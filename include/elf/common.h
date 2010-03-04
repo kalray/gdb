@@ -386,6 +386,13 @@
 /* Vitesse IQ2000.  */
 #define EM_IQ2000		0xFEBA
 
+/* Kalray K1.  */
+#define EM_K1                   0x1337
+
+/* LX */
+#define EM_LX 0x64      
+#define EM_LX_OLD  0x1064
+
 /* NIOS magic number - no EABI available.  */
 #define EM_NIOS32		0xFEBB
 
