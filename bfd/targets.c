@@ -612,6 +612,7 @@ extern const bfd_target bfd_elf32_ia64_big_vec;
 extern const bfd_target bfd_elf32_ia64_hpux_big_vec;
 extern const bfd_target bfd_elf32_ip2k_vec;
 extern const bfd_target bfd_elf32_iq2000_vec;
+extern const bfd_target bfd_elf32_k1_vec;
 extern const bfd_target bfd_elf32_lm32_vec;
 extern const bfd_target bfd_elf32_lm32fdpic_vec;
 extern const bfd_target bfd_elf32_little_generic_vec;
@@ -621,6 +622,10 @@ extern const bfd_target bfd_elf32_littlearm_symbian_vec;
 extern const bfd_target bfd_elf32_littlearm_vxworks_vec;
 extern const bfd_target bfd_elf32_littlemips_vec;
 extern const bfd_target bfd_elf32_littlemips_vxworks_vec;
+extern const bfd_target bfd_elf32_lx_vec;
+extern const bfd_target bfd_elf32_littlelx_vec;
+extern const bfd_target bfd_elf32_lx_linux_vec;
+extern const bfd_target bfd_elf32_littlelx_linux_vec;
 extern const bfd_target bfd_elf32_m32c_vec;
 extern const bfd_target bfd_elf32_m32r_vec;
 extern const bfd_target bfd_elf32_m32rle_vec;
@@ -952,6 +957,7 @@ static const bfd_target * const _bfd_target_vector[] =
 #endif
 	&bfd_elf32_ip2k_vec,
 	&bfd_elf32_iq2000_vec,
+	&bfd_elf32_k1_vec,
 	&bfd_elf32_lm32_vec,
 	&bfd_elf32_little_generic_vec,
 	&bfd_elf32_littlearc_vec,
@@ -960,6 +966,9 @@ static const bfd_target * const _bfd_target_vector[] =
 	&bfd_elf32_littlearm_vxworks_vec,
 	&bfd_elf32_littlemips_vec,
 	&bfd_elf32_littlemips_vxworks_vec,
+        &bfd_elf32_lx_vec,
+        &bfd_elf32_littlelx_vec,
+        &bfd_elf32_littlelx_linux_vec,
 	&bfd_elf32_m32c_vec,
 	&bfd_elf32_m32r_vec,
         &bfd_elf32_m32rle_vec,

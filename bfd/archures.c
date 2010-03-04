@@ -427,6 +427,16 @@ DESCRIPTION
 .  bfd_arch_lm32,      {* Lattice Mico32 *}
 .#define bfd_mach_lm32      1
 .  bfd_arch_microblaze,{* Xilinx MicroBlaze. *}
+ .#define bfd_mach_st240                4
+.  bfd_arch_lx,        {* STMicroelectronics ST200 *}
+.#define bfd_mach_st210                0
+.#define bfd_mach_st220                1
+.#define bfd_mach_st230                2
+.#define bfd_mach_st231                3
+.#define bfd_mach_st240                4
+.  bfd_arch_k1,        {* KALRAY k1 *}
+.#define bfd_mach_k1dp                 0
+.#define bfd_mach_k1cp                 1
 .  bfd_arch_last
 .  };
 */
@@ -489,8 +499,10 @@ extern const bfd_arch_info_type bfd_i960_arch;
 extern const bfd_arch_info_type bfd_ia64_arch;
 extern const bfd_arch_info_type bfd_ip2k_arch;
 extern const bfd_arch_info_type bfd_iq2000_arch;
+extern const bfd_arch_info_type bfd_k1_arch;
 extern const bfd_arch_info_type bfd_l1om_arch;
 extern const bfd_arch_info_type bfd_lm32_arch;
+extern const bfd_arch_info_type bfd_lx_arch;
 extern const bfd_arch_info_type bfd_m32c_arch;
 extern const bfd_arch_info_type bfd_m32r_arch;
 extern const bfd_arch_info_type bfd_m68hc11_arch;
@@ -566,8 +578,10 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_ia64_arch,
     &bfd_ip2k_arch,
     &bfd_iq2000_arch,
+    &bfd_k1_arch,
     &bfd_l1om_arch,
     &bfd_lm32_arch,
+    &bfd_lx_arch,
     &bfd_m32c_arch,
     &bfd_m32r_arch,
     &bfd_m68hc11_arch,

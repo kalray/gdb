@@ -2093,6 +2093,16 @@ enum bfd_architecture
   bfd_arch_lm32,      /* Lattice Mico32 */
 #define bfd_mach_lm32      1
   bfd_arch_microblaze,/* Xilinx MicroBlaze. */
+#define bfd_mach_st240                4
+  bfd_arch_lx,        /* STMicroelectronics ST200 */
+#define bfd_mach_st210                0
+#define bfd_mach_st220                1
+#define bfd_mach_st230                2
+#define bfd_mach_st231                3
+#define bfd_mach_st240                4
+  bfd_arch_k1,        /* KALRAY k1 */
+#define bfd_mach_k1dp                 0
+#define bfd_mach_k1cp                 1
   bfd_arch_last
   };
 
@@ -2574,6 +2584,8 @@ relocation types already defined.  */
   BFD_RELOC_SPU_PPU32,
   BFD_RELOC_SPU_PPU64,
   BFD_RELOC_SPU_ADD_PIC,
+  BFD_RELOC_SPU_PIC18,
+  BFD_RELOC_SPU_STUB,
 
 /* Alpha ECOFF and ELF relocations.  Some of these treat the symbol or
 "addend" in some special way.
@@ -4643,6 +4655,56 @@ value in a word.  The relocation is relative offset from  */
 /* This is used to tell the dynamic linker to copy the value out of
 the dynamic object into the runtime process image.  */
   BFD_RELOC_MICROBLAZE_COPY,
+
+/* Relocations for K1 processor  */
+  BFD_RELOC_K1_17_PCREL,
+  BFD_RELOC_K1_18_PCREL,
+  BFD_RELOC_K1_27_PCREL,
+  BFD_RELOC_K1_32_PCREL,
+  BFD_RELOC_K1_LO10,
+  BFD_RELOC_K1_HI22,
+  BFD_RELOC_K1_GPREL_LO10,
+  BFD_RELOC_K1_GPREL_HI22,
+
+/* LX relocations  */
+  BFD_RELOC_LX_16,
+  BFD_RELOC_LX_32 ,
+  BFD_RELOC_LX_32_PCREL,
+  BFD_RELOC_LX_23_PCREL,
+  BFD_RELOC_LX_HI23,
+  BFD_RELOC_LX_LO9,
+  BFD_RELOC_LX_GPREL_HI23,
+  BFD_RELOC_LX_GPREL_LO9,
+  BFD_RELOC_LX_REL32,
+  BFD_RELOC_LX_GOTOFF_HI23,
+  BFD_RELOC_LX_GOTOFF_LO9,
+  BFD_RELOC_LX_GOTOFFX_HI23,
+  BFD_RELOC_LX_GOTOFFX_LO9,
+  BFD_RELOC_LX_LTV32,
+  BFD_RELOC_LX_SEGREL32,
+  BFD_RELOC_LX_FPTR32,
+  BFD_RELOC_LX_PLTOFF_HI23,
+  BFD_RELOC_LX_PLTOFF_LO9,
+  BFD_RELOC_LX_GOTOFF_FPTR_HI23,
+  BFD_RELOC_LX_GOTOFF_FPTR_LO9,
+  BFD_RELOC_LX_IPLT,
+  BFD_RELOC_LX_NEG_GPREL_HI23,
+  BFD_RELOC_LX_NEG_GPREL_LO9,
+  BFD_RELOC_LX_COPY,
+  BFD_RELOC_LX_JMP_SLOT,
+  BFD_RELOC_LX_TPREL_HI23,
+  BFD_RELOC_LX_TPREL_LO9,
+  BFD_RELOC_LX_TPREL32,
+  BFD_RELOC_LX_GOTOFF_TPREL_HI23,
+  BFD_RELOC_LX_GOTOFF_TPREL_LO9,
+  BFD_RELOC_LX_GOTOFF_DTPLDM_HI23,
+  BFD_RELOC_LX_GOTOFF_DTPLDM_LO9,
+  BFD_RELOC_LX_DTPREL_HI23,
+  BFD_RELOC_LX_DTPREL_LO9,
+  BFD_RELOC_LX_DTPMOD32,
+  BFD_RELOC_LX_DTPREL32,
+  BFD_RELOC_LX_GOTOFF_DTPNDX_HI23,
+  BFD_RELOC_LX_GOTOFF_DTPNDX_LO9,
   BFD_RELOC_UNUSED };
 typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;
 reloc_howto_type *bfd_reloc_type_lookup

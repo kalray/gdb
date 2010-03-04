@@ -51,6 +51,7 @@ HFILES = \
 	ia64-opc.h \
 	ip2k-desc.h ip2k-opc.h \
 	iq2000-desc.h iq2000-opc.h \
+	k1.h \
 	lm32-desc.h \
 	lm32-opc.h \
 	m32c-desc.h m32c-opc.h \
@@ -126,6 +127,8 @@ TARGET_LIBOPCODES_CFILES = \
 	iq2000-dis.c \
 	iq2000-ibld.c \
 	iq2000-opc.c \
+	k1-opc.c \
+	k1-dis.c \
 	lm32-asm.c \
 	lm32-desc.c \
 	lm32-dis.c \

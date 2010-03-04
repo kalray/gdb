@@ -94,7 +94,9 @@ ALL_MACHINES = \
 	cpu-ia64.lo \
 	cpu-ip2k.lo \
 	cpu-iq2000.lo \
+	cpu-k1.lo \
 	cpu-lm32.lo \
+	cpu-lx.lo \
 	cpu-m10200.lo \
 	cpu-m10300.lo \
 	cpu-m32c.lo \
@@ -166,7 +168,9 @@ ALL_MACHINES_CFILES = \
 	cpu-ia64.c \
 	cpu-ip2k.c \
 	cpu-iq2000.c \
+	cpu-k1.c \
 	cpu-lm32.c \
+	cpu-lx.c \
 	cpu-m10200.c \
 	cpu-m10300.c \
 	cpu-m32c.c \
@@ -290,7 +294,10 @@ BFD32_BACKENDS = \
 	elf32-i960.lo \
 	elf32-ip2k.lo \
 	elf32-iq2000.lo \
+	elf32-k1.lo \
 	elf32-lm32.lo \
+	elf32-lx.lo \
+	elf32-lx-linux.lo \
 	elf32-m32c.lo \
 	elf32-m32r.lo \
 	elf32-m68hc11.lo \
@@ -474,7 +481,10 @@ BFD32_BACKENDS_CFILES = \
 	elf32-i960.c \
 	elf32-ip2k.c \
 	elf32-iq2000.c \
+	elf32-k1.c \
 	elf32-lm32.c \
+	elf32-lx.c \
+	elf32-lx-linux.c \
 	elf32-m32c.c \
 	elf32-m32r.c \
 	elf32-m68hc11.c \

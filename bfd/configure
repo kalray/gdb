@@ -15038,6 +15038,7 @@ do
     bfd_elf32_ia64_hpux_big_vec) tb="$tb elf32-ia64.lo elf32.lo $elf";;
     bfd_elf32_ip2k_vec)		tb="$tb elf32-ip2k.lo elf32.lo $elf" ;;
     bfd_elf32_iq2000_vec)       tb="$tb elf32-iq2000.lo elf32.lo $elf" ;;
+    bfd_elf32_k1_vec)           tb="$tb elf32-k1.lo elf32.lo $elf" ;;
     bfd_elf32_lm32_vec)         tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     bfd_elf32_lm32fdpic_vec)         tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     bfd_elf32_little_generic_vec) tb="$tb elf32-gen.lo elf32.lo $elf" ;;
@@ -15050,6 +15051,10 @@ do
     bfd_elf32_littlemips_vec) 	tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo" ;;
     bfd_elf32_littlemips_vxworks_vec)
 			 	tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo" ;;
+    bfd_elf32_lx_vec)           tb="$tb elf32-lx.lo elf32.lo $elf" ;;
+    bfd_elf32_littlelx_vec)     tb="$tb elf32-lx.lo elf32.lo $elf $ipa" ;;
+    bfd_elf32_lx_linux_vec)     tb="$tb elf32-lx-linux.lo elf32.lo $elf" ;;
+    bfd_elf32_littlelx_linux_vec) tb="$tb elf32-lx-linux.lo elf32.lo $elf $ipa" ;;
     bfd_elf32_m32c_vec)         tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
     bfd_elf32_m32r_vec)		tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
     bfd_elf32_m32rle_vec)       tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
