@@ -97,7 +97,7 @@ POSTCOMPILE = @true
 
 # Directory containing source files.
 srcdir = @srcdir@
-VPATH = @srcdir@
+VPATH = @srcdir@:$(MDS_BE_DIR)
 
 YACC=@YACC@
 
