@@ -19,8 +19,9 @@
 
 #include "defs.h"
 #include "arch-utils.h"
-#include "target-descriptions.h"
 #include "dis-asm.h"
+#include "target.h"
+#include "target-descriptions.h"
 
 struct gdbarch_tdep {
 
@@ -29,7 +30,8 @@ struct gdbarch_tdep {
 static struct target_desc *k1_tdesc;
 extern struct target_desc *initialize_k1_description (void);
 
-extern const char *k1_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
+extern const char *k1_pseudo_register_name (struct gdbarch *gdbarch,
+					    int regnr);
 extern struct type *k1_pseudo_register_type (struct gdbarch *gdbarch, 
 					     int reg_nr);
 extern int k1_pseudo_register_reggroup_p (struct gdbarch *gdbarch, 
@@ -56,25 +58,30 @@ k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
   error ("Not implemented yet.");
 }
 
+static CORE_ADDR
+k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
+{
+  gdb_byte syllab_buf[4];
+  uint32_t syllab;
+  enum bfd_endian order = gdbarch_byte_order_for_code (gdbarch);
+
+  /* Look for the end of the bundle preceeding the requested address. */
+  do {
+    if (target_read_memory (bpaddr - 4, syllab_buf, 4) != 0)
+      return bpaddr;
+    
+    syllab = extract_unsigned_integer (syllab_buf, 4, order);
+
+  } while ((syllab >> 31) && (bpaddr -= 4));
+
+  return bpaddr;
+}
+
 /* Return PC of first real instruction.  */
 static CORE_ADDR
 k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 {
   return start_pc;
-}
-
-static int
-k1_memory_insert_breakpoint (struct gdbarch *gdbarch,
-			       struct bp_target_info *bp_tgt)
-{
-  return 1;
-}
-
-static int
-k1_memory_remove_breakpoint (struct gdbarch *gdbarch,
-			       struct bp_target_info *bp_tgt)
-{
-  return 1;
 }
 
 static struct gdbarch *
@@ -119,7 +126,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_tdesc_pseudo_register_name (gdbarch, k1_pseudo_register_name);
   set_tdesc_pseudo_register_type (gdbarch, k1_pseudo_register_type);
-  set_tdesc_pseudo_register_reggroup_p (gdbarch, k1_pseudo_register_reggroup_p);
+  set_tdesc_pseudo_register_reggroup_p (gdbarch,
+					k1_pseudo_register_reggroup_p);
 
   set_gdbarch_pseudo_register_read (gdbarch, k1_pseudo_register_read);
   set_gdbarch_pseudo_register_write (gdbarch, k1_pseudo_register_write);
@@ -128,9 +136,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_skip_prologue (gdbarch, k1_skip_prologue);
 
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
-  set_gdbarch_memory_insert_breakpoint (gdbarch, k1_memory_insert_breakpoint);
-  set_gdbarch_memory_remove_breakpoint (gdbarch, k1_memory_remove_breakpoint);
-
+  set_gdbarch_adjust_breakpoint_address (gdbarch, 
+					 k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_print_insn (gdbarch, print_insn_k1);
