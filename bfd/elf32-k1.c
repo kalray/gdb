@@ -78,6 +78,12 @@ static void k1_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   cache_ptr->howto = &elf32_k1_howto_table[r];
 }
 
+static bfd_boolean
+elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym)
+{
+  return sym->name && sym->name[0] == 'L' && sym->name[1] == '?';
+}
+
 #define TARGET_LITTLE_SYM         bfd_elf32_k1_vec
 #define TARGET_LITTLE_NAME        "elf32-k1"
 #define ELF_ARCH                  bfd_arch_k1
@@ -86,6 +92,9 @@ static void k1_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 #define bfd_elf32_bfd_reloc_type_lookup k1_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup k1_reloc_name_lookup
 #define elf_info_to_howto               k1_elf_info_to_howto
+#define bfd_elf32_bfd_is_target_special_symbol  elf32_k1_is_target_special_symbol
+
+#define elf_backend_can_gc_sections       1
 
 #include "elf32-target.h"
 
