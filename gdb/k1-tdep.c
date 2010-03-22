@@ -20,6 +20,7 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include "dis-asm.h"
+#include "dwarf2-frame.h"
 #include "frame-unwind.h"
 #include "gdbtypes.h"
 #include "target.h"
@@ -234,6 +235,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, k1_skip_prologue);
   set_gdbarch_unwind_pc (gdbarch, k1_unwind_pc);
+  dwarf2_append_unwinders (gdbarch);
   frame_unwind_append_unwinder (gdbarch, &k1_frame_unwind);
 
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
