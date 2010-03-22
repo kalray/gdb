@@ -21,28 +21,26 @@ def cpu_number ()
   num_cpu
 end
 
-target = options["target"]
+arch = options["target"]
 workspace = options["workspace"]
 make_j = options["parallel-make"] == "yes" ? "-j#{cpu_number}" : ""
 
-exit 0 if not target == "k1"
-
-b.logtitle = "Report for GDB build, arch = #{target}"
+b.logtitle = "Report for GDB build, arch = #{arch}"
 
 b.default_targets = [build]
 
-case target
+case arch
 when "k1"
   build_target = "k1-elf"
-  mds_path = workspace + "/documents/Processor/#{target}-family/build/BE/GDB/#{target}"
+  mds_path = workspace + "/documents/Processor/#{arch}-family/build/BE/GDB/#{arch}"
 when "st200" 
   build_target = "lx-stm-elf32"
-  mds_path = workspace + "/mds/#{target}-family/build/BE/GBU/#{target}"
+  mds_path = workspace + "/mds/#{arch}-family/build/BE/GBU/#{arch}"
 else 
-  raise "Unknown Target #{target}"
+  raise "Unknown Target #{arch}"
 end
 
-build_path = workspace + "/" + options["clone"] + "/" + target + "_build"
+build_path = workspace + "/" + options["clone"] + "/" + arch + "_build"
 
 build.add_result build_path
 
@@ -50,10 +48,12 @@ b.target("build") do
 
   create_goto_dir! build_path
 
-  b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{target}- --disable-werror --prefix=#{build_path}/release")
-  b.run(:cmd => "make clean")
-  b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path}")
-  b.run(:cmd => "make install")
+  if( arch == "k1" )
+    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --prefix=#{build_path}/release")
+    b.run(:cmd => "make clean")
+    b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path}")
+    b.run(:cmd => "make install")
+  end
 end
 
 b.target("valid") do
@@ -61,7 +61,3 @@ b.target("valid") do
 end
 
 b.launch
-
-
-
-
