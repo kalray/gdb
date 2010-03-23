@@ -46,17 +46,27 @@ static void
 dwarf_expr_frame_base_1 (struct symbol *framefunc, CORE_ADDR pc,
 			 gdb_byte **start, size_t *length);
 
-/* A helper function for dealing with location lists.  Given a
-   symbol baton (BATON) and a pc value (PC), find the appropriate
-   location expression, set *LOCEXPR_LENGTH, and return a pointer
-   to the beginning of the expression.  Returns NULL on failure.
+/* Callback function type for traverse_location_expression.  It gets called for
+   the range LOW (inclusive) to HIGH (exclusive) being covered by the DWARF
+   block at BASE with DWARF block length LENGTH.  FUNC_DATA is an arbitrary
+   pointer passed from the caller.  Callback function returns non-zero if the
+   traversal should be terminated.  */
 
-   For now, only return the first matching location expression; there
-   can be more than one in the list.  */
+typedef int (*traverse_location_expression_func_t) (CORE_ADDR low,
+						    CORE_ADDR high,
+						    gdb_byte *base,
+						    size_t length,
+						    void *func_data);
 
-static gdb_byte *
-find_location_expression (struct dwarf2_loclist_baton *baton,
-			  size_t *locexpr_length, CORE_ADDR pc)
+/* Given a symbol baton (BATON), traverse al the available location expressions
+   and call FUNC with FUNC_DATA arbitrary pointer for each
+   such location expression.  Return non-zero if any of the FUNC calls returned
+   non-zero.  */
+
+static int
+traverse_location_expression (struct dwarf2_loclist_baton *baton,
+			      traverse_location_expression_func_t func,
+			      void *func_data)
 {
   CORE_ADDR low, high;
   gdb_byte *loc_ptr, *buf_end;
@@ -96,7 +106,7 @@ find_location_expression (struct dwarf2_loclist_baton *baton,
 
       /* An end-of-list entry.  */
       if (low == 0 && high == 0)
-	return NULL;
+	return 0;
 
       /* Otherwise, a location expression entry.  */
       low += base_address;
@@ -105,14 +115,66 @@ find_location_expression (struct dwarf2_loclist_baton *baton,
       length = extract_unsigned_integer (loc_ptr, 2, byte_order);
       loc_ptr += 2;
 
-      if (pc >= low && pc < high)
-	{
-	  *locexpr_length = length;
-	  return loc_ptr;
-	}
+      if (func (low, high, loc_ptr, length, func_data))
+	return 1;
 
       loc_ptr += length;
     }
+  /* NOTREACHED */
+}
+
+/* Storage for data from the caller for find_location_expression_func.  */
+
+struct find_location_expression
+  {
+    CORE_ADDR pc;
+    gdb_byte *retval;
+    size_t locexpr_length;
+  };
+
+/* Helper callback for find_location_expression.  */
+
+static int
+find_location_expression_func (CORE_ADDR low, CORE_ADDR high, gdb_byte *base,
+			       size_t length, void *func_data)
+{
+  struct find_location_expression *data = func_data;
+
+  if (data->pc >= low && data->pc < high)
+    {
+      data->retval = base;
+      data->locexpr_length = length;
+
+      /* Terminate the traversal.  */
+      return 1;
+    }
+
+  /* Continue the traversal.  */
+  return 0;
+}
+
+/* A helper function for dealing with location lists.  Given a
+   symbol baton (BATON) and a pc value (PC), find the appropriate
+   location expression, set *LOCEXPR_LENGTH, and return a pointer
+   to the beginning of the expression.  Returns NULL on failure.
+
+   For now, only return the first matching location expression; there
+   can be more than one in the list.  */
+
+static gdb_byte *
+find_location_expression (struct dwarf2_loclist_baton *baton,
+			  size_t *locexpr_length, CORE_ADDR pc)
+{
+  struct find_location_expression data;
+
+  data.pc = pc;
+
+  if (!traverse_location_expression (baton, find_location_expression_func,
+                                     &data))
+    return NULL;
+
+  *locexpr_length = data.locexpr_length;
+  return data.retval;
 }
 
 /* This is the baton used when performing dwarf2 expression
@@ -735,12 +797,11 @@ locexpr_read_needs_frame (struct symbol *symbol)
 				      dlbaton->per_cu);
 }
 
-/* Print a natural-language description of SYMBOL to STREAM.  */
-static int
-locexpr_describe_location (struct symbol *symbol, struct ui_file *stream)
+/* Print a natural-language description of DLBATON to STREAM.  */
+
+static void
+describe_dlbaton (struct dwarf2_locexpr_baton *dlbaton, struct ui_file *stream)
 {
-  /* FIXME: be more extensive.  */
-  struct dwarf2_locexpr_baton *dlbaton = SYMBOL_LOCATION_BATON (symbol);
   int addr_size = dwarf2_per_cu_addr_size (dlbaton->per_cu);
 
   if (dlbaton->size == 1
@@ -754,7 +815,46 @@ locexpr_describe_location (struct symbol *symbol, struct ui_file *stream)
       fprintf_filtered (stream,
 			"a variable in register %s",
 			gdbarch_register_name (gdbarch, regno));
-      return 1;
+      return;
+    }
+
+  if (dlbaton->size > 1 && dlbaton->data[0] == DW_OP_fbreg)
+    {
+      LONGEST frame_offset;
+      gdb_byte *buf_end;
+
+      buf_end = read_sleb128 (&dlbaton->data[1], &dlbaton->data[dlbaton->size],
+			      &frame_offset);
+      if (buf_end == &dlbaton->data[dlbaton->size])
+	{
+	  fprintf_filtered (stream, _("stored relative to frame base "
+				      "at offset %s"),
+			    plongest (frame_offset));
+	  return;
+	}
+    }
+
+  if (dlbaton->size > 1
+      && (dlbaton->data[0] >= DW_OP_breg0 && dlbaton->data[0] <= DW_OP_breg31))
+    {
+      LONGEST frame_offset;
+      gdb_byte *buf_end;
+
+      buf_end = read_sleb128 (&dlbaton->data[1], &dlbaton->data[dlbaton->size],
+			      &frame_offset);
+      if (buf_end == &dlbaton->data[dlbaton->size])
+	{
+	  struct objfile *objfile = dwarf2_per_cu_objfile (dlbaton->per_cu);
+	  struct gdbarch *gdbarch = get_objfile_arch (objfile);
+	  int regno = gdbarch_dwarf2_reg_to_regnum (gdbarch,
+					    dlbaton->data[0] - DW_OP_breg0);
+
+	  fprintf_filtered (stream, _("stored relative to register %s "
+				      "at offset %s"),
+			    gdbarch_register_name (gdbarch, regno),
+			    plongest (frame_offset));
+	  return;
+	}
     }
 
   /* The location expression for a TLS variable looks like this (on a
@@ -783,15 +883,25 @@ locexpr_describe_location (struct symbol *symbol, struct ui_file *stream)
 			  "a thread-local variable at offset %s in the "
 			  "thread-local storage for `%s'",
 			  paddress (gdbarch, offset), objfile->name);
-	return 1;
+	return;
       }
   
 
   fprintf_filtered (stream,
 		    "a variable with complex or multiple locations (DWARF2)");
-  return 1;
 }
 
+/* Print a natural-language description of SYMBOL to STREAM.  */
+
+static int
+locexpr_describe_location (struct symbol *symbol, struct ui_file *stream)
+{
+  struct dwarf2_locexpr_baton *dlbaton = SYMBOL_LOCATION_BATON (symbol);
+
+  describe_dlbaton (dlbaton, stream);
+
+  return 1;
+}
 
 /* Describe the location of SYMBOL as an agent value in VALUE, generating
    any necessary bytecode in AX.
@@ -863,12 +973,58 @@ loclist_read_needs_frame (struct symbol *symbol)
   return 1;
 }
 
+/* Storage for data from the caller for loclist_describe_location_func.  */
+
+struct loclist_describe_location
+  {
+    struct ui_file *stream;
+    struct dwarf2_per_cu_data *per_cu;
+  };
+
+/* Helper callback for loclist_describe_location.  Print location list item as
+   a separate DWARF block text wrapping it by its validity address range.  */
+
+static int
+loclist_describe_location_func (CORE_ADDR low, CORE_ADDR high, gdb_byte *base,
+				size_t length, void *func_data)
+{
+  struct loclist_describe_location *data = func_data;
+  struct objfile *objfile = dwarf2_per_cu_objfile (data->per_cu);
+  struct gdbarch *arch = get_objfile_arch (objfile);
+  struct dwarf2_locexpr_baton dlbaton;
+
+  fprintf_filtered (data->stream, "%s - %s: ", paddress (arch, low),
+		    paddress (arch, high));
+
+  dlbaton.data = base;
+  dlbaton.size = length;
+  dlbaton.per_cu = data->per_cu;
+  describe_dlbaton (&dlbaton, data->stream);
+
+  fputc_filtered ('\n', data->stream);
+
+  /* Continue the traversal.  */
+  return 0;
+}
+
 /* Print a natural-language description of SYMBOL to STREAM.  */
+
 static int
 loclist_describe_location (struct symbol *symbol, struct ui_file *stream)
 {
-  /* FIXME: Could print the entire list of locations.  */
-  fprintf_filtered (stream, "a variable with multiple locations");
+  struct loclist_describe_location data;
+  struct dwarf2_loclist_baton *dlbaton = SYMBOL_LOCATION_BATON (symbol);
+
+  fprintf_filtered (stream, _("a variable with multiple locations, "
+			      "for PC inclusive - exclusive:\n"));
+
+  data.stream = stream;
+  data.per_cu = dlbaton->per_cu;
+
+  traverse_location_expression (dlbaton, loclist_describe_location_func, &data);
+
+  fprintf_filtered (stream, _("and optimized out in ranges not covered above"));
+
   return 1;
 }
 
