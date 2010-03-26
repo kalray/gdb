@@ -23,8 +23,11 @@
 #include "dwarf2-frame.h"
 #include "frame-unwind.h"
 #include "gdbtypes.h"
+#include "regcache.h"
+#include "symtab.h"
 #include "target.h"
 #include "target-descriptions.h"
+#include "user-regs.h"
 
 struct gdbarch_tdep {
 
@@ -105,17 +108,55 @@ k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
 }
 
 /* Return PC of first real instruction.  */
+/* This function is nearly cmopletely copied from
+   symtab.c:skip_prologue_using_lineinfo (excpet the test in the loop
+   at the end. */
 static CORE_ADDR
-k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
+k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 {
-  return start_pc;
+    CORE_ADDR func_start, func_end;
+    struct linetable *l;
+    int ind, i, len;
+    int best_lineno = 0;
+    CORE_ADDR best_pc = func_addr;
+    struct symtab *symtab;
+
+    symtab = find_pc_symtab (func_addr);
+    if (symtab == NULL)
+	return func_addr;
+
+    /* Give up if this symbol has no lineinfo table.  */
+    l = LINETABLE (symtab);
+    if (l == NULL)
+	return func_addr;
+    
+    /* Get the range for the function's PC values, or give up if we
+       cannot, for some reason.  */
+    if (!find_pc_partial_function (func_addr, NULL, &func_start, &func_end))
+	return func_addr;
+    
+    /* Linetable entries are ordered by PC values, see the commentary in
+       symtab.h where `struct linetable' is defined.  Thus, the first
+       entry whose PC is in the range [FUNC_START..FUNC_END[ is the
+       address we are looking for.  */
+    for (i = 0; i < l->nitems; i++)
+	{
+	    struct linetable_entry *item = &(l->item[i]);
+	    
+	    /* Don't use line numbers of zero, they mark special entries in
+	       the table.  See the commentary on symtab.h before the
+	       definition of struct linetable.  */
+	    if (item->line > 0 && func_start < item->pc && item->pc < func_end)
+		return item->pc;
+	}
+    
+    return func_addr;
 }
 
 static CORE_ADDR
 k1_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
-    return frame_unwind_register_unsigned (next_frame,
-					   gdbarch_pc_regnum (gdbarch));
+    return frame_unwind_register_unsigned (next_frame, gdbarch_pc_regnum(gdbarch));
 }
 
 /* Given a GDB frame, determine the address of the calling function's
@@ -125,6 +166,9 @@ static void
 k1_frame_this_id (struct frame_info *this_frame,
 		  void **this_prologue_cache, struct frame_id *this_id)
 {
+    if (get_frame_func (this_frame) == get_frame_pc (this_frame)) {
+	*this_id = frame_id_build (get_frame_sp (this_frame), get_frame_func (this_frame));
+    }
     /* struct k1_frame_cache *cache = k1_frame_cache (this_frame, */
     /* 						   this_prologue_cache); */
     
@@ -141,6 +185,14 @@ static struct value *
 k1_frame_prev_register (struct frame_info *this_frame,
 			void **this_prologue_cache, int regnum)
 {
+    if (get_frame_func (this_frame) == get_frame_pc (this_frame)) {
+	if (regnum == gdbarch_pc_regnum (get_frame_arch (this_frame))) 
+	    return frame_unwind_got_register (this_frame,
+					      regnum,
+					      user_reg_map_name_to_regnum (get_frame_arch (this_frame), "ra", -1));
+	if (regnum == gdbarch_sp_regnum (get_frame_arch (this_frame))) 
+	    return frame_unwind_got_register (this_frame, regnum, regnum);
+    }
     /* struct k1_frame_cache *cache = k1_frame_cache (this_frame, */
     /* 						   this_prologue_cache); */
     
@@ -166,6 +218,58 @@ static const struct frame_unwind k1_frame_unwind = {
     default_frame_sniffer
 };
 
+static int k1_print_insn (bfd_vma pc, disassemble_info *di)
+{
+    return print_insn_k1 (pc, di);
+}
+
+static void k1_store_return_value (struct gdbarch *gdbarch,
+				   struct type *type,
+                                   struct regcache *regcache,
+                                   const gdb_byte *buf)
+{
+    int len = TYPE_LENGTH (type);
+    // FIXME: extract first arg id from MDS
+    int i = 0;
+    int sz = register_size (gdbarch, 0);
+    
+    while (len > 0) {
+	regcache_raw_write (regcache, i, buf + i*sz);
+	i++, len -= sz;
+    }
+}
+
+static void k1_extract_return_value (struct gdbarch *gdbarch,
+				     struct type *type,
+                                     struct regcache *regcache,
+                                     gdb_byte *buf)
+{
+    int len = TYPE_LENGTH (type);
+    // FIXME: extract first arg id from MDS
+    int i = 0;
+    int sz = register_size (gdbarch, 0);
+    
+    while (len > 0) {
+	regcache_raw_read (regcache, i, buf + i*sz);
+	i++, len -= sz;
+    }
+}
+
+static enum return_value_convention
+k1_return_value (struct gdbarch *gdbarch, struct type *func_type,
+                 struct type *type, struct regcache *regcache,
+                 gdb_byte *readbuf, const gdb_byte *writebuf)
+{
+    if (TYPE_LENGTH (type) > 32)
+        return RETURN_VALUE_STRUCT_CONVENTION;
+
+    if (writebuf)
+        k1_store_return_value (gdbarch, type, regcache, writebuf);
+    else if (readbuf)
+        k1_extract_return_value (gdbarch, type, regcache, readbuf);
+    return RETURN_VALUE_REGISTER_CONVENTION;
+}
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -174,8 +278,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
   int i, has_pc = -1, has_sp = -1;
-
-  printf ("Init k1_gdbarch_init\n");
 
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -188,7 +290,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
   set_gdbarch_int_bit (gdbarch, 32);
-  set_gdbarch_long_bit (gdbarch, 64);
+  set_gdbarch_long_bit (gdbarch, 32);
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
@@ -233,6 +335,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_pseudo_register_write (gdbarch, k1_pseudo_register_write);
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1_dwarf2_reg_to_regnum);
 
+  set_gdbarch_return_value (gdbarch, k1_return_value);
+
   set_gdbarch_skip_prologue (gdbarch, k1_skip_prologue);
   set_gdbarch_unwind_pc (gdbarch, k1_unwind_pc);
   dwarf2_append_unwinders (gdbarch);
@@ -243,7 +347,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 					 k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_print_insn (gdbarch, print_insn_k1);
+  set_gdbarch_print_insn (gdbarch, k1_print_insn);
 
   return gdbarch;
 }
