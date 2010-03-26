@@ -1909,6 +1909,9 @@ proc gdb_compile {source dest type options} {
 
     regsub "\[\r\n\]*$" "$result" "" result;
     regsub "^\[\r\n\]*" "$result" "" result;
+    regsub "^!!! DevWarn.*" "$result" "" result;
+    regsub ".*space repeat count is zero.*" "$result" "" result;
+
     
     if {[lsearch $options quiet] < 0} {
 	# We shall update this on a per language basis, to avoid
