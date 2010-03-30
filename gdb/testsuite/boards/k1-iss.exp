@@ -31,7 +31,7 @@ set_board_info use_gdb_stub 1
 # We will be using the standard GDB remote protocol.
 set_board_info gdb_protocol "remote"
 # Test the copy of gdbserver in the build directory.
-set_board_info gdb_server_prog "gdb_stub.rb"
+set_board_info gdb_server_prog "gdb_stub"
 
 proc ${board}_spawn { board cmd } {
   global board_info
