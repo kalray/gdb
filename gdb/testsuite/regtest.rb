@@ -3,13 +3,13 @@
 require 'tempfile'
 
 def usage
-  STDERR.puts "Usage: #{File.basename __FILE__} SUM_FILE REF_SUM_FILE"
+  STDERR.puts "Usage: #{File.basename __FILE__} REF_SUM_FILE SUM_FILE"
   exit 1
 end
 
 begin
-  $sum = File.new(ARGV[0], "r");
-  $ref = File.new(ARGV[1], "r");
+  $ref = File.new(ARGV[0], "r");
+  $sum = File.new(ARGV[1], "r");
 rescue
   puts $!
   usage
@@ -85,7 +85,13 @@ $tests.each_pair do |exp, tests|
     res_ref = ref.delete t
 
     if (res_ref == nil)
-      notify exp, "\t     => #{res}\t#{t}"
+      if (res == 'PASS')
+        $progressions += 1
+        notify exp, "\t     => #{green(res)}\t#{t}"
+      else
+        $regressions += 1
+        notify exp, "\t     => #{red(res)}\t#{t}"
+      end
       next
     end
     
@@ -103,7 +109,13 @@ $tests.each_pair do |exp, tests|
 
   if (not ref.empty?)
     ref.each_pair do |t, res|
-      notify exp, "\t#{red(res)} =>     \t#{t}"
+      if (res == 'PASS')
+        $regressions += 1
+        notify exp, "\t#{red(res)} =>     \t#{t}"
+      else
+        $progressions += 1
+        notify exp, "\t#{green(res)} =>     \t#{t}"
+      end
     end
   end
 
