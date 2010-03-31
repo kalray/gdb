@@ -71,9 +71,9 @@ struct op_list {
     struct op_list *next;
 };
 
-static struct op_list *add_insns;
-static struct op_list *sbf_insns;
-static struct op_list *swm_insns;
+static struct op_list *sp_adjust_insns;
+static struct op_list *sp_store_insns;
+static struct op_list *prologue_helper_insns;
 
 const char *
 k1_dummy_register_name (struct gdbarch *gdbarch, int regno)
@@ -132,12 +132,13 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	struct op_list *ops;
 	int sp_idx;
     } prologue_insns[] = {
-	{ add_insns, 0 /* Dest register */},
-	{ sbf_insns, 0 /* Dest register */},
-	{ swm_insns, 1 /* Base register */},
+	{ sp_adjust_insns, 0 /* Dest register */},
+	{ sp_store_insns, 1 /* Base register */},
+	{ prologue_helper_insns, -1 /* unused */},
     };
 
     do {
+    next_addr:
 	if (target_read_memory (addr, syllab_buf, 4) != 0)
 	    return 0;
 	syllab = extract_unsigned_integer (syllab_buf, 4, order);
@@ -148,7 +149,11 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 		k1opc_t *op = ops->op;
 		if ((syllab & op->codeword[0].mask) != op->codeword[0].opcode)
 		    goto next;
-		
+		if (prologue_insns[ops_idx].sp_idx < 0) {
+		    addr += op->coding_size/8;
+		    goto next_addr;
+		}
+
 		bfield = &op->format[prologue_insns[ops_idx].sp_idx]->bfield[0];
 		reg = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
 		if (reg == 12) return 1;
@@ -156,9 +161,7 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 		ops = ops->next;
 	    }
 	}
-
-	addr += 4;
-    } while (i++ < 4 && (syllab >> 31));
+    } while (0);
     
     return 0;
 }
@@ -427,12 +430,29 @@ static void k1_look_for_insns (void)
     k1opc_t *op = k1dp_k1optab;
 
     while (op->as_op[0]) {
-	if (strcmp ("add", op->as_op) == 0)
-            add_op (&add_insns, op);
-        else if (strcmp ("sbf", op->as_op) == 0)
-            add_op (&sbf_insns, op);
+	if (strcmp ("add", op->as_op) == 0) {
+            add_op (&sp_adjust_insns, op);
+            add_op (&prologue_helper_insns, op);
+	} else if (strcmp ("sbf", op->as_op) == 0)
+            add_op (&sp_adjust_insns, op);
 	else if (strcmp ("swm", op->as_op) == 0)
-            add_op (&swm_insns, op);
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("sdm", op->as_op) == 0)
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("shm", op->as_op) == 0)
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("sb", op->as_op) == 0)
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("shm", op->as_op) == 0)
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("make", op->as_op) == 0)
+            add_op (&prologue_helper_insns, op);
+	else if (strcmp ("sxb", op->as_op) == 0)
+            add_op (&prologue_helper_insns, op);
+	else if (strcmp ("sxh", op->as_op) == 0)
+            add_op (&prologue_helper_insns, op);
+	else if (strcmp ("extfz", op->as_op) == 0)
+            add_op (&prologue_helper_insns, op);
 
 	++op;
     }
