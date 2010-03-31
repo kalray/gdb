@@ -28,6 +28,7 @@
 #include "target.h"
 #include "target-descriptions.h"
 #include "user-regs.h"
+#include "opcode/k1.h"
 
 struct gdbarch_tdep {
 
@@ -64,6 +65,15 @@ extern int k1_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
 extern const int k1_num_pseudo_regs;
 extern const char *k1_pc_name;
 extern const char *k1_sp_name;
+
+struct op_list {
+    k1opc_t        *op;
+    struct op_list *next;
+};
+
+static struct op_list *add_insns;
+static struct op_list *sbf_insns;
+static struct op_list *swm_insns;
 
 const char *
 k1_dummy_register_name (struct gdbarch *gdbarch, int regno)
@@ -107,6 +117,52 @@ k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
   return adjusted;
 }
 
+static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+    gdb_byte syllab_buf[4];
+    uint32_t syllab;
+    enum bfd_endian order = gdbarch_byte_order_for_code (gdbarch);
+    k1bfield *add_reg_desc, *sbf_reg_desc;
+    int reg;
+    int i = 0, ops_idx;
+    struct op_list *ops;
+    k1_bitfield_t *bfield;
+
+    struct {
+	struct op_list *ops;
+	int sp_idx;
+    } prologue_insns[] = {
+	{ add_insns, 0 /* Dest register */},
+	{ sbf_insns, 0 /* Dest register */},
+	{ swm_insns, 1 /* Base register */},
+    };
+
+    do {
+	if (target_read_memory (addr, syllab_buf, 4) != 0)
+	    return 0;
+	syllab = extract_unsigned_integer (syllab_buf, 4, order);
+
+	for (ops_idx = 0; ops_idx < ARRAY_SIZE(prologue_insns); ++ops_idx) {
+	    ops = prologue_insns[ops_idx].ops;
+	    while (ops) {
+		k1opc_t *op = ops->op;
+		if ((syllab & op->codeword[0].mask) != op->codeword[0].opcode)
+		    goto next;
+		
+		bfield = &op->format[prologue_insns[ops_idx].sp_idx]->bfield[0];
+		reg = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
+		if (reg == 12) return 1;
+	    next:
+		ops = ops->next;
+	    }
+	}
+
+	addr += 4;
+    } while (i++ < 4 && (syllab >> 31));
+    
+    return 0;
+}
+
 /* Return PC of first real instruction.  */
 /* This function is nearly cmopletely copied from
    symtab.c:skip_prologue_using_lineinfo (excpet the test in the loop
@@ -119,14 +175,17 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
     int ind, i, len;
     int best_lineno = 0;
     CORE_ADDR best_pc = func_addr;
-    struct symtab *symtab;
+    struct symtab_and_line sal;
 
-    symtab = find_pc_symtab (func_addr);
-    if (symtab == NULL)
+     if (!k1_has_create_stack_frame (gdbarch, func_addr))
+     	return func_addr;
+
+    sal = find_pc_line (func_addr, 0);
+    if (sal.symtab == NULL)
 	return func_addr;
 
     /* Give up if this symbol has no lineinfo table.  */
-    l = LINETABLE (symtab);
+    l = LINETABLE (sal.symtab);
     if (l == NULL)
 	return func_addr;
     
@@ -352,10 +411,38 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+static void add_op (struct op_list **list, k1opc_t *op)
+{
+    struct op_list *op_l = malloc (sizeof (struct op_list));
+    
+    op_l->op = op;
+    op_l->next = *list;
+    
+    *list = op_l;
+}
+
+static void k1_look_for_insns (void)
+{
+    /* FIXME: consider the k1cp ABI */
+    k1opc_t *op = k1dp_k1optab;
+
+    while (op->as_op[0]) {
+	if (strcmp ("add", op->as_op) == 0)
+            add_op (&add_insns, op);
+        else if (strcmp ("sbf", op->as_op) == 0)
+            add_op (&sbf_insns, op);
+	else if (strcmp ("swm", op->as_op) == 0)
+            add_op (&swm_insns, op);
+
+	++op;
+    }
+}
+
 extern initialize_file_ftype _initialize_k1_tdep; /* -Wmissing-prototypes */
 
 void
 _initialize_k1_tdep (void)
 {
+  k1_look_for_insns ();
   gdbarch_register (bfd_arch_k1, k1_gdbarch_init, NULL);
 }
