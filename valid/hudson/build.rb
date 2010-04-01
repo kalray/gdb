@@ -58,6 +58,12 @@ end
 
 b.target("valid") do
 
+  Dir.chdir build_path + "/gdb/testsuite"
+
+  if( arch == "k1" )
+    b.run(:cmd => "DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp; true")
+    b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
+  end
 end
 
 b.launch
