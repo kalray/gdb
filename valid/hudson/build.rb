@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 
-require 'rubygems'
+
+$LOAD_PATH.push('metabuild/lib')
 require 'metabuild'
 include Metabuild
 
