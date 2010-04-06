@@ -3,7 +3,7 @@
 # add them to the last section
 
 global boards_dir
-lappend boards_dir /work1/friss/tools/gdb/gdb/testsuite/boards
+lappend boards_dir ../../../gdb/testsuite/boards
 
 set host_triplet i686-pc-linux-gnu
 set target_alias k1-elf
