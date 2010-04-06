@@ -41,7 +41,7 @@ def parse (file, tests, output)
       end
       cur_test_name = $1
       cur_test_results = {}
-    when /PASS: [^:]+: (.*)$/
+    when /.?PASS: [^:]+: (.*)$/
       cur_test_results[$1] = 'PASS'
     when /.?FAIL: [^:]+: (.*)$/
       cur_test_results[$1] = 'FAIL'
@@ -125,7 +125,14 @@ end
 if (not $tests_ref.empty?)
   $tests_ref.each_pair do |exp, tests|
     notify exp, "Only in ref: #{exp}"
-    tests.each_pair { |t, res| notify exp, "\tTest disappeared #{res}: #{t}" }
+    tests.each_pair do |t, res| 
+      if (res == 'PASS')
+        notify exp, "\tTest disappeared #{red(res)}: #{t}"
+        $regressions += 1
+      else
+        notify exp, "\tTest disappeared #{res}: #{t}"
+      end
+    end
   end
 end
 
