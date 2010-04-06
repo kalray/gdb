@@ -30,17 +30,13 @@ $output = ""
 
 def parse (file, tests, output)
   
-  cur_test_name = ""
   cur_test_results = {}
 
   while line = file.gets
     case line
     when /Running (.*\.exp) \.\.\./
-      if (cur_test_name != "")
-        tests[cur_test_name] = cur_test_results
-      end
-      cur_test_name = $1
       cur_test_results = {}
+      tests[$1] = cur_test_results
     when /.?PASS: [^:]+: (.*)$/
       cur_test_results[$1] = 'PASS'
     when /.?FAIL: [^:]+: (.*)$/
@@ -53,7 +49,6 @@ def parse (file, tests, output)
       output << line
     end
   end
-  
 end
 
 $last_exp_file = ""
