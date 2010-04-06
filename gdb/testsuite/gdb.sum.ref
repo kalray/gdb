@@ -1,4 +1,4 @@
-Test Run By friss on Sun Apr  4 16:50:27 2010
+Test Run By friss on Tue Apr  6 14:25:09 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -919,10 +919,10 @@ PASS: gdb.mi/mi-var-cmd.exp: inside breakpoint inside callee
 PASS: gdb.mi/mi-var-cmd.exp: continue to where i is initialized
 PASS: gdb.mi/mi-var-cmd.exp: update F inside callee
 PASS: gdb.mi/mi-var-cmd.exp: check F inside callee
-FAIL: gdb.mi/mi-var-cmd.exp: create null_ptr
+PASS: gdb.mi/mi-var-cmd.exp: create null_ptr
 PASS: gdb.mi/mi-var-cmd.exp: update null_ptr
 PASS: gdb.mi/mi-var-cmd.exp: delete null_ptr
-FAIL: gdb.mi/mi-var-cmd.exp: kill program before endvar (the program is no longer running)
+PASS: gdb.mi/mi-var-cmd.exp: kill program before endvar
 PASS: gdb.mi/mi-var-cmd.exp: create endvar
 PASS: gdb.mi/mi-var-cmd.exp: update endvar
 PASS: gdb.mi/mi-var-cmd.exp: delete endvar
@@ -1455,7 +1455,7 @@ PASS: gdb.base/break.exp: run until file:linenum breakpoint
 PASS: gdb.base/break.exp: breakpoint offset +1
 PASS: gdb.base/break.exp: step onto breakpoint
 PASS: gdb.base/break.exp: setting breakpoint at }
-FAIL: gdb.base/break.exp: continue to breakpoint at }
+FAIL: gdb.base/break.exp: continue to breakpoint at } (the program exited)
 PASS: gdb.base/break.exp: Temporary breakpoint function
 PASS: gdb.base/break.exp: Temporary breakpoint function in file
 PASS: gdb.base/break.exp: Temporary breakpoint line number #1
@@ -1915,6 +1915,15 @@ Running ../../../gdb/testsuite/gdb.base/hook-stop-frame.exp ...
 PASS: gdb.base/hook-stop-frame.exp: breakpoint line number
 PASS: gdb.base/hook-stop-frame.exp: define hook-stop command
 PASS: gdb.base/hook-stop-frame.exp: hook-stop runs before frame print
+Running ../../../gdb/testsuite/gdb.base/watch-cond.exp ...
+PASS: gdb.base/watch-cond.exp: set write watchpoint on global variable, local condition
+PASS: gdb.base/watch-cond.exp: watchpoint with global expression, local condition evaluates in correct frame
+PASS: gdb.base/watch-cond.exp: set write watchpoint on local variable, local condition
+PASS: gdb.base/watch-cond.exp: watchpoint with local expression, local condition evaluates in correct frame
+PASS: gdb.base/watch-cond.exp: set write watchpoint on global2 variable
+PASS: gdb.base/watch-cond.exp: watchpoint on global2 variable triggers
+PASS: gdb.base/watch-cond.exp: condition of watchpoint 2 changes
+PASS: gdb.base/watch-cond.exp: watchpoint stops with untestable local expression
 Running ../../../gdb/testsuite/gdb.base/included.exp ...
 PASS: gdb.base/included.exp: set listsize 1
 PASS: gdb.base/included.exp: list main
@@ -2821,6 +2830,9 @@ PASS: gdb.base/cursal.exp: backtrace
 PASS: gdb.base/cursal.exp: list after backtrace
 PASS: gdb.base/cursal.exp: set listsize 3
 PASS: gdb.base/cursal.exp: list size 3
+Running ../../../gdb/testsuite/gdb.base/break-entry.exp ...
+PASS: gdb.base/break-entry.exp: info files
+FAIL: gdb.base/break-entry.exp: running to *0x0 in runto
 Running ../../../gdb/testsuite/gdb.base/shlib-call.exp ...
 Running ../../../gdb/testsuite/gdb.base/unwindonsignal.exp ...
 Running ../../../gdb/testsuite/gdb.base/sigstep.exp ...
@@ -2925,9 +2937,9 @@ PASS: gdb.base/advance.exp: malformed advance
 PASS: gdb.base/advance.exp: advance func
 FAIL: gdb.base/advance.exp: advance function not called by current frame
 PASS: gdb.base/advance.exp: set breakpoint at call to func3
-FAIL: gdb.base/advance.exp: continue to call to func3 in main
-FAIL: gdb.base/advance.exp: advance function called as param
-FAIL: gdb.base/advance.exp: advance with no argument
+FAIL: gdb.base/advance.exp: continue to call to func3 in main (the program exited)
+FAIL: gdb.base/advance.exp: advance function called as param (the program is no longer running)
+FAIL: gdb.base/advance.exp: advance with no argument (the program is no longer running)
 Running ../../../gdb/testsuite/gdb.base/step-bt.exp ...
 PASS: gdb.base/step-bt.exp: breakpoint at first instruction of hello()
 PASS: gdb.base/step-bt.exp: run to hello()
@@ -4359,7 +4371,7 @@ PASS: gdb.base/ifelse.exp: call original define
 PASS: gdb.base/ifelse.exp: replace define with if .. else with empty body
 PASS: gdb.base/ifelse.exp: call replacement define
 Running ../../../gdb/testsuite/gdb.base/step-line.exp ...
-FAIL: gdb.base/step-line.exp: break f1
+PASS: gdb.base/step-line.exp: break f1
 FAIL: gdb.base/step-line.exp: continue to f1
 FAIL: gdb.base/step-line.exp: next over dummy 1
 FAIL: gdb.base/step-line.exp: next to dummy 2
@@ -5098,6 +5110,9 @@ PASS: gdb.base/arrayidx.exp: Set print array-indexes to off
 PASS: gdb.base/arrayidx.exp: Print array with array-indexes off
 PASS: gdb.base/arrayidx.exp: Set print array-indexes to on
 PASS: gdb.base/arrayidx.exp: Print array with array-indexes on
+Running ../../../gdb/testsuite/gdb.base/watch-non-mem.exp ...
+PASS: gdb.base/watch-non-mem.exp: set write watchpoint on $pc
+PASS: gdb.base/watch-non-mem.exp: watchpoint on $pc works
 Running ../../../gdb/testsuite/gdb.base/valgrind-db-attach.exp ...
 PASS: gdb.base/valgrind-db-attach.exp: spawn valgrind
 ERROR: Process no longer exists
@@ -6142,6 +6157,7 @@ PASS: gdb.base/printcmds.exp: printf "%f is fun\n", 1.0
 PASS: gdb.base/printcmds.exp: printf "x=%d,y=%f,z=%d\n", 5, 6.0, 7
 PASS: gdb.base/printcmds.exp: printf "%x %f, %c %x, %x, %f\n", 0xbad, -99.541, 'z', 0xfeedface, 0xdeadbeef, 5.0
 PASS: gdb.base/printcmds.exp: printf "%c\n", "x"[1,0]
+PASS: gdb.base/printcmds.exp: printf "%%%d%%\n", 5
 PASS: gdb.base/printcmds.exp: printf "%Hf\n",1.2df
 PASS: gdb.base/printcmds.exp: printf "%Hf\n",-1.2df
 PASS: gdb.base/printcmds.exp: printf "%Hf\n",1.234567df
@@ -6225,6 +6241,11 @@ PASS: gdb.base/breakpoint-shadow.exp: Second breakpoint placed
 PASS: gdb.base/breakpoint-shadow.exp: disassembly with breakpoints
 Running ../../../gdb/testsuite/gdb.base/relativedebug.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-signal-resume.exp ...
+Running ../../../gdb/testsuite/gdb.base/dup-sect.exp ...
+gdb compile failed, /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: warning: section sect1 of /work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.base/dup-sect0.o attached by default to output section sect1
+/work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: warning: section sect2 of /work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.base/dup-sect0.o attached by default to output section sect2
+/work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
+UNTESTED: gdb.base/dup-sect.exp: dup-sect.exp
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
 XFAIL: gdb.base/callexit.exp: This target can not call functions (PRMS 2416)
 Running ../../../gdb/testsuite/gdb.base/reread.exp ...
@@ -6974,14 +6995,14 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6537
-# of unexpected failures	73
+# of expected passes		6552
+# of unexpected failures	71
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		7
+# of untested testcases		8
 # of unsupported tests		17
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100303-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100406-cvs -nw -nx 
 
