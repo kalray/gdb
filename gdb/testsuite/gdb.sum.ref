@@ -1,4 +1,4 @@
-Test Run By friss on Thu Apr  1 08:21:32 2010
+Test Run By friss on Sun Apr  4 16:50:27 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -202,28 +202,28 @@ Running ../../../gdb/testsuite/gdb.mi/mi-var-block.exp ...
 PASS: gdb.mi/mi-var-block.exp: breakpoint at do_block_tests
 PASS: gdb.mi/mi-var-block.exp: mi runto do_block_tests
 PASS: gdb.mi/mi-var-block.exp: create local variable cb
-FAIL: gdb.mi/mi-var-block.exp: try to create local variable foo
-FAIL: gdb.mi/mi-var-block.exp: step at do_block_test (stopped at wrong place)
-FAIL: gdb.mi/mi-var-block.exp: delete var foo
+PASS: gdb.mi/mi-var-block.exp: try to create local variable foo
+PASS: gdb.mi/mi-var-block.exp: step at do_block_test
+PASS: gdb.mi/mi-var-block.exp: delete var foo
 PASS: gdb.mi/mi-var-block.exp: create local variable foo
-FAIL: gdb.mi/mi-var-block.exp: step at do_block_test (stopped at wrong place)
-FAIL: gdb.mi/mi-var-block.exp: update all vars: cb foo changed
-FAIL: gdb.mi/mi-var-block.exp: step at do_block_test (stopped at wrong place)
+PASS: gdb.mi/mi-var-block.exp: step at do_block_test
+PASS: gdb.mi/mi-var-block.exp: update all vars: cb foo changed
+PASS: gdb.mi/mi-var-block.exp: step at do_block_test
 PASS: gdb.mi/mi-var-block.exp: create local variable inner_foo
-FAIL: gdb.mi/mi-var-block.exp: step at do_block_test (stopped at wrong place)
-FAIL: gdb.mi/mi-var-block.exp: create local variable foo2
+PASS: gdb.mi/mi-var-block.exp: step at do_block_test
+PASS: gdb.mi/mi-var-block.exp: create local variable foo2
 XFAIL: gdb.mi/mi-var-block.exp: update inner_foo: should be out of scope: KNOWN PROBLEM
 XFAIL: gdb.mi/mi-var-block.exp: evaluate inner_foo: should be out of scope: KNOWN PROBLEM
 PASS: gdb.mi/mi-var-block.exp: update foo: did not change
 PASS: gdb.mi/mi-var-block.exp: delete var inner_foo
-FAIL: gdb.mi/mi-var-block.exp: step at do_block_test (stopped at wrong place)
+PASS: gdb.mi/mi-var-block.exp: step at do_block_test
 XFAIL: gdb.mi/mi-var-block.exp: update foo2: should be out of scope: KNOWN PROBLEM
-FAIL: gdb.mi/mi-var-block.exp: step at do_block_test (stopped at wrong place)
+PASS: gdb.mi/mi-var-block.exp: step at do_block_test
 XFAIL: gdb.mi/mi-var-block.exp: update foo2 should be out of scope: KNOWN PROBLEM
 XFAIL: gdb.mi/mi-var-block.exp: update foo should be out of scope: KNOWN PROBLEM
-FAIL: gdb.mi/mi-var-block.exp: update cb
+PASS: gdb.mi/mi-var-block.exp: update cb
 PASS: gdb.mi/mi-var-block.exp: delete var foo
-FAIL: gdb.mi/mi-var-block.exp: delete var foo2
+PASS: gdb.mi/mi-var-block.exp: delete var foo2
 PASS: gdb.mi/mi-var-block.exp: delete var cb
 Running ../../../gdb/testsuite/gdb.mi/mi2-simplerun.exp ...
 PASS: gdb.mi/mi2-simplerun.exp: break-insert operation
@@ -236,7 +236,7 @@ PASS: gdb.mi/mi2-simplerun.exp: list of breakpoints, 16 disabled
 PASS: gdb.mi/mi2-simplerun.exp: run to main
 PASS: gdb.mi/mi2-simplerun.exp: next at main
 PASS: gdb.mi/mi2-simplerun.exp: step at main
-FAIL: gdb.mi/mi2-simplerun.exp: step to callee4 (stopped at wrong place)
+PASS: gdb.mi/mi2-simplerun.exp: step to callee4
 PASS: gdb.mi/mi2-simplerun.exp: exec-finish
 PASS: gdb.mi/mi2-simplerun.exp: continue to end
 Running ../../../gdb/testsuite/gdb.mi/mi-stack.exp ...
@@ -344,7 +344,7 @@ PASS: gdb.mi/mi-simplerun.exp: list of breakpoints, 16 disabled
 PASS: gdb.mi/mi-simplerun.exp: run to main
 PASS: gdb.mi/mi-simplerun.exp: next at main
 PASS: gdb.mi/mi-simplerun.exp: step at main
-FAIL: gdb.mi/mi-simplerun.exp: step to callee4 (stopped at wrong place)
+PASS: gdb.mi/mi-simplerun.exp: step to callee4
 PASS: gdb.mi/mi-simplerun.exp: exec-finish
 PASS: gdb.mi/mi-simplerun.exp: continue to end
 Running ../../../gdb/testsuite/gdb.mi/mi2-file.exp ...
@@ -353,7 +353,7 @@ Running ../../../gdb/testsuite/gdb.mi/mi2-syn-frame.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-eval.exp ...
 PASS: gdb.mi/mi-eval.exp: breakpoint at callee4
 PASS: gdb.mi/mi-eval.exp: mi runto callee4
-FAIL: gdb.mi/mi-eval.exp: next at callee4 (stopped at wrong place)
+PASS: gdb.mi/mi-eval.exp: next at callee4
 PASS: gdb.mi/mi-eval.exp: eval A
 PASS: gdb.mi/mi-eval.exp: eval &A
 PASS: gdb.mi/mi-eval.exp: eval A+3
@@ -362,28 +362,28 @@ Running ../../../gdb/testsuite/gdb.mi/mi2-var-block.exp ...
 PASS: gdb.mi/mi2-var-block.exp: breakpoint at do_block_tests
 PASS: gdb.mi/mi2-var-block.exp: mi runto do_block_tests
 PASS: gdb.mi/mi2-var-block.exp: create local variable cb
-FAIL: gdb.mi/mi2-var-block.exp: create local variable foo
-FAIL: gdb.mi/mi2-var-block.exp: step at do_block_test (stopped at wrong place)
-FAIL: gdb.mi/mi2-var-block.exp: delete var foo
 PASS: gdb.mi/mi2-var-block.exp: create local variable foo
-FAIL: gdb.mi/mi2-var-block.exp: step at do_block_test (stopped at wrong place)
-FAIL: gdb.mi/mi2-var-block.exp: update all vars: cb foo changed
-FAIL: gdb.mi/mi2-var-block.exp: step at do_block_test (stopped at wrong place)
+PASS: gdb.mi/mi2-var-block.exp: step at do_block_test
+PASS: gdb.mi/mi2-var-block.exp: delete var foo
+PASS: gdb.mi/mi2-var-block.exp: create local variable foo
+PASS: gdb.mi/mi2-var-block.exp: step at do_block_test
+PASS: gdb.mi/mi2-var-block.exp: update all vars: cb foo changed
+PASS: gdb.mi/mi2-var-block.exp: step at do_block_test
 PASS: gdb.mi/mi2-var-block.exp: create local variable inner_foo
-FAIL: gdb.mi/mi2-var-block.exp: step at do_block_test (stopped at wrong place)
-FAIL: gdb.mi/mi2-var-block.exp: create local variable foo2
+PASS: gdb.mi/mi2-var-block.exp: step at do_block_test
+PASS: gdb.mi/mi2-var-block.exp: create local variable foo2
 XFAIL: gdb.mi/mi2-var-block.exp: update inner_foo: should be out of scope: KNOWN PROBLEM
 XFAIL: gdb.mi/mi2-var-block.exp: evaluate inner_foo: should be out of scope: KNOWN PROBLEM
 PASS: gdb.mi/mi2-var-block.exp: update foo: did not change
 PASS: gdb.mi/mi2-var-block.exp: delete var inner_foo
-FAIL: gdb.mi/mi2-var-block.exp: step at do_block_test (stopped at wrong place)
+PASS: gdb.mi/mi2-var-block.exp: step at do_block_test
 XFAIL: gdb.mi/mi2-var-block.exp: update foo2: should be out of scope: KNOWN PROBLEM
-FAIL: gdb.mi/mi2-var-block.exp: step at do_block_test (stopped at wrong place)
+PASS: gdb.mi/mi2-var-block.exp: step at do_block_test
 XFAIL: gdb.mi/mi2-var-block.exp: update foo2 should be out of scope: KNOWN PROBLEM
 XFAIL: gdb.mi/mi2-var-block.exp: update foo should be out of scope: KNOWN PROBLEM
-FAIL: gdb.mi/mi2-var-block.exp: update cb
+PASS: gdb.mi/mi2-var-block.exp: update cb
 PASS: gdb.mi/mi2-var-block.exp: delete var foo
-FAIL: gdb.mi/mi2-var-block.exp: delete var foo2
+PASS: gdb.mi/mi2-var-block.exp: delete var foo2
 PASS: gdb.mi/mi2-var-block.exp: delete var cb
 Running ../../../gdb/testsuite/gdb.mi/mi-nsthrexec.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-read-memory.exp ...
@@ -698,7 +698,7 @@ PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "break callee4"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "info break"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "set listsize 1"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "list"
-FAIL: gdb.mi/mi2-cli.exp: continue to callee4 (stopped at wrong place)
+PASS: gdb.mi/mi2-cli.exp: continue to callee4
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "delete 2"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "up"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "down"
@@ -900,10 +900,9 @@ PASS: gdb.mi/mi-var-cmd.exp: check V1.i: 10
 PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.j: 11
 PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.k: 12
 PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:492 (set breakpoint)
-FAIL: gdb.mi/mi-var-cmd.exp: bitfield: go to line 492
-FAIL: gdb.mi/mi-var-cmd.exp: create varobj for Data
-FAIL: gdb.mi/mi-var-cmd.exp: list children of Data
-FAIL: gdb.mi/mi-var-cmd.exp: access bitfield
+PASS: gdb.mi/mi-var-cmd.exp: create varobj for Data
+PASS: gdb.mi/mi-var-cmd.exp: list children of Data
+PASS: gdb.mi/mi-var-cmd.exp: access bitfield
 PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:435 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: create floating varobj
 PASS: gdb.mi/mi-var-cmd.exp: update F (1)
@@ -982,13 +981,13 @@ PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "break callee4"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "info break"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "set listsize 1"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "list"
-FAIL: gdb.mi/mi-cli.exp: continue to callee4 (stopped at wrong place)
+PASS: gdb.mi/mi-cli.exp: continue to callee4
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "delete 2"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "up"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "down"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "frame 2"
 PASS: gdb.mi/mi-cli.exp: -stack-select-frame 0
-FAIL: gdb.mi/mi-cli.exp: check *stopped from CLI command (stopped at wrong place)
+PASS: gdb.mi/mi-cli.exp: check *stopped from CLI command
 PASS: gdb.mi/mi-cli.exp: -break-insert -t basics.c:$line_main_hello
 PASS: gdb.mi/mi-cli.exp: -exec-continue to line 70
 PASS: gdb.mi/mi-cli.exp: 34 next: run
@@ -999,7 +998,7 @@ PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "set $pc=0x0"
 Running ../../../gdb/testsuite/gdb.mi/mi2-eval.exp ...
 PASS: gdb.mi/mi2-eval.exp: breakpoint at callee4
 PASS: gdb.mi/mi2-eval.exp: mi runto callee4
-FAIL: gdb.mi/mi2-eval.exp: next at callee4 (stopped at wrong place)
+PASS: gdb.mi/mi2-eval.exp: next at callee4
 PASS: gdb.mi/mi2-eval.exp: eval A
 PASS: gdb.mi/mi2-eval.exp: eval &A
 PASS: gdb.mi/mi2-eval.exp: eval A+3
@@ -1014,6 +1013,13 @@ PASS: gdb.mi/mi-watch.exp: sw: break-watch operation
 PASS: gdb.mi/mi-watch.exp: sw: list of watchpoints
 PASS: gdb.mi/mi-watch.exp: sw: watchpoint trigger
 XPASS: gdb.mi/mi-watch.exp: sw: watchpoint trigger
+PASS: gdb.mi/mi-watch.exp: hw watchpoints toggle (2)
+PASS: gdb.mi/mi-watch.exp: hw: breakpoint at callee4
+PASS: gdb.mi/mi-watch.exp: hw: mi runto callee4
+PASS: gdb.mi/mi-watch.exp: hw: break-watch operation
+PASS: gdb.mi/mi-watch.exp: hw: list of watchpoints
+PASS: gdb.mi/mi-watch.exp: hw: watchpoint trigger
+PASS: gdb.mi/mi-watch.exp: hw: watchpoint trigger
 Running ../../../gdb/testsuite/gdb.mi/mi-hack-cli.exp ...
 PASS: gdb.mi/mi-hack-cli.exp: show architecture
 PASS: gdb.mi/mi-hack-cli.exp: 47show architecture
@@ -1244,12 +1250,11 @@ XFAIL: gdb.mi/mi-var-child.exp: update all vars psnp->next->long_ptr (and 1.long
 PASS: gdb.mi/mi-var-child.exp: step $line_dct_snp0 + 7
 PASS: gdb.mi/mi-var-child.exp: update all vars psnp->next->next->long_ptr (and 2.long_ptr) changed
 PASS: gdb.mi/mi-var-child.exp: run to mi-var-child.c:324 (set breakpoint)
-FAIL: gdb.mi/mi-var-child.exp: child_deletion: go to line 324
-FAIL: gdb.mi/mi-var-child.exp: create varobj for s
-FAIL: gdb.mi/mi-var-child.exp: list children of S
-FAIL: gdb.mi/mi-var-child.exp: delete S.a
-FAIL: gdb.mi/mi-var-child.exp: delete S.b
-FAIL: gdb.mi/mi-var-child.exp: delete S
+PASS: gdb.mi/mi-var-child.exp: create varobj for s
+PASS: gdb.mi/mi-var-child.exp: list children of S
+PASS: gdb.mi/mi-var-child.exp: delete S.a
+PASS: gdb.mi/mi-var-child.exp: delete S.b
+PASS: gdb.mi/mi-var-child.exp: delete S
 Running ../../../gdb/testsuite/gdb.mi/gdb669.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-syn-frame.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-reverse.exp ...
@@ -1266,6 +1271,13 @@ PASS: gdb.mi/mi2-watch.exp: sw: break-watch operation
 PASS: gdb.mi/mi2-watch.exp: sw: list of watchpoints
 PASS: gdb.mi/mi2-watch.exp: sw: watchpoint trigger
 XPASS: gdb.mi/mi2-watch.exp: sw: watchpoint trigger
+PASS: gdb.mi/mi2-watch.exp: hw watchpoints toggle (2)
+PASS: gdb.mi/mi2-watch.exp: hw: breakpoint at callee4
+PASS: gdb.mi/mi2-watch.exp: hw: mi runto callee4
+PASS: gdb.mi/mi2-watch.exp: hw: break-watch operation
+PASS: gdb.mi/mi2-watch.exp: hw: list of watchpoints
+PASS: gdb.mi/mi2-watch.exp: hw: watchpoint trigger
+PASS: gdb.mi/mi2-watch.exp: hw: watchpoint trigger
 Running ../../../gdb/testsuite/gdb.mi/mi2-var-display.exp ...
 PASS: gdb.mi/mi2-var-display.exp: break-insert operation
 PASS: gdb.mi/mi2-var-display.exp: run to main
@@ -1902,7 +1914,7 @@ PASS: gdb.base/exprs.exp: set output-radix 10
 Running ../../../gdb/testsuite/gdb.base/hook-stop-frame.exp ...
 PASS: gdb.base/hook-stop-frame.exp: breakpoint line number
 PASS: gdb.base/hook-stop-frame.exp: define hook-stop command
-FAIL: gdb.base/hook-stop-frame.exp: hook-stop runs before frame print
+PASS: gdb.base/hook-stop-frame.exp: hook-stop runs before frame print
 Running ../../../gdb/testsuite/gdb.base/included.exp ...
 PASS: gdb.base/included.exp: set listsize 1
 PASS: gdb.base/included.exp: list main
@@ -2795,18 +2807,18 @@ PASS: gdb.base/watchpoint.exp: watch *global_ptr
 PASS: gdb.base/watchpoint.exp: next
 PASS: gdb.base/watchpoint.exp: next over ptr init
 PASS: gdb.base/watchpoint.exp: next over buffer set
-FAIL: gdb.base/watchpoint.exp: continue to breakpoint: second x assignment
-FAIL: gdb.base/watchpoint.exp: watch x
-FAIL: gdb.base/watchpoint.exp: next after watch x (the program is no longer running)
+PASS: gdb.base/watchpoint.exp: continue to breakpoint: second x assignment
+PASS: gdb.base/watchpoint.exp: watch x
+PASS: gdb.base/watchpoint.exp: next after watch x
 PASS: gdb.base/watchpoint.exp: watch buf
-FAIL: gdb.base/watchpoint.exp: watchpoint on buf hit (the program is no longer running)
+PASS: gdb.base/watchpoint.exp: watchpoint on buf hit
 Running ../../../gdb/testsuite/gdb.base/cursal.exp ...
 PASS: gdb.base/cursal.exp: set listsize 1
 PASS: gdb.base/cursal.exp: list before run
 PASS: gdb.base/cursal.exp: list in main
-FAIL: gdb.base/cursal.exp: list in func2
+PASS: gdb.base/cursal.exp: list in func2
 PASS: gdb.base/cursal.exp: backtrace
-FAIL: gdb.base/cursal.exp: list after backtrace
+PASS: gdb.base/cursal.exp: list after backtrace
 PASS: gdb.base/cursal.exp: set listsize 3
 PASS: gdb.base/cursal.exp: list size 3
 Running ../../../gdb/testsuite/gdb.base/shlib-call.exp ...
@@ -4094,7 +4106,13 @@ Running ../../../gdb/testsuite/gdb.base/bigcore.exp ...
 UNTESTED: gdb.base/bigcore.exp: Remote system
 Running ../../../gdb/testsuite/gdb.base/savedregs.exp ...
 Running ../../../gdb/testsuite/gdb.base/pr11022.exp ...
-UNTESTED: gdb.base/pr11022.exp: pr11022.exp
+PASS: gdb.base/pr11022.exp: set breakpoint
+PASS: gdb.base/pr11022.exp: set watchpoint
+PASS: gdb.base/pr11022.exp: breakpoint hit
+PASS: gdb.base/pr11022.exp: watchpoint hit
+PASS: gdb.base/pr11022.exp: breakpoint hit 2
+PASS: gdb.base/pr11022.exp: set var x = 1
+PASS: gdb.base/pr11022.exp: watchpoint hit 2
 Running ../../../gdb/testsuite/gdb.base/whatis.exp ...
 PASS: gdb.base/whatis.exp: whatis char
 PASS: gdb.base/whatis.exp: whatis signed char
@@ -6903,7 +6921,14 @@ PASS: gdb.base/bitops.exp: print value of 0 || 1 && 0 | 0 ^ 0 == 8
 PASS: gdb.base/bitops.exp: print value of 0 == 8 > 128 >> 1 + 2 * 2
 Running ../../../gdb/testsuite/gdb.base/unload.exp ...
 Running ../../../gdb/testsuite/gdb.base/watch-read.exp ...
-UNTESTED: gdb.base/watch-read.exp: watch-read.exp
+PASS: gdb.base/watch-read.exp: set hardware read watchpoint on global variable
+PASS: gdb.base/watch-read.exp: read watchpoint triggers on first read
+PASS: gdb.base/watch-read.exp: read watchpoint triggers on read after value changed
+PASS: gdb.base/watch-read.exp: set write watchpoint on global variable
+PASS: gdb.base/watch-read.exp: write watchpoint triggers
+PASS: gdb.base/watch-read.exp: only write watchpoint triggers when value changes
+PASS: gdb.base/watch-read.exp: read watchpoint triggers when value doesn't change, trapping reads and writes
+PASS: gdb.base/watch-read.exp: only read watchpoint triggers when value doesn't change
 Running ../../../gdb/testsuite/gdb.base/foll-vfork.exp ...
 Running ../../../gdb/testsuite/gdb.base/annota3.exp ...
 Running ../../../gdb/testsuite/gdb.base/detach.exp ...
@@ -6949,14 +6974,14 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6462
-# of unexpected failures	121
+# of expected passes		6537
+# of unexpected failures	73
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		9
+# of untested testcases		7
 # of unsupported tests		17
 /work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100303-cvs -nw -nx 
 
