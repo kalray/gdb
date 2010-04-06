@@ -1,3 +1,22 @@
+2010-04-06  Stan Shebs  <stan@codesourcery.com>
+
+	* defs.h (char_ptr): Move typedef here from...
+	* ada-lang.c (char_ptr): Remove.
+	* charset.c (char_ptr): Remove.
+	* tracepoint.h (struct uploaded_string): Remove.
+	(struct uploaded_tp): Use vectors for string arrays.
+	* tracepoint.c (trace_save): Use vectors of actions.
+	(parse_tracepoint_definition): Ditto.
+	(get_uploaded_tp): Clear vectors.
+	* breakpoint.c (create_tracepoint_from_upload): Use vectors.
+	(next_cmd): Change to an int.
+	(read_next_cmd): Use vector of command strings.
+
+2010-04-06  Doug Evans  <dje@google.com>
+
+	* top.h (source_script, cd_command): Delete.
+	* main.c: #include "cli/cli-cmds.h"
+
 2010-04-06  Kevin Buettner  <kevinb@redhat.com>
 
 	* m32c-tdep.c (make_types): When calling `arch_type', pass size of
@@ -113,7 +132,6 @@
 	* remote.c (remote_parse_stop_reply): Use hex_string instead
 	of phex_nz for error.
 
->>>>>>> 1.11571
 2010-04-01  Stan Shebs  <stan@codesourcery.com>
 	    Nathan Sidwell  <nathan@codesourcery.com>
 
