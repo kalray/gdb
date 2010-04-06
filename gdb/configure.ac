@@ -161,6 +161,9 @@ do
 
     . ${srcdir}/configure.tgt
 
+    AS_IF([test -z "${gdb_target_obs}"],
+      [AC_MSG_ERROR([configuration ${targ} is unsupported.])])
+
     # Target-specific object files
     for i in ${gdb_target_obs}; do
         case " $TARGET_OBS " in
@@ -802,7 +805,7 @@ AC_CHECK_FUNCS([canonicalize_file_name realpath getrusage getuid \
 		getgid pipe poll pread64 sbrk setpgid setpgrp setsid \
 		sigaction sigprocmask sigsetmask socketpair syscall \
 		ttrace wborder setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit])
+		setrlimit getrlimit posix_madvise])
 AM_LANGINFO_CODESET
 
 # Check the return and argument types of ptrace.  No canned test for

@@ -325,7 +325,7 @@ x86_breakpoint_at (CORE_ADDR pc)
 {
   unsigned char c;
 
-  read_inferior_memory (pc, &c, 1);
+  (*the_target->read_memory) (pc, &c, 1);
   if (c == 0xCC)
     return 1;
 
@@ -431,6 +431,8 @@ x86_insert_point (char type, CORE_ADDR addr, int len)
   struct process_info *proc = current_process ();
   switch (type)
     {
+    case '0':
+      return set_gdb_breakpoint_at (addr);
     case '2':
     case '3':
     case '4':
@@ -448,6 +450,8 @@ x86_remove_point (char type, CORE_ADDR addr, int len)
   struct process_info *proc = current_process ();
   switch (type)
     {
+    case '0':
+      return delete_gdb_breakpoint_at (addr);
     case '2':
     case '3':
     case '4':
@@ -507,10 +511,11 @@ x86_linux_new_thread (void)
 static void
 x86_linux_prepare_to_resume (struct lwp_info *lwp)
 {
+  ptid_t ptid = ptid_of (lwp);
+
   if (lwp->arch_private->debug_registers_changed)
     {
       int i;
-      ptid_t ptid = ptid_of (lwp);
       int pid = ptid_get_pid (ptid);
       struct process_info *proc = find_process_pid (pid);
       struct i386_debug_reg_state *state = &proc->private->arch_private->debug_reg_state;
@@ -522,6 +527,9 @@ x86_linux_prepare_to_resume (struct lwp_info *lwp)
 
       lwp->arch_private->debug_registers_changed = 0;
     }
+
+  if (lwp->stopped_by_watchpoint)
+    x86_linux_dr_set (ptid, DR_STATUS, 0);
 }
 
 /* When GDBSERVER is built as a 64-bit application on linux, the

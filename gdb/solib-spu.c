@@ -161,7 +161,8 @@ spu_current_sos (void)
 
       /* Encode FD and object ID in path name.  Choose the name so as not
 	 to conflict with any (normal) SVR4 library path name.  */
-      xsnprintf (new->so_name, sizeof new->so_name, "@0x%llx <%d>", addr, fd);
+      xsnprintf (new->so_name, sizeof new->so_name, "@%s <%d>",
+		 hex_string (addr), fd);
       strcpy (new->so_original_name, new->so_name);
 
       *link_ptr = new;
@@ -326,16 +327,13 @@ spu_bfd_open (char *pathname)
 static struct symbol *
 spu_lookup_lib_symbol (const struct objfile *objfile,
 		       const char *name,
-		       const char *linkage_name,
 		       const domain_enum domain)
 {
   if (bfd_get_arch (objfile->obfd) == bfd_arch_spu)
-    return lookup_global_symbol_from_objfile (objfile, name, linkage_name,
-					      domain);
+    return lookup_global_symbol_from_objfile (objfile, name, domain);
 
   if (svr4_so_ops.lookup_lib_global_symbol != NULL)
-    return svr4_so_ops.lookup_lib_global_symbol (objfile, name, linkage_name,
-						 domain);
+    return svr4_so_ops.lookup_lib_global_symbol (objfile, name, domain);
   return NULL;
 }
 

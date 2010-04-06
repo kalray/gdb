@@ -1721,6 +1721,7 @@ static const struct elf32_arm_reloc_map elf32_arm_reloc_map[] =
     {BFD_RELOC_ARM_RELATIVE,         R_ARM_RELATIVE},
     {BFD_RELOC_ARM_GOTOFF,           R_ARM_GOTOFF32},
     {BFD_RELOC_ARM_GOTPC,            R_ARM_GOTPC},
+    {BFD_RELOC_ARM_GOT_PREL,         R_ARM_GOT_PREL},
     {BFD_RELOC_ARM_GOT32,            R_ARM_GOT32},
     {BFD_RELOC_ARM_PLT32,            R_ARM_PLT32},
     {BFD_RELOC_ARM_TARGET1,	     R_ARM_TARGET1},
@@ -2984,6 +2985,9 @@ using_thumb_only (struct elf32_arm_link_hash_table *globals)
 				       Tag_CPU_arch);
   int profile;
 
+  if (arch == TAG_CPU_ARCH_V6_M || arch == TAG_CPU_ARCH_V6S_M)
+    return TRUE;
+
   if (arch != TAG_CPU_ARCH_V7 && arch != TAG_CPU_ARCH_V7E_M)
     return FALSE;
 
@@ -4080,7 +4084,7 @@ cortex_a8_erratum_scan (bfd *input_bfd,
 		  && last_was_32bit
 		  && ! last_was_branch)
                 {
-                  bfd_signed_vma offset;
+                  bfd_signed_vma offset = 0;
                   bfd_boolean force_target_arm = FALSE;
 		  bfd_boolean force_target_thumb = FALSE;
                   bfd_vma target;
@@ -12786,107 +12790,14 @@ elf32_arm_section_from_shdr (bfd *abfd,
   return TRUE;
 }
 
-/* A structure used to record a list of sections, independently
-   of the next and prev fields in the asection structure.  */
-typedef struct section_list
-{
-  asection * sec;
-  struct section_list * next;
-  struct section_list * prev;
-}
-section_list;
-
-/* Unfortunately we need to keep a list of sections for which
-   an _arm_elf_section_data structure has been allocated.  This
-   is because it is possible for functions like elf32_arm_write_section
-   to be called on a section which has had an elf_data_structure
-   allocated for it (and so the used_by_bfd field is valid) but
-   for which the ARM extended version of this structure - the
-   _arm_elf_section_data structure - has not been allocated.  */
-static section_list * sections_with_arm_elf_section_data = NULL;
-
-static void
-record_section_with_arm_elf_section_data (asection * sec)
-{
-  struct section_list * entry;
-
-  entry = (struct section_list *) bfd_malloc (sizeof (* entry));
-  if (entry == NULL)
-    return;
-  entry->sec = sec;
-  entry->next = sections_with_arm_elf_section_data;
-  entry->prev = NULL;
-  if (entry->next != NULL)
-    entry->next->prev = entry;
-  sections_with_arm_elf_section_data = entry;
-}
-
-static struct section_list *
-find_arm_elf_section_entry (asection * sec)
-{
-  struct section_list * entry;
-  static struct section_list * last_entry = NULL;
-
-  /* This is a short cut for the typical case where the sections are added
-     to the sections_with_arm_elf_section_data list in forward order and
-     then looked up here in backwards order.  This makes a real difference
-     to the ld-srec/sec64k.exp linker test.  */
-  entry = sections_with_arm_elf_section_data;
-  if (last_entry != NULL)
-    {
-      if (last_entry->sec == sec)
-	entry = last_entry;
-      else if (last_entry->next != NULL
-	       && last_entry->next->sec == sec)
-	entry = last_entry->next;
-    }
-
-  for (; entry; entry = entry->next)
-    if (entry->sec == sec)
-      break;
-
-  if (entry)
-    /* Record the entry prior to this one - it is the entry we are most
-       likely to want to locate next time.  Also this way if we have been
-       called from unrecord_section_with_arm_elf_section_data() we will not
-       be caching a pointer that is about to be freed.  */
-    last_entry = entry->prev;
-
-  return entry;
-}
-
 static _arm_elf_section_data *
 get_arm_elf_section_data (asection * sec)
 {
-  struct section_list * entry;
-
-  entry = find_arm_elf_section_entry (sec);
-
-  if (entry)
-    return elf32_arm_section_data (entry->sec);
+  if (sec && sec->owner && is_arm_elf (sec->owner))
+    return elf32_arm_section_data (sec);
   else
     return NULL;
 }
-
-static void
-unrecord_section_with_arm_elf_section_data (asection * sec)
-{
-  struct section_list * entry;
-
-  entry = find_arm_elf_section_entry (sec);
-
-  if (entry)
-    {
-      if (entry->prev != NULL)
-	entry->prev->next = entry->next;
-      if (entry->next != NULL)
-	entry->next->prev = entry->prev;
-      if (entry == sections_with_arm_elf_section_data)
-	sections_with_arm_elf_section_data = entry->next;
-      free (entry);
-    }
-}
-
 
 typedef struct
 {
@@ -13172,10 +13083,13 @@ elf32_arm_output_arch_local_syms (bfd *output_bfd,
 	     osi.sec = osi.sec->next)
 	  {
 	    if (osi.sec->output_section != NULL
+		&& ((osi.sec->output_section->flags & (SEC_ALLOC | SEC_CODE))
+		    != 0)
 		&& (osi.sec->flags & (SEC_HAS_CONTENTS | SEC_LINKER_CREATED))
 		   == SEC_HAS_CONTENTS
 		&& get_arm_elf_section_data (osi.sec) != NULL
-		&& get_arm_elf_section_data (osi.sec)->mapcount == 0)
+		&& get_arm_elf_section_data (osi.sec)->mapcount == 0
+		&& osi.sec->size > 0)
 	      {
 		osi.sec_shndx = _bfd_elf_section_from_bfd_section
 		  (output_bfd, osi.sec->output_section);
@@ -13308,8 +13222,6 @@ elf32_arm_new_section_hook (bfd *abfd, asection *sec)
 	return FALSE;
       sec->used_by_bfd = sdata;
     }
-
-  record_section_with_arm_elf_section_data (sec);
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -13741,42 +13653,11 @@ elf32_arm_write_section (bfd *output_bfd,
     }
 
   free (map);
-  arm_data->mapcount = 0;
+  arm_data->mapcount = -1;
   arm_data->mapsize = 0;
   arm_data->map = NULL;
-  unrecord_section_with_arm_elf_section_data (sec);
 
   return FALSE;
-}
-
-static void
-unrecord_section_via_map_over_sections (bfd * abfd ATTRIBUTE_UNUSED,
-					asection * sec,
-					void * ignore ATTRIBUTE_UNUSED)
-{
-  unrecord_section_with_arm_elf_section_data (sec);
-}
-
-static bfd_boolean
-elf32_arm_close_and_cleanup (bfd * abfd)
-{
-  if (abfd->sections)
-    bfd_map_over_sections (abfd,
-			   unrecord_section_via_map_over_sections,
-			   NULL);
-
-  return _bfd_elf_close_and_cleanup (abfd);
-}
-
-static bfd_boolean
-elf32_arm_bfd_free_cached_info (bfd * abfd)
-{
-  if (abfd->sections)
-    bfd_map_over_sections (abfd,
-			   unrecord_section_via_map_over_sections,
-			   NULL);
-
-  return _bfd_free_cached_info (abfd);
 }
 
 /* Display STT_ARM_TFUNC symbols as functions.  */
@@ -13965,8 +13846,6 @@ const struct elf_size_info elf32_arm_size_info =
 #define bfd_elf32_find_inliner_info	        elf32_arm_find_inliner_info
 #define bfd_elf32_new_section_hook		elf32_arm_new_section_hook
 #define bfd_elf32_bfd_is_target_special_symbol	elf32_arm_is_target_special_symbol
-#define bfd_elf32_close_and_cleanup             elf32_arm_close_and_cleanup
-#define bfd_elf32_bfd_free_cached_info          elf32_arm_bfd_free_cached_info
 #define bfd_elf32_bfd_final_link		elf32_arm_final_link
 
 #define elf_backend_get_symbol_type             elf32_arm_get_symbol_type
