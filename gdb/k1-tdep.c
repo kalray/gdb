@@ -124,7 +124,7 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
     enum bfd_endian order = gdbarch_byte_order_for_code (gdbarch);
     k1bfield *add_reg_desc, *sbf_reg_desc;
     int reg;
-    int i = 0, ops_idx;
+    int i = 0, ops_idx, has_make = 0;
     struct op_list *ops;
     k1_bitfield_t *bfield;
 
@@ -149,8 +149,18 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 		k1opc_t *op = ops->op;
 		if ((syllab & op->codeword[0].mask) != op->codeword[0].opcode)
 		    goto next;
+
+		if (strcmp (op->as_op, "make") == 0) {
+		    if (i == 0) has_make = 1; else return 0;
+		} else if (has_make && i == 1) {
+		    if (strcmp (op->as_op, "sbf")) return 0;
+		} else if (has_make) {
+		    return 0;
+		}
+
 		if (prologue_insns[ops_idx].sp_idx < 0) {
 		    addr += op->coding_size/8;
+		    ++i;
 		    goto next_addr;
 		}
 
@@ -446,7 +456,7 @@ static void k1_look_for_insns (void)
 	else if (strcmp ("shm", op->as_op) == 0)
             add_op (&sp_store_insns, op);
 	else if (strcmp ("make", op->as_op) == 0)
-            add_op (&prologue_helper_insns, op);
+	    add_op (&prologue_helper_insns, op);
 	else if (strcmp ("sxb", op->as_op) == 0)
             add_op (&prologue_helper_insns, op);
 	else if (strcmp ("sxh", op->as_op) == 0)
