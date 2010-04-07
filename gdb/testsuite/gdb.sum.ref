@@ -1,4 +1,4 @@
-Test Run By friss on Tue Apr  6 14:25:09 2010
+Test Run By friss on Wed Apr  7 15:01:41 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -8,6 +8,62 @@ Schedule of variations:
     k1-iss
 
 Running target k1-iss
+Running ../../../gdb/testsuite/gdb.python/py-symtab.exp ...
+UNSUPPORTED: gdb.python/py-symtab.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-template.exp ...
+ERROR: tcl error sourcing ../../../gdb/testsuite/gdb.python/py-template.exp.
+ERROR: couldn't execute "k1cc -DPROTOTYPES": no such file or directory
+    while executing
+"exec $compiler --print-multi-lib"
+    (procedure "get_multilibs" line 62)
+    invoked from within
+"get_multilibs"
+    (procedure "g++_include_flags" line 9)
+    invoked from within
+"g++_include_flags"
+    (procedure "default_target_compile" line 34)
+    invoked from within
+"default_target_compile $source $destfile $type $options"
+    (procedure "target_compile" line 6)
+    invoked from within
+"target_compile $source $dest $type $options"
+    (procedure "gdb_compile" line 148)
+    invoked from within
+"gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable  {debug c++}"
+    invoked from within
+"if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+	  {debug c++}] != "" } {
+    untested "Couldn't compile ${srcfile}"
+    ..."
+    (file "../../../gdb/testsuite/gdb.python/py-template.exp" line 26)
+    invoked from within
+"source ../../../gdb/testsuite/gdb.python/py-template.exp"
+    ("uplevel" body line 1)
+    invoked from within
+"uplevel #0 source ../../../gdb/testsuite/gdb.python/py-template.exp"
+    invoked from within
+"catch "uplevel #0 source $test_file_name""
+Running ../../../gdb/testsuite/gdb.python/python.exp ...
+UNSUPPORTED: gdb.python/python.exp: python support is disabled
+PASS: gdb.python/python.exp: source ../../../gdb/testsuite/gdb.python/source2.py
+Running ../../../gdb/testsuite/gdb.python/py-cmd.exp ...
+UNSUPPORTED: gdb.python/py-cmd.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-value.exp ...
+UNSUPPORTED: gdb.python/py-value.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-frame.exp ...
+UNSUPPORTED: gdb.python/py-frame.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-symbol.exp ...
+UNSUPPORTED: gdb.python/py-symbol.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-prettyprint.exp ...
+UNSUPPORTED: gdb.python/py-prettyprint.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-mi.exp ...
+UNSUPPORTED: gdb.python/py-mi.exp: python support is disabled
+Running ../../../gdb/testsuite/gdb.python/py-block.exp ...
+UNSUPPORTED: gdb.python/py-block.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-function.exp ...
+UNSUPPORTED: gdb.python/py-function.exp: Python support is disabled.
+Running ../../../gdb/testsuite/gdb.python/py-type.exp ...
+UNSUPPORTED: gdb.python/py-type.exp: Python support is disabled.
 Running ../../../gdb/testsuite/gdb.mi/mi2-var-child.exp ...
 PASS: gdb.mi/mi2-var-child.exp: breakpoint at do_children_tests
 PASS: gdb.mi/mi2-var-child.exp: mi runto do_children_tests
@@ -3582,8 +3638,7 @@ PASS: gdb.base/charset.exp: undefined concatenation of wide and UTF-16
 PASS: gdb.base/charset.exp: undefined concatenation of wide and UTF-32
 PASS: gdb.base/charset.exp: typedef to wchar_t
 PASS: gdb.base/charset.exp: undefined concatenation of UTF-16 and UTF-32
-PASS: gdb.base/charset.exp: set up for python printing of utf-16 string
-PASS: gdb.base/charset.exp: extract utf-16 string using python
+UNSUPPORTED: gdb.base/charset.exp: python support is disabled
 PASS: gdb.base/charset.exp: EVAL_SKIP cleanup handling regression test
 Running ../../../gdb/testsuite/gdb.base/mips_pro.exp ...
 PASS: gdb.base/mips_pro.exp: backtrace
@@ -6995,7 +7050,7 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6552
+# of expected passes		6551
 # of unexpected failures	71
 # of unexpected successes	2
 # of expected failures		42
@@ -7003,6 +7058,6 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 # of known failures		2
 # of unresolved testcases	1
 # of untested testcases		8
-# of unsupported tests		17
+# of unsupported tests		29
 /work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100406-cvs -nw -nx 
 
