@@ -33,7 +33,7 @@ b.default_targets = [build]
 case arch
 when "k1"
   build_target = "k1-elf"
-  mds_path = workspace + "/documents/Processor/#{arch}-family/build/BE/GDB/#{arch}"
+  mds_path = workspace + "/processor/#{arch}-family/build/BE/GDB/#{arch}"
 when "st200" 
   build_target = "lx-stm-elf32"
   mds_path = workspace + "/mds/#{arch}-family/build/BE/GBU/#{arch}"
