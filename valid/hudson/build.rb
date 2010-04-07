@@ -50,7 +50,7 @@ b.target("build") do
   if( arch == "k1" )
     create_goto_dir! build_path
 
-    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --prefix=#{build_path}/release")
+    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --prefix=#{build_path}/release")
     b.run(:cmd => "make clean")
     b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path}")
     b.run(:cmd => "make install")
