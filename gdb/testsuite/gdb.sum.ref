@@ -1,4 +1,4 @@
-Test Run By friss on Wed Apr  7 15:01:41 2010
+Test Run By friss on Wed Apr  7 16:36:11 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -9,7 +9,13 @@ Schedule of variations:
 
 Running target k1-iss
 Running ../../../gdb/testsuite/gdb.python/py-symtab.exp ...
-UNSUPPORTED: gdb.python/py-symtab.exp: Python support is disabled.
+PASS: gdb.python/py-symtab.exp: continue to breakpoint: Block break here.
+PASS: gdb.python/py-symtab.exp: Test symtab
+PASS: gdb.python/py-symtab.exp: Test sal.pc
+PASS: gdb.python/py-symtab.exp: Test sal.line
+PASS: gdb.python/py-symtab.exp: Test symtab.filename
+PASS: gdb.python/py-symtab.exp: Test symtab.objfile
+PASS: gdb.python/py-symtab.exp: Test symtab.fullname
 Running ../../../gdb/testsuite/gdb.python/py-template.exp ...
 ERROR: tcl error sourcing ../../../gdb/testsuite/gdb.python/py-template.exp.
 ERROR: couldn't execute "k1cc -DPROTOTYPES": no such file or directory
@@ -44,26 +50,428 @@ ERROR: couldn't execute "k1cc -DPROTOTYPES": no such file or directory
     invoked from within
 "catch "uplevel #0 source $test_file_name""
 Running ../../../gdb/testsuite/gdb.python/python.exp ...
-UNSUPPORTED: gdb.python/python.exp: python support is disabled
+PASS: gdb.python/python.exp: multi-line python command - python
+PASS: gdb.python/python.exp: multi-line python command - print 23
+PASS: gdb.python/python.exp: multi-line python command - end
+PASS: gdb.python/python.exp: show python command - define zzq
+PASS: gdb.python/python.exp: show python command - python
+PASS: gdb.python/python.exp: show python command - print 23
+PASS: gdb.python/python.exp: show python command - end
+PASS: gdb.python/python.exp: show python command - end
+PASS: gdb.python/python.exp: show python command - show user zzq
+PASS: gdb.python/python.exp: indented multi-line python command - python
+PASS: gdb.python/python.exp: indented multi-line python command - def foo ():
+PASS: gdb.python/python.exp: indented multi-line python command -   print 'hello, world!'
+PASS: gdb.python/python.exp: indented multi-line python command - foo ()
+PASS: gdb.python/python.exp: indented multi-line python command - end
 PASS: gdb.python/python.exp: source ../../../gdb/testsuite/gdb.python/source2.py
+PASS: gdb.python/python.exp: python print gdb.current_objfile()
+PASS: gdb.python/python.exp: python print gdb.objfiles()
 Running ../../../gdb/testsuite/gdb.python/py-cmd.exp ...
-UNSUPPORTED: gdb.python/py-cmd.exp: Python support is disabled.
+PASS: gdb.python/py-cmd.exp: input simple command - python
+PASS: gdb.python/py-cmd.exp: input simple command - class test_cmd (gdb.Command):
+PASS: gdb.python/py-cmd.exp: input simple command -   def __init__ (self):
+PASS: gdb.python/py-cmd.exp: input simple command -     super (test_cmd, self).__init__ ("test_cmd", gdb.COMMAND_OBSCURE)
+PASS: gdb.python/py-cmd.exp: input simple command -   def invoke (self, arg, from_tty):
+PASS: gdb.python/py-cmd.exp: input simple command -     print "test_cmd output, arg = %s" % arg
+PASS: gdb.python/py-cmd.exp: input simple command - test_cmd ()
+PASS: gdb.python/py-cmd.exp: input simple command - end
+PASS: gdb.python/py-cmd.exp: call simple command
+PASS: gdb.python/py-cmd.exp: input prefix command - python
+PASS: gdb.python/py-cmd.exp: input prefix command - class prefix_cmd (gdb.Command):
+PASS: gdb.python/py-cmd.exp: input prefix command -   def __init__ (self):
+PASS: gdb.python/py-cmd.exp: input prefix command -     super (prefix_cmd, self).__init__ ("prefix_cmd", gdb.COMMAND_OBSCURE, gdb.COMPLETE_NONE, True)
+PASS: gdb.python/py-cmd.exp: input prefix command -   def invoke (self, arg, from_tty):
+PASS: gdb.python/py-cmd.exp: input prefix command -     print "prefix_cmd output, arg = %s" % arg
+PASS: gdb.python/py-cmd.exp: input prefix command - prefix_cmd ()
+PASS: gdb.python/py-cmd.exp: input prefix command - end
+PASS: gdb.python/py-cmd.exp: call prefix command
+PASS: gdb.python/py-cmd.exp: input subcommand - python
+PASS: gdb.python/py-cmd.exp: input subcommand - class subcmd (gdb.Command):
+PASS: gdb.python/py-cmd.exp: input subcommand -   def __init__ (self):
+PASS: gdb.python/py-cmd.exp: input subcommand -     super (subcmd, self).__init__ ("prefix_cmd subcmd", gdb.COMMAND_OBSCURE)
+PASS: gdb.python/py-cmd.exp: input subcommand -   def invoke (self, arg, from_tty):
+PASS: gdb.python/py-cmd.exp: input subcommand -     print "subcmd output, arg = %s" % arg
+PASS: gdb.python/py-cmd.exp: input subcommand - subcmd ()
+PASS: gdb.python/py-cmd.exp: input subcommand - end
+PASS: gdb.python/py-cmd.exp: call subcmd
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments - python
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments - class prefix_cmd2 (gdb.Command):
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments -   def __init__ (self):
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments -     super (prefix_cmd2, self).__init__ ("prefix_cmd2", gdb.COMMAND_OBSCURE, prefix = True, completer_class = gdb.COMPLETE_FILENAME)
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments -   def invoke (self, arg, from_tty):
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments -     print "prefix_cmd2 output, arg = %s" % arg
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments - prefix_cmd2 ()
+PASS: gdb.python/py-cmd.exp: input prefix command, keyword arguments - end
+PASS: gdb.python/py-cmd.exp: call prefix command, keyword arguments
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 - python
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 - class subcmd (gdb.Command):
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 -   def __init__ (self):
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 -     super (subcmd, self).__init__ ("prefix_cmd2 subcmd", gdb.COMMAND_OBSCURE)
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 -   def invoke (self, arg, from_tty):
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 -     print "subcmd output, arg = %s" % arg
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 - subcmd ()
+PASS: gdb.python/py-cmd.exp: input subcommand under prefix_cmd2 - end
+PASS: gdb.python/py-cmd.exp: call subcmd under prefix_cmd2
+PASS: gdb.python/py-cmd.exp: input new subcommand - python
+PASS: gdb.python/py-cmd.exp: input new subcommand - class newsubcmd (gdb.Command):
+PASS: gdb.python/py-cmd.exp: input new subcommand -   def __init__ (self):
+PASS: gdb.python/py-cmd.exp: input new subcommand -     super (newsubcmd, self).__init__ ("info newsubcmd", gdb.COMMAND_OBSCURE)
+PASS: gdb.python/py-cmd.exp: input new subcommand -   def invoke (self, arg, from_tty):
+PASS: gdb.python/py-cmd.exp: input new subcommand -     print "newsubcmd output, arg = %s" % arg
+PASS: gdb.python/py-cmd.exp: input new subcommand - newsubcmd ()
+PASS: gdb.python/py-cmd.exp: input new subcommand - end
+PASS: gdb.python/py-cmd.exp: call newsubcmd
 Running ../../../gdb/testsuite/gdb.python/py-value.exp ...
-UNSUPPORTED: gdb.python/py-value.exp: Python support is disabled.
+PASS: gdb.python/py-value.exp: create boolean value
+PASS: gdb.python/py-value.exp: create integer value
+PASS: gdb.python/py-value.exp: create long value
+PASS: gdb.python/py-value.exp: create double value
+PASS: gdb.python/py-value.exp: create 8-bit string value
+PASS: gdb.python/py-value.exp: print 8-bit string
+PASS: gdb.python/py-value.exp: verify type of 8-bit string
+PASS: gdb.python/py-value.exp: create unicode value
+PASS: gdb.python/py-value.exp: print Unicode string
+PASS: gdb.python/py-value.exp: verify type of unicode string
+PASS: gdb.python/py-value.exp: Test address attribute in non-addressable value
+PASS: gdb.python/py-value.exp: add two integer values
+PASS: gdb.python/py-value.exp: verify type of integer add result
+PASS: gdb.python/py-value.exp: add two double values
+PASS: gdb.python/py-value.exp: subtract two integer values
+PASS: gdb.python/py-value.exp: subtract two double values
+PASS: gdb.python/py-value.exp: multiply two integer values
+PASS: gdb.python/py-value.exp: multiply two double values
+PASS: gdb.python/py-value.exp: divide two integer values
+PASS: gdb.python/py-value.exp: divide two double values
+PASS: gdb.python/py-value.exp: take remainder of two integer values
+PASS: gdb.python/py-value.exp: integer value raised to the power of another integer value
+PASS: gdb.python/py-value.exp: double value raised to the power of integer value
+PASS: gdb.python/py-value.exp: negated integer value
+PASS: gdb.python/py-value.exp: positive integer value
+PASS: gdb.python/py-value.exp: negated double value
+PASS: gdb.python/py-value.exp: positive double value
+PASS: gdb.python/py-value.exp: absolute of integer value
+PASS: gdb.python/py-value.exp: absolute of double value
+PASS: gdb.python/py-value.exp: subtract integer value from python integer
+PASS: gdb.python/py-value.exp: verify type of mixed integer subtraction result
+PASS: gdb.python/py-value.exp: add double value with python float
+PASS: gdb.python/py-value.exp: subtract python integer from integer value
+PASS: gdb.python/py-value.exp: add python float with double value
+PASS: gdb.python/py-value.exp: print evalue
+PASS: gdb.python/py-value.exp: python evalue = gdb.history (0)
+PASS: gdb.python/py-value.exp: python print int (evalue)
+PASS: gdb.python/py-value.exp: add pointer value with python integer
+PASS: gdb.python/py-value.exp: subtract python integer from pointer value
+PASS: gdb.python/py-value.exp: subtract two pointer values
+PASS: gdb.python/py-value.exp: catch error in python type conversion
+PASS: gdb.python/py-value.exp: catch throw of GDB error
+PASS: gdb.python/py-value.exp: define function to test booleans - python
+PASS: gdb.python/py-value.exp: define function to test booleans - def test_bool (val):
+PASS: gdb.python/py-value.exp: define function to test booleans -   if val:
+PASS: gdb.python/py-value.exp: define function to test booleans -     print 'yay'
+PASS: gdb.python/py-value.exp: define function to test booleans -   else:
+PASS: gdb.python/py-value.exp: define function to test booleans -     print 'nay'
+PASS: gdb.python/py-value.exp: define function to test booleans - end
+PASS: gdb.python/py-value.exp: check evaluation of true boolean value in expression
+PASS: gdb.python/py-value.exp: check evaluation of false boolean value in expression
+PASS: gdb.python/py-value.exp: check evaluation of true integer value in expression
+PASS: gdb.python/py-value.exp: check evaluation of false integer value in expression
+PASS: gdb.python/py-value.exp: check evaluation of true integer value in expression
+PASS: gdb.python/py-value.exp: check evaluation of false integer value in expression
+PASS: gdb.python/py-value.exp: less than, equal
+PASS: gdb.python/py-value.exp: less than, less
+PASS: gdb.python/py-value.exp: less than, greater
+PASS: gdb.python/py-value.exp: less than, None
+PASS: gdb.python/py-value.exp: less or equal, equal
+PASS: gdb.python/py-value.exp: less or equal, less
+PASS: gdb.python/py-value.exp: less or equal, greater
+PASS: gdb.python/py-value.exp: less or equal, None
+PASS: gdb.python/py-value.exp: equality of gdb.Values
+PASS: gdb.python/py-value.exp: inequality of gdb.Values
+PASS: gdb.python/py-value.exp: equality of gdb.Value with Python value
+PASS: gdb.python/py-value.exp: inequality of gdb.Value with Python value
+PASS: gdb.python/py-value.exp: inequality of gdb.Value with None
+PASS: gdb.python/py-value.exp: inequality, false
+PASS: gdb.python/py-value.exp: inequality, true
+PASS: gdb.python/py-value.exp: inequality, None
+PASS: gdb.python/py-value.exp: greater than, equal
+PASS: gdb.python/py-value.exp: greater than, less
+PASS: gdb.python/py-value.exp: greater than, greater
+PASS: gdb.python/py-value.exp: greater than, None
+PASS: gdb.python/py-value.exp: greater or equal, equal
+PASS: gdb.python/py-value.exp: greater or equal, less
+PASS: gdb.python/py-value.exp: greater or equal, greater
+PASS: gdb.python/py-value.exp: greater or equal, None
+PASS: gdb.python/py-value.exp: python
+ok=False
+for file in gdb.objfiles():
+  if 'py-value' in file.filename:
+    ok=True
+print ok
+end
+PASS: gdb.python/py-value.exp: python print gdb.objfiles()[0].pretty_printers
+PASS: gdb.python/py-value.exp: python gdb.objfiles()[0].pretty_printers = 0
+PASS: gdb.python/py-value.exp: parse_and_eval constant test
+PASS: gdb.python/py-value.exp: parse_and_eval simple expression test
+PASS: gdb.python/py-value.exp: parse_and_eval type test
+PASS: gdb.python/py-value.exp: continue to breakpoint: break to inspect struct and union
+PASS: gdb.python/py-value.exp: get value from history
+PASS: gdb.python/py-value.exp: access element inside struct using 8-bit string name
+PASS: gdb.python/py-value.exp: access element inside struct using unicode name
+PASS: gdb.python/py-value.exp: dereference value
+PASS: gdb.python/py-value.exp: Test is_optimized_out attribute
+PASS: gdb.python/py-value.exp: Test address attribute
+PASS: gdb.python/py-value.exp: print st
+PASS: gdb.python/py-value.exp: get value from history
+PASS: gdb.python/py-value.exp: Test string with no length
+PASS: gdb.python/py-value.exp: Test string (length = -1) is all of the string
+PASS: gdb.python/py-value.exp: python print st.string (length = 6)
+PASS: gdb.python/py-value.exp: Test string (length = 0) is empty
+PASS: gdb.python/py-value.exp: Test length is 0
+PASS: gdb.python/py-value.exp: print nullst
+PASS: gdb.python/py-value.exp: get value from history
+PASS: gdb.python/py-value.exp: Test string to first null
+PASS: gdb.python/py-value.exp: get string beyond null
+PASS: gdb.python/py-value.exp: python print repr(nullst)
+PASS: gdb.python/py-value.exp: print sptr
+PASS: gdb.python/py-value.exp: Get value from history
+PASS: gdb.python/py-value.exp: Aquire lazy string
+PASS: gdb.python/py-value.exp: Test type name equality
+PASS: gdb.python/py-value.exp: Test type name equality
+PASS: gdb.python/py-value.exp: create PTR type
+PASS: gdb.python/py-value.exp: kill the inferior
+PASS: gdb.python/py-value.exp: Discard the symbols
+PASS: gdb.python/py-value.exp: cast arg0 to PTR
+PASS: gdb.python/py-value.exp: delete PTR type
+PASS: gdb.python/py-value.exp: print value's type
+gdb compile failed, default_target_compile: Can't find k1-elf-g++.
+UNTESTED: gdb.python/py-value.exp: Couldn't compile py-value.c in c++ mode
+PASS: gdb.python/py-value.exp: continue to breakpoint: break to inspect struct and union
+PASS: gdb.python/py-value.exp: Create a value for subscript test
+PASS: gdb.python/py-value.exp: Create a value for subscript test
+PASS: gdb.python/py-value.exp: Baseline print of a Python value
+PASS: gdb.python/py-value.exp: Attempt to access an integer with a subscript
+PASS: gdb.python/py-value.exp: Baseline print of a Python value
+PASS: gdb.python/py-value.exp: Attempt to access a string with a subscript
+PASS: gdb.python/py-value.exp: Build pointer to array
+PASS: gdb.python/py-value.exp:
+PASS: gdb.python/py-value.exp: Access array via pointer with int subscript
+PASS: gdb.python/py-value.exp: Access array via pointer with value subscript
+PASS: gdb.python/py-value.exp: Attempt to access an integer with a subscript
+PASS: gdb.python/py-value.exp: Build array
+PASS: gdb.python/py-value.exp:
+PASS: gdb.python/py-value.exp: Test multiple subscript
 Running ../../../gdb/testsuite/gdb.python/py-frame.exp ...
-UNSUPPORTED: gdb.python/py-frame.exp: Python support is disabled.
+PASS: gdb.python/py-frame.exp: continue to breakpoint: Block break here.
+PASS: gdb.python/py-frame.exp: test i
+PASS: gdb.python/py-frame.exp: test f
+PASS: gdb.python/py-frame.exp: test b
+PASS: gdb.python/py-frame.exp: test i = 1.1
+PASS: gdb.python/py-frame.exp: test double i
+PASS: gdb.python/py-frame.exp: test f = 2.2
+PASS: gdb.python/py-frame.exp: test double f
+PASS: gdb.python/py-frame.exp: test i = 99
+PASS: gdb.python/py-frame.exp: test int i
+PASS: gdb.python/py-frame.exp: continue to breakpoint: breakpoint at f2
+PASS: gdb.python/py-frame.exp: test equality comparison (false)
+PASS: gdb.python/py-frame.exp: test equality comparison (true)
+PASS: gdb.python/py-frame.exp: test inequality comparison (true)
+PASS: gdb.python/py-frame.exp: test inequality comparison (false)
+PASS: gdb.python/py-frame.exp: test Frame.is_valid
+PASS: gdb.python/py-frame.exp: test Frame.name
+PASS: gdb.python/py-frame.exp: test Frame.type
+PASS: gdb.python/py-frame.exp: test Frame.type
+PASS: gdb.python/py-frame.exp: test gdb.frame_stop_reason_string
+PASS: gdb.python/py-frame.exp: test Frame.pc
+PASS: gdb.python/py-frame.exp: test Frame.older
+PASS: gdb.python/py-frame.exp: test Frame.newer
+PASS: gdb.python/py-frame.exp: test Frame.read_var - error
+PASS: gdb.python/py-frame.exp: test Frame.read_var - success
+PASS: gdb.python/py-frame.exp: test gdb.selected_frame
 Running ../../../gdb/testsuite/gdb.python/py-symbol.exp ...
-UNSUPPORTED: gdb.python/py-symbol.exp: Python support is disabled.
+PASS: gdb.python/py-symbol.exp: continue to breakpoint: Block break here.
+PASS: gdb.python/py-symbol.exp: Test arg.is_variable
+PASS: gdb.python/py-symbol.exp: Test arg.is_constant
+PASS: gdb.python/py-symbol.exp: Test arg.is_argument
+PASS: gdb.python/py-symbol.exp: Test arg.is_function
+PASS: gdb.python/py-symbol.exp: Test func.is_variable
+PASS: gdb.python/py-symbol.exp: Test func.is_constant
+PASS: gdb.python/py-symbol.exp: Test func.is_argument
+PASS: gdb.python/py-symbol.exp: Test func.is_function
+PASS: gdb.python/py-symbol.exp: Test func.name
+PASS: gdb.python/py-symbol.exp: Test func.print_name
+PASS: gdb.python/py-symbol.exp: Test func.linkage_name
+PASS: gdb.python/py-symbol.exp: Test func.addr_class
+PASS: gdb.python/py-symbol.exp: continue to breakpoint: Break at end.
+PASS: gdb.python/py-symbol.exp: Test a.is_variable
+PASS: gdb.python/py-symbol.exp: Test a.is_constant
+PASS: gdb.python/py-symbol.exp: Test a.is_argument
+PASS: gdb.python/py-symbol.exp: Test a.is_function
+PASS: gdb.python/py-symbol.exp: Test a.addr_class
+PASS: gdb.python/py-symbol.exp: Test t.is_variable
+PASS: gdb.python/py-symbol.exp: Test t.is_constant
+PASS: gdb.python/py-symbol.exp: Test t.is_argument
+PASS: gdb.python/py-symbol.exp: Test t.is_function
+PASS: gdb.python/py-symbol.exp: Test t.addr_class
+PASS: gdb.python/py-symbol.exp: Get symtab
+gdb compile failed, default_target_compile: Can't find k1-elf-g++.
+UNTESTED: gdb.python/py-symbol.exp: Couldn't compile py-symbol.c in c++ mode
 Running ../../../gdb/testsuite/gdb.python/py-prettyprint.exp ...
-UNSUPPORTED: gdb.python/py-prettyprint.exp: Python support is disabled.
+PASS: gdb.python/py-prettyprint.exp: set print pretty on
+PASS: gdb.python/py-prettyprint.exp: b 252
+PASS: gdb.python/py-prettyprint.exp: continue
+PASS: gdb.python/py-prettyprint.exp: python execfile ('py-prettyprint.py')
+PASS: gdb.python/py-prettyprint.exp: print ss
+PASS: gdb.python/py-prettyprint.exp: print ssa[1]
+PASS: gdb.python/py-prettyprint.exp: print ssa
+PASS: gdb.python/py-prettyprint.exp: print x
+PASS: gdb.python/py-prettyprint.exp: print cstring
+PASS: gdb.python/py-prettyprint.exp: print estring
+PASS: gdb.python/py-prettyprint.exp: print c
+PASS: gdb.python/py-prettyprint.exp: continue
+gdb compile failed, default_target_compile: Can't find k1-elf-g++.
+UNTESTED: gdb.python/py-prettyprint.exp: Couldn't compile py-prettyprint.c in c++ mode
 Running ../../../gdb/testsuite/gdb.python/py-mi.exp ...
-UNSUPPORTED: gdb.python/py-mi.exp: python support is disabled
+PASS: gdb.python/py-mi.exp: breakpoint at main
+PASS: gdb.python/py-mi.exp: mi runto main
+PASS: gdb.python/py-mi.exp: run to 237 (set breakpoint)
+PASS: gdb.python/py-mi.exp: create container varobj, no pretty-printing
+PASS: gdb.python/py-mi.exp: examine container children=0, no pretty-printing
+PASS: gdb.python/py-mi.exp: delete varobj
+PASS: gdb.python/py-mi.exp: create string_1 varobj
+PASS: gdb.python/py-mi.exp: create estring varobj
+PASS: gdb.python/py-mi.exp: assign string_1 from string_2
+PASS: gdb.python/py-mi.exp: update string varobj after assignment
+PASS: gdb.python/py-mi.exp: create container varobj
+PASS: gdb.python/py-mi.exp: examine container children=0
+PASS: gdb.python/py-mi.exp: next over update 1
+PASS: gdb.python/py-mi.exp: varobj update 1
+PASS: gdb.python/py-mi.exp: next over update 2
+PASS: gdb.python/py-mi.exp: varobj update 2
+PASS: gdb.python/py-mi.exp: clear visualizer
+PASS: gdb.python/py-mi.exp: varobj update after clearing
+PASS: gdb.python/py-mi.exp: choose default visualizer
+PASS: gdb.python/py-mi.exp: varobj update after choosing default
+PASS: gdb.python/py-mi.exp: choose visualizer using expression
+PASS: gdb.python/py-mi.exp: varobj update after choosing via expression
+PASS: gdb.python/py-mi.exp: list varobj children after selecting child range
+PASS: gdb.python/py-mi.exp: list varobj children after resetting child range
+PASS: gdb.python/py-mi.exp: next over update 3
+PASS: gdb.python/py-mi.exp: set update range
+PASS: gdb.python/py-mi.exp: list children after setting update range
+PASS: gdb.python/py-mi.exp: list selected children after setting range
+PASS: gdb.python/py-mi.exp: list children after listing selected range
+PASS: gdb.python/py-mi.exp: next over update 4
+PASS: gdb.python/py-mi.exp: update after next with restricted range
+PASS: gdb.python/py-mi.exp: set update range with non-zero start
+PASS: gdb.python/py-mi.exp: update varobj with change outside selected range
+PASS: gdb.python/py-mi.exp: next over update 5
+PASS: gdb.python/py-mi.exp: create second container varobj
+PASS: gdb.python/py-mi.exp: update varobj, no children requested
+PASS: gdb.python/py-mi.exp: next over update 6
+PASS: gdb.python/py-mi.exp: update varobj 2, no children requested
+PASS: gdb.python/py-mi.exp: run to 107 (set breakpoint)
+PASS: gdb.python/py-mi.exp: create outer varobj
+PASS: gdb.python/py-mi.exp: list children of outer
+PASS: gdb.python/py-mi.exp: list children of outer.s
+PASS: gdb.python/py-mi.exp: next over outer update
+PASS: gdb.python/py-mi.exp: update after updating element of outer
+PASS: gdb.python/py-mi.exp: run to 177 (set breakpoint)
+PASS: gdb.python/py-mi.exp: update after type change
 Running ../../../gdb/testsuite/gdb.python/py-block.exp ...
-UNSUPPORTED: gdb.python/py-block.exp: Python support is disabled.
+PASS: gdb.python/py-block.exp: continue to breakpoint: Block break here.
+PASS: gdb.python/py-block.exp: Check block not None
+PASS: gdb.python/py-block.exp: First anonymous block
+PASS: gdb.python/py-block.exp: Check start not None
+PASS: gdb.python/py-block.exp: Check end not None
+PASS: gdb.python/py-block.exp: Get superblock
+PASS: gdb.python/py-block.exp: Second anonymous block
+PASS: gdb.python/py-block.exp: Get superblock
+PASS: gdb.python/py-block.exp: python print block.function
+PASS: gdb.python/py-block.exp: up
+PASS: gdb.python/py-block.exp: Check block not None
+PASS: gdb.python/py-block.exp: main block
 Running ../../../gdb/testsuite/gdb.python/py-function.exp ...
-UNSUPPORTED: gdb.python/py-function.exp: Python support is disabled.
+PASS: gdb.python/py-function.exp: input convenience function - python
+PASS: gdb.python/py-function.exp: input convenience function - class test_func (gdb.Function):
+PASS: gdb.python/py-function.exp: input convenience function -   def __init__ (self):
+PASS: gdb.python/py-function.exp: input convenience function -     super (test_func, self).__init__ ("test_func")
+PASS: gdb.python/py-function.exp: input convenience function -   def invoke (self, arg):
+PASS: gdb.python/py-function.exp: input convenience function -     return "test_func output, arg = %s" % arg.string ()
+PASS: gdb.python/py-function.exp: input convenience function - test_func ()
+PASS: gdb.python/py-function.exp: input convenience function - end
+PASS: gdb.python/py-function.exp: call function
+PASS: gdb.python/py-function.exp: input value-returning convenience function - python
+PASS: gdb.python/py-function.exp: input value-returning convenience function - class Double (gdb.Function):
+PASS: gdb.python/py-function.exp: input value-returning convenience function -   def __init__ (self):
+PASS: gdb.python/py-function.exp: input value-returning convenience function -     super (Double, self).__init__ ("double")
+PASS: gdb.python/py-function.exp: input value-returning convenience function -   def invoke (self, n):
+PASS: gdb.python/py-function.exp: input value-returning convenience function -     return n*2
+PASS: gdb.python/py-function.exp: input value-returning convenience function - Double ()
+PASS: gdb.python/py-function.exp: input value-returning convenience function - end
+PASS: gdb.python/py-function.exp: call value-returning function
+PASS: gdb.python/py-function.exp: input int-returning function - python
+PASS: gdb.python/py-function.exp: input int-returning function - class Yes(gdb.Function):
+PASS: gdb.python/py-function.exp: input int-returning function -     def __init__(self):
+PASS: gdb.python/py-function.exp: input int-returning function -         gdb.Function.__init__(self, 'yes')
+PASS: gdb.python/py-function.exp: input int-returning function -     def invoke(self):
+PASS: gdb.python/py-function.exp: input int-returning function -         return 1
+PASS: gdb.python/py-function.exp: input int-returning function - Yes ()
+PASS: gdb.python/py-function.exp: input int-returning function - end
+PASS: gdb.python/py-function.exp: call yes with &&
+PASS: gdb.python/py-function.exp: call yes with ||
 Running ../../../gdb/testsuite/gdb.python/py-type.exp ...
-UNSUPPORTED: gdb.python/py-type.exp: Python support is disabled.
+PASS: gdb.python/py-type.exp: continue to breakpoint: break to inspect struct and array.
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from history
+PASS: gdb.python/py-type.exp: get fields
+PASS: gdb.python/py-type.exp: Check number of fields
+PASS: gdb.python/py-type.exp: Check structure field a name
+PASS: gdb.python/py-type.exp: Check structure field b name
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from  history
+PASS: gdb.python/py-type.exp: python fields = ar.type.fields()
+PASS: gdb.python/py-type.exp: Check the number of fields
+PASS: gdb.python/py-type.exp: Check array field type
+gdb compile failed, default_target_compile: Can't find k1-elf-g++.
+UNTESTED: gdb.python/py-type.exp: Couldn't compile py-type.c in c++ mode
+PASS: gdb.python/py-type.exp: continue to breakpoint: break to inspect struct and array.
+PASS: gdb.python/py-type.exp: print value
+FAIL: gdb.python/py-type.exp: get value from history
+FAIL: gdb.python/py-type.exp: get fields
+FAIL: gdb.python/py-type.exp: Check number of fields
+FAIL: gdb.python/py-type.exp: Check class field c name
+FAIL: gdb.python/py-type.exp: Check class field d name
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from history
+PASS: gdb.python/py-type.exp: get fields
+PASS: gdb.python/py-type.exp: Check number of fields
+PASS: gdb.python/py-type.exp: Check structure field a name
+PASS: gdb.python/py-type.exp: Check structure field b name
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from  history
+PASS: gdb.python/py-type.exp: python fields = ar.type.fields()
+PASS: gdb.python/py-type.exp: Check the number of fields
+PASS: gdb.python/py-type.exp: Check array field type
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from  history
+PASS: gdb.python/py-type.exp: get value from history
+FAIL: gdb.python/py-type.exp: Check the number of fields
+FAIL: gdb.python/py-type.exp: Check base class
+FAIL: gdb.python/py-type.exp: Check base class
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from history
+PASS: gdb.python/py-type.exp: Check correct tuple length
+PASS: gdb.python/py-type.exp: Check low range
+PASS: gdb.python/py-type.exp: Check high range
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from  history
+PASS: gdb.python/py-type.exp: get fields
+PASS: gdb.python/py-type.exp: Check range type low bound
+PASS: gdb.python/py-type.exp: Check range type high bound
+PASS: gdb.python/py-type.exp: print value
+PASS: gdb.python/py-type.exp: get value from history
+PASS: gdb.python/py-type.exp: Check range for non ranged type.
 Running ../../../gdb/testsuite/gdb.mi/mi2-var-child.exp ...
 PASS: gdb.mi/mi2-var-child.exp: breakpoint at do_children_tests
 PASS: gdb.mi/mi2-var-child.exp: mi runto do_children_tests
@@ -3638,7 +4046,8 @@ PASS: gdb.base/charset.exp: undefined concatenation of wide and UTF-16
 PASS: gdb.base/charset.exp: undefined concatenation of wide and UTF-32
 PASS: gdb.base/charset.exp: typedef to wchar_t
 PASS: gdb.base/charset.exp: undefined concatenation of UTF-16 and UTF-32
-UNSUPPORTED: gdb.base/charset.exp: python support is disabled
+PASS: gdb.base/charset.exp: set up for python printing of utf-16 string
+PASS: gdb.base/charset.exp: extract utf-16 string using python
 PASS: gdb.base/charset.exp: EVAL_SKIP cleanup handling regression test
 Running ../../../gdb/testsuite/gdb.base/mips_pro.exp ...
 PASS: gdb.base/mips_pro.exp: backtrace
@@ -7050,14 +7459,14 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6551
-# of unexpected failures	71
+# of expected passes		6950
+# of unexpected failures	79
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		8
-# of unsupported tests		29
+# of untested testcases		12
+# of unsupported tests		17
 /work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100406-cvs -nw -nx 
 
