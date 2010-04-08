@@ -1,4 +1,4 @@
-Test Run By friss on Thu Apr  8 15:51:33 2010
+Test Run By friss on Thu Apr  8 17:37:14 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -586,53 +586,7 @@ Running ../../../gdb/testsuite/gdb.mi/mi2-hack-cli.exp ...
 PASS: gdb.mi/mi2-hack-cli.exp: show architecture
 PASS: gdb.mi/mi2-hack-cli.exp: 47show architecture
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
-PASS: gdb.mi/mi-nonstop.exp: successfully compiled posix threads test case
-ERROR: (/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-non-stop) No such file or directory
-
-ERROR: (/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-non-stop) No such file or directory
-
-UNRESOLVED: gdb.mi/mi-nonstop.exp: breakpoint at main
-ERROR: tcl error sourcing ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp.
-ERROR: could not read "/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-non-stop": no such file or directory
-    while executing
-"file mtime $host_exec"
-    (procedure "gdbserver_download_current_prog" line 20)
-    invoked from within
-"gdbserver_download_current_prog"
-    (procedure "gdbserver_spawn" line 2)
-    invoked from within
-"gdbserver_spawn """
-    (procedure "gdbserver_gdb_load" line 2)
-    invoked from within
-"gdbserver_gdb_load"
-    (procedure "mi_gdb_target_load" line 16)
-    invoked from within
-"mi_gdb_target_load"
-    (procedure "mi_run_cmd" line 21)
-    invoked from within
-"mi_run_cmd"
-    (procedure "mi_runto_helper" line 19)
-    invoked from within
-"mi_runto_helper $func "run""
-    (procedure "mi_runto" line 2)
-    invoked from within
-"mi_runto main"
-    (procedure "mi_run_to_main" line 16)
-    invoked from within
-"mi_run_to_main"
-    invoked from within
-"if { [mi_run_to_main] < 0 } {
-    perror "mi-nonstop.exp tests suppressed"
-    continue
-}"
-    (file "../../../gdb/testsuite/gdb.mi/mi-nonstop.exp" line 65)
-    invoked from within
-"source ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp"
-    ("uplevel" body line 1)
-    invoked from within
-"uplevel #0 source ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp"
-    invoked from within
-"catch "uplevel #0 source $test_file_name""
+UNSUPPORTED: gdb.mi/mi-nonstop.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/non-stop.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/mi-var-display.exp ...
 PASS: gdb.mi/mi-var-display.exp: break-insert operation
 PASS: gdb.mi/mi-var-display.exp: run to main
@@ -1092,53 +1046,7 @@ PASS: gdb.mi/mi-until.exp: until line number:file
 PASS: gdb.mi/mi-until.exp: until after current function
 Running ../../../gdb/testsuite/gdb.mi/mi2-pthreads.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp ...
-PASS: gdb.mi/mi-nonstop-exit.exp: successfully compiled posix threads test case
-ERROR: (/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-non-stop-exit) No such file or directory
-
-ERROR: (/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-non-stop-exit) No such file or directory
-
-UNRESOLVED: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
-ERROR: tcl error sourcing ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp.
-ERROR: could not read "/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-non-stop-exit": no such file or directory
-    while executing
-"file mtime $host_exec"
-    (procedure "gdbserver_download_current_prog" line 20)
-    invoked from within
-"gdbserver_download_current_prog"
-    (procedure "gdbserver_spawn" line 2)
-    invoked from within
-"gdbserver_spawn """
-    (procedure "gdbserver_gdb_load" line 2)
-    invoked from within
-"gdbserver_gdb_load"
-    (procedure "mi_gdb_target_load" line 16)
-    invoked from within
-"mi_gdb_target_load"
-    (procedure "mi_run_cmd" line 21)
-    invoked from within
-"mi_run_cmd"
-    (procedure "mi_runto_helper" line 19)
-    invoked from within
-"mi_runto_helper $func "run""
-    (procedure "mi_runto" line 2)
-    invoked from within
-"mi_runto main"
-    (procedure "mi_run_to_main" line 16)
-    invoked from within
-"mi_run_to_main"
-    invoked from within
-"if { [mi_run_to_main] < 0 } {
-    perror "mi-nonstop-exit.exp tests suppressed"
-    continue
-}"
-    (file "../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp" line 55)
-    invoked from within
-"source ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp"
-    ("uplevel" body line 1)
-    invoked from within
-"uplevel #0 source ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp"
-    invoked from within
-"catch "uplevel #0 source $test_file_name""
+UNSUPPORTED: gdb.mi/mi-nonstop-exit.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/non-stop-exit.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/mi2-until.exp ...
 PASS: gdb.mi/mi2-until.exp: break-insert operation
 PASS: gdb.mi/mi2-until.exp: run to main
@@ -1489,53 +1397,7 @@ PASS: gdb.mi/mi2-basics.exp: environment-path dir1 dir2 operation
 PASS: gdb.mi/mi2-basics.exp: environment-path -r dir operation
 PASS: gdb.mi/mi2-basics.exp: environment-path -r operation
 Running ../../../gdb/testsuite/gdb.mi/mi-nsmoribund.exp ...
-PASS: gdb.mi/mi-nsmoribund.exp: successfully compiled posix threads test case
-ERROR: (/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-nsmoribund) No such file or directory
-
-ERROR: (/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-nsmoribund) No such file or directory
-
-UNRESOLVED: gdb.mi/mi-nsmoribund.exp: breakpoint at main
-ERROR: tcl error sourcing ../../../gdb/testsuite/gdb.mi/mi-nsmoribund.exp.
-ERROR: could not read "/work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.mi/mi-nsmoribund": no such file or directory
-    while executing
-"file mtime $host_exec"
-    (procedure "gdbserver_download_current_prog" line 20)
-    invoked from within
-"gdbserver_download_current_prog"
-    (procedure "gdbserver_spawn" line 2)
-    invoked from within
-"gdbserver_spawn """
-    (procedure "gdbserver_gdb_load" line 2)
-    invoked from within
-"gdbserver_gdb_load"
-    (procedure "mi_gdb_target_load" line 16)
-    invoked from within
-"mi_gdb_target_load"
-    (procedure "mi_run_cmd" line 21)
-    invoked from within
-"mi_run_cmd"
-    (procedure "mi_runto_helper" line 19)
-    invoked from within
-"mi_runto_helper $func "run""
-    (procedure "mi_runto" line 2)
-    invoked from within
-"mi_runto main"
-    (procedure "mi_run_to_main" line 16)
-    invoked from within
-"mi_run_to_main"
-    invoked from within
-"if { [mi_run_to_main] < 0 } {
-    perror "mi-nsmoribund.exp tests suppressed"
-    continue
-}"
-    (file "../../../gdb/testsuite/gdb.mi/mi-nsmoribund.exp" line 55)
-    invoked from within
-"source ../../../gdb/testsuite/gdb.mi/mi-nsmoribund.exp"
-    ("uplevel" body line 1)
-    invoked from within
-"uplevel #0 source ../../../gdb/testsuite/gdb.mi/mi-nsmoribund.exp"
-    invoked from within
-"catch "uplevel #0 source $test_file_name""
+UNSUPPORTED: gdb.mi/mi-nsmoribund.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/nsmoribund.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/gdb792.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-pthreads.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-console.exp ...
@@ -4249,16 +4111,6 @@ PASS: gdb.base/nofield.exp: ptype struct empty
 PASS: gdb.base/nofield.exp: ptype union empty_union
 Running ../../../gdb/testsuite/gdb.base/complex.exp ...
 gdb compile failed, ../../../gdb/testsuite/gdb.base/complex.c:24: error: __complex__ type not currently supported
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
 UNSUPPORTED: gdb.base/complex.exp: print complex packed value in C
 UNSUPPORTED: gdb.base/complex.exp: print complex value in C
 Running ../../../gdb/testsuite/gdb.base/bigcore.exp ...
@@ -6621,31 +6473,6 @@ PASS: gdb.base/readline.exp: Simple operate-and-get-next - final prompt
 Running ../../../gdb/testsuite/gdb.base/regs.exp ...
 Running ../../../gdb/testsuite/gdb.base/macscp.exp ...
 gdb compile failed, k1cc WARNING:  -g3 conflicts with -g; using latter value (-g)
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 58
-
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 10
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 24
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 41
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 22
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 70
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 10
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 24
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 41
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 22
-
-!!! DevWarn during Writing WHIRL file: Encountered BUILT_IN: 83 at line 82
-
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
-!!! DevWarn during Writing WHIRL file: impossible arg decls -- is empty?
 UNTESTED: gdb.base/macscp.exp: macscp.exp
 Running ../../../gdb/testsuite/gdb.base/structs.exp ...
 XFAIL: gdb.base/structs.exp: This target can not call functions
@@ -7167,14 +6994,14 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6581
+# of expected passes		6578
 # of unexpected failures	43
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
-# of unresolved testcases	4
+# of unresolved testcases	1
 # of untested testcases		8
-# of unsupported tests		15
+# of unsupported tests		18
 /work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100406-cvs -nw -nx 
 
