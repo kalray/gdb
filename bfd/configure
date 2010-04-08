@@ -15028,6 +15028,7 @@ do
     bfd_elf32_i370_vec)		tb="$tb elf32-i370.lo elf32.lo $elf" ;;
     bfd_elf32_i386_dragonfly_vec)
 				tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
+    bfd_elf32_i386_sol2_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
     bfd_elf32_i386_freebsd_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
     bfd_elf32_i386_vxworks_vec)	tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
     bfd_elf32_i386_vec)		tb="$tb elf32-i386.lo elf-ifunc.lo elf-vxworks.lo elf32.lo $elf" ;;
@@ -15110,6 +15111,8 @@ do
     bfd_elf32_sparc_vec)	tb="$tb elf32-sparc.lo elfxx-sparc.lo elf-vxworks.lo elf32.lo $elf" ;;
     bfd_elf32_sparc_vxworks_vec) tb="$tb elf32-sparc.lo elfxx-sparc.lo elf-vxworks.lo elf32.lo $elf" ;;
     bfd_elf32_spu_vec)		tb="$tb elf32-spu.lo elf32.lo $elf" ;;
+    bfd_elf32_tic6x_be_vec)	tb="$tb elf32-tic6x.lo elf32.lo $elf" ;;
+    bfd_elf32_tic6x_le_vec)	tb="$tb elf32-tic6x.lo elf32.lo $elf" ;;
     bfd_elf32_tradbigmips_vec)  tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo" ;;
     bfd_elf32_tradlittlemips_vec) tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo" ;;
     bfd_elf32_us_cris_vec)	tb="$tb elf32-cris.lo elf32.lo $elf" ;;
@@ -15146,6 +15149,7 @@ do
     bfd_elf64_tradbigmips_vec)	tb="$tb elf64-mips.lo elf64.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf64_tradlittlemips_vec) tb="$tb elf64-mips.lo elf64.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf64_x86_64_freebsd_vec) tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
+    bfd_elf64_x86_64_sol2_vec)  tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_x86_64_vec)	tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_l1om_vec)		tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_l1om_freebsd_vec) tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
@@ -15261,7 +15265,8 @@ do
     vax1knetbsd_vec)		tb="$tb vax1knetbsd.lo aout32.lo" ;;
     vaxbsd_vec)			tb="$tb vaxbsd.lo aout32.lo" ;;
     versados_vec)		tb="$tb versados.lo" ;;
-    vms_alpha_vec)		tb="$tb vms.lo vms-hdr.lo vms-gsd.lo vms-tir.lo vms-misc.lo"; target_size=64 ;;
+    vms_alpha_vec)		tb="$tb vms.lo vms-hdr.lo vms-gsd.lo vms-tir.lo vms-misc.lo vms-lib.lo"; target_size=64 ;;
+    vms_lib_txt_vec)		tb="$tb vms-lib.lo vms-misc.lo" ;;
     vms_vax_vec)		tb="$tb vms.lo vms-hdr.lo vms-gsd.lo vms-tir.lo vms-misc.lo" ;;
     w65_vec)			tb="$tb coff-w65.lo reloc16.lo" ;;
     we32kcoff_vec)		tb="$tb coff-we32k.lo" ;;
