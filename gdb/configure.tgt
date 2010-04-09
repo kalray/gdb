@@ -252,7 +252,7 @@ iq2000-*-*)
 	;;
 
 k1-*-*)
-	gdb_target_obs="k1-mds-tdep.o k1-tdep.o"
+	gdb_target_obs="k1-mds-tdep.o k1-tdep.o k1-target.o"
 	;;
 
 lm32-*-*)		
