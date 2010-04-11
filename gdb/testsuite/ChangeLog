@@ -1,3 +1,18 @@
+2010-04-09  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix non-GNU make compatibility.
+	* Makefile.in ($(TEST_TARGETS)): Conditionalize it by @GMAKE_TRUE@.
+
+2010-04-09  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.python/py-breakpoint.exp: New File.
+	* gdb.python/py-breakpoint.C: Ditto.
+
+2010-04-08  Stan Shebs  <stan@codesourcery.com>
+
+	* gdb.trace/actions.exp: Clear default-collect.
+	* gdb.trace/save-trace.exp: Clear default-collect.
+
 2010-04-08  Phil Muldoon  <pmuldoon@redhat.com>
 
 	* gdb.python/py-value: Add null string variable.
