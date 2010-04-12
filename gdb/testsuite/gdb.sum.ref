@@ -1,4 +1,4 @@
-Test Run By friss on Thu Apr  8 17:37:14 2010
+Test Run By friss on Mon Apr 12 09:28:55 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -1407,10 +1407,6 @@ PASS: gdb.mi/mi-console.exp: Testing console output
 UNSUPPORTED: gdb.mi/mi-console.exp: Testing console output inferior output
 PASS: gdb.mi/mi-console.exp: finished step over hello
 Running ../../../gdb/testsuite/gdb.mi/mi-file-transfer.exp ...
-FAIL: gdb.mi/mi-file-transfer.exp: put binary file
-FAIL: gdb.mi/mi-file-transfer.exp: get binary file
-FAIL: gdb.mi/mi-file-transfer.exp: compare binary file
-FAIL: gdb.mi/mi-file-transfer.exp: deleted binary file
 Running ../../../gdb/testsuite/gdb.base/relocate.exp ...
 PASS: gdb.base/relocate.exp: add-symbol-file relocate.o 0
 PASS: gdb.base/relocate.exp: get address of static_foo
@@ -1514,6 +1510,11 @@ PASS: gdb.base/break.exp: rbreak junk set breakpoint
 PASS: gdb.base/break.exp: rbreak junk
 Running ../../../gdb/testsuite/gdb.base/a2-run.exp ...
 Running ../../../gdb/testsuite/gdb.base/display.exp ...
+PASS: gdb.base/display.exp: kill
+PASS: gdb.base/display.exp: detach
+PASS: gdb.base/display.exp: run
+PASS: gdb.base/display.exp: kill again
+PASS: gdb.base/display.exp: detach again
 PASS: gdb.base/display.exp: break  do_loops
 PASS: gdb.base/display.exp: get to do_loops
 PASS: gdb.base/display.exp: set watch
@@ -1567,6 +1568,43 @@ PASS: gdb.base/display.exp: print/a $pc
 PASS: gdb.base/display.exp: print/a &&j
 Running ../../../gdb/testsuite/gdb.base/multi-forks.exp ...
 Running ../../../gdb/testsuite/gdb.base/args.exp ...
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for basic
+PASS: gdb.base/args.exp: argc for basic
+PASS: gdb.base/args.exp: argv[1] for basic
+PASS: gdb.base/args.exp: argv[2] for basic
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for one empty
+PASS: gdb.base/args.exp: argc for one empty
+PASS: gdb.base/args.exp: argv[1] for one empty
+PASS: gdb.base/args.exp: argv[2] for one empty
+PASS: gdb.base/args.exp: argv[3] for one empty
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for two empty
+PASS: gdb.base/args.exp: argc for two empty
+PASS: gdb.base/args.exp: argv[1] for two empty
+PASS: gdb.base/args.exp: argv[2] for two empty
+PASS: gdb.base/args.exp: argv[3] for two empty
+PASS: gdb.base/args.exp: argv[4] for two empty
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for one empty (with single quotes)
+PASS: gdb.base/args.exp: argc for one empty (with single quotes)
+PASS: gdb.base/args.exp: argv[1] for one empty (with single quotes)
+PASS: gdb.base/args.exp: argv[2] for one empty (with single quotes)
+PASS: gdb.base/args.exp: argv[3] for one empty (with single quotes)
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for two empty (with single quotes)
+PASS: gdb.base/args.exp: argc for two empty (with single quotes)
+PASS: gdb.base/args.exp: argv[1] for two empty (with single quotes)
+PASS: gdb.base/args.exp: argv[2] for two empty (with single quotes)
+PASS: gdb.base/args.exp: argv[3] for two empty (with single quotes)
+PASS: gdb.base/args.exp: argv[4] for two empty (with single quotes)
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for one newline
+PASS: gdb.base/args.exp: argc for one newline
+PASS: gdb.base/args.exp: argv[1] for one newline
+PASS: gdb.base/args.exp: argv[2] for one newline
+PASS: gdb.base/args.exp: argv[3] for one newline
+PASS: gdb.base/args.exp: continue to breakpoint: breakpoint for two newlines
+PASS: gdb.base/args.exp: argc for two newlines
+PASS: gdb.base/args.exp: argv[1] for two newlines
+PASS: gdb.base/args.exp: argv[2] for two newlines
+PASS: gdb.base/args.exp: argv[3] for two newlines
+PASS: gdb.base/args.exp: argv[4] for two newlines
 Running ../../../gdb/testsuite/gdb.base/sect-cmd.exp ...
 Running ../../../gdb/testsuite/gdb.base/gdb1090.exp ...
 PASS: gdb.base/gdb1090.exp: up from marker
@@ -2015,7 +2053,15 @@ PASS: gdb.base/default.exp: append value
 PASS: gdb.base/default.exp: append binary memory
 PASS: gdb.base/default.exp: append binary value
 PASS: gdb.base/default.exp: attach
-WARNING: Skipping backtrace and break tests because of GDB stub.
+PASS: gdb.base/default.exp: break
+PASS: gdb.base/default.exp: break "b" abbreviation
+PASS: gdb.base/default.exp: break "br" abbreviation
+PASS: gdb.base/default.exp: break "bre" abbreviation
+PASS: gdb.base/default.exp: break "brea" abbreviation
+PASS: gdb.base/default.exp: backtrace
+PASS: gdb.base/default.exp: backtrace "bt" abbreviation
+PASS: gdb.base/default.exp: backtrace "ba" abbreviation
+PASS: gdb.base/default.exp: backtrace "bac" abbreviation
 PASS: gdb.base/default.exp: continue
 PASS: gdb.base/default.exp: continue "c" abbreviation
 PASS: gdb.base/default.exp: call
@@ -2299,6 +2345,10 @@ PASS: gdb.base/ending-run.exp: Clear 2 by default
 PASS: gdb.base/ending-run.exp: all set to continue
 PASS: gdb.base/ending-run.exp: cont
 PASS: gdb.base/ending-run.exp: step out of main
+PASS: gdb.base/ending-run.exp: step to end of run
+PASS: gdb.base/ending-run.exp: continue after exit
+PASS: gdb.base/ending-run.exp: don't step after run
+PASS: gdb.base/ending-run.exp: ls: core (No core dumped on quit)
 Running ../../../gdb/testsuite/gdb.base/jump.exp ...
 PASS: gdb.base/jump.exp: break before jump to non-call
 PASS: gdb.base/jump.exp: jump to non-call
@@ -2832,7 +2882,8 @@ PASS: gdb.base/cursal.exp: set listsize 3
 PASS: gdb.base/cursal.exp: list size 3
 Running ../../../gdb/testsuite/gdb.base/break-entry.exp ...
 PASS: gdb.base/break-entry.exp: info files
-FAIL: gdb.base/break-entry.exp: running to *0x0 in runto
+PASS: gdb.base/break-entry.exp: p/x $pc
+PASS: gdb.base/break-entry.exp: continue to breakpoint: main
 Running ../../../gdb/testsuite/gdb.base/shlib-call.exp ...
 Running ../../../gdb/testsuite/gdb.base/unwindonsignal.exp ...
 Running ../../../gdb/testsuite/gdb.base/sigstep.exp ...
@@ -2857,7 +2908,7 @@ Running ../../../gdb/testsuite/gdb.base/infnan.exp ...
 PASS: gdb.base/infnan.exp: print a
 PASS: gdb.base/infnan.exp: print b
 Running ../../../gdb/testsuite/gdb.base/start.exp ...
-UNTESTED: gdb.base/start.exp: start
+PASS: gdb.base/start.exp: start
 Running ../../../gdb/testsuite/gdb.base/callfuncs.exp ...
 XFAIL: gdb.base/callfuncs.exp: This target can not call functions (PRMS 2416)
 Running ../../../gdb/testsuite/gdb.base/condbreak.exp ...
@@ -4445,6 +4496,7 @@ PASS: gdb.base/watchpoint-cond-gone.exp: continue to breakpoint: Place to set th
 PASS: gdb.base/watchpoint-cond-gone.exp: Place the watchpoint
 PASS: gdb.base/watchpoint-cond-gone.exp: Catch the no longer valid watchpoint
 Running ../../../gdb/testsuite/gdb.base/remotetimeout.exp ...
+PASS: gdb.base/remotetimeout.exp: correct remotetimeout printed
 Running ../../../gdb/testsuite/gdb.base/code-expr.exp ...
 PASS: gdb.base/code-expr.exp: (@code char)
 PASS: gdb.base/code-expr.exp: (@code signed char)
@@ -4559,11 +4611,50 @@ PASS: gdb.base/commands.exp: set foo in gdbvar_simple_while_test
 PASS: gdb.base/commands.exp: gdbvar_simple_while_test #1
 PASS: gdb.base/commands.exp: set foo in gdbvar complex_if_while_test
 PASS: gdb.base/commands.exp: gdbvar_complex_if_while_test #1
+PASS: gdb.base/commands.exp: set value to 5 in progvar_simple_if_test #1
+PASS: gdb.base/commands.exp: progvar_simple_if_test #1
+PASS: gdb.base/commands.exp: progvar_simple_if_test #2
+PASS: gdb.base/commands.exp: set args in progvar_simple_while_test
+PASS: gdb.base/commands.exp: set value to 5 in progvar_simple_if_test #2
+PASS: gdb.base/commands.exp: progvar_simple_while_test #1
+PASS: gdb.base/commands.exp: set args in progvar_complex_if_while_test
+PASS: gdb.base/commands.exp: set value to 4 in progvar_simple_if_test
+PASS: gdb.base/commands.exp: progvar_complex_if_while_test #1
+PASS: gdb.base/commands.exp: set args in if_while_breakpoint_command_test
+PASS: gdb.base/commands.exp: set value to 5 in progvar_simple_if_test
+PASS: gdb.base/commands.exp: break factorial #1
+PASS: gdb.base/commands.exp: commands in if_while_breakpoint_command_test
+PASS: gdb.base/commands.exp: commands part 2 in if_while_breakpoint_command_test
+PASS: gdb.base/commands.exp: if_while_breakpoint_command_test #1
+PASS: gdb.base/commands.exp: info break in if_while_breakpoint_command_test
+PASS: gdb.base/commands.exp: set args in infrun_breakpoint_command_test
+PASS: gdb.base/commands.exp: set value to 6 in progvar_simple_if_test #1
+PASS: gdb.base/commands.exp: break factorial if value == 5
+PASS: gdb.base/commands.exp: commands in infrun_breakpoint_command_test #1
+PASS: gdb.base/commands.exp: commands in infrun_breakpoint_command_test #2
+PASS: gdb.base/commands.exp: continue in infrun_breakpoint_command_test
+PASS: gdb.base/commands.exp: set args in breakpoint_command_test
+PASS: gdb.base/commands.exp: set value to 6 in progvar_simple_if_test #2
+PASS: gdb.base/commands.exp: break factorial #2
+PASS: gdb.base/commands.exp: commands in breakpoint_command_test
+PASS: gdb.base/commands.exp: continue in breakpoint_command_test
+PASS: gdb.base/commands.exp: print value in breakpoint_command_test
 PASS: gdb.base/commands.exp: set foo in user_defined_command_test
 PASS: gdb.base/commands.exp: define mycommand in user_defined_command_test
 PASS: gdb.base/commands.exp: enter commands in user_defined_command_test
 PASS: gdb.base/commands.exp: execute user defined command in user_defined_command_test
 PASS: gdb.base/commands.exp: display user command in user_defined_command_test
+PASS: gdb.base/commands.exp: set args in watchpoint_command_test
+PASS: gdb.base/commands.exp: watch local_var
+PASS: gdb.base/commands.exp: begin commands on watch
+PASS: gdb.base/commands.exp: add print command to watch
+PASS: gdb.base/commands.exp: add continue command to watch
+PASS: gdb.base/commands.exp: end commands on watch
+PASS: gdb.base/commands.exp: continue with watch
+PASS: gdb.base/commands.exp: break factorial #3
+PASS: gdb.base/commands.exp: set value to 5 in test_command_prompt_position
+PASS: gdb.base/commands.exp: if test in test_command_prompt_position
+PASS: gdb.base/commands.exp: > OK in test_command_prompt_position
 PASS: gdb.base/commands.exp: tried to deprecate non-existing command
 PASS: gdb.base/commands.exp: maintenance deprecate p "new_p" /1/
 PASS: gdb.base/commands.exp: p deprecated warning, with replacement
@@ -4577,6 +4668,23 @@ PASS: gdb.base/commands.exp: long command deprecated /1/
 PASS: gdb.base/commands.exp: deprecate long command /2/
 PASS: gdb.base/commands.exp: long command deprecated with no alternative /2/
 PASS: gdb.base/commands.exp: deprecate with no arguments
+PASS: gdb.base/commands.exp: set args in bp_deleted_in_command_test
+PASS: gdb.base/commands.exp: breakpoint in bp_deleted_in_command_test
+PASS: gdb.base/commands.exp: begin commands in bp_deleted_in_command_test
+PASS: gdb.base/commands.exp: add silent command
+PASS: gdb.base/commands.exp: add clear command
+PASS: gdb.base/commands.exp: add printf command
+PASS: gdb.base/commands.exp: add cont command
+PASS: gdb.base/commands.exp: end commands
+PASS: gdb.base/commands.exp: run factorial until breakpoint
+PASS: gdb.base/commands.exp: set args in temporary_breakpoint_commands
+PASS: gdb.base/commands.exp: breakpoint in temporary_breakpoint_commands
+PASS: gdb.base/commands.exp: begin commands in bp_deleted_in_command_test
+PASS: gdb.base/commands.exp: add silent tbreak command
+PASS: gdb.base/commands.exp: add printf tbreak command
+PASS: gdb.base/commands.exp: add cont tbreak command
+PASS: gdb.base/commands.exp: end tbreak commands
+PASS: gdb.base/commands.exp: run factorial until temporary breakpoint
 PASS: gdb.base/commands.exp: stray_arg0_test #1
 PASS: gdb.base/commands.exp: stray_arg0_test #2
 PASS: gdb.base/commands.exp: stray_arg0_test #3
@@ -4655,7 +4763,7 @@ UNTESTED: gdb.base/longjmp.exp: longjmp.exp
 Running ../../../gdb/testsuite/gdb.base/list.exp ...
 PASS: gdb.base/list.exp: set width 0
 PASS: gdb.base/list.exp: show default list size
-UNSUPPORTED: gdb.base/list.exp: list default lines around main
+PASS: gdb.base/list.exp: list default lines around main
 PASS: gdb.base/list.exp: setting listsize to 1 #1
 PASS: gdb.base/list.exp: show listsize 1 #1
 PASS: gdb.base/list.exp: list line 1 with listsize 1
@@ -5313,6 +5421,8 @@ PASS: gdb.base/setshow.exp: show annotate (0)
 PASS: gdb.base/setshow.exp: annotation_level 0
 PASS: gdb.base/setshow.exp: set args
 PASS: gdb.base/setshow.exp: show args
+PASS: gdb.base/setshow.exp: continuing
+PASS: gdb.base/setshow.exp: passing args
 PASS: gdb.base/setshow.exp: set check range on
 PASS: gdb.base/setshow.exp: show check range (on)
 PASS: gdb.base/setshow.exp: set check range off
@@ -6297,6 +6407,8 @@ Running ../../../gdb/testsuite/gdb.base/solib-weak.exp ...
 Running ../../../gdb/testsuite/gdb.base/shreloc.exp ...
 Running ../../../gdb/testsuite/gdb.base/source.exp ...
 PASS: gdb.base/source.exp: script contains error
+PASS: gdb.base/source.exp: source -v
+PASS: gdb.base/source.exp: source after -v
 Running ../../../gdb/testsuite/gdb.base/prologue.exp ...
 Running ../../../gdb/testsuite/gdb.base/gdb1250.exp ...
 PASS: gdb.base/gdb1250.exp: backtrace from abort
@@ -6994,14 +7106,14 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6578
-# of unexpected failures	43
+# of expected passes		6698
+# of unexpected failures	38
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		8
-# of unsupported tests		18
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100406-cvs -nw -nx 
+# of untested testcases		7
+# of unsupported tests		17
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100411-cvs -nw -nx 
 

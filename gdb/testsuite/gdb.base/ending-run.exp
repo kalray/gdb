@@ -236,7 +236,7 @@ if {! [target_info exists use_gdb_stub]
 		pass "step to end of run"
 		set program_exited_normally 1
 	    }
-	    -re ".*Single.*in exit.*from.*dld.sl.*$gdb_prompt $" {
+	    -re ".*Single.*in exit.*$gdb_prompt $" {
 		pass "step to end of run" 
 		set program_in_exit 1
 	    }
