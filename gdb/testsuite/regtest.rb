@@ -16,6 +16,7 @@ rescue
 end
 
 def colorize(text, color_code)
+  return text if !STDOUT.tty?
   "#{color_code}#{text}\033[0m"
 end
 
