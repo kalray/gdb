@@ -38,6 +38,9 @@ static void
 k1_target_new_thread (struct thread_info *t)
 {
     inferior_thread ()->step_multi = 1;
+
+    /* When we attach, don't wait... the K1 is already stopped. */
+    current_target.to_attach_no_wait = 1;
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
@@ -80,7 +83,8 @@ Use the \"file\" or \"exec-file\" command."));
 	char *dir;
 
 	/* Child */
-	environ = env;
+	if (env)
+	    environ = env;
 	execvp ("gdb_stub", argv_args);
 	
 	/* Not in PATH */
@@ -126,7 +130,8 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
   pid_t pid;
 
   parse_pid_to_attach (args);
-  error ("Attach not supported yet.");
+
+  k1_target_create_inferior (ops, "-a", args, NULL, from_tty);
 }
 
 static int
@@ -148,6 +153,7 @@ _initialize_k1_target (void)
     k1_target_ops.to_close = k1_target_close;
 
     k1_target_ops.to_attach = k1_target_attach;
+    k1_target_ops.to_attach_no_wait = 1;
 
     k1_target_ops.to_create_inferior = k1_target_create_inferior;
 
