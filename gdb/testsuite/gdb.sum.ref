@@ -1,4 +1,4 @@
-Test Run By friss on Mon Apr 12 09:28:55 2010
+Test Run By friss on Thu Apr 22 21:58:46 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -3635,6 +3635,12 @@ PASS: gdb.base/charset.exp: typedef to wchar_t
 PASS: gdb.base/charset.exp: undefined concatenation of UTF-16 and UTF-32
 UNSUPPORTED: gdb.base/charset.exp: python support is disabled
 PASS: gdb.base/charset.exp: EVAL_SKIP cleanup handling regression test
+PASS: gdb.base/charset.exp: Assign String16 with prefix u
+FAIL: gdb.base/charset.exp: Display String String16 with x/hs
+PASS: gdb.base/charset.exp: Assign String32 with prefix U
+FAIL: gdb.base/charset.exp: Display String String32 with x/ws
+PASS: gdb.base/charset.exp: Assign String32 with prefix L
+FAIL: gdb.base/charset.exp: Display String String32 with x/ws
 Running ../../../gdb/testsuite/gdb.base/mips_pro.exp ...
 PASS: gdb.base/mips_pro.exp: backtrace
 Running ../../../gdb/testsuite/gdb.base/page.exp ...
@@ -6409,6 +6415,10 @@ Running ../../../gdb/testsuite/gdb.base/source.exp ...
 PASS: gdb.base/source.exp: script contains error
 PASS: gdb.base/source.exp: source -v
 PASS: gdb.base/source.exp: source after -v
+PASS: gdb.base/source.exp: dir ../../../gdb/testsuite/gdb.base
+PASS: gdb.base/source.exp: source -s
+PASS: gdb.base/source.exp: source -s -v
+PASS: gdb.base/source.exp: source -v -s
 Running ../../../gdb/testsuite/gdb.base/prologue.exp ...
 Running ../../../gdb/testsuite/gdb.base/gdb1250.exp ...
 PASS: gdb.base/gdb1250.exp: backtrace from abort
@@ -7106,8 +7116,8 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6698
-# of unexpected failures	38
+# of expected passes		6705
+# of unexpected failures	41
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
@@ -7115,5 +7125,5 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 # of unresolved testcases	1
 # of untested testcases		7
 # of unsupported tests		17
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100411-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100422-cvs -nw -nx 
 

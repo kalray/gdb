@@ -365,6 +365,7 @@ trace_variable_command (char *args, int from_tty)
       tsv->initial_value = initval;
       printf_filtered (_("Trace state variable $%s now has initial value %s.\n"),
 		       tsv->name, plongest (tsv->initial_value));
+      do_cleanups (old_chain);
       return;
     }
 
@@ -1856,11 +1857,19 @@ tfind_1 (enum trace_find_type type, int num,
 	 int from_tty)
 {
   int target_frameno = -1, target_tracept = -1;
-  struct frame_id old_frame_id;
+  struct frame_id old_frame_id = null_frame_id;
   char *reply;
   struct breakpoint *tp;
 
-  old_frame_id = get_frame_id (get_current_frame ());
+  /* Only try to get the current stack frame if we have a chance of
+     succeeding.  In particular, if we're trying to get a first trace
+     frame while all threads are running, it's not going to succeed,
+     so leave it with a default value and let the frame comparison
+     below (correctly) decide to print out the source location of the
+     trace frame.  */
+  if (!(type == tfind_number && num == -1)
+      && (has_stack_frames () || traceframe_number >= 0))
+    old_frame_id = get_frame_id (get_current_frame ());
 
   target_frameno = target_trace_find (type, num, addr1, addr2,
 				      &target_tracept);
@@ -1873,7 +1882,7 @@ tfind_1 (enum trace_find_type type, int num,
     }
   else if (target_frameno == -1)
     {
-      /* A request for a non-existant trace frame has failed.
+      /* A request for a non-existent trace frame has failed.
 	 Our response will be different, depending on FROM_TTY:
 
 	 If FROM_TTY is true, meaning that this command was 
@@ -1940,8 +1949,10 @@ tfind_1 (enum trace_find_type type, int num,
     {
       if (ui_out_is_mi_like_p (uiout))
 	ui_out_field_string (uiout, "found", "0");
-      else
-	printf_unfiltered (_("No trace frame found"));
+      else if (type == tfind_number && num == -1)
+	printf_unfiltered (_("No longer looking at any trace frame\n"));
+      else /* this case may never occur, check */
+	printf_unfiltered (_("No trace frame found\n"));
     }
 
   /* If we're in nonstop mode and getting out of looking at trace
@@ -1952,7 +1963,7 @@ tfind_1 (enum trace_find_type type, int num,
     {
       enum print_what print_what;
 
-      /* NOTE: in immitation of the step command, try to determine
+      /* NOTE: in imitation of the step command, try to determine
          whether we have made a transition from one function to
          another.  If so, we'll print the "stack frame" (ie. the new
          function and it's arguments) -- otherwise we'll just show the
@@ -2361,7 +2372,9 @@ scope_info (char *args, int from_tty)
 	      printf_filtered ("optimized out.\n");
 	      continue;
 	    case LOC_COMPUTED:
-	      SYMBOL_COMPUTED_OPS (sym)->describe_location (sym, gdb_stdout);
+	      SYMBOL_COMPUTED_OPS (sym)->describe_location (sym,
+							    BLOCK_START (block),
+							    gdb_stdout);
 	      break;
 	    }
 	  if (SYMBOL_TYPE (sym))
@@ -2603,7 +2616,7 @@ trace_save (const char *filename, int target_does_save)
   pathname = tilde_expand (filename);
   cleanup = make_cleanup (xfree, pathname);
 
-  fp = fopen (pathname, "w");
+  fp = fopen (pathname, "wb");
   if (!fp)
     error (_("Unable to open file '%s' for saving trace data (%s)"),
 	   filename, safe_strerror (errno));
@@ -3892,7 +3905,14 @@ tfile_xfer_partial (struct target_ops *ops, enum target_object object,
 	      if (amt > len)
 		amt = len;
 
-	      read (trace_fd, readbuf, amt);
+	      gotten = read (trace_fd, readbuf, amt);
+	      if (gotten < 0)
+		perror_with_name (trace_filename);
+	      /* While it's acceptable to return less than was
+		 originally asked for, it's not acceptable to return
+		 less than what this block claims to contain.  */
+	      else if (gotten < amt)
+		error (_("Premature end of file while reading trace file"));
 	      return amt;
   	    }
 	  lseek (trace_fd, mlen, SEEK_CUR);

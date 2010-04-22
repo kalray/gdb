@@ -1,3 +1,94 @@
+2010-04-22  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	PR stabs/11479.
+	* gdb.stabs/gdb11479.exp: New file.
+	* gdb.stabs/gdb11479.c: New file.
+
+2010-04-22  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* gdb.base/charset.c (Strin16, String32): New variables.
+	* gdb.base/charset.exp (gdb_test): Test correct display
+	of 16 or 32 bit strings.
+
+2010-04-21  Chris Moller  <cmoller@redhat.com>
+
+	PR 9167
+	* gdb.cp/Makefile.in (EXECUTABLES): Added pr9167.
+	* gdb.cp/pr9167.cc: New file.
+	* gdb.cp/pr9167.exp: New file.
+
+
+2010-04-21  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	PR pascal/11492.
+	* gdb.pascal/gdb11492.pas: New file.
+	* gdb.pascal/gdb11492.exp: New file.
+
+2010-04-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.ada/info_types.c, gdb.ada/info_types.exp: New files.
+
+2010-04-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.ada/dyn_loc: New testcase.
+
+2010-04-20  Chris Moller  <cmoller@redhat.com>
+
+	PR 10867
+	
+	* gdb.cp/Makefile.in  (EXECUTABLES): Added pr10687
+	* gdb.cp/pr10687.cc: New file.
+	* gdb.cp/pr10687.exp: New file.
+
+
+2010-04-20  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* gdb.fortran/logical.exp: New testcase.
+	* gdb.fortran/logical.f90: New file.
+
+2010-04-19  Doug Evans  <dje@google.com>
+
+	* gdb.base/help.exp (help source): Update expected output.
+
+2010-04-19  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.base/solib-display.exp: Replace gdb_exit, gdb_start,
+	gdb_reinitialize_dir and gdb_load by clean_restart.  Remove trailing
+	gdb_exit and return.
+	(executable): New variable.
+	(binfile): Use it.
+
+2010-04-19  Pedro Alves  <pedro@codesourcery.com>
+
+	PR breakpoints/8554.
+
+	* gdb.trace/save-trace.exp: Adjust.
+
+2010-04-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR corefiles/11511
+	* gdb.arch/system-gcore.exp: New.
+	* gdb.arch/gcore.c: Likewise.
+
+2010-04-15  Doug Evans  <dje@google.com>
+
+	* gdb.python/py-progspace.c: New file.
+	* gdb.python/py-progspace.exp: New file.
+
+	* gdb.base/source.exp: Add tests for "source -s".
+
+2010-04-14  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.python/py-prettyprint.py (NoStringContainerPrinter): New printer.
+	* gdb.python/py-prettyprint.c: Add justchildren struct, typedefs.
+	* gdb.python/py-prettyprint.exp: New test for to_string returning None.
+	* gdb.python/py-mi.exp: New test for to_string returning None.
+
+2010-04-12  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.python/py-breakpoint.c: Make result global.
+
 2010-04-09  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Fix non-GNU make compatibility.
