@@ -1,3 +1,152 @@
+2010-04-26  Doug Evans  <dje@google.com>
+
+	* serial.c (serial_write): Handle serial_debug_p akin to serial_read.
+
+2010-04-26  Tom Tromey  <tromey@redhat.com>
+
+	* cli/cli-decode.c (complete_on_cmdlist): Make two passes over the
+	command list.
+
+2010-04-26  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	Removal of config/i386/nm-i386sol2.h native configuration file.
+	* config/i386/nm-i386sol2.h: Remove file.
+	* config/i386/i386sol2.mh: Remove NAT_FILE definition.
+	* config/i386/sol2-64.mh: Idem.
+	* config/djgpp/fnchange.lst: Remove reference to that file.
+	* Makefile.in (HFILES_NO_SRCDIR): Idem.
+
+2010-04-26  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	PR breakpoints/11531.
+	* config/i386/nm-i386sol2.h (CANNOT_STEP_HW_WATCHPOINTS): Remove
+	macro definition and related comment.
+	* infrun.c (CANNOT_STEP_HW_WATCHPOINTS): Remove macro.
+	(resume): Remove code and comment related to this macro.
+
+2010-04-26  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* cp-namespace.c (cp_lookup_symbol_in_namespace): Fix alloca size.
+	Fix whitespace.
+
+2010-04-24  Pedro Alves  <pedro@codesourcery.com>
+
+	* defs.h: Adjust comment.
+	* filesystem.h, filesystem.c: New files.
+	* Makefile.in (SFILES): Add filesystem.c.
+	(COMMON_OBS): Add filesystem.o.
+	* solib.c (solib_find): Handle DOS-based filesystems.  Handle
+	different target and host path flavours.
+	* arm-symbian-tdep.c (arm_symbian_init_abi): Set
+	has_dos_based_file_system on the gdbarch.
+	* arm-wince-tdep.c (arm_wince_init_abi): Ditto.
+	* i386-cygwin-tdep.c (i386_cygwin_init_abi): Ditto.
+	* i386-tdep.c (i386_go32_init_abi): Ditto.
+	* gdbarch.sh (has_dos_based_file_system): New.
+	* gdbarch.h, gdbarch.c: Regenerate.
+	* NEWS: Mention improved support for remote targets with DOS-based
+	filesystems.  Mention new `set/show target-file-system-kind'
+	commands.
+
+2010-04-23  Stan Shebs  <stan@codesourcery.com>
+
+	* ax.h (struct agent_expr): Merge in agent_reqs fields, add some
+	comments.
+	(struct agent_reqs): Remove.
+	(ax_reg_mask): Declare.
+	* ax-general.c (new_agent_expr): Add gdbarch argument, set new fields.
+	(free_agent_expr): Free reg_mask.
+	(ax_print): Add scope and register mask info.
+	(ax_reqs): Remove agent_reqs argument, use agent expression
+	fields, and move part of register mask computation to...
+	(ax_reg_mask): New function.
+	* ax-gdb.c (gen_trace_static_fields): Call it.
+	(gen_traced_pop): Ditto.
+	(is_nontrivial_conversion): Add dummy gdbarch to new_agent_expr.
+	(gen_trace_for_var): Pass gdbarch to new_agent_expr.
+	(gen_trace_for_expr): Ditto, and clear optimized_out flag.
+	(gen_eval_for_expr): Ditto, and require an rvalue.
+	(agent_command): Call ax_reqs.
+	(agent_eval_command): Ditto.
+	* tracepoint.c (report_agent_reqs_errors): Use agent expression fields.
+	(validate_action_line): Ditto.
+	(collect_symbol): Ditto.
+	(encode_actions_1): Ditto.
+
+2010-04-23  Daniel Jacobowitz  <dan@codesourcery.com>
+	    Paul Pluzhnikov  <ppluzhnikov@google.com>
+	    Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix deadlock on looped list of loaded shared objects.
+	* solib-svr4.c (LM_PREV): New function.
+	(IGNORE_FIRST_LINK_MAP_ENTRY): Use it.
+	(svr4_current_sos): Check for correct l_prev.  New variables prev_lm
+	and next_lm.  Clear prev_lm for solib_svr4_r_ldsomap.
+	* config/djgpp/fnchange.lst: Add translation for solib-corrupted.exp.
+
+2010-04-23  Doug Evans  <dje@google.com>
+
+	* configure.ac (CONFIG_SRCS): Add py-auto-load.o even if not using
+	python.
+	* configure: Regenerate.
+	* main.c: #include "python/python.h".
+	(captured_main): Defer loading auto-loaded scripts until after
+	local_gdbinit has been sourced.
+	* python/py-auto-load.c (gdbpy_global_auto_load): New global.
+	(load_auto_scripts_for_objfile): New function.
+	(auto_load_new_objfile): Call it.
+	* python/python.h (gdbpy_global_auto_load): Declare.
+	(load_auto_scripts_for_objfile): Declare.
+
+	Add support for auto-loading scripts from .debug_gdb_scripts section.
+	* NEWS: Add entry for .debug_gdb_scripts.
+	* Makefile.in SUBDIR_PYTHON_OBS): Add py-auto-load.o.
+	(SUBDIR_PYTHON_SRCS): Add py-auto-load.c.
+	(py-auto-load.o): New rule.
+	* cli/cli-cmds.c (find_and_open_script): Make externally visible.
+	* cli/cli-cmds.h (find_and_open_script): Update prototype.
+	* python/py-auto-load.c: New file.
+	* python/python-internal.h: #include <stdio.h>.
+	(set_python_list, show_python_list): Declare.
+	(gdbpy_initialize_auto_load): Declare.
+	(source_python_script_for_objfile): Declare.
+	* python/python.c: Remove #include of observer.h.
+	(gdbpy_auto_load): Moved to py-auto-load.c.
+	(GDBPY_AUTO_FILENAME): Ditto.
+	(gdbpy_new_objfile): Delete.
+	(source_python_script_for_objfile): New function.
+	(set_python_list, show_python_list): Make externally visible.
+	(_initialize_python): Move "auto-load" command to py-auto-load.c
+	and observer_attach_new_objfile to py-auto-load.c.
+
+2010-04-23  Jerome Guitton  <guitton@adacore.com>
+    
+	* alpha-tdep.c (INSN_OPCODE, MEM_RA, MEM_RB, MEM_DISP, BR_RA)
+	(OPR_FUNCTION, OPR_HAS_IMMEDIATE, OPR_RA, OPR_RC, OPR_LIT): New macros.
+	(lda_opcode, stq_opcode, bne_opcode, subq_opcode, subq_function):
+	New constants.
+	(alpha_heuristic_analyze_probing_loop): New function.
+	(alpha_heuristic_frame_unwind_cache): In the prologue analysis, detect
+	and handle cases when a stack probe loop is generated.
+	* alpha-mdebug-tdep.c (alpha_mdebug_frameless): New function.
+	(alpha_mdebug_max_frame_size_exceeded): New function.
+	(alpha_mdebug_after_prologue): Use alpha_mdebug_frameless.
+	(alpha_mdebug_frame_sniffer, alpha_mdebug_frame_base_sniffer):
+	Return 0 when the maximum debuggable frame size has been exceeded.
+
+2010-04-23  Joel Brobecker  <brobecker@adacore.com>
+
+	Fix ARI warning.
+	* ppc-linux-nat.c (booke_cmp_hw_point): Do not mark inline.
+
+2010-04-20  Chris Moller  <cmoller@redhat.com>
+
+	PR 10179
+
+	* symtab.c (rbreak_command): Added code to include a filename
+	specification in the rbreak argument.
+	* NEWS: Added a brief description of filename-qualified rbreak.
+
 2010-04-22  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Fix crashes on dangling display expressions.

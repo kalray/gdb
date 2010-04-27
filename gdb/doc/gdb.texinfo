@@ -3355,7 +3355,7 @@ See also @ref{Conditions, ,Break Conditions}.
 
 @kindex rbreak
 @cindex regular expression
-@cindex breakpoints in functions matching a regexp
+@cindex breakpoints at functions matching a regexp
 @cindex set breakpoints in many functions
 @item rbreak @var{regex}
 Set breakpoints on all functions matching the regular expression
@@ -3384,6 +3384,19 @@ The @code{rbreak} command can be used to set breakpoints in
 @smallexample
 (@value{GDBP}) rbreak .
 @end smallexample
+
+@item rbreak @var{file}:@var{regex}
+If @code{rbreak} is called with a filename qualification, it limits
+the search for functions matching the given regular expression to the
+specified @var{file}.  This can be used, for example, to set breakpoints on
+every function in a given file:
+
+@smallexample
+(@value{GDBP}) rbreak file.c:.
+@end smallexample
+
+The colon separating the filename qualifier from the regex may
+optionally be surrounded by spaces.
 
 @kindex info breakpoints
 @cindex @code{$_} and @code{info breakpoints}
@@ -14391,6 +14404,59 @@ The part of @var{path} following the initial @file{remote:}
 that happens to be named @file{remote:}, you need to use some equivalent
 variant of the name like @file{./remote:}.}
 
+For targets with an MS-DOS based filesystem, such as MS-Windows and
+SymbianOS, @value{GDBN} tries prefixing a few variants of the target
+absolute file name with @var{path}.  But first, on Unix hosts,
+@value{GDBN} converts all backslash directory separators into forward
+slashes, because the backslash is not a directory separator on Unix:
+
+@smallexample
+  c:\foo\bar.dll @result{} c:/foo/bar.dll
+@end smallexample
+
+Then, @value{GDBN} attempts prefixing the target file name with
+@var{path}, and looks for the resulting file name in the host file
+system:
+
+@smallexample
+  c:/foo/bar.dll @result{} /path/to/sysroot/c:/foo/bar.dll
+@end smallexample
+
+If that does not find the shared library, @value{GDBN} tries removing
+the @samp{:} character from the drive spec, both for convenience, and,
+for the case of the host file system not supporting file names with
+colons:
+
+@smallexample
+  c:/foo/bar.dll @result{} /path/to/sysroot/c/foo/bar.dll
+@end smallexample
+
+This makes it possible to have a system root that mirrors a target
+with more than one drive.  E.g., you may want to setup your local
+copies of the target system shared libraries like so (note @samp{c} vs
+@samp{z}):
+
+@smallexample
+ @file{/path/to/sysroot/c/sys/bin/foo.dll}
+ @file{/path/to/sysroot/c/sys/bin/bar.dll}
+ @file{/path/to/sysroot/z/sys/bin/bar.dll}
+@end smallexample
+
+@noindent
+and point the system root at @file{/path/to/sysroot}, so that
+@value{GDBN} can find the correct copies of both
+@file{c:\sys\bin\foo.dll}, and @file{z:\sys\bin\bar.dll}.
+
+If that still does not find the shared library, @value{GDBN} tries
+removing the whole drive spec from the target file name:
+
+@smallexample
+  c:/foo/bar.dll @result{} /path/to/sysroot/foo/bar.dll
+@end smallexample
+
+This last lookup makes it possible to not care about the drive name,
+if you don't want or need to.
+
 The @code{set solib-absolute-prefix} command is an alias for @code{set
 sysroot}.
 
@@ -14422,6 +14488,55 @@ of shared library symbols.
 @kindex show solib-search-path
 @item show solib-search-path
 Display the current shared library search path.
+
+@cindex DOS file-name semantics of file names.
+@kindex set target-file-system-kind (unix|dos-based|auto)
+@kindex show target-file-system-kind
+@item set target-file-system-kind @var{kind}
+Set assumed file system kind for target reported file names.
+
+Shared library file names as reported by the target system may not
+make sense as is on the system @value{GDBN} is running on.  For
+example, when remote debugging a target that has MS-DOS based file
+system semantics, from a Unix host, the target may be reporting to
+@value{GDBN} a list of loaded shared libraries with file names such as
+@file{c:\Windows\kernel32.dll}.  On Unix hosts, there's no concept of
+drive letters, so the @samp{c:\} prefix is not normally understood as
+indicating an absolute file name, and neither is the backslash
+normally considered a directory separator character.  In that case,
+the native file system would interpret this whole absolute file name
+as a relative file name with no directory components.  This would make
+it impossible to point @value{GDBN} at a copy of the remote target's
+shared libraries on the host using @code{set sysroot}, and impractical
+with @code{set solib-search-path}.  Setting
+@code{target-file-system-kind} to @code{dos-based} tells @value{GDBN}
+to interpret such file names similarly to how the target would, and to
+map them to file names valid on @value{GDBN}'s native file system
+semantics.  The value of @var{kind} can be @code{"auto"}, in addition
+to one of the supported file system kinds.  In that case, @value{GDBN}
+tries to determine the appropriate file system variant based on the
+current target's operating system (@pxref{ABI, ,Configuring the
+Current ABI}).  The supported file system settings are:
+
+@table @code
+@item unix
+Instruct @value{GDBN} to assume the target file system is of Unix
+kind.  Only file names starting the forward slash (@samp{/}) character
+are considered absolute, and the directory separator character is also
+the forward slash.
+
+@item dos-based
+Instruct @value{GDBN} to assume the target file system is DOS based.
+File names starting with either a forward slash, or a drive letter
+followed by a colon (e.g., @samp{c:}), are considered absolute, and
+both the slash (@samp{/}) and the backslash (@samp{\\}) characters are
+considered directory separators.
+
+@item auto
+Instruct @value{GDBN} to use the file system kind associated with the
+target operating system (@pxref{ABI, ,Configuring the Current ABI}).
+This is the default.
+@end table
 @end table
 
 
@@ -19728,6 +19843,7 @@ Python programming language}.  This feature is available only if
 @menu
 * Python Commands::             Accessing Python from @value{GDBN}.
 * Python API::                  Accessing @value{GDBN} from Python.
+* Auto-loading::                Automatically loading Python code.
 @end menu
 
 @node Python Commands
@@ -19805,7 +19921,6 @@ situation, a Python @code{KeyboardInterrupt} exception is thrown.
 @menu
 * Basic Python::                Basic Python Functions.
 * Exception Handling::
-* Auto-loading::                Automatically loading Python code.
 * Values From Inferior::
 * Types In Python::             Python representation of types.
 * Pretty Printing API::         Pretty-printing values.
@@ -19950,53 +20065,6 @@ exception handler will see @code{RuntimeError} or
 message as its value, and the Python call stack backtrace at the
 Python statement closest to where the @value{GDBN} error occured as the
 traceback.
-
-@node Auto-loading
-@subsubsection Auto-loading
-@cindex auto-loading, Python
-
-When a new object file is read (for example, due to the @code{file}
-command, or because the inferior has loaded a shared library),
-@value{GDBN} will look for a file named @file{@var{objfile}-gdb.py},
-where @var{objfile} is the object file's real name, formed by ensuring
-that the file name is absolute, following all symlinks, and resolving
-@code{.} and @code{..}  components.  If this file exists and is
-readable, @value{GDBN} will evaluate it as a Python script.
-
-If this file does not exist, and if the parameter
-@code{debug-file-directory} is set (@pxref{Separate Debug Files}),
-then @value{GDBN} will use for its each separated directory component
-@code{component} the file named @file{@code{component}/@var{real-name}}, where
-@var{real-name} is the object file's real name, as described above.
-
-Finally, if this file does not exist, then @value{GDBN} will look for
-a file named @file{@var{data-directory}/python/auto-load/@var{real-name}}, where
-@var{data-directory} is @value{GDBN}'s data directory (available via
-@code{show data-directory}, @pxref{Data Files}), and @var{real-name}
-is the object file's real name, as described above.
-
-When reading an auto-loaded file, @value{GDBN} sets the ``current
-objfile''.  This is available via the @code{gdb.current_objfile}
-function (@pxref{Objfiles In Python}).  This can be useful for
-registering objfile-specific pretty-printers.
-
-The auto-loading feature is useful for supplying application-specific
-debugging commands and scripts.  You can enable or disable this
-feature, and view its current state.
-
-@table @code
-@kindex maint set python auto-load
-@item maint set python auto-load [yes|no]
-Enable or disable the Python auto-loading feature.
-
-@kindex maint show python auto-load
-@item maint show python auto-load
-Show whether Python auto-loading is enabled or disabled.
-@end table
-
-@value{GDBN} does not track which files it has already auto-loaded.
-So, your @samp{-gdb.py} file should take care to ensure that it may be
-evaluated multiple times without error.
 
 @node Values From Inferior
 @subsubsection Values From Inferior
@@ -21626,6 +21694,162 @@ resolve this to the lazy string's character type, use the type's
 @code{target} method.  @xref{Types In Python}.  This attribute is not
 writable.
 @end defivar
+
+@node Auto-loading
+@subsection Auto-loading
+@cindex auto-loading, Python
+
+When a new object file is read (for example, due to the @code{file}
+command, or because the inferior has loaded a shared library),
+@value{GDBN} will look for Python support scripts in several ways:
+@file{@var{objfile}-gdb.py} and @code{.debug_gdb_scripts} section.
+
+@menu
+* objfile-gdb.py file::         The @file{@var{objfile}-gdb.py} file
+* .debug_gdb_scripts section::  The @code{.debug_gdb_scripts} section
+* Which flavor to choose?::
+@end menu
+
+The auto-loading feature is useful for supplying application-specific
+debugging commands and scripts.
+
+Auto-loading can be enabled or disabled.
+
+@table @code
+@kindex maint set python auto-load
+@item maint set python auto-load [yes|no]
+Enable or disable the Python auto-loading feature.
+
+@kindex maint show python auto-load
+@item maint show python auto-load
+Show whether Python auto-loading is enabled or disabled.
+@end table
+
+When reading an auto-loaded file, @value{GDBN} sets the
+@dfn{current objfile}.  This is available via the @code{gdb.current_objfile}
+function (@pxref{Objfiles In Python}).  This can be useful for
+registering objfile-specific pretty-printers.
+
+@node objfile-gdb.py file
+@subsubsection The @file{@var{objfile}-gdb.py} file
+@cindex @file{@var{objfile}-gdb.py}
+
+When a new object file is read, @value{GDBN} looks for
+a file named @file{@var{objfile}-gdb.py},
+where @var{objfile} is the object file's real name, formed by ensuring
+that the file name is absolute, following all symlinks, and resolving
+@code{.} and @code{..} components.  If this file exists and is
+readable, @value{GDBN} will evaluate it as a Python script.
+
+If this file does not exist, and if the parameter
+@code{debug-file-directory} is set (@pxref{Separate Debug Files}),
+then @value{GDBN} will look for @var{real-name} in all of the
+directories mentioned in the value of @code{debug-file-directory}.
+
+Finally, if this file does not exist, then @value{GDBN} will look for
+a file named @file{@var{data-directory}/python/auto-load/@var{real-name}}, where
+@var{data-directory} is @value{GDBN}'s data directory (available via
+@code{show data-directory}, @pxref{Data Files}), and @var{real-name}
+is the object file's real name, as described above.
+
+@value{GDBN} does not track which files it has already auto-loaded this way.
+@value{GDBN} will load the associated script every time the corresponding
+@var{objfile} is opened.
+So your @file{-gdb.py} file should be careful to avoid errors if it
+is evaluated more than once.
+
+@node .debug_gdb_scripts section
+@subsubsection The @code{.debug_gdb_scripts} section
+@cindex @code{.debug_gdb_scripts} section
+
+For systems using file formats like ELF and COFF,
+when @value{GDBN} loads a new object file
+it will look for a special section named @samp{.debug_gdb_scripts}.
+If this section exists, its contents is a list of names of scripts to load.
+
+@value{GDBN} will look for each specified script file first in the
+current directory and then along the source search path
+(@pxref{Source Path, ,Specifying Source Directories}),
+except that @file{$cdir} is not searched, since the compilation
+directory is not relevant to scripts.
+
+Entries can be placed in section @code{.debug_gdb_scripts} with,
+for example, this GCC macro:
+
+@example
+/* Note: The "MS" section flags are to remote duplicates.  */
+#define DEFINE_GDB_SCRIPT(script_name) \
+  asm("\
+.pushsection \".debug_gdb_scripts\", \"MS\",@@progbits,1\n\
+.byte 1\n\
+.asciz \"" script_name "\"\n\
+.popsection \n\
+");
+@end example
+
+@noindent
+Then one can reference the macro in a header or source file like this:
+
+@example
+DEFINE_GDB_SCRIPT ("my-app-scripts.py")
+@end example
+
+The script name may include directories if desired.
+
+If the macro is put in a header, any application or library
+using this header will get a reference to the specified script.
+
+@node Which flavor to choose?
+@subsubsection Which flavor to choose?
+
+Given the multiple ways of auto-loading Python scripts, it might not always
+be clear which one to choose.  This section provides some guidance.
+
+Benefits of the @file{-gdb.py} way:
+
+@itemize @bullet
+@item
+Can be used with file formats that don't support multiple sections.
+
+@item
+Ease of finding scripts for public libraries.
+
+Scripts specified in the @code{.debug_gdb_scripts} section are searched for
+in the source search path.
+For publicly installed libraries, e.g., @file{libstdc++}, there typically
+isn't a source directory in which to find the script.
+
+@item
+Doesn't require source code additions.
+@end itemize
+
+Benefits of the @code{.debug_gdb_scripts} way:
+
+@itemize @bullet
+@item
+Works with static linking.
+
+Scripts for libraries done the @file{-gdb.py} way require an objfile to
+trigger their loading.  When an application is statically linked the only
+objfile available is the executable, and it is cumbersome to attach all the
+scripts from all the input libraries to the executable's @file{-gdb.py} script.
+
+@item
+Works with classes that are entirely inlined.
+
+Some classes can be entirely inlined, and thus there may not be an associated
+shared library to attach a @file{-gdb.py} script to.
+
+@item
+Scripts needn't be copied out of the source tree.
+
+In some circumstances, apps can be built out of large collections of internal
+libraries, and the build infrastructure necessary to install the
+@file{-gdb.py} scripts in a place where @value{GDBN} can find them is
+cumbersome.  It may be easier to specify the scripts in the
+@code{.debug_gdb_scripts} section as relative paths, and add a path to the
+top of the source tree to the source search path.
+@end itemize
 
 @node Interpreters
 @chapter Command Interpreters
@@ -29428,6 +29652,16 @@ This command forces @value{GDBN} to flush its internal register cache.
 Print a dump of all known object files.  For each object file, this
 command prints its name, address in memory, and all of its psymtabs
 and symtabs.
+
+@kindex maint print section-scripts
+@cindex info for known .debug_gdb_scripts-loaded scripts
+@item maint print section-scripts [@var{regexp}]
+Print a dump of scripts specified in the @code{.debug_gdb_section} section.
+If @var{regexp} is specified, only print scripts loaded by object files
+matching @var{regexp}.
+For each script, this command prints its name as specified in the objfile,
+and the full path if known.
+@xref{.debug_gdb_scripts section}.
 
 @kindex maint print statistics
 @cindex bcache statistics
