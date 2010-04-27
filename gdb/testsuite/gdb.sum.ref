@@ -1,4 +1,4 @@
-Test Run By friss on Mon Apr 12 09:28:55 2010
+Test Run By friss on Tue Apr 27 22:00:33 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -2593,6 +2593,10 @@ FAIL: gdb.base/step-break.exp: next 2 (3)
 PASS: gdb.base/step-break.exp: next 2 (4)
 FAIL: gdb.base/step-break.exp: next 2 (5)
 PASS: gdb.base/step-break.exp: next 2 (6)
+Running ../../../gdb/testsuite/gdb.base/pr10179.exp ...
+PASS: gdb.base/pr10179.exp: rbreak foo.*
+PASS: gdb.base/pr10179.exp: rbreak pr10179-a.c:foo.*
+PASS: gdb.base/pr10179.exp: rbreak pr10179-a.c : .*
 Running ../../../gdb/testsuite/gdb.base/return.exp ...
 PASS: gdb.base/return.exp: simple return
 PASS: gdb.base/return.exp: break func2
@@ -3635,6 +3639,12 @@ PASS: gdb.base/charset.exp: typedef to wchar_t
 PASS: gdb.base/charset.exp: undefined concatenation of UTF-16 and UTF-32
 UNSUPPORTED: gdb.base/charset.exp: python support is disabled
 PASS: gdb.base/charset.exp: EVAL_SKIP cleanup handling regression test
+PASS: gdb.base/charset.exp: Assign String16 with prefix u
+FAIL: gdb.base/charset.exp: Display String String16 with x/hs
+PASS: gdb.base/charset.exp: Assign String32 with prefix U
+FAIL: gdb.base/charset.exp: Display String String32 with x/ws
+PASS: gdb.base/charset.exp: Assign String32 with prefix L
+FAIL: gdb.base/charset.exp: Display String String32 with x/ws
 Running ../../../gdb/testsuite/gdb.base/mips_pro.exp ...
 PASS: gdb.base/mips_pro.exp: backtrace
 Running ../../../gdb/testsuite/gdb.base/page.exp ...
@@ -4295,6 +4305,8 @@ PASS: gdb.base/completion.exp: complete 'info func marke'
 PASS: gdb.base/completion.exp: complete 'set follow-fork-mode'
 PASS: gdb.base/completion.exp: Completing non-existing component
 PASS: gdb.base/completion.exp: Completing non-existing component #2
+PASS: gdb.base/completion.exp: test non-deprecated completion
+PASS: gdb.base/completion.exp: test deprecated completion
 Running ../../../gdb/testsuite/gdb.base/constvars.exp ...
 PASS: gdb.base/constvars.exp: up from marker1
 PASS: gdb.base/constvars.exp: ptype qux1
@@ -6355,6 +6367,10 @@ gdb compile failed, /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1
 /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: warning: section sect2 of /work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.base/dup-sect0.o attached by default to output section sect2
 /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
 UNTESTED: gdb.base/dup-sect.exp: dup-sect.exp
+Running ../../../gdb/testsuite/gdb.base/solib-corrupted.exp ...
+PASS: gdb.base/solib-corrupted.exp: normal list
+XFAIL: gdb.base/solib-corrupted.exp: make solibs looping
+UNTESTED: gdb.base/solib-corrupted.exp: solib-corrupted.exp
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
 XFAIL: gdb.base/callexit.exp: This target can not call functions (PRMS 2416)
 Running ../../../gdb/testsuite/gdb.base/reread.exp ...
@@ -6409,6 +6425,10 @@ Running ../../../gdb/testsuite/gdb.base/source.exp ...
 PASS: gdb.base/source.exp: script contains error
 PASS: gdb.base/source.exp: source -v
 PASS: gdb.base/source.exp: source after -v
+PASS: gdb.base/source.exp: dir ../../../gdb/testsuite/gdb.base
+PASS: gdb.base/source.exp: source -s
+PASS: gdb.base/source.exp: source -s -v
+PASS: gdb.base/source.exp: source -v -s
 Running ../../../gdb/testsuite/gdb.base/prologue.exp ...
 Running ../../../gdb/testsuite/gdb.base/gdb1250.exp ...
 PASS: gdb.base/gdb1250.exp: backtrace from abort
@@ -7064,6 +7084,10 @@ PASS: gdb.base/watch-read.exp: only read watchpoint triggers when value doesn't 
 Running ../../../gdb/testsuite/gdb.base/foll-vfork.exp ...
 Running ../../../gdb/testsuite/gdb.base/annota3.exp ...
 Running ../../../gdb/testsuite/gdb.base/detach.exp ...
+Running ../../../gdb/testsuite/gdb.base/gdb11531.exp ...
+PASS: gdb.base/gdb11531.exp: Set watchpoint
+PASS: gdb.base/gdb11531.exp: watchpoint variable triggers at next
+PASS: gdb.base/gdb11531.exp: watchpoint variable triggers at continue
 Running ../../../gdb/testsuite/gdb.base/ptr-typedef.exp ...
 PASS: gdb.base/ptr-typedef.exp: print foo_ptr
 PASS: gdb.base/ptr-typedef.exp: print foz_ptr
@@ -7106,14 +7130,14 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 
 		=== gdb Summary ===
 
-# of expected passes		6698
-# of unexpected failures	38
+# of expected passes		6714
+# of unexpected failures	41
 # of unexpected successes	2
-# of expected failures		42
+# of expected failures		43
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		7
+# of untested testcases		8
 # of unsupported tests		17
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100411-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100427-cvs -nw -nx 
 
