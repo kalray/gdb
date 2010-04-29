@@ -37,8 +37,8 @@ static bundle_t bundle_insn[ISSUES];
 static unsigned int opcnt = 0;
 static unsigned int opindex = 0;
 
-void reassemble_bundle(void);
-void reassemble_bundle(void) {
+int reassemble_bundle(void);
+int reassemble_bundle(void) {
     int i;
     int insncnt = 0;
     int immxcnt = 0;
@@ -55,7 +55,7 @@ void reassemble_bundle(void) {
 
     // First separate instructions and immx
     for(i=0; i < opcnt; i++){
-        if((GETSTEERING(bundle_ops[i]) == BCU_STEER) && (i > 0)){ // op has BCU steering and is not in slot 0 => IMMX
+        if((GETSTEERING(bundle_ops[i]) == BCU_STEER) && (i > 0) && (immxcnt < MAXIMMX)){ // op has BCU steering and is not in slot 0 => IMMX
             bundle_immx[immxcnt] = bundle_ops[i];
             immxcnt++;
         } else {
@@ -74,6 +74,15 @@ void reassemble_bundle(void) {
             break; // No more // bit, reached the end.
         }
     }
+
+    // Do some check. Useful if trying to disass data section, where bundles have no meaning
+    if(  (seen[BCU_STEER] > (MAXIMMX + 1))  // One BCU and MAXIMMX is the maximum BCU_STEER authorized
+       ||(seen[ALU_STEER] > 4)              // 2 ALU + 2 LITE
+       || (seen[MAU_STEER] > 1)             // 1 MAU
+       || (seen[LSU_STEER] > 1)){           // 1 LSU
+        return 1;
+    }
+
     real_alu = (seen[ALU_STEER] > 2) ? 2 : seen[ALU_STEER]; // See how many real ALU are used
     real_alu -= has_opxd;
 
@@ -99,8 +108,8 @@ void reassemble_bundle(void) {
                     bundle_insn[seen[BCU_STEER] + real_alu + seen[MAU_STEER]].insn[1] = bundle_immx[i];
                     bundle_insn[seen[BCU_STEER] + real_alu + seen[MAU_STEER]].len = 2;
                 } else { // LITE insn on LSU has to be the last ALU insn
-                    bundle_insn[seen[BCU_STEER] + seen[ALU_STEER] - 1 + seen[MAU_STEER]].insn[1] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER] + seen[ALU_STEER] - 1 + seen[MAU_STEER]].len = 2;
+                    bundle_insn[seen[BCU_STEER] + seen[ALU_STEER] - 1 - has_opxd + seen[MAU_STEER]].insn[1] = bundle_immx[i];
+                    bundle_insn[seen[BCU_STEER] + seen[ALU_STEER] - 1 - has_opxd + seen[MAU_STEER]].len = 2;
                 }
                 break;
             case MAU_EXU:
@@ -116,6 +125,7 @@ void reassemble_bundle(void) {
     }
 
     opcnt = insncnt;
+    return 0;
 }
 
 
@@ -131,6 +141,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int readsofar = 0;
   int opt_pretty = 0;
   int found = 0;
+  int invalid_bundle = 0;
 
 //  flagword elf_private_flags = 0;
 //  int k1_core = 0;
@@ -185,7 +196,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
           }
           opcnt++;
       } while (k1_parallel_fld(bundle_ops[opcnt-1]) && opcnt < MAXBUNDLESIZE);
-      reassemble_bundle();
+      invalid_bundle = reassemble_bundle();
   }
 
   insn = &(bundle_insn[opindex]);
@@ -197,9 +208,15 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
+      
+      if(invalid_bundle){
+          break;
+      }
+
       if(op->codewords != insn->len){
           continue;
       }
+
 
       for(i=0; i < op->codewords; i++) {
           if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
@@ -281,6 +298,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1_signed32M:
                   case Immediate_k1_signed5M:
                   case Immediate_k1_unsigned32L:
+                  case Immediate_k1_unsigned32:
                   case Immediate_k1_extension22:
                   case Immediate_k1_eventmask:
                   case Immediate_k1_flagmask:
