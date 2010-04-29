@@ -1941,9 +1941,19 @@ proc gdb_compile {source dest type options} {
 
     regsub "\[\r\n\]*$" "$result" "" result;
     regsub "^\[\r\n\]*" "$result" "" result;
-    regsub "^!!! DevWarn.*" "$result" "" result;
-    regsub ".*space repeat count is zero.*" "$result" "" result;
 
+    set lines [split $result "\n"]
+    set result ""
+    ## Iterate over the lines
+    foreach line $lines {
+	regsub "^!!! DevWarn.+" "$line" "" line;
+	regsub ".*Assembler messages:.*" "$line" "" line;
+	regsub ".*space repeat count is zero.*" "$line" "" line;
+	if { $line != "" } {
+	    lappend result $line
+	}
+    }
+    set result [join $result "\n"]
     
     if {[lsearch $options quiet] < 0} {
 	# We shall update this on a per language basis, to avoid
