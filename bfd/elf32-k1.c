@@ -84,6 +84,140 @@ elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym)
   return sym->name && sym->name[0] == 'L' && sym->name[1] == '?';
 }
 
+/* Copied from elf32-mt.c as this implementation seemd the most clean,
+   simple and generic. */
+static bfd_boolean
+k1_elf_relocate_section
+    (bfd *                   output_bfd ATTRIBUTE_UNUSED,
+     struct bfd_link_info *  info,
+     bfd *                   input_bfd,
+     asection *              input_section,
+     bfd_byte *              contents,
+     Elf_Internal_Rela *     relocs,
+     Elf_Internal_Sym *      local_syms,
+     asection **             local_sections)
+{
+  Elf_Internal_Shdr *           symtab_hdr;
+  struct elf_link_hash_entry ** sym_hashes;
+  Elf_Internal_Rela *           rel;
+  Elf_Internal_Rela *           relend;
+
+  symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
+  sym_hashes = elf_sym_hashes (input_bfd);
+  relend     = relocs + input_section->reloc_count;
+
+  for (rel = relocs; rel < relend; rel ++)
+    {
+      reloc_howto_type *           howto;
+      unsigned long                r_symndx;
+      Elf_Internal_Sym *           sym;
+      asection *                   sec;
+      struct elf_link_hash_entry * h;
+      bfd_vma                      relocation;
+      bfd_reloc_status_type        r;
+      const char *                 name = NULL;
+      int                          r_type;
+      
+      r_type = ELF32_R_TYPE (rel->r_info);
+
+      r_symndx = ELF32_R_SYM (rel->r_info);
+
+      howto  = elf32_k1_howto_table + ELF32_R_TYPE (rel->r_info);
+      h      = NULL;
+      sym    = NULL;
+      sec    = NULL;
+      
+      if (r_symndx < symtab_hdr->sh_info)
+	{
+	  sym = local_syms + r_symndx;
+	  sec = local_sections [r_symndx];
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
+	  
+	  name = bfd_elf_string_from_elf_section
+	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
+	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	}
+      else
+	{
+	  bfd_boolean unresolved_reloc;
+	  bfd_boolean warned;
+
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned);
+
+	  name = h->root.root.string;
+	}
+
+      if (sec != NULL && elf_discarded_section (sec))
+	{
+	  /* For relocs against symbols from removed linkonce sections,
+	     or sections discarded by a linker script, we just want the
+	     section contents zeroed.  Avoid any special processing.  */
+	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
+	  rel->r_info = 0;
+	  rel->r_addend = 0;
+	  continue;
+	}
+
+      if (info->relocatable)
+	continue;
+
+      /* Finally, the sole K1-specific part.  */
+      switch (r_type)
+        {
+	    /* Handle K1 specific things here */
+	default:
+          r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+					contents, rel->r_offset, 
+					relocation, rel->r_addend);
+          break;
+        }
+
+
+      if (r != bfd_reloc_ok)
+	{
+	  const char * msg = (const char *) NULL;
+
+	  switch (r)
+	    {
+	    case bfd_reloc_overflow:
+	      r = info->callbacks->reloc_overflow
+		(info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
+		 input_bfd, input_section, rel->r_offset);
+	      break;
+	      
+	    case bfd_reloc_undefined:
+	      r = info->callbacks->undefined_symbol
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
+	      break;
+	      
+	    case bfd_reloc_outofrange:
+	      msg = _("internal error: out of range error");
+	      break;
+
+	    case bfd_reloc_dangerous:
+	      msg = _("internal error: dangerous relocation");
+	      break;
+
+	    default:
+	      msg = _("internal error: unknown error");
+	      break;
+	    }
+
+	  if (msg)
+	    r = info->callbacks->warning
+	      (info, msg, name, input_bfd, input_section, rel->r_offset);
+
+	  if (! r)
+	    return FALSE;
+	}
+    }
+
+  return TRUE;
+}
+
 #define TARGET_LITTLE_SYM         bfd_elf32_k1_vec
 #define TARGET_LITTLE_NAME        "elf32-k1"
 #define ELF_ARCH                  bfd_arch_k1
@@ -95,6 +229,7 @@ elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym)
 #define bfd_elf32_bfd_is_target_special_symbol  elf32_k1_is_target_special_symbol
 
 #define elf_backend_can_gc_sections       1
+#define elf_backend_relocate_section      k1_elf_relocate_section
 
 #include "elf32-target.h"
 

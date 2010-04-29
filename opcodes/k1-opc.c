@@ -35,7 +35,7 @@ k1_Register k1_registers[] = {
   { 1, "$spc"},
   { 2, "$ps"},
   { 3, "$sps"},
-  { 4, "$ea"},
+  { 4, "$ta"},
   { 5, "$ev"},
   { 6, "$is"},
   { 7, "$iv"},
@@ -67,7 +67,7 @@ k1_Register k1_registers[] = {
   { 33, "$t1"},
   { 34, "$t0r"},
   { 35, "$t1r"},
-  { 36, "$tc"},
+  { 36, "$tcr"},
   { 37, "$s37"},
   { 38, "$s38"},
   { 39, "$s39"},
@@ -256,13 +256,14 @@ k1_Register k1_registers[] = {
   { 62, "$w60"},
   { 63, "$w62"},
 };
+static k1bfield bits_9_8_bits_7_5 = {"bits_9_8_bits_7_5", Immediate_k1_unsigned5, 5, 0, 0, 2, {   { 2, 3, 14 },   { 3, 0, 24 }, } };
 static k1bfield bytea = {"bytea", Modifier_k1_bytea, 2, 0, 0, 1, {   { 2, 0, 22 }, } };
 static k1bfield clrmask = {"clrmask", Immediate_k1_bfxmask, 8, 0, 0, 1, {   { 8, 0, 6 }, } };
 static k1bfield comparison = {"comparison", Modifier_k1_comparison, 4, 0, 0, 1, {   { 4, 0, 24 }, } };
 static k1bfield condition = {"condition", Modifier_k1_condition, 3, 0, 0, 1, {   { 3, 0, 24 }, } };
 static k1bfield eventmask = {"eventmask", Immediate_k1_eventmask, 6, 0, 0, 1, {   { 6, 0, 6 }, } };
 static k1bfield flagmask = {"flagmask", Immediate_k1_flagmask, 6, 0, 0, 1, {   { 6, 0, 0 }, } };
-static k1bfield floatcomp = {"floatcomp", Modifier_k1_floatcomp, 3, 0, 0, 1, {   { 3, 0, 12 }, } };
+static k1bfield floatcomp = {"floatcomp", Modifier_k1_floatcomp, 3, 0, 0, 1, {   { 3, 0, 24 }, } };
 static k1bfield highbit = {"highbit", Immediate_k1_unsigned5, 5, 0, 0, 1, {   { 5, 0, 11 }, } };
 static k1bfield lowbit = {"lowbit", Immediate_k1_unsigned5, 5, 0, 0, 1, {   { 5, 0, 6 }, } };
 static k1bfield lsucond = {"lsucond", Modifier_k1_condition, 3, 0, 0, 1, {   { 3, 0, 12 }, } };
@@ -295,916 +296,1192 @@ static k1bfield sysnumber = {"sysnumber", Immediate_k1_sysnumber, 12, 0, 0, 1, {
 static k1bfield systems = {"systems", RegClass_k1_systemReg, 6, 0, 0, 1, {   { 6, 0, 0 }, } };
 static k1bfield systemt = {"systemt", RegClass_k1_systemReg, 6, 0, 0, 1, {   { 6, 0, 18 }, } };
 static k1bfield unsigned6 = {"unsigned6", Immediate_k1_unsigned6, 6, 0, 0, 1, {   { 6, 0, 6 }, } };
+static k1bfield upper22l_bits_9_8_bits_7_5_signed5m = {"upper22l_bits_9_8_bits_7_5_signed5m", Immediate_k1_unsigned32, 32, 0, 0, 4, {   { 22, 10, 64 },   { 2, 8, 14 },   { 3, 5, 24 },   { 5, 0, 86 }, } };
 static k1bfield upper22l_lower10l = {"upper22l_lower10l", Immediate_k1_unsigned32L, 32, 0, 0, 2, {   { 22, 10, 64 },   { 10, 0, 6 }, } };
+static k1bfield upper22_bits_9_8_bits_7_5_lower5 = {"upper22_bits_9_8_bits_7_5_lower5", Immediate_k1_unsigned32, 32, 0, 0, 4, {   { 22, 10, 32 },   { 2, 8, 14 },   { 3, 5, 24 },   { 5, 0, 54 }, } };
 static k1bfield upper22_lower10 = {"upper22_lower10", Immediate_k1_signed32, 32, 0, k1SIGNED, 2, {   { 22, 10, 32 },   { 10, 0, 6 }, } };
 static k1bfield upper27m_lower5m = {"upper27m_lower5m", Immediate_k1_signed32M, 32, 0, k1SIGNED, 2, {   { 27, 5, 96 },   { 5, 0, 86 }, } };
 
 BundleType bundle_types[] = {
-#define Bundle_k1_LITE_X_ALU_X_MAU_X_LSU_X_0_4 0
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_LITE_X_0_4 1
+#define Bundle_k1_LITE_ALU_MAU_LITE_X_0_4 0
   { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LITE_0_4 2
+#define Bundle_k1_ALU_ALU_LITE_0_4 1
   { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LITE_LSU_X_LITE_0_4 3
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_LSU_0_4 4
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_LITE_X_0_4 5
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_MAU_0_4 6
+#define Bundle_k1_BCU_MAU_0_4 2
   { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LITE_0_4 7
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_X_MAU_LSU_0_4 8
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_LSU_X_0_4 9
+#define Bundle_k1_LITE_ALU_LITE_X_0_4 3
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_LSU_X_0_4 4
   { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_X_LITE_0_4 10
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LITE_0_4 11
+#define Bundle_k1_LITE_ALU_X_LSU_LITE_0_4 5
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LITE_0_4 6
   { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_LSU_0_4 12
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_MAU_X_0_4 13
+#define Bundle_k1_LITE_LITE_X_LITE_X_0_4 7
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LITE_LITE_X_0_4 8
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_MAU_X_0_4 9
   { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_MAU_LSU_0_4 14
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_LITE_LSU_X_LITE_X_0_4 15
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_0_4 16
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_LSU_0_4 17
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_LITE_LSU_LITE_X_0_4 18
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LITE_LITE_X_0_4 19
+#define Bundle_k1_ALUD_Z_LSU_X_LITE_0_4 10
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LSU_X_LITE_X_0_4 11
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LITE_LITE_X_0_4 12
   { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_X_LITE_X_0_4 20
+#define Bundle_k1_ALU_ALU_MAU_X_LITE_X_0_4 13
   { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_MAU_LSU_X_0_4 21
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_LSU_X_0_4 22
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_0_4 23
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LSU_0_4 24
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LITE_0_4 25
+#define Bundle_k1_LITE_X_LSU_LITE_X_0_4 14
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LITE_0_4 15
   { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_0_4 26
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_X_LITE_X_LSU_X_LITE_X_0_4 27
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_LSU_0_4 28
-  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_LSU_X_0_4 29
+#define Bundle_k1_LITE_X_ALU_X_LSU_X_LITE_X_0_4 16
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LSU_X_0_4 17
   { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_LITE_0_4 30
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LITE_LITE_X_0_4 31
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_LITE_0_4 32
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LSU_0_4 33
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_LITE_X_0_4 34
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LSU_X_LITE_X_0_4 35
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_MAU_X_0_4 36
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_LITE_0_4 37
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_LSU_0_4 38
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LSU_X_0_4 39
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_0_4 40
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_MAU_X_0_4 41
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LITE_LSU_X_LITE_X_0_4 42
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LSU_X_0_4 43
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_MAU_LSU_X_0_4 44
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_X_LITE_X_0_4 45
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LITE_X_0_4 46
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_X_LSU_0_4 47
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_LSU_0_4 48
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_LITE_X_0_4 49
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_LSU_X_0_4 50
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_LITE_X_0_4 51
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_LSU_X_0_4 52
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_LITE_X_0_4 53
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LSU_X_LITE_X_0_4 54
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALUD_MAU_0_4 55
-  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LITE_LSU_LITE_X_0_4 56
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LITE_0_4 57
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_LSU_0_4 58
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LSU_0_4 59
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_LITE_LSU_X_LITE_0_4 60
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LSU_LITE_0_4 61
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_LSU_X_0_4 62
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_LSU_0_4 63
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_LSU_X_0_4 64
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LSU_LITE_X_0_4 65
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_LSU_X_0_4 66
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_0_4 67
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LITE_LITE_0_4 68
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_0_4 69
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_LSU_X_0_4 70
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_0_4 71
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_MAU_0_4 72
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_LSU_X_0_4 73
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_X_LITE_0_4 74
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_MAU_LSU_X_0_4 75
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LITE_X_0_4 76
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_0_4 77
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_LSU_X_0_4 78
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_X_LSU_X_0_4 79
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_MAU_0_4 80
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_MAU_0_4 81
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LSU_0_4 82
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_LSU_X_0_4 83
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_LSU_0_4 84
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_MAU_X_0_4 85
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_LSU_0_4 86
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_MAU_0_4 87
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_MAU_X_LSU_0_4 88
-  { 2, 0, 4, 0, { Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_X_LSU_X_0_4 89
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_X_LITE_X_0_4 90
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LSU_LITE_0_4 91
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_LITE_X_0_4 92
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_0_4 93
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_X_LITE_X_0_4 94
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_LSU_X_0_4 95
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LITE_X_LITE_X_0_4 96
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_0_4 97
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_MAU_X_0_4 98
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_0_4 99
-  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LITE_X_LITE_X_0_4 100
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_MAU_X_LSU_X_0_4 101
-  { 2, 0, 4, 0, { Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_0_4 102
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_MAU_X_0_4 103
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_0_4 104
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_LITE_X_0_4 105
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LITE_X_LITE_X_0_4 106
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LSU_X_0_4 107
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LITE_LITE_X_0_4 108
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_LSU_X_0_4 109
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_X_LSU_0_4 110
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_LSU_0_4 111
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_LITE_X_0_4 112
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_MAU_LSU_X_0_4 113
-  { 2, 0, 4, 0, { Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_LSU_X_0_4 114
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LITE_X_LSU_X_LITE_X_0_4 115
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_LITE_X_LSU_LITE_X_0_4 116
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_MAU_0_4 117
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_MAU_0_4 118
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_X_LITE_X_0_4 119
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_LSU_0_4 120
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_0_4 121
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_0_4 122
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_LSU_0_4 123
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_MAU_X_LSU_X_0_4 124
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LITE_LSU_X_LITE_X_0_4 125
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_MAU_LSU_X_0_4 126
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_LSU_0_4 127
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_LSU_X_0_4 128
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_0_4 129
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_MAU_LSU_X_0_4 130
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_MAU_X_0_4 131
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_MAU_0_4 132
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_0_4 133
-  { 1, 0, 4, 0, { Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_MAU_0_4 134
-  { 1, 0, 4, 0, { Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_LSU_0_4 135
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_0_4 136
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_0_4 137
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_0_4 138
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_0_4 139
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_LSU_X_0_4 140
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_MAU_X_LSU_0_4 141
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_MAU_LSU_0_4 142
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_X_LITE_X_0_4 143
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_LSU_0_4 144
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_X_LSU_0_4 145
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LSU_0_4 146
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_0_4 147
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_BCU_MAU_LSU_0_4 148
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_MAU_X_0_4 149
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_X_LITE_0_4 150
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_MAU_X_LSU_X_0_4 151
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_X_0_4 152
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_0_4 153
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_X_0_4 154
-  { 1, 0, 4, 0, { Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LITE_X_0_4 155
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_LSU_X_0_4 156
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LSU_LITE_X_0_4 157
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_MAU_0_4 158
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_LITE_LSU_LITE_0_4 159
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_LSU_0_4 160
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_MAU_X_LSU_X_0_4 161
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_LSU_0_4 162
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_MAU_0_4 163
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_X_LSU_X_0_4 164
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LSU_0_4 165
-  { 1, 0, 4, 0, { Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_LITE_X_0_4 166
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LSU_LITE_X_0_4 167
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LSU_0_4 168
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_LSU_0_4 169
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_LITE_X_0_4 170
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_LSU_0_4 171
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LSU_X_LITE_0_4 172
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_LSU_X_0_4 173
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_LSU_0_4 174
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_MAU_X_LSU_0_4 175
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_MAU_X_LSU_0_4 176
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LITE_LSU_LITE_0_4 177
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_MAU_X_LSU_0_4 178
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_MAU_X_0_4 179
-  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_LITE_0_4 180
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_0_4 181
-  { 1, 0, 4, 0, { Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_0_4 182
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_LITE_0_4 183
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_LITE_X_0_4 184
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_MAU_X_LSU_0_4 185
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_LSU_0_4 186
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_0_4 187
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_ALL_0_4 188
-  { 1, 0, 4, 0, { Bundling_k1_ALL }, { -1 } }, 
-#define Bundle_k1_ALU_X_MAU_X_LSU_X_0_4 189
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LSU_X_LITE_X_0_4 190
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_LITE_X_0_4 191
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_LSU_0_4 192
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LITE_LITE_X_0_4 193
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_MAU_LSU_X_0_4 194
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LSU_0_4 195
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_LSU_0_4 196
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_X_0_4 197
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LITE_X_0_4 198
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LITE_LITE_0_4 199
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_X_LSU_X_0_4 200
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_X_LSU_0_4 201
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_LSU_0_4 202
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_0_4 203
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_LSU_X_0_4 204
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LSU_X_0_4 205
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LSU_X_LITE_0_4 206
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_0_4 207
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_MAU_X_0_4 208
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_0_4 209
-  { 1, 0, 4, 0, { Bundling_k1_ALUD_Z }, { -1 } }, 
-#define Bundle_k1_ALUD_LSU_0_4 210
-  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_MAU_LSU_0_4 211
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_MAU_LSU_0_4 212
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_MAU_LSU_0_4 213
-  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LSU_X_0_4 214
-  { 1, 0, 4, 0, { Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_MAU_LSU_X_0_4 215
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_0_4 216
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_MAU_X_LSU_X_0_4 217
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_0_4 218
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_LITE_X_0_4 219
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LSU_0_4 220
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_MAU_LSU_X_0_4 221
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_0_4 222
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_LITE_0_4 223
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_MAU_X_LSU_0_4 224
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_LITE_LITE_0_4 225
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LSU_LITE_0_4 226
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_X_LSU_X_0_4 227
-  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_LSU_X_0_4 228
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_LITE_X_0_4 229
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_X_LSU_X_0_4 230
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_X_0_4 231
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_LITE_X_0_4 232
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_X_0_4 233
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_MAU_LSU_0_4 234
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_LITE_0_4 235
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_MAU_LSU_0_4 236
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_MAU_0_4 237
-  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_X_LITE_X_0_4 238
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LSU_X_0_4 239
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_LITE_0_4 240
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_LITE_X_0_4 241
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_MAU_0_4 242
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LSU_X_0_4 243
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_MAU_X_LSU_X_0_4 244
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_LITE_0_4 245
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_MAU_X_LSU_0_4 246
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LSU_X_LITE_0_4 247
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_MAU_LSU_0_4 248
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_LSU_0_4 249
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_LITE_0_4 250
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_MAU_LSU_0_4 251
-  { 2, 0, 4, 0, { Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_MAU_LSU_X_0_4 252
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_X_0_4 253
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LITE_LITE_X_0_4 254
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_X_LITE_0_4 255
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_0_4 256
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_MAU_LSU_X_0_4 257
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_0_4 258
-  { 1, 0, 4, 0, { Bundling_k1_ALUD_Y }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LSU_LITE_X_0_4 259
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LITE_X_0_4 260
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_MAU_X_LSU_X_0_4 261
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_LSU_X_0_4 262
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LSU_X_0_4 263
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_0_4 264
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_MAU_0_4 265
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_X_LSU_X_0_4 266
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LSU_X_LITE_0_4 267
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_LSU_0_4 268
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_LITE_X_LSU_X_LITE_X_0_4 269
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LITE_LITE_0_4 270
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_LSU_X_0_4 271
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_X_LSU_0_4 272
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_MAU_X_0_4 273
-  { 1, 0, 4, 0, { Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_X_0_4 274
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_LSU_0_4 275
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_MAU_LSU_0_4 276
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LITE_0_4 277
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_X_0_4 278
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_LSU_X_0_4 279
-  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_MAU_LSU_0_4 280
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_LITE_0_4 281
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LITE_LSU_LITE_0_4 282
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_0_4 283
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_MAU_LSU_0_4 284
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LSU_0_4 285
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_MAU_LSU_X_0_4 286
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_LSU_X_0_4 287
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_MAU_X_LSU_X_0_4 288
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_LSU_X_0_4 289
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_X_LSU_X_0_4 290
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_LSU_0_4 291
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LITE_LITE_0_4 292
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_MAU_X_0_4 293
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_MAU_X_LSU_X_0_4 294
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_MAU_X_LSU_0_4 295
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_MAU_X_0_4 296
-  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_0_4 297
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_LSU_0_4 298
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_MAU_LSU_X_0_4 299
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_LITE_0_4 300
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_MAU_LSU_X_0_4 301
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_LITE_X_0_4 302
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LSU_LITE_0_4 303
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LSU_0_4 304
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_LSU_0_4 305
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LSU_X_LITE_X_0_4 306
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_LITE_X_0_4 307
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_LSU_X_0_4 308
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_LSU_0_4 309
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_X_0_4 310
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_0_4 311
-  { 1, 0, 4, 0, { Bundling_k1_BCU }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_LSU_0_4 312
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_0_4 313
-  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_LSU_X_0_4 314
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_LITE_0_4 315
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LSU_LITE_X_0_4 316
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_X_0_4 317
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_LSU_X_0_4 318
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_X_LITE_0_4 319
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_MAU_X_0_4 320
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_LSU_0_4 321
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LSU_0_4 322
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_MAU_LSU_X_0_4 323
-  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LITE_X_0_4 324
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_MAU_X_LSU_0_4 325
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LSU_X_0_4 326
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_0_4 327
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LITE_0_4 328
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_MAU_LSU_0_4 329
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_X_LITE_0_4 330
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_LSU_X_0_4 331
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LITE_0_4 332
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LSU_LITE_0_4 333
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_ALU_LSU_0_4 334
-  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_LITE_LSU_LITE_0_4 335
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_0_4 336
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_MAU_X_LSU_X_0_4 337
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_LSU_X_0_4 338
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LSU_0_4 339
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_MAU_X_0_4 340
-  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LITE_X_0_4 341
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_LSU_0_4 342
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_LSU_X_0_4 343
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_X_LSU_X_0_4 344
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_LSU_X_0_4 345
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_0_4 346
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_X_LSU_X_0_4 347
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_0_4 348
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_MAU_0_4 349
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_X_LSU_0_4 350
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_X_LSU_0_4 351
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_0_4 352
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_LSU_X_0_4 353
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_X_0_4 354
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Y_MAU_X_LSU_0_4 355
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_LSU_0_4 356
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_LSU_X_0_4 357
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_X_0_4 358
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_MAU_X_LSU_0_4 359
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_MAU_0_4 360
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_LITE_X_MAU_X_0_4 361
-  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_0_4 362
-  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_MAU_0_4 363
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_MAU_0_4 364
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_0_4 365
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_MAU_X_0_4 366
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_MAU_LSU_0_4 367
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_LSU_X_0_4 368
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_MAU_X_LSU_0_4 369
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_X_LITE_LSU_X_LITE_X_0_4 370
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_MAU_LSU_X_0_4 371
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_X_0_4 372
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_LITE_X_0_4 373
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LITE_X_LSU_LITE_X_0_4 374
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Y_LSU_0_4 375
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_MAU_LSU_0_4 376
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_MAU_X_LSU_X_0_4 377
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_MAU_X_LSU_0_4 378
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_0_4 379
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALUD_MAU_X_LSU_X_0_4 380
-  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_MAU_0_4 381
-  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LITE_LSU_X_LITE_0_4 382
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_LSU_0_4 383
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_MAU_LSU_0_4 384
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALU_LITE_LSU_LITE_X_0_4 385
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LITE_X_LITE_X_0_4 386
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_MAU_LSU_X_0_4 387
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_Z_MAU_LSU_X_0_4 388
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_MAU_LSU_0_4 389
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_MAU_X_LSU_0_4 390
-  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_X_LITE_X_0_4 391
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_X_LSU_0_4 392
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_MAU_X_0_4 393
-  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_LSU_X_0_4 394
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_X_MAU_LITE_0_4 395
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_LSU_0_4 396
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LSU_X_LITE_0_4 397
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_MAU_LSU_X_0_4 398
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LSU_X_0_4 399
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_X_MAU_LITE_X_0_4 400
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_X_LITE_0_4 401
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_LSU_X_LITE_X_0_4 402
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_MAU_X_LSU_X_0_4 403
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_0_4 404
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_LITE_X_LITE_X_0_4 405
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_X_LSU_0_4 406
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_MAU_X_LSU_0_4 407
-  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_ALU_X_MAU_LITE_0_4 408
-  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_X_LSU_0_4 409
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LITE_LSU_LITE_X_0_4 410
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_MAU_LSU_X_0_4 411
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_LITE_X_0_4 412
-  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_0_4 413
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD }, { -1 } }, 
-#define Bundle_k1_BCU_LSU_X_0_4 414
-  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_ALU_MAU_LITE_X_0_4 415
+#define Bundle_k1_LITE_X_ALU_MAU_LITE_X_0_4 18
   { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_MAU_LITE_X_0_4 416
-  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LSU_X_0_4 417
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_LITE_X_MAU_0_4 418
-  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_ALU_MAU_LSU_0_4 419
-  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LSU_X_0_4 420
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_LITE_X_LSU_LITE_X_0_4 421
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_LITE_0_4 422
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_ALU_MAU_LITE_X_0_4 423
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_LITE_LSU_X_LITE_0_4 424
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_LSU_0_4 425
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_0_4 426
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_MAU_X_LSU_0_4 427
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_MAU_X_0_4 428
-  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALUD_MAU_X_0_4 429
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_MAU_X_LSU_X_0_4 430
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_MAU_X_LSU_X_0_4 431
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_ALU_0_4 432
-  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_LITE_X_LSU_LITE_X_0_4 433
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_X_LITE_X_0_4 434
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_BCU_MAU_X_LSU_X_0_4 435
-  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALUD_0_4 436
-  { 1, 0, 4, 0, { Bundling_k1_ALUD }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_MAU_X_LSU_0_4 437
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_LITE_X_0_4 438
-  { 1, 0, 4, 0, { Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALU_X_ALU_X_MAU_LSU_X_0_4 439
-  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_MAU_X_LSU_0_4 440
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_MAU_LSU_X_0_4 441
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_ALU_MAU_X_LSU_0_4 442
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_0_4 443
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_X_0_4 444
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_LITE_MAU_0_4 445
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_MAU_X_LSU_X_0_4 446
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_ALU_MAU_X_LITE_0_4 447
-  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
-#define Bundle_k1_LITE_X_LITE_X_MAU_X_LSU_X_0_4 448
-  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_ALU_LSU_X_0_4 449
-  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
-#define Bundle_k1_BCU_ALU_MAU_X_LSU_0_4 450
-  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
-#define Bundle_k1_BCU_LITE_X_LITE_X_0_4 451
+#define Bundle_k1_ALU_X_ALU_X_MAU_LITE_X_0_4 19
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LITE_0_4 20
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_LITE_0_4 21
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LSU_X_0_4 22
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LSU_LITE_X_0_4 23
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LSU_X_0_4 24
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LITE_X_0_4 25
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_X_LSU_0_4 26
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LITE_X_0_4 27
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_LSU_X_0_4 28
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LSU_X_LITE_X_0_4 29
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LITE_LITE_X_0_4 30
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LSU_X_LITE_X_0_4 31
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_0_4 32
+  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LSU_X_LITE_0_4 33
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LSU_LITE_X_0_4 34
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_LSU_0_4 35
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LSU_0_4 36
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LSU_X_LITE_0_4 37
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LSU_X_0_4 38
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LSU_LITE_X_0_4 39
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LSU_X_0_4 40
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_0_4 41
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LITE_LITE_X_0_4 42
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_LSU_LITE_X_0_4 43
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_0_4 44
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_LSU_X_0_4 45
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LITE_X_0_4 46
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_MAU_0_4 47
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_LSU_X_0_4 48
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_X_LITE_X_0_4 49
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_LSU_LITE_X_0_4 50
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_LITE_X_LITE_X_0_4 51
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LITE_LITE_X_0_4 52
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LSU_X_LITE_X_0_4 53
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_LSU_X_0_4 54
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_X_LSU_X_0_4 55
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_0_4 56
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LSU_0_4 57
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_X_LITE_X_0_4 58
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LITE_LITE_X_0_4 59
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_X_0_4 60
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_LSU_0_4 61
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LITE_LITE_0_4 62
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LSU_X_LITE_X_0_4 63
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LITE_LITE_X_0_4 64
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_MAU_X_LSU_0_4 65
+  { 2, 0, 4, 0, { Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_X_LSU_X_0_4 66
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LSU_LITE_0_4 67
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_LITE_X_0_4 68
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LITE_0_4 69
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_0_4 70
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_LITE_X_0_4 71
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_X_LITE_X_0_4 72
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LSU_X_0_4 73
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_LITE_0_4 74
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_0_4 75
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_0_4 76
+  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LITE_LITE_X_0_4 77
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_X_LITE_X_0_4 78
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_MAU_X_0_4 79
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LITE_X_LITE_X_0_4 80
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_X_LITE_0_4 81
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LSU_X_0_4 82
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LSU_X_LITE_X_0_4 83
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_X_LSU_0_4 84
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_LSU_0_4 85
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_LITE_X_0_4 86
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_LSU_0_4 87
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_X_LITE_X_0_4 88
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LITE_0_4 89
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LITE_X_LITE_X_0_4 90
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LITE_0_4 91
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_0_4 92
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_0_4 93
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_0_4 94
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_LSU_0_4 95
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LSU_0_4 96
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_0_4 97
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LITE_LITE_X_0_4 98
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LITE_X_LITE_X_0_4 99
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_MAU_X_0_4 100
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LITE_X_LITE_X_0_4 101
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_MAU_0_4 102
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_0_4 103
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_LITE_0_4 104
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_0_4 105
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_0_4 106
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_0_4 107
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_MAU_X_LSU_0_4 108
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_X_LITE_X_0_4 109
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_LITE_X_0_4 110
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LITE_X_0_4 111
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LSU_0_4 112
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_0_4 113
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_BCU_MAU_LSU_0_4 114
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_X_LITE_0_4 115
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_LSU_LITE_X_0_4 116
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_X_0_4 117
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_0_4 118
+  { 1, 0, 4, 0, { Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LITE_X_0_4 119
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LITE_X_0_4 120
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_LSU_X_0_4 121
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LSU_LITE_X_0_4 122
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LITE_X_0_4 123
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_MAU_0_4 124
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_LSU_0_4 125
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LITE_LITE_X_0_4 126
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LSU_0_4 127
+  { 1, 0, 4, 0, { Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LSU_LITE_X_0_4 128
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_LSU_0_4 129
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LSU_X_LITE_0_4 130
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_LSU_X_0_4 131
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_X_LSU_0_4 132
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_X_LSU_0_4 133
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_MAU_X_LSU_0_4 134
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_X_0_4 135
+  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_LITE_0_4 136
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_0_4 137
+  { 1, 0, 4, 0, { Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_LITE_X_0_4 138
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_MAU_X_LSU_0_4 139
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_LSU_0_4 140
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LITE_X_0_4 141
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LSU_X_LITE_X_0_4 142
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_LITE_X_0_4 143
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_LSU_0_4 144
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LITE_LITE_X_0_4 145
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_X_LSU_X_0_4 146
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LSU_X_LITE_X_0_4 147
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LSU_0_4 148
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_LSU_0_4 149
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_X_0_4 150
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_X_LITE_X_0_4 151
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LITE_LITE_0_4 152
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_LITE_X_0_4 153
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_0_4 154
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LSU_0_4 155
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LSU_X_LITE_X_0_4 156
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LSU_LITE_X_0_4 157
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_LSU_X_0_4 158
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LSU_X_0_4 159
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LSU_X_LITE_0_4 160
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_0_4 161
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_MAU_X_0_4 162
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_0_4 163
+  { 1, 0, 4, 0, { Bundling_k1_ALUD_Z }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_X_LITE_X_0_4 164
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_0_4 165
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_X_LSU_X_0_4 166
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LSU_0_4 167
+  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LSU_LITE_X_0_4 168
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_LSU_0_4 169
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LSU_X_0_4 170
+  { 1, 0, 4, 0, { Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_MAU_LSU_X_0_4 171
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_0_4 172
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_LITE_X_0_4 173
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_0_4 174
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_LSU_X_0_4 175
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LSU_LITE_0_4 176
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_LSU_X_0_4 177
+  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_LITE_X_0_4 178
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_LITE_X_0_4 179
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_X_0_4 180
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_LSU_0_4 181
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_LITE_X_0_4 182
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LITE_LITE_X_0_4 183
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LSU_X_0_4 184
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_0_4 185
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LSU_0_4 186
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_X_LSU_X_0_4 187
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LSU_X_LITE_0_4 188
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_MAU_LSU_0_4 189
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LITE_0_4 190
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LSU_0_4 191
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_LITE_0_4 192
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_MAU_LSU_0_4 193
+  { 2, 0, 4, 0, { Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_X_0_4 194
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_LSU_X_0_4 195
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LITE_LITE_X_0_4 196
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LSU_LITE_X_0_4 197
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_X_LITE_0_4 198
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_LSU_X_0_4 199
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LSU_LITE_X_0_4 200
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LITE_0_4 201
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LITE_X_0_4 202
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LSU_LITE_X_0_4 203
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_X_LITE_0_4 204
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LITE_LITE_0_4 205
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_LSU_X_0_4 206
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_LSU_X_LITE_X_0_4 207
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_X_LSU_X_0_4 208
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_LSU_0_4 209
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_LSU_X_0_4 210
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_X_LITE_X_0_4 211
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_X_LSU_0_4 212
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_LITE_X_0_4 213
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_MAU_LSU_0_4 214
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_LSU_LITE_X_0_4 215
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_LSU_0_4 216
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_LSU_X_0_4 217
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LITE_X_0_4 218
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_X_LITE_0_4 219
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LSU_0_4 220
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LITE_LITE_0_4 221
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_MAU_X_LSU_X_0_4 222
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_X_LSU_X_0_4 223
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LSU_LITE_X_0_4 224
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_X_0_4 225
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LITE_X_0_4 226
+  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_MAU_X_LSU_X_0_4 227
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_LITE_X_LITE_X_0_4 228
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_MAU_X_LSU_0_4 229
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LITE_0_4 230
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_MAU_X_0_4 231
+  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LITE_LITE_X_0_4 232
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_0_4 233
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LSU_X_LITE_X_0_4 234
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_MAU_LSU_X_0_4 235
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_0_4 236
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LSU_X_LITE_X_0_4 237
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_LITE_0_4 238
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_MAU_LSU_X_0_4 239
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LITE_0_4 240
+  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LSU_LITE_0_4 241
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LSU_0_4 242
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_LSU_LITE_X_0_4 243
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_LITE_X_0_4 244
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_X_LITE_X_0_4 245
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_0_4 246
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_X_0_4 247
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LSU_X_LITE_0_4 248
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_0_4 249
+  { 1, 0, 4, 0, { Bundling_k1_BCU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LSU_0_4 250
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_0_4 251
+  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LSU_LITE_X_0_4 252
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LSU_X_0_4 253
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_X_LITE_0_4 254
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_LSU_0_4 255
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LSU_0_4 256
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_LITE_X_0_4 257
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_LSU_0_4 258
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LITE_0_4 259
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LSU_X_0_4 260
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LITE_0_4 261
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_LSU_X_LITE_X_0_4 262
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_X_LITE_0_4 263
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LITE_0_4 264
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LITE_0_4 265
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LSU_LITE_0_4 266
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LSU_0_4 267
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_0_4 268
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LITE_X_0_4 269
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LSU_X_0_4 270
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_X_LSU_X_0_4 271
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_X_0_4 272
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LITE_X_LITE_X_0_4 273
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_LITE_X_0_4 274
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LSU_X_LITE_X_0_4 275
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_LITE_X_0_4 276
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_X_LSU_0_4 277
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_X_0_4 278
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_X_LSU_0_4 279
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_LSU_X_0_4 280
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_LSU_X_0_4 281
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LITE_LITE_0_4 282
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_X_MAU_X_0_4 283
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_0_4 284
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_X_LITE_X_0_4 285
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LSU_LITE_X_0_4 286
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_X_0_4 287
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_0_4 288
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_LITE_X_MAU_LSU_0_4 289
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_LITE_X_0_4 290
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_LITE_X_0_4 291
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_0_4 292
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_X_0_4 293
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_LITE_0_4 294
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LSU_LITE_X_0_4 295
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_X_LITE_0_4 296
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LITE_LITE_0_4 297
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LSU_X_LITE_X_0_4 298
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_LSU_0_4 299
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_MAU_X_LSU_X_0_4 300
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_X_LSU_0_4 301
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_0_4 302
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LSU_X_LITE_0_4 303
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LSU_0_4 304
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LSU_0_4 305
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LSU_X_LITE_0_4 306
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LITE_X_LITE_X_0_4 307
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_LSU_X_0_4 308
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_LITE_X_LITE_X_0_4 309
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LITE_X_LITE_X_0_4 310
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_X_LSU_0_4 311
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_X_LITE_X_0_4 312
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_X_LITE_0_4 313
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LSU_LITE_X_0_4 314
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_X_LITE_0_4 315
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_LSU_X_0_4 316
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_LITE_X_0_4 317
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_LITE_0_4 318
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_LSU_0_4 319
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LSU_X_0_4 320
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_LITE_X_0_4 321
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_X_LITE_0_4 322
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LSU_LITE_0_4 323
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_0_4 324
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LSU_X_LITE_X_0_4 325
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_MAU_X_LSU_X_0_4 326
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_LITE_0_4 327
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_X_LSU_0_4 328
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LITE_LITE_X_0_4 329
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_LSU_X_0_4 330
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LSU_0_4 331
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_0_4 332
   { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
-#define Bundle_k1_ALUD_Z_MAU_LSU_0_4 452
+#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_X_0_4 333
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LSU_X_0_4 334
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_0_4 335
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LITE_0_4 336
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_MAU_LSU_0_4 337
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LITE_0_4 338
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_LSU_LITE_0_4 339
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LITE_X_0_4 340
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_LITE_X_0_4 341
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LSU_X_LITE_0_4 342
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_LSU_0_4 343
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_0_4 344
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_X_LSU_0_4 345
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_X_0_4 346
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_X_0_4 347
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_LITE_0_4 348
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LITE_X_LITE_X_0_4 349
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_MAU_X_LSU_X_0_4 350
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_0_4 351
+  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_X_LITE_X_0_4 352
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LITE_X_LITE_X_0_4 353
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_X_LITE_X_0_4 354
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LITE_0_4 355
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LITE_X_LITE_X_0_4 356
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_LSU_LITE_X_0_4 357
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_0_4 358
+  { 1, 0, 4, 0, { Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LSU_X_LITE_0_4 359
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LSU_LITE_0_4 360
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_LSU_X_0_4 361
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_X_LSU_0_4 362
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LITE_LITE_X_0_4 363
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LSU_LITE_X_0_4 364
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_LITE_X_0_4 365
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_MAU_LSU_X_0_4 366
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_LSU_LITE_0_4 367
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_X_LSU_0_4 368
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_X_LSU_X_0_4 369
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LSU_LITE_0_4 370
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_MAU_X_LSU_X_0_4 371
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LSU_LITE_0_4 372
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_LSU_X_0_4 373
+  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_MAU_X_LSU_0_4 374
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_X_LSU_0_4 375
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_X_LSU_X_0_4 376
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_X_LITE_X_0_4 377
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LSU_X_LITE_0_4 378
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LSU_0_4 379
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_X_LITE_X_0_4 380
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_LSU_X_LITE_X_0_4 381
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_MAU_LSU_0_4 382
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LITE_LITE_0_4 383
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_LSU_0_4 384
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_LSU_0_4 385
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_0_4 386
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_LITE_LSU_LITE_0_4 387
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_LSU_LITE_X_0_4 388
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_MAU_LSU_X_0_4 389
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_0_4 390
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_LSU_0_4 391
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_0_4 392
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALU_X_LSU_0_4 393
+  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_X_LITE_0_4 394
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LSU_X_LITE_X_0_4 395
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LITE_0_4 396
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_X_0_4 397
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LSU_LITE_0_4 398
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LSU_LITE_0_4 399
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_X_0_4 400
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_0_4 401
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LSU_X_LITE_X_0_4 402
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LITE_X_LITE_X_0_4 403
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_MAU_LSU_X_0_4 404
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LSU_0_4 405
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_LITE_X_0_4 406
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_LSU_X_0_4 407
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LSU_LITE_0_4 408
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_LSU_X_0_4 409
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LITE_LITE_0_4 410
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LITE_LITE_0_4 411
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LITE_X_0_4 412
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_LITE_0_4 413
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LITE_X_LITE_X_0_4 414
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_MAU_LSU_X_0_4 415
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_0_4 416
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LSU_LITE_0_4 417
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_X_LITE_0_4 418
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_0_4 419
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LITE_X_LITE_X_0_4 420
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_X_0_4 421
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_LSU_LITE_0_4 422
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_MAU_X_LSU_X_0_4 423
+  { 2, 0, 4, 0, { Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_LITE_0_4 424
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_0_4 425
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_LITE_X_0_4 426
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_LITE_X_0_4 427
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_X_LITE_0_4 428
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LITE_LITE_X_0_4 429
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_LSU_LITE_X_0_4 430
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_MAU_LSU_X_0_4 431
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_LITE_X_LITE_X_0_4 432
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_MAU_LSU_X_0_4 433
+  { 2, 0, 4, 0, { Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_LSU_X_LITE_X_0_4 434
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_LSU_X_0_4 435
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_0_4 436
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LSU_0_4 437
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_LITE_LITE_0_4 438
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_LSU_X_0_4 439
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_LSU_X_0_4 440
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_LSU_X_0_4 441
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_0_4 442
+  { 1, 0, 4, 0, { Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_MAU_0_4 443
+  { 1, 0, 4, 0, { Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_LITE_0_4 444
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LSU_X_LITE_X_0_4 445
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_MAU_X_LSU_0_4 446
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_LSU_X_LITE_X_0_4 447
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_0_4 448
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_LSU_X_0_4 449
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_X_MAU_LSU_0_4 450
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_MAU_X_LSU_0_4 451
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_X_0_4 452
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_X_LSU_X_0_4 453
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_LITE_X_0_4 454
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_LSU_0_4 455
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_MAU_X_LSU_X_0_4 456
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_0_4 457
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_MAU_X_LSU_X_0_4 458
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LSU_0_4 459
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_LSU_0_4 460
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LSU_LITE_0_4 461
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_LITE_X_0_4 462
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_LITE_0_4 463
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALL_0_4 464
+  { 1, 0, 4, 0, { Bundling_k1_ALL }, { -1 } }, 
+#define Bundle_k1_ALU_X_MAU_X_LSU_X_0_4 465
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_MAU_LSU_X_0_4 466
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_LITE_X_LITE_X_0_4 467
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_X_LSU_X_0_4 468
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_ALU_X_MAU_X_LSU_0_4 469
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_0_4 470
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LSU_LITE_X_0_4 471
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_LITE_LITE_0_4 472
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LSU_X_LITE_0_4 473
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LITE_X_0_4 474
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_MAU_LSU_0_4 475
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_MAU_LSU_0_4 476
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_X_LSU_X_0_4 477
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_LITE_X_0_4 478
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_X_MAU_X_0_4 479
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_LITE_LITE_0_4 480
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_X_LSU_0_4 481
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_LSU_X_LITE_0_4 482
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LSU_X_0_4 483
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_LSU_0_4 484
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_MAU_0_4 485
+  { 2, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_MAU_LITE_X_0_4 486
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_MAU_LSU_X_0_4 487
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LSU_LITE_X_0_4 488
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_X_MAU_LITE_0_4 489
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_X_LSU_0_4 490
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_X_LITE_X_0_4 491
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_X_0_4 492
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_0_4 493
+  { 1, 0, 4, 0, { Bundling_k1_ALUD_Y }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_X_LSU_X_0_4 494
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_0_4 495
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_MAU_0_4 496
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LSU_X_LITE_0_4 497
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_LITE_X_0_4 498
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_MAU_X_0_4 499
+  { 1, 0, 4, 0, { Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_LSU_0_4 500
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_LSU_X_0_4 501
+  { 2, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_LSU_0_4 502
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LITE_X_0_4 503
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LITE_0_4 504
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_MAU_LSU_X_0_4 505
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_LSU_X_0_4 506
+  { 2, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LITE_LITE_0_4 507
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LITE_LITE_0_4 508
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_LITE_0_4 509
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LSU_X_LITE_X_0_4 510
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LSU_X_0_4 511
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_ALU_X_MAU_LSU_0_4 512
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_MAU_LITE_X_0_4 513
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LSU_X_0_4 514
+  { 2, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_LITE_0_4 515
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_MAU_X_0_4 516
+  { 2, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_X_MAU_LSU_0_4 517
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_LSU_X_0_4 518
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LITE_X_0_4 519
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_LITE_MAU_X_LSU_0_4 520
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LSU_X_0_4 521
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_0_4 522
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_LITE_MAU_LSU_0_4 523
+  { 3, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_LSU_0_4 524
+  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_X_MAU_0_4 525
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_X_LSU_X_0_4 526
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LSU_X_LITE_0_4 527
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_MAU_X_0_4 528
+  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_X_LITE_X_0_4 529
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_LSU_X_0_4 530
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_0_4 531
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_0_4 532
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_0_4 533
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_X_LSU_0_4 534
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_0_4 535
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_LSU_0_4 536
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_LITE_X_0_4 537
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_X_0_4 538
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_MAU_0_4 539
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_MAU_X_LSU_0_4 540
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LSU_X_LITE_X_0_4 541
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_MAU_0_4 542
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_MAU_X_0_4 543
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LSU_X_0_4 544
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_MAU_X_LSU_0_4 545
+  { 3, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_LITE_X_LITE_X_0_4 546
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LSU_LITE_X_0_4 547
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Y_LSU_0_4 548
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Y, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_0_4 549
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_X_LSU_X_0_4 550
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALU_MAU_0_4 551
+  { 2, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_LITE_0_4 552
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_LITE_X_LITE_X_0_4 553
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_MAU_LSU_0_4 554
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_LITE_LITE_0_4 555
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_MAU_LSU_X_0_4 556
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_LSU_0_4 557
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_MAU_X_LSU_0_4 558
+  { 4, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_X_0_4 559
+  { 3, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_LITE_X_ALU_X_LSU_LITE_X_0_4 560
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_ALU_X, Bundling_k1_LSU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_MAU_LITE_0_4 561
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_MAU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_ALU_LSU_X_LITE_0_4 562
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_MAU_LSU_X_0_4 563
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_MAU, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_0_4 564
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_LITE_X_LITE_X_0_4 565
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_X_LSU_0_4 566
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALU_X_ALU_X_LITE_X_0_4 567
+  { 3, 0, 4, 0, { Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_0_4 568
+  { 2, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LSU_X_LITE_0_4 569
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALU_ALU_MAU_LITE_X_0_4 570
+  { 4, 0, 4, 0, { Bundling_k1_ALU, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_LSU_X_0_4 571
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LSU_X_LITE_0_4 572
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LSU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LITE_LITE_0_4 573
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_MAU_X_LITE_0_4 574
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_Y_LITE_LITE_0_4 575
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Y, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_X_LSU_X_0_4 576
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_LITE_X_LITE_X_0_4 577
+  { 3, 0, 4, 0, { Bundling_k1_ALUD, Bundling_k1_LITE_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_MAU_X_LSU_X_0_4 578
+  { 3, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_ALU_MAU_X_LITE_0_4 579
+  { 5, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_ALU, Bundling_k1_MAU_X, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_ALUD_0_4 580
+  { 1, 0, 4, 0, { Bundling_k1_ALUD }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_MAU_X_LSU_0_4 581
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_LITE_LITE_LSU_LITE_0_4 582
+  { 4, 0, 4, 0, { Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_LSU, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_ALU_X_ALU_X_LSU_0_4 583
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALU_X, Bundling_k1_ALU_X, Bundling_k1_LSU }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_LSU_X_LITE_X_0_4 584
+  { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_LSU_X, Bundling_k1_LITE_X }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_X_LITE_X_MAU_X_0_4 585
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X }, { -1 } }, 
+#define Bundle_k1_BCU_ALUD_Z_LITE_LITE_0_4 586
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_ALUD_Z, Bundling_k1_LITE, Bundling_k1_LITE }, { -1 } }, 
+#define Bundle_k1_BCU_LITE_LITE_MAU_0_4 587
+  { 4, 0, 4, 0, { Bundling_k1_BCU, Bundling_k1_LITE, Bundling_k1_LITE, Bundling_k1_MAU }, { -1 } }, 
+#define Bundle_k1_LITE_X_LITE_X_MAU_X_LSU_X_0_4 588
+  { 4, 0, 4, 0, { Bundling_k1_LITE_X, Bundling_k1_LITE_X, Bundling_k1_MAU_X, Bundling_k1_LSU_X }, { -1 } }, 
+#define Bundle_k1_ALUD_Z_MAU_LSU_0_4 589
   { 3, 0, 4, 0, { Bundling_k1_ALUD_Z, Bundling_k1_MAU, Bundling_k1_LSU }, { -1 } }, 
   { -1, 0, 0, 0, {}, {} }};
 
@@ -1216,16 +1493,16 @@ int bundlematch_table[221376 + 1] = {
  /*    30 */    -1,   -1,   -1,   15,   16,   17,   18,   19,   20,   21,
  /*    40 */    -1,   -1,   22,   -1,   -1,   -1,   23,   24,   25,   26,
  /*    50 */    27,   28,   29,   -1,   -1,   -1,   -1,   -1,   -1,   30,
- /*    60 */    -1,   -1,   31,   32,   33,   34,   -1,   -1,   -1,   -1,
- /*    70 */    -1,   -1,   35,   -1,   -1,   36,   37,   38,   39,   -1,
- /*    80 */    -1,   -1,   -1,   -1,   -1,   40,   -1,   -1,   41,   42,
- /*    90 */    43,   44,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   45,
- /*   100 */    46,   47,   48,   49,   50,   -1,   -1,   -1,   -1,   -1,
- /*   110 */    -1,   -1,   51,   52,   53,   54,   55,   56,   -1,   -1,
- /*   120 */    -1,   -1,   -1,   -1,   -1,   -1,   57,   58,   59,   60,
- /*   130 */    61,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   140 */    -1,   -1,   62,   63,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   150 */    -1,   -1,   -1,   -1,   -1,   64,   65,   -1,   -1,   -1,
+ /*    60 */    31,   32,   33,   34,   35,   36,   -1,   -1,   -1,   -1,
+ /*    70 */    -1,   -1,   37,   38,   39,   40,   41,   42,   43,   -1,
+ /*    80 */    -1,   -1,   -1,   -1,   -1,   44,   45,   46,   47,   48,
+ /*    90 */    49,   50,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   51,
+ /*   100 */    52,   53,   54,   55,   56,   -1,   -1,   -1,   -1,   -1,
+ /*   110 */    -1,   -1,   57,   58,   59,   60,   61,   62,   -1,   -1,
+ /*   120 */    -1,   -1,   -1,   -1,   -1,   -1,   63,   64,   65,   66,
+ /*   130 */    67,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   140 */    -1,   -1,   68,   69,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   150 */    -1,   -1,   -1,   -1,   -1,   70,   71,   -1,   -1,   -1,
  /*   160 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   170 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   180 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1247,36 +1524,36 @@ int bundlematch_table[221376 + 1] = {
  /*   340 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   350 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   360 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   370 */    -1,   66,   67,   68,   69,   70,   71,   72,   -1,   -1,
- /*   380 */    -1,   -1,   -1,   -1,   73,   74,   75,   76,   77,   78,
- /*   390 */    79,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   370 */    -1,   72,   73,   74,   75,   76,   77,   78,   -1,   -1,
+ /*   380 */    -1,   -1,   -1,   -1,   79,   80,   81,   82,   83,   84,
+ /*   390 */    85,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   400 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   410 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   420 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   430 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   80,   81,   82,
- /*   440 */    83,   84,   85,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   450 */    86,   87,   88,   89,   90,   91,   -1,   -1,   -1,   -1,
- /*   460 */    -1,   -1,   -1,   -1,   92,   93,   94,   95,   96,   -1,
+ /*   430 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   86,   87,   88,
+ /*   440 */    89,   90,   91,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   450 */    92,   93,   94,   95,   96,   97,   -1,   -1,   -1,   -1,
+ /*   460 */    -1,   -1,   -1,   -1,   98,   99,  100,  101,  102,   -1,
  /*   470 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   480 */    97,   98,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   490 */    -1,   -1,   -1,   99,  100,   -1,   -1,   -1,   -1,   -1,
+ /*   480 */   103,  104,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   490 */    -1,   -1,   -1,  105,  106,   -1,   -1,   -1,   -1,   -1,
  /*   500 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   510 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   520 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   530 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   540 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   550 */    -1,   -1,   -1,  101,  102,  103,  104,  105,  106,  107,
+ /*   550 */    -1,   -1,   -1,  107,  108,  109,  110,  111,  112,  113,
  /*   560 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   570 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   580 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   590 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   600 */    -1,   -1,   -1,   -1,   -1,   -1,  108,  109,  110,  111,
- /*   610 */   112,  113,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  114,
- /*   620 */   115,  116,  117,  118,  119,   -1,   -1,   -1,   -1,   -1,
- /*   630 */    -1,   -1,   -1,  120,  121,  122,  123,  124,   -1,   -1,
- /*   640 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  125,
- /*   650 */   126,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   660 */    -1,   -1,  127,  128,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   600 */    -1,   -1,   -1,   -1,   -1,   -1,  114,  115,  116,  117,
+ /*   610 */   118,  119,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  120,
+ /*   620 */   121,  122,  123,  124,  125,   -1,   -1,   -1,   -1,   -1,
+ /*   630 */    -1,   -1,   -1,  126,  127,  128,  129,  130,   -1,   -1,
+ /*   640 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  131,
+ /*   650 */   132,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   660 */    -1,   -1,  133,  134,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   670 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   680 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   690 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1287,13 +1564,13 @@ int bundlematch_table[221376 + 1] = {
  /*   740 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   750 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   760 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   770 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  129,  130,  131,
- /*   780 */   132,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   790 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   800 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   810 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  133,  134,
+ /*   770 */    -1,   -1,   -1,   -1,   -1,  135,  136,  137,  138,  139,
+ /*   780 */   140,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  141,  142,
+ /*   790 */   143,  144,  145,  146,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   800 */    -1,   -1,  147,  148,  149,  150,  151,   -1,   -1,   -1,
+ /*   810 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  152,  153,
  /*   820 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   830 */    -1,  135,  136,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   830 */    -1,  154,  155,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   840 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   860 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1304,13 +1581,13 @@ int bundlematch_table[221376 + 1] = {
  /*   910 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   920 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*   930 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   940 */    -1,   -1,   -1,   -1,   -1,   -1,  137,  138,  139,  140,
- /*   950 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   960 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   970 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*   980 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  141,  142,   -1,
+ /*   940 */    -1,   -1,   -1,   -1,  156,  157,  158,  159,  160,  161,
+ /*   950 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  162,  163,  164,
+ /*   960 */   165,  166,  167,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*   970 */    -1,  168,  169,  170,  171,  172,   -1,   -1,   -1,   -1,
+ /*   980 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  173,  174,   -1,
  /*   990 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1000 */   143,  144,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  1000 */   175,  176,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1010 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1321,13 +1598,13 @@ int bundlematch_table[221376 + 1] = {
  /*  1080 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1100 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1110 */    -1,   -1,   -1,   -1,   -1,  145,  146,  147,  148,   -1,
- /*  1120 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1130 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1140 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1150 */    -1,   -1,   -1,   -1,   -1,   -1,  149,  150,   -1,   -1,
- /*  1160 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  151,
- /*  1170 */   152,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  1110 */    -1,   -1,   -1,  177,  178,  179,  180,  181,  182,   -1,
+ /*  1120 */    -1,   -1,   -1,   -1,   -1,   -1,  183,  184,  185,  186,
+ /*  1130 */   187,  188,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  1140 */   189,  190,  191,  192,  193,   -1,   -1,   -1,   -1,   -1,
+ /*  1150 */    -1,   -1,   -1,   -1,   -1,   -1,  194,  195,   -1,   -1,
+ /*  1160 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  196,
+ /*  1170 */   197,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1180 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1190 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1200 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1339,11 +1616,11 @@ int bundlematch_table[221376 + 1] = {
  /*  1260 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1270 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1280 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1290 */    -1,   -1,   -1,   -1,   -1,  153,  154,  155,  156,  157,
- /*  1300 */   158,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  159,
- /*  1310 */   160,  161,  162,  163,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1320 */    -1,   -1,   -1,   -1,   -1,  164,  165,   -1,   -1,   -1,
- /*  1330 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  166,  167,
+ /*  1290 */    -1,   -1,   -1,   -1,   -1,  198,  199,  200,  201,  202,
+ /*  1300 */   203,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  204,
+ /*  1310 */   205,  206,  207,  208,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  1320 */    -1,   -1,   -1,   -1,   -1,  209,  210,   -1,   -1,   -1,
+ /*  1330 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  211,  212,
  /*  1340 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1350 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1360 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1356,11 +1633,11 @@ int bundlematch_table[221376 + 1] = {
  /*  1430 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1440 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1450 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1460 */    -1,   -1,   -1,   -1,   -1,   -1,  168,  169,  170,  171,
- /*  1470 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  172,
- /*  1480 */   173,  174,  175,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1490 */    -1,   -1,   -1,   -1,  176,  177,   -1,   -1,   -1,   -1,
- /*  1500 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  178,  179,   -1,
+ /*  1460 */    -1,   -1,   -1,   -1,  213,  214,  215,  216,  217,  218,
+ /*  1470 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  219,  220,
+ /*  1480 */   221,  222,  223,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  1490 */    -1,   -1,   -1,   -1,  224,  225,   -1,   -1,   -1,   -1,
+ /*  1500 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  226,  227,   -1,
  /*  1510 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1520 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1530 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1374,10 +1651,10 @@ int bundlematch_table[221376 + 1] = {
  /*  1610 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1620 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1630 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1640 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  180,  181,
- /*  1650 */   182,  183,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  1660 */    -1,   -1,   -1,  184,  185,   -1,   -1,   -1,   -1,   -1,
- /*  1670 */    -1,   -1,   -1,   -1,   -1,   -1,  186,  187,   -1,   -1,
+ /*  1640 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  228,  229,  230,
+ /*  1650 */   231,  232,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  1660 */    -1,   -1,   -1,  233,  234,   -1,   -1,   -1,   -1,   -1,
+ /*  1670 */    -1,   -1,   -1,   -1,   -1,   -1,  235,  236,   -1,   -1,
  /*  1680 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1690 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  1700 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1693,12 +1970,12 @@ int bundlematch_table[221376 + 1] = {
  /*  4800 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  4810 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  4820 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  4830 */    -1,  188,  189,  190,  191,  192,  193,   -1,   -1,   -1,
- /*  4840 */    -1,   -1,   -1,   -1,  194,  195,  196,  197,  198,  199,
- /*  4850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  200,  201,
- /*  4860 */   202,  203,  204,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  4870 */    -1,   -1,   -1,   -1,  205,  206,   -1,   -1,   -1,   -1,
- /*  4880 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  207,  208,   -1,
+ /*  4830 */    -1,  237,  238,  239,  240,  241,  242,   -1,   -1,   -1,
+ /*  4840 */    -1,   -1,   -1,   -1,  243,  244,  245,  246,  247,  248,
+ /*  4850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  249,  250,
+ /*  4860 */   251,  252,  253,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  4870 */    -1,   -1,   -1,   -1,  254,  255,   -1,   -1,   -1,   -1,
+ /*  4880 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  256,  257,   -1,
  /*  4890 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  4900 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  4910 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1710,12 +1987,12 @@ int bundlematch_table[221376 + 1] = {
  /*  4970 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  4980 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  4990 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5000 */   209,  210,  211,  212,  213,  214,   -1,   -1,   -1,   -1,
- /*  5010 */    -1,   -1,   -1,  215,  216,  217,  218,  219,  220,   -1,
- /*  5020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  221,  222,  223,
- /*  5030 */   224,  225,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5040 */    -1,   -1,   -1,  226,  227,   -1,   -1,   -1,   -1,   -1,
- /*  5050 */    -1,   -1,   -1,   -1,   -1,   -1,  228,  229,   -1,   -1,
+ /*  5000 */   258,  259,  260,  261,  262,  263,   -1,   -1,   -1,   -1,
+ /*  5010 */    -1,   -1,   -1,  264,  265,  266,  267,  268,  269,   -1,
+ /*  5020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  270,  271,  272,
+ /*  5030 */   273,  274,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  5040 */    -1,   -1,   -1,  275,  276,   -1,   -1,   -1,   -1,   -1,
+ /*  5050 */    -1,   -1,   -1,   -1,   -1,   -1,  277,  278,   -1,   -1,
  /*  5060 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5070 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5080 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1778,12 +2055,12 @@ int bundlematch_table[221376 + 1] = {
  /*  5650 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5660 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5670 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5680 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  230,
- /*  5690 */   231,  232,  233,  234,  235,   -1,   -1,   -1,   -1,   -1,
- /*  5700 */    -1,   -1,   -1,  236,  237,  238,  239,  240,   -1,   -1,
- /*  5710 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  241,
- /*  5720 */   242,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5730 */    -1,   -1,  243,  244,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  5680 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  279,
+ /*  5690 */   280,  281,  282,  283,  284,   -1,   -1,   -1,   -1,   -1,
+ /*  5700 */    -1,   -1,   -1,  285,  286,  287,  288,  289,   -1,   -1,
+ /*  5710 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  290,
+ /*  5720 */   291,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  5730 */    -1,   -1,  292,  293,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5740 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5750 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5760 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1795,12 +2072,12 @@ int bundlematch_table[221376 + 1] = {
  /*  5820 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5830 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5840 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5860 */   245,  246,  247,  248,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5870 */    -1,   -1,   -1,  249,  250,  251,  252,   -1,   -1,   -1,
- /*  5880 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  253,  254,
+ /*  5850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  294,  295,
+ /*  5860 */   296,  297,  298,  299,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  5870 */    -1,   -1,  300,  301,  302,  303,  304,   -1,   -1,   -1,
+ /*  5880 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  305,  306,
  /*  5890 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  5900 */    -1,  255,  256,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  5900 */    -1,  307,  308,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5910 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5920 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  5930 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1814,10 +2091,10 @@ int bundlematch_table[221376 + 1] = {
  /*  6010 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  6020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  6030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  6040 */    -1,   -1,  257,  258,  259,  260,   -1,   -1,   -1,   -1,
- /*  6050 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  261,  262,   -1,
+ /*  6040 */    -1,  309,  310,  311,  312,  313,   -1,   -1,   -1,   -1,
+ /*  6050 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  314,  315,   -1,
  /*  6060 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  6070 */   263,  264,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  6070 */   316,  317,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  6080 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  6090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  6100 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1929,13 +2206,13 @@ int bundlematch_table[221376 + 1] = {
  /*  7160 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7170 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7180 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  7190 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  265,  266,  267,
- /*  7200 */   268,  269,  270,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  7210 */   271,  272,  273,  274,  275,  276,   -1,   -1,   -1,   -1,
- /*  7220 */    -1,   -1,   -1,   -1,  277,  278,  279,  280,  281,   -1,
+ /*  7190 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  318,  319,  320,
+ /*  7200 */   321,  322,  323,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  7210 */   324,  325,  326,  327,  328,  329,   -1,   -1,   -1,   -1,
+ /*  7220 */    -1,   -1,   -1,   -1,  330,  331,  332,  333,  334,   -1,
  /*  7230 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  7240 */   282,  283,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  7250 */    -1,   -1,   -1,  284,  285,   -1,   -1,   -1,   -1,   -1,
+ /*  7240 */   335,  336,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  7250 */    -1,   -1,   -1,  337,  338,   -1,   -1,   -1,   -1,   -1,
  /*  7260 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7270 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7280 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1998,12 +2275,12 @@ int bundlematch_table[221376 + 1] = {
  /*  7850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7860 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7870 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  7880 */    -1,   -1,   -1,   -1,   -1,   -1,  286,  287,  288,  289,
- /*  7890 */   290,  291,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  7900 */   292,  293,  294,  295,  296,   -1,   -1,   -1,   -1,   -1,
- /*  7910 */    -1,   -1,   -1,   -1,   -1,   -1,  297,  298,   -1,   -1,
- /*  7920 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  299,
- /*  7930 */   300,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  7880 */    -1,   -1,   -1,   -1,   -1,   -1,  339,  340,  341,  342,
+ /*  7890 */   343,  344,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  7900 */   345,  346,  347,  348,  349,   -1,   -1,   -1,   -1,   -1,
+ /*  7910 */    -1,   -1,   -1,   -1,   -1,   -1,  350,  351,   -1,   -1,
+ /*  7920 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  352,
+ /*  7930 */   353,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7940 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7950 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  7960 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2015,11 +2292,11 @@ int bundlematch_table[221376 + 1] = {
  /*  8020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8040 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  8050 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  301,  302,  303,
- /*  8060 */   304,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  8070 */   305,  306,  307,  308,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  8080 */    -1,   -1,   -1,   -1,   -1,  309,  310,   -1,   -1,   -1,
- /*  8090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  311,  312,
+ /*  8050 */    -1,   -1,   -1,   -1,   -1,  354,  355,  356,  357,  358,
+ /*  8060 */   359,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  360,
+ /*  8070 */   361,  362,  363,  364,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  8080 */    -1,   -1,   -1,   -1,   -1,  365,  366,   -1,   -1,   -1,
+ /*  8090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  367,  368,
  /*  8100 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8110 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8120 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2033,10 +2310,10 @@ int bundlematch_table[221376 + 1] = {
  /*  8200 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8210 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8220 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  8230 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  313,
- /*  8240 */   314,  315,  316,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /*  8250 */    -1,   -1,   -1,   -1,  317,  318,   -1,   -1,   -1,   -1,
- /*  8260 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  319,  320,   -1,
+ /*  8230 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  369,  370,
+ /*  8240 */   371,  372,  373,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /*  8250 */    -1,   -1,   -1,   -1,  374,  375,   -1,   -1,   -1,   -1,
+ /*  8260 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  376,  377,   -1,
  /*  8270 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8280 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /*  8290 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2218,11 +2495,11 @@ int bundlematch_table[221376 + 1] = {
  /* 10050 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 10060 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 10070 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 10080 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 10090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 10100 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 10110 */    -1,   -1,   -1,  321,  322,   -1,   -1,   -1,   -1,   -1,
- /* 10120 */    -1,   -1,   -1,   -1,   -1,   -1,  323,  324,   -1,   -1,
+ /* 10080 */    -1,   -1,   -1,  378,  379,  380,  381,  382,  383,   -1,
+ /* 10090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  384,  385,  386,
+ /* 10100 */   387,  388,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 10110 */    -1,   -1,   -1,  389,  390,   -1,   -1,   -1,   -1,   -1,
+ /* 10120 */    -1,   -1,   -1,   -1,   -1,   -1,  391,  392,   -1,   -1,
  /* 10130 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 10140 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 10150 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2438,11 +2715,11 @@ int bundlematch_table[221376 + 1] = {
  /* 12250 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 12260 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 12270 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 12280 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 12290 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 12280 */   393,  394,  395,  396,  397,  398,   -1,   -1,   -1,   -1,
+ /* 12290 */    -1,   -1,   -1,   -1,  399,  400,  401,  402,  403,   -1,
  /* 12300 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 12310 */   325,  326,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 12320 */    -1,   -1,   -1,  327,  328,   -1,   -1,   -1,   -1,   -1,
+ /* 12310 */   404,  405,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 12320 */    -1,   -1,   -1,  406,  407,   -1,   -1,   -1,   -1,   -1,
  /* 12330 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 12340 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 12350 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2657,12 +2934,12 @@ int bundlematch_table[221376 + 1] = {
  /* 14440 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 14450 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 14460 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 14470 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 14480 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 14490 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 14500 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  329,  330,   -1,
+ /* 14470 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  408,  409,  410,
+ /* 14480 */   411,  412,  413,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 14490 */    -1,   -1,  414,   -1,  415,   -1,   -1,   -1,   -1,   -1,
+ /* 14500 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  416,  417,   -1,
  /* 14510 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 14520 */   331,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 14520 */   418,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 14530 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 14540 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 14550 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2894,11 +3171,11 @@ int bundlematch_table[221376 + 1] = {
  /* 16810 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 16820 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 16830 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 16840 */    -1,   -1,   -1,   -1,   -1,  332,  333,  334,  335,   -1,
- /* 16850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  336,  337,
- /* 16860 */   338,  339,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 16870 */    -1,   -1,   -1,  340,  341,   -1,   -1,   -1,   -1,   -1,
- /* 16880 */    -1,   -1,   -1,   -1,   -1,   -1,  342,  343,   -1,   -1,
+ /* 16840 */    -1,   -1,   -1,  419,  420,  421,  422,  423,  424,   -1,
+ /* 16850 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  425,  426,  427,
+ /* 16860 */   428,  429,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 16870 */    -1,   -1,   -1,  430,  431,   -1,   -1,   -1,   -1,   -1,
+ /* 16880 */    -1,   -1,   -1,   -1,   -1,   -1,  432,  433,   -1,   -1,
  /* 16890 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 16900 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 16910 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -2912,10 +3189,10 @@ int bundlematch_table[221376 + 1] = {
  /* 16990 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 17000 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 17010 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 17020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  344,  345,  346,
- /* 17030 */   347,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 17040 */    -1,   -1,  348,  349,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 17050 */    -1,   -1,   -1,   -1,   -1,  350,  351,   -1,   -1,   -1,
+ /* 17020 */    -1,   -1,   -1,   -1,   -1,   -1,  434,  435,  436,  437,
+ /* 17030 */   438,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 17040 */    -1,   -1,  439,  440,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 17050 */    -1,   -1,   -1,   -1,   -1,  441,  442,   -1,   -1,   -1,
  /* 17060 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 17070 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 17080 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -3114,11 +3391,11 @@ int bundlematch_table[221376 + 1] = {
  /* 19010 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19040 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19050 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 19040 */   443,  444,  445,  446,  447,  448,   -1,   -1,   -1,   -1,
+ /* 19050 */    -1,   -1,   -1,   -1,  449,  450,  451,  452,  453,   -1,
  /* 19060 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19070 */   352,  353,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19080 */    -1,   -1,   -1,  354,  355,   -1,   -1,   -1,   -1,   -1,
+ /* 19070 */   454,  455,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 19080 */    -1,   -1,   -1,  456,  457,   -1,   -1,   -1,   -1,   -1,
  /* 19090 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19100 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19110 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -3132,10 +3409,10 @@ int bundlematch_table[221376 + 1] = {
  /* 19190 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19200 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19210 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19220 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19230 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  356,
- /* 19240 */   357,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 19250 */    -1,   -1,  358,  359,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 19220 */    -1,   -1,   -1,  458,  459,  460,  461,  462,   -1,   -1,
+ /* 19230 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  463,
+ /* 19240 */   464,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 19250 */    -1,   -1,  465,  466,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19260 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19270 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 19280 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -3352,10 +3629,10 @@ int bundlematch_table[221376 + 1] = {
  /* 21390 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 21400 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 21410 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 21420 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 21430 */    -1,   -1,   -1,   -1,   -1,   -1,  360,  361,   -1,   -1,
- /* 21440 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  362,
- /* 21450 */   363,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 21420 */   467,  468,  469,  470,  471,   -1,   -1,   -1,   -1,   -1,
+ /* 21430 */    -1,   -1,   -1,   -1,   -1,   -1,  472,  473,   -1,   -1,
+ /* 21440 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  474,
+ /* 21450 */   475,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 21460 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 21470 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 21480 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -7491,11 +7768,11 @@ int bundlematch_table[221376 + 1] = {
  /* 62780 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 62790 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 62800 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 62810 */    -1,  364,  365,  366,  367,  368,  369,   -1,   -1,   -1,
- /* 62820 */    -1,   -1,   -1,   -1,   -1,  370,  371,  372,  373,  374,
+ /* 62810 */    -1,  476,  477,  478,  479,  480,  481,   -1,   -1,   -1,
+ /* 62820 */    -1,   -1,   -1,   -1,   -1,  482,  483,  484,  485,  486,
  /* 62830 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 62840 */    -1,  375,  376,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 62850 */    -1,   -1,   -1,   -1,  377,  378,   -1,   -1,   -1,   -1,
+ /* 62840 */    -1,  487,  488,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 62850 */    -1,   -1,   -1,   -1,  489,  490,   -1,   -1,   -1,   -1,
  /* 62860 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 62870 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 62880 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -7710,12 +7987,12 @@ int bundlematch_table[221376 + 1] = {
  /* 64970 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 64980 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 64990 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 65000 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  379,  380,
- /* 65010 */   381,  382,  383,  384,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 65020 */    -1,   -1,  385,  386,  387,  388,  389,   -1,   -1,   -1,
- /* 65030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  390,  391,
+ /* 65000 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  491,  492,
+ /* 65010 */   493,  494,  495,  496,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 65020 */    -1,   -1,  497,  498,  499,  500,  501,   -1,   -1,   -1,
+ /* 65030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  502,  503,
  /* 65040 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 65050 */    -1,  392,  393,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 65050 */    -1,  504,  505,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 65060 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 65070 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 65080 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -8606,11 +8883,11 @@ int bundlematch_table[221376 + 1] = {
  /* 73930 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 73940 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 73950 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 73960 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  394,  395,  396,
- /* 73970 */   397,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 73980 */   398,  399,  400,  401,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 73990 */    -1,   -1,   -1,   -1,   -1,  402,  403,   -1,   -1,   -1,
- /* 74000 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  404,  405,
+ /* 73960 */    -1,   -1,   -1,   -1,   -1,  506,  507,  508,  509,  510,
+ /* 73970 */   511,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  512,
+ /* 73980 */   513,  514,  515,  516,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 73990 */    -1,   -1,   -1,   -1,   -1,  517,  518,   -1,   -1,   -1,
+ /* 74000 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  519,  520,
  /* 74010 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 74020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 74030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -8624,10 +8901,10 @@ int bundlematch_table[221376 + 1] = {
  /* 74110 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 74120 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 74130 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 74140 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  406,
- /* 74150 */   407,  408,  409,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 74160 */    -1,   -1,   -1,   -1,  410,  411,   -1,   -1,   -1,   -1,
- /* 74170 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  412,  413,   -1,
+ /* 74140 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  521,  522,
+ /* 74150 */   523,  524,  525,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 74160 */    -1,   -1,   -1,   -1,  526,  527,   -1,   -1,   -1,   -1,
+ /* 74170 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  528,  529,   -1,
  /* 74180 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 74190 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 74200 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -10566,12 +10843,12 @@ int bundlematch_table[221376 + 1] = {
  /* 93530 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 93540 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 93550 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 93560 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  414,
- /* 93570 */   415,  416,  417,  418,  419,   -1,   -1,   -1,   -1,   -1,
- /* 93580 */    -1,   -1,   -1,   -1,  420,   -1,  421,   -1,   -1,   -1,
- /* 93590 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  422,
- /* 93600 */   423,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 93610 */    -1,   -1,  424,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 93560 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  530,
+ /* 93570 */   531,  532,  533,  534,  535,   -1,   -1,   -1,   -1,   -1,
+ /* 93580 */    -1,   -1,   -1,   -1,  536,   -1,  537,   -1,   -1,   -1,
+ /* 93590 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  538,
+ /* 93600 */   539,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 93610 */    -1,   -1,  540,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 93620 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 93630 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 93640 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -11462,12 +11739,12 @@ int bundlematch_table[221376 + 1] = {
  /* 102490 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102500 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102510 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 102520 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  425,  426,
- /* 102530 */   427,  428,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 102540 */    -1,  429,  430,  431,  432,   -1,   -1,   -1,   -1,   -1,
- /* 102550 */    -1,   -1,   -1,   -1,   -1,   -1,  433,  434,   -1,   -1,
- /* 102560 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  435,
- /* 102570 */   436,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 102520 */    -1,   -1,   -1,   -1,   -1,   -1,  541,  542,  543,  544,
+ /* 102530 */   545,  546,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 102540 */   547,  548,  549,  550,  551,   -1,   -1,   -1,   -1,   -1,
+ /* 102550 */    -1,   -1,   -1,   -1,   -1,   -1,  552,  553,   -1,   -1,
+ /* 102560 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  554,
+ /* 102570 */   555,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102580 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102590 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102600 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -11481,9 +11758,9 @@ int bundlematch_table[221376 + 1] = {
  /* 102680 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102690 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102700 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 102710 */   437,   -1,  438,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 102720 */    -1,   -1,   -1,   -1,   -1,  439,  440,   -1,   -1,   -1,
- /* 102730 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  441,   -1,
+ /* 102710 */   556,   -1,  557,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 102720 */    -1,   -1,   -1,   -1,   -1,  558,  559,   -1,   -1,   -1,
+ /* 102730 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  560,   -1,
  /* 102740 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102750 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 102760 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -23106,12 +23383,12 @@ int bundlematch_table[221376 + 1] = {
  /* 218930 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 218940 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 218950 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 218960 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 218970 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 218980 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 218990 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  442,  443,   -1,
+ /* 218960 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  561,  562,  563,
+ /* 218970 */   564,  565,  566,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 218980 */    -1,  567,  568,  569,  570,  571,   -1,   -1,   -1,   -1,
+ /* 218990 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,  572,  573,   -1,
  /* 219000 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 219010 */   444,  445,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 219010 */   574,  575,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219020 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219030 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219040 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -23125,10 +23402,10 @@ int bundlematch_table[221376 + 1] = {
  /* 219120 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219130 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219140 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 219150 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 219160 */    -1,   -1,   -1,   -1,   -1,   -1,  446,  447,   -1,   -1,
- /* 219170 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  448,
- /* 219180 */   449,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 219150 */   576,  577,  578,  579,  580,   -1,   -1,   -1,   -1,   -1,
+ /* 219160 */    -1,   -1,   -1,   -1,   -1,   -1,  581,  582,   -1,   -1,
+ /* 219170 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  583,
+ /* 219180 */   584,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219190 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219200 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 219210 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -23344,12 +23621,12 @@ int bundlematch_table[221376 + 1] = {
  /* 221310 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 221320 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
  /* 221330 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 221340 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 221350 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
- /* 221360 */    -1,   -1,   -1,  450,  451,   -1,   -1,   -1,   -1,   -1,
- /* 221370 */    -1,   -1,   -1,   -1,   -1,   -1,  452,};
+ /* 221340 */    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  585,   -1,
+ /* 221350 */   586,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ /* 221360 */    -1,   -1,   -1,  587,  588,   -1,   -1,   -1,   -1,   -1,
+ /* 221370 */    -1,   -1,   -1,   -1,   -1,   -1,  589,};
 
-BundleMatchType canonical_table[453] = {
+BundleMatchType canonical_table[590] = {
   { 1, { Bundle_k1_ALL_0_4 } },
   { 1, { Bundle_k1_ALU_0_4 } },
   { 1, { Bundle_k1_ALU_X_0_4 } },
@@ -23381,16 +23658,22 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_ALU_X_MAU_0_4 } },
   { 1, { Bundle_k1_ALU_X_MAU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_0_4 } },
+  { 1, { Bundle_k1_ALUD_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_LITE_X_0_4 } },
   { 1, { Bundle_k1_ALUD_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_LSU_X_0_4 } },
   { 1, { Bundle_k1_ALUD_MAU_0_4 } },
   { 1, { Bundle_k1_ALUD_MAU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LITE_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_LSU_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_MAU_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_MAU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LITE_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Z_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_Z_LSU_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Z_MAU_0_4 } },
@@ -23479,26 +23762,65 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_ALU_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_ALU_X_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_MAU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_MAU_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_ALUD_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_ALUD_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_MAU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_MAU_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Y_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Y_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_MAU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_MAU_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_ALUD_Z_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_ALUD_Z_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_Z_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_ALUD_Z_MAU_LSU_X_0_4 } },
@@ -23518,20 +23840,24 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_BCU_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_LITE_LITE_LSU_0_4 } },
-  { 1, { Bundle_k1_LITE_LITE_LSU_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LSU_X_LITE_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_MAU_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_MAU_X_0_4 } },
-  { 1, { Bundle_k1_LITE_LITE_X_LSU_0_4 } },
-  { 1, { Bundle_k1_LITE_LITE_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_X_MAU_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_X_MAU_X_0_4 } },
   { 1, { Bundle_k1_LITE_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_LITE_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_LITE_X_LITE_X_LSU_0_4 } },
-  { 1, { Bundle_k1_LITE_X_LITE_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_LITE_X_MAU_0_4 } },
   { 1, { Bundle_k1_LITE_X_LITE_X_MAU_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_MAU_LSU_0_4 } },
@@ -23595,20 +23921,24 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_BCU_ALU_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_ALU_LITE_LSU_LITE_0_4 } },
-  { 1, { Bundle_k1_ALU_LITE_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LSU_X_LITE_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_LITE_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_X_LITE_0_4 } },
-  { 1, { Bundle_k1_ALU_LITE_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_ALU_LITE_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_ALU_LITE_X_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_ALU_LITE_X_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_ALU_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_ALU_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_ALU_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_MAU_LSU_0_4 } },
@@ -23651,65 +23981,124 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_BCU_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_X_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_ALU_X_LITE_LSU_LITE_0_4 } },
-  { 1, { Bundle_k1_ALU_X_LITE_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LSU_X_LITE_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_LITE_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_X_LITE_0_4 } },
-  { 1, { Bundle_k1_ALU_X_LITE_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_ALU_X_LITE_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_ALU_X_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_LITE_ALU_X_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_ALU_X_LITE_X_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_ALU_X_LITE_X_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_ALU_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_ALU_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_ALU_X_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_X_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_X_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_ALU_X_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Y_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Y_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_ALUD_Z_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALUD_Z_MAU_LSU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_LITE_LITE_LSU_0_4 } },
-  { 1, { Bundle_k1_BCU_LITE_LITE_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LSU_X_LITE_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_MAU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_MAU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_LITE_LITE_X_LSU_0_4 } },
-  { 1, { Bundle_k1_BCU_LITE_LITE_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_LITE_X_LITE_X_LSU_0_4 } },
-  { 1, { Bundle_k1_BCU_LITE_X_LITE_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_LITE_X_MAU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_LITE_X_MAU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_X_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_X_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_LITE_X_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_LITE_LITE_X_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LITE_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LITE_X_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LITE_X_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_LITE_X_LITE_X_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_LITE_X_LITE_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_X_LITE_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_LITE_X_LITE_X_MAU_LSU_X_0_4 } },
@@ -23744,20 +24133,24 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_BCU_ALU_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_ALU_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_ALU_X_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_LITE_LSU_LITE_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_LITE_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LSU_X_LITE_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_LITE_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_X_LITE_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_LITE_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_LITE_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_LITE_X_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_LITE_X_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_ALU_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_ALU_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_ALU_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_MAU_LSU_0_4 } },
@@ -23775,31 +24168,52 @@ BundleMatchType canonical_table[453] = {
   { 1, { Bundle_k1_BCU_ALU_X_ALU_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_X_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_ALU_X_ALU_X_MAU_LSU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_X_LITE_LSU_LITE_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_X_LITE_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LSU_X_LITE_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_LITE_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_X_LITE_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_X_LITE_LSU_LITE_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_X_LITE_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_ALU_X_LSU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_ALU_X_MAU_X_LSU_X_0_4 } },
-  { 1, { Bundle_k1_BCU_ALU_X_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_ALU_X_LSU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_X_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_ALU_X_MAU_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LITE_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LITE_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LSU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LSU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_MAU_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_MAU_X_LITE_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_X_LITE_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_X_LSU_X_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_X_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_LSU_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_LITE_X_MAU_X_LSU_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_LITE_X_LSU_LITE_X_0_4 } },
+  { 1, { Bundle_k1_BCU_LITE_X_LITE_X_MAU_LITE_X_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_LITE_X_MAU_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_LITE_X_MAU_X_LSU_0_4 } },
   { 1, { Bundle_k1_BCU_LITE_X_LITE_X_MAU_LSU_X_0_4 } },
@@ -23839,37 +24253,35 @@ const int k1cp_resources[RESOURCE_MAX] = { 8,4,1,2,1,1,1,1};
 #define Reservation_k1dp_ALU_ALU_Z 6
 #define Reservation_k1dp_BCU 7
 #define Reservation_k1dp_BCU_LITE_LITE_MAU 8
-#define Reservation_k1dp_BCU_LSU 9
-#define Reservation_k1dp_LITE 10
-#define Reservation_k1dp_LITE_X 11
-#define Reservation_k1dp_LSU 12
-#define Reservation_k1dp_LSU_X 13
-#define Reservation_k1dp_LSU_ACC 14
-#define Reservation_k1dp_LSU_ACC_X 15
-#define Reservation_k1dp_MAU 16
-#define Reservation_k1dp_MAU_X 17
-#define Reservation_k1dp_MAU_ACC 18
-#define Reservation_k1dp_MAU_ACC_X 19
-#define Reservation_k1cp_ALL 20
-#define Reservation_k1cp_ALU 21
-#define Reservation_k1cp_ALU_X 22
-#define Reservation_k1cp_ALU_ODD 23
-#define Reservation_k1cp_ALU_ALU 24
-#define Reservation_k1cp_ALU_ALU_Y 25
-#define Reservation_k1cp_ALU_ALU_Z 26
-#define Reservation_k1cp_BCU 27
-#define Reservation_k1cp_BCU_LITE_LITE_MAU 28
-#define Reservation_k1cp_BCU_LSU 29
-#define Reservation_k1cp_LITE 30
-#define Reservation_k1cp_LITE_X 31
-#define Reservation_k1cp_LSU 32
-#define Reservation_k1cp_LSU_X 33
-#define Reservation_k1cp_LSU_ACC 34
-#define Reservation_k1cp_LSU_ACC_X 35
-#define Reservation_k1cp_MAU 36
-#define Reservation_k1cp_MAU_X 37
-#define Reservation_k1cp_MAU_ACC 38
-#define Reservation_k1cp_MAU_ACC_X 39
+#define Reservation_k1dp_LITE 9
+#define Reservation_k1dp_LITE_X 10
+#define Reservation_k1dp_LSU 11
+#define Reservation_k1dp_LSU_X 12
+#define Reservation_k1dp_LSU_ACC 13
+#define Reservation_k1dp_LSU_ACC_X 14
+#define Reservation_k1dp_MAU 15
+#define Reservation_k1dp_MAU_X 16
+#define Reservation_k1dp_MAU_ACC 17
+#define Reservation_k1dp_MAU_ACC_X 18
+#define Reservation_k1cp_ALL 19
+#define Reservation_k1cp_ALU 20
+#define Reservation_k1cp_ALU_X 21
+#define Reservation_k1cp_ALU_ODD 22
+#define Reservation_k1cp_ALU_ALU 23
+#define Reservation_k1cp_ALU_ALU_Y 24
+#define Reservation_k1cp_ALU_ALU_Z 25
+#define Reservation_k1cp_BCU 26
+#define Reservation_k1cp_BCU_LITE_LITE_MAU 27
+#define Reservation_k1cp_LITE 28
+#define Reservation_k1cp_LITE_X 29
+#define Reservation_k1cp_LSU 30
+#define Reservation_k1cp_LSU_X 31
+#define Reservation_k1cp_LSU_ACC 32
+#define Reservation_k1cp_LSU_ACC_X 33
+#define Reservation_k1cp_MAU 34
+#define Reservation_k1cp_MAU_X 35
+#define Reservation_k1cp_MAU_ACC 36
+#define Reservation_k1cp_MAU_ACC_X 37
 
 
 #define RESERVATION_TABLE_LINES 1
@@ -23970,17 +24382,6 @@ static const int Reservation_k1cp_BCU_LITE_LITE_MAU_table[RESERVATION_TABLE_LINE
   0 /* cyc.0 Resource-k1-ALU */,
   0 /* cyc.0 Resource-k1-LSU */,
   1 /* cyc.0 Resource-k1-MAU */,
-  0 /* cyc.0 Resource-k1-ODD */,
-  0 /* cyc.0 Resource-k1-ACC */
-};
-
-static const int Reservation_k1cp_BCU_LSU_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
-  1 /* cyc.0 Resource-k1-ISSUE */,
-  1 /* cyc.0 Resource-k1-LITE */,
-  1 /* cyc.0 Resource-k1-BCU */,
-  0 /* cyc.0 Resource-k1-ALU */,
-  1 /* cyc.0 Resource-k1-LSU */,
-  0 /* cyc.0 Resource-k1-MAU */,
   0 /* cyc.0 Resource-k1-ODD */,
   0 /* cyc.0 Resource-k1-ACC */
 };
@@ -24194,17 +24595,6 @@ static const int Reservation_k1dp_BCU_LITE_LITE_MAU_table[RESERVATION_TABLE_LINE
   0 /* cyc.0 Resource-k1-ACC */
 };
 
-static const int Reservation_k1dp_BCU_LSU_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
-  1 /* cyc.0 Resource-k1-ISSUE */,
-  1 /* cyc.0 Resource-k1-LITE */,
-  1 /* cyc.0 Resource-k1-BCU */,
-  0 /* cyc.0 Resource-k1-ALU */,
-  1 /* cyc.0 Resource-k1-LSU */,
-  0 /* cyc.0 Resource-k1-MAU */,
-  0 /* cyc.0 Resource-k1-ODD */,
-  0 /* cyc.0 Resource-k1-ACC */
-};
-
 static const int Reservation_k1dp_LITE_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
   1 /* cyc.0 Resource-k1-ISSUE */,
   1 /* cyc.0 Resource-k1-LITE */,
@@ -24325,7 +24715,6 @@ const int *k1_reservation_table_table[] = {
   Reservation_k1dp_ALU_ALU_Z_table,
   Reservation_k1dp_BCU_table,
   Reservation_k1dp_BCU_LITE_LITE_MAU_table,
-  Reservation_k1dp_BCU_LSU_table,
   Reservation_k1dp_LITE_table,
   Reservation_k1dp_LITE_X_table,
   Reservation_k1dp_LSU_table,
@@ -24345,7 +24734,6 @@ const int *k1_reservation_table_table[] = {
   Reservation_k1cp_ALU_ALU_Z_table,
   Reservation_k1cp_BCU_table,
   Reservation_k1cp_BCU_LITE_LITE_MAU_table,
-  Reservation_k1cp_BCU_LSU_table,
   Reservation_k1cp_LITE_table,
   Reservation_k1cp_LITE_X_table,
   Reservation_k1cp_LSU_table,
@@ -24363,8 +24751,6 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
 	{"abs", {{ 0x61000000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"bool", {{ 0x6e020040, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"copy", {{ 0x6b000000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"negd", {{ 0xe3000000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -24375,20 +24761,32 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
 	{"not", {{ 0x6e00ffc0, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"sath", {{ 0x6d020400, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sath", {{ 0x68025400, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"satw", {{ 0xed020800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"satw", {{ 0xe8025800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
+	{"sxbd", {{ 0xe7033800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"sxb", {{ 0x67033800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"sxhd", {{ 0xe7037800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"sxh", {{ 0x67037800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"zxb", {{ 0x68003fc0, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sxwd", {{ 0xe703f800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+	{"wtob", {{ 0x65000040, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"zxh", {{ 0x68037800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"zxbd", {{ 0xe6033800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+	{"zxb", {{ 0x66033800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"abdd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
+	{"zxhd", {{ 0xe6037800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+	{"zxh", {{ 0x66037800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"zxwd", {{ 0xe603f800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"abdd", {{ 0xf1000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"abdd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -24397,22 +24795,22 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"abdd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"abdhp", {{ 0x71008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"abd", {{ 0x71000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"abd", {{ 0x61000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"abd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"abd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"addcd", {{ 0xf8001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"addcd", {{ 0xfe020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"addcid", {{ 0xfa001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"addcid", {{ 0xfe022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"addci", {{ 0x7a001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"addci", {{ 0x7e022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"addc", {{ 0x78001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"addc", {{ 0x7e020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"addd", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"addd", {{ 0xf2000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"addd", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -24421,8 +24819,12 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"addd", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"addhp", {{ 0x72008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"addsd", {{ 0xf0001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"addshp", {{ 0x70009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"adds", {{ 0x70001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"addx2d", {{ 0xf2001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -24441,10 +24843,8 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"add", {{ 0x62000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"add", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"add", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"andd", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"andd", {{ 0xf8000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"andd", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -24453,8 +24853,6 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"andd", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"andnd", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"andnd", {{ 0xfa000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"andnd", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -24469,7 +24867,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"andn", {{ 0x6a000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"andn", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"andn", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"and", {{ 0x68030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
@@ -24477,11 +24875,31 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"and", {{ 0x68000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"and", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"and", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"arld", {{ 0xf8020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"arl", {{ 0x78020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"avgd", {{ 0xf8001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avghp", {{ 0x78009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgrd", {{ 0xfa001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avgrhp", {{ 0x7a009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgrud", {{ 0xfb001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avgruhp", {{ 0x7b009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgru", {{ 0x7b001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgr", {{ 0x7a001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgud", {{ 0xf9001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avguhp", {{ 0x79009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgu", {{ 0x79001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avg", {{ 0x78001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"barrier", {{ 0x00040000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {0}, "", ""},
@@ -24495,11 +24913,19 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&systems, &setmask, &clrmask, 0}, "", "%s, %s, %s"},
 	{"break", {{ 0x000c0000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&sysnumber, 0}, "", "%s"},
+	{"bwluhp", {{ 0xf0032000, 0xf8033000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &registery, &upper22_bits_9_8_bits_7_5_lower5, 0}, "", "%s = %s, %s, %s"},
+	{"bwluwp", {{ 0xf0032000, 0xf8033000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, &upper22l_bits_9_8_bits_7_5_signed5m, 0}, "", "%s:%s = %s:%s, %s:%s, %s"},
+	{"bwlu_", {{ 0x70032000, 0x78033000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &registery, &bits_9_8_bits_7_5, 0}, "", "%s = %s, %s, %s"},
+	{"bwlu", {{ 0xf0032000, 0xf8033000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &registery, &registeru, &upper22l_bits_9_8_bits_7_5_signed5m, 0}, "", "%s = %s:%s, %s:%s, %s"},
 	{"call", {{ 0x10000000, 0x78000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&pcrel27, 0}, "", "%s"},
-	{"cbsl", {{ 0xf6030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"cbsdl", {{ 0xee022000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"cbs", {{ 0x76030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"cbs", {{ 0x6e022000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"cb.gtz", {{ 0x1d000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, &pcrel18, 0}, "", "%s, %s"},
@@ -24519,13 +24945,13 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, &pcrel18, 0}, "", "%s, %s"},
 	{"clear", {{ 0x07000000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
-	{"clsl", {{ 0xf5030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"clsdl", {{ 0xee021000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"cls", {{ 0x75030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"cls", {{ 0x6e021000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"clzl", {{ 0xf4030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"clzdl", {{ 0xee020000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"clz", {{ 0x74030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"clz", {{ 0x6e020000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"cmoved.gtz", {{ 0xf5020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registery, &registeru, 0}, "", "%s:%s = %s, %s:%s"},
@@ -24591,6 +25017,22 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s, %s:%s"},
 	{"cmoved.odd", {{ 0xe6020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s, %s:%s"},
+	{"cmovehp.gtz", {{ 0x75028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.ltz", {{ 0x72028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.even", {{ 0x77028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.gez", {{ 0x73028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.eqz", {{ 0x71028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.lez", {{ 0x74028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.nez", {{ 0x70028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.odd", {{ 0x76028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"cmove.gtz", {{ 0x75020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"cmove.ltz", {{ 0x72020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -24623,150 +25065,182 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
 	{"cmove.odd", {{ 0x66020000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"cmove.gtz", {{ 0xe5020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.gtz", {{ 0xe5020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.ltz", {{ 0xe2020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.ltz", {{ 0xe2020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.even", {{ 0xe7020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.even", {{ 0xe7020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.gez", {{ 0xe3020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.gez", {{ 0xe3020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.eqz", {{ 0xe1020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.eqz", {{ 0xe1020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.lez", {{ 0xe4020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.lez", {{ 0xe4020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.nez", {{ 0xe0020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.nez", {{ 0xe0020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.odd", {{ 0xe6020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.odd", {{ 0xe6020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1dp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"compl.tn", {{ 0xff010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tn", {{ 0xff010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ge", {{ 0xf3010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ge", {{ 0xf3010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.none", {{ 0xfd010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.none", {{ 0xfd010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.geu", {{ 0xf7010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.geu", {{ 0xf7010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ltu", {{ 0xf6010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ltu", {{ 0xf6010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.le", {{ 0xf4010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.le", {{ 0xf4010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gt", {{ 0xf5010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gt", {{ 0xf5010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ne", {{ 0xf0010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ne", {{ 0xf0010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.leu", {{ 0xf8010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.leu", {{ 0xf8010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gtu", {{ 0xf9010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gtu", {{ 0xf9010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.eq", {{ 0xf1010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.eq", {{ 0xf1010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tp", {{ 0xfe010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tp", {{ 0xfe010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.nall", {{ 0xfb010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.nall", {{ 0xfb010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.lt", {{ 0xf2010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.lt", {{ 0xf2010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.any", {{ 0xfc010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.any", {{ 0xfc010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.all", {{ 0xfa010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.all", {{ 0xfa010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
+	{"comphp.tn", {{ 0x7f018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.ge", {{ 0x73018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.none", {{ 0x7d018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.geu", {{ 0x77018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.ltu", {{ 0x76018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.le", {{ 0x74018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.gt", {{ 0x75018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.ne", {{ 0x70018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.leu", {{ 0x78018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.gtu", {{ 0x79018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.eq", {{ 0x71018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.tp", {{ 0x7e018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.nall", {{ 0x7b018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.lt", {{ 0x72018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.any", {{ 0x7c018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.all", {{ 0x7a018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"comp.tn", {{ 0x7f010000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"comp.ge", {{ 0x73010000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -24831,41 +25305,41 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
 	{"comp.all", {{ 0x6a010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"comp.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"ctzl", {{ 0xf7030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"ctzdl", {{ 0xee023000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"ctz", {{ 0x77030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"ctz", {{ 0x6e023000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"dflush", {{ 0x2f890000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {0}, "", ""},
@@ -24887,7 +25361,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dflushl", {{ 0x2f090000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dflushl", {{ 0xaf090000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dflushl", {{ 0xaf090000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dinval", {{ 0x2f850000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {0}, "", ""},
@@ -24909,7 +25383,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dinvall", {{ 0x2f050000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dinvall", {{ 0xaf050000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dinvall", {{ 0xaf050000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dpurge", {{ 0x2f8d0000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {0}, "", ""},
@@ -24931,7 +25405,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dpurgel", {{ 0x2f0d0000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dpurgel", {{ 0xaf0d0000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dpurgel", {{ 0xaf0d0000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dtouchl.sbf.x8", {{ 0x2f03f000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
@@ -24951,7 +25425,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dtouchl", {{ 0x2f010000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dtouchl", {{ 0xaf010000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dtouchl", {{ 0xaf010000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dzerol.sbf.x8", {{ 0x2f13f000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
@@ -24971,8 +25445,12 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dzerol", {{ 0x2f110000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dzerol", {{ 0xaf110000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dzerol", {{ 0xaf110000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
+	{"extfds", {{ 0xe7030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &highbit, &lowbit, 0}, "", "%s:%s = %s, %s, %s"},
+	{"extfdz", {{ 0xe6030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &highbit, &lowbit, 0}, "", "%s:%s = %s, %s, %s"},
 	{"extfs", {{ 0x67030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
 	{"extfz", {{ 0x66030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -24985,37 +25463,37 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerq, &registerp, 0}, "", "%s = %s, %s"},
 	{"fadd", {{ 0x4e03c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcompl.une", {{ 0xff023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.une", {{ 0xf3012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.oeq", {{ 0xff022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.oeq", {{ 0xf2012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.uge", {{ 0xff025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.uge", {{ 0xf5012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.one", {{ 0xff020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.one", {{ 0xf0012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.ult", {{ 0xff027000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.ult", {{ 0xf7012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.olt", {{ 0xff024000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.olt", {{ 0xf4012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.oge", {{ 0xff026000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.oge", {{ 0xf6012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.ueq", {{ 0xff021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.ueq", {{ 0xf1012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcomp.une", {{ 0x7f023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.une", {{ 0x73012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.oeq", {{ 0x7f022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.oeq", {{ 0x72012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.uge", {{ 0x7f025000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.uge", {{ 0x75012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.one", {{ 0x7f020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.one", {{ 0x70012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.ult", {{ 0x7f027000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.ult", {{ 0x77012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.olt", {{ 0x7f024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.olt", {{ 0x74012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.oge", {{ 0x7f026000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.oge", {{ 0x76012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.ueq", {{ 0x7f021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.ueq", {{ 0x71012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"fence", {{ 0x2f810000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {0}, "", ""},
@@ -25035,6 +25513,78 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerw, &registerx, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
 	{"ffms", {{ 0x55000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerw, &registerx, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
+	{"fixedd.rn", {{ 0xe1033000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedd.rm", {{ 0xe1032000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedd.rz", {{ 0xe1030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedd.rp", {{ 0xe1031000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rn", {{ 0xe1037000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rm", {{ 0xe1036000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rz", {{ 0xe1034000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rp", {{ 0xe1035000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedu.rn", {{ 0x61037000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixedu.rm", {{ 0x61036000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixedu.rz", {{ 0x61034000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixedu.rp", {{ 0x61035000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rn", {{ 0x61033000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rm", {{ 0x61032000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rz", {{ 0x61030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rp", {{ 0x61031000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatd.rn", {{ 0xe0033000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatd.rm", {{ 0xe0032000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatd.rz", {{ 0xe0030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatd.rp", {{ 0xe0031000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rn", {{ 0xe0037000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rm", {{ 0xe0036000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rz", {{ 0xe0034000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rp", {{ 0xe0035000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatu.rn", {{ 0x60037000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatu.rm", {{ 0x60036000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatu.rz", {{ 0x60034000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatu.rp", {{ 0x60035000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rn", {{ 0x60033000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rm", {{ 0x60032000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rz", {{ 0x60030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rp", {{ 0x60031000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fmaxd", {{ 0xff021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"fmax", {{ 0x7f021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"fmind", {{ 0xff020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"fmin", {{ 0x7f020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"fmuld", {{ 0x5f03e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerq, &registerp, 0}, "", "%s = %s, %s"},
 	{"fmulnd", {{ 0x5f03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -25051,9 +25601,9 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
 	{"fneg", {{ 0x6f023000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"fseedinv", {{ 0x6f020000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fsinv", {{ 0x6f020000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"fseedisr", {{ 0x6f021000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fsisr", {{ 0x6f021000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"fsubd", {{ 0x5f03d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerq, &registerp, 0}, "", "%s = %s, %s"},
@@ -25064,9 +25614,9 @@ k1opc_t k1dp_k1optab[] = {
 	{"fwiden", {{ 0xef027000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerv, 0}, "", "%s:%s = %s"},
 	{"get", {{ 0x05001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &registerz, 0}, "", "%s = %s"},
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"get", {{ 0x05000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &systems, 0}, "", "%s = %s"},
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &systems, 0}, "", "%s = %s"},
 	{"goto", {{ 0x08000000, 0x78000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&pcrel27, 0}, "", "%s"},
 	{"icall", {{ 0x00240000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -25077,7 +25627,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&sysnumber, 0}, "", "%s"},
 	{"igoto", {{ 0x00200000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, 0}, "", "%s"},
-	{"iinval", {{ 0x2f990000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"iinval", {{ 0x2f950000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {0}, "", ""},
 	{"iinvall.sbf.x8", {{ 0x2f47f000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
@@ -25097,7 +25647,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"iinvall", {{ 0x2f450000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"iinvall", {{ 0xaf450000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"iinvall", {{ 0xaf450000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"insf", {{ 0x65030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ODD, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
@@ -25119,10 +25669,12 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"itouchl", {{ 0x2f410000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"itouchl", {{ 0xaf410000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"itouchl", {{ 0xaf410000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
-	{"landd", {{ 0xfc001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"landdl", {{ 0xfc001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"landhp", {{ 0x7c009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"land", {{ 0x7c001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lbqs.sbf.x8", {{ 0x2703f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -25143,7 +25695,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbqs", {{ 0x27010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbqs", {{ 0xa7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbqs", {{ 0xa7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbqz.sbf.x8", {{ 0x2603f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25163,7 +25715,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbqz", {{ 0x26010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbqz", {{ 0xa6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbqz", {{ 0xa6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbs.m4096.x4", {{ 0x3102e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25311,7 +25863,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbs", {{ 0x21000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbs", {{ 0xa1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbs", {{ 0xa1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbz.m4096.x4", {{ 0x3002e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25459,7 +26011,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbz", {{ 0x20000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbz", {{ 0xa0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbz", {{ 0xa0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldc.sbf.x8", {{ 0x2a03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25479,7 +26031,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldc", {{ 0x2a010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldc", {{ 0xaa010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldc", {{ 0xaa010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldd.m4096.x4", {{ 0x3902e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25627,7 +26179,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldd", {{ 0x29000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldd", {{ 0xa9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldd", {{ 0xa9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldm.sbf.x8", {{ 0x2503f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25647,7 +26199,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldm", {{ 0x25010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldm", {{ 0xa5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldm", {{ 0xa5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldu.m4096.x4", {{ 0x3802e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25795,7 +26347,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldu", {{ 0x28000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldu", {{ 0xa8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldu", {{ 0xa8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ld.m4096.x4", {{ 0x3702e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -25943,47 +26495,47 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ld", {{ 0x27000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ld", {{ 0xa7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ld", {{ 0xa7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x8", {{ 0x2903f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x8", {{ 0x2903f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x1", {{ 0x2903c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x1", {{ 0x2903c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x8", {{ 0x2903b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x8", {{ 0x2903b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x4", {{ 0x2903a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x4", {{ 0x2903a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x4", {{ 0x2903e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x4", {{ 0x2903e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x2", {{ 0x29039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x2", {{ 0x29039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x2", {{ 0x2903d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x2", {{ 0x2903d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x1", {{ 0x29038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x1", {{ 0x29038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps", {{ 0x29010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm", {{ 0x29010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps", {{ 0xa9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhpsm", {{ 0xa9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x8", {{ 0x2803f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x8", {{ 0x2803f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x1", {{ 0x2803c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x1", {{ 0x2803c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x8", {{ 0x2803b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x8", {{ 0x2803b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x4", {{ 0x2803a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x4", {{ 0x2803a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x4", {{ 0x2803e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x4", {{ 0x2803e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x2", {{ 0x28039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x2", {{ 0x28039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x2", {{ 0x2803d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x2", {{ 0x2803d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x1", {{ 0x28038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x1", {{ 0x28038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz", {{ 0x28010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm", {{ 0x28010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz", {{ 0xa8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhpzm", {{ 0xa8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhsm.sbf.x8", {{ 0x2103f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26003,7 +26555,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhsm", {{ 0x21010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhsm", {{ 0xa1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhsm", {{ 0xa1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhs.m4096.x4", {{ 0x3302e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26151,7 +26703,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhs", {{ 0x23000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhs", {{ 0xa3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhs", {{ 0xa3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhzm.sbf.x8", {{ 0x2003f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26171,7 +26723,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhzm", {{ 0x20010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhzm", {{ 0xa0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhzm", {{ 0xa0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhz.m4096.x4", {{ 0x3202e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26319,24 +26871,30 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhz", {{ 0x22000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhz", {{ 0xa2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhz", {{ 0xa2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lnandd", {{ 0xfd001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"lnanddl", {{ 0xfd001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"lnandhp", {{ 0x7d009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lnand", {{ 0x7d001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"lnord", {{ 0xff001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"lnordl", {{ 0xff001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"lnorhp", {{ 0x7f009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lnor", {{ 0x7f001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"loopdo", {{ 0x01000000, 0x7f800000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LSU, {&registerz, &pcoff17, 0}, "", "%s, %s"},
+((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&registerz, &pcoff17, 0}, "", "%s, %s"},
 	{"loopgtz", {{ 0x03000000, 0x7f800000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LSU, {&registerz, &pcoff17, 0}, "", "%s, %s"},
+((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&registerz, &pcoff17, 0}, "", "%s, %s"},
 	{"loopnez", {{ 0x02000000, 0x7f800000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LSU, {&registerz, &pcoff17, 0}, "", "%s, %s"},
-	{"lord", {{ 0xfe001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&registerz, &pcoff17, 0}, "", "%s, %s"},
+	{"lordl", {{ 0xfe001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"lorhp", {{ 0x7e009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lor", {{ 0x7e001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lwm.sbf.x8", {{ 0x2203f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -26357,7 +26915,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwm", {{ 0x22010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwm", {{ 0xa2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwm", {{ 0xa2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwsm.sbf.x8", {{ 0x2403f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26377,7 +26935,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwsm", {{ 0x24010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwsm", {{ 0xa4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwsm", {{ 0xa4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lws.m4096.x4", {{ 0x3602e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26525,7 +27083,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lws", {{ 0x26000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lws", {{ 0xa6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lws", {{ 0xa6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwzm.sbf.x8", {{ 0x2303f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26545,7 +27103,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwzm", {{ 0x23010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwzm", {{ 0xa3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwzm", {{ 0xa3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwz.m4096.x4", {{ 0x3502e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26693,7 +27251,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwz", {{ 0x25000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwz", {{ 0xa5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwz", {{ 0xa5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lw.m4096.x4", {{ 0x3402e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -26841,13 +27399,13 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lw", {{ 0x24000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lw", {{ 0xa4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lw", {{ 0xa4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"madswd", {{ 0x44038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"madswd", {{ 0x44010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"madswd", {{ 0xc4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"madswd", {{ 0xc4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"maduciwd", {{ 0x47038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
@@ -26859,7 +27417,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maduwd", {{ 0x42010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"maduwd", {{ 0xc2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"maduwd", {{ 0xc2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"madwd", {{ 0x50000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registero, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
@@ -26867,10 +27425,8 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"madwd", {{ 0x40010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"madwd", {{ 0xc0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"madwd", {{ 0xc0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"maked", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &signed16, 0}, "", "%s = %s"},
 	{"maked", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &signed16, 0}, "", "%s:%s = %s"},
 	{"maked", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
@@ -26879,10 +27435,8 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s"},
 	{"make", {{ 0x60000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &signed16, 0}, "", "%s = %s"},
-	{"make", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"make", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &upper22_lower10, 0}, "", "%s = %s"},
-	{"maxd", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"maxd", {{ 0xf6000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxd", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -26891,8 +27445,8 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxd", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"maxud", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
+	{"maxhp", {{ 0x76008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maxud", {{ 0xf7000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxud", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -26901,20 +27455,20 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxud", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"maxuhp", {{ 0x77008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maxu", {{ 0x77000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maxu", {{ 0x67000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"maxu", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"maxu", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"max", {{ 0x76000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"max", {{ 0x66000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"max", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"max", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mind", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"mind", {{ 0xf4000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"mind", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -26923,8 +27477,8 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"mind", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"minud", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
+	{"minhp", {{ 0x74008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"minud", {{ 0xf5000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"minud", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -26933,23 +27487,25 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"minud", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"minuhp", {{ 0x75008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"minu", {{ 0x75000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"minu", {{ 0x65000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"minu", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"minu", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"min", {{ 0x74000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"min", {{ 0x64000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"min", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"min", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"msbswd", {{ 0x45038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"msbswd", {{ 0x45010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"msbswd", {{ 0xc5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"msbswd", {{ 0xc5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"msbuwd", {{ 0x53000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registero, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
@@ -26957,7 +27513,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"msbuwd", {{ 0x43010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"msbuwd", {{ 0xc3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"msbuwd", {{ 0xc3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"msbwd", {{ 0x51000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registero, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
@@ -26965,27 +27521,15 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"msbwd", {{ 0x41010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"msbwd", {{ 0xc1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"msbwd", {{ 0xc1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mull", {{ 0x40030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"mull", {{ 0x40000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mull", {{ 0xc0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mulm", {{ 0x41030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"mulm", {{ 0x41000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulm", {{ 0xc1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"mulqb", {{ 0x47030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"mulqd", {{ 0x4a038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"mulqd", {{ 0x4a000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulqd", {{ 0xca000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"mulqd", {{ 0xca000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"mulqt", {{ 0x46030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
@@ -27001,28 +27545,38 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"muls", {{ 0x43000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"muls", {{ 0xc3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"muls", {{ 0xc3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mulum", {{ 0x42030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"muluwdm", {{ 0x42030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"mulum", {{ 0x42000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"muluwdm", {{ 0x42000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulum", {{ 0xc2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"muluwdm", {{ 0xc2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"muluwd", {{ 0x49038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"muluwd", {{ 0x49000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"muluwd", {{ 0xc9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"muluwd", {{ 0xc9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
+	{"mulwdl", {{ 0x40030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"mulwdl", {{ 0x40000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"mulwdl", {{ 0xc0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
+	{"mulwdm", {{ 0x41030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"mulwdm", {{ 0x41000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"mulwdm", {{ 0xc1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"mulwd", {{ 0x48038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"mulwd", {{ 0x48000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_MAU, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulwd", {{ 0xc8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"mulwd", {{ 0xc8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1dp_MAU_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"nandd", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"nandd", {{ 0xf9000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"nandd", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27037,12 +27591,10 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"nand", {{ 0x69000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"nand", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"nand", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"nop", {{ 0x00000000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {0}, "", ""},
-	{"nord", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"nord", {{ 0xfc000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"nord", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27057,12 +27609,10 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"nor", {{ 0x6c000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"nor", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"nor", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"notify", {{ 0x07002000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
-	{"nxord", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"nxord", {{ 0xff000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"nxord", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27077,12 +27627,10 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"nxor", {{ 0x6f000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"nxor", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"nxor", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"opxd", {{ 0x78030000, 0x7803f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"ord", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"ord", {{ 0xfb000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"ord", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27091,8 +27639,6 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"ord", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"ornd", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"ornd", {{ 0xfd000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"ornd", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27107,7 +27653,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"orn", {{ 0x6d000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"orn", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"orn", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"or", {{ 0x6b030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
@@ -27115,7 +27661,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"or", {{ 0x6b000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"or", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"or", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"raise", {{ 0x07001000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
@@ -27123,32 +27669,34 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {0}, "", ""},
 	{"rfe", {{ 0x001c0000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {0}, "", ""},
-	{"satd", {{ 0xfd020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satd", {{ 0xed020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satud", {{ 0xfe020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satud", {{ 0xee020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satu", {{ 0x7e020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"rol", {{ 0x78027000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"satu", {{ 0x6e020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"rol", {{ 0x68027000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"sat", {{ 0x7d020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"ror", {{ 0x78026000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sat", {{ 0x6d020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"ror", {{ 0x68026000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"sbfcd", {{ 0xf9001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"satdl", {{ 0xf8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"satdl", {{ 0xe8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"satd", {{ 0xf8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
+	{"satd", {{ 0xe8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"sat", {{ 0x78025000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sat", {{ 0x68025000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"sbfcd", {{ 0xfe021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbfcid", {{ 0xfb001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sbfcid", {{ 0xfe023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbfci", {{ 0x7b001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sbfci", {{ 0x7e023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbfc", {{ 0x79001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sbfc", {{ 0x7e021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbfd", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"sbfd", {{ 0xf3000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbfd", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27157,8 +27705,12 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbfd", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"sbfhp", {{ 0x73008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbfsd", {{ 0xf1001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"sbfshp", {{ 0x71009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbfs", {{ 0x71001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbfx2d", {{ 0xf3001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -27177,32 +27729,40 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbf", {{ 0x63000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"sbf", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"sbf", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"sbmm8_", {{ 0x72030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbmm8_", {{ 0x62030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"sbmm8l", {{ 0xf2030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"sbmm8l", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, 0}, "", "%s = %s:%s, %s"},
+	{"sbmm8l", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
 	{"sbmm8", {{ 0xf2030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbmm8", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &signed10, 0}, "", "%s:%s = %s:%s, %s"},
 	{"sbmm8", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbmm8", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbmmt8_", {{ 0x73030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbmmt8_", {{ 0x63030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"sbmmt8l", {{ 0xf3030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"sbmmt8l", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, 0}, "", "%s = %s:%s, %s"},
+	{"sbmmt8l", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
 	{"sbmmt8", {{ 0xf3030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbmmt8", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &signed10, 0}, "", "%s:%s = %s:%s, %s"},
 	{"sbmmt8", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbmmt8", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"sbmmt_", {{ 0x73030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sbmmt_", {{ 0x63030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"sbmm_", {{ 0x72030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sbmm_", {{ 0x62030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
 	{"sb.m4096.x4", {{ 0x3a02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sb.m1024.x1", {{ 0x3a024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -27349,7 +27909,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sb", {{ 0x2a000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"sb", {{ 0xaa000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sb", {{ 0xaa000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"scall", {{ 0x002c0000, 0x7ffc003f, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&sysnumber, 0}, "", "%s"},
@@ -27499,7 +28059,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdd", {{ 0x2f000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sdd", {{ 0xaf000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sdd", {{ 0xaf000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdm.sbf.x8", {{ 0x2e03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
@@ -27519,7 +28079,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdm", {{ 0x2e010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sdm", {{ 0xae010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sdm", {{ 0xae010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdu.m4096.x4", {{ 0x3e02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
@@ -27667,7 +28227,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdu", {{ 0x2e000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sdu", {{ 0xae000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sdu", {{ 0xae000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sd.m4096.x4", {{ 0x3d02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
@@ -27815,7 +28375,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sd", {{ 0x2d000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sd", {{ 0xad000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sd", {{ 0xad000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"set", {{ 0x06000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&systemt, &registerz, 0}, "", "%s = %s"},
@@ -27837,7 +28397,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"shm", {{ 0x2b010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"shm", {{ 0xab010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"shm", {{ 0xab010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sh.m4096.x4", {{ 0x3b02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
@@ -27985,44 +28545,84 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sh", {{ 0x2b000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"sh", {{ 0xab000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sh", {{ 0xab000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"slld", {{ 0xf9020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"slldm", {{ 0xf8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7c030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registers, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"slldm", {{ 0xe8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7c030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registers, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"slld", {{ 0xf8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"slld", {{ 0xe9020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"slld", {{ 0xe8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"sllsd", {{ 0xfc020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sllhps", {{ 0x78029000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sllhps", {{ 0x68029000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"sll", {{ 0x78021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sll", {{ 0x68021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"slsd", {{ 0xf8024000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"sllsd", {{ 0xec020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"slsd", {{ 0xe8024000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"slls", {{ 0x7c020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"slshps", {{ 0x7802c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"slls", {{ 0x6c020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"slshps", {{ 0x6802c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"sll", {{ 0x79020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sls", {{ 0x78024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sll", {{ 0x69020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sls", {{ 0x68024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"srad", {{ 0xfa020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sradl", {{ 0xf8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"sradl", {{ 0xe8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"srad", {{ 0xf8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"srad", {{ 0xea020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"srad", {{ 0xe8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"sra", {{ 0x7a020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srahps", {{ 0x7802a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sra", {{ 0x6a020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srahps", {{ 0x6802a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"srld", {{ 0xfb020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sra", {{ 0x78022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sra", {{ 0x68022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srldl", {{ 0xf8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"srldl", {{ 0xe8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"srld", {{ 0xf8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"srld", {{ 0xeb020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"srld", {{ 0xe8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"srl", {{ 0x7b020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srlhps", {{ 0x7802b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"srl", {{ 0x6b020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srlhps", {{ 0x6802b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srl", {{ 0x78023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"srl", {{ 0x68023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srsd", {{ 0xf8020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
 	{"srsd", {{ 0xe8020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"srshps", {{ 0x78028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"srshps", {{ 0x68028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srs", {{ 0x78020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"srs", {{ 0x68020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"stsud", {{ 0xf0000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"stsu", {{ 0x70000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"swm.sbf.x8", {{ 0x2c03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"swm.sbf.x1", {{ 0x2c03c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28041,7 +28641,7 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"swm", {{ 0x2c010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"swm", {{ 0xac010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"swm", {{ 0xac010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sw.m4096.x4", {{ 0x3c02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
@@ -28189,8 +28789,12 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sw", {{ 0x2c000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"sw", {{ 0xac000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sw", {{ 0xac000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1dp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
+	{"sxbp", {{ 0x6e025000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"sxbq", {{ 0xee025000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"trapa", {{ 0x00340000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1dp_ALL, {&flagmask, &sysnumber, 0}, "", "%s, %s"},
 	{"trapf", {{ 0x003c0000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28202,13 +28806,11 @@ k1opc_t k1dp_k1optab[] = {
 	{"waitall", {{ 0x07003000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
 	{"waitany", {{ 0x07004000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
 	{"wantany", {{ 0x07005000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
-	{"wflush", {{ 0x2f950000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1dp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
+	{"wflush", {{ 0x2f910000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1dp_LSU, {0}, "", ""},
-	{"xord", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"xord", {{ 0xfe000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"xord", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -28223,9 +28825,13 @@ k1opc_t k1dp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"xor", {{ 0x6e000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1dp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"xor", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"xor", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1dp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-/* Number of instructions : 1933 */
+	{"zxbp", {{ 0x6e024000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1dp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"zxbq", {{ 0xee024000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1dp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+/* Number of instructions : 2042 */
 	{"", 0, 0, 0, 0, 0, {0}, "", ""}};
 
 const K1_Core_Info k1dp_core_info = { "k1dp", k1dp_k1optab, k1dp_resources, ELF_K1_CORE_DP, TRUE };
@@ -28234,8 +28840,6 @@ k1opc_t k1cp_k1optab[] = {
 	{"absd", {{ 0xe1000000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
 	{"abs", {{ 0x61000000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"bool", {{ 0x6e020040, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"copy", {{ 0x6b000000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, 0}, "", "%s = %s"},
@@ -28247,20 +28851,32 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
 	{"not", {{ 0x6e00ffc0, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"sath", {{ 0x6d020400, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sath", {{ 0x68025400, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"satw", {{ 0xed020800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"satw", {{ 0xe8025800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
+	{"sxbd", {{ 0xe7033800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"sxb", {{ 0x67033800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"sxhd", {{ 0xe7037800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"sxh", {{ 0x67037800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"zxb", {{ 0x68003fc0, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sxwd", {{ 0xe703f800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+	{"wtob", {{ 0x65000040, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"zxh", {{ 0x68037800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"zxbd", {{ 0xe6033800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+	{"zxb", {{ 0x66033800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"abdd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
+	{"zxhd", {{ 0xe6037800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+	{"zxh", {{ 0x66037800, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"zxwd", {{ 0xe603f800, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"abdd", {{ 0xf1000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"abdd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -28269,22 +28885,22 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"abdd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"abdhp", {{ 0x71008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"abd", {{ 0x71000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"abd", {{ 0x61000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"abd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"abd", {{ 0xe1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"addcd", {{ 0xf8001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"addcd", {{ 0xfe020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"addcid", {{ 0xfa001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"addcid", {{ 0xfe022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"addci", {{ 0x7a001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"addci", {{ 0x7e022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"addc", {{ 0x78001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"addc", {{ 0x7e020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"addd", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"addd", {{ 0xf2000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"addd", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -28293,8 +28909,12 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"addd", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"addhp", {{ 0x72008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"addsd", {{ 0xf0001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"addshp", {{ 0x70009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"adds", {{ 0x70001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"addx2d", {{ 0xf2001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -28313,10 +28933,8 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"add", {{ 0x62000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"add", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"add", {{ 0xe2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"andd", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"andd", {{ 0xf8000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"andd", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -28325,8 +28943,6 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"andd", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"andnd", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"andnd", {{ 0xfa000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"andnd", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -28341,7 +28957,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"andn", {{ 0x6a000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"andn", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"andn", {{ 0xea000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"and", {{ 0x68030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
@@ -28349,11 +28965,31 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"and", {{ 0x68000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"and", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"and", {{ 0xe8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"arld", {{ 0xf8020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"arl", {{ 0x78020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"avgd", {{ 0xf8001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avghp", {{ 0x78009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgrd", {{ 0xfa001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avgrhp", {{ 0x7a009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgrud", {{ 0xfb001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avgruhp", {{ 0x7b009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgru", {{ 0x7b001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgr", {{ 0x7a001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgud", {{ 0xf9001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"avguhp", {{ 0x79009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avgu", {{ 0x79001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"avg", {{ 0x78001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"barrier", {{ 0x00040000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {0}, "", ""},
@@ -28367,11 +29003,19 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&systems, &setmask, &clrmask, 0}, "", "%s, %s, %s"},
 	{"break", {{ 0x000c0000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&sysnumber, 0}, "", "%s"},
+	{"bwluhp", {{ 0xf0032000, 0xf8033000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &registery, &upper22_bits_9_8_bits_7_5_lower5, 0}, "", "%s = %s, %s, %s"},
+	{"bwluwp", {{ 0xf0032000, 0xf8033000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, &upper22l_bits_9_8_bits_7_5_signed5m, 0}, "", "%s:%s = %s:%s, %s:%s, %s"},
+	{"bwlu_", {{ 0x70032000, 0x78033000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &registery, &bits_9_8_bits_7_5, 0}, "", "%s = %s, %s, %s"},
+	{"bwlu", {{ 0xf0032000, 0xf8033000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &registery, &registeru, &upper22l_bits_9_8_bits_7_5_signed5m, 0}, "", "%s = %s:%s, %s:%s, %s"},
 	{"call", {{ 0x10000000, 0x78000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&pcrel27, 0}, "", "%s"},
-	{"cbsl", {{ 0xf6030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"cbsdl", {{ 0xee022000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"cbs", {{ 0x76030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"cbs", {{ 0x6e022000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"cb.gtz", {{ 0x1d000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, &pcrel18, 0}, "", "%s, %s"},
@@ -28391,13 +29035,13 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, &pcrel18, 0}, "", "%s, %s"},
 	{"clear", {{ 0x07000000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
-	{"clsl", {{ 0xf5030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"clsdl", {{ 0xee021000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"cls", {{ 0x75030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"cls", {{ 0x6e021000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"clzl", {{ 0xf4030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"clzdl", {{ 0xee020000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"clz", {{ 0x74030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"clz", {{ 0x6e020000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"cmoved.gtz", {{ 0xf5020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registery, &registeru, 0}, "", "%s:%s = %s, %s:%s"},
@@ -28463,6 +29107,22 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s, %s:%s"},
 	{"cmoved.odd", {{ 0xe6020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s, %s:%s"},
+	{"cmovehp.gtz", {{ 0x75028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.ltz", {{ 0x72028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.even", {{ 0x77028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.gez", {{ 0x73028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.eqz", {{ 0x71028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.lez", {{ 0x74028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.nez", {{ 0x70028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"cmovehp.odd", {{ 0x76028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"cmove.gtz", {{ 0x75020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"cmove.ltz", {{ 0x72020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28495,150 +29155,182 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
 	{"cmove.odd", {{ 0x66020000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"cmove.gtz", {{ 0xe5020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.gtz", {{ 0xe5020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.ltz", {{ 0xe2020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.ltz", {{ 0xe2020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.even", {{ 0xe7020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.even", {{ 0xe7020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.gez", {{ 0xe3020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.gez", {{ 0xe3020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.eqz", {{ 0xe1020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.eqz", {{ 0xe1020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.lez", {{ 0xe4020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.lez", {{ 0xe4020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.nez", {{ 0xe0020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.nez", {{ 0xe0020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"cmove.odd", {{ 0xe6020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"cmove.odd", {{ 0xe6020000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALU_X, ((int)0 << 8) | (int)Reservation_k1cp_ALU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"compl.tn", {{ 0xff010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tn", {{ 0xff010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ge", {{ 0xf3010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ge", {{ 0xf3010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.none", {{ 0xfd010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.none", {{ 0xfd010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.geu", {{ 0xf7010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.geu", {{ 0xf7010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ltu", {{ 0xf6010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ltu", {{ 0xf6010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.le", {{ 0xf4010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.le", {{ 0xf4010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gt", {{ 0xf5010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gt", {{ 0xf5010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ne", {{ 0xf0010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ne", {{ 0xf0010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.leu", {{ 0xf8010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.leu", {{ 0xf8010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gtu", {{ 0xf9010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gtu", {{ 0xf9010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.eq", {{ 0xf1010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.eq", {{ 0xf1010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tp", {{ 0xfe010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tp", {{ 0xfe010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.nall", {{ 0xfb010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.nall", {{ 0xfb010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.lt", {{ 0xf2010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.lt", {{ 0xf2010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.any", {{ 0xfc010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.any", {{ 0xfc010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.all", {{ 0xfa010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.all", {{ 0xfa010000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"compdl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
-	{"compl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+	{"compdl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
-	{"compl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+	{"compdl.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
+	{"comphp.tn", {{ 0x7f018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.ge", {{ 0x73018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.none", {{ 0x7d018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.geu", {{ 0x77018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.ltu", {{ 0x76018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.le", {{ 0x74018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.gt", {{ 0x75018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.ne", {{ 0x70018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.leu", {{ 0x78018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.gtu", {{ 0x79018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.eq", {{ 0x71018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.tp", {{ 0x7e018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.nall", {{ 0x7b018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.lt", {{ 0x72018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.any", {{ 0x7c018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"comphp.all", {{ 0x7a018000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"comp.tn", {{ 0x7f010000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"comp.ge", {{ 0x73010000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28703,41 +29395,41 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
 	{"comp.all", {{ 0x6a010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"comp.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.tn", {{ 0xef010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.ge", {{ 0xe3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.none", {{ 0xed010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.geu", {{ 0xe7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.ltu", {{ 0xe6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.le", {{ 0xe4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.gt", {{ 0xe5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.ne", {{ 0xe0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.leu", {{ 0xe8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.gtu", {{ 0xe9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.eq", {{ 0xe1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.tp", {{ 0xee010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.nall", {{ 0xeb010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.lt", {{ 0xe2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.any", {{ 0xec010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"comp.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"comp.all", {{ 0xea010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"ctzl", {{ 0xf7030000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"ctzdl", {{ 0xee023000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, 0}, "", "%s = %s:%s"},
-	{"ctz", {{ 0x77030000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"ctz", {{ 0x6e023000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"dflush", {{ 0x2f890000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {0}, "", ""},
@@ -28759,7 +29451,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dflushl", {{ 0x2f090000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dflushl", {{ 0xaf090000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dflushl", {{ 0xaf090000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dinval", {{ 0x2f850000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {0}, "", ""},
@@ -28781,7 +29473,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dinvall", {{ 0x2f050000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dinvall", {{ 0xaf050000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dinvall", {{ 0xaf050000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dpurge", {{ 0x2f8d0000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {0}, "", ""},
@@ -28803,7 +29495,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dpurgel", {{ 0x2f0d0000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dpurgel", {{ 0xaf0d0000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dpurgel", {{ 0xaf0d0000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dtouchl.sbf.x8", {{ 0x2f03f000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
@@ -28823,7 +29515,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dtouchl", {{ 0x2f010000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dtouchl", {{ 0xaf010000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dtouchl", {{ 0xaf010000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"dzerol.sbf.x8", {{ 0x2f13f000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
@@ -28843,8 +29535,12 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"dzerol", {{ 0x2f110000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"dzerol", {{ 0xaf110000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"dzerol", {{ 0xaf110000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
+	{"extfds", {{ 0xe7030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &highbit, &lowbit, 0}, "", "%s:%s = %s, %s, %s"},
+	{"extfdz", {{ 0xe6030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &highbit, &lowbit, 0}, "", "%s:%s = %s, %s, %s"},
 	{"extfs", {{ 0x67030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
 	{"extfz", {{ 0x66030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28857,37 +29553,37 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerq, &registerp, 0}, "", "%s = %s, %s"},
 	{"fadd", {{ 0x4e03c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcompl.une", {{ 0xff023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.une", {{ 0xf3012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.oeq", {{ 0xff022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.oeq", {{ 0xf2012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.uge", {{ 0xff025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.uge", {{ 0xf5012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.one", {{ 0xff020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.one", {{ 0xf0012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.ult", {{ 0xff027000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.ult", {{ 0xf7012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.olt", {{ 0xff024000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.olt", {{ 0xf4012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.oge", {{ 0xff026000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.oge", {{ 0xf6012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcompl.ueq", {{ 0xff021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"fcompdl.ueq", {{ 0xf1012000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
-	{"fcomp.une", {{ 0x7f023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.une", {{ 0x73012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.oeq", {{ 0x7f022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.oeq", {{ 0x72012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.uge", {{ 0x7f025000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.uge", {{ 0x75012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.one", {{ 0x7f020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.one", {{ 0x70012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.ult", {{ 0x7f027000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.ult", {{ 0x77012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.olt", {{ 0x7f024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.olt", {{ 0x74012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.oge", {{ 0x7f026000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.oge", {{ 0x76012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"fcomp.ueq", {{ 0x7f021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fcomp.ueq", {{ 0x71012000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"fence", {{ 0x2f810000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {0}, "", ""},
@@ -28907,6 +29603,78 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerw, &registerx, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
 	{"ffms", {{ 0x55000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerw, &registerx, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
+	{"fixedd.rn", {{ 0xe1033000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedd.rm", {{ 0xe1032000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedd.rz", {{ 0xe1030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedd.rp", {{ 0xe1031000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rn", {{ 0xe1037000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rm", {{ 0xe1036000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rz", {{ 0xe1034000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedud.rp", {{ 0xe1035000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"fixedu.rn", {{ 0x61037000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixedu.rm", {{ 0x61036000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixedu.rz", {{ 0x61034000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixedu.rp", {{ 0x61035000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rn", {{ 0x61033000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rm", {{ 0x61032000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rz", {{ 0x61030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fixed.rp", {{ 0x61031000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatd.rn", {{ 0xe0033000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatd.rm", {{ 0xe0032000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatd.rz", {{ 0xe0030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatd.rp", {{ 0xe0031000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rn", {{ 0xe0037000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rm", {{ 0xe0036000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rz", {{ 0xe0034000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatud.rp", {{ 0xe0035000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"floatu.rn", {{ 0x60037000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatu.rm", {{ 0x60036000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatu.rz", {{ 0x60034000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"floatu.rp", {{ 0x60035000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rn", {{ 0x60033000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rm", {{ 0x60032000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rz", {{ 0x60030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"float.rp", {{ 0x60031000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"fmaxd", {{ 0xff021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"fmax", {{ 0x7f021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"fmind", {{ 0xff020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"fmin", {{ 0x7f020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"fmuld", {{ 0x5f03e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerq, &registerp, 0}, "", "%s = %s, %s"},
 	{"fmulnd", {{ 0x5f03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28923,9 +29691,9 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, 0}, "", "%s:%s = %s:%s"},
 	{"fneg", {{ 0x6f023000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"fseedinv", {{ 0x6f020000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fsinv", {{ 0x6f020000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
-	{"fseedisr", {{ 0x6f021000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"fsisr", {{ 0x6f021000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"fsubd", {{ 0x5f03d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerq, &registerp, 0}, "", "%s = %s, %s"},
@@ -28936,9 +29704,9 @@ k1opc_t k1cp_k1optab[] = {
 	{"fwiden", {{ 0xef027000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerv, 0}, "", "%s:%s = %s"},
 	{"get", {{ 0x05001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &registerz, 0}, "", "%s = %s"},
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &registerz, 0}, "", "%s = %s"},
 	{"get", {{ 0x05000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &systems, 0}, "", "%s = %s"},
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &systems, 0}, "", "%s = %s"},
 	{"goto", {{ 0x08000000, 0x78000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&pcrel27, 0}, "", "%s"},
 	{"icall", {{ 0x00240000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -28949,7 +29717,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&sysnumber, 0}, "", "%s"},
 	{"igoto", {{ 0x00200000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, 0}, "", "%s"},
-	{"iinval", {{ 0x2f990000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"iinval", {{ 0x2f950000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {0}, "", ""},
 	{"iinvall.sbf.x8", {{ 0x2f47f000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
@@ -28969,7 +29737,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"iinvall", {{ 0x2f450000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"iinvall", {{ 0xaf450000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"iinvall", {{ 0xaf450000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
 	{"insf", {{ 0x65030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ODD, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
@@ -28991,10 +29759,12 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registery, &registerz, 0}, "", "%s[%s]"},
 	{"itouchl", {{ 0x2f410000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&signed10, &registerz, 0}, "", "%s[%s]"},
-	{"itouchl", {{ 0xaf410000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"itouchl", {{ 0xaf410000, 0xffff0000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&upper22_lower10, &registerz, 0}, "", "%s[%s]"},
-	{"landd", {{ 0xfc001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"landdl", {{ 0xfc001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"landhp", {{ 0x7c009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"land", {{ 0x7c001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lbqs.sbf.x8", {{ 0x2703f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -29015,7 +29785,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbqs", {{ 0x27010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbqs", {{ 0xa7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbqs", {{ 0xa7010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbqz.sbf.x8", {{ 0x2603f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29035,7 +29805,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbqz", {{ 0x26010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbqz", {{ 0xa6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbqz", {{ 0xa6010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbs.m4096.x4", {{ 0x3102e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29183,7 +29953,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbs", {{ 0x21000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbs", {{ 0xa1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbs", {{ 0xa1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbz.m4096.x4", {{ 0x3002e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29331,7 +30101,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lbz", {{ 0x20000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lbz", {{ 0xa0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lbz", {{ 0xa0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldc.sbf.x8", {{ 0x2a03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29351,7 +30121,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldc", {{ 0x2a010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldc", {{ 0xaa010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldc", {{ 0xaa010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldd.m4096.x4", {{ 0x3902e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29499,7 +30269,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldd", {{ 0x29000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldd", {{ 0xa9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldd", {{ 0xa9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldm.sbf.x8", {{ 0x2503f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29519,7 +30289,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldm", {{ 0x25010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldm", {{ 0xa5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldm", {{ 0xa5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldu.m4096.x4", {{ 0x3802e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29667,7 +30437,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ldu", {{ 0x28000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ldu", {{ 0xa8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ldu", {{ 0xa8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ld.m4096.x4", {{ 0x3702e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29815,47 +30585,47 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"ld", {{ 0x27000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"ld", {{ 0xa7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"ld", {{ 0xa7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x8", {{ 0x2903f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x8", {{ 0x2903f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x1", {{ 0x2903c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x1", {{ 0x2903c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x8", {{ 0x2903b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x8", {{ 0x2903b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x4", {{ 0x2903a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x4", {{ 0x2903a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x4", {{ 0x2903e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x4", {{ 0x2903e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x2", {{ 0x29039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x2", {{ 0x29039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.sbf.x2", {{ 0x2903d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.sbf.x2", {{ 0x2903d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps.add.x1", {{ 0x29038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm.add.x1", {{ 0x29038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps", {{ 0x29010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpsm", {{ 0x29010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhps", {{ 0xa9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhpsm", {{ 0xa9010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x8", {{ 0x2803f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x8", {{ 0x2803f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x1", {{ 0x2803c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x1", {{ 0x2803c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x8", {{ 0x2803b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x8", {{ 0x2803b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x4", {{ 0x2803a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x4", {{ 0x2803a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x4", {{ 0x2803e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x4", {{ 0x2803e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x2", {{ 0x28039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x2", {{ 0x28039000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.sbf.x2", {{ 0x2803d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.sbf.x2", {{ 0x2803d000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz.add.x1", {{ 0x28038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm.add.x1", {{ 0x28038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz", {{ 0x28010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"lhpzm", {{ 0x28010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhpz", {{ 0xa8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhpzm", {{ 0xa8010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhsm.sbf.x8", {{ 0x2103f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -29875,7 +30645,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhsm", {{ 0x21010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhsm", {{ 0xa1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhsm", {{ 0xa1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhs.m4096.x4", {{ 0x3302e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30023,7 +30793,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhs", {{ 0x23000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhs", {{ 0xa3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhs", {{ 0xa3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhzm.sbf.x8", {{ 0x2003f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30043,7 +30813,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhzm", {{ 0x20010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhzm", {{ 0xa0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhzm", {{ 0xa0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhz.m4096.x4", {{ 0x3202e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30191,24 +30961,30 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lhz", {{ 0x22000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lhz", {{ 0xa2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lhz", {{ 0xa2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lnandd", {{ 0xfd001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"lnanddl", {{ 0xfd001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"lnandhp", {{ 0x7d009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lnand", {{ 0x7d001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"lnord", {{ 0xff001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"lnordl", {{ 0xff001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"lnorhp", {{ 0x7f009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lnor", {{ 0x7f001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"loopdo", {{ 0x01000000, 0x7f800000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LSU, {&registerz, &pcoff17, 0}, "", "%s, %s"},
+((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&registerz, &pcoff17, 0}, "", "%s, %s"},
 	{"loopgtz", {{ 0x03000000, 0x7f800000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LSU, {&registerz, &pcoff17, 0}, "", "%s, %s"},
+((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&registerz, &pcoff17, 0}, "", "%s, %s"},
 	{"loopnez", {{ 0x02000000, 0x7f800000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LSU, {&registerz, &pcoff17, 0}, "", "%s, %s"},
-	{"lord", {{ 0xfe001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&registerz, &pcoff17, 0}, "", "%s, %s"},
+	{"lordl", {{ 0xfe001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"lorhp", {{ 0x7e009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lor", {{ 0x7e001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"lwm.sbf.x8", {{ 0x2203f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -30229,7 +31005,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwm", {{ 0x22010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwm", {{ 0xa2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwm", {{ 0xa2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwsm.sbf.x8", {{ 0x2403f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30249,7 +31025,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwsm", {{ 0x24010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwsm", {{ 0xa4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwsm", {{ 0xa4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lws.m4096.x4", {{ 0x3602e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30397,7 +31173,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lws", {{ 0x26000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lws", {{ 0xa6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lws", {{ 0xa6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwzm.sbf.x8", {{ 0x2303f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30417,7 +31193,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwzm", {{ 0x23010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwzm", {{ 0xa3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwzm", {{ 0xa3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwz.m4096.x4", {{ 0x3502e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30565,7 +31341,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lwz", {{ 0x25000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerm, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lwz", {{ 0xa5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lwz", {{ 0xa5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerm, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lw.m4096.x4", {{ 0x3402e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
@@ -30713,13 +31489,13 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &registery, &registerz, 0}, "", "%s = %s[%s]"},
 	{"lw", {{ 0x24000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {&registerw, &signed10, &registerz, 0}, "", "%s = %s[%s]"},
-	{"lw", {{ 0xa4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"lw", {{ 0xa4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_X, {&registerw, &upper22_lower10, &registerz, 0}, "", "%s = %s[%s]"},
 	{"madswd", {{ 0x44038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"madswd", {{ 0x44010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"madswd", {{ 0xc4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"madswd", {{ 0xc4010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"maduciwd", {{ 0x47038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
@@ -30731,7 +31507,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maduwd", {{ 0x42010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"maduwd", {{ 0xc2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"maduwd", {{ 0xc2010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"madwd", {{ 0x50000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registero, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
@@ -30739,10 +31515,8 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"madwd", {{ 0x40010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"madwd", {{ 0xc0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"madwd", {{ 0xc0010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"maked", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &signed16, 0}, "", "%s = %s"},
 	{"maked", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &signed16, 0}, "", "%s:%s = %s"},
 	{"maked", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
@@ -30751,10 +31525,8 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s"},
 	{"make", {{ 0x60000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &signed16, 0}, "", "%s = %s"},
-	{"make", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"make", {{ 0xe0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &upper22_lower10, 0}, "", "%s = %s"},
-	{"maxd", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"maxd", {{ 0xf6000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxd", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30763,8 +31535,8 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxd", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"maxud", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
+	{"maxhp", {{ 0x76008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maxud", {{ 0xf7000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxud", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30773,20 +31545,20 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"maxud", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"maxuhp", {{ 0x77008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maxu", {{ 0x77000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"maxu", {{ 0x67000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"maxu", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"maxu", {{ 0xe7000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"max", {{ 0x76000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"max", {{ 0x66000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"max", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"max", {{ 0xe6000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mind", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"mind", {{ 0xf4000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"mind", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30795,8 +31567,8 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"mind", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"minud", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
+	{"minhp", {{ 0x74008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"minud", {{ 0xf5000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"minud", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30805,23 +31577,25 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"minud", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"minuhp", {{ 0x75008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"minu", {{ 0x75000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"minu", {{ 0x65000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"minu", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"minu", {{ 0xe5000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"min", {{ 0x74000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"min", {{ 0x64000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"min", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"min", {{ 0xe4000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"msbswd", {{ 0x45038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"msbswd", {{ 0x45010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"msbswd", {{ 0xc5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"msbswd", {{ 0xc5010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"msbuwd", {{ 0x53000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registero, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
@@ -30829,7 +31603,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"msbuwd", {{ 0x43010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"msbuwd", {{ 0xc3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"msbuwd", {{ 0xc3010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"msbwd", {{ 0x51000000, 0x7f000000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registero, &registerz, &registery, 0}, "", "%s = %s, %s, %s"},
@@ -30837,27 +31611,15 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"msbwd", {{ 0x41010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"msbwd", {{ 0xc1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"msbwd", {{ 0xc1010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_ACC_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mull", {{ 0x40030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"mull", {{ 0x40000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mull", {{ 0xc0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mulm", {{ 0x41030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"mulm", {{ 0x41000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulm", {{ 0xc1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"mulqb", {{ 0x47030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"mulqd", {{ 0x4a038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"mulqd", {{ 0x4a000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulqd", {{ 0xca000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"mulqd", {{ 0xca000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"mulqt", {{ 0x46030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
@@ -30873,28 +31635,38 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"muls", {{ 0x43000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"muls", {{ 0xc3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"muls", {{ 0xc3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"mulum", {{ 0x42030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"muluwdm", {{ 0x42030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"mulum", {{ 0x42000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"muluwdm", {{ 0x42000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulum", {{ 0xc2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"muluwdm", {{ 0xc2000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"muluwd", {{ 0x49038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"muluwd", {{ 0x49000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"muluwd", {{ 0xc9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"muluwd", {{ 0xc9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
+	{"mulwdl", {{ 0x40030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"mulwdl", {{ 0x40000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"mulwdl", {{ 0xc0000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
+	{"mulwdm", {{ 0x41030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"mulwdm", {{ 0x41000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"mulwdm", {{ 0xc1000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"mulwd", {{ 0x48038000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerm, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"mulwd", {{ 0x48000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_MAU, {&registerm, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"mulwd", {{ 0xc8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
+	{"mulwd", {{ 0xc8000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_MAU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_MAU_X, ((int)0 << 8) | (int)Reservation_k1cp_MAU_X, {&registerm, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"nandd", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"nandd", {{ 0xf9000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"nandd", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30909,12 +31681,10 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"nand", {{ 0x69000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"nand", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"nand", {{ 0xe9000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"nop", {{ 0x00000000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {0}, "", ""},
-	{"nord", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"nord", {{ 0xfc000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"nord", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30929,12 +31699,10 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"nor", {{ 0x6c000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"nor", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"nor", {{ 0xec000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"notify", {{ 0x07002000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
-	{"nxord", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"nxord", {{ 0xff000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"nxord", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30949,12 +31717,10 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"nxor", {{ 0x6f000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"nxor", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"nxor", {{ 0xef000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"opxd", {{ 0x78030000, 0x7803f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"ord", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"ord", {{ 0xfb000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"ord", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30963,8 +31729,6 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"ord", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"ornd", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"ornd", {{ 0xfd000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"ornd", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -30979,7 +31743,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"orn", {{ 0x6d000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"orn", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"orn", {{ 0xed000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"or", {{ 0x6b030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &highbit, &lowbit, 0}, "", "%s = %s, %s, %s"},
@@ -30987,7 +31751,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"or", {{ 0x6b000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"or", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"or", {{ 0xeb000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
 	{"raise", {{ 0x07001000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
@@ -30995,32 +31759,34 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {0}, "", ""},
 	{"rfe", {{ 0x001c0000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {0}, "", ""},
-	{"satd", {{ 0xfd020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satd", {{ 0xed020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satud", {{ 0xfe020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satud", {{ 0xee020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"satu", {{ 0x7e020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"rol", {{ 0x78027000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"satu", {{ 0x6e020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"rol", {{ 0x68027000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"sat", {{ 0x7d020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"ror", {{ 0x78026000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sat", {{ 0x6d020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"ror", {{ 0x68026000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"sbfcd", {{ 0xf9001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"satdl", {{ 0xf8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"satdl", {{ 0xe8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"satd", {{ 0xf8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
+	{"satd", {{ 0xe8025000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"sat", {{ 0x78025000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sat", {{ 0x68025000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"sbfcd", {{ 0xfe021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbfcid", {{ 0xfb001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sbfcid", {{ 0xfe023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbfci", {{ 0x7b001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sbfci", {{ 0x7e023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbfc", {{ 0x79001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sbfc", {{ 0x7e021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbfd", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"sbfd", {{ 0xf3000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbfd", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -31029,8 +31795,12 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbfd", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"sbfhp", {{ 0x73008000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbfsd", {{ 0xf1001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"sbfshp", {{ 0x71009000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbfs", {{ 0x71001000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbfx2d", {{ 0xf3001000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -31049,32 +31819,40 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"sbf", {{ 0x63000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"sbf", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"sbf", {{ 0xe3000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-	{"sbmm8_", {{ 0x72030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbmm8_", {{ 0x62030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"sbmm8l", {{ 0xf2030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"sbmm8l", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, 0}, "", "%s = %s:%s, %s"},
+	{"sbmm8l", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
 	{"sbmm8", {{ 0xf2030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbmm8", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &signed10, 0}, "", "%s:%s = %s:%s, %s"},
 	{"sbmm8", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbmm8", {{ 0xe2030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbmmt8_", {{ 0x73030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sbmmt8_", {{ 0x63030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"sbmmt8l", {{ 0xf3030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, &registeru, 0}, "", "%s = %s:%s, %s:%s"},
+	{"sbmmt8l", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registerz, &registerv, &upper22l_lower10l, 0}, "", "%s = %s:%s, %s"},
+	{"sbmmt8l", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfa030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
+((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s = %s:%s, %s:%s"},
 	{"sbmmt8", {{ 0xf3030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
-	{"sbmmt8", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &signed10, 0}, "", "%s:%s = %s:%s, %s"},
 	{"sbmmt8", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Y, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Y, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &signed5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"sbmmt8", {{ 0xe3030000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0xfe030000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX1 | k1OPCODE_FLAG_ALU }, }, 4, 128,
 ((int)0 << 8) | (int)Bundling_k1_ALUD_Z, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU_Z, {&registerw, &registers, &registerz, &registerv, &upper22l_lower10l, &upper27m_lower5m, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"sbmmt_", {{ 0x73030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sbmmt_", {{ 0x63030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
+	{"sbmm_", {{ 0x72030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sbmm_", {{ 0x62030000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
 	{"sb.m4096.x4", {{ 0x3a02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sb.m1024.x1", {{ 0x3a024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -31221,7 +31999,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sb", {{ 0x2a000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"sb", {{ 0xaa000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sb", {{ 0xaa000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"scall", {{ 0x002c0000, 0x7ffc003f, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&sysnumber, 0}, "", "%s"},
@@ -31371,7 +32149,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdd", {{ 0x2f000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sdd", {{ 0xaf000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sdd", {{ 0xaf000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdm.sbf.x8", {{ 0x2e03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
@@ -31391,7 +32169,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdm", {{ 0x2e010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sdm", {{ 0xae010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sdm", {{ 0xae010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdu.m4096.x4", {{ 0x3e02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
@@ -31539,7 +32317,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sdu", {{ 0x2e000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sdu", {{ 0xae000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sdu", {{ 0xae000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sd.m4096.x4", {{ 0x3d02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
@@ -31687,7 +32465,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"sd", {{ 0x2d000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
-	{"sd", {{ 0xad000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sd", {{ 0xad000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registern, 0}, "", "%s[%s] = %s"},
 	{"set", {{ 0x06000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&systemt, &registerz, 0}, "", "%s = %s"},
@@ -31709,7 +32487,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"shm", {{ 0x2b010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"shm", {{ 0xab010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"shm", {{ 0xab010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sh.m4096.x4", {{ 0x3b02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
@@ -31857,44 +32635,84 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sh", {{ 0x2b000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"sh", {{ 0xab000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sh", {{ 0xab000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"slld", {{ 0xf9020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"slldm", {{ 0xf8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7c030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registers, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"slldm", {{ 0xe8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7c030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registers, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"slld", {{ 0xf8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"slld", {{ 0xe9020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"slld", {{ 0xe8021000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"sllsd", {{ 0xfc020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sllhps", {{ 0x78029000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sllhps", {{ 0x68029000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"sll", {{ 0x78021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sll", {{ 0x68021000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"slsd", {{ 0xf8024000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"sllsd", {{ 0xec020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"slsd", {{ 0xe8024000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"slls", {{ 0x7c020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"slshps", {{ 0x7802c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"slls", {{ 0x6c020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"slshps", {{ 0x6802c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"sll", {{ 0x79020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sls", {{ 0x78024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sll", {{ 0x69020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"sls", {{ 0x68024000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"srad", {{ 0xfa020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sradl", {{ 0xf8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"sradl", {{ 0xe8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"srad", {{ 0xf8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"srad", {{ 0xea020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"srad", {{ 0xe8022000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"sra", {{ 0x7a020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srahps", {{ 0x7802a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"sra", {{ 0x6a020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srahps", {{ 0x6802a000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
-	{"srld", {{ 0xfb020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"sra", {{ 0x78022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"sra", {{ 0x68022000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srldl", {{ 0xf8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &registery, 0}, "", "%s = %s:%s, %s"},
+	{"srldl", {{ 0xe8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7a030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registerz, &registerv, &unsigned6, 0}, "", "%s = %s:%s, %s"},
+	{"srld", {{ 0xf8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
-	{"srld", {{ 0xeb020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+	{"srld", {{ 0xe8023000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
-	{"srl", {{ 0x7b020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srlhps", {{ 0x7802b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
-	{"srl", {{ 0x6b020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+	{"srlhps", {{ 0x6802b000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srl", {{ 0x78023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"srl", {{ 0x68023000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srsd", {{ 0xf8020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, 0}, "", "%s:%s = %s:%s, %s"},
 	{"srsd", {{ 0xe8020000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &unsigned6, 0}, "", "%s:%s = %s:%s, %s"},
+	{"srshps", {{ 0x78028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
+	{"srshps", {{ 0x68028000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"srs", {{ 0x78020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"srs", {{ 0x68020000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, &unsigned6, 0}, "", "%s = %s, %s"},
+	{"stsud", {{ 0xf0000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
+	{"stsu", {{ 0x70000000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ODD, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"swm.sbf.x8", {{ 0x2c03f000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"swm.sbf.x1", {{ 0x2c03c000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -31913,7 +32731,7 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"swm", {{ 0x2c010000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"swm", {{ 0xac010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"swm", {{ 0xac010000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sw.m4096.x4", {{ 0x3c02e000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
@@ -32061,8 +32879,12 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&registery, &registerz, &registert, 0}, "", "%s[%s] = %s"},
 	{"sw", {{ 0x2c000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC, {&signed10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
-	{"sw", {{ 0xac000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
+	{"sw", {{ 0xac000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_LSU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LSU_X, ((int)0 << 8) | (int)Reservation_k1cp_LSU_ACC_X, {&upper22_lower10, &registerz, &registert, 0}, "", "%s[%s] = %s"},
+	{"sxbp", {{ 0x6e025000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"sxbq", {{ 0xee025000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
 	{"trapa", {{ 0x00340000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_ALL, ((int)0 << 8) | (int)Reservation_k1cp_ALL, {&flagmask, &sysnumber, 0}, "", "%s, %s"},
 	{"trapf", {{ 0x003c0000, 0x7ffc0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
@@ -32074,13 +32896,11 @@ k1opc_t k1cp_k1optab[] = {
 	{"waitall", {{ 0x07003000, 0x7ffff000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU, {&registerz, &eventmask, 0}, "", "%s, %s"},
 	{"waitany", {{ 0x07004000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
 	{"wantany", {{ 0x07005000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1_MAU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
-	{"wflush", {{ 0x2f950000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_BCU, ((int)0 << 8) | (int)Reservation_k1cp_BCU_LITE_LITE_MAU, {&registerw, &registerz, &eventmask, 0}, "", "%s = %s, %s"},
+	{"wflush", {{ 0x2f910000, 0x7fff0000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LSU, ((int)0 << 8) | (int)Reservation_k1cp_LSU, {0}, "", ""},
-	{"xord", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7f030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerr, &registerz, &registerv, &signed10, 0}, "", "%s = %s:%s, %s"},
 	{"xord", {{ 0xfe000000, 0xff03f000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, &registerv, &registery, &registeru, 0}, "", "%s:%s = %s:%s, %s:%s"},
 	{"xord", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
@@ -32095,9 +32915,13 @@ k1opc_t k1cp_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &registery, 0}, "", "%s = %s, %s"},
 	{"xor", {{ 0x6e000000, 0x7f030000, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1_LITE, ((int)0 << 8) | (int)Reservation_k1cp_LITE, {&registerw, &registerz, &signed10, 0}, "", "%s = %s, %s"},
-	{"xor", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x67c00000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
+	{"xor", {{ 0xee000000, 0xff030000, k1OPCODE_FLAG_UNDEF }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_IMMX0 | k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1_LITE_X, ((int)0 << 8) | (int)Reservation_k1cp_LITE_X, {&registerw, &registerz, &upper22_lower10, 0}, "", "%s = %s, %s"},
-/* Number of instructions : 1933 */
+	{"zxbp", {{ 0x6e024000, 0x7f03ffc0, k1OPCODE_FLAG_UNDEF }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1_ALU, ((int)0 << 8) | (int)Reservation_k1cp_ALU, {&registerw, &registerz, 0}, "", "%s = %s"},
+	{"zxbq", {{ 0xee024000, 0xff03ffc0, k1OPCODE_FLAG_UNDEF }, { 0x7e030000, 0x7f03f000, k1OPCODE_FLAG_UNDEF }, }, 2, 64,
+((int)0 << 8) | (int)Bundling_k1_ALUD, ((int)0 << 8) | (int)Reservation_k1cp_ALU_ALU, {&registerw, &registers, &registerz, 0}, "", "%s:%s = %s"},
+/* Number of instructions : 2042 */
 	{"", 0, 0, 0, 0, 0, {0}, "", ""}};
 
 const K1_Core_Info k1cp_core_info = { "k1cp", k1cp_k1optab, k1cp_resources, ELF_K1_CORE_CP, TRUE };
