@@ -50,7 +50,7 @@ static void k1_target_create_inferior (struct target_ops *ops,
     char **argv_args = gdb_buildargv (args);
     char **arg = argv_args;
     int nb_args = 0;
-    char tar_remote_cmd[] = "target remote :1337";
+    char tar_remote_cmd[] = "target extended-remote :1337";
     int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
 
