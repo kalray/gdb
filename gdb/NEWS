@@ -27,6 +27,8 @@ qGetTIBAddr
   - GDBserver now support tracepoints.  The feature is currently
     supported by the i386-linux and amd64-linux builds.
 
+  - GDBserver now supports x86_64 Windows 64-bit debugging.
+
 * GDB now sends xmlRegisters= in qSupported packet to indicate that
   it understands register description.
 
@@ -80,7 +82,9 @@ is now deprecated.
 * Python scripting
 
 ** The GDB Python API now has access to breakpoints, symbols, symbol
-   tables, program spaces, and frame's code blocks.
+   tables, program spaces, and frame's code blocks.  Additionally, GDB
+   Parameters can now be created from the API, and manipulated via
+   set/show in the CLI.
 
 ** New functions gdb.target_charset, gdb.target_wide_charset,
    gdb.progspaces, and gdb.current_progspace.
@@ -99,6 +103,10 @@ regular breakpoints.
 * New targets
 
 ARM Symbian			arm*-*-symbianelf*
+
+* D language support.
+  GDB now supports debugging programs written in the D programming
+  language.
 
 *** Changes in GDB 7.1
 
