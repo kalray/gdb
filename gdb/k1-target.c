@@ -37,7 +37,8 @@ static void k1_target_close (int quitting)
 static void
 k1_target_new_thread (struct thread_info *t)
 {
-    inferior_thread ()->step_multi = 1;
+    if (!ptid_equal(inferior_ptid, null_ptid))
+	inferior_thread ()->step_multi = 1;
 
     /* When we attach, don't wait... the K1 is already stopped. */
     current_target.to_attach_no_wait = 1;
@@ -140,6 +141,22 @@ k1_target_can_run (void)
     return 1;
 }
 
+static int
+k1_target_supports_non_stop (void)
+{
+  return 1;
+}
+
+static int
+k1_target_can_async (void)
+{
+  if (!target_async_permitted)
+    /* We only enable async when the user specifically asks for it.  */
+    return 0;
+
+  return 1;
+}
+
 void
 _initialize_k1_target (void)
 {
@@ -157,6 +174,8 @@ _initialize_k1_target (void)
 
     k1_target_ops.to_create_inferior = k1_target_create_inferior;
 
+    k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
+    k1_target_ops.to_can_async_p = k1_target_can_async;
     k1_target_ops.to_can_run = k1_target_can_run;
     k1_target_ops.to_magic = OPS_MAGIC;
     
