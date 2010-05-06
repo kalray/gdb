@@ -45,8 +45,8 @@ int reassemble_bundle(void) {
     int seen[4];
     int real_alu = 0;
     unsigned int bundle_immx[MAXIMMX];
-    unsigned int opxd_mask   = 0x78030000;
-    unsigned int opxd_opcode = 0x78030000;
+    unsigned int opxd_mask   = 0x7803f000;
+    unsigned int opxd_opcode = 0x7803f000;
     int has_opxd = 0;
 
     for(i=0; i < 4; i++){
@@ -208,7 +208,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
-      
+
       if(invalid_bundle){
           break;
       }
@@ -269,7 +269,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
               for(bf_idx=0;bf_idx < bf_nb; bf_idx++) {
                   int insn_idx = (int)bf[bf_idx].to_offset / 32;
-		  int to_offset = bf[bf_idx].to_offset % 32;
+                  int to_offset = bf[bf_idx].to_offset % 32;
                   unsigned long long encoded_value = insn->insn[insn_idx] >> to_offset;
                   encoded_value &= (1LL << bf[bf_idx].size) - 1;
                   value |= encoded_value << bf[bf_idx].from_offset;
