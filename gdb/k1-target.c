@@ -51,9 +51,11 @@ static void k1_target_create_inferior (struct target_ops *ops,
     char **argv_args = gdb_buildargv (args);
     char **arg = argv_args;
     int nb_args = 0;
-    char tar_remote_cmd[] = "target extended-remote :1337";
+    char tar_remote_cmd[] = "target extended-remote :        ";
     int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
+    int pipefds[2];
+    int port;
 
     if (exec_file == NULL)
 	error (_("No executable file specified.\n\
@@ -73,6 +75,7 @@ Use the \"file\" or \"exec-file\" command."));
 	waitpid (server_pid, NULL, 0);
     }
 
+    pipe (pipefds);
     server_pid = fork ();
     
     if (server_pid < 0)
@@ -82,6 +85,9 @@ Use the \"file\" or \"exec-file\" command."));
 	char path[PATH_MAX];
 	char tmp[PATH_MAX] = { 0 };
 	char *dir;
+
+	close (pipefds[0]);
+	dup2(pipefds[1], 1);
 
 	/* Child */
 	if (env)
@@ -97,6 +103,24 @@ Use the \"file\" or \"exec-file\" command."));
 
 	printf_unfiltered ("Could not find gdb_stub in you PATH\n");
 	exit (1);
+    } else {
+	char *line = NULL, *port_str, *cmd_port;
+	size_t linesize;
+	FILE *pipefile;
+	char tmp [1000];
+
+	close (pipefds[1]);
+	pipefile = fdopen(pipefds[0], "r");
+	if (getline (&line, &linesize, pipefile) < 0)
+	    error ("Failed to read debug server port.");
+	fclose (pipefile);
+	port_str = strrchr (line, ' ') ;
+	if (!port_str)
+	    error ("Failed to read debug server port.");
+	cmd_port = strchr(tar_remote_cmd, ':');
+
+	strcpy (cmd_port+1, port_str+1);
+	free (line);
     }
 
     /* Load the real debug target by issuing 'target remote'. Of
