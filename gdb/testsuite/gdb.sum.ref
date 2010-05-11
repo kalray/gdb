@@ -1,4 +1,4 @@
-Test Run By friss on Tue Apr 27 22:00:33 2010
+Test Run By friss on Tue May 11 20:37:06 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -995,6 +995,9 @@ PASS: gdb.mi/mi-cli.exp: 34 next: stop
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "list" at basics.c:$line_main_return
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "help set args"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "set $pc=0x0"
+Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
+gdb compile failed, ns-stale-regcache.o: In function `main':
+catvaras-dasa.lin.mbt.kalray.eu.(none):/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
 Running ../../../gdb/testsuite/gdb.mi/mi2-eval.exp ...
 PASS: gdb.mi/mi2-eval.exp: breakpoint at callee4
 PASS: gdb.mi/mi2-eval.exp: mi runto callee4
@@ -2528,7 +2531,7 @@ PASS: gdb.base/arithmet.exp: print x/(y*w)
 PASS: gdb.base/arithmet.exp: print x-(y/w)
 PASS: gdb.base/arithmet.exp: print (x+y)*w
 Running ../../../gdb/testsuite/gdb.base/hashline2.exp ...
-PASS: gdb.base/hashline2.exp: set breakpoint (PRMS 2360)
+PASS: gdb.base/hashline2.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/watchpoint-hw-hit-once.exp ...
 Running ../../../gdb/testsuite/gdb.base/assign.exp ...
 PASS: gdb.base/assign.exp: continuing after dummy()
@@ -2609,7 +2612,7 @@ PASS: gdb.base/return.exp: next over call to func3
 PASS: gdb.base/return.exp: correct value returned double test (known problem with sparc solaris)
 Running ../../../gdb/testsuite/gdb.base/sigrepeat.exp ...
 Running ../../../gdb/testsuite/gdb.base/hashline3.exp ...
-PASS: gdb.base/hashline3.exp: set breakpoint (PRMS 2360)
+PASS: gdb.base/hashline3.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/recurse.exp ...
 PASS: gdb.base/recurse.exp: next over b = 0 in first instance
 PASS: gdb.base/recurse.exp: set first instance watchpoint
@@ -3004,7 +3007,7 @@ PASS: gdb.base/step-bt.exp: step second instruction
 PASS: gdb.base/step-bt.exp: backtrace after second instruction step
 Running ../../../gdb/testsuite/gdb.base/solib-display.exp ...
 Running ../../../gdb/testsuite/gdb.base/hashline1.exp ...
-PASS: gdb.base/hashline1.exp: set breakpoint (PRMS 2360)
+PASS: gdb.base/hashline1.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/bitfields.exp ...
 PASS: gdb.base/bitfields.exp: print flags
 PASS: gdb.base/bitfields.exp: continuing to break1 #1
@@ -3681,10 +3684,10 @@ PASS: gdb.base/find.exp: search spanning large range
 Running ../../../gdb/testsuite/gdb.base/checkpoint.exp ...
 Running ../../../gdb/testsuite/gdb.base/structs2.exp ...
 PASS: gdb.base/structs2.exp: set width 0
-PASS: gdb.base/structs2.exp: structs2 sanity check (PRMS 13536)
-PASS: gdb.base/structs2.exp: structs2 breakpoint set (PRMS 13536)
-PASS: gdb.base/structs2.exp: structs2 continue1 (PRMS 13536)
-PASS: gdb.base/structs2.exp: structs2 continue2 (PRMS 13536)
+PASS: gdb.base/structs2.exp: structs2 sanity check
+PASS: gdb.base/structs2.exp: structs2 breakpoint set
+PASS: gdb.base/structs2.exp: structs2 continue1
+PASS: gdb.base/structs2.exp: structs2 continue2
 Running ../../../gdb/testsuite/gdb.base/interrupt.exp ...
 Running ../../../gdb/testsuite/gdb.base/foll-fork.exp ...
 Running ../../../gdb/testsuite/gdb.base/so-indr-cl.exp ...
@@ -4763,10 +4766,10 @@ PASS: gdb.base/trace-commands.exp: depth resets on error part 1
 PASS: gdb.base/trace-commands.exp: depth resets on error part 2
 Running ../../../gdb/testsuite/gdb.base/longjmp.exp ...
 gdb compile failed, In file included from ../../../gdb/testsuite/gdb.base/longjmp.c:19:
-/work1/friss/tools/open64/osprey/targia32_k1/devimage/include/setjmp.h:14: error: parse error before "__jmpb"
-/work1/friss/tools/open64/osprey/targia32_k1/devimage/include/setjmp.h:15: error: parse error before "__jmpb"
-../../../gdb/testsuite/gdb.base/longjmp.c:21: error: parse error before "env"
-../../../gdb/testsuite/gdb.base/longjmp.c:27: error: parse error before '*' token
+/work1/friss/tools/open64/osprey/targia32_k1/devimage/include/setjmp.h:14: error: syntax error before "__jmpb"
+/work1/friss/tools/open64/osprey/targia32_k1/devimage/include/setjmp.h:15: error: syntax error before "__jmpb"
+../../../gdb/testsuite/gdb.base/longjmp.c:21: error: syntax error before "env"
+../../../gdb/testsuite/gdb.base/longjmp.c:27: error: syntax error before '*' token
 ../../../gdb/testsuite/gdb.base/longjmp.c: In function `call_longjmp':
 ../../../gdb/testsuite/gdb.base/longjmp.c:30: error: `buf' undeclared (first use in this function)
 ../../../gdb/testsuite/gdb.base/longjmp.c:30: error: (Each undeclared identifier is reported only once
@@ -6363,9 +6366,7 @@ PASS: gdb.base/breakpoint-shadow.exp: disassembly with breakpoints
 Running ../../../gdb/testsuite/gdb.base/relativedebug.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-signal-resume.exp ...
 Running ../../../gdb/testsuite/gdb.base/dup-sect.exp ...
-gdb compile failed, /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: warning: section sect1 of /work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.base/dup-sect0.o attached by default to output section sect1
-/work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: warning: section sect2 of /work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.base/dup-sect0.o attached by default to output section sect2
-/work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
+gdb compile failed, /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
 UNTESTED: gdb.base/dup-sect.exp: dup-sect.exp
 Running ../../../gdb/testsuite/gdb.base/solib-corrupted.exp ...
 PASS: gdb.base/solib-corrupted.exp: normal list
@@ -6374,8 +6375,8 @@ UNTESTED: gdb.base/solib-corrupted.exp: solib-corrupted.exp
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
 XFAIL: gdb.base/callexit.exp: This target can not call functions (PRMS 2416)
 Running ../../../gdb/testsuite/gdb.base/reread.exp ...
-PASS: gdb.base/reread.exp: breakpoint foo in first file (PRMS 13484)
-PASS: gdb.base/reread.exp: run to foo() (PRMS 13484)
+PASS: gdb.base/reread.exp: breakpoint foo in first file
+PASS: gdb.base/reread.exp: run to foo()
 UNSUPPORTED: gdb.base/reread.exp: run to foo() second time
 UNSUPPORTED: gdb.base/reread.exp: second pass: GDB should check for changes before running
 Running ../../../gdb/testsuite/gdb.base/return2.exp ...
@@ -7139,5 +7140,5 @@ Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
 # of unresolved testcases	1
 # of untested testcases		8
 # of unsupported tests		17
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100427-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100511-cvs -nw -nx 
 
