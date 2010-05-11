@@ -22,7 +22,11 @@
 #include "dis-asm.h"
 #include "dwarf2-frame.h"
 #include "frame-unwind.h"
+#include "gdbcore.h"
 #include "gdbtypes.h"
+#include "inferior.h"
+#include "objfiles.h"
+#include "observer.h"
 #include "regcache.h"
 #include "symtab.h"
 #include "target.h"
@@ -31,7 +35,13 @@
 #include "opcode/k1.h"
 
 struct gdbarch_tdep {
+    int ls_regnum;
+    int le_regnum;
+    int lc_regnum;
+    int ps_regnum;
+    int ra_regnum;
 
+    int local_regnum;
 };
 
 struct k1_frame_cache
@@ -87,11 +97,24 @@ k1_dummy_register_type (struct gdbarch *gdbarch, int regno)
     return builtin_type (gdbarch)->builtin_int;
 }
 
+static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
+{
+    struct regcache *regs = get_current_regcache ();
+    ULONGEST val;
+
+    regcache_raw_read_unsigned (regs,
+				gdbarch_tdep (target_gdbarch)->local_regnum, 
+				&val);
+    return val;
+}
+
+
 static const gdb_byte *
 k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-    //error ("Not implemented yet.");
-    return NULL;
+    static const gdb_byte BREAK[4] = { 0, 0, 0x0c, 0 };
+    *len = 4;
+    return BREAK;
 }
 
 static CORE_ADDR
@@ -225,6 +248,155 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
     return func_addr;
 }
 
+struct displaced_step_closure {
+    /* Take into account that ALUs might have extensions. */
+    uint32_t insn_words[K1MAXBUNDLESIZE*2];
+    int num_insn_words;
+    
+    uint32_t rewrite_LE;
+};
+
+static CORE_ADDR k1_step_pad_address;
+
+static void
+k1_inferior_created (struct target_ops *target, int from_tty)
+{
+    k1_step_pad_address = 0;
+}
+
+static CORE_ADDR
+k1_displaced_step_location (struct gdbarch *gdbarch)
+{
+    if (!k1_step_pad_address) {
+	struct minimal_symbol *msym = lookup_minimal_symbol ("_debug_start", 
+							     NULL, NULL);
+	if (msym == NULL)
+	    error ("Can not locate a suitable step pad area.");
+	k1_step_pad_address = SYMBOL_VALUE_ADDRESS(msym);;
+    }
+
+    return k1_step_pad_address;
+}
+
+static void
+patch_bcu_instruction (struct gdbarch *gdbarch, 
+		       CORE_ADDR from, CORE_ADDR to, struct regcache *regs,
+		       struct displaced_step_closure *dsc)
+{
+    if (debug_displaced)
+	printf_filtered ("displaced: Looking at BCU instruction\n");
+
+    if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2 /* CALL */
+	|| ((dsc->insn_words[0] >> 27) & 0x3) == 0x1 /* GOTO */) {
+	int displacement = dsc->insn_words[0] << 5;
+	
+	if (debug_displaced) printf_filtered ("displaced: CALL/GOTO\n");
+
+	displacement >>= 3;
+	displacement = from + displacement - to;
+	displacement >>= 2;
+	dsc->insn_words[0] &= 0Xf8000000;
+	dsc->insn_words[0] |= (displacement & ~0Xf8000000);
+    } else if (((dsc->insn_words[0] >> 23) & 0xff) == 0x6 /* LOOPGTZ */
+	       || ((dsc->insn_words[0] >> 23) & 0xff) == 0x4 /* LOOPNEZ */
+	       || ((dsc->insn_words[0] >> 23) & 0xff) == 0x2 /* LOOPDO */) {
+	int off = ((dsc->insn_words[0] >> 6) & ((1<<18)-1)) << 2;
+	dsc->rewrite_LE = from + off;
+	if (debug_displaced) printf_filtered ("displaced: H/W LOOP setup\n");
+    }
+}
+
+static struct displaced_step_closure *
+k1_displaced_step_copy_insn (struct gdbarch *gdbarch, 
+			     CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
+{
+    struct displaced_step_closure *dsc
+	= xzalloc (sizeof (struct displaced_step_closure));
+
+    if (debug_displaced)
+	printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
+
+    do {
+	read_memory (from + dsc->num_insn_words*4,
+		     (gdb_byte*)(dsc->insn_words + dsc->num_insn_words), 4);
+    } while (dsc->insn_words[dsc->num_insn_words++] & (1<<31));
+    
+    if (debug_displaced) {
+	int i;
+	printf_filtered ("displaced: copied a %i word(s)\n", dsc->num_insn_words);
+	for (i = 0; i < dsc->num_insn_words; ++i)
+	    printf_filtered ("displaced: insn[%i] = %08x\n", 
+			     i, dsc->insn_words[i]);
+    }
+
+    dsc->insn_words[0] = extract_unsigned_integer ((const gdb_byte*)dsc->insn_words, 4, gdbarch_byte_order (gdbarch));
+    if (((dsc->insn_words[0] >> 29) & 0x3) == 0)
+	patch_bcu_instruction (gdbarch, from, to, regs, dsc);
+    store_unsigned_integer ((gdb_byte*)dsc->insn_words, 4, gdbarch_byte_order (gdbarch), dsc->insn_words[0]);
+
+    write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
+    
+    return dsc;
+}
+
+static void
+k1_displaced_step_fixup (struct gdbarch *gdbarch, 
+			 struct displaced_step_closure *dsc, 
+			 CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
+{
+    ULONGEST ps, lc, le, pc;
+    struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+    /* FIXME: handle traps */
+
+    if (debug_displaced) printf_filtered ("displaced: Fixup\n");
+
+    regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);    
+    pc = regcache_read_pc (regs);
+    if ((int)(pc - to) > 0) {
+	pc = from + (pc - to);
+	if (debug_displaced) printf_filtered ("displaced: Didn't branch\n");
+    } else {
+	/* We branched. Was it a call ? */
+	if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2)
+	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
+					 from + dsc->num_insn_words*4);
+    }
+
+    if (dsc->rewrite_LE) {
+	regcache_raw_write_unsigned (regs, tdep->ls_regnum,
+				     from + dsc->num_insn_words*4);
+	regcache_raw_write_unsigned (regs, tdep->le_regnum,
+				     dsc->rewrite_LE);
+	if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
+    }
+
+    if (((ps >> 5)&1) /* HLE */) {
+	if (debug_displaced) printf_filtered ("displaced: active loop\n");
+	regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
+	if (pc == le) {
+	    if (debug_displaced) printf_filtered ("displaced: at loop end\n");
+	    regcache_raw_read_unsigned (regs, tdep->lc_regnum, &lc);
+	    if (lc - 1 == 0)
+		regcache_raw_read_unsigned (regs, tdep->le_regnum, &pc);
+	    else
+		regcache_raw_read_unsigned (regs, tdep->ls_regnum, &pc);
+	    if (lc != 0)
+		regcache_raw_write_unsigned (regs, tdep->lc_regnum, lc - 1);
+	}
+    }
+	
+    regcache_write_pc (regs, pc);
+    if (debug_displaced) 
+	printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
+}
+
+static void 
+k1_displaced_step_free_closure (struct gdbarch *gdbarch, 
+				struct displaced_step_closure *closure)
+{
+    xfree (closure);
+}
+
 static CORE_ADDR
 k1_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
@@ -349,7 +521,15 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch_tdep *tdep;
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
-  int i, has_pc = -1, has_sp = -1;
+  int i;
+  int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1, has_lc = -1, has_local = -1, has_ra = -1;
+
+  static const char k1_lc_name[] = "lc";
+  static const char k1_ls_name[] = "ls";
+  static const char k1_le_name[] = "le";
+  static const char k1_ps_name[] = "ps";
+  static const char k1_ra_name[] = "ra";
+  static const char k1_local_name[] = "r13";
 
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -381,13 +561,42 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	      has_pc = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_sp_name) == 0)
 	      has_sp = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_le_name) == 0)
+	      has_le = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ls_name) == 0)
+	      has_ls = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ps_name) == 0)
+	      has_ps = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_lc_name) == 0)
+	      has_lc = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_local_name) == 0)
+	      has_local = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ra_name) == 0)
+	      has_ra = i;
       
       if (has_pc < 0)
 	  error ("There's no '%s' register!", k1_pc_name);
-      
       if (has_sp < 0)
 	  error ("There's no '%s' register!", k1_sp_name);
-      
+      if (has_le < 0)
+	  error ("There's no '%s' register!", k1_le_name);
+      if (has_ls < 0)
+	  error ("There's no '%s' register!", k1_ls_name);
+      if (has_lc < 0)
+	  error ("There's no '%s' register!", k1_lc_name);
+      if (has_ps < 0)
+	  error ("There's no '%s' register!", k1_ps_name);
+      if (has_local < 0)
+	  error ("There's no '%s' register!", k1_local_name);
+      if (has_ra < 0)
+	  error ("There's no '%s' register!", k1_ra_name);
+
+      tdep->le_regnum = has_le;
+      tdep->ls_regnum = has_ls;
+      tdep->lc_regnum = has_lc;
+      tdep->ps_regnum = has_ps;
+      tdep->ra_regnum = has_ra;
+      tdep->local_regnum = has_local;
       set_gdbarch_pc_regnum (gdbarch, has_pc);
       set_gdbarch_sp_regnum (gdbarch, has_sp);
   } else {
@@ -414,12 +623,23 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   dwarf2_append_unwinders (gdbarch);
   frame_unwind_append_unwinder (gdbarch, &k1_frame_unwind);
 
+  set_gdbarch_fetch_tls_load_module_address (gdbarch,
+					     k1_fetch_tls_load_module_address);
+
+  set_gdbarch_decr_pc_after_break (gdbarch, 4);
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
   set_gdbarch_adjust_breakpoint_address (gdbarch, 
 					 k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_print_insn (gdbarch, k1_print_insn);
+
+  /* Displaced stepping */
+  set_gdbarch_displaced_step_copy_insn (gdbarch, k1_displaced_step_copy_insn);
+  set_gdbarch_displaced_step_fixup (gdbarch, k1_displaced_step_fixup);
+  set_gdbarch_displaced_step_free_closure (gdbarch, k1_displaced_step_free_closure);
+  set_gdbarch_displaced_step_location (gdbarch, k1_displaced_step_location);
+  set_gdbarch_max_insn_length (gdbarch, K1MAXBUNDLESIZE*2);
 
   return gdbarch;
 }
@@ -475,4 +695,6 @@ _initialize_k1_tdep (void)
 {
   k1_look_for_insns ();
   gdbarch_register (bfd_arch_k1, k1_gdbarch_init, NULL);
+
+  observer_attach_inferior_created (k1_inferior_created);
 }
