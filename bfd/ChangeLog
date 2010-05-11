@@ -1,3 +1,53 @@
+2010-05-11  Alan Modra  <amodra@gmail.com>
+
+	* coffcode.h (coff_write_object_contents): Enclose all occurrences
+	of hasdebug and is_reloc_section in #ifdef COFF_IMAGE_WITH_PE.
+
+2010-05-07  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* elf32-arm.c (struct a8_erratum_reloc): Add hash member.  Move
+	sym_name to improve packing.
+	(cortex_a8_erratum_scan): Check for PLT entries.
+	(elf32_arm_size_stubs): Save the target symbol for a8 relocs.
+
+2010-05-07  Tristan Gingold  <gingold@adacore.com>
+
+	* Makefile.in: Regenerate with automake 1.11.1.
+	* aclocal.m4: Ditto.
+
+2010-05-05  Nick Clifton  <nickc@redhat.com>
+
+	* po/es.po: Updated Spanish translation.
+
+2010-05-03  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-lib.c (vms_lib_bopen): Fix the size threshold to read
+	selective_search flag.
+	Add comments.
+	* vms-alpha.c (alpha_vms_bfd_final_link): Create the DMT section
+	before output_has_begun is set.
+
+2010-05-03  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-alpha.c: Add comments.
+	(struct vms_private_data_struct): Remove image_autoextend field.
+	(dst_check_allocation): Removed.
+	(image_write): Remove call to dst_check_allocation.
+	(vms_slurp_debug): Do not set image_autoextend.  Adjust section
+	size.
+	(_bfd_vms_slurp_object_records): Remove useless new_type variable.
+	(alpha_vms_write_exec): Use dst_section to get the dst section.
+	Write the dmt section.
+	(evax_bfd_print_image): Also print the dst size in hexa.  Fix typo.
+	(alpha_vms_read_sections_content): Do not set image_autoextend.
+	(alpha_vms_bfd_final_link): Generate the dst.
+
+2010-05-03  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-lib.c (_bfd_vms_lib_archive_p): Adjust for a possible empty
+	next array.
+	(vms_lib_dcx): Adjust for the above change.
+
 2010-04-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/11542

@@ -633,7 +633,7 @@ binop_promote (const struct language_defn *language, struct gdbarch *gdbarch,
 }
 
 static int
-ptrmath_type_p (struct type *type)
+ptrmath_type_p (const struct language_defn *lang, struct type *type)
 {
   type = check_typedef (type);
   if (TYPE_CODE (type) == TYPE_CODE_REF)
@@ -646,7 +646,7 @@ ptrmath_type_p (struct type *type)
       return 1;
 
     case TYPE_CODE_ARRAY:
-      return current_language->c_style_arrays;
+      return lang->c_style_arrays;
 
     default:
       return 0;
@@ -690,7 +690,7 @@ evaluate_subexp_standard (struct type *expect_type,
   struct type *type;
   int nargs;
   struct value **argvec;
-  int upper, lower, retcode;
+  int upper, lower;
   int code;
   int ix;
   long mem_offset;
@@ -731,6 +731,7 @@ evaluate_subexp_standard (struct type *expect_type,
       return value_from_decfloat (exp->elts[pc + 1].type,
 				  exp->elts[pc + 2].decfloatconst);
 
+    case OP_ADL_FUNC:
     case OP_VAR_VALUE:
       (*pos) += 3;
       if (noside == EVAL_SKIP)
@@ -1418,7 +1419,6 @@ evaluate_subexp_standard (struct type *expect_type,
 	{
 	  /* Unpack it locally so we can properly handle overload
 	     resolution.  */
-	  struct type *qual_type;
 	  char *name;
 	  int local_tem;
 
@@ -1453,6 +1453,17 @@ evaluate_subexp_standard (struct type *expect_type,
 	      tem = 2;
 	    }
 	}
+      else if (op == OP_ADL_FUNC)
+        {
+          /* Save the function position and move pos so that the arguments
+             can be evaluated.  */
+          int func_name_len;
+          save_pos1 = *pos;
+          tem = 1;
+
+          func_name_len = longest_to_int (exp->elts[save_pos1 + 3].longconst);
+          (*pos) += 6 + BYTES_TO_EXP_ELEM (func_name_len + 1);
+        }
       else
 	{
 	  /* Non-method function call */
@@ -1483,6 +1494,32 @@ evaluate_subexp_standard (struct type *expect_type,
 
       /* signal end of arglist */
       argvec[tem] = 0;
+      if (op == OP_ADL_FUNC)
+        {
+          struct symbol *symp;
+          char *func_name;
+          int  name_len;
+          int string_pc = save_pos1 + 3;
+
+          /* Extract the function name.  */
+          name_len = longest_to_int (exp->elts[string_pc].longconst);
+          func_name = (char *) alloca (name_len + 1);
+          strcpy (func_name, &exp->elts[string_pc + 1].string);
+
+          /* Prepare list of argument types for overload resolution */
+          arg_types = (struct type **) alloca (nargs * (sizeof (struct type *)));
+          for (ix = 1; ix <= nargs; ix++)
+            arg_types[ix - 1] = value_type (argvec[ix]);
+
+          find_overload_match (arg_types, nargs, func_name,
+                               0 /* not method */ , 0 /* strict match */ ,
+                               NULL, NULL /* pass NULL symbol since symbol is unknown */ ,
+                               NULL, &symp, NULL, 0);
+
+          /* Now fix the expression being evaluated.  */
+          exp->elts[save_pos1 + 2].symbol = symp;
+          argvec[0] = evaluate_subexp_with_coercion (exp, &save_pos1, noside);
+        }
 
       if (op == STRUCTOP_STRUCT || op == STRUCTOP_PTR
 	  || (op == OP_SCOPE && function_name != NULL))
@@ -1514,7 +1551,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	      (void) find_overload_match (arg_types, nargs, tstr,
 				     1 /* method */ , 0 /* strict match */ ,
 					  &arg2 /* the object */ , NULL,
-					  &valp, NULL, &static_memfuncp);
+					  &valp, NULL, &static_memfuncp, 0);
 
 	      if (op == OP_SCOPE && !static_memfuncp)
 		{
@@ -1566,6 +1603,11 @@ evaluate_subexp_standard (struct type *expect_type,
 	    {
 	      /* Language is C++, do some overload resolution before evaluation */
 	      struct symbol *symp;
+	      int no_adl = 0;
+
+	      /* If a scope has been specified disable ADL.  */
+	      if (op == OP_SCOPE)
+		no_adl = 1;
 
 	      if (op == OP_VAR_VALUE)
 		function = exp->elts[save_pos1+2].symbol;
@@ -1578,7 +1620,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	      (void) find_overload_match (arg_types, nargs, NULL /* no need for name */ ,
 				 0 /* not method */ , 0 /* strict match */ ,
 		      NULL, function /* the function */ ,
-					  NULL, &symp, NULL);
+					  NULL, &symp, NULL, no_adl);
 
 	      if (op == OP_VAR_VALUE)
 		{
@@ -1864,10 +1906,12 @@ evaluate_subexp_standard (struct type *expect_type,
       op = exp->elts[pc + 1].opcode;
       if (binop_user_defined_p (op, arg1, arg2))
 	return value_x_binop (arg1, arg2, BINOP_ASSIGN_MODIFY, op, noside);
-      else if (op == BINOP_ADD && ptrmath_type_p (value_type (arg1))
+      else if (op == BINOP_ADD && ptrmath_type_p (exp->language_defn,
+						  value_type (arg1))
 	       && is_integral_type (value_type (arg2)))
 	arg2 = value_ptradd (arg1, value_as_long (arg2));
-      else if (op == BINOP_SUB && ptrmath_type_p (value_type (arg1))
+      else if (op == BINOP_SUB && ptrmath_type_p (exp->language_defn,
+						  value_type (arg1))
 	       && is_integral_type (value_type (arg2)))
 	arg2 = value_ptradd (arg1, - value_as_long (arg2));
       else
@@ -1893,10 +1937,10 @@ evaluate_subexp_standard (struct type *expect_type,
 	goto nosideret;
       if (binop_user_defined_p (op, arg1, arg2))
 	return value_x_binop (arg1, arg2, op, OP_NULL, noside);
-      else if (ptrmath_type_p (value_type (arg1))
+      else if (ptrmath_type_p (exp->language_defn, value_type (arg1))
 	       && is_integral_type (value_type (arg2)))
 	return value_ptradd (arg1, value_as_long (arg2));
-      else if (ptrmath_type_p (value_type (arg2))
+      else if (ptrmath_type_p (exp->language_defn, value_type (arg2))
 	       && is_integral_type (value_type (arg1)))
 	return value_ptradd (arg2, value_as_long (arg1));
       else
@@ -1912,14 +1956,14 @@ evaluate_subexp_standard (struct type *expect_type,
 	goto nosideret;
       if (binop_user_defined_p (op, arg1, arg2))
 	return value_x_binop (arg1, arg2, op, OP_NULL, noside);
-      else if (ptrmath_type_p (value_type (arg1))
-	       && ptrmath_type_p (value_type (arg2)))
+      else if (ptrmath_type_p (exp->language_defn, value_type (arg1))
+	       && ptrmath_type_p (exp->language_defn, value_type (arg2)))
 	{
 	  /* FIXME -- should be ptrdiff_t */
 	  type = builtin_type (exp->gdbarch)->builtin_long;
 	  return value_from_longest (type, value_ptrdiff (arg1, arg2));
 	}
-      else if (ptrmath_type_p (value_type (arg1))
+      else if (ptrmath_type_p (exp->language_defn, value_type (arg1))
 	       && is_integral_type (value_type (arg2)))
 	return value_ptradd (arg1, - value_as_long (arg2));
       else
@@ -2530,7 +2574,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	}
       else
 	{
-	  if (ptrmath_type_p (value_type (arg1)))
+	  if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
 	    arg2 = value_ptradd (arg1, 1);
 	  else
 	    {
@@ -2553,7 +2597,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	}
       else
 	{
-	  if (ptrmath_type_p (value_type (arg1)))
+	  if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
 	    arg2 = value_ptradd (arg1, -1);
 	  else
 	    {
@@ -2576,7 +2620,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	}
       else
 	{
-	  if (ptrmath_type_p (value_type (arg1)))
+	  if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
 	    arg2 = value_ptradd (arg1, 1);
 	  else
 	    {
@@ -2600,7 +2644,7 @@ evaluate_subexp_standard (struct type *expect_type,
 	}
       else
 	{
-	  if (ptrmath_type_p (value_type (arg1)))
+	  if (ptrmath_type_p (exp->language_defn, value_type (arg1)))
 	    arg2 = value_ptradd (arg1, -1);
 	  else
 	    {
@@ -2790,7 +2834,7 @@ evaluate_subexp_with_coercion (struct expression *exp,
       var = exp->elts[pc + 2].symbol;
       type = check_typedef (SYMBOL_TYPE (var));
       if (TYPE_CODE (type) == TYPE_CODE_ARRAY
-	  && CAST_IS_CONVERSION)
+	  && CAST_IS_CONVERSION (exp->language_defn))
 	{
 	  (*pos) += 4;
 	  val = address_of_variable (var, exp->elts[pc + 1].block);
