@@ -250,7 +250,7 @@ Configure various Kalray specific variables."),
     add_prefix_cmd ("kalray", class_maintenance, show_kalray_cmd, _("\
 Kalray specific variables\n				    \
 Configure various Kalray specific variables."),
-		    &kalray_show_cmdlist, "set kalray ",
+		    &kalray_show_cmdlist, "show kalray ",
 		    0 /* allow-unknown */, &showlist);
 
     add_setshow_string_noescape_cmd ("debug_agent_options", class_maintenance,
