@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include "gdbcmd.h"
 #include "gdbthread.h"
 #include "inferior.h"
 #include "observer.h"
@@ -19,7 +20,10 @@
 #include "target.h"
 #include "top.h"
 
+#include "cli/cli-setshow.h"
+
 static struct target_ops k1_target_ops;
+static char *da_options = NULL;
 
 pid_t server_pid;
 
@@ -49,26 +53,41 @@ static void k1_target_create_inferior (struct target_ops *ops,
 				       char **env, int from_tty)
 {
     char **argv_args = gdb_buildargv (args);
-    char **arg = argv_args;
-    int nb_args = 0;
+    char **da_args = gdb_buildargv (da_options);
+    char **stub_args;
+    char **arg;
+    int nb_args = 0, nb_da_args = 0;
     char tar_remote_cmd[] = "target extended-remote :        ";
     int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
     int pipefds[2];
     int port;
+    int argidx = 0;
 
     if (exec_file == NULL)
 	error (_("No executable file specified.\n\
 Use the \"file\" or \"exec-file\" command."));
 
-    while (*arg++) nb_args++;
+    arg = argv_args;
+    while (arg && *arg++) nb_args++;
+    arg = da_args;
+    while (arg && *arg++) nb_da_args++;
 
-    argv_args = xrealloc (argv_args, (nb_args+5)*sizeof (char*));
-    memmove (argv_args + 4,  argv_args, (nb_args+1)*sizeof (char*));
-    argv_args[0] = "gdb_stub";
-    argv_args[1] = "-s";
-    argv_args[2] = ":1337";
-    argv_args[3] = exec_file;
+    stub_args = xmalloc ((nb_args+7)*sizeof (char*));
+    stub_args[argidx++] = "gdb_stub";
+    if (nb_da_args && strlen (da_options)) {
+	stub_args[argidx++] = "--da";
+	stub_args[argidx++] = calloc (strlen (da_options) + 1, 1);
+	arg = da_args;
+	while (*arg) {
+	    strcat (stub_args[argidx-1], *arg++);
+	    if (*arg) strcat (stub_args[argidx-1], ",");
+	}
+    }
+    stub_args[argidx++] = "-s";
+    stub_args[argidx++] = ":1337";
+    stub_args[argidx++] = exec_file;
+    memcpy (stub_args + argidx,  argv_args, (nb_args+1)*sizeof (char*));
 
     if (server_pid != 0) {
 	kill (server_pid, 9);
@@ -87,18 +106,21 @@ Use the \"file\" or \"exec-file\" command."));
 	char *dir;
 
 	close (pipefds[0]);
-	dup2(pipefds[1], 1);
+	dup2(pipefds[1], 100);
+	close (pipefds[1]);
+
+	setsid ();
 
 	/* Child */
 	if (env)
 	    environ = env;
-	execvp ("gdb_stub", argv_args);
+	execvp ("gdb_stub", stub_args);
 	
 	/* Not in PATH */
 	if (readlink ("/proc/self/exe", tmp, PATH_MAX) != -1) {
 	    dir = dirname (tmp);
 	    snprintf (path, PATH_MAX, "%s/gdb_stub", dir);
-	    execvp (path, argv_args);
+	    execvp (path, stub_args);
 	}
 
 	printf_unfiltered ("Could not find gdb_stub in you PATH\n");
@@ -181,6 +203,21 @@ k1_target_can_async (void)
   return 1;
 }
 
+static struct cmd_list_element *kalray_set_cmdlist;
+static struct cmd_list_element *kalray_show_cmdlist;
+
+static void
+set_kalray_cmd (char *args, int from_tty)
+{
+  help_list (kalray_set_cmdlist, "set kalray ", -1, gdb_stdout);
+}
+
+static void
+show_kalray_cmd (char *args, int from_tty)
+{
+  help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
+}
+
 void
 _initialize_k1_target (void)
 {
@@ -204,4 +241,21 @@ _initialize_k1_target (void)
     k1_target_ops.to_magic = OPS_MAGIC;
     
     add_target (&k1_target_ops);
+
+    add_prefix_cmd ("kalray", class_maintenance, set_kalray_cmd, _("\
+Kalray specific variables\n				    \
+Configure various Kalray specific variables."),
+		    &kalray_set_cmdlist, "set kalray ",
+		    0 /* allow-unknown */, &setlist);
+    add_prefix_cmd ("kalray", class_maintenance, show_kalray_cmd, _("\
+Kalray specific variables\n				    \
+Configure various Kalray specific variables."),
+		    &kalray_show_cmdlist, "set kalray ",
+		    0 /* allow-unknown */, &showlist);
+
+    add_setshow_string_noescape_cmd ("debug_agent_options", class_maintenance,
+				     &da_options,  _("\
+Set the options passed to the debug agent."), _("\
+Show the options passed to the debug agent."), NULL, NULL, NULL,
+				   &kalray_set_cmdlist, &kalray_show_cmdlist);
 }
