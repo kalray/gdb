@@ -3515,7 +3515,7 @@ done
 
 
 
-ac_config_files="$ac_config_files Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.fortran/Makefile gdb.server/Makefile gdb.java/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
+ac_config_files="$ac_config_files Makefile gdb.kalray/Makefile gdb.ada/Makefile gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile gdb.fortran/Makefile gdb.server/Makefile gdb.java/Makefile gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile gdb.objc/Makefile gdb.opt/Makefile gdb.pascal/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.threads/Makefile gdb.trace/Makefile gdb.xml/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4216,6 +4216,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "gdb.kalray/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.kalray/Makefile" ;;
     "gdb.ada/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.ada/Makefile" ;;
     "gdb.arch/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.arch/Makefile" ;;
     "gdb.asm/Makefile") CONFIG_FILES="$CONFIG_FILES gdb.asm/Makefile" ;;
