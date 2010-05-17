@@ -139,6 +139,7 @@ AC_CHECK_HEADERS(pthread.h)
 AC_EXEEXT
 
 AC_OUTPUT([Makefile \
+  gdb.kalray/Makefile \
   gdb.ada/Makefile \
   gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile \
   gdb.cp/Makefile gdb.disasm/Makefile gdb.dwarf2/Makefile \

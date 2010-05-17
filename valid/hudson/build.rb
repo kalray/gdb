@@ -63,7 +63,7 @@ b.target("valid") do
     Dir.chdir build_path + "/gdb/testsuite"
 
     b.run(:cmd => "[ $USER != \"hudson\" ] || killall -9 gdb_stub; true")
-    b.run(:cmd => "PATH=#{workspace}/open64/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp; true")
+    b.run(:cmd => "PATH=#{workspace}/open64/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
