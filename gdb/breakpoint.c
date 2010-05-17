@@ -224,6 +224,8 @@ static void disable_trace_command (char *, int);
 
 static void trace_pass_command (char *, int);
 
+static void bp_location_target_extensions_update (void);
+
 /* A reference-counted struct command_line.  This lets multiple
    breakpoints share a single command list.  */
 struct counted_command_line
@@ -2011,6 +2013,8 @@ You may have requested too many hardware breakpoints/watchpoints.\n");
       target_terminal_ours_for_output ();
       error_stream (tmp_error_stream);
     }
+
+  bp_location_target_extensions_update ();
 
   do_cleanups (cleanups);
 }
@@ -8944,8 +8948,6 @@ update_global_location_list (int should_insert)
       *locp++ = loc;
   qsort (bp_location, bp_location_count, sizeof (*bp_location),
 	 bp_location_compare);
-
-  bp_location_target_extensions_update ();
 
   /* Identify bp_location instances that are no longer present in the new
      list, and therefore should be freed.  Note that it's not necessary that
