@@ -218,6 +218,21 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
+
+void
+attach_mppa_command (char *args, int from_tty)
+{
+    char set_target_async_cmd[] = "set target-async";
+    char set_non_stop_cmd[] = "set non-stop";
+    char set_pagination_off_cmd[] = "set pagination off";
+    dont_repeat ();
+    
+    execute_command (set_target_async_cmd, 0);
+    execute_command (set_non_stop_cmd, 0);
+    execute_command (set_pagination_off_cmd, 0);
+    attach_command (args, from_tty);
+}
+
 void
 _initialize_k1_target (void)
 {
@@ -258,4 +273,8 @@ Configure various Kalray specific variables."),
 Set the options passed to the debug agent."), _("\
 Show the options passed to the debug agent."), NULL, NULL, NULL,
 				   &kalray_set_cmdlist, &kalray_show_cmdlist);
+
+    add_com ("attach-mppa", class_run, attach_mppa_command, _("\
+Connect to a MPPA TLM platform and start debugging it.\n\
+Usage is `attach-mppa PORT[&]'."));
 }
