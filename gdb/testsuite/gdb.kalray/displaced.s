@@ -57,14 +57,16 @@ test_displaced:
 	;;
 
 .align 4096
-ev:
+ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0xC */
+	nop
+	;;
 	nop
 	;;  
-	set $spc = $r0 /* H/W TRAP */
+	set $spc = $r0
 	;;
 	rfe
 	;;
-	rfe /* S/W TRAP */
+	rfe
 	;;
 	
 .section .data
