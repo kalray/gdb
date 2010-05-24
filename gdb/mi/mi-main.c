@@ -804,8 +804,9 @@ mi_cmd_list_thread_groups (char *command, char **argv, int argc)
   for (; optind < argc; ++optind)
     {
       char *end;
-      int inf = strtoul (argv[optind], &end, 0);
-      if (*end != '\0')
+      int inf = strtoul (argv[optind]+1, &end, 0);
+      if (argv[optind][0] != 'i' || *end != '\0' || end == argv[optind]+1
+          || (inf = gdb_inferior_id_to_pid (inf)) < 0)
 	error ("invalid group id '%s'", argv[optind]);
       VEC_safe_push (int, ids, inf);
     }
