@@ -143,29 +143,44 @@ dwarf_expr_fetch_in_stack_memory (struct dwarf_expr_context *ctx, int n)
 
 }
 
+/* Return true if the expression stack is empty.  */
+
+static int
+dwarf_expr_stack_empty_p (struct dwarf_expr_context *ctx)
+{
+  return ctx->stack_len == 0;
+}
+
 /* Add a new piece to CTX's piece list.  */
 static void
-add_piece (struct dwarf_expr_context *ctx, ULONGEST size)
+add_piece (struct dwarf_expr_context *ctx, ULONGEST size, ULONGEST offset)
 {
   struct dwarf_expr_piece *p;
 
   ctx->num_pieces++;
 
-  if (ctx->pieces)
-    ctx->pieces = xrealloc (ctx->pieces,
-                            (ctx->num_pieces
-                             * sizeof (struct dwarf_expr_piece)));
-  else
-    ctx->pieces = xmalloc (ctx->num_pieces
-                           * sizeof (struct dwarf_expr_piece));
+  ctx->pieces = xrealloc (ctx->pieces,
+			  (ctx->num_pieces
+			   * sizeof (struct dwarf_expr_piece)));
 
   p = &ctx->pieces[ctx->num_pieces - 1];
   p->location = ctx->location;
   p->size = size;
+  p->offset = offset;
+
   if (p->location == DWARF_VALUE_LITERAL)
     {
       p->v.literal.data = ctx->data;
       p->v.literal.length = ctx->len;
+    }
+  else if (dwarf_expr_stack_empty_p (ctx))
+    {
+      p->location = DWARF_VALUE_OPTIMIZED_OUT;
+      /* Also reset the context's location, for our callers.  This is
+	 a somewhat strange approach, but this lets us avoid setting
+	 the location to DWARF_VALUE_MEMORY in all the individual
+	 cases in the evaluator.  */
+      ctx->location = DWARF_VALUE_OPTIMIZED_OUT;
     }
   else
     {
@@ -482,9 +497,11 @@ execute_stack_op (struct dwarf_expr_context *ctx,
 	case DW_OP_reg31:
 	  if (op_ptr != op_end 
 	      && *op_ptr != DW_OP_piece
+	      && *op_ptr != DW_OP_bit_piece
 	      && *op_ptr != DW_OP_GNU_uninit)
 	    error (_("DWARF-2 expression error: DW_OP_reg operations must be "
-		   "used either alone or in conjuction with DW_OP_piece."));
+		     "used either alone or in conjuction with DW_OP_piece "
+		     "or DW_OP_bit_piece."));
 
 	  result = op - DW_OP_reg0;
 	  ctx->location = DWARF_VALUE_REGISTER;
@@ -855,15 +872,34 @@ execute_stack_op (struct dwarf_expr_context *ctx,
 
             /* Record the piece.  */
             op_ptr = read_uleb128 (op_ptr, op_end, &size);
-	    add_piece (ctx, size);
+	    add_piece (ctx, 8 * size, 0);
 
             /* Pop off the address/regnum, and reset the location
 	       type.  */
-	    if (ctx->location != DWARF_VALUE_LITERAL)
+	    if (ctx->location != DWARF_VALUE_LITERAL
+		&& ctx->location != DWARF_VALUE_OPTIMIZED_OUT)
 	      dwarf_expr_pop (ctx);
             ctx->location = DWARF_VALUE_MEMORY;
           }
           goto no_push;
+
+	case DW_OP_bit_piece:
+	  {
+	    ULONGEST size, offset;
+
+            /* Record the piece.  */
+	    op_ptr = read_uleb128 (op_ptr, op_end, &size);
+	    op_ptr = read_uleb128 (op_ptr, op_end, &offset);
+	    add_piece (ctx, size, offset);
+
+            /* Pop off the address/regnum, and reset the location
+	       type.  */
+	    if (ctx->location != DWARF_VALUE_LITERAL
+		&& ctx->location != DWARF_VALUE_OPTIMIZED_OUT)
+	      dwarf_expr_pop (ctx);
+            ctx->location = DWARF_VALUE_MEMORY;
+	  }
+	  goto no_push;
 
 	case DW_OP_GNU_uninit:
 	  if (op_ptr != op_end)
