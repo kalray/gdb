@@ -860,6 +860,9 @@
    <sys/proc.h> problem on IRIX 5. */
 #undef _KMEMUSER
 
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
 /* Define to 1 if on MINIX. */
 #undef _MINIX
 
