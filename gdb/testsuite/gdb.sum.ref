@@ -1,4 +1,4 @@
-Test Run By friss on Mon May 24 08:26:15 2010
+Test Run By friss on Sun May 30 12:32:55 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -1622,6 +1622,7 @@ PASS: gdb.base/define.exp: redocumenting builtin command disallowed
 PASS: gdb.base/define.exp: document user command: nextwhere
 PASS: gdb.base/define.exp: re-document user command: nextwhere
 PASS: gdb.base/define.exp: help user command: nextwhere
+PASS: gdb.base/define.exp: set up whitespace in help string
 PASS: gdb.base/define.exp: preserve whitespace in help string
 PASS: gdb.base/define.exp: define user command: ifnospace
 PASS: gdb.base/define.exp: test ifnospace is parsed correctly
@@ -2298,7 +2299,7 @@ PASS: gdb.base/default.exp: tty
 PASS: gdb.base/default.exp: until "u" abbreviation
 PASS: gdb.base/default.exp: until
 PASS: gdb.base/default.exp: undisplay prompt
-PASS: gdb.base/default.exp: unset environmentprompt
+PASS: gdb.base/default.exp: unset environment prompt
 PASS: gdb.base/default.exp: unset
 PASS: gdb.base/default.exp: up-silently
 PASS: gdb.base/default.exp: watch
@@ -2306,6 +2307,7 @@ PASS: gdb.base/default.exp: whatis
 PASS: gdb.base/default.exp: where
 PASS: gdb.base/default.exp: x
 Running ../../../gdb/testsuite/gdb.base/gdbvars.exp ...
+PASS: gdb.base/gdbvars.exp: set print sevenbit-strings
 PASS: gdb.base/gdbvars.exp: Set value-history[1] using $1
 PASS: gdb.base/gdbvars.exp: Set value-history[2] using $2
 PASS: gdb.base/gdbvars.exp: Set value-history[3] using $3
@@ -2897,6 +2899,8 @@ PASS: gdb.base/break-entry.exp: p/x $pc
 PASS: gdb.base/break-entry.exp: continue to breakpoint: main
 Running ../../../gdb/testsuite/gdb.base/shlib-call.exp ...
 Running ../../../gdb/testsuite/gdb.base/unwindonsignal.exp ...
+Running ../../../gdb/testsuite/gdb.base/tui-layout.exp ...
+PASS: gdb.base/tui-layout.exp: layout asm
 Running ../../../gdb/testsuite/gdb.base/sigstep.exp ...
 Running ../../../gdb/testsuite/gdb.base/signals.exp ...
 Running ../../../gdb/testsuite/gdb.base/del.exp ...
@@ -2950,6 +2954,7 @@ PASS: gdb.base/condbreak.exp: break *main if (1==1) ta 999
 PASS: gdb.base/condbreak.exp: run until breakpoint at marker3
 PASS: gdb.base/condbreak.exp: run until breakpoint at marker4
 Running ../../../gdb/testsuite/gdb.base/bitfields2.exp ...
+PASS: gdb.base/bitfields2.exp: set print sevenbit-strings
 PASS: gdb.base/bitfields2.exp: break tester prior to break1
 PASS: gdb.base/bitfields2.exp: continuing to tester prior to break1
 PASS: gdb.base/bitfields2.exp: continuing to break1 #0
@@ -3013,6 +3018,7 @@ Running ../../../gdb/testsuite/gdb.base/solib-display.exp ...
 Running ../../../gdb/testsuite/gdb.base/hashline1.exp ...
 PASS: gdb.base/hashline1.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/bitfields.exp ...
+PASS: gdb.base/bitfields.exp: set print sevenbit-strings
 PASS: gdb.base/bitfields.exp: print flags
 PASS: gdb.base/bitfields.exp: continuing to break1 #1
 PASS: gdb.base/bitfields.exp: bitfield uniqueness (s1)
@@ -4315,6 +4321,8 @@ PASS: gdb.base/completion.exp: Completing non-existing component #2
 PASS: gdb.base/completion.exp: test non-deprecated completion
 PASS: gdb.base/completion.exp: test deprecated completion
 Running ../../../gdb/testsuite/gdb.base/constvars.exp ...
+PASS: gdb.base/constvars.exp: break marker1
+PASS: gdb.base/constvars.exp: continue to marker1
 PASS: gdb.base/constvars.exp: up from marker1
 PASS: gdb.base/constvars.exp: ptype qux1
 PASS: gdb.base/constvars.exp: print lave
@@ -4882,6 +4890,8 @@ PASS: gdb.base/step-test.exp: run to pass large struct
 PASS: gdb.base/step-test.exp: large struct by value
 PASS: gdb.base/step-test.exp: continue until exit at step-test.exp
 Running ../../../gdb/testsuite/gdb.base/volatile.exp ...
+PASS: gdb.base/volatile.exp: continue to marker1
+PASS: gdb.base/volatile.exp: up from marker1
 PASS: gdb.base/volatile.exp: ptype vox
 PASS: gdb.base/volatile.exp: ptype victuals
 PASS: gdb.base/volatile.exp: ptype vixen
@@ -4961,6 +4971,7 @@ PASS: gdb.base/subst.exp: show substitute-path after empty rule removed
 PASS: gdb.base/subst.exp: remove all remaining substitution rules
 PASS: gdb.base/subst.exp: show substitute-path after all remaining rules removed
 Running ../../../gdb/testsuite/gdb.base/maint.exp ...
+PASS: gdb.base/maint.exp: set height 0
 PASS: gdb.base/maint.exp: maint check-symtabs
 PASS: gdb.base/maint.exp: maint space
 PASS: gdb.base/maint.exp: maint space 1
@@ -4969,7 +4980,7 @@ PASS: gdb.base/maint.exp: maint time 1
 PASS: gdb.base/maint.exp: maint time 0
 PASS: gdb.base/maint.exp: maint space 0
 PASS: gdb.base/maint.exp: maint demangle
-PASS: gdb.base/maint.exp: maint demangle
+PASS: gdb.base/maint.exp: maint demangle main
 PASS: gdb.base/maint.exp: maint print statistics
 PASS: gdb.base/maint.exp: maint print dummy-frames
 PASS: gdb.base/maint.exp: maint print objfiles: header
@@ -5025,7 +5036,7 @@ PASS: gdb.base/pointers.exp: continuing after dummy()
 PASS: gdb.base/pointers.exp: set pointer to beginning of array
 PASS: gdb.base/pointers.exp: set pointer to end of array
 PASS: gdb.base/pointers.exp: print object pointed to
-PASS: gdb.base/pointers.exp: print object pointed to
+PASS: gdb.base/pointers.exp: print object pointed to #2
 PASS: gdb.base/pointers.exp: pointer1==pointer2
 PASS: gdb.base/pointers.exp: pointer1!=pointer2
 PASS: gdb.base/pointers.exp: pointer1<=pointer2
@@ -5033,24 +5044,26 @@ PASS: gdb.base/pointers.exp: pointer1>=pointer2
 PASS: gdb.base/pointers.exp: pointer1<pointer2
 PASS: gdb.base/pointers.exp: pointer1>pointer2
 PASS: gdb.base/pointers.exp: set y = *v_int_pointer++
-PASS: gdb.base/pointers.exp: pointer assignment and increment
+PASS: gdb.base/pointers.exp: pointer assignment
+PASS: gdb.base/pointers.exp: and post-increment
 PASS: gdb.base/pointers.exp: set y = *--v_int_pointer2
-PASS: gdb.base/pointers.exp: pointer decrement and assignment
+PASS: gdb.base/pointers.exp: pointer assignment
+PASS: gdb.base/pointers.exp: and pre-decrement
 PASS: gdb.base/pointers.exp: set y =v_int_pointer-v_int_pointer2
 PASS: gdb.base/pointers.exp: pointer1-pointer2
 PASS: gdb.base/pointers.exp: set v_int_pointer=v_int_array
 PASS: gdb.base/pointers.exp: print array element through pointer
-PASS: gdb.base/pointers.exp: print array element through pointer
-PASS: gdb.base/pointers.exp: print array element through pointer
-PASS: gdb.base/pointers.exp: print array element through pointer
-PASS: gdb.base/pointers.exp: print array element through pointer
+PASS: gdb.base/pointers.exp: print array element through pointer #2
+PASS: gdb.base/pointers.exp: print array element through pointer #3
+PASS: gdb.base/pointers.exp: print array element through pointer #4
+PASS: gdb.base/pointers.exp: print array element through pointer #5
 PASS: gdb.base/pointers.exp: increment rptr
-PASS: gdb.base/pointers.exp: print array element through pointer
-PASS: gdb.base/pointers.exp: print array element through pointer
-PASS: gdb.base/pointers.exp: print array element through pointer
+PASS: gdb.base/pointers.exp: print array element through pointer #6
+PASS: gdb.base/pointers.exp: print array element through pointer #7
+PASS: gdb.base/pointers.exp: print array element through pointer #8
 PASS: gdb.base/pointers.exp: print array element w/ pointer arithmetic
 PASS: gdb.base/pointers.exp: print through ptr to ptr
-PASS: gdb.base/pointers.exp: continue to marker1
+PASS: gdb.base/pointers.exp: continue
 PASS: gdb.base/pointers.exp: up from marker1
 PASS: gdb.base/pointers.exp: print value of *pUC
 PASS: gdb.base/pointers.exp: ptype pUC
@@ -5430,7 +5443,7 @@ FAIL: gdb.base/dump.exp: element 4 not changed, == 4
 Running ../../../gdb/testsuite/gdb.base/setshow.exp ...
 PASS: gdb.base/setshow.exp: default annotation_level is zero
 PASS: gdb.base/setshow.exp: set annotate 2
-PASS: gdb.base/setshow.exp: show annotate (2)
+PASS: gdb.base/setshow.exp: show annotate 2
 PASS: gdb.base/setshow.exp: annotation_level 2
 PASS: gdb.base/setshow.exp: set annotate 1
 PASS: gdb.base/setshow.exp: show annotate (1)
@@ -5485,9 +5498,9 @@ PASS: gdb.base/setshow.exp: set language auto
 PASS: gdb.base/setshow.exp: show language (auto)
 PASS: gdb.base/setshow.exp: set listsize 100
 PASS: gdb.base/setshow.exp: show listsize (100)
-PASS: gdb.base/setshow.exp: set prompt (FooBarBaz)
-PASS: gdb.base/setshow.exp: show prompt (FooBarBaz)
-PASS: gdb.base/setshow.exp: set prompt (gdb)
+PASS: gdb.base/setshow.exp: set prompt FooBarBaz
+PASS: gdb.base/setshow.exp: show prompt FooBarBaz
+PASS: gdb.base/setshow.exp: set prompt gdb
 PASS: gdb.base/setshow.exp: set radix 11
 PASS: gdb.base/setshow.exp: set radix 16
 PASS: gdb.base/setshow.exp: show radix (16)
@@ -6317,7 +6330,6 @@ PASS: gdb.base/printcmds.exp: printf "%DDf\n",1.2E10dl
 PASS: gdb.base/printcmds.exp: printf "%DDf\n",1.2E-10dl
 PASS: gdb.base/printcmds.exp: printf "%DDf\n",1.2E6144dl
 Running ../../../gdb/testsuite/gdb.base/sepdebug.exp ...
-PASS: gdb.base/sepdebug.exp: Delete all breakpoints when none
 PASS: gdb.base/sepdebug.exp: breakpoint function
 PASS: gdb.base/sepdebug.exp: breakpoint quoted function
 PASS: gdb.base/sepdebug.exp: breakpoint function in file
@@ -6415,6 +6427,7 @@ PASS: gdb.base/bfp-test.exp: set variable b64 = 200.25x
 PASS: gdb.base/bfp-test.exp: set variable b128 = 300.375fl
 PASS: gdb.base/bfp-test.exp: set variable b128 = 300.375fff
 Running ../../../gdb/testsuite/gdb.base/miscexprs.exp ...
+PASS: gdb.base/miscexprs.exp: continue to marker1
 PASS: gdb.base/miscexprs.exp: up from marker1
 PASS: gdb.base/miscexprs.exp: print value of &ibig.i[0]
 PASS: gdb.base/miscexprs.exp: print value of &cbig.c[0]
@@ -6432,9 +6445,9 @@ PASS: gdb.base/miscexprs.exp: print value of !sbig.s[90] * 10
 PASS: gdb.base/miscexprs.exp: print value of ibig.i[100] * sbig.s[90]
 PASS: gdb.base/miscexprs.exp: print value of fbig.f[100] * dbig.d[202]
 PASS: gdb.base/miscexprs.exp: print value of !(sbig.s[90] * 2)
-PASS: gdb.base/miscexprs.exp: print value of sizeof(sbig)
-PASS: gdb.base/miscexprs.exp: print value of sizeof(cbig)
-PASS: gdb.base/miscexprs.exp: print value of sizeof(lbig)/sizeof(long)
+PASS: gdb.base/miscexprs.exp: print value of sizeof sbig
+PASS: gdb.base/miscexprs.exp: print value of sizeof cbig
+PASS: gdb.base/miscexprs.exp: print value of sizeof lbig / sizeof long
 PASS: gdb.base/miscexprs.exp: print value of ibig.i[100] << 2
 PASS: gdb.base/miscexprs.exp: print value of sbig.s[90] >> 4
 PASS: gdb.base/miscexprs.exp: print value of lbig.l[333] >> 6
@@ -6518,6 +6531,7 @@ PASS: gdb.base/gdb1250.exp: backtrace from abort
 Running ../../../gdb/testsuite/gdb.base/catch-syscall.exp ...
 Running ../../../gdb/testsuite/gdb.base/solib-symbol.exp ...
 Running ../../../gdb/testsuite/gdb.base/setvar.exp ...
+PASS: gdb.base/setvar.exp: set print sevenbit-strings
 PASS: gdb.base/setvar.exp: set variable char=0
 PASS: gdb.base/setvar.exp: set variable char=1
 PASS: gdb.base/setvar.exp: set variable char=7 (Bel)
@@ -7149,7 +7163,7 @@ PASS: gdb.base/bitops.exp: print value of 3==4.0
 PASS: gdb.base/bitops.exp: print value of 3!=3.0
 PASS: gdb.base/bitops.exp: print value of 3!=5.0
 PASS: gdb.base/bitops.exp: print value of 0 || 1 && 0 | 0 ^ 0 == 8 > 128 >>1 +2 *2
-PASS: gdb.base/bitops.exp: print value of 1.0 || 0
+PASS: gdb.base/bitops.exp: pass
 PASS: gdb.base/bitops.exp: print value of 0.0 || 1.0
 PASS: gdb.base/bitops.exp: print value of 0.0 || 0
 PASS: gdb.base/bitops.exp: print value of 0 || 1 && 0 | 0 ^ 0 == 8
@@ -7210,6 +7224,9 @@ PASS: gdb.base/structs3.exp: print *twop
 PASS: gdb.base/structs3.exp: print *(struct Two *)onep
 PASS: gdb.base/structs3.exp: print *(tTwo *)onep
 Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
+PASS: gdb.base/varargs.exp: set print sevenbit-strings
+PASS: gdb.base/varargs.exp: set print address off
+PASS: gdb.base/varargs.exp: set width 0
 Running ../../../gdb/testsuite/gdb.kalray/displaced.exp ...
 PASS: gdb.kalray/displaced.exp: Force displaced stepping
 PASS: gdb.kalray/displaced.exp: Set breakpoints
@@ -7256,7 +7273,7 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6835
+# of expected passes		6851
 # of unexpected failures	44
 # of unexpected successes	2
 # of expected failures		43
@@ -7265,5 +7282,5 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 # of unresolved testcases	1
 # of untested testcases		8
 # of unsupported tests		16
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100524-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100530-cvs -nw -nx 
 
