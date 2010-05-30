@@ -1,3 +1,209 @@
+2010-05-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* Makefile.in (RDYNAMIC): New.
+	(SFILES): Add proc-service.list.
+	* config/alpha/alpha-linux.mh (NAT_CDEPS): New.
+	(LOADLIBES): Replace -rdynamic by $(RDYNAMIC).
+	* config/arm/linux.mh: Likewise.
+	* config/i386/linux.mh: Likewise.
+	* config/i386/linux64.mh: Likewise.
+	* config/ia64/linux.mh: Likewise.
+	* config/m32r/linux.mh: Likewise.
+	* config/m68k/linux.mh: Likewise.
+	* config/mips/linux.mh: Likewise.
+	* config/pa/linux.mh: Likewise.
+	* config/powerpc/linux.mh: Likewise.
+	* config/powerpc/ppc64-linux.mh: Likewise.
+	* config/s390/s390.mh: Likewise.
+	* config/sparc/linux.mh: Likewise.
+	* config/sparc/linux64.mh: Likewise.
+	* config/xtensa/linux.mh: Likewise.
+	* configure.ac: New RDYNAMIC on native host and GCC.
+	(solaris*): Replace -Wl,-export-dynamic by $RDYNAMIC.
+	* configure: Regenerate.
+	* proc-service.list: New.
+
+2010-05-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* linux-nat.c (linux_nat_core_of_thread_1): Fix crash on invalid
+	CONTENT.
+
+2010-05-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* linux-nat.c (linux_nat_wait_1): Do not call
+	linux_nat_core_of_thread_1 on TARGET_WAITKIND_EXITED or
+	TARGET_WAITKIND_SIGNALLED.
+
+2010-05-27  Joel Brobecker  <brobecker@adacore.com>
+
+	* ada-lang.c (ada_inferior_data): New struct.
+	(ada_inferior_data): New static global.
+	(ada_inferior_data_cleanup, get_ada_inferior_data, ada_inferior_exit)
+	(ada_get_tsd_type): New functions.
+	(ada_tag_name_2): Use ada_get_tsd_type instead of ada_find_any_type
+	to look the tsd type up.
+	(_initialize_ada_language): Attach ada_inferior_exit to inferior_exit
+	event.  Set ada_inferior_data.
+
+2010-05-27  Pedro Alves  <pedro@codesourcery.com>
+
+	* remote.c (unpack_varlen_hex): Remove forward declaration.
+	(remote_console_output): Make static, and add forward declaration.
+	* remote.h: Drop FIXME comment.
+	(unpack_varlen_hex): Declare.
+	(remote_console_output, remote_cisco_objfile_relocate)
+	(deprecated_target_resume_hook, deprecated_target_wait_loop_hook):
+	Delete declarations.
+	* tracepoint.c: Include "remote.h".
+	(unpack_varlen_hex): Delete declaration.
+
+2010-05-27  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2loc.c (struct piece_closure) <refc>: New field.
+	(allocate_piece_closure): Initialize refc.
+	(copy_pieced_value_closure): Use refc.
+	(free_pieced_value_closure): Likewise.
+
+2010-05-27  Tom Tromey  <tromey@redhat.com>
+
+	* arm-tdep.c (push_stack_item): 'contents' now const.
+	(arm_push_dummy_call): Make 'val' const.  Use value_contents, not
+	value_contents_writeable.  Introduce new temporary.
+
+2010-05-27  Tom Tromey  <tromey@redhat.com>
+
+	* findcmd.c (parse_find_args): Use value_contents, not
+	value_contents_raw.
+
+2010-05-27  Tom Tromey  <tromey@redhat.com>
+
+	* alpha-tdep.c (alpha_push_dummy_call): Make alpha_arg.contents
+	const.  Use value_contents, not value_contents_writeable.
+
+2010-05-27  Joel Brobecker  <brobecker@adacore.com>
+
+	* ada-lang.c (ensure_lval): Replace call to value_contents_raw
+	by call to value_contents.
+
+2010-05-27  Ozkan Sezer  <sezeroz@gmail.com>
+
+	* MAINTAINERS: Add myself for write after approval privileges.
+
+2010-05-26  Doug Evans  <dje@google.com>
+
+	Allow python to find its files if moved from original location.
+	* acinclude.m4 (GDB_AC_DEFINE_RELOCATABLE): New function.
+	(GDB_AC_WITH_DIR): Call it.
+	* configure.ac: Define WITH_PYTHON_PATH if we can find the
+	python installation directory.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* defs.h (python_libdir): Declare.
+	* main.c (python_libdir): Define.
+	(captured_main): Initialize python_libdir.
+	* python/python.c (_initialize_python): #ifdef WITH_PYTHON_PATH,
+	call Py_SetProgramName to make sure python can find its libraries
+	and modules.
+
+	* configure.ac: Try to use python's distutils to fetch compilation
+	parameters.
+	* configure: Regenerate.
+	* python/python-config.py: New file.
+
+2010-05-26  Ozkan Sezer  <sezeroz@gmail.com>
+
+	* ser-tcp.c (net_open): Check error return from socket() call by its
+	equality to -1 not by it being negative.
+	(net_close): Likewise.
+
+2010-05-26  Pedro Alves  <pedro@codesourcery.com>
+
+	* NEWS: Mention the `qRelocInsn' feature.
+	* gdbarch.sh (relocate_instruction): New.
+	* amd64-tdep.c (rip_relative_offset): New.
+	(append_insns): New.
+	(amd64_relocate_instruction): New.
+	(amd64_init_abi): Install it.
+	* i386-tdep.c (append_insns): New.
+	(i386_relocate_instruction): New.
+	(i386_gdbarch_init): Install it.
+	* remote.c (remote_get_noisy_reply): Handle qRelocInsn requests.
+	* gdbarch.h, gdbarch.c: Regenerate.
+
+2010-05-26  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2loc.h (struct dwarf2_locexpr_baton) <data>: Now const.
+	(struct dwarf2_loclist_baton) <data>: Likewise.
+	* dwarf2loc.c (find_location_expression): Constify return type.
+	(dwarf2_evaluate_loc_desc): Make 'data' argument const.
+	(dwarf2_loc_desc_needs_frame): Likewise.
+	(loclist_read_variable): Constify.
+	(loclist_describe_location): Likewise.
+	(loclist_tracepoint_var_ref): Likewise.
+
+2010-05-25  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2loc.c (dwarf_expr_frame_base): Constify.
+	(dwarf_expr_frame_base_1): Likewise.
+	(read_pieced_value): Update.
+	(needs_frame_frame_base): Constify.
+	(dwarf2_tracepoint_var_loc): Likewise.
+	(dwarf2_tracepoint_var_access): Likewise.
+	(locexpr_describe_location_piece): Likewise.
+	(locexpr_describe_location_1): Likewise.
+	* dwarf2expr.h (struct dwarf_expr_context) <get_frame_base>:
+	Constify.
+	(data): Now const.
+	(struct dwarf_expr_piece) <v.literal.data>: Likewise.
+	(dwarf_expr_eval, read_uleb128, read_sleb128)
+	(dwarf2_read_address): Update.
+	* dwarf2expr.c (dwarf_expr_eval): Constify.
+	(read_uleb128): Likewise.
+	(read_sleb128): Likewise.
+	(dwarf2_read_address): Likewise.
+	(require_composition): Likewise.
+	(execute_stack_op): Likewise.
+	* dwarf2-frame.h (struct dwarf2_frame_state_reg) <loc.exp>: Now a
+	"const gdb_byte *".
+	* dwarf2-frame.c (struct dwarf2_frame_state_reg_info) <cfa_exp>:
+	Now const.
+	(no_get_frame_base): Constify.
+	(execute_stack_op): Likewise.
+	(execute_cfa_program): Likewise.
+	(read_encoded_value): Likewise.
+
+2010-05-25  Doug Evans  <dje@google.com>
+
+	* ser-pipe.c (pipe_open): Ignore SIGINTs in child.
+
+	* event-loop.h (GDB_READABLE, GDB_WRITABLE, GDB_EXCEPTION): Move to ...
+	* event-loop.c: ... here.
+	* tui/tui-io.c (tui_readline_output): Rename parameter `code' to
+	`error' for clarity.
+	(tui_getc): Pass correct value for `error' parameter to
+	tui_readline_output.
+
+	Add python gdb.GdbError and gdb.string_to_argv.
+	* NEWS: Document them.
+	* python/py-cmd.c (cmdpy_function): Don't print a traceback if
+	the exception is gdb.GdbError.  Print a second traceback if there's
+	an error computing the error message.
+	(gdbpy_string_to_argv): New function.
+	* python/py-utils.c (gdbpy_obj_to_string): New function.
+	(gdbpy_exception_to_string): New function.
+	* python/python-internal.h (gdbpy_string_to_argv): Declare.
+	(gdbpy_obj_to_string, gdbpy_exception_to_string): Declare.
+	(gdbpy_gdberror_exc): Declare.
+	* python/python.c (gdbpy_gdberror_exc): New global.
+	(_initialize_python): Initialize gdbpy_gdberror_exc and create
+	gdb.GdbError.
+	(GdbMethods): Add string_to_argv.
+
+2010-05-21  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* windows-nat.c (display_selector): Call GetLastError to give better
+	failure explanation.
+
 2010-05-24  Pedro Alves  <pedro@codesourcery.com>
 
 	* config.in: Regenerate.
