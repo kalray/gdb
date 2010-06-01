@@ -1,20 +1,20 @@
 #!/usr/bin/ruby
 
-
 $LOAD_PATH.push('metabuild/lib')
 require 'metabuild'
 include Metabuild
 
 options = Options.new({"target" => "k1",
-                       "parallel-make" => "yes"
+                       "parallel-make" => "yes",
                       })
 
 repo = Git.new(options["clone"])
 
 build = Target.new("build", repo, [])
 valid = Target.new("valid", repo, [build])
+install = Target.new("install", repo, [valid])
 
-b = Builder.new("gdb", options, [build, valid])
+b = Builder.new("gdb", options, [build, valid, install])
 
 def cpu_number ()
   num_cpu = 0
@@ -24,6 +24,8 @@ end
 
 arch = options["target"]
 workspace = options["workspace"]
+build_path = workspace + "/" + options["clone"] + "/" + arch + "_build"
+prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 make_j = options["parallel-make"] == "yes" ? "-j#{cpu_number}" : ""
 
 b.logtitle = "Report for GDB build, arch = #{arch}"
@@ -41,8 +43,6 @@ else
   raise "Unknown Target #{arch}"
 end
 
-build_path = workspace + "/" + options["clone"] + "/" + arch + "_build"
-
 build.add_result build_path
 
 b.target("build") do 
@@ -50,11 +50,17 @@ b.target("build") do
   if( arch == "k1" )
     create_goto_dir! build_path
 
-    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat --with-bugurl=no --prefix=#{build_path}/release")
+    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat --with-bugurl=no --prefix=#{prefix}")
     b.run(:cmd => "make clean")
     b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path}")
-    b.run(:cmd => "make install")
   end
+end
+
+b.target("install") do
+
+  cd build_path
+  b.run(:cmd => "make install")  if( arch == "k1" )
+
 end
 
 b.target("valid") do
@@ -63,7 +69,7 @@ b.target("valid") do
     Dir.chdir build_path + "/gdb/testsuite"
 
     b.run(:cmd => "[ $USER != \"hudson\" ] || killall -9 gdb_stub; true")
-    b.run(:cmd => "PATH=#{workspace}/open64/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.run(:cmd => "LANG=C PATH=#{workspace}/open64/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
