@@ -58,8 +58,10 @@ end
 
 b.target("install") do
 
-  cd build_path
-  b.run(:cmd => "make install")  if( arch == "k1" )
+  if( arch == "k1" )
+    cd build_path
+    b.run(:cmd => "make install")  if( arch == "k1" )
+  end
 
 end
 
