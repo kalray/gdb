@@ -4,8 +4,12 @@ $LOAD_PATH.push('metabuild/lib')
 require 'metabuild'
 include Metabuild
 
-options = Options.new({"target" => "k1",
-                       "parallel-make" => "yes",
+options = Options.new({ "target"        => "k1",
+                        "clone"         => ".",
+                        "processor"     => "processor",
+                        "mds"           => "mds",
+                        "open64"        => "open64",
+                        "parallel-make" => "yes",
                       })
 
 repo = Git.new(options["clone"])
@@ -24,7 +28,13 @@ end
 
 arch = options["target"]
 workspace = options["workspace"]
-build_path = workspace + "/" + options["clone"] + "/" + arch + "_build"
+gdb_clone =  workspace + "/" + options["clone"]
+processor_clone =  workspace + "/" + options["processor"]
+mds_clone =  workspace + "/" + options["mds"]
+open64_clone =  workspace + "/" + options["open64"]
+
+build_path = gdb_clone + "/" + arch + "_build"
+
 prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 make_j = options["parallel-make"] == "yes" ? "-j#{cpu_number}" : ""
 
@@ -35,10 +45,10 @@ b.default_targets = [build]
 case arch
 when "k1"
   build_target = "k1-elf"
-  mds_path = workspace + "/processor/#{arch}-family/build/BE/GDB/#{arch}"
+  mds_path = processor_clone  + "/#{arch}-family/build/BE/GDB/#{arch}"
 when "st200" 
   build_target = "lx-stm-elf32"
-  mds_path = workspace + "/mds/#{arch}-family/build/BE/GBU/#{arch}"
+  mds_path = mds_clone + "/#{arch}-family/build/BE/GBU/#{arch}"
 else 
   raise "Unknown Target #{arch}"
 end
@@ -71,7 +81,7 @@ b.target("valid") do
     Dir.chdir build_path + "/gdb/testsuite"
 
     b.run(:cmd => "[ $USER != \"hudson\" ] || killall -9 gdb_stub; true")
-    b.run(:cmd => "LANG=C PATH=#{workspace}/open64/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.run(:cmd => "LANG=C PATH=#{open64_clone}/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
