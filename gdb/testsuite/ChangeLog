@@ -1,3 +1,329 @@
+2010-06-07  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Test PR 10640.
+	* gdb.dwarf2/dw2-op-call.exp, gdb.dwarf2/dw2-op-call.S: New.
+
+2010-06-07  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* gdb.cp/koenig.exp: Test for ADL operators.
+	* gdb.cp/koenig.cc: Added ADL operators.
+	* gdb.cp/operator.exp: New test.
+	* gdb.cp/operator.cc: New test.
+
+2010-06-04  Michael Snyder  <msnyder@vmware.com>
+
+	* gdb.base/attach.exp: Replace gdb_test_multiple with gdb_test.
+	* gdb.base/pending.exp: Ditto.
+
+	* gdb.cp/pr-1210.exp: Add message string to gdb_test_multiple.
+
+2010-06-04  Doug Evans  <dje@google.com>
+
+	* gdb.python/py-prettyprint.exp: Add new test for enabled and
+	disabled printers.
+	* gdb.python/py-prettyprint.py (disable_lookup_function): New function.
+	(enable_lookup_function): New function.
+
+2010-06-04  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.python/py-value.exp (test_value_hash): Don't test equality
+	of hash and id.
+
+2010-06-04  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.base/commands.exp (add printf tbreak command): Remove trailing
+	newline.
+	* gdb.gdb/complaints.exp (empty non-verbose non-noisy clear)
+	(empty verbose non-noisy clear, empty verbose noisy clear)
+	(empty non-verbose noisy clear): Likewise.
+
+2010-06-03  Michael Snyder  <msnyder@vmware.com>
+
+	* gdb.base/commands.exp: Replace gdb_test with gdb_test_no_output.
+	* gdb.base/display.exp: Ditto.
+	* gdb.base/find.exp: Ditto.
+	* gdb.base/ifelse.exp: Ditto.
+	* gdb.base/multi-forks.exp: Ditto.
+	* gdb.base/recurse.exp: Ditto.
+	* gdb.base/setshow.exp: Ditto.
+	* gdb.base/value-double-free.exp: Ditto.
+	* gdb.base/watch-vfork.exp: Ditto.
+	* gdb.base/watch_thread_num.exp: Ditto.
+	* gdb.base/watchpoint-solib.exp: Ditto.
+	* gdb.base/watchpoint.exp: Ditto.
+	* gdb.base/watchpoints.exp: Ditto.
+
+	* gdb.cp/classes.exp: Replace gdb_test with gdb_test_no_output.
+	* gdb.cp/overload.exp: Ditto.
+	* gdb.cp/virtfunc.exp: Ditto.
+
+	* gdb.python/py-value.exp: Replace gdb_test with gdb_test_no_output.
+
+	* gdb.reverse/watch-precsave.exp: 
+	Replace gdb_test with gdb_test_no_output.
+
+	* gdb.threads/attach-into-signal.exp: 
+	Replace gdb_test with gdb_test_no_output.
+	* gdb.threads/local-watch-wrong-thread.exp: Ditto.
+	* gdb.threads/watchthreads.exp: Ditto.
+	* gdb.threads/watchthreads2.exp: Ditto.
+
+	* gdb.trace/deltrace.exp: Replace gdb_test with gdb_test_no_output.
+	* gdb.trace/tfind.exp: Ditto.
+
+2010-06-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* lib/gdb.exp (gdb_test_no_output): Do not emit pass for
+	successful test if message is the empty string.
+
+2010-06-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.fortran/module.exp (stopped language detection): New test.
+
+2010-06-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Support DW_TAG_module as separate namespaces.
+	* gdb.fortran/library-module.exp, gdb.fortran/library-module-main.f90,
+	gdb.fortran/library-module-lib.f90: New.
+	* gdb.fortran/module.exp: Replace startup by a prepare_for_testing call.
+	(print i): Remove.
+	(continue to breakpoint: i-is-1, print var_i value 1)
+	(continue to breakpoint: i-is-2, print var_i value 2)
+	(continue to breakpoint: a-b-c-d, print var_a, print var_b, print var_c)
+	(print var_d, print var_i value 14, ptype modmany, complete `modm)
+	(complete `modmany, complete `modmany`, complete `modmany`var)
+	(show language, setting breakpoint at module): New tests.
+	* gdb.fortran/module.f90 (module mod): Remove.
+	(module mod1, module mod2, module modmany, subroutine sub1)
+	(subroutine sub2, program module): New.
+
+2010-06-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/ref-types.exp (pass, pass, pass): Rename to ...
+	(print value of rUC, print value of rI, print value of UI): ... here.
+	* gdb.cp/anon-union.exp (pass): Rename to ...
+	(print z 2): ... here.
+
+2010-06-02  Michael Snyder  <msnyder@vmware.com>
+
+	* gdb.trace/actions.exp: Use gdb_test_no_output.
+	* gdb.trace/circ.exp: Ditto.
+	* gdb.trace/packetlen.exp: Ditto.
+	* gdb.trace/save-trace.exp: Ditto.
+	* gdb.trace/tracecmd.exp: Ditto.
+	* gdb.trace/tsv.exp: Ditto.
+
+	* gdb.threads/fork-thread-pending.exp: Use gdb_test_no_output.
+	* gdb.threads/hand-call-in-thraeds.exp: Ditto.
+	* gdb.threads/local-watch-wrong-thread.exp: Ditto.
+	* gdb.threads/manythreads.exp: Ditto.
+	* gdb.threads/print-threads.exp: Ditto.
+	* gdb.threads/pthreads.exp: Ditto.
+	* gdb.threads/schedlock.exp: Ditto.
+	* gdb.threads/staticthreads.exp: Ditto.
+	* gdb.threads/thread-specific.exp: Ditto.
+	* gdb.threads/thread-unwindonsignal.exp: Ditto.
+	* gdb.threads/threadapply.exp: Ditto.
+	* gdb.threads/watchthreads.exp: Ditto.
+	* gdb.threads/watchthreads2.exp: Ditto.
+
+	* gdb.python/py-block.exp: Use gdb_test_no_output.
+	* gdb.python/py-prettyprint.exp: Ditto.
+	* gdb.python/py-template.exp: Ditto.
+	* gdb.python/py-value.exp: Ditto.
+
+	* gdb.reverse/watch-precsave.exp: Use gdb_test_no_output.
+	* gdb.reverse/watch-reverse.exp: Ditto.
+
+	* gdb.server/ext-attach.exp: Use gdb_test_no_output.
+	* gdb.server/ext-run.exp: Ditto.
+
+	* gdb.dwarf2/dw2-basic.exp: Use gdb_test_no_output.
+	* gdb.dwarf2/dw2-compressed.exp: Ditto.
+	* gdb.dwarf2/dw2-intercu.exp: Ditto.
+	* gdb.dwarf2/dw2-intermix.exp: Ditto.
+	* gdb.dwarf2/dw2-producer.exp: Ditto.
+	* gdb.dwarf2/mac-fileno.exp: Ditto.
+
+	* gdb.gdb/observer.exp: Use gdb_test_no_output.
+	* gdb.gdb/selftest.exp: Ditto.
+
+	* gdb.multi/base.exp: Use gdb_test_no_output.
+
+	* gdb.opt/inline-cmds.exp: Use gdb_test_no_output.
+
+2010-06-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/ref-types.exp (print value of UI): Remove excessive newline.
+
+2010-06-02  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+
+	* gdb.cp/class2.exp: Use gdb_test_no_output.
+	* gdb.cp/classes.exp: Ditto.
+	* gdb.cp/extern-c.exp: Ditto.
+	* gdb.cp/inherit.exp: Ditto.
+	* gdb.cp/maint.exp: Ditto.
+	* gdb.cp/mb-inline.exp: Ditto.
+	* gdb.cp/mb-templates.exp: Ditto.
+	* gdb.cp/method2.exp: Ditto.
+	* gdb.cp/misc.exp: Ditto.
+	* gdb.cp/ovldbreak.exp: Ditto.
+	* gdb.cp/punctuator.exp: Ditto.
+	* gdb.cp/templates.exp: Ditto.
+	* gdb.cp/virtbase.exp: Ditto.
+
+	* gdb.threads/attach-stopped.exp: 
+	Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/attachstop-mt.exp: 
+	Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/gcore-thread.exp: 
+	Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/hand-call-in-threads.exp: 
+	Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/linux-dp.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/print-threads.exp: 
+	Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/pthreads.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/schedlock.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.threads/sigthread.exp: Replace uses of send_gdb / gdb_expect.
+
+	* gdb.trace/actions.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/backtrace.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/collection.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/deltrace.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/infotrace.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/limits.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/report.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/save-trace.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/tfind.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/tracecmd.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.trace/tsv.exp: Replace uses of send_gdb / gdb_expect.
+
+2010-06-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/re-set-overloaded.exp, gdb.cp/re-set-overloaded.cc: New.
+
+2010-06-02  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* gdb.cp/koenig.exp: Added new test case.
+	* gdb.cp/koenig.cc: Ditto.
+
+2010-06-01  Michael Snyder  <msnyder@vmware.com>
+
+	* gdb.base/arithmet.exp: Use gdb_test_no_output.
+	* gdb.base/arrayidx.exp: Ditto.
+	* gdb.base/attach.exp: Ditto.
+	* gdb.base/auxv.exp: Ditto.
+	* gdb.base/bigcre.exp: Ditto.
+	* gdb.base/break-always.exp: Ditto.
+	* gdb.base/break-interp.exp: Ditto.
+	* gdb.base/break.exp: Ditto.
+	* gdb.base/breakpoint-shadow.exp: Ditto.
+	* gdb.base/call-ar-st.exp: Ditto.
+	* gdb.base/call-sc.exp: Ditto.
+	* gdb.base/call-signal-resume.exp: Ditto.
+	* gdb.base/callfuncs.exp: Ditto.
+	* gdb.base/catch-syscall.exp: Ditto.
+	* gdb.base/charset.exp: Ditto.
+	* gdb.base/code-expr.exp: Ditto.
+	* gdb.base/commands.exp: Ditto.
+	* gdb.base/cond-expr.exp: Ditto.
+	* gdb.base/condbreak.exp: Ditto.
+	* gdb.base/cursal.exp: Ditto.
+	* gdb.base/cvexpr.exp: Ditto.
+	* gdb.base/default.exp: Ditto.
+	* gdb.base/del.exp: Ditto.
+	* gdb.base/detach.exp: Ditto.
+	* gdb.base/display.exp: Ditto.
+	* gdb.base/ena-dis-br.exp: Ditto.
+	* gdb.base/eval-skip.exp: Ditto.
+	* gdb.base/foll-fork.exp: Ditto.
+	* gdb.base/foll-vfork.exp: Ditto.
+	* gdb.base/frame-args.exp: Ditto.
+	* gdb.base/funcargs.exp: Ditto.
+	* gdb.base/gcore-buffer-overflow.exp: Ditto.
+	* gdb.base/gdbvars.exp: Ditto.
+	* gdb.base/help.exp: Ditto.
+	* gdb.base/ifelse.exp: Ditto.
+	* gdb.base/included.exp: Ditto.
+	* gdb.base/list.exp: Ditto.
+	* gdb.base/macscp.exp: Ditto.
+	* gdb.base/maint.exp: Ditto.
+	* gdb.base/multi-fork.exp: Ditto.
+	* gdb.base/overlays.exp: Ditto.
+	* gdb.base/page.exp: Ditto.
+	* gdb.base/pending.exp: Ditto.
+	* gdb.base/pointers.exp: Ditto.
+	* gdb.base/pr11022.exp: Ditto.
+	* gdb.base/prelink.exp: Ditto.
+	* gdb.base/printcmds.exp: Ditto.
+	* gdb.base/psymtab.exp: Ditto.
+	* gdb.base/randomize.exp: Ditto.
+	* gdb.base/relational.exp: Ditto.
+	* gdb.base/relocate.exp: Ditto.
+	* gdb.base/remote.exp: Ditto.
+	* gdb.base/sepdebug.exp: Ditto.
+	* gdb.base/set-lang-auto.exp: Ditto.
+	* gdb.base/setshow.exp: Ditto.
+	* gdb.base/setvar.exp: Ditto.
+	* gdb.base/signals.exp: Ditto.
+	* gdb.base/signull.exp: Ditto.
+	* gdb.base/sigstep.exp: Ditto.
+	* gdb.base/sizeof.exp: Ditto.
+	* gdb.base/solib-disc.exp: Ditto.
+	* gdb.base/store.exp: Ditto.
+	* gdb.base/structs.exp: Ditto.
+	* gdb.base/structs2.exp: Ditto.
+	* gdb.base/subst.exp: Ditto.
+	* gdb.base/term.exp: Ditto.
+	* gdb.base/trace-commands.exp: Ditto.
+	* gdb.base/unwindonsignal.exp: Ditto.
+	* gdb.base/valgrind-db-attach.exp: Ditto.
+	* gdb.base/varargs.exp: Ditto.
+	* gdb.base/watch-cond.exp: Ditto.
+	* gdb.base/watch_thread_num.exp: Ditto.
+	* gdb.base/watchpoint-cond-gone.exp: Ditto.
+	* gdb.base/watchpoint.exp: Ditto.
+	* gdb.base/whatis-exp.exp: Ditto.
+
+2010-06-01  Michael Snyder  <msnyder@vmware.com>
+
+	* gdb.cp/annota2.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/annota3.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/anon-union.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/cplusfuncs.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/demangle.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/formatted-ref.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/local.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/method.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/misc.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/namespace.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/ovldbreak.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/pr-1023.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/ref-types.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/templates.exp: Replace uses of send_gdb / gdb_expect.
+	* gdb.cp/userdef.exp: Replace uses of send_gdb / gdb_expect.
+
+2010-06-01  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.base/commands.exp (begin commands on watch): Remove excessive
+	trailing newline.
+	* gdb.mi/mi-nsintrall.exp (-gdb-show non-stop): Likewise.
+	* gdb.java/jmisc.exp (p *args\n): Rename to ...
+	(p *args): ... here and remove excessive trailing newline.
+
+2010-05-31  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.base/subst.exp: Fix call to gdb_test with empty message.
+
+2010-05-31  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Accept the new Linux kernel "t (tracing stop)" string.
+	* gdb.threads/watchthreads-reorder.c (thread1_func, thread2_func):
+	Update comment.
+	(state_wait) <T (tracing stop)>: New.
+	(main): Update the state_wait expect string.
+
 2010-05-28  Pedro Alves  <pedro@codesourcery.com>
 
 	* limits.c, limits.exp: Delete files.
@@ -8,7 +334,7 @@
 
 	* gdb.base/tui-layout.exp: New.
 
-2010-05-28  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+2010-05-28  Michael Snyder  <msnyder@vmware.com>
 
 	* gdb.reverse/break-precsave.exp: 
 	Replace uses of send_gdb / gdb_expect.
@@ -62,7 +388,7 @@
 	* gdb.base/sepdebug.exp (info silent break bp_location1): Fix racy
 	excessive newline.
 
-2010-05-27  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+2010-05-27  Michael Snyder  <msnyder@vmware.com>
 
 	* gdb.base/break.exp: Replace uses of send_gdb / gdb_expect.
 	* gdb.base/relational.exp: Replace uses of send_gdb / gdb_expect.
@@ -84,7 +410,7 @@
 	* gdb.base/watch_thread_num.exp: Replace uses of send_gdb / gdb_expect.
 	* gdb.base/watchpoint.exp: Replace uses of send_gdb / gdb_expect.
 
-2010-05-26  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+2010-05-26  Michael Snyder  <msnyder@vmware.com>
 
 	* gdb.java/jmisc.exp: Replace uses of send_gdb / gdb_expect.
 	* gdb.java/jprint.exp: Replace uses of send_gdb / gdb_expect.
