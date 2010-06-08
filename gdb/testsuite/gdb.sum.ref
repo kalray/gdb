@@ -1,4 +1,4 @@
-Test Run By friss on Sun May 30 12:32:55 2010
+Test Run By friss on Tue Jun  8 10:32:27 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -3652,11 +3652,11 @@ PASS: gdb.base/charset.exp: typedef to wchar_t
 PASS: gdb.base/charset.exp: undefined concatenation of UTF-16 and UTF-32
 UNSUPPORTED: gdb.base/charset.exp: python support is disabled
 PASS: gdb.base/charset.exp: EVAL_SKIP cleanup handling regression test
-PASS: gdb.base/charset.exp: Assign String16 with prefix u
+FAIL: gdb.base/charset.exp: Assign String16 with prefix u
 FAIL: gdb.base/charset.exp: Display String String16 with x/hs
-PASS: gdb.base/charset.exp: Assign String32 with prefix U
+FAIL: gdb.base/charset.exp: Assign String32 with prefix U
 FAIL: gdb.base/charset.exp: Display String String32 with x/ws
-PASS: gdb.base/charset.exp: Assign String32 with prefix L
+FAIL: gdb.base/charset.exp: Assign String32 with prefix L
 FAIL: gdb.base/charset.exp: Display String String32 with x/ws
 Running ../../../gdb/testsuite/gdb.base/mips_pro.exp ...
 PASS: gdb.base/mips_pro.exp: backtrace
@@ -4525,6 +4525,9 @@ PASS: gdb.base/watchpoint-cond-gone.exp: Catch the no longer valid watchpoint
 Running ../../../gdb/testsuite/gdb.base/remotetimeout.exp ...
 PASS: gdb.base/remotetimeout.exp: correct remotetimeout printed
 Running ../../../gdb/testsuite/gdb.base/code-expr.exp ...
+PASS: gdb.base/code-expr.exp: set print sevenbit-strings
+PASS: gdb.base/code-expr.exp: set print address off
+PASS: gdb.base/code-expr.exp: set width 0
 PASS: gdb.base/code-expr.exp: (@code char)
 PASS: gdb.base/code-expr.exp: (@code signed char)
 PASS: gdb.base/code-expr.exp: (@code unsigned char)
@@ -4962,6 +4965,7 @@ PASS: gdb.base/subst.exp: show substitute-path from, after all paths added
 PASS: gdb.base/subst.exp: show substitute-path depuis, after all paths added
 PASS: gdb.base/subst.exp: show substitute-path garbage, after all paths added
 PASS: gdb.base/subst.exp: unset substitute-path from
+PASS: gdb.base/subst.exp: show substitute-path from, after unsetting it
 PASS: gdb.base/subst.exp: show substitute-path after from rule removed
 PASS: gdb.base/subst.exp: unset substitute-path from after the rule was removed
 PASS: gdb.base/subst.exp: unset substitute-path depuis (middle of list)
@@ -5518,6 +5522,9 @@ PASS: gdb.base/setshow.exp: show verbose (on)
 PASS: gdb.base/setshow.exp: set verbose off
 PASS: gdb.base/setshow.exp: show verbose (off)
 Running ../../../gdb/testsuite/gdb.base/cvexpr.exp ...
+PASS: gdb.base/cvexpr.exp: set print sevenbit-strings
+PASS: gdb.base/cvexpr.exp: set print address off
+PASS: gdb.base/cvexpr.exp: set width 0
 PASS: gdb.base/cvexpr.exp: (const char)
 PASS: gdb.base/cvexpr.exp: (const signed char)
 PASS: gdb.base/cvexpr.exp: (const unsigned char)
@@ -6464,7 +6471,7 @@ Running ../../../gdb/testsuite/gdb.base/dup-sect.exp ...
 gdb compile failed, /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
 UNTESTED: gdb.base/dup-sect.exp: dup-sect.exp
 Running ../../../gdb/testsuite/gdb.base/solib-corrupted.exp ...
-PASS: gdb.base/solib-corrupted.exp: normal list
+FAIL: gdb.base/solib-corrupted.exp: normal list
 XFAIL: gdb.base/solib-corrupted.exp: make solibs looping
 UNTESTED: gdb.base/solib-corrupted.exp: solib-corrupted.exp
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
@@ -7273,8 +7280,8 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6851
-# of unexpected failures	44
+# of expected passes		6854
+# of unexpected failures	48
 # of unexpected successes	2
 # of expected failures		43
 # of unknown successes		2
@@ -7282,5 +7289,5 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 # of unresolved testcases	1
 # of untested testcases		8
 # of unsupported tests		16
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100530-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100608-cvs -nw -nx 
 
