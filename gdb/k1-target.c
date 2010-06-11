@@ -48,6 +48,13 @@ k1_target_new_thread (struct thread_info *t)
     current_target.to_attach_no_wait = 1;
 }
 
+static void k1_target_mourn_inferior (struct target_ops *target)
+{
+    generic_mourn_inferior ();
+    unpush_target (target);
+    kill (server_pid, 9);
+}
+
 static void k1_target_create_inferior (struct target_ops *ops, 
 				       char *exec_file, char *args,
 				       char **env, int from_tty)
@@ -170,6 +177,7 @@ Use the \"file\" or \"exec-file\" command."));
        implementation. */
     ops = find_target_beneath(&current_target);
     ops->to_create_inferior = k1_target_create_inferior;
+    ops->to_mourn_inferior = k1_target_mourn_inferior;
 }
    
 void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
@@ -249,6 +257,7 @@ _initialize_k1_target (void)
     k1_target_ops.to_attach_no_wait = 1;
 
     k1_target_ops.to_create_inferior = k1_target_create_inferior;
+    k1_target_ops.to_mourn_inferior = k1_target_mourn_inferior;
 
     k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
     k1_target_ops.to_can_async_p = k1_target_can_async;
