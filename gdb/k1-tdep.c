@@ -535,6 +535,25 @@ k1_return_value (struct gdbarch *gdbarch, struct type *func_type,
     return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
+int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+{
+    /* R0 point to the jmpbuf, and RA is at offset 0x34 in the buf */
+    gdb_byte buf[4];
+    CORE_ADDR r0;
+    struct gdbarch *gdbarch = get_frame_arch (frame);
+    enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+    get_frame_register (frame, 0, buf);
+    r0 = extract_unsigned_integer (buf, 4, byte_order);
+    
+    if (target_read_memory (r0 + 0x34, buf, 4))
+	return 0;
+
+    *pc = extract_unsigned_integer (buf, 4, byte_order);
+    return 1;
+}
+
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -673,6 +692,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_displaced_step_free_closure (gdbarch, k1_displaced_step_free_closure);
   set_gdbarch_displaced_step_location (gdbarch, k1_displaced_step_location);
   set_gdbarch_max_insn_length (gdbarch, K1MAXBUNDLESIZE*2);
+
+  set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
 
   return gdbarch;
 }
