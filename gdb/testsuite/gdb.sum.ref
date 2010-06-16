@@ -1,4 +1,4 @@
-Test Run By friss on Tue Jun  8 10:32:27 2010
+Test Run By friss on Wed Jun 16 16:18:22 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -4628,6 +4628,27 @@ PASS: gdb.base/code-expr.exp: (struct t_struct @code * @code)
 PASS: gdb.base/code-expr.exp: (union t_union @code * @code)
 Running ../../../gdb/testsuite/gdb.base/exe-lock.exp ...
 PASS: gdb.base/exe-lock.exp: continue until program exits
+Running ../../../gdb/testsuite/gdb.base/permissions.exp ...
+PASS: gdb.base/permissions.exp: show may-write-registers
+PASS: gdb.base/permissions.exp: show may-write-memory
+PASS: gdb.base/permissions.exp: show may-insert-breakpoints
+PASS: gdb.base/permissions.exp: show may-insert-tracepoints
+PASS: gdb.base/permissions.exp: show may-insert-fast-tracepoints
+PASS: gdb.base/permissions.exp: show may-interrupt
+PASS: gdb.base/permissions.exp: enable observer mode
+PASS: gdb.base/permissions.exp: show may-write-memory
+PASS: gdb.base/permissions.exp: show may-write-registers
+PASS: gdb.base/permissions.exp: show may-insert-breakpoints
+PASS: gdb.base/permissions.exp: show may-insert-tracepoints
+PASS: gdb.base/permissions.exp: show may-insert-fast-tracepoints
+PASS: gdb.base/permissions.exp: show may-interrupt
+PASS: gdb.base/permissions.exp: disable observer mode
+PASS: gdb.base/permissions.exp: set non-stop off
+PASS: gdb.base/permissions.exp: set a global
+PASS: gdb.base/permissions.exp: print x
+PASS: gdb.base/permissions.exp: set may-write-memory off
+PASS: gdb.base/permissions.exp: try to set a global
+PASS: gdb.base/permissions.exp: print x
 Running ../../../gdb/testsuite/gdb.base/gcore-buffer-overflow.exp ...
 PASS: gdb.base/gcore-buffer-overflow.exp: help gcore
 PASS: gdb.base/gcore-buffer-overflow.exp: Set buffer exceeding arguments
@@ -4780,16 +4801,24 @@ PASS: gdb.base/trace-commands.exp: nested trace-commands test with source
 PASS: gdb.base/trace-commands.exp: depth resets on error part 1
 PASS: gdb.base/trace-commands.exp: depth resets on error part 2
 Running ../../../gdb/testsuite/gdb.base/longjmp.exp ...
-gdb compile failed, In file included from ../../../gdb/testsuite/gdb.base/longjmp.c:19:
-/work1/friss/tools/open64/osprey/targia32_k1/devimage/include/setjmp.h:14: error: syntax error before "__jmpb"
-/work1/friss/tools/open64/osprey/targia32_k1/devimage/include/setjmp.h:15: error: syntax error before "__jmpb"
-../../../gdb/testsuite/gdb.base/longjmp.c:21: error: syntax error before "env"
-../../../gdb/testsuite/gdb.base/longjmp.c:27: error: syntax error before '*' token
-../../../gdb/testsuite/gdb.base/longjmp.c: In function `call_longjmp':
-../../../gdb/testsuite/gdb.base/longjmp.c:30: error: `buf' undeclared (first use in this function)
-../../../gdb/testsuite/gdb.base/longjmp.c:30: error: (Each undeclared identifier is reported only once
-../../../gdb/testsuite/gdb.base/longjmp.c:30: error: for each function it appears in.)
-UNTESTED: gdb.base/longjmp.exp: longjmp.exp
+PASS: gdb.base/longjmp.exp: breakpoint at pattern 1 start
+PASS: gdb.base/longjmp.exp: continue to breakpoint at pattern 1 start
+PASS: gdb.base/longjmp.exp: breakpoint at miss_step_1
+PASS: gdb.base/longjmp.exp: next over setjmp (1)
+PASS: gdb.base/longjmp.exp: next to longjmp (1)
+PASS: gdb.base/longjmp.exp: next over longjmp(1)
+PASS: gdb.base/longjmp.exp: next into else block (1)
+PASS: gdb.base/longjmp.exp: next into safety net (1)
+PASS: gdb.base/longjmp.exp: breakpoint at pattern 2 start
+PASS: gdb.base/longjmp.exp: continue to breakpoint at pattern 2 start
+PASS: gdb.base/longjmp.exp: breakpoint at miss_step_2
+PASS: gdb.base/longjmp.exp: next over setjmp (2)
+PASS: gdb.base/longjmp.exp: next over call_longjmp (2)
+PASS: gdb.base/longjmp.exp: next into else block (2)
+PASS: gdb.base/longjmp.exp: next into safety net (2)
+PASS: gdb.base/longjmp.exp: breakpoint at pattern 3 start
+PASS: gdb.base/longjmp.exp: continue to breakpoint at pattern 3 start
+PASS: gdb.base/longjmp.exp: next over patt3
 Running ../../../gdb/testsuite/gdb.base/list.exp ...
 PASS: gdb.base/list.exp: set width 0
 PASS: gdb.base/list.exp: show default list size
@@ -6468,12 +6497,9 @@ PASS: gdb.base/breakpoint-shadow.exp: disassembly with breakpoints
 Running ../../../gdb/testsuite/gdb.base/relativedebug.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-signal-resume.exp ...
 Running ../../../gdb/testsuite/gdb.base/dup-sect.exp ...
-gdb compile failed, /work1/friss/tools/open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
+gdb compile failed, /work1/friss/tools/./open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
 UNTESTED: gdb.base/dup-sect.exp: dup-sect.exp
 Running ../../../gdb/testsuite/gdb.base/solib-corrupted.exp ...
-FAIL: gdb.base/solib-corrupted.exp: normal list
-XFAIL: gdb.base/solib-corrupted.exp: make solibs looping
-UNTESTED: gdb.base/solib-corrupted.exp: solib-corrupted.exp
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
 XFAIL: gdb.base/callexit.exp: This target can not call functions (PRMS 2416)
 Running ../../../gdb/testsuite/gdb.base/reread.exp ...
@@ -6533,6 +6559,9 @@ PASS: gdb.base/source.exp: source -s
 PASS: gdb.base/source.exp: source -s -v
 PASS: gdb.base/source.exp: source -v -s
 Running ../../../gdb/testsuite/gdb.base/prologue.exp ...
+Running ../../../gdb/testsuite/gdb.base/moribund-step.exp ...
+PASS: gdb.base/moribund-step.exp: set non-stop on
+FAIL: gdb.base/moribund-step.exp: running to main in runto (timeout)
 Running ../../../gdb/testsuite/gdb.base/gdb1250.exp ...
 PASS: gdb.base/gdb1250.exp: backtrace from abort
 Running ../../../gdb/testsuite/gdb.base/catch-syscall.exp ...
@@ -7280,14 +7309,14 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6854
+# of expected passes		6893
 # of unexpected failures	48
 # of unexpected successes	2
-# of expected failures		43
+# of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		8
+# of untested testcases		6
 # of unsupported tests		16
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100608-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100614-cvs -nw -nx 
 
