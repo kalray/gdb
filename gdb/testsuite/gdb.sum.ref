@@ -1,4 +1,4 @@
-Test Run By friss on Wed Jun 16 16:18:22 2010
+Test Run By friss on Thu Jun 17 12:56:54 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -586,7 +586,9 @@ Running ../../../gdb/testsuite/gdb.mi/mi2-hack-cli.exp ...
 PASS: gdb.mi/mi2-hack-cli.exp: show architecture
 PASS: gdb.mi/mi2-hack-cli.exp: 47show architecture
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
-UNSUPPORTED: gdb.mi/mi-nonstop.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/non-stop.c: unrecognized error
+PASS: gdb.mi/mi-nonstop.exp: successfully compiled posix threads test case
+PASS: gdb.mi/mi-nonstop.exp: breakpoint at main
+FAIL: gdb.mi/mi-nonstop.exp: mi runto main (timeout)
 Running ../../../gdb/testsuite/gdb.mi/mi-var-display.exp ...
 PASS: gdb.mi/mi-var-display.exp: break-insert operation
 PASS: gdb.mi/mi-var-display.exp: run to main
@@ -1049,7 +1051,9 @@ PASS: gdb.mi/mi-until.exp: until line number:file
 PASS: gdb.mi/mi-until.exp: until after current function
 Running ../../../gdb/testsuite/gdb.mi/mi2-pthreads.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp ...
-UNSUPPORTED: gdb.mi/mi-nonstop-exit.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/non-stop-exit.c: unrecognized error
+PASS: gdb.mi/mi-nonstop-exit.exp: successfully compiled posix threads test case
+PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
+FAIL: gdb.mi/mi-nonstop-exit.exp: mi runto main (timeout)
 Running ../../../gdb/testsuite/gdb.mi/mi2-until.exp ...
 PASS: gdb.mi/mi2-until.exp: break-insert operation
 PASS: gdb.mi/mi2-until.exp: run to main
@@ -7309,14 +7313,14 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6893
-# of unexpected failures	48
+# of expected passes		6897
+# of unexpected failures	50
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
 # of untested testcases		6
-# of unsupported tests		16
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100614-cvs -nw -nx 
+# of unsupported tests		14
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100615-cvs -nw -nx 
 
