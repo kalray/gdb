@@ -1,8 +1,4 @@
-/* 32-bit ELF support for TI C6X
-   Copyright 2010
-   Free Software Foundation, Inc.
-
-   This file is part of BFD, the Binary File Descriptor library.
+/* Copyright 2010 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,12 +11,21 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-extern int elf32_tic6x_merge_arch_attributes (int, int);
+   This file is part of the gdb testsuite.
 
-/* This function is provided for use from the assembler.  */
+   Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
+   Tests for SPU local-store access.  */
 
-extern void elf32_tic6x_set_use_rela_p (bfd *, bfd_boolean);
+char *ptr = (char *)0x12345678;
+
+char array[256];
+
+int
+main (unsigned long long speid, unsigned long long argp, 
+      unsigned long long envp)
+{
+  return 0;
+}
+

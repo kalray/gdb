@@ -1,8 +1,6 @@
-/* 32-bit ELF support for TI C6X
-   Copyright 2010
-   Free Software Foundation, Inc.
+/* This testcase is part of GDB, the GNU debugger.
 
-   This file is part of BFD, the Binary File Descriptor library.
+   Copyright 2010 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,12 +13,23 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-extern int elf32_tic6x_merge_arch_attributes (int, int);
+/* The original program corresponding to watch-notconst2.S.
 
-/* This function is provided for use from the assembler.  */
+   This program is not compiled; the .S version is used instead.
 
-extern void elf32_tic6x_set_use_rela_p (bfd *, bfd_boolean);
+   The purpose of this test is to see if GDB can still watch the
+   variable `x' even when we compile the program using -O2
+   optimization.  */
+
+extern int g (int j);
+
+int
+f (int i)
+{
+  int x = 5;
+  g (2);
+  x = i;
+  return g (x);
+}

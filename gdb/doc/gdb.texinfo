@@ -2788,6 +2788,13 @@ As with the @samp{[New @dots{}]} message, the form of the text after
 @samp{Switching to} depends on your system's conventions for identifying
 threads.
 
+@vindex $_thread@r{, convenience variable}
+The debugger convenience variable @samp{$_thread} contains the number
+of the current thread.  You may find this useful in writing breakpoint
+conditional expressions, command scripts, and so forth.  See
+@xref{Convenience Vars,, Convenience Variables}, for general
+information on convenience variables.
+
 @kindex thread apply
 @cindex apply command to several threads
 @item thread apply [@var{threadno}] [@var{all}] @var{command}
@@ -3724,6 +3731,18 @@ or written into by the program.
 This command prints a list of watchpoints, using the same format as
 @code{info break} (@pxref{Set Breaks}).
 @end table
+
+If you watch for a change in a numerically entered address you need to
+dereference it, as the address itself is just a constant number which will
+never change.  @value{GDBN} refuses to create a watchpoint that watches
+a never-changing value:
+
+@smallexample
+(@value{GDBP}) watch 0x600850
+Cannot watch constant value 0x600850.
+(@value{GDBP}) watch *(int *) 0x600850
+Watchpoint 1: *(int *) 6293584
+@end smallexample
 
 @value{GDBN} sets a @dfn{hardware watchpoint} if possible.  Hardware
 watchpoints execute very quickly, and the debugger reports a change in
@@ -5626,6 +5645,17 @@ usual ``live'' debugging of the process from that state.
 
 When the inferior process exits, or @value{GDBN} detaches from it,
 process record and replay target will automatically stop itself.
+
+@kindex record save
+@item record save @var{filename}
+Save the execution log to a file @file{@var{filename}}.
+Default filename is @file{gdb_record.@var{process_id}}, where
+@var{process_id} is the process ID of the inferior.
+
+@kindex record restore
+@item record restore @var{filename}
+Restore the execution log from a file @file{@var{filename}}.
+File must have been created with @code{record save}.
 
 @kindex set record insn-number-max
 @item set record insn-number-max @var{limit}
@@ -8489,6 +8519,12 @@ this functionality depends on the remote stub's support of the
 @samp{qXfer:osdata:read} packet, see @ref{qXfer osdata read}.
 
 @table @code
+@kindex info os
+@item info os
+List the types of OS information available for the target.  If the
+target does not return a list of possible types, this command will
+report an error.
+
 @kindex info os processes
 @item info os processes
 Display the list of processes on the target.  For each process,
