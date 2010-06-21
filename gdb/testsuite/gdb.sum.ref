@@ -1,4 +1,4 @@
-Test Run By friss on Thu Jun 17 12:56:54 2010
+Test Run By friss on Mon Jun 21 13:02:30 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -2880,14 +2880,29 @@ PASS: gdb.base/watchpoint.exp: trigger slow conditional watch
 PASS: gdb.base/watchpoint.exp: rwatch disallowed when can-set-hw-watchpoints cleared
 PASS: gdb.base/watchpoint.exp: watchpoint refused to insert on nonexistent struct member
 PASS: gdb.base/watchpoint.exp: watch *global_ptr
-PASS: gdb.base/watchpoint.exp: next
+PASS: gdb.base/watchpoint.exp: set $global_ptr_breakpoint_number = $bpnum
+PASS: gdb.base/watchpoint.exp: global_ptr next
 PASS: gdb.base/watchpoint.exp: next over ptr init
 PASS: gdb.base/watchpoint.exp: next over buffer set
+PASS: gdb.base/watchpoint.exp: delete $global_ptr_breakpoint_number
+PASS: gdb.base/watchpoint.exp: watch **global_ptr_ptr
+PASS: gdb.base/watchpoint.exp: set $global_ptr_ptr_breakpoint_number = $bpnum
+PASS: gdb.base/watchpoint.exp: gloabl_ptr_ptr next
+PASS: gdb.base/watchpoint.exp: next over global_ptr_ptr init
+PASS: gdb.base/watchpoint.exp: next over global_ptr_ptr buffer set
+PASS: gdb.base/watchpoint.exp: next over global_ptr_ptr pointer advance
+PASS: gdb.base/watchpoint.exp: delete $global_ptr_ptr_breakpoint_number
 PASS: gdb.base/watchpoint.exp: continue to breakpoint: second x assignment
 PASS: gdb.base/watchpoint.exp: watch x
 PASS: gdb.base/watchpoint.exp: next after watch x
 PASS: gdb.base/watchpoint.exp: watch buf
 PASS: gdb.base/watchpoint.exp: watchpoint on buf hit
+PASS: gdb.base/watchpoint.exp: number is constant
+PASS: gdb.base/watchpoint.exp: marker1 is constant
+PASS: gdb.base/watchpoint.exp: watch count + 6
+PASS: gdb.base/watchpoint.exp: delete watchpoint `count + 6'
+PASS: gdb.base/watchpoint.exp: watch 7 + count
+PASS: gdb.base/watchpoint.exp: delete watchpoint `7 + count'
 Running ../../../gdb/testsuite/gdb.base/cursal.exp ...
 PASS: gdb.base/cursal.exp: set listsize 1
 PASS: gdb.base/cursal.exp: list before run
@@ -7313,7 +7328,7 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6897
+# of expected passes		6912
 # of unexpected failures	50
 # of unexpected successes	2
 # of expected failures		42
@@ -7322,5 +7337,5 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 # of unresolved testcases	1
 # of untested testcases		6
 # of unsupported tests		14
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100615-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100621-cvs -nw -nx 
 
