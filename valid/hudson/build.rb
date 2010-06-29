@@ -10,6 +10,7 @@ options = Options.new({ "target"        => "k1",
                         "mds"           => "mds",
                         "open64"        => "open64",
                         "parallel-make" => "yes",
+                        "toolroot"      => "",
                       })
 
 repo = Git.new(options["clone"])
@@ -17,8 +18,9 @@ repo = Git.new(options["clone"])
 build = Target.new("build", repo, [])
 valid = Target.new("valid", repo, [build])
 install = Target.new("install", repo, [valid])
+valid_valid = Target.new("gdb", repo, [])
 
-b = Builder.new("gdb", options, [build, valid, install])
+b = Builder.new("gdb", options, [build, valid, install, valid_valid])
 
 def cpu_number ()
   num_cpu = 0
@@ -79,8 +81,27 @@ b.target("valid") do
 
   if( arch == "k1" )
     Dir.chdir build_path + "/gdb/testsuite"
+    
+    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
+  end
 
-    b.run(:cmd => "LANG=C PATH=#{open64_clone}/osprey/targia32_#{arch}/devimage/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+end
+
+b.target("gdb") do
+
+  if( arch == "k1" )
+    
+    # Validation in the valid project
+    create_goto_dir! build_path 
+    
+    # Build native, just to create the build directories
+    b.run("../configure")
+    b.run("make #{make_j}")
+
+    cd "gdb/testsuite"
+    
+    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
