@@ -18,7 +18,7 @@ repo = Git.new(options["clone"])
 build = Target.new("build", repo, [])
 valid = Target.new("valid", repo, [build])
 install = Target.new("install", repo, [valid])
-valid_valid = Target.new("gdb", repo, [build])
+valid_valid = Target.new("gdb", repo, [])
 
 b = Builder.new("gdb", options, [build, valid, install, valid_valid])
 
