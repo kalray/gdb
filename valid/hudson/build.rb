@@ -18,7 +18,7 @@ repo = Git.new(options["clone"])
 build = Target.new("build", repo, [])
 valid = Target.new("valid", repo, [build])
 install = Target.new("install", repo, [valid])
-valid_valid = Target.new("gdb", repo, [])
+valid_valid = Target.new("gdb", repo, [build])
 
 b = Builder.new("gdb", options, [build, valid, install, valid_valid])
 
@@ -101,7 +101,7 @@ b.target("gdb") do
 
     cd "gdb/testsuite"
     
-    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH LD_LIBRARY_PATH=#{options["toolroot"]}/lib:$LD_LIBARRY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
