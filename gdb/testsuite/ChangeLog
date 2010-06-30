@@ -1,3 +1,151 @@
+2010-06-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Doug Evans  <dje@google.com>
+
+	* gdb.base/break-interp.exp (prelinkYES): XFAIL on `Not enough room to
+	add .dynamic entry'.
+
+2010-06-29  Doug Evans  <dje@google.com>
+
+	Test PR c++/11702.
+	* gdb.cp/m-static.exp: Add testcase.
+	* gdb.cp/m-static.h (gnu_obj_4): Add initialized static const member.
+
+2010-06-28  Phil Muldoon  <pmuldoon@redhat.com>
+            Tom Tromey  <tromey@redhat.com>
+            Thiago Jung Bauermann  <bauerman@br.ibm.com>
+
+	* gdb.python/py-inferior.c: New File.
+	* gdb.python/py-infthread.c: New File.
+	* gdb.python/py-inferior.exp: New File.
+	* gdb.python/py-infthread.exp: New File.
+
+2010-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/namespace.exp (ptype OtherFileClass typedefs)
+	(ptype ::C::OtherFileClass typedefs): New.
+	* gdb.cp/namespace1.cc (C::OtherFileClass::cOtherFileClassType2)
+	(C::OtherFileClass::cOtherFileClassVar2): New.
+	(C::OtherFileClass::cOtherFileClassVar_use): Use also
+	cOtherFileClassVar2.
+	(C::cOtherFileType2, C::cOtherFileVar2): New.
+	(C::cOtherFileVar_use): use also cOtherFileVar2.
+	* gdb.cp/userdef.exp (ptype &*c): Permit arbitrary trailing text.
+
+2010-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/namespace.exp (whatis C::cOtherFileType)
+	(whatis ::C::cOtherFileType, whatis C::cOtherFileVar)
+	(whatis ::C::cOtherFileVar, print C::cOtherFileVar)
+	(print ::C::cOtherFileVar)
+	(whatis C::OtherFileClass::cOtherFileClassType)
+	(whatis ::C::OtherFileClass::cOtherFileClassType)
+	(print C::OtherFileClass::cOtherFileClassVar)
+	(print ::cOtherFileClassVar)
+	(print ::C::OtherFileClass::cOtherFileClassVar): New tests.
+	(ptype OtherFileClass, ptype ::C::OtherFileClass): Permit arbitrary
+	trailing content.
+	* gdb.cp/namespace1.cc (C::OtherFileClass::cOtherFileClassType)
+	(C::OtherFileClass::cOtherFileClassVar)
+	(C::OtherFileClass::cOtherFileClassVar_use, C::cOtherFileType)
+	(C::cOtherFileVar, C::cOtherFileVar_use): New.
+
+2010-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Test PR c++/11703 and PR gdb/1448.
+	* gdb.cp/namespace.exp (ptype ::C::NestedClass): Remove KFAIL for
+	gdb/1448.
+
+2010-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/virtbase.cc (class RTTI_base, class RTTI_data)
+	(main) <rtti_data>: New.
+	* gdb.cp/virtbase.exp (print rtti_data): New.
+
+2010-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	* lib/gdb.exp (gdb_test_multiple): Error on trailing newlines.
+
+2010-06-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/static-print-quit.exp, gdb.cp/static-print-quit.cc: New.
+
+2010-06-28  Doug Evans  <dje@google.com>
+
+	* gdb.base/break-interp.exp (reach): Relax expected output a bit.
+
+2010-06-27  Doug Evans  <dje@google.com>
+
+	* gdb.cp/m-static.exp: Update expected test output.
+
+2010-06-25  Paul Hilfinger  <hilfinger@adacore.com>
+
+        * gdb.gdb/selftest.exp: Adjust expected message for
+        capturing start-up runtime.
+
+2010-06-25  Tom Tromey  <tromey@redhat.com>
+
+	PR python/10808:
+	* gdb.python/python.exp: Add new tests.
+
+2010-06-25  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* gdb.cp/operator.cc: Created an import loop.
+	* gdb.cp/operator.exp: Added testcase for import loop.
+
+2010-06-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Test PR python/11407.
+	* gdb.dwarf2/dw2-ref-missing-frame-func.c: New file.
+	* gdb.dwarf2/dw2-ref-missing-frame.S: Use cu_text_start and cu_text_end.
+	Split main into func_nofb and func_loopfb dropping NO_FRAME_BASE.
+	* gdb.dwarf2/dw2-ref-missing-frame.exp: Remove variables sources,
+	executable_nofb and executable_fb.  New variables srcsfile, objsfile,
+	srcfuncfile, objfuncfile, srcmainfile, objmainfile, executable and
+	binfile.  Call gdb_compile with clean_restart twice.
+	(func_nofb print, func_nofb backtrace, func_loopfb print)
+	(func_loopfb backtrace): New.
+
+2010-06-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.dwarf2/dw2-ref-missing-frame-main.c: New.
+	* gdb.dwarf2/dw2-ref-missing-frame.S: Replace compiler generated output
+	by a hand made one.
+	* gdb.dwarf2/dw2-ref-missing-frame.exp: Remove invalid comment.  Remove
+	i?86 requirement.  Remove variables srcfile and binfile.  New variable
+	sources, executable_nofb and executable_fb.  Call prepare_for_testing.
+
+2010-06-25  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* gdb.cell/dwarfaddr.exp: New file.
+	* gdb.cell/dwarfaddr.S: New file.
+
+2010-06-24  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Test PR 9436.
+	* gdb.base/nostdlib.exp, gdb.base/nostdlib.c: New.
+
+2010-06-24  Hui Zhu  <teawater@gmail.com>
+
+	* gdb.base/eval.exp: New file.
+
+2010-06-23  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* gdb.cell/fork.exp: New file.
+	* gdb.cell/fork.c: Likewise.
+	* gdb.cell/fork-spu.c: Likewise.
+
+2010-06-22  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* lib/gdb.exp (banned_variables_traced): New global variable.
+	(gdb_init, gdb_finish): Use new variable to avoid multiple tracing.
+	(gdb_init): Use `trace add variable' instead of obsolete
+	`trace variable'.
+
+2010-06-21  Doug Evans  <dje@google.com>
+
+	* gdb.gdb/selftest.exp: Remove support for gpl v1 and v2 gdb's.
+
 2010-06-19  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
 
 	* gdb.arch/spu-ls.exp: New file.
