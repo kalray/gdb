@@ -84,9 +84,8 @@ $tests.each_pair do |exp, tests|
       if (res == 'PASS')
         $progressions += 1
         notify exp, "\t     => #{green(res)}\t#{t}"
-      else
-        $regressions += 1
-        notify exp, "\t     => #{red(res)}\t#{t}"
+      else 
+        notify exp, "\t     => #{res}\t#{t}"
       end
       next
     end
