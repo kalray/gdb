@@ -67,6 +67,7 @@ find_location_expression (struct dwarf2_loclist_baton *baton,
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   unsigned int addr_size = dwarf2_per_cu_addr_size (baton->per_cu);
+  int signed_addr_p = bfd_get_sign_extend_vma (objfile->obfd);
   CORE_ADDR base_mask = ~(~(CORE_ADDR)1 << (addr_size * 8 - 1));
   /* Adjust base_address for relocatable objects.  */
   CORE_ADDR base_offset = ANOFFSET (objfile->section_offsets,
@@ -81,20 +82,24 @@ find_location_expression (struct dwarf2_loclist_baton *baton,
       if (buf_end - loc_ptr < 2 * addr_size)
 	error (_("find_location_expression: Corrupted DWARF expression."));
 
-      low = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
+      if (signed_addr_p)
+	low = extract_signed_integer (loc_ptr, addr_size, byte_order);
+      else
+	low = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
+      loc_ptr += addr_size;
+
+      if (signed_addr_p)
+	high = extract_signed_integer (loc_ptr, addr_size, byte_order);
+      else
+	high = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
       loc_ptr += addr_size;
 
       /* A base-address-selection entry.  */
-      if (low == base_mask)
+      if ((low & base_mask) == base_mask)
 	{
-	  base_address = dwarf2_read_address (gdbarch,
-					      loc_ptr, buf_end, addr_size);
-	  loc_ptr += addr_size;
+	  base_address = high + base_offset;
 	  continue;
 	}
-
-      high = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
-      loc_ptr += addr_size;
 
       /* An end-of-list entry.  */
       if (low == 0 && high == 0)
@@ -543,8 +548,7 @@ read_pieced_value (struct value *v)
 	case DWARF_VALUE_REGISTER:
 	  {
 	    struct gdbarch *arch = get_frame_arch (frame);
-	    int gdb_regnum = gdbarch_dwarf2_reg_to_regnum (arch,
-							   p->v.expr.value);
+	    int gdb_regnum = gdbarch_dwarf2_reg_to_regnum (arch, p->v.value);
 	    int reg_offset = source_offset;
 
 	    if (gdbarch_byte_order (arch) == BFD_ENDIAN_BIG
@@ -565,16 +569,16 @@ read_pieced_value (struct value *v)
 	    else
 	      {
 		error (_("Unable to access DWARF register number %s"),
-		       paddress (arch, p->v.expr.value));
+		       paddress (arch, p->v.value));
 	      }
 	  }
 	  break;
 
 	case DWARF_VALUE_MEMORY:
-	  if (p->v.expr.in_stack_memory)
-	    read_stack (p->v.expr.value + source_offset, buffer, this_size);
+	  if (p->v.mem.in_stack_memory)
+	    read_stack (p->v.mem.addr + source_offset, buffer, this_size);
 	  else
-	    read_memory (p->v.expr.value + source_offset, buffer, this_size);
+	    read_memory (p->v.mem.addr + source_offset, buffer, this_size);
 	  break;
 
 	case DWARF_VALUE_STACK:
@@ -593,14 +597,14 @@ read_pieced_value (struct value *v)
 	    else if (source_offset == 0)
 	      store_unsigned_integer (buffer, n,
 				      gdbarch_byte_order (gdbarch),
-				      p->v.expr.value);
+				      p->v.value);
 	    else
 	      {
 		gdb_byte bytes[sizeof (ULONGEST)];
 
 		store_unsigned_integer (bytes, n + source_offset,
 					gdbarch_byte_order (gdbarch),
-					p->v.expr.value);
+					p->v.value);
 		memcpy (buffer, bytes + source_offset, n);
 	      }
 	  }
@@ -725,7 +729,7 @@ write_pieced_value (struct value *to, struct value *from)
 	case DWARF_VALUE_REGISTER:
 	  {
 	    struct gdbarch *arch = get_frame_arch (frame);
-	    int gdb_regnum = gdbarch_dwarf2_reg_to_regnum (arch, p->v.expr.value);
+	    int gdb_regnum = gdbarch_dwarf2_reg_to_regnum (arch, p->v.value);
 	    int reg_offset = dest_offset;
 
 	    if (gdbarch_byte_order (arch) == BFD_ENDIAN_BIG
@@ -751,7 +755,7 @@ write_pieced_value (struct value *to, struct value *from)
 	    else
 	      {
 		error (_("Unable to write to DWARF register number %s"),
-		       paddress (arch, p->v.expr.value));
+		       paddress (arch, p->v.value));
 	      }
 	  }
 	  break;
@@ -760,8 +764,8 @@ write_pieced_value (struct value *to, struct value *from)
 	    {
 	      /* Only the first and last bytes can possibly have any
 		 bits reused.  */
-	      read_memory (p->v.expr.value + dest_offset, buffer, 1);
-	      read_memory (p->v.expr.value + dest_offset + this_size - 1,
+	      read_memory (p->v.mem.addr + dest_offset, buffer, 1);
+	      read_memory (p->v.mem.addr + dest_offset + this_size - 1,
 			   buffer + this_size - 1, 1);
 	      copy_bitwise (buffer, dest_offset_bits,
 			    contents, source_offset_bits,
@@ -769,7 +773,7 @@ write_pieced_value (struct value *to, struct value *from)
 			    bits_big_endian);
 	    }
 
-	  write_memory (p->v.expr.value + dest_offset,
+	  write_memory (p->v.mem.addr + dest_offset,
 			source_buffer, this_size);
 	  break;
 	default:
@@ -930,7 +934,7 @@ dwarf2_evaluate_loc_desc (struct type *type, struct frame_info *frame,
 	case DWARF_VALUE_REGISTER:
 	  {
 	    struct gdbarch *arch = get_frame_arch (frame);
-	    CORE_ADDR dwarf_regnum = dwarf_expr_fetch (ctx, 0);
+	    ULONGEST dwarf_regnum = dwarf_expr_fetch (ctx, 0);
 	    int gdb_regnum = gdbarch_dwarf2_reg_to_regnum (arch, dwarf_regnum);
 
 	    if (gdb_regnum != -1)
@@ -943,7 +947,7 @@ dwarf2_evaluate_loc_desc (struct type *type, struct frame_info *frame,
 
 	case DWARF_VALUE_MEMORY:
 	  {
-	    CORE_ADDR address = dwarf_expr_fetch (ctx, 0);
+	    CORE_ADDR address = dwarf_expr_fetch_address (ctx, 0);
 	    int in_stack_memory = dwarf_expr_fetch_in_stack_memory (ctx, 0);
 
 	    retval = allocate_value (type);
@@ -957,7 +961,7 @@ dwarf2_evaluate_loc_desc (struct type *type, struct frame_info *frame,
 
 	case DWARF_VALUE_STACK:
 	  {
-	    ULONGEST value = (ULONGEST) dwarf_expr_fetch (ctx, 0);
+	    ULONGEST value = dwarf_expr_fetch (ctx, 0);
 	    bfd_byte *contents;
 	    size_t n = ctx->addr_size;
 
@@ -1228,7 +1232,6 @@ compile_dwarf_to_ax (struct agent_expr *expr, struct axs_value *loc,
   while (op_ptr < op_end)
     {
       enum dwarf_location_atom op = *op_ptr;
-      CORE_ADDR result;
       ULONGEST uoffset, reg;
       LONGEST offset;
       int i;
@@ -1290,8 +1293,8 @@ compile_dwarf_to_ax (struct agent_expr *expr, struct axs_value *loc,
 	  break;
 
 	case DW_OP_addr:
-	  result = dwarf2_read_address (arch, op_ptr, op_end, addr_size);
-	  ax_const_l (expr, result);
+	  ax_const_l (expr, extract_unsigned_integer (op_ptr,
+						      addr_size, byte_order));
 	  op_ptr += addr_size;
 	  break;
 
@@ -2016,15 +2019,14 @@ locexpr_describe_location_piece (struct symbol *symbol, struct ui_file *stream,
 	   && data[1 + addr_size] == DW_OP_GNU_push_tls_address
 	   && piece_end_p (data + 2 + addr_size, end))
     {
-      CORE_ADDR offset = dwarf2_read_address (gdbarch,
-					      data + 1,
-					      end,
-					      addr_size);
+      ULONGEST offset;
+      offset = extract_unsigned_integer (data + 1, addr_size,
+					 gdbarch_byte_order (gdbarch));
 
       fprintf_filtered (stream, 
-			_("a thread-local variable at offset %s "
+			_("a thread-local variable at offset 0x%s "
 			  "in the thread-local storage for `%s'"),
-			paddress (gdbarch, offset), objfile->name);
+			phex_nz (offset, addr_size), objfile->name);
 
       data += 1 + addr_size + 1;
     }
@@ -2061,7 +2063,6 @@ disassemble_dwarf_expression (struct ui_file *stream,
 	     || (data[0] != DW_OP_piece && data[0] != DW_OP_bit_piece)))
     {
       enum dwarf_location_atom op = *data++;
-      CORE_ADDR addr;
       ULONGEST ul;
       LONGEST l;
       const char *name;
@@ -2076,9 +2077,10 @@ disassemble_dwarf_expression (struct ui_file *stream,
       switch (op)
 	{
 	case DW_OP_addr:
-	  addr = dwarf2_read_address (arch, data, end, addr_size);
+	  ul = extract_unsigned_integer (data, addr_size,
+					 gdbarch_byte_order (arch));
 	  data += addr_size;
-	  fprintf_filtered (stream, " %s", paddress (arch, addr));
+	  fprintf_filtered (stream, " 0x%s", phex_nz (ul, addr_size));
 	  break;
 
 	case DW_OP_const1u:
@@ -2488,6 +2490,7 @@ loclist_describe_location (struct symbol *symbol, CORE_ADDR addr,
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   unsigned int addr_size = dwarf2_per_cu_addr_size (dlbaton->per_cu);
   int offset_size = dwarf2_per_cu_offset_size (dlbaton->per_cu);
+  int signed_addr_p = bfd_get_sign_extend_vma (objfile->obfd);
   CORE_ADDR base_mask = ~(~(CORE_ADDR)1 << (addr_size * 8 - 1));
   /* Adjust base_address for relocatable objects.  */
   CORE_ADDR base_offset = ANOFFSET (objfile->section_offsets,
@@ -2506,22 +2509,26 @@ loclist_describe_location (struct symbol *symbol, CORE_ADDR addr,
 	error (_("Corrupted DWARF expression for symbol \"%s\"."),
 	       SYMBOL_PRINT_NAME (symbol));
 
-      low = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
+      if (signed_addr_p)
+	low = extract_signed_integer (loc_ptr, addr_size, byte_order);
+      else
+	low = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
+      loc_ptr += addr_size;
+
+      if (signed_addr_p)
+	high = extract_signed_integer (loc_ptr, addr_size, byte_order);
+      else
+	high = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
       loc_ptr += addr_size;
 
       /* A base-address-selection entry.  */
-      if (low == base_mask)
+      if ((low & base_mask) == base_mask)
 	{
-	  base_address = dwarf2_read_address (gdbarch,
-					      loc_ptr, buf_end, addr_size);
+	  base_address = high + base_offset;
 	  fprintf_filtered (stream, _("  Base address %s"),
 			    paddress (gdbarch, base_address));
-	  loc_ptr += addr_size;
 	  continue;
 	}
-
-      high = extract_unsigned_integer (loc_ptr, addr_size, byte_order);
-      loc_ptr += addr_size;
 
       /* An end-of-list entry.  */
       if (low == 0 && high == 0)

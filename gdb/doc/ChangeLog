@@ -1,3 +1,50 @@
+2010-06-29  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Threads In Python): Fix unmatched @end table.
+
+2010-06-28  Phil Muldoon  <pmuldoon@redhat.com>
+	    Tom Tromey  <tromey@redhat.com>
+	    Thiago Jung Bauermann  <bauerman@br.ibm.com>
+
+	* gdb.texinfo (Inferiors In Python): New node.
+	* gdb.texinfo (Threads In Python): New node.
+
+2010-06-28  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Python): Document what the python directory is
+	and what its location is.
+	(Basic Python): Document the gdb.PYTHONDIR constant.
+
+2010-06-25  Tom Tromey  <tromey@redhat.com>
+
+	PR python/10808:
+	* gdb.texinfo (Basic Python): Document new gdb.execute argument.
+
+2010-06-24  Hui Zhu  <teawater@gmail.com>
+
+	* gdb.texinfo: (Commands for Controlled Output): Add
+	documentation for command "eval".
+
+2010-06-21  Stan Shebs  <stan@codesourcery.com>
+
+	* gdb.texinfo: Add explicit @node and @appendix for GFDL.
+	* annotate.texinfo: Ditto.
+	* gdbint.texinfo: Ditto.
+	* stabs.texinfo: Ditto.
+
+2010-06-22  Hui Zhu  <teawater@gmail.com>
+
+	* gdb.texinfo: (Process Record and Replay): Add documentation
+	for command "set record memory-query".
+
+2010-06-21  Stan Shebs  <stan@codesourcery.com>
+
+	* gdb.texinfo: Relicense under GFDL version 1.3.
+	* annotate.texinfo: Relicense under GFDL version 1.3.
+	* gdbint.texinfo: Relicense under GFDL version 1.3.
+	* stabs.texinfo: Relicense under GFDL version 1.3.
+	* fdl.texi: Update to version 1.3.
+
 2010-06-18  Stan Shebs  <stan@codesourcery.com>
 
 	* gdb.texinfo (Operating System Auxiliary Information): Describe
