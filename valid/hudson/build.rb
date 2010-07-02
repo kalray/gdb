@@ -11,6 +11,7 @@ options = Options.new({ "target"        => "k1",
                         "open64"        => "open64",
                         "parallel-make" => "yes",
                         "toolroot"      => "",
+                        "version"       => ["unknown", "Version of the delivered GDB."],
                       })
 
 repo = Git.new(options["clone"])
@@ -62,9 +63,12 @@ b.target("build") do
   if( arch == "k1" )
     create_goto_dir! build_path
 
+    version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
+    version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
+
     b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat --with-bugurl=no --prefix=#{prefix}")
     b.run(:cmd => "make clean")
-    b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path}")
+    b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path} KALRAY_VERSION=\"#{version}\"")
   end
 end
 
