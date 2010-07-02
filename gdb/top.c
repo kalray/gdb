@@ -1001,6 +1001,7 @@ print_gdb_version (struct ui_file *stream)
      number, which starts after last space. */
 
   fprintf_filtered (stream, "GNU gdb %s%s\n", PKGVERSION, version);
+  fprintf_filtered (stream, "Kalray gdb version %s\n", KALRAY_VERSION);
 
   /* Second line is a copyright notice. */
 
