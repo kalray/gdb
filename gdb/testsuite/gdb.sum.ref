@@ -1,4 +1,4 @@
-Test Run By friss on Mon Jun 21 13:02:30 2010
+Test Run By friss on Fri Jul  2 15:08:50 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -2920,6 +2920,10 @@ Running ../../../gdb/testsuite/gdb.base/shlib-call.exp ...
 Running ../../../gdb/testsuite/gdb.base/unwindonsignal.exp ...
 Running ../../../gdb/testsuite/gdb.base/tui-layout.exp ...
 PASS: gdb.base/tui-layout.exp: layout asm
+Running ../../../gdb/testsuite/gdb.base/eval.exp ...
+PASS: gdb.base/eval.exp: Initialize $a.
+PASS: gdb.base/eval.exp: First eval.
+PASS: gdb.base/eval.exp: Second eval.
 Running ../../../gdb/testsuite/gdb.base/sigstep.exp ...
 Running ../../../gdb/testsuite/gdb.base/signals.exp ...
 Running ../../../gdb/testsuite/gdb.base/del.exp ...
@@ -4300,6 +4304,9 @@ PASS: gdb.base/whatis.exp: whatis inner union
 PASS: gdb.base/whatis.exp: whatis inner union member
 PASS: gdb.base/whatis.exp: whatis using typedef type name
 PASS: gdb.base/whatis.exp: whatis applied to variable defined by typedef
+Running ../../../gdb/testsuite/gdb.base/nostdlib.exp ...
+PASS: gdb.base/nostdlib.exp: stop at run
+PASS: gdb.base/nostdlib.exp: continue to marker
 Running ../../../gdb/testsuite/gdb.base/prelink.exp ...
 Running ../../../gdb/testsuite/gdb.base/siginfo-obj.exp ...
 Running ../../../gdb/testsuite/gdb.base/completion.exp ...
@@ -6516,8 +6523,11 @@ PASS: gdb.base/breakpoint-shadow.exp: disassembly with breakpoints
 Running ../../../gdb/testsuite/gdb.base/relativedebug.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-signal-resume.exp ...
 Running ../../../gdb/testsuite/gdb.base/dup-sect.exp ...
-gdb compile failed, /work1/friss/tools/./open64/osprey/targia32_k1/devimage/bin/k1-ld: error: no memory region specified for loadable section `sect1'
-UNTESTED: gdb.base/dup-sect.exp: dup-sect.exp
+PASS: gdb.base/dup-sect.exp: rename section
+PASS: gdb.base/dup-sect.exp: split
+PASS: gdb.base/dup-sect.exp: strip
+PASS: gdb.base/dup-sect.exp: var1 after strip
+PASS: gdb.base/dup-sect.exp: var2 after strip
 Running ../../../gdb/testsuite/gdb.base/solib-corrupted.exp ...
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
 XFAIL: gdb.base/callexit.exp: This target can not call functions (PRMS 2416)
@@ -7328,14 +7338,14 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6912
+# of expected passes		6922
 # of unexpected failures	50
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
-# of untested testcases		6
+# of untested testcases		5
 # of unsupported tests		14
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100621-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100630-cvs -nw -nx 
 
