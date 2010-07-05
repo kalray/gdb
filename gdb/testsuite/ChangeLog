@@ -1,3 +1,25 @@
+2010-07-02  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.base/bitops.exp: Remove extraneous "pass".
+
+2010-07-02  Ken Werner  <ken.werner@de.ibm.com>
+
+	* gdb.arch/altivec-abi.exp: Fix expect pattern of character vectors.
+
+2010-07-01  Pedro Alves  <pedro@codesourcery.com>
+
+	* gdb.base/help.exp: Adjust expected output.
+
+2010-07-01  Pedro Alves  <pedro@codesourcery.com>
+
+	* gdb.base/help.exp: Adjust expected output.
+
+2010-06-30  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.cp/namespace.exp (print C::OtherFileClass::cOtherFileClassVar)
+	(print ::C::OtherFileClass::cOtherFileClassVar): Remove KFAIL for
+	c++/11702.
+
 2010-06-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
 	    Doug Evans  <dje@google.com>
 

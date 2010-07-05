@@ -1,3 +1,20 @@
+2010-07-03  Cary Coutant  <ccoutant@google.com>
+
+	* compress.c (bfd_uncompress_section_contents): Add ATTRIBUTE_UNUSED.
+	* dwarf2.c (read_and_uncompress_section): New function.
+	(read_section): Call it.
+	(find_line): Likewise.
+
+2010-07-01  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (ppc64_elf_edit_toc): Use SYMBOL_CALLS_LOCAL rather
+	than SYMBOL_REFERENCES_LOCAL.
+	(ppc64_elf_relocate_section): Likewise.
+
+2010-07-01  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (ppc64_elf_edit_toc): Keep toc entries for ifuncs.
+
 2010-06-29  Alan Modra  <amodra@gmail.com>
 
 	* cpu-maxq.c: Delete file.
