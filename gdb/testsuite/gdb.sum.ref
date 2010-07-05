@@ -1,4 +1,4 @@
-Test Run By friss on Fri Jul  2 15:08:50 2010
+Test Run By friss on Mon Jul  5 09:51:30 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -2250,7 +2250,7 @@ PASS: gdb.base/default.exp: show check type
 PASS: gdb.base/default.exp: show commands
 PASS: gdb.base/default.exp: show complaints
 PASS: gdb.base/default.exp: show confirm
-PASS: gdb.base/default.exp: show convenience
+FAIL: gdb.base/default.exp: show convenience
 PASS: gdb.base/default.exp: show directories
 PASS: gdb.base/default.exp: show editing
 PASS: gdb.base/default.exp: show height
@@ -7228,7 +7228,7 @@ PASS: gdb.base/bitops.exp: print value of 3==4.0
 PASS: gdb.base/bitops.exp: print value of 3!=3.0
 PASS: gdb.base/bitops.exp: print value of 3!=5.0
 PASS: gdb.base/bitops.exp: print value of 0 || 1 && 0 | 0 ^ 0 == 8 > 128 >>1 +2 *2
-PASS: gdb.base/bitops.exp: pass
+PASS: gdb.base/bitops.exp: print value of 1.0 || 0
 PASS: gdb.base/bitops.exp: print value of 0.0 || 1.0
 PASS: gdb.base/bitops.exp: print value of 0.0 || 0
 PASS: gdb.base/bitops.exp: print value of 0 || 1 && 0 | 0 ^ 0 == 8
@@ -7338,8 +7338,8 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6922
-# of unexpected failures	50
+# of expected passes		6921
+# of unexpected failures	51
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
@@ -7347,5 +7347,5 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 # of unresolved testcases	1
 # of untested testcases		5
 # of unsupported tests		14
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100630-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100705-cvs -nw -nx 
 
