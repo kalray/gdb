@@ -1,3 +1,33 @@
+2010-07-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	Fix re-run of PIE executable, PR shlibs/11776.
+	* solib-svr4.c (svr4_relocate_main_executable) <symfile_objfile>: Remove
+	the part of pre-set SYMFILE_OBJFILE->SECTION_OFFSETS.
+
+2010-07-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	* auxv.c (memory_xfer_auxv): Update attach comment.
+	* solib-svr4.c (svr4_special_symbol_handling): Remove the call to
+	svr4_relocate_main_executable.
+	(svr4_solib_create_inferior_hook): Make the call to
+	svr4_relocate_main_executable unconditional.
+
+2010-07-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	* auxv.c (ld_so_xfer_auxv): Do not error on failed read of data_address.
+
+2010-07-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	Fix attaching to PIEs prelinked on the disk after the process was
+	started.
+	* solib-svr4.c (svr4_exec_displacement): New variable arch_size.
+	Verify it against bfd_get_arch_size.  Try to match arbitrary
+	displacement for the phdrs comparison.
+
 2010-07-02  Tom Tromey  <tromey@redhat.com>
 
 	PR exp/11780:
