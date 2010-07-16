@@ -537,6 +537,11 @@ CODE_FRAGMENT
 .#define BFD_COM_SECTION_NAME "*COM*"
 .#define BFD_IND_SECTION_NAME "*IND*"
 .
+.#ifdef IPA_LINK
+.#define BFD_WHT_SECTION_NAME "*WHT*"
+.#define BFD_WHD_SECTION_NAME "*WHD*"
+.#endif
+.
 .{* The absolute section.  *}
 .extern asection bfd_abs_section;
 .#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
@@ -552,6 +557,17 @@ CODE_FRAGMENT
 .extern asection bfd_ind_section;
 .#define bfd_ind_section_ptr ((asection *) &bfd_ind_section)
 .#define bfd_is_ind_section(sec) ((sec) == bfd_ind_section_ptr)
+.
+.#ifdef IPA_LINK
+.{* Pointer to the WHIRL data section.  *}
+.extern asection bfd_whirl_data_section;
+.#define bfd_whirl_data_section_ptr ((asection *) &bfd_whirl_data_section)
+.#define bfd_is_whirl_data_section(sec) ((sec) == bfd_whirl_data_section_ptr)
+.{* Pointer to the WHIRL text section.  *}
+.extern asection bfd_whirl_text_section;
+.#define bfd_whirl_text_section_ptr ((asection *) &bfd_whirl_text_section)
+.#define bfd_is_whirl_text_section(sec) ((sec) == bfd_whirl_text_section_ptr)
+.#endif
 .
 .#define bfd_is_const_section(SEC)		\
 . (   ((SEC) == bfd_abs_section_ptr)		\
@@ -709,7 +725,11 @@ static const asymbol global_syms[] =
   GLOBAL_SYM_INIT (BFD_COM_SECTION_NAME, &bfd_com_section),
   GLOBAL_SYM_INIT (BFD_UND_SECTION_NAME, &bfd_und_section),
   GLOBAL_SYM_INIT (BFD_ABS_SECTION_NAME, &bfd_abs_section),
-  GLOBAL_SYM_INIT (BFD_IND_SECTION_NAME, &bfd_ind_section)
+  GLOBAL_SYM_INIT (BFD_IND_SECTION_NAME, &bfd_ind_section),
+#ifdef IPA_LINK
+  GLOBAL_SYM_INIT (BFD_WHD_SECTION_NAME, &bfd_whirl_data_section),
+  GLOBAL_SYM_INIT (BFD_WHT_SECTION_NAME, &bfd_whirl_text_section)
+#endif
 };
 
 #define STD_SECTION(SEC, FLAGS, NAME, IDX)				\
@@ -720,6 +740,10 @@ STD_SECTION (bfd_com_section, SEC_IS_COMMON, BFD_COM_SECTION_NAME, 0);
 STD_SECTION (bfd_und_section, 0, BFD_UND_SECTION_NAME, 1);
 STD_SECTION (bfd_abs_section, 0, BFD_ABS_SECTION_NAME, 2);
 STD_SECTION (bfd_ind_section, 0, BFD_IND_SECTION_NAME, 3);
+#ifdef IPA_LINK
+STD_SECTION (bfd_whirl_data_section, 0, BFD_WHD_SECTION_NAME, 4);
+STD_SECTION (bfd_whirl_text_section, 0, BFD_WHT_SECTION_NAME, 5);
+#endif /* IPA_LINK */
 #undef STD_SECTION
 
 /* Initialize an entry in the section hash table.  */
@@ -995,6 +1019,12 @@ bfd_make_section_old_way (bfd *abfd, const char *name)
     newsect = bfd_und_section_ptr;
   else if (strcmp (name, BFD_IND_SECTION_NAME) == 0)
     newsect = bfd_ind_section_ptr;
+#ifdef IPA_LINK
+  else if (strcmp (name, BFD_WHD_SECTION_NAME) == 0)
+    newsect = bfd_whirl_data_section_ptr;
+  else if (strcmp (name, BFD_WHT_SECTION_NAME) == 0)
+    newsect = bfd_whirl_text_section_ptr;
+#endif
   else
     {
       struct section_hash_entry *sh;

@@ -39,6 +39,8 @@ BFD_H = ../bfd/bfd.h
 BUILD_LIBS = @BUILD_LIBS@
 BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 
+VPATH = @srcdir@:$(FAMILY)/build/BE/GBU/$(ARCH)/opcodes
+
 # Header files.
 HFILES = \
 	fr30-desc.h fr30-opc.h \
@@ -51,7 +53,6 @@ HFILES = \
 	ia64-opc.h \
 	ip2k-desc.h ip2k-opc.h \
 	iq2000-desc.h iq2000-opc.h \
-	k1.h \
 	lm32-desc.h \
 	lm32-opc.h \
 	m32c-desc.h m32c-opc.h \
@@ -135,6 +136,8 @@ TARGET_LIBOPCODES_CFILES = \
 	lm32-ibld.c \
 	lm32-opc.c \
 	lm32-opinst.c \
+	lx-opc.c \
+	lx-dis.c \
 	m10200-dis.c \
 	m10200-opc.c \
 	m10300-dis.c \
@@ -257,7 +260,7 @@ OFILES = @BFD_MACHINES@
 # that's where the version number in Makefile comes from.
 CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/configure.in
 
-AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@
+AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMILY)/build/BE/GBU/$(ARCH)/include
 
 disassemble.lo: disassemble.c
 if am__fastdepCC

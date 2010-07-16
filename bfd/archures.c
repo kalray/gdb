@@ -425,7 +425,6 @@ DESCRIPTION
 .  bfd_arch_lm32,      {* Lattice Mico32 *}
 .#define bfd_mach_lm32      1
 .  bfd_arch_microblaze,{* Xilinx MicroBlaze. *}
- .#define bfd_mach_st240                4
 .  bfd_arch_lx,        {* STMicroelectronics ST200 *}
 .#define bfd_mach_st210                0
 .#define bfd_mach_st220                1

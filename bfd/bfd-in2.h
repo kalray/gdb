@@ -1521,6 +1521,11 @@ struct relax_table {
 #define BFD_COM_SECTION_NAME "*COM*"
 #define BFD_IND_SECTION_NAME "*IND*"
 
+#ifdef IPA_LINK
+#define BFD_WHT_SECTION_NAME "*WHT*"
+#define BFD_WHD_SECTION_NAME "*WHD*"
+#endif
+
 /* The absolute section.  */
 extern asection bfd_abs_section;
 #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
@@ -1536,6 +1541,17 @@ extern asection bfd_com_section;
 extern asection bfd_ind_section;
 #define bfd_ind_section_ptr ((asection *) &bfd_ind_section)
 #define bfd_is_ind_section(sec) ((sec) == bfd_ind_section_ptr)
+
+#ifdef IPA_LINK
+/* Pointer to the WHIRL data section.  */
+extern asection bfd_whirl_data_section;
+#define bfd_whirl_data_section_ptr ((asection *) &bfd_whirl_data_section)
+#define bfd_is_whirl_data_section(sec) ((sec) == bfd_whirl_data_section_ptr)
+/* Pointer to the WHIRL text section.  */
+extern asection bfd_whirl_text_section;
+#define bfd_whirl_text_section_ptr ((asection *) &bfd_whirl_text_section)
+#define bfd_is_whirl_text_section(sec) ((sec) == bfd_whirl_text_section_ptr)
+#endif
 
 #define bfd_is_const_section(SEC)              \
  (   ((SEC) == bfd_abs_section_ptr)            \
@@ -2091,7 +2107,6 @@ enum bfd_architecture
   bfd_arch_lm32,      /* Lattice Mico32 */
 #define bfd_mach_lm32      1
   bfd_arch_microblaze,/* Xilinx MicroBlaze. */
-#define bfd_mach_st240                4
   bfd_arch_lx,        /* STMicroelectronics ST200 */
 #define bfd_mach_st210                0
 #define bfd_mach_st220                1
@@ -2579,8 +2594,6 @@ relocation types already defined.  */
   BFD_RELOC_SPU_PPU32,
   BFD_RELOC_SPU_PPU64,
   BFD_RELOC_SPU_ADD_PIC,
-  BFD_RELOC_SPU_PIC18,
-  BFD_RELOC_SPU_STUB,
 
 /* Alpha ECOFF and ELF relocations.  Some of these treat the symbol or
 "addend" in some special way.
@@ -4687,16 +4700,6 @@ value in a word.  The relocation is relative offset from  */
 the dynamic object into the runtime process image.  */
   BFD_RELOC_MICROBLAZE_COPY,
 
-/* Relocations for K1 processor  */
-  BFD_RELOC_K1_17_PCREL,
-  BFD_RELOC_K1_18_PCREL,
-  BFD_RELOC_K1_27_PCREL,
-  BFD_RELOC_K1_32_PCREL,
-  BFD_RELOC_K1_LO10,
-  BFD_RELOC_K1_HI22,
-  BFD_RELOC_K1_GPREL_LO10,
-  BFD_RELOC_K1_GPREL_HI22,
-
 /* LX relocations  */
   BFD_RELOC_LX_16,
   BFD_RELOC_LX_32 ,
@@ -4736,6 +4739,19 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_LX_DTPREL32,
   BFD_RELOC_LX_GOTOFF_DTPNDX_HI23,
   BFD_RELOC_LX_GOTOFF_DTPNDX_LO9,
+
+/* Relocations for K1 processor  */
+  BFD_RELOC_K1_17_PCREL,
+  BFD_RELOC_K1_18_PCREL,
+  BFD_RELOC_K1_27_PCREL,
+  BFD_RELOC_K1_32_PCREL,
+  BFD_RELOC_K1_LO10,
+  BFD_RELOC_K1_HI22,
+  BFD_RELOC_K1_GPREL_LO10,
+  BFD_RELOC_K1_GPREL_HI22,
+  BFD_RELOC_K1_TPREL_LO10,
+  BFD_RELOC_K1_TPREL_HI22,
+  BFD_RELOC_K1_TPREL_32,
   BFD_RELOC_UNUSED };
 typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;
 reloc_howto_type *bfd_reloc_type_lookup

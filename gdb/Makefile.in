@@ -97,7 +97,7 @@ POSTCOMPILE = @true
 
 # Directory containing source files.
 srcdir = @srcdir@
-VPATH = @srcdir@:$(MDS_BE_DIR)
+VPATH = @srcdir@:$(FAMILY)/build/BE/GDB/$(ARCH)
 
 YACC=@YACC@
 
@@ -123,7 +123,7 @@ CC_LD=$(CC)
 # This is essentially the header file directory for the library
 # routines in libiberty.
 INCLUDE_DIR =  $(srcdir)/../include
-INCLUDE_CFLAGS = -I$(INCLUDE_DIR)
+INCLUDE_CFLAGS = -I$(INCLUDE_DIR) -I$(FAMILY)/BE/GBU/$(ARCH)/include
 
 # Where is the "-liberty" library?  Typically in ../libiberty.
 LIBIBERTY = ../libiberty/libiberty.a

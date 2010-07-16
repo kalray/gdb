@@ -30,6 +30,35 @@
 #include "libiberty.h"
 #include "objalloc.h"
 
+
+#ifdef IPA_LINK
+
+#define SHN_IPA_TEXT     0xff01         /* Allocated text symbols.  */
+#define SHN_IPA_DATA     0xff02         /* Allocated data symbols.  */
+
+extern int ipa_set_ndx(bfd *);
+int ld_set_ndx (bfd *);
+#pragma weak ld_set_ndx
+int
+ld_set_ndx (bfd *abfd)
+{
+    return ipa_set_ndx(abfd);
+}
+
+extern bfd_boolean is_ipa;
+
+extern bfd_boolean
+ipa_is_whirl(bfd *);
+
+extern void
+ipa_process_whirl_in_archive ( bfd *, bfd *);
+
+#include "ipa_bfd.h" /* [CL] needed for symbol_comdat() */
+#include "elf-bfd.h" /* [CL] needed to support comdat: need to get ipa_indx */
+
+#endif /* IPA_LINK */
+
+
 /* This struct is used to pass information to routines called via
    elf_link_hash_traverse which must return failure.  */
 
@@ -982,12 +1011,32 @@ _bfd_elf_merge_symbol (bfd *abfd,
   if (h->root.type == bfd_link_hash_new)
     {
       h->non_elf = 0;
+
+#ifdef IPA_LINK
+      /*
+        For SGI intermediate WHIRL format we need to mark the
+        symbol.
+      */
+      h->ipa_indx = ld_set_ndx (abfd);
+      /* [CL] store current bfd for this symbol */
+      if (is_ipa && ipa_is_whirl(abfd))
+	h->root.ipa_bfd = abfd;
+      else
+	h->root.ipa_bfd = NULL;
+#endif
+
       return TRUE;
     }
 
   /* OLDBFD and OLDSEC are a BFD and an ASECTION associated with the
      existing symbol.  */
 
+#ifdef IPA_LINK
+  if (h->root.ipa_bfd) {
+      oldbfd = h->root.ipa_bfd;
+  } else
+#endif
+    
   switch (h->root.type)
     {
     default:
@@ -1038,6 +1087,12 @@ _bfd_elf_merge_symbol (bfd *abfd,
   olddyn = FALSE;
   if (oldbfd != NULL)
     olddyn = (oldbfd->flags & DYNAMIC) != 0;
+#ifdef IPA_LINK 
+  /* [CL] IPA sections do not contain information selected above,
+     so ignore it */
+  else if (is_ipa && ipa_is_whirl(abfd))
+      oldsec = NULL;
+#endif
   else if (oldsec != NULL)
     {
       /* This handles the special SHN_MIPS_{TEXT,DATA} section
@@ -3924,6 +3979,12 @@ error_free_dyn:
 	     calls the value we call the alignment.  */
 	  value = isym->st_size;
 	}
+#ifdef IPA_LINK
+      else if (isym->st_shndx == SHN_IPA_TEXT)
+        sec = bfd_whirl_text_section_ptr;
+      else if (isym->st_shndx == SHN_IPA_DATA)
+        sec = bfd_whirl_data_section_ptr;
+#endif
       else
 	{
 	  sec = bfd_section_from_elf_index (abfd, isym->st_shndx);
@@ -3974,6 +4035,36 @@ error_free_dyn:
 	  if (name == NULL)
 	    continue;
 	}
+
+#ifdef IPA_LINK
+      /* Handle the case of symbols in GNU LINK_ONCE sections
+       * in context of Open64-IPA. Without this code, a multiple
+       * define of linkonce symbols will occur.
+       */
+      if (! bfd_is_und_section (sec)) {
+	struct elf_link_hash_entry *old_h;
+	
+	old_h = elf_link_hash_lookup (elf_hash_table (info), 
+				      name, FALSE, FALSE, FALSE);
+	if (old_h != NULL) {
+	  asection *old_sec;
+	  
+	  if ((old_h->root.type == bfd_link_hash_defined) || 
+	      (old_h->root.type == bfd_link_hash_defweak)) {
+	    old_sec = old_h->root.u.def.section;
+
+	    /* [CL] support for linkonce attribute. */
+	    if (is_ipa && ipa_is_whirl(old_h->root.ipa_bfd) &&
+		(*p_symbol_linkonce)(old_h->ipa_indx)) {
+	      /* Previous symbol is in LINK ONCE section. 
+		 We discard it. */
+	      *sym_hash = old_h;
+	      continue;
+	    }
+	  }
+	}
+      }
+#endif /* IPA_LINK */
 
       /* Sanity check that all possibilities were handled.  */
       if (sec == NULL)
@@ -4363,6 +4454,9 @@ error_free_dyn:
 	    {
 	      if (! definition)
 		{
+#ifdef IPA_LINK
+                  if (!ipa_is_whirl(abfd))
+#endif
 		  h->ref_regular = 1;
 		  if (bind != STB_WEAK)
 		    h->ref_regular_nonweak = 1;
@@ -5071,8 +5165,13 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
 	     something wrong with the archive.  */
 	  if (element->archive_pass != 0)
 	    {
+#ifdef IPA_LINK
+              /* Already got this obj, skip it and continue */
+              continue;
+#else
 	      bfd_set_error (bfd_error_bad_value);
 	      goto error_return;
+#endif
 	    }
 	  element->archive_pass = 1;
 
@@ -5084,6 +5183,16 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
 	  if (! bfd_link_add_symbols (element, info))
 	    goto error_return;
 
+#ifdef IPA_LINK
+	  /* [CL] support archive elements containing Whirl
+	     instead of plain object code */
+          if (is_ipa) {
+            ld_set_cur_obj(element);
+            if (ipa_is_whirl(element)) {
+              ipa_process_whirl_in_archive(abfd, element);
+            }
+          }
+#endif
 	  /* If there are any new undefined symbols, we need to make
 	     another pass through the archive in order to see whether
 	     they can be defined.  FIXME: This isn't perfect, because

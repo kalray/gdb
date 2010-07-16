@@ -153,6 +153,14 @@ struct bfd_link_hash_entry
 	  bfd_size_type size;	/* Common symbol size.  */
 	} c;
     } u;
+
+#ifdef IPA_LINK
+  /* [CL] Remember the bfd associated with this symbol.
+   * For Whirl sections, there is no bfd owner,
+   * so we need to store it here */
+  bfd* ipa_bfd;
+#endif
+
 };
 
 /* This is the link hash table.  It is a derived class of

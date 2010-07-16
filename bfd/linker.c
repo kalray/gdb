@@ -27,6 +27,16 @@
 #include "bfdlink.h"
 #include "genlink.h"
 
+#ifdef IPA_LINK
+#pragma weak ipa_is_whirl
+
+extern bfd_boolean
+ipa_is_whirl(bfd *);
+
+#include "ipa_bfd.h" /* [CL] needed for symbol_comdat() */
+#include "elf-bfd.h" /* [CL] needed to support comdat: need to get ipa_indx */
+#endif
+
 /*
 SECTION
 	Linker Functions
@@ -428,6 +438,19 @@ static bfd_boolean default_data_link_order
 static bfd_boolean default_indirect_link_order
   (bfd *, struct bfd_link_info *, asection *, struct bfd_link_order *,
    bfd_boolean);
+
+#ifdef IPA_LINK
+
+/* The strong version is defined in ld. */
+#if 1
+bfd_boolean is_ipa = 0;
+#pragma weak is_ipa
+#else
+bfd_boolean __is_ipa = 0;
+#pragma weak is_ipa = __is_ipa
+#endif
+
+#endif
 
 /* The link hash table structure is defined in bfdlink.h.  It provides
    a base hash table which the backend specific hash tables are built
@@ -1642,11 +1665,28 @@ _bfd_generic_link_add_one_symbol (struct bfd_link_info *info,
 
 	    /* Define a symbol.  */
 	    oldtype = h->type;
+#ifdef IPA_LINK
+	    /* [CL] if we have DEFW from a non-Whirl symbol, don't
+	       propagate the weak attribute to the reference:
+	       otherwise, it makes the compiler generate a weak
+	       reference, which is not resolved by the final link
+	       stage */
+	    if (is_ipa && (action == DEFW) && !ipa_is_whirl(abfd)) {
+	      action = DEF;
+	    }
+#endif
 	    if (action == DEFW)
 	      h->type = bfd_link_hash_defweak;
 	    else
 	      h->type = bfd_link_hash_defined;
 	    h->u.def.section = section;
+#ifdef IPA_LINK
+            /* ipa_set_def_bfd(abfd,h); */
+            if (is_ipa) {
+	      /*              h->u.def.section = (asection *)abfd;*/
+	      h->ipa_bfd = abfd;
+	    }
+#endif
 	    h->u.def.value = value;
 
 	    /* If we have been asked to, we act like collect2 and
@@ -1845,6 +1885,16 @@ _bfd_generic_link_add_one_symbol (struct bfd_link_info *info,
 		default:
 		  abort ();
 		}
+
+#ifdef IPA_LINK
+	      /* [CL] support comdat attribute: redefinition
+		 of a symbol with the comdat attribute is allowed.
+		 It will be fully resolved by the final link pass */
+	      if (is_ipa && ipa_is_whirl(abfd) &&
+		  (*p_symbol_comdat)(((struct elf_link_hash_entry*)h)->ipa_indx)) {
+		break;
+	      }
+#endif
 
 	      /* Ignore a redefinition of an absolute symbol to the
 		 same value; it's harmless.  */
