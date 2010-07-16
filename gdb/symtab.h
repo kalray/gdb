@@ -377,8 +377,7 @@ typedef enum domain_enum_tag
 
   STRUCT_DOMAIN,
 
-  /* LABEL_DOMAIN may be used for names of labels (for gotos);
-     currently it is not used and labels are not recorded at all.  */
+  /* LABEL_DOMAIN may be used for names of labels (for gotos).  */
 
   LABEL_DOMAIN,
 
@@ -1137,7 +1136,7 @@ extern char **make_source_files_completion_list (char *, char *);
 
 int matching_obj_sections (struct obj_section *, struct obj_section *);
 
-extern char *find_main_filename (void);
+extern const char *find_main_filename (void);
 
 extern struct symtab *find_line_symtab (struct symtab *, int, int *, int *);
 
@@ -1150,7 +1149,7 @@ extern void skip_prologue_sal (struct symtab_and_line *);
 
 extern void clear_symtab_users (void);
 
-extern enum language deduce_language_from_filename (char *);
+extern enum language deduce_language_from_filename (const char *);
 
 /* symtab.c */
 
