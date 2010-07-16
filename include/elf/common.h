@@ -79,6 +79,7 @@
 #define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
 #define ELFOSABI_ARM	     97	/* ARM */
 #define ELFOSABI_STANDALONE 255	/* Standalone (embedded) application */
+#define ELFOSABI_OS21  64       /* OS 21 */
 
 #define EI_ABIVERSION	8	/* ABI version */
 
@@ -388,13 +389,6 @@
 /* Vitesse IQ2000.  */
 #define EM_IQ2000		0xFEBA
 
-/* Kalray K1.  */
-#define EM_K1                   0x1337
-
-/* LX */
-#define EM_LX 0x64      
-#define EM_LX_OLD  0x1064
-
 /* NIOS magic number - no EABI available.  */
 #define EM_NIOS32		0xFEBB
 
@@ -408,6 +402,12 @@
 #define EM_MICROBLAZE_OLD	0xbaab	/* Old MicroBlaze */
 
 /* See the above comment before you add a new EM_* value here.  */
+
+/* Kalray K1 */
+#define EM_K1                   0x1337
+
+#define EM_LX 0x64      
+#define EM_LX_OLD  0x1064
 
 /* Values for e_version.  */
 

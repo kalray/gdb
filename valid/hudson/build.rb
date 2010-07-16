@@ -48,10 +48,10 @@ b.default_targets = [build]
 case arch
 when "k1"
   build_target = "k1-elf"
-  mds_path = processor_clone  + "/#{arch}-family/build/BE/GDB/#{arch}"
+  mds_path = processor_clone  + "/#{arch}-family/"
 when "st200" 
   build_target = "lx-stm-elf32"
-  mds_path = mds_clone + "/#{arch}-family/build/BE/GBU/#{arch}"
+  mds_path = mds_clone + "/#{arch}-family/"
 else 
   raise "Unknown Target #{arch}"
 end
@@ -68,7 +68,7 @@ b.target("build") do
 
     b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat --with-bugurl=no --prefix=#{prefix}")
     b.run(:cmd => "make clean")
-    b.run(:cmd => "make #{make_j} MDS_BE_DIR=#{mds_path} KALRAY_VERSION=\"#{version}\"")
+    b.run(:cmd => "make #{make_j} FAMILY=#{mds_path} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
   end
 end
 

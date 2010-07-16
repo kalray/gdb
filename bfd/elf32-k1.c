@@ -8,18 +8,6 @@ static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-/*
-static bfd_boolean
-k1_elf_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
-{
-   return ((name[0] == '.' && name[1] == 'L') ||
-          (name[0] == 'L' && name[1] == '?') ||
-          (name[0] == '_' && name[1] == '?') ||
-          (name[0] == '?') ||
-          (name[0] == '$'));
-}
-*/
-
 #define K1DP_K1CP
 #include "elf32-k1.def"
 #undef K1DP_K1CP
@@ -32,17 +20,20 @@ struct k1_reloc_map
 
 static const struct k1_reloc_map k1_reloc_map[] =
 {
-  { BFD_RELOC_NONE, R_K1_NONE },
-  { BFD_RELOC_16,   R_K1_16},
-  { BFD_RELOC_32,   R_K1_32},
-  {BFD_RELOC_K1_17_PCREL, R_K1_17_PCREL},
-  {BFD_RELOC_K1_18_PCREL, R_K1_18_PCREL},
-  {BFD_RELOC_K1_27_PCREL, R_K1_27_PCREL},
-  {BFD_RELOC_K1_32_PCREL, R_K1_32_PCREL},
-  {BFD_RELOC_K1_LO10, R_K1_LO10},
-  {BFD_RELOC_K1_HI22, R_K1_HI22},
-  {BFD_RELOC_K1_GPREL_LO10, R_K1_GPREL_LO10},
-  {BFD_RELOC_K1_GPREL_HI22, R_K1_GPREL_HI22},
+  { BFD_RELOC_NONE,          R_K1_NONE },
+  { BFD_RELOC_16,            R_K1_16 },
+  { BFD_RELOC_32,            R_K1_32 },
+  { BFD_RELOC_K1_17_PCREL,   R_K1_17_PCREL },
+  { BFD_RELOC_K1_18_PCREL,   R_K1_18_PCREL },
+  { BFD_RELOC_K1_27_PCREL,   R_K1_27_PCREL },
+  { BFD_RELOC_K1_32_PCREL,   R_K1_32_PCREL },
+  { BFD_RELOC_K1_LO10,       R_K1_LO10 },
+  { BFD_RELOC_K1_HI22,       R_K1_HI22 },
+  { BFD_RELOC_K1_GPREL_LO10, R_K1_GPREL_LO10 },
+  { BFD_RELOC_K1_GPREL_HI22, R_K1_GPREL_HI22 },
+  { BFD_RELOC_K1_TPREL_LO10, R_K1_TPREL_LO10 },
+  { BFD_RELOC_K1_TPREL_HI22, R_K1_TPREL_HI22 },
+  { BFD_RELOC_K1_TPREL_32,   R_K1_TPREL_32 },
 };
 
 static reloc_howto_type* k1_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name){
@@ -81,7 +72,29 @@ static void k1_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 static bfd_boolean
 elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym)
 {
-  return sym->name && sym->name[0] == 'L' && sym->name[1] == '?';
+  return sym->name && sym->name[0] == '.' && sym->name[1] == 'L';
+}
+
+
+static bfd_vma elf32_k1_gp_base (bfd *output_bfd)
+{
+    bfd_vma res = _bfd_get_gp_value (output_bfd);
+    bfd_vma min_vma = (bfd_vma) -1;
+    asection *os;
+      
+    if (res) return res;
+    
+    /* Point GP at the lowest data section */
+    for (os = output_bfd->sections; os ; os = os->next) {
+	if ((os->flags & (SEC_ALLOC | SEC_DATA)) == (SEC_ALLOC | SEC_DATA)
+	    && os->size > 0) {
+	    if (os->vma < min_vma)
+		min_vma = os->vma;
+	}
+    }
+
+    _bfd_set_gp_value (output_bfd, min_vma);
+    return min_vma;
 }
 
 /* Copied from elf32-mt.c as this implementation seemd the most clean,
@@ -168,13 +181,23 @@ k1_elf_relocate_section
       switch (r_type)
         {
 	    /* Handle K1 specific things here */
+	case R_K1_TPREL_LO10:
+	case R_K1_TPREL_HI22:
+	case R_K1_TPREL_32:
+	    relocation -=  elf_hash_table (info)->tls_sec->vma;
+	    break;
+	case R_K1_GPREL_LO10:
+	case R_K1_GPREL_HI22:
+	    relocation -=  elf32_k1_gp_base (output_bfd);
+	    break;
 	default:
-          r = _bfd_final_link_relocate (howto, input_bfd, input_section,
-					contents, rel->r_offset, 
-					relocation, rel->r_addend);
-          break;
+	    break;
         }
 
+      /* Generic relocation */
+      r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+				    contents, rel->r_offset, 
+				    relocation, rel->r_addend);
 
       if (r != bfd_reloc_ok)
 	{
@@ -230,6 +253,7 @@ k1_elf_relocate_section
 
 #define elf_backend_can_gc_sections       1
 #define elf_backend_relocate_section      k1_elf_relocate_section
+#define elf_backend_rela_normal           1
 
 #include "elf32-target.h"
 

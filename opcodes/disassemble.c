@@ -47,8 +47,8 @@
 #define ARCH_ip2k
 #define ARCH_iq2000
 #define ARCH_k1
-#define ARCH_lx
 #define ARCH_lm32
+#define ARCH_lx
 #define ARCH_m32c
 #define ARCH_m32r
 #define ARCH_m68hc11
@@ -230,10 +230,27 @@ disassembler (abfd)
       disassemble = print_insn_fr30;
       break;
 #endif
+#ifdef ARCH_k1
+    case bfd_arch_k1:
+      disassemble = print_insn_k1;
+      break;
+#endif
 #ifdef ARCH_lm32
     case bfd_arch_lm32:
       disassemble = print_insn_lm32;
       break;
+#endif
+#ifdef ARCH_lx 
+    case bfd_arch_lx:
+      if (bfd_big_endian (abfd))
+        {
+          disassemble = print_insn_big_lx;
+        }
+      else
+        {
+          disassemble = print_insn_little_lx;
+        }
+      break; 
 #endif
 #ifdef ARCH_m32r
     case bfd_arch_m32r:
@@ -466,23 +483,6 @@ disassembler (abfd)
       disassemble = print_insn_iq2000;
       break;
 #endif
-#ifdef ARCH_k1
-    case bfd_arch_k1:
-      disassemble = print_insn_k1;
-      break;
-#endif
-#ifdef ARCH_lx 
-    case bfd_arch_lx:
-      if (bfd_big_endian (abfd))
-        {
-          disassemble = print_insn_big_lx;
-        }
-      else
-        {
-          disassemble = print_insn_little_lx;
-        }
-      break; 
-#endif
 #ifdef ARCH_m32c
     case bfd_arch_m32c:
       disassemble = print_insn_m32c;
@@ -513,9 +513,7 @@ disassembler_usage (stream)
 #ifdef ARCH_s390
   print_s390_disassembler_options (stream);
 #endif
-#ifdef ARCH_k1
-  print_k1_disassembler_options (stream);
-#endif
+
   return;
 }
 

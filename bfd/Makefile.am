@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 # RELEASE=y
 
 INCDIR = $(srcdir)/../include
-CSEARCH = -I. -I$(srcdir) -I$(INCDIR)
+CSEARCH = -I. -I$(srcdir) -I$(INCDIR) -I$(FAMILY)/build/BE/GBU/$(ARCH)/bfd
 
 SUBDIRS = doc po
 
@@ -52,7 +52,7 @@ BFD32_LIBS = \
 	format.lo init.lo libbfd.lo opncls.lo reloc.lo \
 	section.lo syms.lo targets.lo hash.lo linker.lo \
 	srec.lo binary.lo tekhex.lo ihex.lo stabs.lo stab-syms.lo \
-	merge.lo dwarf2.lo simple.lo compress.lo verilog.lo
+	merge.lo dwarf2.lo simple.lo compress.lo verilog.lo ipa_bfd.lo
 
 BFD64_LIBS = archive64.lo
 
@@ -62,7 +62,7 @@ BFD32_LIBS_CFILES = \
 	format.c init.c libbfd.c opncls.c reloc.c \
 	section.c syms.c targets.c hash.c linker.c \
 	srec.c binary.c tekhex.c ihex.c stabs.c stab-syms.c \
-	merge.c dwarf2.c simple.c compress.c verilog.c
+	merge.c dwarf2.c simple.c compress.c verilog.c ipa_bfd.c
 
 BFD64_LIBS_CFILES = archive64.c
 
@@ -168,9 +168,7 @@ ALL_MACHINES_CFILES = \
 	cpu-ia64.c \
 	cpu-ip2k.c \
 	cpu-iq2000.c \
-	cpu-k1.c \
 	cpu-lm32.c \
-	cpu-lx.c \
 	cpu-m10200.c \
 	cpu-m10300.c \
 	cpu-m32c.c \
@@ -296,7 +294,6 @@ BFD32_BACKENDS = \
 	elf32-k1.lo \
 	elf32-lm32.lo \
 	elf32-lx.lo \
-	elf32-lx-linux.lo \
 	elf32-m32c.lo \
 	elf32-m32r.lo \
 	elf32-m68hc11.lo \
@@ -477,10 +474,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-i960.c \
 	elf32-ip2k.c \
 	elf32-iq2000.c \
-	elf32-k1.c \
 	elf32-lm32.c \
-	elf32-lx.c \
-	elf32-lx-linux.c \
 	elf32-m32c.c \
 	elf32-m32r.c \
 	elf32-m68hc11.c \
@@ -717,7 +711,7 @@ SOURCE_HFILES = \
 	libnlm.h liboasys.h libpei.h libxcoff.h mach-o.h \
 	netbsd.h nlm-target.h nlmcode.h nlmswap.h ns32k.h \
 	pef.h pef-traceback.h peicode.h som.h version.h \
-	vms.h xcoff-target.h xsym.h
+	vms.h xcoff-target.h xsym.h ipa_bfd.h
 
 ## ... and all .h files which are in the build tree.
 BUILD_HFILES = \
