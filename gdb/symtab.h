@@ -75,7 +75,12 @@ struct program_space;
 
    --chastain 2003-08-21  */
 
+/* Struct for storing C++ specific information.  Allocated when needed.  */
 
+struct cplus_specific
+{
+  char *demangled_name;
+};
 
 /* Define a structure for the information that is common to all symbol types,
    including minimal symbols, partial symbols, and full symbols.  In a
@@ -120,16 +125,19 @@ struct general_symbol_info
   value;
 
   /* Since one and only one language can apply, wrap the language specific
-     information inside a union. */
+     information inside a union.  */
 
   union
   {
-    struct cplus_specific
+    /* This is used by languages which wish to store a demangled name.
+       currently used by Ada, Java, and Objective C.*/
+    struct mangled_lang
     {
-      /* This is in fact used for C++, Java, and Objective C.  */
       char *demangled_name;
     }
-    cplus_specific;
+    mangled_lang;
+
+    struct cplus_specific *cplus_specific;
   }
   language_specific;
 
@@ -152,6 +160,11 @@ struct general_symbol_info
 
   struct obj_section *obj_section;
 };
+
+extern void symbol_set_demangled_name (struct general_symbol_info *, char *,
+                                       struct objfile *);
+
+extern char *symbol_get_demangled_name (const struct general_symbol_info *);
 
 extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, struct obj_section *);
 
