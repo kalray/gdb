@@ -1,3 +1,26 @@
+2010-07-31  Paul Pluzhnikov  <ppluzhnikov@google.com>
+
+	* gdb.texinfo (Threads): Document 'debug libthread-db'.
+
+2010-07-30  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Index Files): Mention gdb-add-index.
+
+2010-07-30  Hui Zhu  <teawater@gmail.com>
+
+	* gdb.texinfo (Inferiors and Programs): Update the introduce of
+	"detach inferior" and "kill inferior".
+
+2010-07-28  CHENG Renquan  <rqcheng@smu.edu.sg>
+
+	* gdb.texinfo (Machine Code): Update description of two forms of
+	arguments, and add new example to demonstrate the new form.
+
+2010-07-27  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* gdb.texinfo (Values From Inferior): Add value inferior function
+	call description.
+
 2010-07-19  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	* gdb.texinfo (Active Targets): Fix wrong comma placement.

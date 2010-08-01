@@ -1,3 +1,43 @@
+2010-07-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (compute_bucket_count): Add ATTRIBUTE_UNUSED to info.
+
+2010-07-30  Anthony Green  <green@moxielogic.com>
+
+	* config.bfd (targ_cpu): Add moxie-*-rtems support.
+
+2010-07-29  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (ppc64_elf_edit_toc): Always adjust local syms in
+	.toc section, even when none are used in relocs.
+
+2010-07-27  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* elfxx-mips.h: Include "elf/mips.h".
+	(gprel16_reloc_p): New static inline function.
+	* elfxx-mips.c (_bfd_mips_elf_check_relocs)
+	[R_MIPS16_GOT16, R_MIPS_GOT16, R_MIPS_GOT_HI16, R_MIPS_GOT_LO16]:
+	Use got16_reloc_p.
+	(_bfd_mips_elf_relocate_section)[bfd_reloc_overflow]: Use
+	gprel16_reloc_p.
+	* elf32-mips.c (mips_info_to_howto_rel): Likewise.
+	* elfn32-mips.c (mips_info_to_howto_rel): Likewise.
+
+2010-07-27  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* elf64-mips.c (mips_elf64_howto_table_rela)
+	[R_MIPS_TLS_DTPMOD64]: Clear partial_inplace.
+	[R_MIPS_TLS_DTPREL64, R_MIPS_TLS_GD, R_MIPS_TLS_LDM]: Likewise.
+	[R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_DTPREL_LO16]: Likewise.
+	[R_MIPS_TLS_GOTTPREL, R_MIPS_TLS_TPREL64]: Likewise.
+	[R_MIPS_TLS_TPREL_HI16, R_MIPS_TLS_TPREL_LO16]: Likewise.
+	* elfn32-mips.c (elf_mips_howto_table_rela)
+	[R_MIPS_TLS_DTPMOD32]: Likewise.
+	[R_MIPS_TLS_DTPREL32, R_MIPS_TLS_GD, R_MIPS_TLS_LDM]: Likewise.
+	[R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_DTPREL_LO16]: Likewise.
+	[R_MIPS_TLS_GOTTPREL, R_MIPS_TLS_TPREL32]: Likewise.
+	[R_MIPS_TLS_TPREL_HI16, R_MIPS_TLS_TPREL_LO16]: Likewise.
+
 2010-07-23  Naveen.H.S  <naveen.S@kpitcummins.com>
 	    Ina Pandit  <ina.pandit@kpitcummins.com>
 
