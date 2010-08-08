@@ -1,3 +1,146 @@
+2010-08-07  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* defs.h (make_cleanup_restore_uinteger, make_cleanup_restore_ui_file)
+	(make_cleanup_restore_page_info)
+	(set_batch_flag_and_make_cleanup_restore_page_info): New declarations.
+	* gdbcmd.h (execute_command_to_string): New declaration.
+	* python/python.c (struct restore_ui_file_closure, restore_ui_file)
+	(make_cleanup_restore_ui_file): Move to utils.c
+	(execute_gdb_command) <to_string>: Move ...
+	* top.c (execute_command_to_string): ... here.  Call
+	set_batch_flag_and_make_cleanup_restore_page_info.
+	* utils.c (make_cleanup_restore_integer): New source file blank line.
+	(make_cleanup_restore_uinteger): New.
+	(struct restore_ui_file_closure, do_restore_ui_file)
+	(make_cleanup_restore_ui_file): Move here from python/python.c.
+	(init_page_info) <batch_flag>
+	(do_restore_page_info_cleanup, make_cleanup_restore_page_info)
+	(set_batch_flag_and_make_cleanup_restore_page_info): New.
+
+2010-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* thread.c (add_thread_silent): Use null_ptid instead of
+	minus_one_ptid while getting rid of stale inferior_ptid.
+
+2010-08-06  Corinna Vinschen  <vinschen@redhat.com>
+
+	* dwarf2-frame.c (struct dwarf2_cie): Add ptr_size member.
+	Throughout, call read_encoded_value with ptr_size rather than addr_size.
+	(decode_frame_entry_1): Remove redundant setting of
+	addr_size.  Call gdbarch_dwarf2_addr_size rather than gdbarch_ptr_bit
+	to determine addr_size in Dwarf versions < 4.  Set ptr_size dependent
+	on examined frame section.  Add comment to explain why.
+	* gdbarch.sh (dwarf2_addr_size): Define as variable.  Add lengthy
+	comment to explain usage.
+	* gdbarch.c: Regenerate.
+	* gdbarch.h: Regenerate.
+
+	* xstormy16-tdep.c (xstormy16_gdbarch_init): Set dwarf2_addr_size to 4.
+
+2010-08-06  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Code cleanup.
+	* varobj.c (varobj_create): Move variables fi, old_fi and block to
+	a more inner block.
+
+2010-08-05  Pedro Alves  <pedro@codesourcery.com>
+
+	* configure.tgt (alpha*-*-linux*, am33_2.0*-*-linux*, frv-*-*)
+	(hppa*-*-linux*, ia64-*-linux*, m32r*-*-linux*, m68*-*-linux*)
+	(microblaze*-linux-*, mips*-*-linux*, sh*-*-linux*)
+	(sparc-*-linux*, sparc64-*-linux*, xtensa*-*-linux*): Add
+	linux-tdep.o to gdb_target_obs.
+
+2010-08-05  Marc Khouzam  <marc.khouzam@ericsson.com>
+ 
+	* mi/mi-main.c (mi_cmd_remove_inferior): Properly access first 
+	argument.
+	
+2010-08-05  Hui Zhu  <teawater@gmail.com>
+
+	* mips-linux-tdep.c(regset.h): New include.
+	(mips_supply_gregset_wrapper, mips_fill_gregset_wrapper,
+	mips_supply_fpregset_wrapper, mips_fill_fpregset_wrapper,
+	mips64_supply_gregset_wrapper, mips64_fill_gregset_wrapper,
+	mips64_supply_fpregset_wrapper, mips64_fill_fpregset_wrapper,
+	mips_linux_regset_from_core_section): New functions.
+	(fetch_core_registers, regset_core_fns): Deleted.
+	(mips_linux_init_abi): Add mips_linux_regset_from_core_section.
+	Deleted regset_core_fns.
+	* mips-tdep.c(mips_gdbarch_init): Initialize tdep->gregset,
+	tdep->gregset64, tdep->fpregset and tdep->fpregset64.
+	* mips-tdep.h(gdbarch_tdep): Add gregset, gregset64, fpregset
+	and fpregset64.
+
+2010-08-04  Pedro Alves  <pedro@codesourcery.com>
+
+	* s390-tdep.c: Include linux-tdep.h.
+	(s390_gdbarch_init): Call linux_init_abi.
+
+2010-08-04  Pedro Alves  <pedro@codesourcery.com>
+
+	* corelow.c (core_pid_to_str): Default to using normal_pid_to_str
+	instead of printing "Thread" here.
+	* linux-tdep.c: Include inferior.h.
+	(linux_core_pid_to_str): New.
+	(linux_init_abi): New.
+	* linux-tdep.h (linux_init_abi): Declare.
+	* alpha-linux-tdep.c: Include linux-tdep.h.
+	(alpha_linux_init_abi): Call linux_init_abi.
+	* amd64-linux-tdep.c (amd64_linux_init_abi): Call linux_init_abi.
+	* arm-linux-tdep.c (arm_linux_init_abi): Call linux_init_abi.
+	* frv-linux-tdep.c: Include linux-tdep.h
+	(frv_linux_init_abi): Call linux_init_abi.
+	* hppa-linux-tdep.c: Include linux-tdep.h
+	(hppa_linux_init_abi): Call linux_init_abi.
+	* i386-linux-tdep.c (i386_linux_init_abi): Call linux_init_abi.
+	* ia64-linux-tdep.c: Include linux-tdep.h.
+	(ia64_linux_init_abi): Call linux_init_abi.
+	* m32r-linux-tdep.c: Include linux-tdep.h.
+	(m32r_linux_init_abi): Call linux_init_abi.
+	* m68klinux-tdep.c: Include linux-tdep.h.
+	(m68k_linux_init_abi): Call linux_init_abi.
+	* microblaze-linux-tdep.c: Include linux-tdep.h.
+	(microblaze_linux_init_abi): Call linux_init_abi.
+	* mips-linux-tdep.c: Include linux-tdep.h.
+	(mips_linux_init_abi): Call linux_init_abi.
+	* mn10300-linux-tdep.c: Include linux-tdep.h.
+	(am33_linux_init_osabi): Call linux_init_abi.  Rename the
+	'gdbinfo' parameter to 'info'.
+	* ppc-linux-tdep.c: Include linux-tdep.h.
+	(ppc_linux_init_abi): Call linux_init_abi.
+	* sh-linux-tdep.c: Include linux-tdep.h.
+	(sh_linux_init_abi): Call linux_init_abi.
+	* sparc-linux-tdep.c: Include linux-tdep.h.
+	(sparc32_linux_init_abi): Call linux_init_abi.
+	* sparc64-linux-tdep.c: Include linux-tdep.h.
+	(sparc64_linux_init_abi): Call linux_init_abi.
+	* xtensa-linux-tdep.c: Include linux-tdep.h.
+	(xtensa_linux_init_abi): Call linux_init_abi.
+	* i386-cygwin-tdep.c (i386_windows_core_pid_to_str): New.
+	(i386_cygwin_init_abi): Install it as gdbarch_core_pid_to_str
+	callback.
+
+2010-08-03  Doug Evans  <dje@google.com>
+
+	* breakpoint.c (bpdisp_text): Constify bpdisps.
+	* solib-svr4.c (solib_break_names): Constify.
+	(bkpt_names, main_name_list): Constify.
+	(match_main): Constify soname arg.
+	(bfd_lookup_symbol): Remove unnecessary forward decl.
+	Constify symname arg.
+	(enable_break): Constify bkpt_namep.
+	* symtab.c (search_symbols): Constify types, types2, types3, types4.
+	(symtab_symbol_info): Constify classnames.
+
+2010-08-03  Phil Muldoon  <pmuldoon@redhat.com>
+
+	* NEWS: Document Python value inferior function calls.
+
+2010-08-02  Doug Evans  <dje@google.com>
+
+	* dwarf2read.c (dwarf_attr_name): Add DW_AT_GNU_odr_signature.
+
 2010-07-31  Paul Pluzhnikov  <ppluzhnikov@google.com>
 
 	* linux-thread-db.c (libthread_db_debug): New variable.

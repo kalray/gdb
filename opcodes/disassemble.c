@@ -116,10 +116,8 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_arc
     case bfd_arch_arc:
-      {
-	disassemble = arc_get_disassembler (abfd);
-	break;
-      }
+      disassemble = arc_get_disassembler (abfd);
+      break;
 #endif
 #ifdef ARCH_arm
     case bfd_arch_arm:
@@ -336,9 +334,9 @@ disassembler (abfd)
 #ifdef ARCH_or32
     case bfd_arch_or32:
       if (bfd_big_endian (abfd))
-        disassemble = print_insn_big_or32;
+	disassemble = print_insn_big_or32;
       else
-        disassemble = print_insn_little_or32;
+	disassemble = print_insn_little_or32;
       break;
 #endif
 #ifdef ARCH_pdp11
@@ -380,9 +378,9 @@ disassembler (abfd)
 #ifdef ARCH_score
     case bfd_arch_score:
       if (bfd_big_endian (abfd))
-        disassemble = print_insn_big_score;      
+	disassemble = print_insn_big_score;
       else
-        disassemble = print_insn_little_score; 
+	disassemble = print_insn_little_score;
      break;
 #endif
 #ifdef ARCH_sh
@@ -549,6 +547,8 @@ disassemble_init_for_target (struct disassemble_info * info)
 #endif
 #ifdef ARCH_m32c
     case bfd_arch_m32c:
+      /* This processor in fact is little endian.  The value set here
+	 reflects the way opcodes are written in the cgen description.  */
       info->endian = BFD_ENDIAN_BIG;
       if (! info->insn_sets)
 	{
