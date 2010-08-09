@@ -451,12 +451,12 @@ k1_frame_prev_register (struct frame_info *this_frame,
 			void **this_prologue_cache, int regnum)
 {
     if (get_frame_func (this_frame) == get_frame_pc (this_frame)) {
-	if (regnum == gdbarch_pc_regnum (get_frame_arch (this_frame))) 
+	if (regnum == gdbarch_pc_regnum (get_frame_arch (this_frame))) {
 	    return frame_unwind_got_register (this_frame,
 					      regnum,
 					      user_reg_map_name_to_regnum (get_frame_arch (this_frame), "ra", -1));
-	if (regnum == gdbarch_sp_regnum (get_frame_arch (this_frame))) 
-	    return frame_unwind_got_register (this_frame, regnum, regnum);
+	}
+	return frame_unwind_got_register (this_frame, regnum, regnum);
     }
     /* struct k1_frame_cache *cache = k1_frame_cache (this_frame, */
     /* 						   this_prologue_cache); */
