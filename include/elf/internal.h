@@ -328,6 +328,8 @@ struct elf_segment_map
    /* SHF_ALLOC sections must have VMAs within the segment.  */		\
    && (!(check_vma)							\
        || ((sec_hdr)->sh_flags & SHF_ALLOC) == 0			\
+       || (((sec_hdr)->sh_flags & SHF_TLS) != 0				\
+           && (segment)->p_type != PT_TLS)				\
        || ((sec_hdr)->sh_addr >= (segment)->p_vaddr			\
 	   && (!(strict)						\
 	       || ((sec_hdr)->sh_addr - (segment)->p_vaddr		\
