@@ -1,4 +1,4 @@
-Test Run By friss on Mon Jul  5 09:51:30 2010
+Test Run By friss on Mon Aug  9 16:17:25 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -999,7 +999,7 @@ PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "help set args"
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "set $pc=0x0"
 Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
 gdb compile failed, ns-stale-regcache.o: In function `main':
-catvaras-dasa.lin.mbt.kalray.eu.(none):/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
+catvaras-dasa.lin.mbt.kalray.eu:/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
 Running ../../../gdb/testsuite/gdb.mi/mi2-eval.exp ...
 PASS: gdb.mi/mi2-eval.exp: breakpoint at callee4
 PASS: gdb.mi/mi2-eval.exp: mi runto callee4
@@ -2250,7 +2250,7 @@ PASS: gdb.base/default.exp: show check type
 PASS: gdb.base/default.exp: show commands
 PASS: gdb.base/default.exp: show complaints
 PASS: gdb.base/default.exp: show confirm
-FAIL: gdb.base/default.exp: show convenience
+PASS: gdb.base/default.exp: show convenience
 PASS: gdb.base/default.exp: show directories
 PASS: gdb.base/default.exp: show editing
 PASS: gdb.base/default.exp: show height
@@ -2415,7 +2415,7 @@ PASS: gdb.base/all-bin.exp: print value of v_int&&v_float
 PASS: gdb.base/all-bin.exp: print value of v_int&&v_double
 Running ../../../gdb/testsuite/gdb.base/watch-vfork.exp ...
 gdb compile failed, /work1/friss/tools/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
-catvaras-dasa.lin.mbt.kalray.eu.(none):/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
+catvaras-dasa.lin.mbt.kalray.eu:/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 Running ../../../gdb/testsuite/gdb.base/scope.exp ...
@@ -2593,6 +2593,28 @@ PASS: gdb.base/set-lang-auto.exp: forcing the language to ada
 PASS: gdb.base/set-lang-auto.exp: show lang after switching language to ada
 PASS: gdb.base/set-lang-auto.exp: switching the language back to auto
 PASS: gdb.base/set-lang-auto.exp: show lang after having switched back to auto
+Running ../../../gdb/testsuite/gdb.base/code_elim.exp ...
+PASS: gdb.base/code_elim.exp: add-symbol-file code_elim1 0x100000
+PASS: gdb.base/code_elim.exp: test eliminated var my_global_symbol
+PASS: gdb.base/code_elim.exp: test eliminated var my_static_symbol
+PASS: gdb.base/code_elim.exp: test eliminated var my_global_func
+PASS: gdb.base/code_elim.exp: get address of main
+PASS: gdb.base/code_elim.exp: test eliminated var my_global_symbol
+PASS: gdb.base/code_elim.exp: test eliminated var my_static_symbol
+PASS: gdb.base/code_elim.exp: test eliminated var my_global_func
+PASS: gdb.base/code_elim.exp: get address of main
+PASS: gdb.base/code_elim.exp: add-symbol-file code_elim1 0x100000
+PASS: gdb.base/code_elim.exp: add-symbol-file code_elim2 0x200000
+PASS: gdb.base/code_elim.exp: get address of my_global_symbol
+PASS: gdb.base/code_elim.exp: get address of my_static_symbol
+PASS: gdb.base/code_elim.exp: get address of my_global_func
+PASS: gdb.base/code_elim.exp: get address of main
+PASS: gdb.base/code_elim.exp: add-symbol-file code_elim2 0x200000
+PASS: gdb.base/code_elim.exp: add-symbol-file code_elim1 0x100000
+PASS: gdb.base/code_elim.exp: get address of my_global_symbol
+PASS: gdb.base/code_elim.exp: get address of my_static_symbol
+PASS: gdb.base/code_elim.exp: get address of my_global_func
+PASS: gdb.base/code_elim.exp: get address of main
 Running ../../../gdb/testsuite/gdb.base/step-break.exp ...
 PASS: gdb.base/step-break.exp: breakpoint line number
 PASS: gdb.base/step-break.exp: run until breakpoint set at a line number
@@ -3203,6 +3225,7 @@ PASS: gdb.base/logical.exp: evaluate ! x > y || w + z; variables x = 1, y = 2, w
 PASS: gdb.base/logical.exp: evaluate x > y || w == z; variables x = 2, y = 2, w = 2, z = 3; expecting 0
 PASS: gdb.base/logical.exp: evaluate x >= y && w != z; variables x = 2, y = 2, w = 2, z = 3; expecting 1
 PASS: gdb.base/logical.exp: evaluate ! x > y || w + z; variables x = 2, y = 2, w = 2, z = 3; expecting 1
+Running ../../../gdb/testsuite/gdb.base/label.exp ...
 Running ../../../gdb/testsuite/gdb.base/stack-checking.exp ...
 PASS: gdb.base/stack-checking.exp: continue to breakpoint: breakpoint for small frame
 PASS: gdb.base/stack-checking.exp: bt
@@ -3210,6 +3233,7 @@ PASS: gdb.base/stack-checking.exp: continue to breakpoint: breakpoint for medium
 PASS: gdb.base/stack-checking.exp: bt
 PASS: gdb.base/stack-checking.exp: continue to breakpoint: breakpoint for big frame
 PASS: gdb.base/stack-checking.exp: bt
+Running ../../../gdb/testsuite/gdb.base/solib-nodir.exp ...
 Running ../../../gdb/testsuite/gdb.base/interp.exp ...
 PASS: gdb.base/interp.exp: interpreter-exec mi "-var-update *"
 PASS: gdb.base/interp.exp: interpreter-exec console "show version"
@@ -4998,6 +5022,7 @@ PASS: gdb.base/volatile.exp: ptype qux2
 Running ../../../gdb/testsuite/gdb.base/gdb1555.exp ...
 Running ../../../gdb/testsuite/gdb.base/sepsymtab.exp ...
 PASS: gdb.base/sepsymtab.exp: info sym main
+Running ../../../gdb/testsuite/gdb.base/attach-pie-misread.exp ...
 Running ../../../gdb/testsuite/gdb.base/subst.exp ...
 PASS: gdb.base/subst.exp: deactivate GDB's confirmation interface
 PASS: gdb.base/subst.exp: show substitute-path, no rule entered yet
@@ -6353,6 +6378,7 @@ PASS: gdb.base/printcmds.exp: set print address off
 PASS: gdb.base/printcmds.exp: set print elements 50
 XFAIL: gdb.base/printcmds.exp: This target can not call functions (PRMS 2416)
 XFAIL: gdb.base/printcmds.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/printcmds.exp: print some_volatile_enum
 PASS: gdb.base/printcmds.exp: printf "x=%d,y=%d,z=%d\n", 5, 6, 7
 PASS: gdb.base/printcmds.exp: printf "string=%.4sxx\n", teststring
 PASS: gdb.base/printcmds.exp: printf "string=%sxx\n", teststring
@@ -7338,8 +7364,8 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6921
-# of unexpected failures	51
+# of expected passes		6944
+# of unexpected failures	50
 # of unexpected successes	2
 # of expected failures		42
 # of unknown successes		2
@@ -7347,5 +7373,5 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 # of unresolved testcases	1
 # of untested testcases		5
 # of unsupported tests		14
-/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.1.50.20100705-cvs -nw -nx 
+/work1/friss/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20100808-cvs -nw -nx 
 
