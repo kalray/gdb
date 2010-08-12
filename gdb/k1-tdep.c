@@ -488,6 +488,78 @@ static int k1_print_insn (bfd_vma pc, disassemble_info *di)
     return print_insn_k1 (pc, di);
 }
 
+static CORE_ADDR
+k1_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+    return addr - addr % 8;
+}
+
+static struct frame_id
+k1_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
+{
+  CORE_ADDR sp = get_frame_register_unsigned (this_frame, 
+					      gdbarch_sp_regnum (gdbarch));
+  return frame_id_build (sp, get_frame_pc (this_frame));
+}
+
+static CORE_ADDR
+k1_push_dummy_call (struct gdbarch *gdbarch,
+		    struct value *function,
+		    struct regcache *regcache,
+		    CORE_ADDR bp_addr, int nargs,
+		    struct value **args,
+		    CORE_ADDR sp, int struct_return,
+		    CORE_ADDR struct_addr)
+{
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  CORE_ADDR orig_sp = sp;
+  int i, j;
+  const gdb_byte *val;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  gdb_byte *argslotsbuf = NULL;
+  unsigned int argslotsnb = 0;
+  int len;
+
+  /* Allocate arguments to the virtual argument slots  */
+  for (i = 0; i < nargs; i++)
+    {
+      int typelen = TYPE_LENGTH (value_enclosing_type (args[i]));
+      int newslots = (typelen+3)/4;
+      if (typelen > 4 && argslotsnb & 1) ++argslotsnb;
+      argslotsbuf = xrealloc (argslotsbuf, (argslotsnb+newslots)*4);
+      memset (&argslotsbuf[argslotsnb*4], 0, newslots*4);
+      memcpy (&argslotsbuf[argslotsnb*4], value_contents (args[i]),
+	      typelen);
+	argslotsnb += newslots;
+    }
+
+  for (i = 0; i < argslotsnb; i++)
+    regcache_cooked_write (regcache, i, &argslotsbuf[i*4]);
+
+  sp = k1_frame_align (gdbarch, sp);
+  len = argslotsnb - 8;
+  if (len > 0) 
+    {
+      /* Align stack correctly and copy args there */
+      if (argslotsnb & 0x1) sp -= 4;
+
+      sp -= len*4;
+      write_memory (sp, argslotsbuf + 8*4, len*4);
+    }
+
+  /* Scratch area */
+  sp -= 16;
+
+  if (struct_return)
+    regcache_cooked_write_unsigned (regcache, 15, struct_addr);
+
+  regcache_cooked_write_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
+				  sp);
+  regcache_cooked_write_unsigned (regcache, tdep->ra_regnum, bp_addr);
+
+  return sp;
+}
+
 static void k1_store_return_value (struct gdbarch *gdbarch,
 				   struct type *type,
                                    struct regcache *regcache,
@@ -498,9 +570,14 @@ static void k1_store_return_value (struct gdbarch *gdbarch,
     int i = 0;
     int sz = register_size (gdbarch, 0);
     
-    while (len > 0) {
+    while (len > sz) {
 	regcache_raw_write (regcache, i, buf + i*sz);
 	i++, len -= sz;
+    }
+    if (len > 0) {
+	gdb_byte tmp[4] = {0};
+	memcpy (tmp, buf + i*sz, len);
+	regcache_raw_write (regcache, i, tmp);
     }
 }
 
@@ -514,9 +591,14 @@ static void k1_extract_return_value (struct gdbarch *gdbarch,
     int i = 0;
     int sz = register_size (gdbarch, 0);
     
-    while (len > 0) {
+    while (len > sz) {
 	regcache_raw_read (regcache, i, buf + i*sz);
 	i++, len -= sz;
+    }
+    if (len > 0) {
+	gdb_byte tmp[4];
+	regcache_raw_read (regcache, i, tmp);
+	memcpy (buf+i*sz, tmp, len);
     }
 }
 
@@ -669,6 +751,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1_dwarf2_reg_to_regnum);
 
   set_gdbarch_return_value (gdbarch, k1_return_value);
+  set_gdbarch_push_dummy_call (gdbarch, k1_push_dummy_call);
+  set_gdbarch_dummy_id (gdbarch, k1_dummy_id);
 
   set_gdbarch_skip_prologue (gdbarch, k1_skip_prologue);
   set_gdbarch_unwind_pc (gdbarch, k1_unwind_pc);

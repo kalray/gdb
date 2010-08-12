@@ -1,4 +1,4 @@
-Test Run By friss on Mon Aug  9 16:17:25 2010
+Test Run By friss on Thu Aug 12 17:59:44 2010
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -319,7 +319,7 @@ PASS: gdb.mi/mi-break.exp: delete temp breakpoints
 PASS: gdb.mi/mi-break.exp: insert breakpoint with ignore count at callme
 PASS: gdb.mi/mi-break.exp: run to breakpoint with ignore count
 PASS: gdb.mi/mi-break.exp: breakpoint at nonexistent function
-FAIL: gdb.mi/mi-break.exp: create varobj for function call
+PASS: gdb.mi/mi-break.exp: create varobj for function call
 PASS: gdb.mi/mi-break.exp: update varobj for function call
 PASS: gdb.mi/mi-break.exp: test disabled creation
 PASS: gdb.mi/mi-break.exp: test disabled creation: cleanup
@@ -1495,9 +1495,9 @@ PASS: gdb.base/break.exp: set breakpoint via convenience variable
 PASS: gdb.base/break.exp: set convenience variable $foo to 81.5
 PASS: gdb.base/break.exp: set breakpoint via non-integer convenience variable disallowed
 PASS: gdb.base/break.exp: set breakpoint on to-be-called function
-FAIL: gdb.base/break.exp: hit breakpoint on called function
-FAIL: gdb.base/break.exp: backtrace while in called function
-FAIL: gdb.base/break.exp: finish from called function
+PASS: gdb.base/break.exp: hit breakpoint on called function
+PASS: gdb.base/break.exp: backtrace while in called function
+PASS: gdb.base/break.exp: finish from called function
 PASS: gdb.base/break.exp: finish with arguments disallowed
 PASS: gdb.base/break.exp: finish from outermost frame disallowed
 PASS: gdb.base/break.exp: kill program
@@ -2029,7 +2029,32 @@ PASS: gdb.base/gdb1821.exp: print /x bar
 Running ../../../gdb/testsuite/gdb.base/fileio.exp ...
 Running ../../../gdb/testsuite/gdb.base/environ.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-ar-st.exp ...
-XFAIL: gdb.base/call-ar-st.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/call-ar-st.exp: set print sevenbit-strings
+PASS: gdb.base/call-ar-st.exp: set print address off
+PASS: gdb.base/call-ar-st.exp: set width 0
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1209
+PASS: gdb.base/call-ar-st.exp: run until breakpoint set at a line
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1216
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1220
+PASS: gdb.base/call-ar-st.exp: step inside print_all_arrays
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1236
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1241
+PASS: gdb.base/call-ar-st.exp: continue to 1241
+PASS: gdb.base/call-ar-st.exp: set breakpoint in sum_array_print
+PASS: gdb.base/call-ar-st.exp: set print frame-arguments all
+PASS: gdb.base/call-ar-st.exp: check args of sum_array_print
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1281
+PASS: gdb.base/call-ar-st.exp: print compute_with_small_structs(20)
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1286
+PASS: gdb.base/call-ar-st.exp: continue to 1286
+PASS: gdb.base/call-ar-st.exp: tbreak in print_long_arg_list after stepping into memcpy
+PASS: gdb.base/call-ar-st.exp: step into print_long_arg_list
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1300
+PASS: gdb.base/call-ar-st.exp: step into init_bit_flags_combo
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1305
+PASS: gdb.base/call-ar-st.exp: continue to 1305
+PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1311
+PASS: gdb.base/call-ar-st.exp: continue to 1311
 Running ../../../gdb/testsuite/gdb.base/nodebug.exp ...
 PASS: gdb.base/nodebug.exp: p top
 PASS: gdb.base/nodebug.exp: whatis top
@@ -2050,7 +2075,7 @@ PASS: gdb.base/nodebug.exp: p bsslocal
 PASS: gdb.base/nodebug.exp: whatis bsslocal
 PASS: gdb.base/nodebug.exp: ptype bsslocal
 FAIL: gdb.base/nodebug.exp: backtrace from inner in nodebug.exp
-XFAIL: gdb.base/nodebug.exp: p/c array_index("abcdef",2) (PRMS 2416)
+PASS: gdb.base/nodebug.exp: p/c array_index("abcdef",2)
 FAIL: gdb.base/nodebug.exp: backtrace from middle in nodebug.exp
 Running ../../../gdb/testsuite/gdb.base/default.exp ...
 PASS: gdb.base/default.exp: add-symbol-file
@@ -2728,7 +2753,15 @@ PASS: gdb.base/ptype.exp: list intfoo
 PASS: gdb.base/ptype.exp: ptype foo typedef after second list of intfoo
 PASS: gdb.base/ptype.exp: list charfoo
 PASS: gdb.base/ptype.exp: ptype foo typedef after second list of charfoo
-XFAIL: gdb.base/ptype.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/ptype.exp: ptype "abc"
+PASS: gdb.base/ptype.exp: ptype {'a','b','c'}
+PASS: gdb.base/ptype.exp: ptype {0,1,2}
+PASS: gdb.base/ptype.exp: ptype {(long)0,(long)1,(long)2}
+PASS: gdb.base/ptype.exp: ptype {(float)0,(float)1,(float)2}
+PASS: gdb.base/ptype.exp: ptype {{0,1,2},{3,4,5}}
+PASS: gdb.base/ptype.exp: ptype {4,5,6}[2]
+PASS: gdb.base/ptype.exp: ptype *&{4,5,6}[1]
+FAIL: gdb.base/ptype.exp: ptype $pc
 Running ../../../gdb/testsuite/gdb.base/sigbpt.exp ...
 Running ../../../gdb/testsuite/gdb.base/long_long.exp ...
 PASS: gdb.base/long_long.exp: get integer valueof "sizeof (char)" (1)
@@ -2895,6 +2928,17 @@ PASS: gdb.base/watchpoint.exp: disable watchpoint #2 in test_disabling_watchpoin
 PASS: gdb.base/watchpoint.exp: watchpoint disabled in table
 PASS: gdb.base/watchpoint.exp: disabled watchpoint skipped
 PASS: gdb.base/watchpoint.exp: continue until exit at continue to exit in test_disabling_watchpoints
+PASS: gdb.base/watchpoint.exp: watch ival2
+PASS: gdb.base/watchpoint.exp: break func2 if 0
+PASS: gdb.base/watchpoint.exp: p $func2_breakpoint_number = $bpnum
+PASS: gdb.base/watchpoint.exp: calling function with watchpoint enabled
+PASS: gdb.base/watchpoint.exp: finish from marker1
+PASS: gdb.base/watchpoint.exp: back at main from marker1
+PASS: gdb.base/watchpoint.exp: next to `for' in watchpoint.exp
+PASS: gdb.base/watchpoint.exp: until to ival1 assignment
+PASS: gdb.base/watchpoint.exp: until to ival3 assignment
+PASS: gdb.base/watchpoint.exp: until out of loop
+PASS: gdb.base/watchpoint.exp: step to ival2 assignment
 PASS: gdb.base/watchpoint.exp: disable fast watches
 PASS: gdb.base/watchpoint.exp: show disable fast watches
 PASS: gdb.base/watchpoint.exp: set slow conditional watch
@@ -2970,7 +3014,126 @@ PASS: gdb.base/infnan.exp: print b
 Running ../../../gdb/testsuite/gdb.base/start.exp ...
 PASS: gdb.base/start.exp: start
 Running ../../../gdb/testsuite/gdb.base/callfuncs.exp ...
-XFAIL: gdb.base/callfuncs.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/callfuncs.exp: set print sevenbit-strings
+PASS: gdb.base/callfuncs.exp: set print address off
+PASS: gdb.base/callfuncs.exp: set width 0
+PASS: gdb.base/callfuncs.exp: set language c
+PASS: gdb.base/callfuncs.exp: set language to "c"
+PASS: gdb.base/callfuncs.exp: next to t_double_values
+PASS: gdb.base/callfuncs.exp: next to t_structs_c
+PASS: gdb.base/callfuncs.exp: retrieve original register contents
+PASS: gdb.base/callfuncs.exp: p t_char_values(0,0)
+PASS: gdb.base/callfuncs.exp: p t_char_values('a','b')
+PASS: gdb.base/callfuncs.exp: p t_char_values(char_val1,char_val2)
+PASS: gdb.base/callfuncs.exp: p t_char_values('a',char_val2)
+PASS: gdb.base/callfuncs.exp: p t_char_values(char_val1,'b')
+PASS: gdb.base/callfuncs.exp: p t_short_values(0,0)
+PASS: gdb.base/callfuncs.exp: p t_short_values(10,-23)
+PASS: gdb.base/callfuncs.exp: p t_short_values(short_val1,short_val2)
+PASS: gdb.base/callfuncs.exp: p t_short_values(10,short_val2)
+PASS: gdb.base/callfuncs.exp: p t_short_values(short_val1,-23)
+PASS: gdb.base/callfuncs.exp: p t_int_values(0,0)
+PASS: gdb.base/callfuncs.exp: p t_int_values(87,-26)
+PASS: gdb.base/callfuncs.exp: p t_int_values(int_val1,int_val2)
+PASS: gdb.base/callfuncs.exp: p t_int_values(87,int_val2)
+PASS: gdb.base/callfuncs.exp: p t_int_values(int_val1,-26)
+PASS: gdb.base/callfuncs.exp: p t_long_values(0,0)
+PASS: gdb.base/callfuncs.exp: p t_long_values(789,-321)
+PASS: gdb.base/callfuncs.exp: p t_long_values(long_val1,long_val2)
+PASS: gdb.base/callfuncs.exp: p t_long_values(789,long_val2)
+PASS: gdb.base/callfuncs.exp: p t_long_values(long_val1,-321)
+PASS: gdb.base/callfuncs.exp: p t_float_values(0.0,0.0)
+PASS: gdb.base/callfuncs.exp: p t_float_values(3.14159,-2.3765)
+PASS: gdb.base/callfuncs.exp: p t_float_values(float_val1,float_val2)
+PASS: gdb.base/callfuncs.exp: p t_float_values(3.14159,float_val2)
+PASS: gdb.base/callfuncs.exp: p t_float_values(float_val1,-2.3765)
+PASS: gdb.base/callfuncs.exp: p t_float_values2(0.0,0.0)
+PASS: gdb.base/callfuncs.exp: p t_float_values2(3.14159,float_val2)
+PASS: gdb.base/callfuncs.exp: Call function with many float arguments.
+PASS: gdb.base/callfuncs.exp: p t_small_values(1,2,3,4,5,6,7,8,9,10)
+PASS: gdb.base/callfuncs.exp: p t_double_values(0.0,0.0)
+PASS: gdb.base/callfuncs.exp: p t_double_values(45.654,-67.66)
+PASS: gdb.base/callfuncs.exp: p t_double_values(double_val1,double_val2)
+PASS: gdb.base/callfuncs.exp: p t_double_values(45.654,double_val2)
+PASS: gdb.base/callfuncs.exp: p t_double_values(double_val1,-67.66)
+PASS: gdb.base/callfuncs.exp: Call function with many double arguments.
+PASS: gdb.base/callfuncs.exp: p t_double_int(99.0, 1)
+PASS: gdb.base/callfuncs.exp: p t_double_int(99.0, 99)
+PASS: gdb.base/callfuncs.exp: p t_int_double(99, 1.0)
+PASS: gdb.base/callfuncs.exp: p t_int_double(99, 99.0)
+PASS: gdb.base/callfuncs.exp: p t_string_values(string_val2,string_val1)
+PASS: gdb.base/callfuncs.exp: p t_string_values(string_val1,string_val2)
+PASS: gdb.base/callfuncs.exp: p t_string_values("string 1","string 2")
+PASS: gdb.base/callfuncs.exp: p t_string_values("string 1",string_val2)
+PASS: gdb.base/callfuncs.exp: p t_string_values(string_val1,"string 2")
+PASS: gdb.base/callfuncs.exp: p t_char_array_values(char_array_val2,char_array_val1)
+PASS: gdb.base/callfuncs.exp: p t_char_array_values(char_array_val1,char_array_val2)
+PASS: gdb.base/callfuncs.exp: p t_char_array_values("carray 1","carray 2")
+PASS: gdb.base/callfuncs.exp: p t_char_array_values("carray 1",char_array_val2)
+PASS: gdb.base/callfuncs.exp: p t_char_array_values(char_array_val1,"carray 2")
+PASS: gdb.base/callfuncs.exp: p doubleit(4)
+PASS: gdb.base/callfuncs.exp: p add(4,5)
+PASS: gdb.base/callfuncs.exp: p t_func_values(func_val2,func_val1)
+PASS: gdb.base/callfuncs.exp: p t_func_values(func_val1,func_val2)
+PASS: gdb.base/callfuncs.exp: p function_struct.func(5)
+PASS: gdb.base/callfuncs.exp: p function_struct_ptr->func(10)
+PASS: gdb.base/callfuncs.exp: p t_func_values(add,func_val2)
+PASS: gdb.base/callfuncs.exp: p t_func_values(func_val1,doubleit)
+PASS: gdb.base/callfuncs.exp: p t_call_add(add,3,4)
+PASS: gdb.base/callfuncs.exp: p t_call_add(func_val1,3,4)
+PASS: gdb.base/callfuncs.exp: p t_enum_value1(enumval1)
+PASS: gdb.base/callfuncs.exp: p t_enum_value1(enum_val1)
+PASS: gdb.base/callfuncs.exp: p t_enum_value1(enum_val2)
+PASS: gdb.base/callfuncs.exp: p t_enum_value2(enumval2)
+PASS: gdb.base/callfuncs.exp: p t_enum_value2(enum_val2)
+PASS: gdb.base/callfuncs.exp: p t_enum_value2(enum_val1)
+PASS: gdb.base/callfuncs.exp: p sum_args(1,{2})
+PASS: gdb.base/callfuncs.exp: p sum_args(2,{2,3})
+PASS: gdb.base/callfuncs.exp: p sum_args(3,{2,3,4})
+PASS: gdb.base/callfuncs.exp: p sum_args(4,{2,3,4,5})
+PASS: gdb.base/callfuncs.exp: p sum10 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+PASS: gdb.base/callfuncs.exp: p cmp10 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns char
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns short
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns int
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns long
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns float
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns double
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns char *
+PASS: gdb.base/callfuncs.exp: register contents after gdb function calls
+PASS: gdb.base/callfuncs.exp: gdb function calls preserve register contents
+PASS: gdb.base/callfuncs.exp: stop at breakpoint in call dummy function
+PASS: gdb.base/callfuncs.exp: continue from call dummy breakpoint
+PASS: gdb.base/callfuncs.exp: bt after continuing from call dummy breakpoint
+PASS: gdb.base/callfuncs.exp: register contents after stop in call dummy
+PASS: gdb.base/callfuncs.exp: continue after stop in call dummy preserves register contents
+PASS: gdb.base/callfuncs.exp: call function causing a breakpoint then do a finish
+PASS: gdb.base/callfuncs.exp: finish from call dummy breakpoint returns correct value
+PASS: gdb.base/callfuncs.exp: bt after finishing from call dummy breakpoint
+PASS: gdb.base/callfuncs.exp: register contents after finish in call dummy
+PASS: gdb.base/callfuncs.exp: finish after stop in call dummy preserves register contents
+PASS: gdb.base/callfuncs.exp: call function causing a breakpoint and then do a return
+PASS: gdb.base/callfuncs.exp: back at main after return from call dummy breakpoint
+PASS: gdb.base/callfuncs.exp: register contents after return in call dummy
+PASS: gdb.base/callfuncs.exp: return after stop in call dummy preserves register contents
+PASS: gdb.base/callfuncs.exp: stop at nested call level 1
+PASS: gdb.base/callfuncs.exp: backtrace at nested call level 1
+PASS: gdb.base/callfuncs.exp: stop at nested call level 2
+PASS: gdb.base/callfuncs.exp: backtrace at nested call level 2
+PASS: gdb.base/callfuncs.exp: stop at nested call level 3
+PASS: gdb.base/callfuncs.exp: backtrace at nested call level 3
+PASS: gdb.base/callfuncs.exp: stop at nested call level 4
+PASS: gdb.base/callfuncs.exp: backtrace at nested call level 4
+PASS: gdb.base/callfuncs.exp: Finish from nested call level 4
+PASS: gdb.base/callfuncs.exp: backtrace after finish from nested call level 4
+PASS: gdb.base/callfuncs.exp: Finish from nested call level 3
+PASS: gdb.base/callfuncs.exp: backtrace after finish from nested call level 3
+PASS: gdb.base/callfuncs.exp: Finish from nested call level 2
+PASS: gdb.base/callfuncs.exp: backtrace after finish from nested call level 2
+PASS: gdb.base/callfuncs.exp: Finish from nested call level 1
+PASS: gdb.base/callfuncs.exp: backtrace after finish from nested call level 1
+PASS: gdb.base/callfuncs.exp: register contents after nested call dummies
+PASS: gdb.base/callfuncs.exp: nested call dummies preserve register contents
 Running ../../../gdb/testsuite/gdb.base/condbreak.exp ...
 PASS: gdb.base/condbreak.exp: breakpoint function
 PASS: gdb.base/condbreak.exp: break marker1 if 1==1
@@ -3699,12 +3862,12 @@ PASS: gdb.base/charset.exp: typedef to wchar_t
 PASS: gdb.base/charset.exp: undefined concatenation of UTF-16 and UTF-32
 UNSUPPORTED: gdb.base/charset.exp: python support is disabled
 PASS: gdb.base/charset.exp: EVAL_SKIP cleanup handling regression test
-FAIL: gdb.base/charset.exp: Assign String16 with prefix u
-FAIL: gdb.base/charset.exp: Display String String16 with x/hs
-FAIL: gdb.base/charset.exp: Assign String32 with prefix U
-FAIL: gdb.base/charset.exp: Display String String32 with x/ws
-FAIL: gdb.base/charset.exp: Assign String32 with prefix L
-FAIL: gdb.base/charset.exp: Display String String32 with x/ws
+PASS: gdb.base/charset.exp: Assign String16 with prefix u
+PASS: gdb.base/charset.exp: Display String String16 with x/hs
+PASS: gdb.base/charset.exp: Assign String32 with prefix U
+PASS: gdb.base/charset.exp: Display String String32 with x/ws
+PASS: gdb.base/charset.exp: Assign String32 with prefix L
+PASS: gdb.base/charset.exp: Display String String32 with x/ws
 Running ../../../gdb/testsuite/gdb.base/mips_pro.exp ...
 PASS: gdb.base/mips_pro.exp: backtrace
 Running ../../../gdb/testsuite/gdb.base/page.exp ...
@@ -4215,7 +4378,13 @@ PASS: gdb.base/store.exp: set variable u = f_4, u.k = F_4.k
 PASS: gdb.base/store.exp: F_4.k
 Running ../../../gdb/testsuite/gdb.base/sigaltstack.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-strs.exp ...
-XFAIL: gdb.base/call-strs.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/call-strs.exp: set print sevenbit-strings
+PASS: gdb.base/call-strs.exp: set print address off
+PASS: gdb.base/call-strs.exp: set width 0
+PASS: gdb.base/call-strs.exp: step after assignment to s
+PASS: gdb.base/call-strs.exp: next over strcpy
+PASS: gdb.base/call-strs.exp: print buf
+PASS: gdb.base/call-strs.exp: print s
 Running ../../../gdb/testsuite/gdb.base/fullname.exp ...
 PASS: gdb.base/fullname.exp: set breakpoint by full path before loading symbols - built absolute
 PASS: gdb.base/fullname.exp: set breakpoint at main - built absolute
@@ -5176,7 +5345,12 @@ PASS: gdb.base/pointers.exp: ptype pppppC
 PASS: gdb.base/pointers.exp: ptype ppppppC
 PASS: gdb.base/pointers.exp: p instance.array_variable + 0
 Running ../../../gdb/testsuite/gdb.base/call-rt-st.exp ...
-XFAIL: gdb.base/call-rt-st.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/call-rt-st.exp: set print sevenbit-strings
+PASS: gdb.base/call-rt-st.exp: set print address off
+PASS: gdb.base/call-rt-st.exp: set width 0
+PASS: gdb.base/call-rt-st.exp: breakpoint loop_count
+PASS: gdb.base/call-rt-st.exp: continue to loop_count
+PASS: gdb.base/call-rt-st.exp: finish out from loop_count (line 777)
 Running ../../../gdb/testsuite/gdb.base/radix.exp ...
 PASS: gdb.base/radix.exp: initialize radix, input radix 2
 PASS: gdb.base/radix.exp: set input-radix 2
@@ -5410,7 +5584,7 @@ PASS: gdb.base/dump.exp: array as value, srec; value restored ok
 PASS: gdb.base/dump.exp: struct as value, srec; file restored ok
 PASS: gdb.base/dump.exp: struct as value, srec; capture intstruct
 PASS: gdb.base/dump.exp: struct as value, srec; value restored ok
-FAIL: gdb.base/dump.exp: zero all
+PASS: gdb.base/dump.exp: zero all
 PASS: gdb.base/dump.exp: array as memory, srec; file restored ok
 PASS: gdb.base/dump.exp: array as memory, srec; capture intarray
 PASS: gdb.base/dump.exp: array as memory, srec; value restored ok
@@ -5499,31 +5673,31 @@ PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, srec; file restored ok
 PASS: gdb.base/dump.exp: array partial, srec; capture intarray[3]
 PASS: gdb.base/dump.exp: array partial, srec; value restored ok
-FAIL: gdb.base/dump.exp: element 2 not changed - 1
-FAIL: gdb.base/dump.exp: element 4 not changed - 1
+PASS: gdb.base/dump.exp: element 2 not changed - 1
+PASS: gdb.base/dump.exp: element 4 not changed - 1
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, ihex; file restored ok
 PASS: gdb.base/dump.exp: array partial, ihex; capture intarray[3]
 PASS: gdb.base/dump.exp: array partial, ihex; value restored ok
-FAIL: gdb.base/dump.exp: element 2 not changed - 2
-FAIL: gdb.base/dump.exp: element 4 not changed - 2
+PASS: gdb.base/dump.exp: element 2 not changed - 2
+PASS: gdb.base/dump.exp: element 4 not changed - 2
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, tekhex; file restored ok
 PASS: gdb.base/dump.exp: array partial, tekhex; capture intarray[3]
 PASS: gdb.base/dump.exp: array partial, tekhex; value restored ok
-FAIL: gdb.base/dump.exp: element 2 not changed - 3
-FAIL: gdb.base/dump.exp: element 4 not changed - 3
+PASS: gdb.base/dump.exp: element 2 not changed - 3
+PASS: gdb.base/dump.exp: element 4 not changed - 3
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, binary; file restored ok
 PASS: gdb.base/dump.exp: array partial, binary; capture intarray[3]
 PASS: gdb.base/dump.exp: array partial, binary; value restored ok
-FAIL: gdb.base/dump.exp: element 2 not changed - 4
-FAIL: gdb.base/dump.exp: element 4 not changed - 4
+PASS: gdb.base/dump.exp: element 2 not changed - 4
+PASS: gdb.base/dump.exp: element 4 not changed - 4
 PASS: gdb.base/dump.exp: array partial with expressions; file restored ok
 PASS: gdb.base/dump.exp: array partial with expressions; capture intarray2[3]
 PASS: gdb.base/dump.exp: array partial with expressions; value restored ok
-FAIL: gdb.base/dump.exp: element 2 not changed, == 4
-FAIL: gdb.base/dump.exp: element 4 not changed, == 4
+PASS: gdb.base/dump.exp: element 2 not changed, == 4
+PASS: gdb.base/dump.exp: element 4 not changed, == 4
 Running ../../../gdb/testsuite/gdb.base/setshow.exp ...
 PASS: gdb.base/setshow.exp: default annotation_level is zero
 PASS: gdb.base/setshow.exp: set annotate 2
@@ -6376,8 +6550,19 @@ PASS: gdb.base/printcmds.exp: p parrays->array5
 PASS: gdb.base/printcmds.exp: p &parrays->array5
 PASS: gdb.base/printcmds.exp: set print address off
 PASS: gdb.base/printcmds.exp: set print elements 50
-XFAIL: gdb.base/printcmds.exp: This target can not call functions (PRMS 2416)
-XFAIL: gdb.base/printcmds.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/printcmds.exp: p "a string"
+PASS: gdb.base/printcmds.exp: p "embedded \000 null"
+PASS: gdb.base/printcmds.exp: p "abcd"[2]
+PASS: gdb.base/printcmds.exp: p sizeof ("abcdef")
+PASS: gdb.base/printcmds.exp: ptype "foo"
+PASS: gdb.base/printcmds.exp: p *"foo"
+PASS: gdb.base/printcmds.exp: ptype *"foo"
+PASS: gdb.base/printcmds.exp: p &*"foo"
+PASS: gdb.base/printcmds.exp: ptype &*"foo"
+PASS: gdb.base/printcmds.exp: p (char *)"foo"
+PASS: gdb.base/printcmds.exp: print {'a','b','c'}
+PASS: gdb.base/printcmds.exp: print {4,5,6}[2]
+PASS: gdb.base/printcmds.exp: print *&{4,5,6}[1]
 PASS: gdb.base/printcmds.exp: print some_volatile_enum
 PASS: gdb.base/printcmds.exp: printf "x=%d,y=%d,z=%d\n", 5, 6, 7
 PASS: gdb.base/printcmds.exp: printf "string=%.4sxx\n", teststring
@@ -6476,9 +6661,9 @@ PASS: gdb.base/sepdebug.exp: set breakpoint via convenience variable
 PASS: gdb.base/sepdebug.exp: set convenience variable $foo to 81.5
 PASS: gdb.base/sepdebug.exp: set breakpoint via non-integer convenience variable disallowed
 PASS: gdb.base/sepdebug.exp: set breakpoint on to-be-called function
-FAIL: gdb.base/sepdebug.exp: hit breakpoint on called function
-FAIL: gdb.base/sepdebug.exp: backtrace while in called function
-FAIL: gdb.base/sepdebug.exp: finish from called function
+PASS: gdb.base/sepdebug.exp: hit breakpoint on called function
+PASS: gdb.base/sepdebug.exp: backtrace while in called function
+PASS: gdb.base/sepdebug.exp: finish from called function
 PASS: gdb.base/sepdebug.exp: finish with arguments disallowed
 PASS: gdb.base/sepdebug.exp: finish from outermost frame disallowed
 PASS: gdb.base/sepdebug.exp: kill program
@@ -6556,7 +6741,7 @@ PASS: gdb.base/dup-sect.exp: var1 after strip
 PASS: gdb.base/dup-sect.exp: var2 after strip
 Running ../../../gdb/testsuite/gdb.base/solib-corrupted.exp ...
 Running ../../../gdb/testsuite/gdb.base/callexit.exp ...
-XFAIL: gdb.base/callexit.exp: This target can not call functions (PRMS 2416)
+PASS: gdb.base/callexit.exp: inferior function call terminated program
 Running ../../../gdb/testsuite/gdb.base/reread.exp ...
 PASS: gdb.base/reread.exp: breakpoint foo in first file
 PASS: gdb.base/reread.exp: run to foo()
@@ -6755,7 +6940,168 @@ Running ../../../gdb/testsuite/gdb.base/siginfo-addr.exp ...
 Running ../../../gdb/testsuite/gdb.base/float.exp ...
 PASS: gdb.base/float.exp: info float (unknown target)
 Running ../../../gdb/testsuite/gdb.base/call-sc.exp ...
-XFAIL: gdb.base/call-sc.exp: This target can not call functions
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-tc (char)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-tc char
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-tc
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-tc
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-tc
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-tc
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-tc
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-tc
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-tc
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-tc
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-tc
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-tc
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-tc
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-tc
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-ts (short int)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-ts short int
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-ts
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-ts
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-ts
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-ts
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-ts
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-ts
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-ts
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-ts
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-ts
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-ts
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-ts
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-ts
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-ti (int)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-ti int
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-ti
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-ti
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-ti
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-ti
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-ti
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-ti
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-ti
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-ti
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-ti
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-ti
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-ti
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-ti
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-tl (long int)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-tl long int
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-tl
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-tl
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-tl
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-tl
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-tl
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-tl
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-tl
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-tl
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-tl
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-tl
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-tl
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-tl
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-tll (long long int)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-tll long long int
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-tll
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-tll
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-tll
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-tll
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-tll
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-tll
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-tll
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-tll
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-tll
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-tll
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-tll
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-tll
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-tf (float)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-tf float
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-tf
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-tf
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-tf
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-tf
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-tf
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-tf
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-tf
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-tf
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-tf
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-tf
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-tf
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-tf
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-td (double)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-td double
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-td
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-td
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-td
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-td
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-td
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-td
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-td
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-td
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-td
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-td
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-td
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-td
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-tld (long double)
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-tld long double
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-tld
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-tld
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-tld
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-tld
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-tld
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-tld
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-tld
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-tld
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-tld
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-tld
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-tld
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-tld
+PASS: gdb.base/call-sc.exp: set print sevenbit-strings
+PASS: gdb.base/call-sc.exp: set print address off
+PASS: gdb.base/call-sc.exp: set width 0
+PASS: gdb.base/call-sc.exp: ptype; call-sc-te (enum {e = 49})
+PASS: gdb.base/call-sc.exp: ptype foo; call-sc-te enum {e = 49}
+PASS: gdb.base/call-sc.exp: p/c fun(); call call-sc-te
+PASS: gdb.base/call-sc.exp: call Fun(foo); call call-sc-te
+PASS: gdb.base/call-sc.exp: p/c L; call call-sc-te
+PASS: gdb.base/call-sc.exp: advance to fun for return; return call-sc-te
+PASS: gdb.base/call-sc.exp: zed L for return; return call-sc-te
+PASS: gdb.base/call-sc.exp: return foo; return call-sc-te
+PASS: gdb.base/call-sc.exp: return foo; synchronize pc to main()
+PASS: gdb.base/call-sc.exp: value foo returned; return call-sc-te
+PASS: gdb.base/call-sc.exp: advance to fun for finish; return call-sc-te
+PASS: gdb.base/call-sc.exp: zed L for finish; return call-sc-te
+PASS: gdb.base/call-sc.exp: finish foo; return call-sc-te
+PASS: gdb.base/call-sc.exp: value foo finished; return call-sc-te
+PASS: gdb.base/call-sc.exp: return and finish use same convention; return call-sc-te
 Running ../../../gdb/testsuite/gdb.base/foll-exec.exp ...
 Running ../../../gdb/testsuite/gdb.base/readline.exp ...
 PASS: gdb.base/readline.exp: Simple operate-and-get-next - send p 1
@@ -6795,7 +7141,641 @@ Running ../../../gdb/testsuite/gdb.base/macscp.exp ...
 gdb compile failed, k1cc WARNING:  -g3 conflicts with -g; using latter value (-g)
 UNTESTED: gdb.base/macscp.exp: macscp.exp
 Running ../../../gdb/testsuite/gdb.base/structs.exp ...
-XFAIL: gdb.base/structs.exp: This target can not call functions
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: continue to breakpoint: chartest-done
+PASS: gdb.base/structs.exp: p chartest
+PASS: gdb.base/structs.exp: ptype foo1; structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 6 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 6 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 6 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 7 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 7 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 7 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 8 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 8 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 8 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 9 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 9 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 9 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 10 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 10 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 10 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 11 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 11 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 11 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 12 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 12 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 12 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 13 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 13 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 13 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 14 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 14 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 14 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 15 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 15 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 15 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 16 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 16 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 16 structs-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 17 structs-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 17 structs-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 17 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 3 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 3 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 3 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 3 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 3 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 3 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 3 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 3 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 3 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 4 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 4 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 4 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 4 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 4 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 4 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 4 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 4 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 4 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 5 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 5 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 5 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 5 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 5 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 5 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 5 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 5 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 5 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 6 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 6 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 6 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 6 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 6 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 6 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 6 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 6 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 6 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 7 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 7 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 7 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 7 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 7 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 7 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 7 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 7 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 7 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 8 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 8 structs-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 8 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 8 structs-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 8 structs-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 8 structs-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 8 structs-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 8 structs-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 8 structs-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-ts
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-ts
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-ts
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-ts
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-ts
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-ts
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 3 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for return; return 3 structs-ts
+PASS: gdb.base/structs.exp: return foo<n>; return 3 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> returned; return 3 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 3 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 3 structs-ts
+PASS: gdb.base/structs.exp: finish foo<n>; return 3 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> finished; return 3 structs-ts
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 3 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 4 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for return; return 4 structs-ts
+PASS: gdb.base/structs.exp: return foo<n>; return 4 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> returned; return 4 structs-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 4 structs-ts
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 4 structs-ts
+PASS: gdb.base/structs.exp: finish foo<n>; return 4 structs-ts
+PASS: gdb.base/structs.exp: value foo<n> finished; return 4 structs-ts
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 4 structs-ts
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-ti
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-ti
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-ti
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-ti
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-ti
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-ti
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-ti
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-ti
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-ti
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-ti
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-ti
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-ti
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-ti
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-ti
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-ti
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-ti
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-ti
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-ti
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-ti
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-ti
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-ti
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-ti
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-ti
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-ti
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-ti
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-ti
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-ti
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-ti
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-tl
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-tl
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-tl
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-tl
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tl
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tl
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tl
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tl
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tl
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tl
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-tl
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-tl
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-tl
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-tl
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-tl
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-tl
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-tl
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-tl
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-tl
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tl
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tl
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tl
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tl
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tl
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tl
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tl
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tl
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tl
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-tll
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-tll
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-tll
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-tll
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tll
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tll
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tll
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-tll
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-tll
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-tll
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-tll
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-tll
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-tll
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-tll
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-tll
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-tll
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tf
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-tf
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-tf
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-tf
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-tf
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-tf
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-tf
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-tf
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-tf
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-tf
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tf
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tf
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tf
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tf
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tf
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tf
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tf
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tf
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tf
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-td
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-td
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-td
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-td
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-td
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-td
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-td
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-td
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-td
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-td
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-td
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-td
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-td
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-td
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-td
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-td
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo1; structs-tld
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 1 structs-tld
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 1 structs-tld
+PASS: gdb.base/structs.exp: p/c L<n>; call 1 structs-tld
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tld
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tld
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tld
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 1 structs-tld
+PASS: gdb.base/structs.exp: zed L<n> for return; return 1 structs-tld
+PASS: gdb.base/structs.exp: return foo<n>; return 1 structs-tld
+PASS: gdb.base/structs.exp: value foo<n> returned; return 1 structs-tld
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 1 structs-tld
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 1 structs-tld
+PASS: gdb.base/structs.exp: finish foo<n>; return 1 structs-tld
+PASS: gdb.base/structs.exp: value foo<n> finished; return 1 structs-tld
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 1 structs-tld
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 6 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 6 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 6 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 7 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 7 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 7 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 8 structs-ts-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 8 structs-ts-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 8 structs-ts-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-ts-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-ti-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-ti-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-ti-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-ti-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-ti-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 6 structs-ti-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 6 structs-ti-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 6 structs-ti-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-ti-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tl-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tl-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tl-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tl-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-tl-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 6 structs-tl-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 6 structs-tl-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 6 structs-tl-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tl-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tll-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tll-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tll-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tll-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tf-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tf-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tf-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tf-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-tf-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 6 structs-tf-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 6 structs-tf-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 6 structs-tf-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tf-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-td-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-td-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-td-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-td-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tld-tc
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tld-tc
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tld-tc
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tld-tc
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tc-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tc-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 5 structs-tc-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 5 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 5 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 6 structs-tc-ts
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 6 structs-tc-ts
+PASS: gdb.base/structs.exp: p/c L<n>; call 6 structs-tc-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tc-ts
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-ti
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-ti
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-ti
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-ti
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tc-ti
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tc-ti
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tc-ti
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tc-ti
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tc-ti
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tc-ti
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tc-ti
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-tl
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-tl
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-tl
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-tl
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tc-tl
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tc-tl
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tc-tl
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tc-tl
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tc-tl
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tc-tl
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tc-tl
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-tll
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-tll
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-tll
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-tll
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 3 structs-tc-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 3 structs-tc-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 3 structs-tc-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 4 structs-tc-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 4 structs-tc-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 4 structs-tc-tf
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-td
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-td
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-td
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-td
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tc-tld
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tc-tld
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tc-tld
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tc-tld
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-td-tf
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-td-tf
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-td-tf
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-td-tf
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-td-tf
+PASS: gdb.base/structs.exp: set print sevenbit-strings
+PASS: gdb.base/structs.exp: set print address off
+PASS: gdb.base/structs.exp: set width 0
+PASS: gdb.base/structs.exp: set print elements 300
+PASS: gdb.base/structs.exp: ptype foo2; structs-tf-td
+PASS: gdb.base/structs.exp: p/c fun<n>(); call 2 structs-tf-td
+PASS: gdb.base/structs.exp: call Fun<n>(foo<n>); call 2 structs-tf-td
+PASS: gdb.base/structs.exp: p/c L<n>; call 2 structs-tf-td
+PASS: gdb.base/structs.exp: advance to fun<n> for return; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: zed L<n> for return; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: return foo<n>; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: value foo<n> returned; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: advance to fun<n> for finish; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: zed L<n> for finish; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: finish foo<n>; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: value foo<n> finished; return 2 structs-tf-td
+PASS: gdb.base/structs.exp: return value known implies finish value known; return 2 structs-tf-td
 Running ../../../gdb/testsuite/gdb.base/bang.exp ...
 PASS: gdb.base/bang.exp: run program
 Running ../../../gdb/testsuite/gdb.base/dfp-exprs.exp ...
@@ -7304,7 +8284,7 @@ Running ../../../gdb/testsuite/gdb.base/signull.exp ...
 Running ../../../gdb/testsuite/gdb.base/value-double-free.exp ...
 PASS: gdb.base/value-double-free.exp: watch var
 PASS: gdb.base/value-double-free.exp: continue
-FAIL: gdb.base/value-double-free.exp: print empty()
+PASS: gdb.base/value-double-free.exp: print empty()
 PASS: gdb.base/value-double-free.exp: help help
 Running ../../../gdb/testsuite/gdb.base/randomize.exp ...
 UNTESTED: gdb.base/randomize.exp: Disabling randomization is not supported on this GDB platform
@@ -7364,10 +8344,10 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		6944
-# of unexpected failures	50
+# of expected passes		7959
+# of unexpected failures	26
 # of unexpected successes	2
-# of expected failures		42
+# of expected failures		31
 # of unknown successes		2
 # of known failures		2
 # of unresolved testcases	1
