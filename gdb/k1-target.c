@@ -81,18 +81,14 @@ Use the \"file\" or \"exec-file\" command."));
     while (arg && *arg++) nb_da_args++;
 
     stub_args = xmalloc ((nb_args+7)*sizeof (char*));
-    stub_args[argidx++] = "gdb_stub";
+    stub_args[argidx++] = "runner";
     if (nb_da_args && strlen (da_options)) {
-	stub_args[argidx++] = "--da";
-	stub_args[argidx++] = calloc (strlen (da_options) + 1, 1);
-	arg = da_args;
 	while (*arg) {
-	    strcat (stub_args[argidx-1], *arg++);
-	    if (*arg) strcat (stub_args[argidx-1], ",");
+	    stub_args[argidx++] = *arg++;
 	}
     }
-    stub_args[argidx++] = "-s";
-    stub_args[argidx++] = ":1337";
+    stub_args[argidx++] = "--gdb";
+    stub_args[argidx++] = "--";
     stub_args[argidx++] = exec_file;
     memcpy (stub_args + argidx,  argv_args, (nb_args+1)*sizeof (char*));
 
@@ -121,35 +117,27 @@ Use the \"file\" or \"exec-file\" command."));
 	/* Child */
 	if (env)
 	    environ = env;
-	execvp ("gdb_stub", stub_args);
+	execvp ("runner", stub_args);
 	
 	/* Not in PATH */
 	if (readlink ("/proc/self/exe", tmp, PATH_MAX) != -1) {
 	    dir = dirname (tmp);
-	    snprintf (path, PATH_MAX, "%s/gdb_stub", dir);
+	    snprintf (path, PATH_MAX, "%s/runner", dir);
 	    execvp (path, stub_args);
 	}
 
 	printf_unfiltered ("Could not find gdb_stub in you PATH\n");
 	exit (1);
     } else {
-	char *line = NULL, *port_str, *cmd_port;
-	size_t linesize;
-	FILE *pipefile;
-	char tmp [1000];
+	int port;
+	char *cmd_port;
 
 	close (pipefds[1]);
-	pipefile = fdopen(pipefds[0], "r");
-	if (getline (&line, &linesize, pipefile) < 0)
-	    error ("Failed to read debug server port.");
-	fclose (pipefile);
-	port_str = strrchr (line, ' ') ;
-	if (!port_str)
-	    error ("Failed to read debug server port.");
+	read (pipefds[0], &port, sizeof(port));
+	close (pipefds[0]);
+	
 	cmd_port = strchr(tar_remote_cmd, ':');
-
-	strcpy (cmd_port+1, port_str+1);
-	free (line);
+	sprintf (cmd_port + 1, "%i", port);
     }
 
     /* Load the real debug target by issuing 'target remote'. Of
