@@ -1,3 +1,36 @@
+2010-08-24  Doug Evans  <dje@google.com>
+
+	PR symtab/11942
+	* gdb.dwarf2/dw4-sig-types.cc: New file.
+	* gdb.dwarf2/dw4-sig-types.h: New file.
+	* gdb.dwarf2/dw4-sig-types-b.cc: New file.
+	* gdb.dwarf2/dw4-sig-types.exp: New file.
+
+2010-08-23  Tom Tromey  <tromey@redhat.com>
+
+	PR python/11145:
+	* gdb.python/py-value.c (Base, Derived): New types.
+	(base): New global.
+	* gdb.python/py-value.exp (test_subscript_regression): Add
+	dynamic_cast test.
+
+2010-08-23  Tom Tromey  <tromey@redhat.com>
+
+	PR python/10676:
+	* gdb.python/py-type.exp (test_fields): Add tests for type
+	equality.
+
+2010-08-23  Tom Tromey  <tromey@redhat.com>
+
+	PR python/11915:
+	* gdb.python/py-type.exp (test_fields): Add tests for array.
+
+2010-08-23  Keith Seitz  <keiths@redhat.com>
+
+	* gdb.dwarf2/dw2-double-set-die-type.S: DIE 0x51f does not
+	have any children. Create a new abbrev for it.
+	Add missing terminal sequence to .debug_abbrev.
+
 2010-08-20  Keith Seitz  <keiths@redhat.com>
 
 	PR symtab/11465:

@@ -1,3 +1,19 @@
+2010-08-24  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* gdb.texinfo (ARM Features): Document
+	org.gnu.gdb.arm.m-profile.
+
+2010-08-23  Tom Tromey  <tromey@redhat.com>
+
+	PR python/11145:
+	* gdb.texinfo (Values From Inferior): Document dynamic_cast and
+	reinterpret_cast methods.
+
+2010-08-23  Tom Tromey  <tromey@redhat.com>
+
+	PR python/11915:
+	* gdb.texinfo (Types In Python): Document array method.
+
 2010-08-18  Thiago Jung Bauermann  <bauerman@br.ibm.com>
 
 	* gdb.texinfo (PowerPC Embedded): Mention support for the DVC register.
