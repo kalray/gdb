@@ -7,7 +7,7 @@ ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 # RELEASE=y
 
 INCDIR = $(srcdir)/../include
-CSEARCH = -I. -I$(srcdir) -I$(INCDIR) -I$(FAMILY)/build/BE/GBU/$(ARCH)/bfd
+CSEARCH = -I. -I$(srcdir) -I$(INCDIR) -I$(FAMDIR)/build/BE/GBU/$(ARCH)/bfd
 
 SUBDIRS = doc po
 
