@@ -59,8 +59,9 @@ typedef union {
 #define _ELF_K1_CORE_BIT        (8)                      /* 1st bit position in 
                                                             byte */
 #define ELF_K1_CORE_MASK        (0xff<<_ELF_K1_CORE_BIT)           /* mask */
-#define ELF_K1_CORE_DP          (0x0<<_ELF_K1_CORE_BIT)
-#define ELF_K1_CORE_CP          (0x1<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_V1          (0x0<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_DP          (0x1<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_CP          (0x2<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_UNDEF       (0x7<<_ELF_K1_CORE_BIT)
 #define _ELF_K1_CHECK_CORE(m) ((m&ELF_K1_CORE_MASK)==m)
 
