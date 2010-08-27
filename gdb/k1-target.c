@@ -25,7 +25,7 @@
 static struct target_ops k1_target_ops;
 static char *da_options = NULL;
 
-static const char *simulation_vehicles[] = { "mppa_tlm", "runner", NULL };
+static const char *simulation_vehicles[] = { "runner", "mppa_tlm", NULL };
 static const char *simulation_vehicle;
 
 pid_t server_pid;
