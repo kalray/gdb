@@ -8,9 +8,9 @@ static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-#define K1DP_K1CP
+#define K1V1_K1DP_K1CP
 #include "elf32-k1.def"
-#undef K1DP_K1CP
+#undef K1V1_K1DP_K1CP
 
 struct k1_reloc_map
 {
