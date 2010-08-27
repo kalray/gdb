@@ -432,7 +432,8 @@ k1_frame_this_id (struct frame_info *this_frame,
 		  void **this_prologue_cache, struct frame_id *this_id)
 {
     if (get_frame_func (this_frame) == get_frame_pc (this_frame)) {
-	*this_id = frame_id_build (get_frame_sp (this_frame), get_frame_func (this_frame));
+	*this_id = frame_id_build (get_frame_sp (this_frame) - 16, 
+				   get_frame_func (this_frame));
     }
     /* struct k1_frame_cache *cache = k1_frame_cache (this_frame, */
     /* 						   this_prologue_cache); */
@@ -483,6 +484,19 @@ static const struct frame_unwind k1_frame_unwind = {
     default_frame_sniffer
 };
 
+static void
+k1_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
+		   struct dwarf2_frame_state_reg *reg,
+		   struct frame_info *this_frame)
+{
+    if (regnum == gdbarch_pc_regnum (gdbarch))
+	reg->how = DWARF2_FRAME_REG_RA;
+    else if (regnum == gdbarch_sp_regnum (gdbarch)) {
+	reg->how = DWARF2_FRAME_REG_CFA_OFFSET;
+	reg->loc.offset = -16; /* Scratch area */
+    }
+}
+
 static int k1_print_insn (bfd_vma pc, disassemble_info *di)
 {
     return print_insn_k1 (pc, di);
@@ -499,7 +513,7 @@ k1_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, 
 					      gdbarch_sp_regnum (gdbarch));
-  return frame_id_build (sp, get_frame_pc (this_frame));
+  return frame_id_build (sp+16, get_frame_pc (this_frame));
 }
 
 static CORE_ADDR
@@ -557,7 +571,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
 				  sp);
   regcache_cooked_write_unsigned (regcache, tdep->ra_regnum, bp_addr);
 
-  return sp;
+  return sp+16;
 }
 
 static void k1_store_return_value (struct gdbarch *gdbarch,
@@ -749,6 +763,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_pseudo_register_read (gdbarch, k1_pseudo_register_read);
   set_gdbarch_pseudo_register_write (gdbarch, k1_pseudo_register_write);
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1_dwarf2_reg_to_regnum);
+  dwarf2_frame_set_init_reg (gdbarch, k1_dwarf2_frame_init_reg);
 
   set_gdbarch_return_value (gdbarch, k1_return_value);
   set_gdbarch_push_dummy_call (gdbarch, k1_push_dummy_call);
