@@ -25,6 +25,9 @@
 static struct target_ops k1_target_ops;
 static char *da_options = NULL;
 
+static const char *simulation_vehicles[] = { "mppa_tlm", "runner", NULL };
+static const char *simulation_vehicle;
+
 pid_t server_pid;
 
 static void 
@@ -57,6 +60,51 @@ static void k1_target_mourn_inferior (struct target_ops *target)
 
 static void k1_target_create_inferior (struct target_ops *ops, 
 				       char *exec_file, char *args,
+				       char **env, int from_tty);
+
+void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
+{
+    char tar_remote_cmd[] = "target extended-remote :        ";
+    int saved_batch_silent = batch_silent;
+    struct observer *new_thread_observer;
+    char *cmd_port;
+
+    parse_pid_to_attach (args);
+
+    cmd_port = strchr(tar_remote_cmd, ':');
+    sprintf (cmd_port + 1, "%s", args);
+
+    /* Load the real debug target by issuing 'target remote'. Of
+       course things aren't that simple because it's not meant to be
+       used that way. One issue is that connecting to the gdb_stub
+       will emit MI stop notifications and will print the initial
+       frame at the connection point. BATCH_SILENT removes the frame
+       display (see infrun.c) and the ugly hack with the observer
+       makes infrun believe that we're in a series of steps and thus
+       inhibits the emission of the new_thread observer notification
+       that prints the initial MI *stopped message. */
+    batch_silent = 1;
+    new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
+    /* tar remote */
+    execute_command (tar_remote_cmd, 0);
+    /* Remove hacks*/
+    observer_detach_new_thread (new_thread_observer);
+    batch_silent = saved_batch_silent;
+    inferior_thread ()->step_multi = 0;
+    current_inferior ()->stop_soon = NO_STOP_QUIETLY;
+
+    /* Our target vector has been poped from the target stack by
+       'target remote'. If we want to keep the ability to 'run', we
+       need to equip the remote target vector with our create_inferior
+       implementation. */
+    ops = find_target_beneath(&current_target);
+    ops->to_create_inferior = k1_target_create_inferior;
+    ops->to_attach = k1_target_attach;
+    ops->to_mourn_inferior = k1_target_mourn_inferior;
+}
+
+static void k1_target_create_inferior (struct target_ops *ops, 
+				       char *exec_file, char *args,
 				       char **env, int from_tty)
 {
     char **argv_args = gdb_buildargv (args);
@@ -64,9 +112,6 @@ static void k1_target_create_inferior (struct target_ops *ops,
     char **stub_args;
     char **arg;
     int nb_args = 0, nb_da_args = 0;
-    char tar_remote_cmd[] = "target extended-remote :        ";
-    int saved_batch_silent = batch_silent;
-    struct observer *new_thread_observer;
     int pipefds[2];
     int port;
     int argidx = 0;
@@ -81,8 +126,9 @@ Use the \"file\" or \"exec-file\" command."));
     while (arg && *arg++) nb_da_args++;
 
     stub_args = xmalloc ((nb_args+7)*sizeof (char*));
-    stub_args[argidx++] = "runner";
+    stub_args[argidx++] = simulation_vehicle;
     if (nb_da_args && strlen (da_options)) {
+	arg = da_args;
 	while (*arg) {
 	    stub_args[argidx++] = *arg++;
 	}
@@ -117,64 +163,29 @@ Use the \"file\" or \"exec-file\" command."));
 	/* Child */
 	if (env)
 	    environ = env;
-	execvp ("runner", stub_args);
+	execvp (simulation_vehicle, stub_args);
 	
 	/* Not in PATH */
 	if (readlink ("/proc/self/exe", tmp, PATH_MAX) != -1) {
 	    dir = dirname (tmp);
-	    snprintf (path, PATH_MAX, "%s/runner", dir);
+	    snprintf (path, PATH_MAX, "%s/%s", dir, simulation_vehicle);
 	    execvp (path, stub_args);
 	}
 
-	printf_unfiltered ("Could not find gdb_stub in you PATH\n");
+	printf_unfiltered ("Could not find %s in you PATH\n", simulation_vehicle);
 	exit (1);
     } else {
 	int port;
-	char *cmd_port;
-
+	char cmd_port[10];
+	
 	close (pipefds[1]);
 	read (pipefds[0], &port, sizeof(port));
 	close (pipefds[0]);
 	
-	cmd_port = strchr(tar_remote_cmd, ':');
-	sprintf (cmd_port + 1, "%i", port);
+	sprintf (cmd_port, "%i", port);
+	k1_target_attach (ops, cmd_port, from_tty);
     }
 
-    /* Load the real debug target by issuing 'target remote'. Of
-       course things aren't that simple because it's not meant to be
-       used that way. One issue is that connecting to the gdb_stub
-       will emit MI stop notifications and will print the initial
-       frame at the connection point. BATCH_SILENT removes the frame
-       display (see infrun.c) and the ugly hack with the observer
-       makes infrun believe that we're in a series of steps and thus
-       inhibits the emission of the new_thread observer notification
-       that prints the initial MI *stopped message. */
-    batch_silent = 1;
-    new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
-    /* tar remote */
-    execute_command (tar_remote_cmd, 0);
-    /* Remove hacks*/
-    observer_detach_new_thread (new_thread_observer);
-    batch_silent = saved_batch_silent;
-    inferior_thread ()->step_multi = 0;
-    current_inferior ()->stop_soon = NO_STOP_QUIETLY;
-
-    /* Our target vector has been poped from the target stack by
-       'target remote'. If we want to keep the ability to 'run', we
-       need to equip the remote target vector with our create_inferior
-       implementation. */
-    ops = find_target_beneath(&current_target);
-    ops->to_create_inferior = k1_target_create_inferior;
-    ops->to_mourn_inferior = k1_target_mourn_inferior;
-}
-   
-void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
-{
-  pid_t pid;
-
-  parse_pid_to_attach (args);
-
-  k1_target_create_inferior (ops, "-a", args, NULL, from_tty);
 }
 
 static int
@@ -226,12 +237,14 @@ attach_mppa_command (char *args, int from_tty)
     execute_command (set_target_async_cmd, 0);
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
-    attach_command (args, from_tty);
+    k1_target_attach (&current_target, args, from_tty);
 }
 
 void
 _initialize_k1_target (void)
 {
+    simulation_vehicle = simulation_vehicles[0];
+    
     k1_target_ops.to_shortname = "k1-iss";
     k1_target_ops.to_longname = "K1 target runinng on simulation";
     k1_target_ops.to_doc = 
@@ -270,6 +283,12 @@ Configure various Kalray specific variables."),
 Set the options passed to the debug agent."), _("\
 Show the options passed to the debug agent."), NULL, NULL, NULL,
 				   &kalray_set_cmdlist, &kalray_show_cmdlist);
+
+    add_setshow_enum_cmd ("simulation_vehicle", class_maintenance,
+			  simulation_vehicles, &simulation_vehicle, _("\
+Set the simulation vehicle to use for execution."), _("\
+Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
+			  &kalray_set_cmdlist, &kalray_show_cmdlist);
 
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
