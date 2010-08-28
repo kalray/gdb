@@ -6816,6 +6816,7 @@ elf_lx_action_discarded (asection *sec)
 #define TARGET_LITTLE_SYM               bfd_elf32_littlelx_vec
 #define TARGET_LITTLE_NAME              "elf32-littlelx"
 #define ELF_ARCH			bfd_arch_lx
+#define ELF_TARGET_ID                   LX_ELF_DATA
 #define ELF_MACHINE_CODE		EM_LX
 #define ELF_MACHINE_ALT1		EM_LX_OLD
 #define ELF_MAXPAGESIZE         	64
