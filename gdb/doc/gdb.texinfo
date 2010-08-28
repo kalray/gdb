@@ -3711,7 +3711,7 @@ watchpoints, which do not slow down the running of your program.
 
 @table @code
 @kindex watch
-@item watch @var{expr} @r{[}thread @var{threadnum}@r{]}
+@item watch @r{[}-l@r{|}-location@r{]} @var{expr} @r{[}thread @var{threadnum}@r{]}
 Set a watchpoint for an expression.  @value{GDBN} will break when the
 expression @var{expr} is written into by the program and its value
 changes.  The simplest (and the most popular) use of this command is
@@ -3728,13 +3728,22 @@ change the value of @var{expr}, @value{GDBN} will not break.  Note
 that watchpoints restricted to a single thread in this way only work
 with Hardware Watchpoints.
 
+Ordinarily a watchpoint respects the scope of variables in @var{expr}
+(see below).  The @code{-location} argument tells @value{GDBN} to
+instead watch the memory referred to by @var{expr}.  In this case,
+@value{GDBN} will evaluate @var{expr}, take the address of the result,
+and watch the memory at that address.  The type of the result is used
+to determine the size of the watched memory.  If the expression's
+result does not have an address, then @value{GDBN} will print an
+error.
+
 @kindex rwatch
-@item rwatch @var{expr} @r{[}thread @var{threadnum}@r{]}
+@item rwatch @r{[}-l@r{|}-location@r{]} @var{expr} @r{[}thread @var{threadnum}@r{]}
 Set a watchpoint that will break when the value of @var{expr} is read
 by the program.
 
 @kindex awatch
-@item awatch @var{expr} @r{[}thread @var{threadnum}@r{]}
+@item awatch @r{[}-l@r{|}-location@r{]} @var{expr} @r{[}thread @var{threadnum}@r{]}
 Set a watchpoint that will break when @var{expr} is either read from
 or written into by the program.
 
@@ -18463,6 +18472,19 @@ Set suspend trace mode.
 @node PowerPC Embedded
 @subsection PowerPC Embedded
 
+@cindex DVC register
+@value{GDBN} supports using the DVC (Data Value Compare) register to
+implement in hardware simple hardware watchpoint conditions of the form:
+
+@smallexample
+(@value{GDBP}) watch @var{ADDRESS|VARIABLE} \
+  if  @var{ADDRESS|VARIABLE} == @var{CONSTANT EXPRESSION}
+@end smallexample
+
+The DVC register will be automatically used whenever @value{GDBN} detects
+such pattern in a condition expression.  This feature is available in native
+@value{GDBN} running on a Linux kernel version 2.6.34 or newer.
+
 @value{GDBN} provides the following PowerPC-specific commands:
 
 @table @code
@@ -20770,6 +20792,16 @@ The result @code{bar} will be a @code{gdb.Value} object holding the
 value pointed to by @code{foo}.
 @end defmethod
 
+@defmethod Value dynamic_cast type
+Like @code{Value.cast}, but works as if the C@t{++} @code{dynamic_cast}
+operator were used.  Consult a C@t{++} reference for details.
+@end defmethod
+
+@defmethod Value reinterpret_cast type
+Like @code{Value.cast}, but works as if the C@t{++} @code{reinterpret_cast}
+operator were used.  Consult a C@t{++} reference for details.
+@end defmethod
+
 @defmethod Value string @r{[}encoding@r{]} @r{[}errors@r{]} @r{[}length@r{]}
 If this @code{gdb.Value} represents a string, then this method
 converts the contents to a Python string.  Otherwise, this method will
@@ -20914,6 +20946,15 @@ this will be zero; in this case the field's size is given by its type.
 The type of the field.  This is usually an instance of @code{Type},
 but it can be @code{None} in some situations.
 @end table
+@end defmethod
+
+@defmethod Type array @var{n1} @r{[}@var{n2}@r{]}
+Return a new @code{gdb.Type} object which represents an array of this
+type.  If one argument is given, it is the inclusive upper bound of
+the array; in this case the lower bound is zero.  If two arguments are
+given, the first argument is the lower bound of the array, and the
+second argument is the upper bound of the array.  An array's length
+must not be negative, but the bounds can be.
 @end defmethod
 
 @defmethod Type const
@@ -35606,9 +35647,15 @@ registers using the capitalization used in the description.
 @subsection ARM Features
 @cindex target descriptions, ARM features
 
-The @samp{org.gnu.gdb.arm.core} feature is required for ARM targets.
+The @samp{org.gnu.gdb.arm.core} feature is required for non-M-profile
+ARM targets.
 It should contain registers @samp{r0} through @samp{r13}, @samp{sp},
 @samp{lr}, @samp{pc}, and @samp{cpsr}.
+
+For M-profile targets (e.g. Cortex-M3), the @samp{org.gnu.gdb.arm.core}
+feature is replaced by @samp{org.gnu.gdb.arm.m-profile}.  It should contain
+registers @samp{r0} through @samp{r13}, @samp{sp}, @samp{lr}, @samp{pc},
+and @samp{xpsr}.
 
 The @samp{org.gnu.gdb.arm.fpa} feature is optional.  If present, it
 should contain registers @samp{f0} through @samp{f7} and @samp{fps}.
