@@ -244,6 +244,7 @@ k1_elf_relocate_section
 #define TARGET_LITTLE_SYM         bfd_elf32_k1_vec
 #define TARGET_LITTLE_NAME        "elf32-k1"
 #define ELF_ARCH                  bfd_arch_k1
+#define ELF_TARGET_ID             K1_ELF_DATA
 #define ELF_MACHINE_CODE          EM_K1
 #define ELF_MAXPAGESIZE           64
 #define bfd_elf32_bfd_reloc_type_lookup k1_reloc_type_lookup
