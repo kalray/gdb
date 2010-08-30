@@ -433,7 +433,7 @@ DESCRIPTION
 .#define bfd_mach_st230                2
 .#define bfd_mach_st231                3
 .#define bfd_mach_st240                4
-.  bfd_arch_k1,        {* KALRAY k1 *}
+.  bfd_arch_k1,        {* Kalray k1 *}
 .#define bfd_mach_k1v1                 0
 .#define bfd_mach_k1dp                 1
 .#define bfd_mach_k1cp                 2
