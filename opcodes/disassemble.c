@@ -511,7 +511,10 @@ disassembler_usage (stream)
 #ifdef ARCH_s390
   print_s390_disassembler_options (stream);
 #endif
-
+#ifdef ARCH_k1
+  print_k1_disassembler_options (stream);
+#endif
+  
   return;
 }
 
