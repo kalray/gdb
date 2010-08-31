@@ -24,6 +24,12 @@
 #define MAU_EXU 2
 #define LSU_EXU 3
 
+struct objdump_disasm_info {
+    bfd *abfd;
+    asection *sec;
+    bfd_boolean require_sec;
+};
+
 typedef struct {
     unsigned int insn[K1MAXCODEWORDS];
     int len;
@@ -39,7 +45,7 @@ static unsigned int opindex = 0;
 
 int reassemble_bundle(void);
 int reassemble_bundle(void) {
-    int i;
+    unsigned int i;
     int insncnt = 0;
     int immxcnt = 0;
     int seen[4];
@@ -142,12 +148,32 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int opt_pretty = 0;
   int found = 0;
   int invalid_bundle = 0;
-
-//  flagword elf_private_flags = 0;
-//  int k1_core = 0;
   
   /* check that tables are initialized */
 
+  if (info->arch != bfd_arch_k1) {
+      fprintf(stderr, "error: Unknown architecture\n");
+      exit(-1);
+  }
+
+  switch (info->mach) {
+    case bfd_mach_k1dp:
+      opc_table = k1dp_k1optab;
+      break;
+    case bfd_mach_k1cp:
+      opc_table = k1cp_k1optab;
+      break;
+    case bfd_mach_k1v1:
+      opc_table = k1v1_k1optab;
+      break;
+    default:
+      /* Core not supported */
+      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core!");
+      return -1;
+  }
+
+
+/*
   for (i = 0; i < K1_NCORES; i++){
     if (strcasecmp("k1dp", k1_core_info_table[i]->name) == 0
         && k1_core_info_table[i]->supported){
@@ -161,7 +187,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   }
 
   opc_table = k1_core_info->optab;
-
+*/
   if (opc_table == NULL) {
       fprintf(stderr, "error: uninitialized opcode table\n");
       exit(-1);
