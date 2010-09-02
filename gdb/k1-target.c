@@ -226,7 +226,7 @@ show_kalray_cmd (char *args, int from_tty)
 }
 
 
-void
+static void
 attach_mppa_command (char *args, int from_tty)
 {
     char set_target_async_cmd[] = "set target-async";
@@ -238,6 +238,21 @@ attach_mppa_command (char *args, int from_tty)
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
     k1_target_attach (&current_target, args, from_tty);
+}
+
+static void
+run_mppa_command (char *args, int from_tty)
+{
+    char set_target_async_cmd[] = "set target-async";
+    char set_non_stop_cmd[] = "set non-stop";
+    char set_pagination_off_cmd[] = "set pagination off";
+    char run[] = "run";
+    dont_repeat ();
+    
+    execute_command (set_target_async_cmd, 0);
+    execute_command (set_non_stop_cmd, 0);
+    execute_command (set_pagination_off_cmd, 0);
+    execute_command (run, 0);
 }
 
 void
@@ -292,5 +307,8 @@ Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
 
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
-Usage is `attach-mppa PORT[&]'."));
+Usage is `attach-mppa PORT'."));
+
+    add_com ("run-mppa", class_run, run_mppa_command, _("\
+Connect to a MPPA TLM platform and start debugging it."));
 }
