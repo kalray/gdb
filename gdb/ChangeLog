@@ -1,3 +1,261 @@
+2010-09-04  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* breakpoint.c (can_use_hardware_watchpoint): Handle the first
+	value specially.
+
+2010-09-04  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Code cleanup - split print_stop_reason.
+	* infrun.c (enum inferior_stop_reason): Remove.
+	(print_stop_reason): Remove by splitting into ...
+	(print_exited_reason, print_signal_exited_reason)
+	(print_no_history_reason, print_signal_received_reason)
+	(print_end_stepping_range_reason): ... these new functions.  Update
+	the preceding comment.
+	(handle_inferior_event): Change the calls to print_exited_reason,
+	print_signal_exited_reason, print_no_history_reason,
+	print_signal_received_reason, print_end_stepping_range_reason.
+	(handle_step_into_function, handle_step_into_function_backward):
+	Change the calls to print_end_stepping_range_reason.
+
+2010-09-03  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* breakpoint.c (save_breakpoints): Use RETURN_MASK_ALL.
+	* cli-out.c: Include vec.h.
+	(cli_field_fmt, cli_spaces, cli_text, cli_message, cli_flush): New
+	variable stream, initialize it, use it.
+	(cli_redirect): New function comment.  Replace the stream and
+	original_stream fields by the new streams field.  Remove the
+	original_stream != NULL conditional, assert error on NULL instead.
+	(out_field_fmt, field_separator): New variable stream, initialize it, use it.
+	(cli_out_data_ctor): Assert non-NULL stream.  Replace the stream and
+	original_stream fields by the new streams field.
+	(cli_out_set_stream): Replace the stream field by the new streams
+	field.
+	* cli-out.h: Include vec.h.
+	(ui_filep): New typedef, call DEF_VEC_P for it.
+	(struct cli_ui_out_data): Replace the stream and original_stream
+	fields by the new streams field.
+	* cli/cli-logging.c (set_logging_redirect): Call ui_out_redirect with
+	NULL first.  Extend the comment.
+	(handle_redirections): Call ui_out_redirect with output.
+	* python/py-breakpoint.c (bppy_get_commands): Move ui_out_redirect
+	calls outside of the TRY_CATCH block.
+
+2010-09-03  Joel Brobecker  <brobecker@adacore.com>
+
+	GDB 7.2 released.
+
+2010-09-02  Joel Brobecker  <brobecker@adacore.com>
+
+	Back out the following change:
+	| 2010-06-29  Hui Zhu  <teawater@gmail.com>
+	| * record.c (set_record_pic_cmdlist,
+	| show_record_pic_cmdlist): New variables.
+	| (set_record_pic_command,
+	| show_record_pic_command): New functions.
+	| (record_pic_function, record_pic_line, record_pic_enum,
+	| set_record_pic_type, record_pic_hide_nofunction,
+	| record_pic_hide_nosource, record_pic_hide_same): New variables.
+	| (record_pic_fputs): New function.
+	| (function_list, node_list, edge_list): New struct.
+	| (function_list, node_list, edge_list): New variables.
+	| (record_pic_cleanups, record_pic_node,
+	| record_pic_edge, cmd_record_pic): New functions.
+	| (_initialize_record): Add new commands for record pic.
+
+2010-09-02  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* config.in, configure: Regenerated.
+	* configure.ac: Check for waitpid.
+	* ser-pipe.c (pipe_close): Wait for the program to exit.
+
+2010-09-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* cli/cli-logging.c: Include gdb_assert.h.
+	(set_logging_overwrite): New function.
+	(logging_redirect): New comment.
+	(logging_no_redirect_file, set_logging_redirect)
+	(pop_output_files) <logging_no_redirect_file>: New.
+	(handle_redirections) <!logging_redirect>: New variable
+	no_redirect_file.  Remove file autoclose for tee_file_new.  No longer
+	discard cleanup for the close of former OUTPUT.  Set
+	LOGGING_NO_REDIRECT_FILE.
+	(handle_redirections) <logging_redirect>: gdb_assert
+	LOGGING_NO_REDIRECT_FILE.
+	(show_logging_command) <logging_redirect handling>: Adjust messages
+	for SAVED_FILENAME not NULL.
+	(_initialize_cli_logging): Install set_logging_overwrite and
+	set_logging_redirect.
+
+2010-09-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* iq2000-tdep.c (iq2000_scan_prologue): Initialize SAL.END.
+
+2010-09-02  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* Makefile.in (GDB_WARN_CFLAGS_NO_FORMAT): Convert it to the no- form.
+	(monitor.o): Replace $(INTERNAL_WARN_CFLAGS) by $(INTERNAL_CFLAGS) and
+	add $(GDB_WARN_CFLAGS_NO_FORMAT).
+	(printcmd.o): Replace $(INTERNAL_CFLAGS_BASE) by $(INTERNAL_CFLAGS).
+
+2010-09-02  Yao Qi  <yao@codesourcery.com>
+
+	* linux-nat.c (status_to_str): Use WTERMSIG to extract the signal
+	number from a WIFSIGNALED status.
+
+2010-09-01  Tom Tromey  <tromey@redhat.com>
+
+	* symtab.h (lookup_type_symbol): Declare.
+	* symtab.c (lookup_symbol_in_language_full): Rename from
+	lookup_symbol_in_language.  Add 'for_type' argument.
+	(lookup_symbol_in_language): New function.
+	(lookup_type_symbol): Likewise.
+	(lookup_symbol_aux): Add 'for_type' argument.
+	(match_symbol_aux): New function.
+	(lookup_symbol_aux_symtabs): Use expand_one_symtab_matching.
+	(match_transparent_type): New function.
+	(basic_lookup_transparent_type): Use expand_one_symtab_matching.
+	* symfile.h (struct quick_symbol_functions)
+	<pre_expand_symtabs_matching>: Remove.
+	<expand_one_symtab_matching>: New field.
+	* psymtab.c (expand_one_symtab_matching_psymtabs): New function.
+	(pre_expand_symtabs_matching_psymtabs): Remove.
+	(psym_functions): Update.
+	* gdbtypes.c (lookup_typename): Use lookup_type_symbol.
+	* dwarf2read.c (dw2_lookup_symbol): Update comment.
+	(dw2_pre_expand_symtabs_matching): Remove.
+	(dw2_expand_one_symtab_matching): New function.
+	(dwarf2_gdb_index_functions): Update.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* NEWS: Add entry announcing GDBserver support on powerpc-lynxos.
+
+2010-09-01  Marc Khouzam  <marc.khouzam@ericsson.com>
+
+	* mi/mi-main.c (mi_cmd_list_target_features): Add `reverse'
+	as a feature reported by -list-target-features.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* features/Makefile (WHICH): Add rs6000/powerpc-32.
+	(powerpc-32.o, powerpc-32.c): New rules.
+	(clean): Also remove powerpc-32.c.
+	* regformats/rs6000/powerpc-32.dat: Generate.
+
+2010-08-31  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* symfile.c (reread_symbols): Use psymbol_bcache_free, and
+	psymbol_bcache_init.
+	* psymtab.h (psymbol_bcache_init): New function prototype.
+	(psymbol_bcache_free): New function prototype.
+	(psymbol_bcache_get_bcache): New function prototype.
+	* psymtab.c (psymbol_bcache_init): New function.
+	(psymbol_bcache_free): New function.
+	(psymbol_bcache_full): New function.
+	(psymbol_bcache_get_bcache): New function.
+	(add_psymbol_to_bcache): use psymbol_bcache_full.
+	* objfiles.h (psymbol_cache): Change type of psymbol_cache to
+	psymbol_bcache.
+	* symmisc.c (print_symbol_bcache_statistics): Updated.
+	(print_objfile_statistics): Updated.
+	* objfiles.c (allocate_objfile): Use psymbol_bcache_init to initialize
+	psymbol_cache.
+	(free_objfile): Use psymbol_bcache_free.
+
+2010-08-31  Tom Tromey  <tromey@redhat.com>
+
+	PR c++/11961:
+	* dwarf2read.c (new_symbol_full) <DW_TAG_template_type_param>:
+	Don't set TYPE_NAME on the type.
+
+2010-08-31  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+
+	* infrun.c (set_exec_direction_func): Error out if target does not
+	support reverse execution.
+
+2010-08-31  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Make linux_get_siginfo_type `type *' unique.
+	* linux-tdep.c (linux_gdbarch_data_handle, struct linux_gdbarch_data)
+	(init_linux_gdbarch_data, get_linux_gdbarch_data): New.
+	(linux_get_siginfo_type): New variable linux_gdbarch_data.  Initialize
+	it.  Use linux_gdbarch_data->siginfo_type as a persistent storage.
+	(_initialize_linux_tdep): New.
+
+2010-08-31  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Code cleanup.
+	* defs.h (find_memory_region_ftype): New typedef.
+	(exec_set_find_memory_regions): Use it.
+	* exec.c (exec_set_find_memory_regions): Use find_memory_region_ftype.
+	* fbsd-nat.c (fbsd_find_memory_regions): Likewise.
+	* gcore.c (objfile_find_memory_regions): Likewise.
+	* gnu-nat.c (gnu_find_memory_regions): Likewise.
+	* linux-nat.c (linux_nat_find_memory_regions): Likewise.
+	* procfs.c (iterate_over_mappings_cb_ftype): Remove.
+	(iterate_over_mappings): Rename iterate_over_mappings_cb_ftype to
+	find_memory_region_ftype.
+	(insert_dbx_link_bpt_in_region): Likewise.
+	(iterate_over_mappings): Likewise.  Drop the comment part about the
+	function prototype.
+	(find_memory_regions_callback): Use find_memory_region_ftype.
+	(proc_find_memory_regions): Likewise.
+	(info_mappings_callback): Rename iterate_over_mappings_cb_ftype to
+	find_memory_region_ftype.
+	* target.c (dummy_find_memory_regions): Use find_memory_region_ftype.
+	* target.h (struct target_ops) <to_find_memory_regions>: Likewise.
+
+2010-08-31  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* psymtab.c (add_psymbol_to_bcache): Remove 'static' from
+	'static partial_symbol psymbol'.
+	(psymbol_hash): New function.
+	(psymbol_compare): New function.
+	* bcache.c (hash_continue): New.
+	(hash): Use hash_continue.
+	* bcache.c: Add hash_function and compare_function
+	pointers to bcache struct.
+	(bcache_full): Use bcache->hash_function, and
+	bcache->compare_function.
+	(bcache_compare): New function.
+	(bcache_xmalloc): Take hash_function and
+	compare_function arguments and initialize the
+	bcach's pointers.
+	Updated comment.
+	* objfiles.c (allocate_objfile): Updated.
+	* symfile.c (reread_symbols): Updated.
+	* python/py-type.c (typy_richcompare): Updated.
+
+2010-08-30  Andre Poenitz  <andre.poenitz@nokia.com>
+	    Tom Tromey  <tromey@redhat.com>
+
+	PR python/11792:
+	* python/py-value.c (valpy_get_dynamic_type): New function.
+	(value_object_getset): Add "dynamic_type".
+	(valpy_get_type): Fail on error.
+
+2010-08-30  Yao Qi  <yao@codesourcery.com>
+
+	* arm-linux-tdep.c (arm_linux_sigreturn_return_addr): New.
+	(arm_linux_syscall_next_pc): New.
+	(arm_linux_copy_svc): Use arm_linux_sigreturn_return_addr instead. 
+	(arm_linux_init_abi): Initialize syscall_next_pc.
+	* arm-tdep.c (thumb_get_next_pc_raw):  Get next pc of SWI in Thumb mode.
+	(arm_get_next_pc_raw): Get next pc of SWI in ARM mode.
+	* arm-tdep.h (struct gdbarch_tdep): Add a function pointer syscall_next_pc. 
+	Declare arm_frame_is_thumb.
+
+2010-08-30  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Code cleanup.
+	* breakpoint.c (bpstat_alloc): Remove unused prototype.
+	(bpstat_alloc): Change parameters cbs to bs_link_pointer.  Adjust the
+	code.
+	(bpstat_stop_status): Change root_bs into bs_head and bs_link.  Adjust
+	calls of bpstat_alloc.  Remove explicit bs chain termination.
+
 2010-08-28  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Code cleanup.
@@ -408,7 +666,7 @@
 
 2010-08-13  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
-	* cli-logging.c (logging_overwrite, logging_redirect): Make them
+	* cli/cli-logging.c (logging_overwrite, logging_redirect): Make them
 	static.
 
 2010-08-13  Ken Werner  <ken.werner@de.ibm.com>

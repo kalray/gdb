@@ -133,8 +133,6 @@ static void watchpoints_info (char *, int);
 
 static int breakpoint_1 (int, int, int (*) (const struct breakpoint *));
 
-static bpstat bpstat_alloc (struct bp_location *, bpstat);
-
 static int breakpoint_cond_eval (void *);
 
 static void cleanup_executing_breakpoints (void *);
@@ -3440,15 +3438,17 @@ breakpoint_cond_eval (void *exp)
   return i;
 }
 
-/* Allocate a new bpstat and chain it to the current one.  */
+/* Allocate a new bpstat.  Link it to the FIFO list by BS_LINK_POINTER.  */
 
 static bpstat
-bpstat_alloc (struct bp_location *bl, bpstat cbs /* Current "bs" value */ )
+bpstat_alloc (struct bp_location *bl, bpstat **bs_link_pointer)
 {
   bpstat bs;
 
   bs = (bpstat) xmalloc (sizeof (*bs));
-  cbs->next = bs;
+  bs->next = NULL;
+  **bs_link_pointer = bs;
+  *bs_link_pointer = &bs->next;
   bs->breakpoint_at = bl->owner;
   bs->bp_location_at = bl;
   incref_bp_location (bl);
@@ -4020,10 +4020,10 @@ bpstat_stop_status (struct address_space *aspace,
   struct breakpoint *b = NULL;
   struct bp_location *bl;
   struct bp_location *loc;
-  /* Root of the chain of bpstat's */
-  struct bpstats root_bs[1];
+  /* First item of allocated bpstat's.  */
+  bpstat bs_head = NULL, *bs_link = &bs_head;
   /* Pointer to the last thing in the chain currently.  */
-  bpstat bs = root_bs;
+  bpstat bs;
   int ix;
   int need_remove_insert;
   int removed_any;
@@ -4058,7 +4058,7 @@ bpstat_stop_status (struct address_space *aspace,
 
 	  /* Come here if it's a watchpoint, or if the break address matches */
 
-	  bs = bpstat_alloc (bl, bs);	/* Alloc a bpstat to explain stop */
+	  bs = bpstat_alloc (bl, &bs_link);	/* Alloc a bpstat to explain stop */
 
 	  /* Assume we stop.  Should we find a watchpoint that is not
 	     actually triggered, or if the condition of the breakpoint
@@ -4080,7 +4080,7 @@ bpstat_stop_status (struct address_space *aspace,
       if (breakpoint_address_match (loc->pspace->aspace, loc->address,
 				    aspace, bp_addr))
 	{
-	  bs = bpstat_alloc (loc, bs);
+	  bs = bpstat_alloc (loc, &bs_link);
 	  /* For hits of moribund locations, we should just proceed.  */
 	  bs->stop = 0;
 	  bs->print = 0;
@@ -4088,16 +4088,13 @@ bpstat_stop_status (struct address_space *aspace,
 	}
     }
 
-  /* Terminate the chain.  */
-  bs->next = NULL;
-
   /* Now go through the locations that caused the target to stop, and
      check whether we're interested in reporting this stop to higher
      layers, or whether we should resume the target transparently.  */
 
   removed_any = 0;
 
-  for (bs = root_bs->next; bs != NULL; bs = bs->next)
+  for (bs = bs_head; bs != NULL; bs = bs->next)
     {
       if (!bs->stop)
 	continue;
@@ -4153,8 +4150,8 @@ bpstat_stop_status (struct address_space *aspace,
      watching may have.  Don't bother if we're stopping; this will get
      done later.  */
   need_remove_insert = 0;
-  if (! bpstat_causes_stop (root_bs->next))
-    for (bs = root_bs->next; bs != NULL; bs = bs->next)
+  if (! bpstat_causes_stop (bs_head))
+    for (bs = bs_head; bs != NULL; bs = bs->next)
       if (!bs->stop
 	  && bs->breakpoint_at
 	  && is_hardware_watchpoint (bs->breakpoint_at))
@@ -4168,7 +4165,7 @@ bpstat_stop_status (struct address_space *aspace,
   else if (removed_any)
     update_global_location_list (0);
 
-  return root_bs->next;
+  return bs_head;
 }
 
 static void
@@ -8334,10 +8331,12 @@ can_use_hardware_watchpoint (struct value *v)
     {
       if (VALUE_LVAL (v) == lval_memory)
 	{
-	  if (value_lazy (v))
-	    /* A lazy memory lvalue is one that GDB never needed to fetch;
-	       we either just used its address (e.g., `a' in `a.b') or
-	       we never needed it at all (e.g., `a' in `a,b').  */
+	  if (v != head && value_lazy (v))
+	    /* A lazy memory lvalue in the chain is one that GDB never
+	       needed to fetch; we either just used its address (e.g.,
+	       `a' in `a.b') or we never needed it at all (e.g., `a'
+	       in `a,b').  This doesn't apply to HEAD; if that is
+	       lazy then it was not readable, but watch it anyway.  */
 	    ;
 	  else
 	    {
@@ -11492,7 +11491,7 @@ save_breakpoints (char *filename, int from_tty,
 	fprintf_unfiltered (fp, "  commands\n");
 	
 	ui_out_redirect (uiout, fp);
-	TRY_CATCH (ex, RETURN_MASK_ERROR)
+	TRY_CATCH (ex, RETURN_MASK_ALL)
 	  {
 	    print_command_lines (uiout, tp->commands->commands, 2);
 	  }

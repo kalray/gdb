@@ -38,6 +38,15 @@
 #include <string.h>
 #endif
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+/* On some systems such as MinGW, alloca is declared in malloc.h
+   (there is no alloca.h).  */
+#if HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 #if !HAVE_DECL_STRERROR
 #ifndef strerror
 extern char *strerror (int);	/* X3.159-1989  4.11.6.2 */
@@ -52,6 +61,13 @@ extern void perror (const char *);
 
 #if !HAVE_DECL_MEMMEM
 extern void *memmem (const void *, size_t , const void *, size_t);
+#endif
+
+#if !HAVE_DECL_VASPRINTF
+extern int vasprintf(char **strp, const char *fmt, va_list ap);
+#endif
+#if !HAVE_DECL_VSNPRINTF
+int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #endif
 
 #ifndef ATTR_NORETURN
@@ -469,6 +485,8 @@ void *xmalloc (size_t) ATTR_MALLOC;
 void *xrealloc (void *, size_t);
 void *xcalloc (size_t, size_t) ATTR_MALLOC;
 char *xstrdup (const char *) ATTR_MALLOC;
+int xsnprintf (char *str, size_t size, const char *format, ...)
+  ATTR_FORMAT (printf, 3, 4);;
 void freeargv (char **argv);
 void perror_with_name (const char *string);
 void error (const char *string,...) ATTR_NORETURN ATTR_FORMAT (printf, 1, 2);

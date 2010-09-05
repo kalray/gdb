@@ -1094,7 +1094,7 @@ status_to_str (int status)
     }
   else if (WIFSIGNALED (status))
     snprintf (buf, sizeof (buf), "%s (terminated)",
-	      strsignal (WSTOPSIG (status)));
+	      strsignal (WTERMSIG (status)));
   else
     snprintf (buf, sizeof (buf), "%d (exited)", WEXITSTATUS (status));
 
@@ -4104,9 +4104,7 @@ read_mapping (FILE *mapfile,
    regions in the inferior for a corefile.  */
 
 static int
-linux_nat_find_memory_regions (int (*func) (CORE_ADDR,
-					    unsigned long,
-					    int, int, int, void *), void *obfd)
+linux_nat_find_memory_regions (find_memory_region_ftype func, void *obfd)
 {
   int pid = PIDGET (inferior_ptid);
   char mapsfilename[MAXPATHLEN];
