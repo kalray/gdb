@@ -144,11 +144,60 @@ k1_elf_relocate_section
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
-	  
+
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
 	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+
+	  if (sec->use_rela_p) {
+	      relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
+	  } else {
+	      bfd_byte *where = contents + rel->r_offset;
+	      bfd_vma addend;
+
+	      rel->r_addend = 0;
+	      relocation = (sec->output_section->vma
+			    + sec->output_offset
+			    + sym->st_value);
+
+	      switch (howto->size) {
+	      case 0:
+		  addend = bfd_get_8 (input_bfd, where);
+		  addend = (addend ^ 0x80) - 0x80;
+		  break;
+	      case 1:
+		  addend = bfd_get_16 (input_bfd, where);
+		  addend = (addend ^ 0x8000) - 0x8000;
+		  break;
+	      case 2:
+		  addend = bfd_get_32 (input_bfd, where);
+		      addend = (addend ^ 0x80000000) - 0x80000000;
+		  break;
+	      default:
+		  abort ();
+	      }
+
+	      if (info->relocatable)
+		  addend += sec->output_offset;
+	      else {
+		  asection *msec = sec;
+		  addend = _bfd_elf_rel_local_sym (output_bfd, sym, &msec, addend);
+		  addend -= relocation;
+		  addend += msec->output_section->vma + msec->output_offset;
+	      }
+	      
+	      switch (howto->size)  {
+	      case 0:
+		  bfd_put_8 (input_bfd, addend, where);
+		  break;
+	      case 1:
+		  bfd_put_16 (input_bfd, addend, where);
+		  break;
+	      case 2:
+		  bfd_put_32 (input_bfd, addend, where);
+		  break;
+	      }
+	  }
 	}
       else
 	{
