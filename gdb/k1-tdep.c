@@ -826,7 +826,11 @@ static void k1_look_for_insns (void)
             add_op (&sp_store_insns, op);
 	else if (strcmp ("sb", op->as_op) == 0)
             add_op (&sp_store_insns, op);
-	else if (strcmp ("shm", op->as_op) == 0)
+	else if (strcmp ("sh", op->as_op) == 0)
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("sw", op->as_op) == 0)
+            add_op (&sp_store_insns, op);
+	else if (strcmp ("sd", op->as_op) == 0)
             add_op (&sp_store_insns, op);
 	else if (strcmp ("make", op->as_op) == 0)
 	    add_op (&prologue_helper_insns, op);
