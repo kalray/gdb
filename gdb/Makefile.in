@@ -97,7 +97,7 @@ POSTCOMPILE = @true
 
 # Directory containing source files.
 srcdir = @srcdir@
-VPATH = @srcdir@:$(FAMDIR)/build/BE/GDB/$(ARCH)
+VPATH = @srcdir@:$(FAMDIR)/BE/GDB/$(ARCH)
 
 YACC=@YACC@
 
