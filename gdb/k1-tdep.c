@@ -19,9 +19,11 @@
 
 #include "defs.h"
 #include "arch-utils.h"
+#include "cli/cli-decode.h"
 #include "dis-asm.h"
 #include "dwarf2-frame.h"
 #include "frame-unwind.h"
+#include "gdbcmd.h"
 #include "gdbcore.h"
 #include "gdbtypes.h"
 #include "inferior.h"
