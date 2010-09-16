@@ -59,8 +59,8 @@ k1_target_new_thread (struct thread_info *t)
 
 static void k1_target_mourn_inferior (struct target_ops *target)
 {
-    generic_mourn_inferior ();
     unpush_target (target);
+    generic_mourn_inferior ();
     kill (server_pid, 9);
 }
 
