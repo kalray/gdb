@@ -12,7 +12,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include "environ.h"
 #include "gdbcmd.h"
+#include "gdbcore.h"
 #include "gdbthread.h"
 #include "inferior.h"
 #include "observer.h"
@@ -20,7 +22,11 @@
 #include "target.h"
 #include "top.h"
 
+#include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
+
+static cmd_cfunc_ftype *real_run_command;
+static struct observer *exec_file_observer;
 
 static struct target_ops k1_target_ops;
 static char *da_options = NULL;
@@ -241,22 +247,68 @@ attach_mppa_command (char *args, int from_tty)
 }
 
 static void
+run_mppa_command_continuation (void *args)
+{
+      clear_proceed_status ();
+      proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 0);
+}
+
+/* This command is run instead of run when the K1 target is
+   loaded. See k1-tdep.c. */
+void
 run_mppa_command (char *args, int from_tty)
 {
     char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
-    char run[] = "run";
     dont_repeat ();
-    
-    execute_command (set_target_async_cmd, 0);
-    execute_command (set_non_stop_cmd, 0);
-    execute_command (set_pagination_off_cmd, 0);
-    execute_command (run, 0);
+
+    if (exec_file_observer) {
+	observer_detach_executable_changed (exec_file_observer);
+	exec_file_observer = NULL;
+    }
+
+    if (lookup_minimal_symbol_text ("pthread_create", NULL)) {
+	execute_command (set_target_async_cmd, 0);
+	execute_command (set_non_stop_cmd, 0);
+	execute_command (set_pagination_off_cmd, 0);
+	target_create_inferior (get_exec_file (0), get_inferior_args (),
+				environ_vector (current_inferior ()->environment),
+				from_tty);
+	/* Prevent the stop notification from the freshly connected RM
+	   to show up in the CLI. We restart this core right after
+	   that. */
+	current_inferior ()->stop_soon = STOP_QUIETLY_NO_SIGSTOP;
+	/* We use a continuation, because we want that to run after
+	   the first stop notification has been handled. Note that an
+	   inferior continuation wouldn't do as this is also used by
+	   notice_new_inferior () and we want to run after that. */
+	add_continuation (inferior_thread (),
+			  run_mppa_command_continuation, NULL, NULL);
+    } else {
+	real_run_command (args, from_tty);
+    }
 }
 
+static void
+k1_override_run (void)
+{
+    if (real_run_command == 0) {
+	/* Target files are linked first, thus we can't override a
+	   generic function like 'run' in the _initialize_... function
+	   of a targetting file. We do that here. It's ugly, I know. */
+	char *run_cmd_name = xstrdup ("run");
+	struct cmd_list_element *run;
+	
+	run = lookup_cmd (&run_cmd_name, cmdlist, "", 0, 0);
+	real_run_command = run->function.cfunc;
+	run->function.cfunc = run_mppa_command;
+    }
+}
+
+
 void
-_initialize_k1_target (void)
+_initialize__k1_target (void)
 {
     simulation_vehicle = simulation_vehicles[0];
     
@@ -311,4 +363,6 @@ Usage is `attach-mppa PORT'."));
 
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));
+
+    exec_file_observer = observer_attach_executable_changed (k1_override_run);
 }
