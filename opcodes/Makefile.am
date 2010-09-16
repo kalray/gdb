@@ -39,7 +39,7 @@ BFD_H = ../bfd/bfd.h
 BUILD_LIBS = @BUILD_LIBS@
 BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 
-VPATH = @srcdir@:$(FAMDIR)/build/BE/GBU/$(ARCH)/opcodes
+VPATH = @srcdir@:$(FAMDIR)/BE/GBU/$(ARCH)/opcodes
 
 # Header files.
 HFILES = \
@@ -260,7 +260,7 @@ OFILES = @BFD_MACHINES@
 # that's where the version number in Makefile comes from.
 CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/configure.in
 
-AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/build/BE/GBU/$(ARCH)/include
+AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/BE/GBU/$(ARCH)/include
 
 disassemble.lo: disassemble.c
 if am__fastdepCC
