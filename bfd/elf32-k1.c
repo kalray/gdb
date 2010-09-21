@@ -4,6 +4,8 @@
 #include "elf-bfd.h"
 #include <elf/k1.h>
 
+#define K1_MACH_MASK 0x0000000f
+
 static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
@@ -95,6 +97,149 @@ static bfd_vma elf32_k1_gp_base (bfd *output_bfd)
 
     _bfd_set_gp_value (output_bfd, min_vma);
     return min_vma;
+}
+
+/* Functions for dealing with the e_flags field.  */
+
+/* Merge backend specific data from an object file to the output
+   object file when linking.  */
+
+static bfd_boolean
+elf_k1_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+{
+  unsigned out_mach, in_mach;
+  flagword out_flags, in_flags;
+
+  /* Check if we have the same endianess.  */
+  if (!_bfd_generic_verify_endian_match (ibfd, obfd))
+    return FALSE;
+
+  /* Don't even pretend to support mixed-format linking.  */
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return FALSE;
+
+  out_flags = elf_elfheader (obfd)->e_flags;
+  in_flags = elf_elfheader (ibfd)->e_flags;
+
+  if (!elf_flags_init (obfd)) {
+#if 0
+    /* [JV] I took this from ARM but I do not understand it... */
+    /* If the input is the default architecture and had the default
+       flags then do not bother setting the flags for the output
+       architecture, instead allow future merges to do this.  If no
+       future merges ever set these flags then they will retain their
+       uninitialised values, which surprise surprise, correspond
+       to the default values.  */
+    if (bfd_get_arch_info (ibfd)->the_default
+	&& elf_elfheader (ibfd)->e_flags == 0)
+      return TRUE;
+#endif
+
+    elf_flags_init (obfd) = TRUE;
+    elf_elfheader (obfd)->e_flags = in_flags;
+    
+    if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
+	&& bfd_get_arch_info (obfd)->the_default)
+      return bfd_set_arch_mach (obfd, bfd_get_arch (ibfd), bfd_get_mach (ibfd));
+    
+    return TRUE;
+  }
+  
+  out_mach = out_flags & K1_MACH_MASK;
+  in_mach = in_flags & K1_MACH_MASK;
+  if (out_mach != in_mach) {
+    (*_bfd_error_handler)
+      (_("%B: incompatible machine type. Output is 0x%x. Input is 0x%x"),
+       ibfd, out_mach, in_mach);
+    bfd_set_error (bfd_error_wrong_format);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+
+static bfd_boolean
+elf_k1_set_private_flags (bfd *abfd, flagword flags)
+{
+  BFD_ASSERT (!elf_flags_init (abfd)
+	      || elf_elfheader (abfd)->e_flags == flags);
+
+  elf_elfheader (abfd)->e_flags |= flags;
+  elf_flags_init (abfd) = TRUE;
+
+  return TRUE;
+}
+
+static bfd_boolean
+elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
+{
+  FILE *f = (FILE *) farg;
+  flagword e_flags = elf_elfheader (abfd)->e_flags;
+
+  fprintf (f, "\nK1 header:\n");
+  switch(e_flags & K1_MACH_MASK) {
+  case bfd_mach_k1v1:
+    fprintf (f, "\nMachine     = k1v1\n");
+    break;
+  case bfd_mach_k1dp:
+    fprintf (f, "\nMachine     = k1dp\n");
+    break;
+  case bfd_mach_k1cp:
+    fprintf (f, "\nMachine     = k1cp\n");
+    break;
+  default:
+    fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
+  }
+
+  return _bfd_elf_print_private_bfd_data (abfd, farg);
+}
+
+/* The final processing done just before writing out an K1 ELF object
+   file.  This gets the K1 architecture right based on the machine
+   number.  */
+
+static void
+elf_k1_final_write_processing (bfd *abfd,
+				   bfd_boolean linker ATTRIBUTE_UNUSED)
+{
+  int mach;
+  unsigned long val;
+
+  switch (mach = bfd_get_mach (abfd))
+    {
+    case bfd_mach_k1v1:
+    case bfd_mach_k1dp:
+    case bfd_mach_k1cp:
+      val = mach;
+      break;
+    default:
+      return;
+    }
+
+  elf_elfheader (abfd)->e_flags &=  (~ K1_MACH_MASK);
+  elf_elfheader (abfd)->e_flags |= val;
+}
+
+/* Set the right machine number for an K1 ELF file.  */
+
+static bfd_boolean
+elf_k1_object_p (bfd *abfd)
+{
+  int mach = elf_elfheader (abfd)->e_flags & K1_MACH_MASK;
+
+  switch (mach) {
+    case bfd_mach_k1v1:
+    case bfd_mach_k1dp:
+    case bfd_mach_k1cp:
+      break;
+    default:
+      return FALSE;
+    }
+
+  (void) bfd_default_set_arch_mach (abfd, bfd_arch_k1, mach);
+  return TRUE;
 }
 
 /* Copied from elf32-mt.c as this implementation seemd the most clean,
@@ -277,6 +422,13 @@ k1_elf_relocate_section
 #define elf_backend_can_gc_sections       1
 #define elf_backend_relocate_section      k1_elf_relocate_section
 #define elf_backend_rela_normal           1
+
+#define bfd_elf32_bfd_merge_private_bfd_data elf_k1_merge_private_bfd_data
+#define bfd_elf32_bfd_set_private_flags	     elf_k1_set_private_flags
+#define bfd_elf32_bfd_print_private_bfd_data elf_k1_print_private_bfd_data
+#define elf_backend_final_write_processing   elf_k1_final_write_processing
+#define elf_backend_object_p                 elf_k1_object_p
+
 
 #include "elf32-target.h"
 

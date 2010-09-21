@@ -168,7 +168,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       break;
     default:
       /* Core not supported */
-      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core!");
+      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
+			    info->mach);
       return -1;
   }
 

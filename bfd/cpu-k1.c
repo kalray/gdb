@@ -6,17 +6,85 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-const bfd_arch_info_type bfd_k1_arch = {
-      32,               /* 32 bits in a word.  */
-      32,               /* 32 bits in an address.  */
-      8,                /*  8 bits in a byte.  */
-      bfd_arch_k1,      /* enum bfd_architecture arch.  */
-      bfd_mach_k1dp,
-      "k1",             /* name.  */
-      "k1",             /* printed name.  */
-      3,                /* section alignment power.  */
-      TRUE,            
-      bfd_default_compatible, 
-      bfd_default_scan ,
-      0,
+/* This routine is provided two arch_infos and returns if machines
+   are compatible.
+*/
+
+static const bfd_arch_info_type *
+compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
+{
+  /* If a & b are for different architecture we can do nothing.  */
+  if (a->arch != b->arch)
+      return NULL;
+
+  /* If a & b are for the same machine then all is well.  */
+  if (a->mach == b->mach)
+    return a;
+
+  /* Otherwise if either a or b is the 'default' machine
+     then it can be polymorphed into the other.  */
+  if (a->the_default)
+    return b;
+
+  if (b->the_default)
+    return a;
+
+  /* k1cp and k1dp are the same for now.*/
+  if ((a->mach == bfd_mach_k1dp || a->mach == bfd_mach_k1cp) &&
+      (b->mach == bfd_mach_k1dp || b->mach == bfd_mach_k1cp))
+    return a;
+
+  return NULL;
+}
+
+static struct
+{
+  unsigned int mach;
+  char *       name;
+}
+processors[] =
+{
+  { bfd_mach_k1v1, "k1v1"  },
+  { bfd_mach_k1dp, "k1dp"  },
+  { bfd_mach_k1cp, "k1cp"  },
 };
+
+static bfd_boolean
+scan (const struct bfd_arch_info *info, const char *string)
+{
+  int  i;
+
+  /* First test for an exact match.  */
+  if (strcasecmp (string, info->printable_name) == 0)
+    return TRUE;
+
+  /* Next check for a processor name instead of an Architecture name.  */
+  for (i = sizeof (processors) / sizeof (processors[0]); i--;)
+    {
+      if (strcasecmp (string, processors [i].name) == 0)
+	break;
+    }
+
+  if (i != -1 && info->mach == processors [i].mach)
+    return TRUE;
+
+  /* Finally check for the default architecture.  */
+  if (strcasecmp (string, "k1") == 0)
+    return info->the_default;
+
+  return FALSE;
+}
+
+#define N(number, print, default, next)  \
+{  32, 32, 8, bfd_arch_k1, number, "k1", print, 4, default, \
+  compatible, scan, next }
+
+static const bfd_arch_info_type arch_info_struct[] =
+{
+  N (bfd_mach_k1v1,      "k1v1",   FALSE, & arch_info_struct[1]),
+  N (bfd_mach_k1dp,      "k1dp",   FALSE, & arch_info_struct[2]),
+  N (bfd_mach_k1cp,      "k1cp",   FALSE, NULL),
+};
+
+const bfd_arch_info_type bfd_k1_arch =
+  N (0, "k1", TRUE, & arch_info_struct[0]);
