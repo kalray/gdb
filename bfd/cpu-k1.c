@@ -87,4 +87,4 @@ static const bfd_arch_info_type arch_info_struct[] =
 };
 
 const bfd_arch_info_type bfd_k1_arch =
-  N (0, "k1", TRUE, & arch_info_struct[0]);
+  N (bfd_mach_k1dp, "k1", TRUE, & arch_info_struct[0]);
