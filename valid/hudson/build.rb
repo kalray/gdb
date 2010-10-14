@@ -60,13 +60,16 @@ build.add_result build_path
 
 b.target("build") do 
 
+  machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
+
   if( arch == "k1" )
     create_goto_dir! build_path
 
     version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
     version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
-    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat --with-bugurl=no --prefix=#{prefix}")
+    b.run(:cmd => "echo #{machine_type}" )
+    b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat#{machine_type} --with-bugurl=no --prefix=#{prefix}")
     b.run(:cmd => "make clean")
     b.run(:cmd => "make #{make_j} FAMDIR=#{family_path} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
   end
