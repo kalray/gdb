@@ -311,19 +311,19 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
               switch (type){
                   case RegClass_k1_singleReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[K1_REGFILE_GRF+value].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_GRF+value]].name);
                       break;
                   case RegClass_k1_pairedReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[K1_REGFILE_PRF+value].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_PRF+value]].name);
                       break;
                   case RegClass_k1_systemReg:
                   case RegClass_k1_nopcpsReg:
                   case RegClass_k1_onlypsReg:
                   case RegClass_k1_onlybfxReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[K1_REGFILE_SRF+value].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_SRF+value]].name);
                       break;
                   case RegClass_k1_remoteReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[K1_REGFILE_NRF+value].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_NRF+value]].name);
                       break;
 
                   case Immediate_k1_bfxmask:
