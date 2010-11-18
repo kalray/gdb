@@ -103,9 +103,11 @@ proc default_mi_gdb_start { args } {
     global timeout
     global gdb_spawn_id;
     global MIFLAGS
+    global errcnt
 
     gdb_stop_suppressing_tests;
     set inferior_pty no-tty
+    set errcnt 0
 
     if { [llength $args] == 1} {
 	set inferior_pty [lindex $args 0]
@@ -905,7 +907,7 @@ proc mi_runto_helper {func run_or_continue} {
   } else {
       mi_send_resuming_command "exec-continue" "$test"
   }
-
+ 
   mi_expect_stop "breakpoint-hit" $func ".*" ".*" "\[0-9\]+" { "" "disp=\"del\"" } $test
 }
 
