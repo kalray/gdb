@@ -686,7 +686,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
-  set_gdbarch_long_double_bit (gdbarch, 128);
+  set_gdbarch_long_double_bit (gdbarch, 64);
   set_gdbarch_ptr_bit (gdbarch, 32);
 
   /* Get the k1 target description from INFO.  */
