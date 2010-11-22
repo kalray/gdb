@@ -216,13 +216,15 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
     int best_lineno = 0;
     CORE_ADDR best_pc = func_addr;
     struct symtab_and_line sal;
-
-     if (!k1_has_create_stack_frame (gdbarch, func_addr))
-     	return func_addr;
+    int gcc_compiled = 0;
 
     sal = find_pc_line (func_addr, 0);
     if (sal.symtab == NULL)
 	return func_addr;
+
+    if (sal.symtab->producer
+	&& strncmp (sal.symtab->producer, "GNU C", 5) == 0)
+	gcc_compiled = 1;
 
     /* Give up if this symbol has no lineinfo table.  */
     l = LINETABLE (sal.symtab);
@@ -234,20 +236,36 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
     if (!find_pc_partial_function (func_addr, NULL, &func_start, &func_end))
 	return func_addr;
     
+     if (!gcc_compiled && !k1_has_create_stack_frame (gdbarch, func_addr))
+     	return func_addr;
+
     /* Linetable entries are ordered by PC values, see the commentary in
        symtab.h where `struct linetable' is defined.  Thus, the first
        entry whose PC is in the range [FUNC_START..FUNC_END[ is the
        address we are looking for.  */
-    for (i = 0; i < l->nitems; i++)
-	{
-	    struct linetable_entry *item = &(l->item[i]);
-	    
-	    /* Don't use line numbers of zero, they mark special entries in
-	       the table.  See the commentary on symtab.h before the
+     if (gcc_compiled) {
+	 for (i = 0; i < l->nitems; i++)
+	     {
+		 struct linetable_entry *item = &(l->item[i]);
+		 
+		 if (item->line > 0 && func_start <= item->pc && item->pc < func_end)
+		     if (ind == 0)
+			 ++ind;
+		     else
+			 return item->pc;
+	     }
+     } else {
+	 for (i = 0; i < l->nitems; i++)
+	     {
+		 struct linetable_entry *item = &(l->item[i]);
+		 
+		 /* Don't use line numbers of zero, they mark special entries in
+		    the table.  See the commentary on symtab.h before the
 	       definition of struct linetable.  */
-	    if (item->line > 0 && func_start < item->pc && item->pc < func_end)
-		return item->pc;
-	}
+		 if (item->line > 0 && func_start < item->pc && item->pc < func_end)
+		     return item->pc;
+	     }
+     }
     
     return func_addr;
 }
