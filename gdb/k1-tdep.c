@@ -244,27 +244,26 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
        entry whose PC is in the range [FUNC_START..FUNC_END[ is the
        address we are looking for.  */
      if (gcc_compiled) {
-	 for (i = 0; i < l->nitems; i++)
-	     {
-		 struct linetable_entry *item = &(l->item[i]);
-		 
-		 if (item->line > 0 && func_start <= item->pc && item->pc < func_end)
-		     if (ind == 0)
-			 ++ind;
-		     else
-			 return item->pc;
-	     }
-     } else {
-	 for (i = 0; i < l->nitems; i++)
-	     {
-		 struct linetable_entry *item = &(l->item[i]);
-		 
-		 /* Don't use line numbers of zero, they mark special entries in
-		    the table.  See the commentary on symtab.h before the
-	       definition of struct linetable.  */
-		 if (item->line > 0 && func_start < item->pc && item->pc < func_end)
+	 ind = 0;
+	 for (i = 0; i < l->nitems; i++) {
+	     struct linetable_entry *item = &(l->item[i]);
+	     
+	     if (item->line > 0 && func_start <= item->pc && item->pc < func_end)
+		 if (ind == 0)
+		     ++ind;
+		 else
 		     return item->pc;
-	     }
+	 }
+     } else {
+	 for (i = 0; i < l->nitems; i++) {
+	     struct linetable_entry *item = &(l->item[i]);
+	     
+	     /* Don't use line numbers of zero, they mark special entries in
+		the table.  See the commentary on symtab.h before the
+		definition of struct linetable.  */
+	     if (item->line > 0 && func_start < item->pc && item->pc < func_end)
+		 return item->pc;
+	 }
      }
     
     return func_addr;
