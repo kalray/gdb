@@ -29,17 +29,6 @@ $tests = {}
 $output_ref = ""
 $output = ""
 
-def add_result (test, res, results)
-  paren = test =~ /\(.*\)$/
-
-  if paren != 0 and not paren.nil? 
-    short_test = test.slice(0,paren).chop
-    test = short_test if not results.has_key? short_test
-  end
-
-  results[test] = res
-end
-
 def parse (file, tests, output)
   
   cur_test_results = {}
@@ -50,15 +39,13 @@ def parse (file, tests, output)
       cur_test_results = {}
       tests[$1] = cur_test_results
     when /.?PASS: [^:]+: (.*)$/
-      add_result $1, 'PASS', cur_test_results
-    when /.FAIL: [^:]+: (.*)$/
-      add_result $1, 'PASS', cur_test_results
-    when /^FAIL: [^:]+: (.*)$/
-      add_result $1, 'FAIL', cur_test_results
+      cur_test_results[$1] = 'PASS'
+    when /.?FAIL: [^:]+: (.*)$/
+      cur_test_results[$1] = 'FAIL'
     when /UNTESTED: [^:]+: (.*)$/
-      add_result $1, 'UNTESTED', cur_test_results
+      cur_test_results[$1] = 'UNTESTED'
     when /UNSUPPORTED: [^:]+: (.*)$/
-      add_result $1, 'UNSUPPORTED', cur_test_results
+      cur_test_results[$1] = 'UNSUPPORTED'
     else
       output << line
     end
