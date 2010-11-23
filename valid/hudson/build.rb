@@ -79,7 +79,7 @@ b.target("install") do
 
   if( arch == "k1" )
     cd build_path
-    b.run(:cmd => "make install")  if( arch == "k1" )
+    b.run(:cmd => "make install FAMDIR=#{family_path} ARCH=#{arch}")  if( arch == "k1" )
   end
 
 end
