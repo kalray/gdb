@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include "elf/k1.h"
 #include "environ.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
@@ -120,6 +121,7 @@ static void k1_target_create_inferior (struct target_ops *ops,
     int nb_args = 0, nb_da_args = 0;
     int pipefds[2];
     int port;
+    int core;
     int argidx = 0;
 
     if (exec_file == NULL)
@@ -131,8 +133,24 @@ Use the \"file\" or \"exec-file\" command."));
     arg = da_args;
     while (arg && *arg++) nb_da_args++;
 
-    stub_args = xmalloc ((nb_args+7)*sizeof (char*));
+    stub_args = xmalloc ((nb_args+8)*sizeof (char*));
     stub_args[argidx++] = simulation_vehicle;
+
+    core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
+    switch (core) {
+    case ELF_K1_CORE_V1:
+	stub_args[argidx++] = "--mcore=k1v1";
+	break;
+    case ELF_K1_CORE_DP:
+	stub_args[argidx++] = "--mcore=k1dp";
+	break;
+    case ELF_K1_CORE_CP:
+	stub_args[argidx++] = "--mcore=k1cp";
+	break;
+    default:
+	error (_("The K1 binary is compiled for an unknown core."));
+    }	
+
     if (nb_da_args && strlen (da_options)) {
 	arg = da_args;
 	while (*arg) {
