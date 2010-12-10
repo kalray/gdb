@@ -16,12 +16,13 @@ options = Options.new({ "target"        => "k1",
 
 repo = Git.new(options["clone"])
 
+clean = Target.new("clean", repo, [])
 build = Target.new("build", repo, [])
 valid = Target.new("valid", repo, [build])
 install = Target.new("install", repo, [valid])
 valid_valid = Target.new("gdb", repo, [])
 
-b = Builder.new("gdb", options, [build, valid, install, valid_valid])
+b = Builder.new("gdb", options, [clean, build, valid, install, valid_valid])
 
 def cpu_number ()
   num_cpu = 0
@@ -41,8 +42,6 @@ build_path = gdb_clone + "/" + arch + "_build"
 prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 make_j = options["parallel-make"] == "yes" ? "-j#{cpu_number}" : ""
 
-b.logtitle = "Report for GDB build, arch = #{arch}"
-
 b.default_targets = [build]
 
 case arch
@@ -59,6 +58,7 @@ end
 build.add_result build_path
 
 b.target("build") do 
+  b.logtitle = "Report for GDB build, arch = #{arch}"
 
   machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
 
@@ -75,7 +75,14 @@ b.target("build") do
   end
 end
 
+b.target("clean") do 
+  b.logtitle = "Report for GDB clean, arch = #{arch}"
+
+  b.run("rm -rf #{build_path}")
+end
+
 b.target("install") do
+  b.logtitle = "Report for GDB install, arch = #{arch}"
 
   if( arch == "k1" )
     cd build_path
@@ -85,6 +92,7 @@ b.target("install") do
 end
 
 b.target("valid") do
+  b.logtitle = "Report for GDB valid, arch = #{arch}"
 
   if( arch == "k1" )
     Dir.chdir build_path + "/gdb/testsuite"
@@ -96,6 +104,7 @@ b.target("valid") do
 end
 
 b.target("gdb") do
+  b.logtitle = "Report for GDB gdb, arch = #{arch}"
 
   if( arch == "k1" )
     
