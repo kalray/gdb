@@ -739,7 +739,7 @@ case "${targ}" in
     targ_defvec=bfd_elf32_iq2000_vec
     ;;
 
-  k1-*-elf)
+  k1-*-*)
     targ_defvec=bfd_elf32_k1_vec
     ;;
 
