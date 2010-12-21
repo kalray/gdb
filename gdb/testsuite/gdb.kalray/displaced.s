@@ -3,7 +3,7 @@
 _start:
 	make $r0 = ev
 	;; 
-	set $ev = $r0
+	set $tv = $r0
 	;; 
 	bfx.b0 $ps, 0x28, 0x0 /* Enable H/W loops and traps */
 	;;
