@@ -387,20 +387,19 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 	pc = from + (pc - to);
 	if (debug_displaced) printf_filtered ("displaced: Didn't branch\n");
     } else {
-	ULONGEST ev, spc;
+	ULONGEST spc;
 	/* We branched. */
-	regcache_raw_read_unsigned (regs, tdep->ev_regnum, &ev);
-	if (pc - ev > 0 && pc - ev <= 0xc) {
+	if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
+	    /* It was a call */
+	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
+					 from + dsc->num_insn_words*4);
+	    if (debug_displaced) printf_filtered ("displaced: call\n");
+	} else {
 	    /* It was a trap */
 	    regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
 	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%llx\n", spc);
 	    spc = from + (spc - k1_step_pad_address);
 	    regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
-	} else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
-	    /* It was a call */
-	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
-					 from + dsc->num_insn_words*4);
-	    if (debug_displaced) printf_filtered ("displaced: call\n");
 	}
     }
 
