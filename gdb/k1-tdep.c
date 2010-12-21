@@ -684,7 +684,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   static const char k1_le_name[] = "le";
   static const char k1_ps_name[] = "ps";
   static const char k1_ra_name[] = "ra";
-  static const char k1_ev_name[] = "ev";
+  static const char k1_tv_name[] = "tv";
   static const char k1_spc_name[] = "spc";
   static const char k1_local_name[] = "r13";
 
@@ -730,7 +730,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	      has_local = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ra_name) == 0)
 	      has_ra = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ev_name) == 0)
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_tv_name) == 0)
 	      has_ev = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_spc_name) == 0)
 	      has_spc = i;
@@ -752,7 +752,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       if (has_ra < 0)
 	  error ("There's no '%s' register!", k1_ra_name);
       if (has_ev < 0)
-	  error ("There's no '%s' register!", k1_ev_name);
+	  error ("There's no '%s' register!", k1_tv_name);
       if (has_spc < 0)
 	  error ("There's no '%s' register!", k1_spc_name);
 
