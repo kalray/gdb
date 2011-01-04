@@ -42,7 +42,6 @@ struct gdbarch_tdep {
     int lc_regnum;
     int ps_regnum;
     int ra_regnum;
-    int ev_regnum;
     int spc_regnum;
 
     int local_regnum;
@@ -676,14 +675,13 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
   int i;
-  int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1, has_lc = -1, has_local = -1, has_ra = -1, has_ev = -1, has_spc = -1;
+  int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
 
   static const char k1_lc_name[] = "lc";
   static const char k1_ls_name[] = "ls";
   static const char k1_le_name[] = "le";
   static const char k1_ps_name[] = "ps";
   static const char k1_ra_name[] = "ra";
-  static const char k1_tv_name[] = "tv";
   static const char k1_spc_name[] = "spc";
   static const char k1_local_name[] = "r13";
 
@@ -729,8 +727,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	      has_local = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ra_name) == 0)
 	      has_ra = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_tv_name) == 0)
-	      has_ev = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_spc_name) == 0)
 	      has_spc = i;
       
@@ -750,8 +746,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  error ("There's no '%s' register!", k1_local_name);
       if (has_ra < 0)
 	  error ("There's no '%s' register!", k1_ra_name);
-      if (has_ev < 0)
-	  error ("There's no '%s' register!", k1_tv_name);
       if (has_spc < 0)
 	  error ("There's no '%s' register!", k1_spc_name);
 
@@ -760,7 +754,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       tdep->lc_regnum = has_lc;
       tdep->ps_regnum = has_ps;
       tdep->ra_regnum = has_ra;
-      tdep->ev_regnum = has_ev;
       tdep->spc_regnum = has_spc;
       tdep->local_regnum = has_local;
       set_gdbarch_pc_regnum (gdbarch, has_pc);
