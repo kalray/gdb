@@ -3,7 +3,7 @@
 _start:
 	make $r0 = ev
 	;; 
-	set $tv = $r0
+	set $ev = $r0
 	;; 
 	bfx.b0 $ps, 0x28, 0x0 /* Enable H/W loops and traps */
 	;;
@@ -57,7 +57,7 @@ test_displaced:
 	;;
 
 .align 4096
-ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0xC */
+ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0x8 */
 	nop
 	;;
 	nop
