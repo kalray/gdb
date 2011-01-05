@@ -29,11 +29,6 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   if (b->the_default)
     return a;
 
-  /* k1cp and k1dp are the same for now.*/
-  if ((a->mach == bfd_mach_k1dp || a->mach == bfd_mach_k1cp) &&
-      (b->mach == bfd_mach_k1dp || b->mach == bfd_mach_k1cp))
-    return a;
-
   return NULL;
 }
 
@@ -46,7 +41,6 @@ processors[] =
 {
   { bfd_mach_k1v1, "k1v1"  },
   { bfd_mach_k1dp, "k1dp"  },
-  { bfd_mach_k1cp, "k1cp"  },
 };
 
 static bfd_boolean
@@ -83,7 +77,6 @@ static const bfd_arch_info_type arch_info_struct[] =
 {
   N (bfd_mach_k1v1,      "k1v1",   FALSE, & arch_info_struct[1]),
   N (bfd_mach_k1dp,      "k1dp",   FALSE, & arch_info_struct[2]),
-  N (bfd_mach_k1cp,      "k1cp",   FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =

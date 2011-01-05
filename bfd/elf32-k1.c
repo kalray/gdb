@@ -10,9 +10,9 @@ static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-#define K1V1_K1DP_K1CP
+#define K1V1_K1DP
 #include "elf32-k1.def"
-#undef K1V1_K1DP_K1CP
+#undef K1V1_K1DP
 
 struct k1_reloc_map
 {
@@ -186,9 +186,6 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
   case bfd_mach_k1dp:
     fprintf (f, "\nMachine     = k1dp\n");
     break;
-  case bfd_mach_k1cp:
-    fprintf (f, "\nMachine     = k1cp\n");
-    break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
   }
@@ -211,7 +208,6 @@ elf_k1_final_write_processing (bfd *abfd,
     {
     case bfd_mach_k1v1:
     case bfd_mach_k1dp:
-    case bfd_mach_k1cp:
       val = mach;
       break;
     default:
@@ -232,7 +228,6 @@ elf_k1_object_p (bfd *abfd)
   switch (mach) {
     case bfd_mach_k1v1:
     case bfd_mach_k1dp:
-    case bfd_mach_k1cp:
       break;
     default:
       return FALSE;
