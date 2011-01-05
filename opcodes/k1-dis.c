@@ -160,9 +160,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
     case bfd_mach_k1dp:
       opc_table = k1dp_k1optab;
       break;
-    case bfd_mach_k1cp:
-      opc_table = k1cp_k1optab;
-      break;
     case bfd_mach_k1v1:
       opc_table = k1v1_k1optab;
       break;

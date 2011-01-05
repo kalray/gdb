@@ -2117,7 +2117,6 @@ enum bfd_architecture
 #define bfd_mach_st240                4
   bfd_arch_k1,        /* Kalray k1 */
 #define bfd_mach_k1dp                 0
-#define bfd_mach_k1cp                 1
 #define bfd_mach_k1v1                 2
   bfd_arch_last
   };
