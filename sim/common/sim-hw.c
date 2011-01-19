@@ -1,5 +1,6 @@
 /* Simulator hardware option handling.
-   Copyright (C) 1998, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support and Andrew Cagney.
 
 This file is part of GDB, the GNU debugger.
@@ -318,7 +319,7 @@ sim_hw_init (struct sim_state *sd)
 static void
 sim_hw_uninstall (struct sim_state *sd)
 {
-  /* hw_tree_delete (STATE_HW (sd)->tree); */
+  hw_tree_delete (STATE_HW (sd)->tree);
   zfree (STATE_HW (sd));
   STATE_HW (sd) = NULL;
 }

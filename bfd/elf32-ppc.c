@@ -6391,6 +6391,7 @@ ppc_elf_relax_section (bfd *abfd,
     {
       /* Append sufficient NOP relocs so we can write out relocation
 	 information for the trampolines.  */
+      Elf_Internal_Shdr *rel_hdr;
       Elf_Internal_Rela *new_relocs = bfd_malloc ((changes + isec->reloc_count)
 						  * sizeof (*new_relocs));
       unsigned ix;
@@ -6409,8 +6410,8 @@ ppc_elf_relax_section (bfd *abfd,
 	free (internal_relocs);
       elf_section_data (isec)->relocs = new_relocs;
       isec->reloc_count += changes;
-      elf_section_data (isec)->rel_hdr.sh_size
-	+= changes * elf_section_data (isec)->rel_hdr.sh_entsize;
+      rel_hdr = _bfd_elf_single_rel_hdr (isec);
+      rel_hdr->sh_size += changes * rel_hdr->sh_entsize;
     }
   else if (elf_section_data (isec)->relocs != internal_relocs)
     free (internal_relocs);
@@ -6816,10 +6817,8 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	  howto = NULL;
 	  if (r_type < R_PPC_max)
 	    howto = ppc_elf_howto_table[r_type];
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
+	  RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					   rel, relend, howto, contents);
 	}
 
       if (info->relocatable)
@@ -6985,9 +6984,9 @@ ppc_elf_relocate_section (bfd *output_bfd,
 			if (local_sections[r_symndx] == sec)
 			  break;
 		      if (r_symndx >= symtab_hdr->sh_info)
-			r_symndx = 0;
+			r_symndx = STN_UNDEF;
 		      rel->r_addend = htab->elf.tls_sec->vma + DTP_OFFSET;
-		      if (r_symndx != 0)
+		      if (r_symndx != STN_UNDEF)
 			rel->r_addend -= (local_syms[r_symndx].st_value
 					  + sec->output_offset
 					  + sec->output_section->vma);
@@ -7053,9 +7052,9 @@ ppc_elf_relocate_section (bfd *output_bfd,
 		if (local_sections[r_symndx] == sec)
 		  break;
 	      if (r_symndx >= symtab_hdr->sh_info)
-		r_symndx = 0;
+		r_symndx = STN_UNDEF;
 	      rel->r_addend = htab->elf.tls_sec->vma + DTP_OFFSET;
-	      if (r_symndx != 0)
+	      if (r_symndx != STN_UNDEF)
 		rel->r_addend -= (local_syms[r_symndx].st_value
 				  + sec->output_offset
 				  + sec->output_section->vma);
@@ -7658,7 +7657,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
 			     sym_name);
 			  ret = FALSE;
 			}
-		      else if (r_symndx == 0 || bfd_is_abs_section (sec))
+		      else if (r_symndx == STN_UNDEF || bfd_is_abs_section (sec))
 			;
 		      else if (sec == NULL || sec->owner == NULL)
 			{

@@ -1,6 +1,7 @@
 /* mem.c --- memory for RX simulator.
 
-Copyright (C) 2005, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
+Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -104,13 +105,19 @@ rx_mem_ptr (unsigned long address, enum mem_ptr_action action)
 
   if (action == MPA_WRITING)
     {
+      int pto_dc;
       if (ptr[pt1][pt2][pto] == MC_PUSHED_PC)
 	execution_error (SIM_ERR_CORRUPT_STACK, address);
       ptr[pt1][pt2][pto] = MC_DATA;
-      if (ptdc[pt1][pt2][pto])
+
+      /* The instruction decoder doesn't store it's decoded instructions
+         at word swapped addresses.  Therefore, when clearing the decode
+	 cache, we have to account for that here.  */
+      pto_dc = pto ^ (rx_big_endian ? 3 : 0);
+      if (ptdc[pt1][pt2][pto_dc])
 	{
-	  free (ptdc[pt1][pt2][pto]);
-	  ptdc[pt1][pt2][pto] = NULL;
+	  free (ptdc[pt1][pt2][pto_dc]);
+	  ptdc[pt1][pt2][pto_dc] = NULL;
 	}
     }
 

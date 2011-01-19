@@ -1,7 +1,7 @@
 /* Target-dependent code for AMD64.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+   2011 Free Software Foundation, Inc.
 
    Contributed by Jiri Smid, SuSE Labs.
 
@@ -256,19 +256,6 @@ static const char *amd64_dword_names[] =
   "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", 
   "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"
 };
-
-/* Return the name of register REGNUM, or the empty string if it is
-   an anonymous register. */
-
-static const char *
-amd64_register_name (struct gdbarch *gdbarch, int regnum)
-{
-  /* Hide the upper YMM registers.  */
-  if (i386_ymmh_regnum_p (gdbarch, regnum))
-    return "";
-
-  return tdesc_register_name (gdbarch, regnum);
-}
 
 /* Return the name of register REGNUM.  */
 
@@ -600,7 +587,7 @@ amd64_return_value (struct gdbarch *gdbarch, struct type *func_type,
 
   /* 2. If the type has class MEMORY, then the caller provides space
      for the return value and passes the address of this storage in
-     %rdi as if it were the first argument to the function. In effect,
+     %rdi as if it were the first argument to the function.  In effect,
      this address becomes a hidden first argument.
 
      On return %rax will contain the address that has been passed in
@@ -1577,7 +1564,7 @@ amd64_relocate_instruction (struct gdbarch *gdbarch,
 
       /* Where "ret" in the original code will return to.  */
       ret_addr = oldloc + insn_length;
-      push_buf[0] = 0x68; /* pushq $... */
+      push_buf[0] = 0x68; /* pushq $...  */
       memcpy (&push_buf[1], &ret_addr, 4);
       /* Push the push.  */
       append_insns (to, 5, push_buf);
@@ -2406,8 +2393,6 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				     amd64_pseudo_register_write);
 
   set_tdesc_pseudo_register_name (gdbarch, amd64_pseudo_register_name);
-
-  set_gdbarch_register_name (gdbarch, amd64_register_name);
 
   /* AMD64 has an FPU and 16 SSE registers.  */
   tdep->st0_regnum = AMD64_ST0_REGNUM;

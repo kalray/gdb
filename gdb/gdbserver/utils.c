@@ -1,6 +1,6 @@
 /* General utility routines for the remote server for GDB.
    Copyright (C) 1986, 1989, 1993, 1995, 1996, 1997, 1999, 2000, 2002, 2003,
-   2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,9 +24,6 @@
 #if HAVE_ERRNO_H
 #include <errno.h>
 #endif
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 #ifdef IN_PROCESS_AGENT
 #  define PREFIX "ipa: "
@@ -43,7 +40,8 @@ static void malloc_failure (size_t size) ATTR_NORETURN;
 static void
 malloc_failure (size_t size)
 {
-  fprintf (stderr, PREFIX "ran out of memory while trying to allocate %lu bytes\n",
+  fprintf (stderr,
+	   PREFIX "ran out of memory while trying to allocate %lu bytes\n",
 	   (unsigned long) size);
   exit (1);
 }
@@ -244,7 +242,7 @@ get_cell (void)
 /* Stdarg wrapper around vsnprintf.
    SIZE is the size of the buffer pointed to by STR.  */
 
-static int
+int
 xsnprintf (char *str, size_t size, const char *format, ...)
 {
   va_list args;

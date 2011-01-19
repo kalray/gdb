@@ -1,6 +1,6 @@
 /* gdb-if.c -- sim interface to GDB.
 
-Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -18,6 +18,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "config.h"
 #include <stdio.h>
 #include <assert.h>
 #include <signal.h>
@@ -533,12 +534,12 @@ sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
   check_desc (sd);
 
   if (!check_regno (regno))
-    return 0;
+    return -1;
 
   size = reg_size (regno);
 
   if (length != size)
-    return 0;
+    return -1;
 
   if (rx_big_endian)
     val = get_be (buf, length);
@@ -629,7 +630,7 @@ sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
     default:
       fprintf (stderr, "rx minisim: unrecognized register number: %d\n",
 	       regno);
-      return -1;
+      return 0;
     }
 
   return size;

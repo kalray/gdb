@@ -664,6 +664,7 @@ python_prog_path
 LTLIBEXPAT
 LIBEXPAT
 HAVE_LIBEXPAT
+READLINE_TEXI_INCFLAG
 READLINE_CFLAGS
 READLINE_DEPS
 READLINE
@@ -975,6 +976,7 @@ with_tk
 with_x
 enable_sim
 enable_multi_ice
+enable_gdbserver
 '
       ac_precious_vars='build_alias
 host_alias
@@ -988,7 +990,7 @@ CPP
 YACC
 YFLAGS
 XMKMF'
-ac_subdirs_all='doc testsuite
+ac_subdirs_all='testsuite
 gdbtk
 multi-ice
 gdbserver'
@@ -1635,6 +1637,8 @@ Optional Features:
                           gcc is used
   --enable-sim            link gdb with simulator
   --enable-multi-ice      build the multi-ice-gdb-server
+  --enable-gdbserver      automatically build gdbserver (yes/no/auto, default
+                          is auto)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -7886,7 +7890,7 @@ fi
 
 
 
-subdirs="$subdirs doc testsuite"
+subdirs="$subdirs testsuite"
 
 
 # Check whether to support alternative target configurations
@@ -9742,6 +9746,7 @@ if test "$with_system_readline" = yes; then
   READLINE=-lreadline
   READLINE_DEPS=
   READLINE_CFLAGS=
+  READLINE_TEXI_INCFLAG=
 
   # readline-6.0 started to use the name `_rl_echoing_p'.
   # `$(READLINE_DIR)/' of bundled readline would not resolve in configure.
@@ -9779,7 +9784,9 @@ else
   READLINE='$(READLINE_DIR)/libreadline.a'
   READLINE_DEPS='$(READLINE)'
   READLINE_CFLAGS='-I$(READLINE_SRC)/..'
+  READLINE_TEXI_INCFLAG='-I $(READLINE_DIR)'
 fi
+
 
 
 
@@ -10963,6 +10970,21 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${PYTHON_CFLAGS}" >&5
 $as_echo "${PYTHON_CFLAGS}" >&6; }
   fi
+
+  # On IRIX, type siginfo is not defined.  Instead, sys/siginfo.h provides:
+  #    #if _SGIAPI
+  #    #define siginfo __siginfo
+  #    #endif
+  # The problem is that including Python causes some XOPEN macros to be
+  # unilaterally defined, and that in turn causes _SGIAPI to evaluate
+  # to false.  So, we work around this issue by defining siginfo ourself
+  # though the command-line.
+  case "$gdb_host" in
+    irix*) if test "${GCC}" = yes; then
+             CPPFLAGS="$CPPFLAGS -Dsiginfo=__siginfo"
+           fi
+           ;;
+  esac
 else
   # Even if Python support is not compiled in, we need to have these files
   # included.
@@ -12556,7 +12578,7 @@ for ac_func in canonicalize_file_name realpath getrusage getuid \
 		getgid pipe poll pread64 resize_term sbrk setpgid setpgrp setsid \
 		sigaction sigprocmask sigsetmask socketpair syscall \
 		ttrace wborder wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise
+		setrlimit getrlimit posix_madvise waitpid
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -14312,27 +14334,6 @@ $as_echo "$found" >&6; }
 
 if test ${build} = ${host} -a ${host} = ${target} ; then
    case ${host_os} in
-   hpux*)
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HPUX/OSF thread support" >&5
-$as_echo_n "checking for HPUX/OSF thread support... " >&6; }
-      if test -f /usr/include/dce/cma_config.h ; then
-         if test "$GCC" = "yes" ; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_HPUX_THREAD_SUPPORT 1" >>confdefs.h
-
-            CONFIG_OBS="${CONFIG_OBS} hpux-thread.o"
-            CONFIG_SRCS="${CONFIG_SRCS} hpux-thread.c"
-         else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no (suppressed because you are not using GCC)" >&5
-$as_echo "no (suppressed because you are not using GCC)" >&6; }
-         fi
-      else
-         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      fi
-      ;;
    solaris*)
       # See if thread_db library is around for Solaris thread debugging.
       # Note that we must explicitly test for version 1 of the library
@@ -14940,6 +14941,10 @@ OLD_LIBS=$LIBS
 CFLAGS="$CFLAGS -I${srcdir}/../include -I../bfd -I${srcdir}/../bfd"
 LDFLAGS="$LDFLAGS -L../bfd -L../libiberty"
 intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
+# -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
+if test "$plugins" = "yes"; then
+  LIBS="-ldl $LIBS"
+fi
 LIBS="-lbfd -liberty $intl $LIBS"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ELF support in BFD" >&5
 $as_echo_n "checking for ELF support in BFD... " >&6; }
@@ -14975,6 +14980,10 @@ if test $gdb_cv_var_elf = yes; then
 
 $as_echo "#define HAVE_ELF 1" >>confdefs.h
 
+  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
+  if test "$plugins" = "yes"; then
+    OLD_LIBS="-ldl $OLD_LIBS"
+  fi
 fi
 CFLAGS=$OLD_CFLAGS
 LDFLAGS=$OLD_LDFLAGS
@@ -15822,8 +15831,20 @@ if test "x$enable_multi_ice" = xyes; then
 
 fi
 
-# We only build gdbserver automatically in a native configuration.
-if test "$gdb_native" = "yes"; then
+# Check whether --enable-gdbserver was given.
+if test "${enable_gdbserver+set}" = set; then :
+  enableval=$enable_gdbserver; case "${enableval}" in
+  yes| no|auto) ;;
+  *) as_fn_error "bad value ${enableval} for --enable-gdbserver option" "$LINENO" 5 ;;
+esac
+else
+  enable_gdbserver=auto
+fi
+
+
+# We only build gdbserver automatically in a native configuration, and
+# only if the user did not explicitly disable its build.
+if test "$gdb_native" = "yes" -a "$enable_gdbserver" != "no"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gdbserver is supported on this host" >&5
 $as_echo_n "checking whether gdbserver is supported on this host... " >&6; }
   if test "x$build_gdbserver" = xyes; then
@@ -15831,10 +15852,17 @@ $as_echo_n "checking whether gdbserver is supported on this host... " >&6; }
 $as_echo "yes" >&6; }
     subdirs="$subdirs gdbserver"
 
+    gdbserver_build_enabled=yes
   else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
   fi
+fi
+
+# If the user explicitly request the gdbserver to be built, verify that
+# we were in fact able to enable it.
+if test "$enable_gdbserver" = "yes" -a "$gdbserver_build_enabled" != "yes"; then
+  as_fn_error "Automatic gdbserver build is not supported for this configuration" "$LINENO" 5
 fi
 
 # If nativefile (NAT_FILE) is not set in config/*/*.m[ht] files, we link
@@ -15875,7 +15903,7 @@ ac_config_links="$ac_config_links $ac_config_links_1"
 $as_echo "#define GDB_DEFAULT_HOST_CHARSET \"UTF-8\"" >>confdefs.h
 
 
-ac_config_files="$ac_config_files Makefile .gdbinit:gdbinit.in gnulib/Makefile"
+ac_config_files="$ac_config_files Makefile .gdbinit:gdbinit.in doc/Makefile gnulib/Makefile data-directory/Makefile"
 
 ac_config_commands="$ac_config_commands default"
 
@@ -16641,7 +16669,9 @@ do
     "$ac_config_links_1") CONFIG_LINKS="$CONFIG_LINKS $ac_config_links_1" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     ".gdbinit") CONFIG_FILES="$CONFIG_FILES .gdbinit:gdbinit.in" ;;
+    "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "gnulib/Makefile") CONFIG_FILES="$CONFIG_FILES gnulib/Makefile" ;;
+    "data-directory/Makefile") CONFIG_FILES="$CONFIG_FILES data-directory/Makefile" ;;
     "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
 
   *) as_fn_error "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
