@@ -1,4 +1,4 @@
-# Copyright 1998, 1999, 2002, 2003, 2004, 2007, 2008, 2009, 2010
+# Copyright 1998, 1999, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
 # Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -683,6 +683,10 @@ gdb_expect  {
         -re ".*$gdb_prompt $"       { fail "complete 'p &values\[0\] -> a'" }
         timeout         { fail "(timeout) complete 'p &values\[0\] -> a' 2" }
         }
+
+gdb_test "complete p &values\[0\]->z" \
+    "p &values.0.->z_field" \
+    "copmletion of field in anonymous union"
 
 # The following tests used to simply try to complete `${objdir}/file',
 # and so on.  The problem is that ${objdir} can be very long; the

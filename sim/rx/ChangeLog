@@ -1,3 +1,48 @@
+2011-01-11  Andrew Burgess  <aburgess@broadcom.com>
+
+	* gdb-if.c (sim_store_register): Update return value to
+	match new API.
+
+2010-12-14  DJ Delorie  <dj@redhat.com>
+
+	* rx.c (decode_opcode): For "MVFC PC,", use the address of the
+	opcode, not the address following the opcode.
+	(decode_opcode): RXO_branchrel is relative to the opcode's PC, not
+	the address following the opcode.
+
+2010-11-11  DJ Delorie  <dj@redhat.com>
+
+	* rx.c (lsb_count): New.
+	(divu_cycles): New.
+	(div_cycles): New.
+	(decode_opcode): Fix cycle count math for div, divu, suntil, and
+	swhile.
+
+2010-09-29  Kevin Buettner  <kevinb@redhat.com>
+
+	* mem.c (rx_mem_ptr): When invalidating the decode cache, account
+	for the fact that the instruction decoder never uses swapped
+	addresses.
+
+2010-09-29  Nick Clifton  <nickc@redhat.com>
+
+	* rx.c (decode_opcode: RXO_int): Only break out of the emulation
+	loop if rx_syscall() does not return a RX_STEPPED result.
+
+2010-09-23  Kevin Buettner  <kevinb@redhat.com>
+
+	* rx.c (decode_opcode): Add cycle information for RXO_smovu.
+
+2010-09-23  Kevin Buettner  <kevinb@redhat.com>
+
+	* fpu.c, gdb-if.c, load.c, misc.c, syscalls.c (config.h): Include.
+
+	* rx.c (decode_opcode): Declare `tx' as unsigned.
+
+	* cpu.h (reset_decoder): Declare.
+	* load.c (rx_load): Call `reset_decoder'.
+	* rx.c (reset_decoder): New function.
+
 2010-07-29  DJ Delorie  <dj@redhat.com>
 
 	* rx.c (decode_cache_base): New.

@@ -1,6 +1,6 @@
 /* General python/gdb code
 
-   Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -66,6 +66,12 @@ PyObject *gdbpy_enabled_cst;
 /* The GdbError exception.  */
 PyObject *gdbpy_gdberror_exc;
 
+/* The `gdb.error' base class.  */
+PyObject *gdbpy_gdb_error;
+
+/* The `gdb.MemoryError' exception.  */
+PyObject *gdbpy_gdb_memory_error;
+
 /* Architecture and language to be used in callbacks from
    the Python interpreter.  */
 struct gdbarch *python_gdbarch;
@@ -79,12 +85,23 @@ struct python_env
   PyGILState_STATE state;
   struct gdbarch *gdbarch;
   const struct language_defn *language;
+  PyObject *error_type, *error_value, *error_traceback;
 };
 
 static void
 restore_python_env (void *p)
 {
   struct python_env *env = (struct python_env *)p;
+
+  /* Leftover Python error is forbidden by Python Exception Handling.  */
+  if (PyErr_Occurred ())
+    {
+      /* This order is similar to the one calling error afterwards. */
+      gdbpy_print_stack ();
+      warning (_("internal error: Unhandled Python exception"));
+    }
+
+  PyErr_Restore (env->error_type, env->error_value, env->error_traceback);
 
   PyGILState_Release (env->state);
   python_gdbarch = env->gdbarch;
@@ -108,6 +125,9 @@ ensure_python_env (struct gdbarch *gdbarch,
   python_gdbarch = gdbarch;
   python_language = language;
 
+  /* Save it and ensure ! PyErr_Occurred () afterwards.  */
+  PyErr_Fetch (&env->error_type, &env->error_value, &env->error_traceback);
+  
   return make_cleanup (restore_python_env, env);
 }
 
@@ -416,7 +436,8 @@ gdbpy_solib_name (PyObject *self, PyObject *args)
 static PyObject *
 gdbpy_decode_line (PyObject *self, PyObject *args)
 {
-  struct symtabs_and_lines sals = { NULL, 0 }; /* Initialize to appease gcc.  */
+  struct symtabs_and_lines sals = { NULL, 0 }; /* Initialize to
+						  appease gcc.  */
   struct symtab_and_line sal;
   char *arg = NULL;
   char *copy = NULL;
@@ -940,7 +961,12 @@ Enables or disables printing of Python stack traces."),
   /* The casts to (char*) are for python 2.4.  */
   PyModule_AddStringConstant (gdb_module, "VERSION", (char*) version);
   PyModule_AddStringConstant (gdb_module, "HOST_CONFIG", (char*) host_name);
-  PyModule_AddStringConstant (gdb_module, "TARGET_CONFIG", (char*) target_name);
+  PyModule_AddStringConstant (gdb_module, "TARGET_CONFIG",
+			      (char*) target_name);
+
+  /* gdb.parameter ("data-directory") doesn't necessarily exist when the python
+     script below is run (depending on order of _initialize_* functions).
+     Define the initial value of gdb.PYTHONDIR here.  */
   {
     char *gdb_pythondir;
 
@@ -948,6 +974,13 @@ Enables or disables printing of Python stack traces."),
     PyModule_AddStringConstant (gdb_module, "PYTHONDIR", gdb_pythondir);
     xfree (gdb_pythondir);
   }
+
+  gdbpy_gdb_error = PyErr_NewException ("gdb.error", PyExc_RuntimeError, NULL);
+  PyModule_AddObject (gdb_module, "error", gdbpy_gdb_error);
+
+  gdbpy_gdb_memory_error = PyErr_NewException ("gdb.MemoryError",
+					       gdbpy_gdb_error, NULL);
+  PyModule_AddObject (gdb_module, "MemoryError", gdbpy_gdb_memory_error);
 
   gdbpy_gdberror_exc = PyErr_NewException ("gdb.GdbError", NULL, NULL);
   PyModule_AddObject (gdb_module, "GdbError", gdbpy_gdberror_exc);
@@ -979,10 +1012,31 @@ Enables or disables printing of Python stack traces."),
   gdbpy_doc_cst = PyString_FromString ("__doc__");
   gdbpy_enabled_cst = PyString_FromString ("enabled");
 
-  /* Create a couple objects which are used for Python's stdout and
-     stderr.  */
+  /* Release the GIL while gdb runs.  */
+  PyThreadState_Swap (NULL);
+  PyEval_ReleaseLock ();
+
+#endif /* HAVE_PYTHON */
+}
+
+#ifdef HAVE_PYTHON
+
+/* Perform the remaining python initializations.
+   These must be done after GDB is at least mostly initialized.
+   E.g., The "info pretty-printer" command needs the "info" prefix
+   command installed.  */
+
+void
+finish_python_initialization (void)
+{
+  struct cleanup *cleanup;
+
+  cleanup = ensure_python_env (get_current_arch (), current_language);
+
   PyRun_SimpleString ("\
+import os\n\
 import sys\n\
+\n\
 class GdbOutputFile:\n\
   def close(self):\n\
     # Do nothing.\n\
@@ -1004,31 +1058,43 @@ class GdbOutputFile:\n\
 sys.stderr = GdbOutputFile()\n\
 sys.stdout = GdbOutputFile()\n\
 \n\
-# GDB's python scripts are stored inside gdb.PYTHONDIR.  So insert\n\
-# that directory name at the start of sys.path to allow the Python\n\
-# interpreter to find them.\n\
-sys.path.insert(0, gdb.PYTHONDIR)\n\
+# Ideally this would live in the gdb module, but it's intentionally written\n\
+# in python, and we need this to bootstrap the gdb module.\n\
 \n\
-# The gdb module is implemented in C rather than in Python.  As a result,\n\
-# the associated __init.py__ script is not not executed by default when\n\
-# the gdb module gets imported.  Execute that script manually if it exists.\n\
-gdb.__path__ = [gdb.PYTHONDIR + '/gdb']\n\
-from os.path import exists\n\
-ipy = gdb.PYTHONDIR + '/gdb/__init__.py'\n\
-if exists (ipy):\n\
-  execfile (ipy)\n\
+def GdbSetPythonDirectory (dir):\n\
+  \"Set gdb.PYTHONDIR and update sys.path,etc.\"\n\
+  old_dir = gdb.PYTHONDIR\n\
+  gdb.PYTHONDIR = dir\n\
+  # GDB's python scripts are stored inside gdb.PYTHONDIR.  So insert\n\
+  # that directory name at the start of sys.path to allow the Python\n\
+  # interpreter to find them.\n\
+  if old_dir in sys.path:\n\
+    sys.path.remove (old_dir)\n\
+  sys.path.insert (0, gdb.PYTHONDIR)\n\
+\n\
+  # Tell python where to find submodules of gdb.\n\
+  gdb.__path__ = [gdb.PYTHONDIR + '/gdb']\n\
+\n\
+  # The gdb module is implemented in C rather than in Python.  As a result,\n\
+  # the associated __init.py__ script is not not executed by default when\n\
+  # the gdb module gets imported.  Execute that script manually if it\n\
+  # exists.\n\
+  ipy = gdb.PYTHONDIR + '/gdb/__init__.py'\n\
+  if os.path.exists (ipy):\n\
+    execfile (ipy)\n\
+\n\
+# Install the default gdb.PYTHONDIR.\n\
+GdbSetPythonDirectory (gdb.PYTHONDIR)\n\
 ");
 
-  /* Release the GIL while gdb runs.  */
-  PyThreadState_Swap (NULL);
-  PyEval_ReleaseLock ();
+  do_cleanups (cleanup);
+}
 
 #endif /* HAVE_PYTHON */
-}
 
 
 
-#if HAVE_PYTHON
+#ifdef HAVE_PYTHON
 
 static PyMethodDef GdbMethods[] =
 {
@@ -1055,6 +1121,9 @@ static PyMethodDef GdbMethods[] =
   { "objfiles", gdbpy_objfiles, METH_NOARGS,
     "Return a sequence of all loaded objfiles." },
 
+  { "newest_frame", gdbpy_newest_frame, METH_NOARGS,
+    "newest_frame () -> gdb.Frame.\n\
+Return the newest frame object." },
   { "selected_frame", gdbpy_selected_frame, METH_NOARGS,
     "selected_frame () -> gdb.Frame.\n\
 Return the selected frame object." },

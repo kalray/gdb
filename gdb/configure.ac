@@ -1,6 +1,6 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-dnl 2005, 2006, 2007, 2008, 2009, 2010
+dnl Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
+dnl 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
 dnl Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
@@ -110,7 +110,7 @@ AS_HELP_STRING([--with-relocated-sources=PATH], [automatically relocate this pat
               [Relocated directory for source files. ])
 ])
 
-AC_CONFIG_SUBDIRS(doc testsuite)
+AC_CONFIG_SUBDIRS(testsuite)
 
 # Check whether to support alternative target configurations
 AC_ARG_ENABLE(targets,
@@ -540,6 +540,7 @@ if test "$with_system_readline" = yes; then
   READLINE=-lreadline
   READLINE_DEPS=
   READLINE_CFLAGS=
+  READLINE_TEXI_INCFLAG=
 
   # readline-6.0 started to use the name `_rl_echoing_p'.
   # `$(READLINE_DIR)/' of bundled readline would not resolve in configure.
@@ -559,10 +560,12 @@ else
   READLINE='$(READLINE_DIR)/libreadline.a'
   READLINE_DEPS='$(READLINE)'
   READLINE_CFLAGS='-I$(READLINE_SRC)/..'
+  READLINE_TEXI_INCFLAG='-I $(READLINE_DIR)'
 fi
 AC_SUBST(READLINE)
 AC_SUBST(READLINE_DEPS)
 AC_SUBST(READLINE_CFLAGS)
+AC_SUBST(READLINE_TEXI_INCFLAG)
 
 AC_ARG_WITH(expat,
   AS_HELP_STRING([--with-expat], [include expat support (auto/yes/no)]),
@@ -857,6 +860,21 @@ if test "${have_libpython}" != no; then
     done
     AC_MSG_RESULT(${PYTHON_CFLAGS})
   fi
+
+  # On IRIX, type siginfo is not defined.  Instead, sys/siginfo.h provides:
+  #    #if _SGIAPI
+  #    #define siginfo __siginfo
+  #    #endif
+  # The problem is that including Python causes some XOPEN macros to be
+  # unilaterally defined, and that in turn causes _SGIAPI to evaluate
+  # to false.  So, we work around this issue by defining siginfo ourself
+  # though the command-line.
+  case "$gdb_host" in
+    irix*) if test "${GCC}" = yes; then
+             CPPFLAGS="$CPPFLAGS -Dsiginfo=__siginfo"
+           fi
+           ;;
+  esac
 else
   # Even if Python support is not compiled in, we need to have these files
   # included.
@@ -964,7 +982,7 @@ AC_CHECK_FUNCS([canonicalize_file_name realpath getrusage getuid \
 		getgid pipe poll pread64 resize_term sbrk setpgid setpgrp setsid \
 		sigaction sigprocmask sigsetmask socketpair syscall \
 		ttrace wborder wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise])
+		setrlimit getrlimit posix_madvise waitpid])
 AM_LANGINFO_CODESET
 
 # Check the return and argument types of ptrace.  No canned test for
@@ -1512,22 +1530,6 @@ dnl and not doing a canadian cross build (build == host).
 
 if test ${build} = ${host} -a ${host} = ${target} ; then
    case ${host_os} in
-   hpux*)
-      AC_MSG_CHECKING(for HPUX/OSF thread support)
-      if test -f /usr/include/dce/cma_config.h ; then
-         if test "$GCC" = "yes" ; then
-            AC_MSG_RESULT(yes)
-            AC_DEFINE(HAVE_HPUX_THREAD_SUPPORT, 1,
-	    [Define if you have HPUX threads])
-            CONFIG_OBS="${CONFIG_OBS} hpux-thread.o"
-            CONFIG_SRCS="${CONFIG_SRCS} hpux-thread.c"
-         else
-            AC_MSG_RESULT(no (suppressed because you are not using GCC))
-         fi
-      else
-         AC_MSG_RESULT(no)
-      fi
-      ;;
    solaris*)
       # See if thread_db library is around for Solaris thread debugging.
       # Note that we must explicitly test for version 1 of the library
@@ -1840,6 +1842,10 @@ OLD_LIBS=$LIBS
 CFLAGS="$CFLAGS -I${srcdir}/../include -I../bfd -I${srcdir}/../bfd"
 LDFLAGS="$LDFLAGS -L../bfd -L../libiberty"
 intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
+# -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
+if test "$plugins" = "yes"; then
+  LIBS="-ldl $LIBS"
+fi
 LIBS="-lbfd -liberty $intl $LIBS"
 AC_CACHE_CHECK([for ELF support in BFD], gdb_cv_var_elf,
 [AC_TRY_LINK(
@@ -1853,6 +1859,10 @@ if test $gdb_cv_var_elf = yes; then
   CONFIG_OBS="$CONFIG_OBS elfread.o"
   AC_DEFINE(HAVE_ELF, 1,
 	    [Define if ELF support should be included.])
+  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
+  if test "$plugins" = "yes"; then
+    OLD_LIBS="-ldl $OLD_LIBS"
+  fi
 fi
 CFLAGS=$OLD_CFLAGS
 LDFLAGS=$OLD_LDFLAGS
@@ -2087,15 +2097,31 @@ if test "x$enable_multi_ice" = xyes; then
    AC_CONFIG_SUBDIRS(multi-ice)
 fi
 
-# We only build gdbserver automatically in a native configuration. 
-if test "$gdb_native" = "yes"; then
+AC_ARG_ENABLE(gdbserver,
+AS_HELP_STRING([--enable-gdbserver],
+               [automatically build gdbserver (yes/no/auto, default is auto)]),
+[case "${enableval}" in
+  yes| no|auto) ;;
+  *) AC_MSG_ERROR(bad value ${enableval} for --enable-gdbserver option) ;;
+esac],[enable_gdbserver=auto])
+
+# We only build gdbserver automatically in a native configuration, and
+# only if the user did not explicitly disable its build.
+if test "$gdb_native" = "yes" -a "$enable_gdbserver" != "no"; then
   AC_MSG_CHECKING(whether gdbserver is supported on this host)
   if test "x$build_gdbserver" = xyes; then
     AC_MSG_RESULT(yes)
     AC_CONFIG_SUBDIRS(gdbserver)
+    gdbserver_build_enabled=yes
   else
     AC_MSG_RESULT(no)
   fi
+fi
+
+# If the user explicitly request the gdbserver to be built, verify that
+# we were in fact able to enable it.
+if test "$enable_gdbserver" = "yes" -a "$gdbserver_build_enabled" != "yes"; then
+  AC_MSG_ERROR(Automatic gdbserver build is not supported for this configuration)
 fi
 
 # If nativefile (NAT_FILE) is not set in config/*/*.m[ht] files, we link
@@ -2126,7 +2152,7 @@ dnl  At the moment, we just assume it's UTF-8.
 AC_DEFINE(GDB_DEFAULT_HOST_CHARSET, "UTF-8",
           [Define to be a string naming the default host character set.])
 
-AC_OUTPUT(Makefile .gdbinit:gdbinit.in gnulib/Makefile,
+AC_OUTPUT(Makefile .gdbinit:gdbinit.in doc/Makefile gnulib/Makefile data-directory/Makefile,
 [
 case x$CONFIG_HEADERS in
 xconfig.h:config.in)

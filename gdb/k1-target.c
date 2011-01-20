@@ -98,7 +98,7 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     observer_detach_new_thread (new_thread_observer);
     batch_silent = saved_batch_silent;
     inferior_thread ()->step_multi = 0;
-    current_inferior ()->stop_soon = NO_STOP_QUIETLY;
+    current_inferior ()->control.stop_soon = NO_STOP_QUIETLY;
 
     /* Our target vector has been poped from the target stack by
        'target remote'. If we want to keep the ability to 'run', we
@@ -296,7 +296,7 @@ run_mppa_command (char *args, int from_tty)
 	/* Prevent the stop notification from the freshly connected RM
 	   to show up in the CLI. We restart this core right after
 	   that. */
-	current_inferior ()->stop_soon = STOP_QUIETLY_NO_SIGSTOP;
+	current_inferior ()->control.stop_soon = STOP_QUIETLY_NO_SIGSTOP;
 	/* We use a continuation, because we want that to run after
 	   the first stop notification has been handled. Note that an
 	   inferior continuation wouldn't do as this is also used by

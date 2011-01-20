@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010 Free Software Foundation, Inc.
+   Copyright 2010, 2011 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 .Lcu1_begin:
 	.4byte	.Lcu1_end - .Lcu1_start	# Length of Compilation Unit Info
 .Lcu1_start:
-	.value	0x3	# DWARF version number
+	.2byte	0x3	# DWARF version number
 	.long	.Labbrev1_begin	# Offset Into Abbrev. Section
 	.byte	0x4	# Pointer Size (in bytes)
 

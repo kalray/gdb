@@ -57,7 +57,7 @@ test_displaced:
 	;;
 
 .align 4096
-ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0xC */
+ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0x8 */
 	nop
 	;;
 	nop

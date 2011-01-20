@@ -1,3 +1,157 @@
+2011-01-05  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+
+	* gdbreplay.c: Shorten lines of >= 80 columns.
+	* linux-low.c: Ditto.
+	* linux-ppc-low.c: Ditto.
+	* linux-s390-low.c: Ditto.
+	* linux-sparc-low.c: Ditto.
+	* linux-x86-low.c: Ditto.
+	* linux-xtensa-low.c: Ditto.
+	* mem-break.c: Ditto.
+	* nto-low.c: Ditto.
+	* regcache.h: Ditto.
+	* remote-utils.c: Ditto.
+	* server.c: Ditto.
+	* server.h: Ditto.
+	* thread-db.c: Ditto.
+	* tracepoint.c: Ditto.
+	* utils.c: Ditto.
+	* win32-low.h: Ditto.
+
+2011-01-05  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbserver/configure.ac, gdbserver/gdbserver.1: Copyright year
+	update.
+
+2011-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* server.c (gdbserver_version): Update copyright year in version
+	output.
+	* gdbreplay.c (gdbreplay_version): Ditto.
+
+2010-12-29  Jie Zhang  <jie.zhang@analog.com>
+
+	* configure.srv (bfin-*-*linux*): Handle Blackfin/Linux targets.
+	* linux-bfin-low.c: New file.
+	* linux-low.c: Define PT_TEXT_ADDR, PT_TEXT_END_ADDR, and
+	PT_DATA_ADDR for BFIN targets.
+	* Makefile.in (SFILES): Add linux-bfin-low.c.
+	(clean): Remove reg-bfin.c.
+	(linux-bfin-low.o, reg-bfin.o, reg-bfin.c): New targets.
+	* README: Mention supported Blackfin targets.
+
+2010-12-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* .gitignore: New file.
+
+2010-11-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* linux-low.c (linux_tracefork_child): Add char* cast to arg.
+
+2010-10-22  Jie Zhang  <jie@codesourcery.com>
+
+	* Makefile.in: Add FLAGS_TO_PASS variable.
+	(install): Remove dependency of install-only and recursively
+	invoke make for install-only.
+
+2010-10-04  Doug Evans  <dje@google.com>
+
+	* Makefile.in (uninstall): Use $(DESTDIR).
+
+2010-09-24  Pedro Alves  <pedro@codesourcery.com>
+
+	PR gdb/11842
+
+	* linux-x86-low.c (compat_siginfo_from_siginfo)
+	(siginfo_from_compat_siginfo): Also copy si_pid and si_uid when
+	si_code is < 0.  Check for si_code == SI_TIMER before checking for
+	si_code < 0.
+
+2010-09-13  Joel Brobecker  <brobecker@adacore.com>
+
+	* lynx-i386-low.c: New file.
+	* configure.srv: Add handling of i[34567]86-*-lynxos* targets.
+
+2010-09-13  Joel Brobecker  <brobecker@adacore.com>
+
+	* lynx-low.c (ptrace_request_to_str): Remove handling for
+	request values that have been removed in LynxOS 5.x.
+
+2010-09-13  Joel Brobecker  <brobecker@adacore.com>
+
+	* lynx-low.c, lynx-ppc-loc.c: Include <sys/ptrace.h> instead of
+	<ptrace.h>
+
+2010-09-09  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* configure.ac: Add --enable-inprocess-agent option.
+	* configure: Rebuilt.
+
+2010-09-06  Yao Qi  <yao@codesourcery.com>
+
+	* linux-low.c (linux_kill): Remove unused variable.
+	(linux_stabilize_threads): Likewise.
+	* server.c (start_inferior): Likewise.
+	(queue_stop_reply_callback): Likewise.
+	* tracepoint.c (do_action_at_tracepoint): Likewise.
+
+2010-09-06  Yao Qi  <yao@codesourcery.com>
+
+	* linux-low.c (maybe_move_out_of_jump_pad): Restore current_inferior
+	on return.
+
+2010-09-06  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* target.c (mywait) <TARGET_WAITKIND_EXITED>: Fix to use INTEGER.
+
+2010-09-06  Pedro Alves  <pedro@codesourcery.com>
+
+	* Makefile.in (install-only): Replace $IPA_DEPFILES with
+	"$(IPA_DEPFILES)".
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbserver/lynx-low.c, gdbserver/lynx-low.h,
+	gdbserver/lynx-ppc-low.c: New files.
+	* Makefile.in (lynx_low_h): New variable.
+	(lynx-low.o, lynx-ppc-low.o): New rules.
+	* configure.ac: On LynxOS, link with -lnetinet.
+	* configure.srv: Add handling of powerpc-*-lynxos* targets.
+	* configure: regenerate.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* Makefile.in (vasprintf.o, vsnprintf.o): New rules.
+	* configure.ac: Add check for vasprintf and vsnprintf.
+	* configure, config.in: Regenerate.
+	* server.h (vasprintf, vsnprintf): Add conditional declarations.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbreplay.c: Move include of alloca.h up, next to include of
+	malloc.h.
+	* server.h: Add include of malloc.h.
+	* mem-break.c: Remove include of malloc.h.
+	* server.c, tracepoint.c, utils.c, win32-low.c: Likewise.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* Makefile.in (memmem.o): Build with -Wno-error.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* utils.c (xsnprintf): Make non-static.
+	* server.h: Add xsnprintf declaration.
+	* linux-low.c, nto-low.c, target.c, thread-db.c, tracepoint.c:
+	replace calls to snprintf by calls to xsnprintf throughout.
+
+2010-09-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* configure.ac: Add configure check for alloca.
+	* configure, config.in: Regenerate.
+	* server.h: Include alloca.h if it exists.
+	* gdbreplay.c: Include alloca.h if it exists.
+
 2010-08-28  Pedro Alves  <pedro@codesourcery.com>
 
 	* linux-low.c (__SIGRTMIN): Define if not already defined.

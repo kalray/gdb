@@ -7073,6 +7073,7 @@ ppc64_elf_edit_opd (struct bfd_link_info *info, bfd_boolean non_overlapping)
       if (need_edit || add_aux_fields)
 	{
 	  Elf_Internal_Rela *write_rel;
+	  Elf_Internal_Shdr *rel_hdr;
 	  bfd_byte *rptr, *wptr;
 	  bfd_byte *new_contents;
 	  bfd_boolean skip;
@@ -7252,9 +7253,8 @@ ppc64_elf_edit_opd (struct bfd_link_info *info, bfd_boolean non_overlapping)
 
 	  /* Fudge the header size too, as this is used later in
 	     elf_bfd_final_link if we are emitting relocs.  */
-	  elf_section_data (sec)->rel_hdr.sh_size
-	    = sec->reloc_count * elf_section_data (sec)->rel_hdr.sh_entsize;
-	  BFD_ASSERT (elf_section_data (sec)->rel_hdr2 == NULL);
+	  rel_hdr = _bfd_elf_single_rel_hdr (sec);
+	  rel_hdr->sh_size = sec->reloc_count * rel_hdr->sh_entsize;
 	  some_edited = TRUE;
 	}
       else if (elf_section_data (sec)->relocs != relstart)
@@ -8413,6 +8413,7 @@ ppc64_elf_edit_toc (struct bfd_link_info *info)
 
 	  if (toc->reloc_count != 0)
 	    {
+	      Elf_Internal_Shdr *rel_hdr;
 	      Elf_Internal_Rela *wrel;
 	      bfd_size_type sz;
 
@@ -8438,9 +8439,9 @@ ppc64_elf_edit_toc (struct bfd_link_info *info)
 		  goto error_ret;
 
 	      toc->reloc_count = wrel - relstart;
-	      sz = elf_section_data (toc)->rel_hdr.sh_entsize;
-	      elf_section_data (toc)->rel_hdr.sh_size = toc->reloc_count * sz;
-	      BFD_ASSERT (elf_section_data (toc)->rel_hdr2 == NULL);
+	      rel_hdr = _bfd_elf_single_rel_hdr (toc);
+	      sz = rel_hdr->sh_entsize;
+	      rel_hdr->sh_size = toc->reloc_count * sz;
 	    }
 	}
 
@@ -9376,9 +9377,13 @@ get_relocs (asection *sec, int count)
       if (relocs == NULL)
 	return NULL;
       elfsec_data->relocs = relocs;
-      elfsec_data->rel_hdr.sh_size = (sec->reloc_count
-				      * sizeof (Elf64_External_Rela));
-      elfsec_data->rel_hdr.sh_entsize = sizeof (Elf64_External_Rela);
+      elfsec_data->rela.hdr = bfd_zalloc (sec->owner,
+					  sizeof (Elf_Internal_Shdr));
+      if (elfsec_data->rela.hdr == NULL)
+	return NULL;
+      elfsec_data->rela.hdr->sh_size = (sec->reloc_count
+					* sizeof (Elf64_External_Rela));
+      elfsec_data->rela.hdr->sh_entsize = sizeof (Elf64_External_Rela);
       sec->reloc_count = 0;
     }
   relocs += sec->reloc_count;
@@ -11619,16 +11624,10 @@ ppc64_elf_relocate_section (bfd *output_bfd,
       h = (struct ppc_link_hash_entry *) h_elf;
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (ppc64_elf_howto_table[r_type], input_bfd,
-			       contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend,
+					 ppc64_elf_howto_table[r_type],
+					 contents);
 
       if (info->relocatable)
 	continue;
@@ -11668,7 +11667,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 
       /* Check that tls relocs are used with tls syms, and non-tls
 	 relocs are used with non-tls syms.  */
-      if (r_symndx != 0
+      if (r_symndx != STN_UNDEF
 	  && r_type != R_PPC64_NONE
 	  && (h == NULL
 	      || h->elf.root.type == bfd_link_hash_defined
@@ -11917,9 +11916,9 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 			if (local_sections[r_symndx] == sec)
 			  break;
 		      if (r_symndx >= symtab_hdr->sh_info)
-			r_symndx = 0;
+			r_symndx = STN_UNDEF;
 		      rel->r_addend = htab->elf.tls_sec->vma + DTP_OFFSET;
-		      if (r_symndx != 0)
+		      if (r_symndx != STN_UNDEF)
 			rel->r_addend -= (local_syms[r_symndx].st_value
 					  + sec->output_offset
 					  + sec->output_section->vma);
@@ -12025,9 +12024,9 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 		if (local_sections[r_symndx] == sec)
 		  break;
 	      if (r_symndx >= symtab_hdr->sh_info)
-		r_symndx = 0;
+		r_symndx = STN_UNDEF;
 	      rel->r_addend = htab->elf.tls_sec->vma + DTP_OFFSET;
-	      if (r_symndx != 0)
+	      if (r_symndx != STN_UNDEF)
 		rel->r_addend -= (local_syms[r_symndx].st_value
 				  + sec->output_offset
 				  + sec->output_section->vma);
@@ -12569,7 +12568,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	case R_PPC64_TOC:
 	  /* Relocation value is TOC base.  */
 	  relocation = TOCstart;
-	  if (r_symndx == 0)
+	  if (r_symndx == STN_UNDEF)
 	    relocation += htab->stub_group[input_section->id].toc_off;
 	  else if (unresolved_reloc)
 	    ;
@@ -12819,7 +12818,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 			     sym_name);
 			  ret = FALSE;
 			}
-		      else if (r_symndx == 0 || bfd_is_abs_section (sec))
+		      else if (r_symndx == STN_UNDEF || bfd_is_abs_section (sec))
 			;
 		      else if (sec == NULL || sec->owner == NULL)
 			{
@@ -13472,7 +13471,7 @@ ppc64_elf_finish_dynamic_sections (bfd *output_bfd,
       && htab->brlt->reloc_count != 0
       && !_bfd_elf_link_output_relocs (output_bfd,
 				       htab->brlt,
-				       &elf_section_data (htab->brlt)->rel_hdr,
+				       elf_section_data (htab->brlt)->rela.hdr,
 				       elf_section_data (htab->brlt)->relocs,
 				       NULL))
     return FALSE;
@@ -13481,7 +13480,7 @@ ppc64_elf_finish_dynamic_sections (bfd *output_bfd,
       && htab->glink->reloc_count != 0
       && !_bfd_elf_link_output_relocs (output_bfd,
 				       htab->glink,
-				       &elf_section_data (htab->glink)->rel_hdr,
+				       elf_section_data (htab->glink)->rela.hdr,
 				       elf_section_data (htab->glink)->relocs,
 				       NULL))
     return FALSE;

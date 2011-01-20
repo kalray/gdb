@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002, 2003, 2007, 2008, 2009, 2010
+   Copyright (C) 2002, 2003, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -181,7 +181,7 @@ struct gdbarch_tdep
   const char *thumb2_breakpoint;
   int thumb2_breakpoint_size;
 
-  int jb_pc;			/* Offset to PC value in jump buffer. 
+  int jb_pc;			/* Offset to PC value in jump buffer.
 				   If this is negative, longjmp support
 				   will be disabled.  */
   size_t jb_elt_size;		/* And the size of each entry in the buf.  */
@@ -196,6 +196,10 @@ struct gdbarch_tdep
   struct type *arm_ext_type;
   struct type *neon_double_type;
   struct type *neon_quad_type;
+
+  /* Return the expected next PC if FRAME is stopped at a syscall
+     instruction.  */
+  CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
 };
 
 /* Structures used for displaced stepping.  */
@@ -297,6 +301,7 @@ extern void
 CORE_ADDR arm_skip_stub (struct frame_info *, CORE_ADDR);
 CORE_ADDR arm_get_next_pc (struct frame_info *, CORE_ADDR);
 int arm_software_single_step (struct frame_info *);
+int arm_frame_is_thumb (struct frame_info *frame);
 
 extern struct displaced_step_closure *
   arm_displaced_step_copy_insn (struct gdbarch *, CORE_ADDR, CORE_ADDR,
