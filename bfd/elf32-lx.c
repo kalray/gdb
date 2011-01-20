@@ -2375,7 +2375,7 @@ get_reloc_section (abfd, lx_info, sec, create)
 
   srel_name = (bfd_elf_string_from_elf_section
 	       (abfd, elf_elfheader(abfd)->e_shstrndx,
-		elf_section_data(sec)->rel_hdr.sh_name));
+		_bfd_elf_single_rel_hdr (sec)->sh_name));
   if (srel_name == NULL)
     return NULL;
 
@@ -2751,8 +2751,8 @@ lx_build_one_stub (gen_entry, in_arg)
 	  if (relocs == NULL)
 	    return FALSE;
 	  elfsec_data->relocs = relocs;
-	  elfsec_data->rel_hdr.sh_size = relsize;
-	  elfsec_data->rel_hdr.sh_entsize = sizeof (Elf32_External_Rela);
+	  _bfd_elf_single_rel_hdr (stub_sec)->sh_size = relsize;
+	  _bfd_elf_single_rel_hdr (stub_sec)->sh_entsize = sizeof (Elf32_External_Rela);
 	  stub_sec->reloc_count = 0;
 	}
     }
@@ -4314,8 +4314,8 @@ elf_lx_size_dynamic_sections (output_bfd, info)
 					* sizeof (struct elf_link_hash_entry *));
 	  BFD_ASSERT (elfsec_data->relocs == 0);
 	  elfsec_data->relocs = relocs;
-	  elfsec_data->rel_hdr.sh_size = relsize;
-	  elfsec_data->rel_hdr.sh_entsize = sizeof (Elf32_External_Rela);
+	  _bfd_elf_single_rel_hdr (got_sec)->sh_size = relsize;
+	  _bfd_elf_single_rel_hdr (got_sec)->sh_entsize = sizeof (Elf32_External_Rela);
 	  lx_info->got_rel_hash = bfd_zmalloc (relhash_size);
 	}
     }
@@ -4574,7 +4574,7 @@ elf_lx_install_got_static_reloc (struct bfd_link_info *info,
   struct elf_lx_link_hash_table *lx_info = elf_lx_hash_table (info);
   asection *got_sec = lx_info->got_sec;
   struct bfd_elf_section_data *elfsec_data = elf_section_data (got_sec);
-  unsigned int reloc_number = elfsec_data->rel_count++;
+  unsigned int reloc_number = elfsec_data->rel.count++;
   unsigned long symndx = STN_UNDEF;
 
   Elf_Internal_Rela *rel = elfsec_data->relocs + reloc_number;
@@ -5089,9 +5089,8 @@ elf_lx_relocate_section (
   relend = relocs + input_section->reloc_count;
 
   output_section = input_section->output_section;
-  rel_hash = (elf_section_data (output_section)->rel_hashes
-	      + elf_section_data (output_section)->rel_count
-	      + elf_section_data (output_section)->rel_count2);
+  rel_hash = (elf_section_data (output_section)->rel.hashes
+	      + elf_section_data (output_section)->rel.count);
 
   transform_tls_relocs (input_bfd, info, rel, relend, contents);
 
@@ -5205,10 +5204,9 @@ elf_lx_relocate_section (
 	 section contents zeroed.  Avoid any special processing.  */
       if (sym_sec != NULL && elf_discarded_section (sym_sec))
 	{
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
+            RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section, rel,
+                                             relend, howto, contents);
+	    continue;
 	}
 
       /* TB: when building a relocatable with pcrel relocs against local
@@ -5925,10 +5923,10 @@ static bfd_boolean elf_lx_output_arch_local_syms(
 	  struct bfd_elf_section_data *esdo = elf_section_data (output_section);
 	  struct bfd_elf_section_data *esdg = elf_section_data (got_sec);
 	  Elf_Internal_Rela *relocs = esdg->relocs;
-	  unsigned int rel_count = esdg->rel_count;
+	  unsigned int rel_count = esdg->rel.count;
 	  struct elf_link_hash_entry **rel_hash;
 	  
-	  rel_hash = esdo->rel_hashes + esdo->rel_count + esdo->rel_count2;
+	  rel_hash = esdo->rel.hashes + esdo->rel.count;
 	  memcpy (rel_hash, lx_info->got_rel_hash, reloc_count * sizeof (*rel_hash));
 	  free (lx_info->got_rel_hash);
 	  lx_info->got_rel_hash = NULL;
@@ -5947,10 +5945,10 @@ static bfd_boolean elf_lx_output_arch_local_syms(
 		last_offset = got_sec->output_section->vma + got_sec->output_offset;
 	      for (rel = relocs + rel_count; rel < relocs + reloc_count; rel++)
 		rel->r_offset = last_offset;
-	      elf_section_data (got_sec)->rel_count = reloc_count;
+	      elf_section_data (got_sec)->rel.count = reloc_count;
 	    }
 	  return _bfd_elf_link_output_relocs (output_bfd, output_section,
-					      &elf_section_data (got_sec)->rel_hdr,
+					      _bfd_elf_single_rel_hdr (got_sec),
 					      relocs, rel_hash);
 	}
     }

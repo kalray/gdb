@@ -329,6 +329,7 @@ k1_elf_relocate_section
 	{
 	    RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section, rel,
 					     relend, howto, contents);
+	    continue;
 	}
 
       if (info->relocatable)
