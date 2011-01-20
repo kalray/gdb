@@ -550,6 +550,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
   gdb_byte *argslotsbuf = NULL;
   unsigned int argslotsnb = 0;
   int len;
+  int r0_regnum = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
 
   /* Allocate arguments to the virtual argument slots  */
   for (i = 0; i < nargs; i++)
@@ -565,7 +566,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
     }
 
   for (i = 0; i < argslotsnb; i++)
-    regcache_cooked_write (regcache, i, &argslotsbuf[i*4]);
+    regcache_cooked_write (regcache, i+r0_regnum, &argslotsbuf[i*4]);
 
   sp = k1_frame_align (gdbarch, sp);
   len = argslotsnb - 8;
@@ -582,7 +583,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
   sp -= 16;
 
   if (struct_return)
-    regcache_cooked_write_unsigned (regcache, 15, struct_addr);
+    regcache_cooked_write_unsigned (regcache, r0_regnum+15, struct_addr);
 
   regcache_cooked_write_unsigned (regcache, gdbarch_sp_regnum (gdbarch),
 				  sp);
@@ -597,18 +598,19 @@ static void k1_store_return_value (struct gdbarch *gdbarch,
                                    const gdb_byte *buf)
 {
     int len = TYPE_LENGTH (type);
-    // FIXME: extract first arg id from MDS
     int i = 0;
+    int r0_regnum = user_reg_map_name_to_regnum (get_regcache_arch (regcache),
+						 "r0", -1);
     int sz = register_size (gdbarch, 0);
     
     while (len > sz) {
-	regcache_raw_write (regcache, i, buf + i*sz);
+	regcache_raw_write (regcache, i+r0_regnum, buf + i*sz);
 	i++, len -= sz;
     }
     if (len > 0) {
 	gdb_byte tmp[4] = {0};
 	memcpy (tmp, buf + i*sz, len);
-	regcache_raw_write (regcache, i, tmp);
+	regcache_raw_write (regcache, i+r0_regnum, tmp);
     }
 }
 
@@ -618,17 +620,18 @@ static void k1_extract_return_value (struct gdbarch *gdbarch,
                                      gdb_byte *buf)
 {
     int len = TYPE_LENGTH (type);
-    // FIXME: extract first arg id from MDS
     int i = 0;
+    int r0_regnum = user_reg_map_name_to_regnum (get_regcache_arch (regcache),
+						 "r0", -1);
     int sz = register_size (gdbarch, 0);
     
     while (len > sz) {
-	regcache_raw_read (regcache, i, buf + i*sz);
+	regcache_raw_read (regcache, i+r0_regnum, buf + i*sz);
 	i++, len -= sz;
     }
     if (len > 0) {
 	gdb_byte tmp[4];
-	regcache_raw_read (regcache, i, tmp);
+	regcache_raw_read (regcache, i+r0_regnum, tmp);
 	memcpy (buf+i*sz, tmp, len);
     }
 }
@@ -656,9 +659,11 @@ int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
     struct gdbarch *gdbarch = get_frame_arch (frame);
     enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
-    get_frame_register (frame, 0, buf);
+    get_frame_register (frame, 
+			user_reg_map_name_to_regnum (get_frame_arch (frame), 
+						     "r0", -1),
+			buf);
     r0 = extract_unsigned_integer (buf, 4, byte_order);
-    
     if (target_read_memory (r0 + 0x34, buf, 4))
 	return 0;
 
