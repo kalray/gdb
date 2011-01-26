@@ -36,7 +36,6 @@ typedef struct {
 } bundle_t;
 
 
-static const   K1_Core_Info *k1_core_info = NULL;
 static unsigned int reordered_bundle[MAXBUNDLESIZE];
 static unsigned int bundle_ops[MAXBUNDLESIZE];
 static bundle_t bundle_insn[ISSUES];
@@ -144,6 +143,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   char *fmtp;
   int ch;
   k1opc_t *opc_table = NULL;
+  k1_Register  *k1_registers = NULL;
+  int          *k1_regfiles = NULL;
+  int          *k1_dec_registers = NULL;
   int readsofar = 0;
   int opt_pretty = 0;
   int found = 0;
@@ -159,9 +161,15 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   switch (info->mach) {
     case bfd_mach_k1dp:
       opc_table = k1dp_k1optab;
+      k1_registers = k1_k1dp_registers;
+      k1_regfiles = k1_k1dp_regfiles;
+      k1_dec_registers = k1_k1dp_dec_registers;
       break;
     case bfd_mach_k1v1:
       opc_table = k1v1_k1optab;
+      k1_registers = k1_k1v1_registers;
+      k1_regfiles = k1_k1v1_regfiles;
+      k1_dec_registers = k1_k1v1_dec_registers;
       break;
     default:
       /* Core not supported */
@@ -170,22 +178,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       return -1;
   }
 
-
-/*
-  for (i = 0; i < K1_NCORES; i++){
-    if (strcasecmp("k1dp", k1_core_info_table[i]->name) == 0
-        && k1_core_info_table[i]->supported){
-      k1_core_info = k1_core_info_table[i];
-      break;
-    }
-  }
-  if (i == K1_NCORES){
-    fprintf(stderr, "Core specified not supported");
-    exit(-1);
-  }
-
-  opc_table = k1_core_info->optab;
-*/
   if (opc_table == NULL) {
       fprintf(stderr, "error: uninitialized opcode table\n");
       exit(-1);
@@ -308,19 +300,19 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
               switch (type){
                   case RegClass_k1_singleReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_GRF+value]].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_GRF]+value]].name);
                       break;
                   case RegClass_k1_pairedReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_PRF+value]].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_PRF]+value]].name);
                       break;
                   case RegClass_k1_systemReg:
                   case RegClass_k1_nopcpsReg:
                   case RegClass_k1_onlypsReg:
                   case RegClass_k1_onlybfxReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_SRF+value]].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_SRF]+value]].name);
                       break;
                   case RegClass_k1_remoteReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[K1_DEC_REGISTERS_NRF+value]].name);
+                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_NRF]+value]].name);
                       break;
 
                   case Immediate_k1_bfxmask:
