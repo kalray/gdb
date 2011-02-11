@@ -306,9 +306,13 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_PRF]+value]].name);
                       break;
                   case RegClass_k1_systemReg:
+                  case RegClass_k1dp_systemReg:
                   case RegClass_k1_nopcpsReg:
+                  case RegClass_k1dp_nopcpsReg:
                   case RegClass_k1_onlypsReg:
+                  case RegClass_k1dp_onlypsReg:
                   case RegClass_k1_onlybfxReg:
+                  case RegClass_k1dp_onlybfxReg:
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_SRF]+value]].name);
                       break;
                   case RegClass_k1_remoteReg:
