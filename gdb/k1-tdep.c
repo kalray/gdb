@@ -34,6 +34,8 @@
 #include "target.h"
 #include "target-descriptions.h"
 #include "user-regs.h"
+
+#include "elf/k1.h"
 #include "opcode/k1.h"
 
 struct gdbarch_tdep {
@@ -115,9 +117,18 @@ static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
 static const gdb_byte *
 k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-    static const gdb_byte BREAK[4] = { 0, 0, 0x0c, 0 };
+    static const gdb_byte BREAK_V1[] = { 0, 0, 0x0c, 0 };
+    static const gdb_byte BREAK_V2[] = { 0, 0, 0x30, 0 };
     *len = 4;
-    return BREAK;
+
+    switch (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK) {
+    case ELF_K1_CORE_V1:
+	return BREAK_V1;
+    case ELF_K1_CORE_DP:
+	return BREAK_V2;
+    default:
+	error (_("The K1 binary is compiled for an unknown core."));
+    }	
 }
 
 static CORE_ADDR
