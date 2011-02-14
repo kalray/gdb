@@ -118,7 +118,7 @@ static const gdb_byte *
 k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
     static const gdb_byte BREAK_V1[] = { 0, 0, 0x0c, 0 };
-    static const gdb_byte BREAK_V2[] = { 0, 0, 0x30, 0 };
+    static const gdb_byte BREAK_V2[] = { 0xFF, 0xFF, 0x1, 0 };
     *len = 4;
 
     switch (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK) {
