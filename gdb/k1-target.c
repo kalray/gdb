@@ -144,9 +144,6 @@ Use the \"file\" or \"exec-file\" command."));
     case ELF_K1_CORE_DP:
 	stub_args[argidx++] = "--mcore=k1dp";
 	break;
-    case ELF_K1_CORE_CP:
-	stub_args[argidx++] = "--mcore=k1cp";
-	break;
     default:
 	error (_("The K1 binary is compiled for an unknown core."));
     }	

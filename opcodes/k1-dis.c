@@ -331,6 +331,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1_flagmask:
                   case Immediate_k1_signed10:
                   case Immediate_k1_signed16:
+                  case Immediate_k1_brknumber:
                   case Immediate_k1_sysnumber:
                   case Immediate_k1_unsigned5:
                   case Immediate_k1_unsigned6:
