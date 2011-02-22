@@ -77,9 +77,9 @@ extern void k1_pseudo_register_write (struct gdbarch *gdbarch,
 
 extern int k1_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
 
-extern const int k1_num_pseudo_regs;
-extern const char *k1_pc_name;
-extern const char *k1_sp_name;
+extern const int k1_num_pseudos (struct gdbarch *);
+extern const char *k1_pc_name (struct gdbarch *);
+extern const char *k1_sp_name (struct gdbarch *);
 
 struct op_list {
     k1opc_t        *op;
@@ -258,11 +258,12 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 	 for (i = 0; i < l->nitems; i++) {
 	     struct linetable_entry *item = &(l->item[i]);
 	     
-	     if (item->line > 0 && func_start <= item->pc && item->pc < func_end)
+	     if (item->line > 0 && func_start <= item->pc && item->pc < func_end) {
 		 if (ind == 0)
 		     ++ind;
 		 else
 		     return item->pc;
+	     }
 	 }
      } else {
 	 for (i = 0; i < l->nitems; i++) {
@@ -407,7 +408,8 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 	} else {
 	    /* It was a trap */
 	    regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
-	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%llx\n", spc);
+	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%lx\n", 
+						  (unsigned long)spc);
 	    spc = from + (spc - k1_step_pad_address);
 	    regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
 	}
@@ -690,7 +692,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch_tdep *tdep;
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
-  int i;
+  int i, num_pseudos;
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
 
   static const char k1_lc_name[] = "lc";
@@ -701,6 +703,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   static const char k1_spc_name[] = "spc";
   static const char k1_local_name[] = "r13";
 
+  const char *pc_name;
+  const char *sp_name;
+
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
@@ -708,6 +713,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   tdep = xzalloc (sizeof (struct gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
+
+  pc_name = k1_pc_name (gdbarch);
+  sp_name = k1_sp_name (gdbarch);
 
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
@@ -727,9 +735,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       tdesc_use_registers (gdbarch, tdesc, tdesc_data);
 
       for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
-	  if (strcmp (tdesc_register_name(gdbarch, i), k1_pc_name) == 0)
+	  if (strcmp (tdesc_register_name(gdbarch, i), pc_name) == 0)
 	      has_pc = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_sp_name) == 0)
+	  else if (strcmp (tdesc_register_name(gdbarch, i), sp_name) == 0)
 	      has_sp = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_le_name) == 0)
 	      has_le = i;
@@ -747,9 +755,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	      has_spc = i;
       
       if (has_pc < 0)
-	  error ("There's no '%s' register!", k1_pc_name);
+	  error ("There's no '%s' register!", pc_name);
       if (has_sp < 0)
-	  error ("There's no '%s' register!", k1_sp_name);
+	  error ("There's no '%s' register!", sp_name);
       if (has_le < 0)
 	  error ("There's no '%s' register!", k1_le_name);
       if (has_ls < 0)
@@ -780,7 +788,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
   }
 
-  set_gdbarch_num_pseudo_regs (gdbarch, k1_num_pseudo_regs);
+  set_gdbarch_num_pseudo_regs (gdbarch, k1_num_pseudos (gdbarch));
 
   set_tdesc_pseudo_register_name (gdbarch, k1_pseudo_register_name);
   set_tdesc_pseudo_register_type (gdbarch, k1_pseudo_register_type);
