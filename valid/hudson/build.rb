@@ -12,8 +12,7 @@ options = Options.new({ "target"        => "k1",
                         "parallel-make" => "yes",
                         "toolroot"      => "",
                         "version"       => ["unknown", "Version of the delivered GDB."],
-                        "enable-gcc"    => ["yes", "Enable build of GCC."],
-                        "enable-open64" => ["no", "Enable build of Open64."],
+                        "compiler"      => ["gcc", "Enable build of GCC or Open64. Valid values: [gcc,open64]"],
                       })
 
 repo = Git.new(options["clone"])
@@ -39,8 +38,7 @@ processor_clone =  workspace + "/" + options["processor"]
 mds_clone =  workspace + "/" + options["mds"]
 open64_clone =  workspace + "/" + options["open64"]
 
-enable_gcc = options["enable-gcc"]
-enable_open64 = options["enable-open64"]
+compiler = options["compiler"]
 
 build_path = gdb_clone + "/" + arch + "_build"
 
@@ -103,7 +101,7 @@ b.target("valid") do
     Dir.chdir build_path + "/gdb/testsuite"
     
     b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
-    if(enable_open64 == "yes") then
+    if(compiler == "open64") then
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.open64.ref gdb.sum")
     else 
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
