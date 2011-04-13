@@ -32,6 +32,8 @@ def cpu_number ()
 end
 
 arch = options["target"]
+b.logsession = arch
+
 workspace = options["workspace"]
 gdb_clone =  workspace + "/" + options["clone"]
 processor_clone =  workspace + "/" + options["processor"]
