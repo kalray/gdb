@@ -283,7 +283,8 @@ run_mppa_command (char *args, int from_tty)
 	exec_file_observer = NULL;
     }
 
-    if (lookup_minimal_symbol_text ("pthread_create", NULL)) {
+    if (lookup_minimal_symbol_text ("pthread_create", NULL)
+	|| lookup_minimal_symbol_text ("rtems_task_start", NULL)) {
 	execute_command (set_target_async_cmd, 0);
 	execute_command (set_non_stop_cmd, 0);
 	execute_command (set_pagination_off_cmd, 0);
