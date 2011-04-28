@@ -133,7 +133,7 @@ Use the \"file\" or \"exec-file\" command."));
     arg = da_args;
     while (arg && *arg++) nb_da_args++;
 
-    stub_args = xmalloc ((nb_args+8)*sizeof (char*));
+    stub_args = xmalloc ((nb_args+nb_da_args+6)*sizeof (char*));
     stub_args[argidx++] = simulation_vehicle;
 
     core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
@@ -158,6 +158,9 @@ Use the \"file\" or \"exec-file\" command."));
     stub_args[argidx++] = "--";
     stub_args[argidx++] = exec_file;
     memcpy (stub_args + argidx,  argv_args, (nb_args+1)*sizeof (char*));
+
+    /* Check that we didn't overflow the allocation above. */
+    gdb_assert (argidx < nb_args+nb_da_args+6);
 
     if (server_pid != 0) {
 	kill (server_pid, 9);
