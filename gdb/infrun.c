@@ -2884,7 +2884,8 @@ adjust_pc_after_break (struct execution_control_state *ecs)
       if (singlestep_breakpoints_inserted_p
 	  || !ptid_equal (ecs->ptid, inferior_ptid)
 	  || !currently_stepping (ecs->event_thread)
-	  || ecs->event_thread->prev_pc == breakpoint_pc)
+	  || (software_breakpoint_inserted_here_p (aspace, breakpoint_pc)
+	      && ecs->event_thread->prev_pc == breakpoint_pc))
 	regcache_write_pc (regcache, breakpoint_pc);
 
       if (RECORD_IS_USED)
