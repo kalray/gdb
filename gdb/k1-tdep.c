@@ -405,7 +405,9 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
     } else {
 	ULONGEST spc;
 	/* We branched. */
-	if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
+	if (dsc->rewrite_LE) {
+	    pc = from + (pc - to);
+	} else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
 	    /* It was a call */
 	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
 					 from + dsc->num_insn_words*4);
