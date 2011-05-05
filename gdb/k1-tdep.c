@@ -304,7 +304,9 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
 							     NULL, NULL);
 	if (msym == NULL)
 	    error ("Can not locate a suitable step pad area.");
-	k1_step_pad_address = SYMBOL_VALUE_ADDRESS(msym);;
+	if (SYMBOL_VALUE_ADDRESS(msym) % 4)
+	    warning ("Step pad area is not 4-byte aligned.");
+	k1_step_pad_address = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
     }
 
     return k1_step_pad_address;
@@ -325,6 +327,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
 	if (debug_displaced) printf_filtered ("displaced: CALL/GOTO\n");
 
 	displacement >>= 3;
+	if (debug_displaced) printf_filtered ("displaced: dest %s\n", paddress (gdbarch, from+displacement));
 	displacement = from + displacement - to;
 	displacement >>= 2;
 	dsc->insn_words[0] &= 0Xf8000000;
@@ -394,13 +397,17 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 
     regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);    
     pc = regcache_read_pc (regs);
-    if ((int)(pc - to) > 0) {
+    if (debug_displaced)
+	printf_filtered ("displaced: new pc %s\n", paddress (gdbarch, pc));
+    if (pc - to == dsc->num_insn_words * 4) {
 	pc = from + (pc - to);
 	if (debug_displaced) printf_filtered ("displaced: Didn't branch\n");
     } else {
 	ULONGEST spc;
 	/* We branched. */
-	if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
+	if (dsc->rewrite_LE) {
+	    pc = from + (pc - to);
+	} else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
 	    /* It was a call */
 	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
 					 from + dsc->num_insn_words*4);
