@@ -1,4 +1,4 @@
-Test Run By jvillette on Thu Feb  3 15:18:48 2011
+Test Run By jvillette on Wed May  4 17:03:31 2011
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -12,7 +12,7 @@ Running ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.exp ...
 gdb compile failed, ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.S:165: Fatal error: [md_apply_fix] unsupported relocation type
 Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
 gdb compile failed, ns-stale-regcache.o: In function `main':
-catvaras.lin.mbt.kalray.eu:/work1/jvillette/tools_dir/jvillette/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
+minos.(none):/work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
 Running ../../../gdb/testsuite/gdb.mi/mi-simplerun.exp ...
 PASS: gdb.mi/mi-simplerun.exp: break-insert operation
 PASS: gdb.mi/mi-simplerun.exp: insert breakpoint at basics.c:callee2
@@ -818,9 +818,7 @@ Running ../../../gdb/testsuite/gdb.mi/mi-hack-cli.exp ...
 PASS: gdb.mi/mi-hack-cli.exp: show architecture
 PASS: gdb.mi/mi-hack-cli.exp: 47show architecture
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
-PASS: gdb.mi/mi-nonstop.exp: successfully compiled posix threads test case
-PASS: gdb.mi/mi-nonstop.exp: breakpoint at main
-ERROR: Unable to start target
+UNSUPPORTED: gdb.mi/mi-nonstop.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/non-stop.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/mi-async.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-stack.exp ...
 PASS: gdb.mi/mi-stack.exp: breakpoint at callee4
@@ -852,9 +850,7 @@ PASS: gdb.mi/mi-stack.exp: stack info-depth 3
 PASS: gdb.mi/mi-stack.exp: stack info-depth 99
 PASS: gdb.mi/mi-stack.exp: stack info-depth wrong usage
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp ...
-PASS: gdb.mi/mi-nonstop-exit.exp: successfully compiled posix threads test case
-PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
-ERROR: Unable to start target
+UNSUPPORTED: gdb.mi/mi-nonstop-exit.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/non-stop-exit.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/mi-console.exp ...
 PASS: gdb.mi/mi-console.exp: breakpoint at main
 PASS: gdb.mi/mi-console.exp: mi runto main
@@ -1740,16 +1736,23 @@ Running ../../../gdb/testsuite/gdb.base/interact.exp ...
 PASS: gdb.base/interact.exp: set interactive-mode auto
 PASS: gdb.base/interact.exp: source script with interactive-mode auto
 PASS: gdb.base/interact.exp: sanity check with interactive-mode auto
+PASS: gdb.base/interact.exp: show interactive-mode (auto)
 PASS: gdb.base/interact.exp: set interactive-mode on
 PASS: gdb.base/interact.exp: source script with interactive-mode on
 PASS: gdb.base/interact.exp: sanity check with interactive-mode on
+PASS: gdb.base/interact.exp: show interactive-mode (on)
 PASS: gdb.base/interact.exp: set interactive-mode off
 PASS: gdb.base/interact.exp: source script with interactive-mode off
 PASS: gdb.base/interact.exp: sanity check with interactive-mode off
+PASS: gdb.base/interact.exp: show interactive-mode (off)
 Running ../../../gdb/testsuite/gdb.base/label.exp ...
 Running ../../../gdb/testsuite/gdb.base/gdb1090.exp ...
 PASS: gdb.base/gdb1090.exp: up from marker
 PASS: gdb.base/gdb1090.exp: print s24
+Running ../../../gdb/testsuite/gdb.base/disasm-end-cu.exp ...
+PASS: gdb.base/disasm-end-cu.exp: get hexadecimal valueof "&main"
+PASS: gdb.base/disasm-end-cu.exp: get hexadecimal valueof "&dummy_3"
+PASS: gdb.base/disasm-end-cu.exp: disassemble command returned some output
 Running ../../../gdb/testsuite/gdb.base/float.exp ...
 PASS: gdb.base/float.exp: info float (unknown target)
 Running ../../../gdb/testsuite/gdb.base/gdb11531.exp ...
@@ -2108,6 +2111,8 @@ gdb compile failed, ### Assertion failure at line 1834 of ../../wgen/wgen_spin_s
 ### Compiler error in file ../../../gdb/testsuite/gdb.base/gnu_vector.c during Writing WHIRL file phase:
 ### Get_TY unexpected tree_type
 UNTESTED: gdb.base/gnu_vector.exp: gnu_vector.exp
+Running ../../../gdb/testsuite/gdb.base/jit.exp ...
+UNTESTED: gdb.base/jit.exp: jit.exp
 Running ../../../gdb/testsuite/gdb.base/code-expr.exp ...
 PASS: gdb.base/code-expr.exp: set print sevenbit-strings
 PASS: gdb.base/code-expr.exp: set print address off
@@ -2260,8 +2265,7 @@ PASS: gdb.base/eval.exp: First eval.
 PASS: gdb.base/eval.exp: Second eval.
 Running ../../../gdb/testsuite/gdb.base/valgrind-db-attach.exp ...
 PASS: gdb.base/valgrind-db-attach.exp: spawn valgrind
-ERROR: Process no longer exists
-UNRESOLVED: gdb.base/valgrind-db-attach.exp: valgrind started
+UNSUPPORTED: gdb.base/valgrind-db-attach.exp: valgrind started
 Running ../../../gdb/testsuite/gdb.base/overlays.exp ...
 Running ../../../gdb/testsuite/gdb.base/call-ar-st.exp ...
 PASS: gdb.base/call-ar-st.exp: set print sevenbit-strings
@@ -4159,8 +4163,8 @@ PASS: gdb.base/display.exp: print/a &&j
 Running ../../../gdb/testsuite/gdb.base/hashline3.exp ...
 PASS: gdb.base/hashline3.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/watch-vfork.exp ...
-gdb compile failed, /work1/jvillette/tools_dir/jvillette/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
-catvaras.lin.mbt.kalray.eu:/work1/jvillette/tools_dir/jvillette/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
+gdb compile failed, /work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
+minos.(none):/work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 Running ../../../gdb/testsuite/gdb.base/gdb1056.exp ...
@@ -8443,14 +8447,13 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		8033
+# of expected passes		8035
 # of unexpected failures	31
 # of unexpected successes	2
 # of expected failures		31
 # of unknown successes		2
 # of known failures		2
-# of unresolved testcases	1
-# of untested testcases		7
-# of unsupported tests		14
-/work1/jvillette/tools_dir/jvillette/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110130-cvs -nw -nx -data-directory /work1/jvillette/tools_dir/jvillette/gdb/k1_build/gdb/testsuite/../data-directory 
+# of untested testcases		8
+# of unsupported tests		17
+/work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110206-cvs -nw -nx -data-directory /work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../data-directory 
 
