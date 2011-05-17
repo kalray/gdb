@@ -1,4 +1,4 @@
-Test Run By jvillette on Wed May  4 17:03:31 2011
+Test Run By jvillette on Tue May 17 14:48:48 2011
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -12,7 +12,7 @@ Running ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.exp ...
 gdb compile failed, ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.S:165: Fatal error: [md_apply_fix] unsupported relocation type
 Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
 gdb compile failed, ns-stale-regcache.o: In function `main':
-minos.(none):/work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
+minos.(none):/work1-disk/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
 Running ../../../gdb/testsuite/gdb.mi/mi-simplerun.exp ...
 PASS: gdb.mi/mi-simplerun.exp: break-insert operation
 PASS: gdb.mi/mi-simplerun.exp: insert breakpoint at basics.c:callee2
@@ -2107,7 +2107,7 @@ PASS: gdb.base/whatis.exp: whatis inner union member
 PASS: gdb.base/whatis.exp: whatis using typedef type name
 PASS: gdb.base/whatis.exp: whatis applied to variable defined by typedef
 Running ../../../gdb/testsuite/gdb.base/gnu_vector.exp ...
-gdb compile failed, ### Assertion failure at line 1834 of ../../wgen/wgen_spin_symbol.cxx:
+gdb compile failed, ### Assertion failure at line 1942 of ../../wgen/wgen_spin_symbol.cxx:
 ### Compiler error in file ../../../gdb/testsuite/gdb.base/gnu_vector.c during Writing WHIRL file phase:
 ### Get_TY unexpected tree_type
 UNTESTED: gdb.base/gnu_vector.exp: gnu_vector.exp
@@ -2275,25 +2275,25 @@ PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1209
 PASS: gdb.base/call-ar-st.exp: run until breakpoint set at a line
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1216
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1220
-PASS: gdb.base/call-ar-st.exp: step inside print_all_arrays
+FAIL: gdb.base/call-ar-st.exp: step inside print_all_arrays
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1236
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1241
-PASS: gdb.base/call-ar-st.exp: continue to 1241
+FAIL: gdb.base/call-ar-st.exp: continue to 1241
 PASS: gdb.base/call-ar-st.exp: set breakpoint in sum_array_print
 PASS: gdb.base/call-ar-st.exp: set print frame-arguments all
-PASS: gdb.base/call-ar-st.exp: check args of sum_array_print
+FAIL: gdb.base/call-ar-st.exp: check args of sum_array_print
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1281
 PASS: gdb.base/call-ar-st.exp: print compute_with_small_structs(20)
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1286
-PASS: gdb.base/call-ar-st.exp: continue to 1286
+FAIL: gdb.base/call-ar-st.exp: continue to 1286
 PASS: gdb.base/call-ar-st.exp: tbreak in print_long_arg_list after stepping into memcpy
-PASS: gdb.base/call-ar-st.exp: step into print_long_arg_list
+FAIL: gdb.base/call-ar-st.exp: step into print_long_arg_list
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1300
-PASS: gdb.base/call-ar-st.exp: step into init_bit_flags_combo
+FAIL: gdb.base/call-ar-st.exp: step into init_bit_flags_combo
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1305
-PASS: gdb.base/call-ar-st.exp: continue to 1305
+FAIL: gdb.base/call-ar-st.exp: continue to 1305
 PASS: gdb.base/call-ar-st.exp: tbreakpoint line 1311
-PASS: gdb.base/call-ar-st.exp: continue to 1311
+FAIL: gdb.base/call-ar-st.exp: continue to 1311
 Running ../../../gdb/testsuite/gdb.base/step-bt.exp ...
 PASS: gdb.base/step-bt.exp: breakpoint at first instruction of hello()
 PASS: gdb.base/step-bt.exp: run to hello()
@@ -4163,8 +4163,8 @@ PASS: gdb.base/display.exp: print/a &&j
 Running ../../../gdb/testsuite/gdb.base/hashline3.exp ...
 PASS: gdb.base/hashline3.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/watch-vfork.exp ...
-gdb compile failed, /work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
-minos.(none):/work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
+gdb compile failed, /work1-disk/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
+minos.(none):/work1-disk/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 Running ../../../gdb/testsuite/gdb.base/gdb1056.exp ...
@@ -4846,8 +4846,8 @@ PASS: gdb.base/call-rt-st.exp: set print sevenbit-strings
 PASS: gdb.base/call-rt-st.exp: set print address off
 PASS: gdb.base/call-rt-st.exp: set width 0
 PASS: gdb.base/call-rt-st.exp: breakpoint loop_count
-PASS: gdb.base/call-rt-st.exp: continue to loop_count
-PASS: gdb.base/call-rt-st.exp: finish out from loop_count (line 777)
+FAIL: gdb.base/call-rt-st.exp: continue to loop_count
+FAIL: gdb.base/call-rt-st.exp: finish out from loop count
 Running ../../../gdb/testsuite/gdb.base/logical.exp ...
 PASS: gdb.base/logical.exp: evaluate x; variables x = 0; expecting 0
 PASS: gdb.base/logical.exp: evaluate !x; variables x = 0; expecting 1
@@ -8447,13 +8447,13 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		8035
-# of unexpected failures	31
+# of expected passes		8025
+# of unexpected failures	41
 # of unexpected successes	2
 # of expected failures		31
 # of unknown successes		2
 # of known failures		2
 # of untested testcases		8
 # of unsupported tests		17
-/work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110206-cvs -nw -nx -data-directory /work1/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../data-directory 
+/work1-disk/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110206-cvs -nw -nx -data-directory /work1-disk/jvillette/tools_dir/master/gdb/k1_build/gdb/testsuite/../data-directory 
 
