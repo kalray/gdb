@@ -282,7 +282,7 @@ k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 
 struct displaced_step_closure {
     /* Take into account that ALUs might have extensions. */
-    uint32_t insn_words[K1MAXBUNDLESIZE*2];
+    uint32_t insn_words[8];
     int num_insn_words;
     
     uint32_t rewrite_LE;
@@ -832,7 +832,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_displaced_step_fixup (gdbarch, k1_displaced_step_fixup);
   set_gdbarch_displaced_step_free_closure (gdbarch, k1_displaced_step_free_closure);
   set_gdbarch_displaced_step_location (gdbarch, k1_displaced_step_location);
-  set_gdbarch_max_insn_length (gdbarch, K1MAXBUNDLESIZE*2);
+  set_gdbarch_max_insn_length (gdbarch, 8*4);
 
   set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
 
