@@ -120,6 +120,7 @@ static void k1_target_create_inferior (struct target_ops *ops,
     char **arg;
     int nb_args = 0, nb_da_args = 0;
     int pipefds[2];
+    int no_mcore = 0;
     int port;
     int core;
     int argidx = 0;
@@ -137,23 +138,30 @@ Use the \"file\" or \"exec-file\" command."));
     stub_args[argidx++] = simulation_vehicle;
 
     core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
-    switch (core) {
-    case ELF_K1_CORE_V1:
-	stub_args[argidx++] = "--mcore=k1v1";
-	break;
-    case ELF_K1_CORE_DP:
-	stub_args[argidx++] = "--mcore=k1dp";
-	break;
-    default:
-	error (_("The K1 binary is compiled for an unknown core."));
-    }	
 
     if (nb_da_args && strlen (da_options)) {
 	arg = da_args;
 	while (*arg) {
+	    if (strncmp (*arg, "--mmppa=", 8) == 0
+		|| strncmp (*arg, "--mcluster=", 11) == 0)
+		no_mcore = 1;
+
 	    stub_args[argidx++] = *arg++;
 	}
     }
+
+    if (!no_mcore)
+	switch (core) {
+	case ELF_K1_CORE_V1:
+	    stub_args[argidx++] = "--mcore=k1v1";
+	    break;
+	case ELF_K1_CORE_DP:
+	    stub_args[argidx++] = "--mcore=k1dp";
+	    break;
+	default:
+	    error (_("The K1 binary is compiled for an unknown core."));
+	}
+
     stub_args[argidx++] = "--gdb";
     stub_args[argidx++] = "--";
     stub_args[argidx++] = exec_file;
