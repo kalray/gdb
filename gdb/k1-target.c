@@ -62,7 +62,8 @@ static void k1_target_mourn_inferior (struct target_ops *target)
 {
     unpush_target (target);
     generic_mourn_inferior ();
-    kill (server_pid, 9);
+    if (server_pid)
+	kill (server_pid, 9);
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
