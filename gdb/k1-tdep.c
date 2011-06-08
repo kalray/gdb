@@ -536,7 +536,23 @@ k1_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 
 static int k1_print_insn (bfd_vma pc, disassemble_info *di)
 {
-    return print_insn_k1 (pc, di);
+    int res;
+    gdb_byte buf[4];
+
+    res = print_insn_k1 (pc, di);
+
+    target_read_memory (pc+res-4, buf, 4);
+    /* Check if the last syllab has the parallel bit set. If so mark
+       the current instruction as having a delay slot.  This forces
+       x/i to display the following instructions until the end of the
+       bundle.  This is of course a lie, but it manages what ze zant
+       to achieve: print the full bundle when invoking 'x/i $pc'.  */
+    if (buf[3] & 0x80) {
+	di->insn_info_valid = 1;
+	di->branch_delay_insns = 1;
+    }
+
+    return res;
 }
 
 static CORE_ADDR
