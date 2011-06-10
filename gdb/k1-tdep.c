@@ -835,7 +835,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     k1_fetch_tls_load_module_address);
 
-  set_gdbarch_decr_pc_after_break (gdbarch, 4);
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
   set_gdbarch_adjust_breakpoint_address (gdbarch, 
 					 k1_adjust_breakpoint_address);
