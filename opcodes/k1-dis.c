@@ -44,14 +44,14 @@ static unsigned int opindex = 0;
 
 int reassemble_bundle(void);
 int reassemble_bundle(void) {
-    unsigned int i;
+    int i;
     int insncnt = 0;
     int immxcnt = 0;
     int seen[4];
     int real_alu = 0;
     unsigned int bundle_immx[MAXIMMX];
-    unsigned int opxd_mask   = 0x7803f000;
-    unsigned int opxd_opcode = 0x7803f000;
+    unsigned int opxd_mask   = 0x7803e000;
+    unsigned int opxd_opcode = 0x7803e000;
     int has_opxd = 0;
 
     for(i=0; i < 4; i++){
@@ -137,7 +137,6 @@ int reassemble_bundle(void) {
 int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int i;
   k1opc_t *op = NULL;             /* operation table index */
-  k1opc_t *opxd = NULL;
   bundle_t *insn;           /* the instruction       */
   int status;              /* temp                  */
   char *fmtp;
@@ -180,17 +179,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
   if (opc_table == NULL) {
       fprintf(stderr, "error: uninitialized opcode table\n");
-      exit(-1);
-  }
-
-  // Get OPXD insn from table
-  for (opxd = opc_table; ((char)opxd->as_op[0]) != 0; opxd++){
-      if(!strncmp(opxd->as_op, "opxd", 4)){
-          break;
-      }
-  }
-  if(opxd == NULL){
-      fprintf(stderr, "error: Could not find OPXD\n");
       exit(-1);
   }
 
@@ -306,12 +294,15 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_PRF]+value]].name);
                       break;
                   case RegClass_k1_systemReg:
-                  case RegClass_k1dp_systemReg:
+                  case RegClass_k1v1_systemReg:
                   case RegClass_k1_nopcpsReg:
-                  case RegClass_k1dp_nopcpsReg:
+                  case RegClass_k1v1_nopcpsReg:
                   case RegClass_k1_onlypsReg:
-                  case RegClass_k1dp_onlypsReg:
+                  case RegClass_k1v1_onlypsReg:
+                  case RegClass_k1_onlyraReg:
+                  //case RegClass_k1v1_onlyraReg:
                   case RegClass_k1_onlyfxReg:
+                  case RegClass_k1v1_onlyfxReg:
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_SRF]+value]].name);
                       break;
                   case RegClass_k1_remoteReg:
