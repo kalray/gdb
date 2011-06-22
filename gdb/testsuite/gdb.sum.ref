@@ -1,4 +1,4 @@
-Test Run By friss on Wed Jan 19 21:23:01 2011
+Test Run By friss on Wed Jun 22 19:10:17 2011
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -590,8 +590,8 @@ PASS: gdb.mi/mi-until.exp: until line number
 PASS: gdb.mi/mi-until.exp: until line number:file
 PASS: gdb.mi/mi-until.exp: until after current function
 Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
-gdb compile failed, /tmp/cctTNVbZ.o: In function `main':
-/work1/friss/tools2/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
+gdb compile failed, /tmp/ccFmGBao.o: In function `main':
+/work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
 collect2: ld returned 1 exit status
 Running ../../../gdb/testsuite/gdb.mi/mi2-regs.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-eval.exp ...
@@ -3531,6 +3531,10 @@ PASS: gdb.base/finish.exp: set break on double_func
 PASS: gdb.base/finish.exp: continue to double_func
 PASS: gdb.base/finish.exp: finish from double_func
 PASS: gdb.base/finish.exp: Testing the "fin" abbreviation for "finish"
+Running ../../../gdb/testsuite/gdb.base/disasm-end-cu.exp ...
+PASS: gdb.base/disasm-end-cu.exp: get hexadecimal valueof "&main"
+PASS: gdb.base/disasm-end-cu.exp: get hexadecimal valueof "&dummy_3"
+PASS: gdb.base/disasm-end-cu.exp: disassemble command returned some output
 Running ../../../gdb/testsuite/gdb.base/value-double-free.exp ...
 PASS: gdb.base/value-double-free.exp: watch var
 PASS: gdb.base/value-double-free.exp: continue
@@ -6128,7 +6132,7 @@ PASS: gdb.base/ending-run.exp: all set to continue
 PASS: gdb.base/ending-run.exp: cont
 PASS: gdb.base/ending-run.exp: step out of main
 PASS: gdb.base/ending-run.exp: step to end of run
-PASS: gdb.base/ending-run.exp: continue after exit
+UNSUPPORTED: gdb.base/ending-run.exp: continue after exit
 PASS: gdb.base/ending-run.exp: don't step after run
 PASS: gdb.base/ending-run.exp: ls: core (No core dumped on quit)
 Running ../../../gdb/testsuite/gdb.base/assign.exp ...
@@ -6496,6 +6500,8 @@ PASS: gdb.base/langs.exp: show language at main in langs.exp
 PASS: gdb.base/langs.exp: continue to exit in langs.exp
 PASS: gdb.base/langs.exp: set lang to minimal
 PASS: gdb.base/langs.exp: print parameter value
+Running ../../../gdb/testsuite/gdb.base/jit.exp ...
+UNTESTED: gdb.base/jit.exp: jit.exp
 Running ../../../gdb/testsuite/gdb.base/expand-psymtabs.exp ...
 PASS: gdb.base/expand-psymtabs.exp: Expand psymtabs
 Running ../../../gdb/testsuite/gdb.base/return2.exp ...
@@ -6866,8 +6872,8 @@ PASS: gdb.base/watch-read.exp: read watchpoint triggers when value doesn't chang
 PASS: gdb.base/watch-read.exp: only read watchpoint triggers when value doesn't change
 Running ../../../gdb/testsuite/gdb.base/attach.exp ...
 Running ../../../gdb/testsuite/gdb.base/watch-vfork.exp ...
-gdb compile failed, /work1/friss/tools2/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
-/work1/friss/tools2/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
+gdb compile failed, /work1/friss/tools4/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
+/work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
 collect2: ld returned 1 exit status
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
@@ -7540,6 +7546,7 @@ PASS: gdb.base/printcmds.exp: p &ctable2[12*16] with print elements set to 16
 PASS: gdb.base/printcmds.exp: p &ctable2[13*16] with print elements set to 16
 PASS: gdb.base/printcmds.exp: p &ctable2[14*16] with print elements set to 16
 PASS: gdb.base/printcmds.exp: p &ctable2[15*16] with print elements set to 16
+PASS: gdb.base/printcmds.exp: correct element repeats in array embedded at offset > 0
 PASS: gdb.base/printcmds.exp: set print elements 0
 PASS: gdb.base/printcmds.exp: p teststring with elements set to 0
 PASS: gdb.base/printcmds.exp: set print elements 1
@@ -8089,12 +8096,15 @@ Running ../../../gdb/testsuite/gdb.base/interact.exp ...
 PASS: gdb.base/interact.exp: set interactive-mode auto
 PASS: gdb.base/interact.exp: source script with interactive-mode auto
 PASS: gdb.base/interact.exp: sanity check with interactive-mode auto
+PASS: gdb.base/interact.exp: show interactive-mode (auto)
 PASS: gdb.base/interact.exp: set interactive-mode on
 PASS: gdb.base/interact.exp: source script with interactive-mode on
 PASS: gdb.base/interact.exp: sanity check with interactive-mode on
+PASS: gdb.base/interact.exp: show interactive-mode (on)
 PASS: gdb.base/interact.exp: set interactive-mode off
 PASS: gdb.base/interact.exp: source script with interactive-mode off
 PASS: gdb.base/interact.exp: sanity check with interactive-mode off
+PASS: gdb.base/interact.exp: show interactive-mode (off)
 Running ../../../gdb/testsuite/gdb.base/display.exp ...
 PASS: gdb.base/display.exp: kill
 PASS: gdb.base/display.exp: detach
@@ -8821,12 +8831,12 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		8405
+# of expected passes		8411
 # of unexpected failures	26
 # of unexpected successes	2
 # of expected failures		31
 # of known failures		23
-# of untested testcases		5
-# of unsupported tests		13
-/work1/friss/tools2/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110118-cvs -nw -nx -data-directory /work1/friss/tools2/gdb/k1_build/gdb/testsuite/../data-directory 
+# of untested testcases		6
+# of unsupported tests		14
+/work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110206-cvs -nw -nx -data-directory /work1/friss/tools4/gdb/k1_build/gdb/testsuite/../data-directory 
 
