@@ -851,6 +851,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
 
+  set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
+
   return gdbarch;
 }
 

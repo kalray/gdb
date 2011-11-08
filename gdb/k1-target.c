@@ -71,6 +71,12 @@ static void k1_target_create_inferior (struct target_ops *ops,
 				       char *exec_file, char *args,
 				       char **env, int from_tty);
 
+static int 
+k1_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+{
+    return 1;
+}
+
 void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
     char tar_remote_cmd[] = "target extended-remote :        ";
@@ -108,8 +114,9 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
        implementation. */
     ops = find_target_beneath(&current_target);
     ops->to_create_inferior = k1_target_create_inferior;
-    ops->to_attach = k1_target_attach;
     ops->to_mourn_inferior = k1_target_mourn_inferior;
+    ops->to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
+    current_target.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
