@@ -286,6 +286,8 @@ struct displaced_step_closure {
     int num_insn_words;
     
     uint32_t rewrite_LE;
+    char cond_jump; 
+    unsigned long long jump_dest;
 };
 
 static CORE_ADDR k1_step_pad_address;
@@ -334,14 +336,14 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
 	dsc->insn_words[0] |= (displacement & ~0Xf8000000);
     } else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x3 /* CB */) {
 	int off = ((dsc->insn_words[0] >> 6) & ((1<<18)-1)) << 2;
-	off = from + off - to;
-	if (off >= (1 << 20))
-	    error ("displacement of conditional branch too big");
+
+        if (off & (1<<19))
+            off |= 0xfff00000;
+
 	dsc->insn_words[0] &= 0xff00003f;
-	off &= (1<<20)-1;
-	dsc->insn_words[0] |= (off << 4); /* Shift by 4 instead of 6
-					     as the value has to be scaled by 4 */
-	if (debug_displaced) printf_filtered ("displaced: CB\n");
+        dsc->cond_jump = 1;
+        dsc->jump_dest = from + off;
+	if (debug_displaced) printf_filtered ("displaced: CB to %x (off: %x)\n", dsc->jump_dest, off);
     } else if (((dsc->insn_words[0] >> 23) & 0xff) == 0x6 /* LOOPGTZ */
 	       || ((dsc->insn_words[0] >> 23) & 0xff) == 0x4 /* LOOPNEZ */
 	       || ((dsc->insn_words[0] >> 23) & 0xff) == 0x2 /* LOOPDO */) {
@@ -407,6 +409,11 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 	/* We branched. */
 	if (dsc->rewrite_LE) {
 	    pc = from + (pc - to);
+	    if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
+        } else if (dsc->cond_jump && pc == to) {
+            /* Cond jump did branch. */
+            pc = dsc->jump_dest;
+	    if (debug_displaced) printf_filtered ("displaced: branchy cond jump\n");
 	} else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
 	    /* It was a call */
 	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
@@ -427,9 +434,9 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 				     from + dsc->num_insn_words*4);
 	regcache_raw_write_unsigned (regs, tdep->le_regnum,
 				     dsc->rewrite_LE);
-	if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
+	if (debug_displaced) printf_filtered ("displaced: rewrite LE: %x\n", dsc->rewrite_LE);
     } else if (((ps >> 5)&1) /* HLE */) {
-	if (debug_displaced) printf_filtered ("displaced: active loop\n");
+	if (debug_displaced) printf_filtered ("displaced: active loop pc(%llx) le(%llx)\n", pc, le);
 	regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
 	if (pc == le) {
 	    if (debug_displaced) printf_filtered ("displaced: at loop end\n");
