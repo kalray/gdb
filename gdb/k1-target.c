@@ -19,6 +19,7 @@
 #include "gdbthread.h"
 #include "inferior.h"
 #include "observer.h"
+#include "osdata.h"
 #include "main.h"
 #include "target.h"
 #include "top.h"
@@ -70,6 +71,12 @@ static void k1_target_create_inferior (struct target_ops *ops,
 				       char *exec_file, char *args,
 				       char **env, int from_tty);
 
+static int 
+k1_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+{
+    return 1;
+}
+
 void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
     char tar_remote_cmd[] = "target extended-remote :        ";
@@ -107,8 +114,9 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
        implementation. */
     ops = find_target_beneath(&current_target);
     ops->to_create_inferior = k1_target_create_inferior;
-    ops->to_attach = k1_target_attach;
     ops->to_mourn_inferior = k1_target_mourn_inferior;
+    ops->to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
+    current_target.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
@@ -265,12 +273,39 @@ attach_mppa_command (char *args, int from_tty)
     char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
+
     dont_repeat ();
     
     execute_command (set_target_async_cmd, 0);
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
     k1_target_attach (&current_target, args, from_tty);
+
+    struct osdata *osdata = get_osdata (NULL);
+    struct osdata_item *last;
+    struct osdata_item *item;
+    int ix_items;
+    
+    for (ix_items = 0;
+         VEC_iterate (osdata_item_s, osdata->items,
+                      ix_items, item);
+         ix_items++) {
+        char *endptr;
+        unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+        struct inferior *inf;
+        char attach_cmd[25];
+        
+        if (pid == current_inferior ()->pid)
+            continue;
+        
+        inf = add_inferior_with_spaces ();
+        set_current_inferior (inf);
+        switch_to_thread (null_ptid);
+        set_current_program_space (inf->pspace);
+        sprintf (attach_cmd, "attach %i", pid);
+        execute_command (attach_cmd, 0);
+    }
+    
 }
 
 static void
@@ -334,7 +369,6 @@ k1_override_run (void)
     }
 }
 
-
 void
 _initialize__k1_target (void)
 {
@@ -349,8 +383,7 @@ _initialize__k1_target (void)
     k1_target_ops.to_open = k1_target_open;
     k1_target_ops.to_close = k1_target_close;
 
-    k1_target_ops.to_attach = k1_target_attach;
-    k1_target_ops.to_attach_no_wait = 1;
+    k1_target_ops.to_attach = noprocess;
 
     k1_target_ops.to_create_inferior = k1_target_create_inferior;
     k1_target_ops.to_mourn_inferior = k1_target_mourn_inferior;
@@ -358,6 +391,7 @@ _initialize__k1_target (void)
     k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
     k1_target_ops.to_can_async_p = k1_target_can_async;
     k1_target_ops.to_can_run = k1_target_can_run;
+
     k1_target_ops.to_magic = OPS_MAGIC;
     
     add_target (&k1_target_ops);
