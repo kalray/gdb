@@ -9,7 +9,6 @@ options = Options.new({ "target"        => "k1",
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "open64"        => "open64",
-                        "parallel-make" => "yes",
                         "toolroot"      => "",
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "compiler"      => ["gcc", "Enable build of GCC or Open64. Valid values: [gcc,open64]"],
@@ -25,12 +24,6 @@ valid_valid = Target.new("gdb", repo, [])
 
 b = Builder.new("gdb", options, [clean, build, valid, install, valid_valid])
 
-def cpu_number ()
-  num_cpu = 0
-  File.open("/proc/cpuinfo") { |f| f.each { |l| l =~ /processor/ and num_cpu += 1 }}
-  num_cpu
-end
-
 arch = options["target"]
 b.logsession = arch
 
@@ -45,7 +38,6 @@ compiler = options["compiler"]
 build_path = gdb_clone + "/" + arch + "_build"
 
 prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
-make_j = options["parallel-make"] == "yes" ? "-j#{cpu_number}" : ""
 
 b.default_targets = [build]
 
@@ -76,7 +68,7 @@ b.target("build") do
     b.run(:cmd => "echo #{machine_type}" )
     b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-python --with-libexpat-prefix=$PWD/../bundled_libraries/expat#{machine_type} --with-bugurl=no --prefix=#{prefix}")
     b.run(:cmd => "make clean")
-    b.run(:cmd => "make #{make_j} FAMDIR=#{family_path} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
+    b.run(:cmd => "make FAMDIR=#{family_path} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
   end
 end
 
@@ -102,7 +94,7 @@ b.target("valid") do
   if( arch == "k1" )
     Dir.chdir build_path + "/gdb/testsuite"
     
-    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make #{make_j} check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
     if(compiler == "open64") then
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.open64.ref gdb.sum")
     else 
@@ -122,7 +114,7 @@ b.target("gdb") do
     
     # Build native, just to create the build directories
     b.run("../configure")
-    b.run("make #{make_j}")
+    b.run("make")
 
     cd "gdb/testsuite"
     
