@@ -17,8 +17,8 @@ options = Options.new({ "target"        => "k1",
 repo = Git.new(options["clone"])
 
 clean = Target.new("clean", repo, [])
-build = Target.new("build", repo, [])
-valid = Target.new("valid", repo, [build])
+build = ParallelTarget.new("build", repo, [])
+valid = ParallelTarget.new("valid", repo, [build])
 install = Target.new("install", repo, [valid])
 valid_valid = Target.new("gdb", repo, [])
 
