@@ -302,7 +302,8 @@ attach_mppa_command (char *args, int from_tty)
         set_current_inferior (inf);
         switch_to_thread (null_ptid);
         set_current_program_space (inf->pspace);
-        sprintf (attach_cmd, "attach %i", pid);
+        sprintf (attach_cmd, "attach %i&", pid);
+        printf ("ATTACH cmd is : %s\n", attach_cmd);
         execute_command (attach_cmd, 0);
     }
     
