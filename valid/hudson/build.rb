@@ -14,7 +14,11 @@ options = Options.new({ "target"        => "k1",
                         "compiler"      => ["gcc", "Enable build of GCC or Open64. Valid values: [gcc,open64]"],
                       })
 
-repo = Git.new(options["clone"])
+workspace = options["workspace"]
+gdb_clone =  options["clone"]
+gdb_path  =  File.join(workspace, gdb_clone)
+
+repo = Git.new(gdb_clone,workspace)
 
 clean = Target.new("clean", repo, [])
 build = ParallelTarget.new("build", repo, [])
@@ -27,15 +31,13 @@ b = Builder.new("gdb", options, [clean, build, valid, install, valid_valid])
 arch = options["target"]
 b.logsession = arch
 
-workspace = options["workspace"]
-gdb_clone =  workspace + "/" + options["clone"]
 processor_clone =  workspace + "/" + options["processor"]
 mds_clone =  workspace + "/" + options["mds"]
 open64_clone =  workspace + "/" + options["open64"]
 
 compiler = options["compiler"]
 
-build_path = gdb_clone + "/" + arch + "_build"
+build_path = gdb_path + "/" + arch + "_build"
 
 prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 
