@@ -39,6 +39,7 @@
 #include "opcode/k1.h"
 
 struct gdbarch_tdep {
+    int ev_regnum;
     int ls_regnum;
     int le_regnum;
     int lc_regnum;
@@ -86,9 +87,48 @@ struct op_list {
     struct op_list *next;
 };
 
-static struct op_list *sp_adjust_insns;
-static struct op_list *sp_store_insns;
-static struct op_list *prologue_helper_insns;
+static enum K1_ARCH {
+    K1_K1V1,
+    K1_K1DP,
+    K1_NUM_ARCHES
+} k1_current_arch = K1_NUM_ARCHES;
+
+static struct op_list *sp_adjust_insns[K1_NUM_ARCHES];
+static struct op_list *sp_store_insns[K1_NUM_ARCHES];
+static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
+
+static struct op_list *branch_insns[K1_NUM_ARCHES];
+
+static enum K1_ARCH
+k1_arch ()
+{
+    const struct target_desc *desc = target_current_description ();
+
+    if (k1_current_arch != K1_NUM_ARCHES)
+        return k1_current_arch;
+
+    if (exec_bfd) {
+        switch (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK) {
+        case ELF_K1_CORE_V1:
+            k1_current_arch = K1_K1V1; break;
+        case ELF_K1_CORE_DP:
+            k1_current_arch = K1_K1DP; break;
+        default:
+            error (_("The K1 binary is compiled for an unknown core."));
+        }  
+    } else if (desc) {
+        if (tdesc_find_feature (desc, "eu.kalray.core.k1dp"))
+            k1_current_arch = K1_K1DP;
+        else if (tdesc_find_feature (desc, "eu.kalray.core.k1v1"))
+            k1_current_arch = K1_K1V1;
+        else
+            error ("unable to find the current k1 architecture.");
+    }
+
+    gdb_assert (k1_current_arch != K1_NUM_ARCHES);
+
+    return k1_current_arch;
+}
 
 const char *
 k1_dummy_register_name (struct gdbarch *gdbarch, int regno)
@@ -121,14 +161,11 @@ k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
     static const gdb_byte BREAK_V2[] = { 0xFF, 0xFF, 0x1, 0 };
     *len = 4;
 
-    switch (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK) {
-    case ELF_K1_CORE_V1:
-	return BREAK_V1;
-    case ELF_K1_CORE_DP:
-	return BREAK_V2;
-    default:
-	error (_("The K1 binary is compiled for an unknown core."));
-    }	
+    switch (k1_arch ()) {
+    case K1_K1V1: return BREAK_V1;
+    case K1_K1DP: return BREAK_V2;
+    default: internal_error (__FILE__, __LINE__, "Unknown K1 arch !\n");
+    }
 }
 
 static CORE_ADDR
@@ -165,14 +202,27 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
     struct op_list *ops;
     k1_bitfield_t *bfield;
 
-    struct {
+    #define NUM_INSN_LISTS 3
+
+    struct op_list_desc {
 	struct op_list *ops;
 	int sp_idx;
-    } prologue_insns[] = {
-	{ sp_adjust_insns, 0 /* Dest register */},
-	{ sp_store_insns, 1 /* Base register */},
-	{ prologue_helper_insns, -1 /* unused */},
     };
+
+    typedef struct op_list_desc prologue_ops[NUM_INSN_LISTS];
+    prologue_ops prologue_insns_full[] = { 
+        [K1_K1V1] = {
+	{ sp_adjust_insns[K1_K1V1], 0 /* Dest register */},
+	{ sp_store_insns[K1_K1V1], 1 /* Base register */},
+	{ prologue_helper_insns[K1_K1V1], -1 /* unused */},
+        },
+        [K1_K1DP] = {
+        { sp_adjust_insns[K1_K1DP], 0 /* Dest register */},
+	{ sp_store_insns[K1_K1DP], 1 /* Base register */},
+	{ prologue_helper_insns[K1_K1DP], -1 /* unused */},
+        } };
+
+    prologue_ops *prologue_insns = &prologue_insns_full [k1_arch ()];
 
     do {
     next_addr:
@@ -180,8 +230,8 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	    return 0;
 	syllab = extract_unsigned_integer (syllab_buf, 4, order);
 
-	for (ops_idx = 0; ops_idx < ARRAY_SIZE(prologue_insns); ++ops_idx) {
-	    ops = prologue_insns[ops_idx].ops;
+	for (ops_idx = 0; ops_idx < NUM_INSN_LISTS; ++ops_idx) {
+	    ops = (*prologue_insns)[ops_idx].ops;
 	    while (ops) {
 		k1opc_t *op = ops->op;
 		if ((syllab & op->codeword[0].mask) != op->codeword[0].opcode)
@@ -195,13 +245,13 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 		    return 0;
 		}
 
-		if (prologue_insns[ops_idx].sp_idx < 0) {
+		if ((*prologue_insns)[ops_idx].sp_idx < 0) {
 		    addr += op->coding_size/8;
 		    ++i;
 		    goto next_addr;
 		}
 
-		bfield = &op->format[prologue_insns[ops_idx].sp_idx]->bfield[0];
+		bfield = &op->format[(*prologue_insns)[ops_idx].sp_idx]->bfield[0];
 		reg = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
 		if (reg == 12) return 1;
 	    next:
@@ -285,9 +335,15 @@ struct displaced_step_closure {
     uint32_t insn_words[8];
     int num_insn_words;
     
-    uint32_t rewrite_LE;
-    char cond_jump; 
-    unsigned long long jump_dest;
+    unsigned branchy      : 1; 
+    unsigned scall_jump   : 1;
+    unsigned rewrite_RA   : 1;
+    unsigned rewrite_LE   : 1;
+    unsigned rewrite_reg  : 1;
+
+    /* The destination address when the branch is taken. */
+    unsigned long long dest;
+    int reg;
 };
 
 static CORE_ADDR k1_step_pad_address;
@@ -296,6 +352,7 @@ static void
 k1_inferior_created (struct target_ops *target, int from_tty)
 {
     k1_step_pad_address = 0;
+    k1_current_arch = K1_NUM_ARCHES;
 }
 
 static CORE_ADDR
@@ -314,42 +371,137 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
     return k1_step_pad_address;
 }
 
+static int
+extract_mds_bitfield (k1opc_t *op, uint32_t syllab, int bitfield)
+{
+    k1_bitfield_t *bfield;
+    int res;
+
+    bfield = &op->format[bitfield]->bfield[0];
+    res = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
+
+    if (res & (1<<(bfield->size-1)))
+        res |= (0xffffffff << bfield->size);
+
+    return res;
+}
+
+static void
+patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
+{
+    k1_bitfield_t *bfield;
+    uint32_t mask;
+    
+    bfield = &op->format[bitfield]->bfield[0];
+    mask = ~(((1 << bfield->size) - 1) << bfield->to_offset);
+    *syllab &= mask;
+    *syllab |= (value << bfield->to_offset) & ~mask;
+}
+
 static void
 patch_bcu_instruction (struct gdbarch *gdbarch, 
 		       CORE_ADDR from, CORE_ADDR to, struct regcache *regs,
 		       struct displaced_step_closure *dsc)
 {
+    struct op_list *insn = branch_insns[k1_arch ()];
+    struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
     if (debug_displaced)
 	printf_filtered ("displaced: Looking at BCU instruction\n");
 
-    if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2 /* CALL */
-	|| ((dsc->insn_words[0] >> 27) & 0x3) == 0x1 /* GOTO */) {
-	int displacement = dsc->insn_words[0] << 5;
-	
-	if (debug_displaced) printf_filtered ("displaced: CALL/GOTO\n");
+    /* In order to limit side effects, we patch every instruction or
+       register in order to make branches target the step pad. This
+       way we have a simple way to check if branches were taken or
+       not. 'scalls' are an exception to this rule, because we don't
+       want to change the 'ev' register that might influence other
+       things than syscalls. */ 
 
-	displacement >>= 3;
-	if (debug_displaced) printf_filtered ("displaced: dest %s\n", paddress (gdbarch, from+displacement));
-	displacement = from + displacement - to;
-	displacement >>= 2;
-	dsc->insn_words[0] &= 0Xf8000000;
-	dsc->insn_words[0] |= (displacement & ~0Xf8000000);
-    } else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x3 /* CB */) {
-	int off = ((dsc->insn_words[0] >> 6) & ((1<<18)-1)) << 2;
+    while (insn) {
+        k1opc_t *op = insn->op;
 
-        if (off & (1<<19))
-            off |= 0xfff00000;
+        if ((dsc->insn_words[0] & op->codeword[0].mask) != op->codeword[0].opcode) {
+            insn = insn->next;
+            continue;
+        }
 
-	dsc->insn_words[0] &= 0xff00003f;
-        dsc->cond_jump = 1;
-        dsc->jump_dest = from + off;
-	if (debug_displaced) printf_filtered ("displaced: CB to %x (off: %x)\n", dsc->jump_dest, off);
-    } else if (((dsc->insn_words[0] >> 23) & 0xff) == 0x6 /* LOOPGTZ */
-	       || ((dsc->insn_words[0] >> 23) & 0xff) == 0x4 /* LOOPNEZ */
-	       || ((dsc->insn_words[0] >> 23) & 0xff) == 0x2 /* LOOPDO */) {
-	int off = ((dsc->insn_words[0] >> 6) & ((1<<18)-1)) << 2;
-	dsc->rewrite_LE = from + off;
-	if (debug_displaced) printf_filtered ("displaced: H/W LOOP setup\n");
+	if (debug_displaced) printf_filtered ("displaced: found branchy BCU insn: %s\n", op->as_op);
+
+        dsc->branchy = 1;
+
+        if (strcmp ("call", op->as_op) == 0) {
+            dsc->rewrite_RA = 1;
+            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
+            patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
+        } else if (strcmp ("goto", op->as_op) == 0) {
+            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
+            patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
+        } else if (strncmp ("cjl.", op->as_op, 4) == 0) {
+            ULONGEST ra;
+
+            dsc->rewrite_RA = 1;
+	    regcache_raw_read_unsigned (regs, tdep->ra_regnum, &ra);
+            dsc->dest = ra;
+            regcache_raw_write_unsigned (regs, tdep->ra_regnum, to);
+        } else if (strncmp ("cb.", op->as_op, 3) == 0) {
+            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
+            patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
+        } else if (strcmp ("icall", op->as_op) == 0) {
+            ULONGEST reg_value;
+
+            dsc->rewrite_RA = 1;
+            dsc->rewrite_reg = 1;
+            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
+	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+            dsc->dest = reg_value;
+            regcache_raw_write_unsigned (regs, dsc->reg, to);
+        } else if (strcmp ("igoto", op->as_op) == 0) {
+            ULONGEST reg_value;
+
+            dsc->rewrite_reg = 1;
+            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
+	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+            dsc->dest = reg_value;
+            regcache_raw_write_unsigned (regs, dsc->reg, to);
+        } else if (strcmp ("ret", op->as_op) == 0) {
+            ULONGEST reg_value;
+
+            dsc->rewrite_reg = 1;
+            dsc->reg = tdep->ra_regnum;
+	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+            dsc->dest = reg_value;
+            regcache_raw_write_unsigned (regs, dsc->reg, to);
+        } else if (strcmp ("rfe", op->as_op) == 0) {
+            ULONGEST reg_value;
+
+            dsc->rewrite_reg = 1;
+            dsc->reg = tdep->spc_regnum;
+	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+            dsc->dest = reg_value;
+            regcache_raw_write_unsigned (regs, dsc->reg, to);
+        } else if (strcmp ("scall", op->as_op) == 0
+                   || strcmp ("trapa", op->as_op) == 0
+                   || strcmp ("trapo", op->as_op) == 0) {
+            ULONGEST reg_value;
+
+            dsc->scall_jump = 1;
+	    regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
+            if (k1_arch () == K1_K1DP)
+                dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
+            else
+                dsc->dest = reg_value | 0xc;
+        } else if (strcmp ("loopdo", op->as_op) == 0
+                   || strcmp ("loopgtz", op->as_op) == 0
+                   || strcmp ("loopnez", op->as_op) == 0) {
+            ULONGEST reg_value;
+
+            dsc->rewrite_LE = 1;
+            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
+            patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
+        } else {
+            internal_error (__FILE__, __LINE__, "Unknwon BCU insn");
+        }
+        
+        break;
     }
 }
 
@@ -393,7 +545,8 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 {
     ULONGEST ps, lc, le, pc;
     struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-    /* FIXME: handle traps */
+    int branched = 0;
+    int exception = 0;
 
     if (debug_displaced) printf_filtered ("displaced: Fixup\n");
 
@@ -406,48 +559,71 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 	if (debug_displaced) printf_filtered ("displaced: Didn't branch\n");
     } else {
 	ULONGEST spc;
+
 	/* We branched. */
-	if (dsc->rewrite_LE) {
-	    pc = from + (pc - to);
-	    if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
-        } else if (dsc->cond_jump && pc == to) {
-            /* Cond jump did branch. */
-            pc = dsc->jump_dest;
-	    if (debug_displaced) printf_filtered ("displaced: branchy cond jump\n");
-	} else if (((dsc->insn_words[0] >> 27) & 0x3) == 0x2) {
-	    /* It was a call */
-	    regcache_raw_write_unsigned (regs, tdep->ra_regnum, 
-					 from + dsc->num_insn_words*4);
-	    if (debug_displaced) printf_filtered ("displaced: call\n");
-	} else {
-	    /* It was a trap */
-	    regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
+        branched = 1;
+	if (debug_displaced) printf_filtered ("displaced: we branched (predicted dest: %llx) \n",
+                                              dsc->dest);
+        if (dsc->branchy && 
+            (pc == to || (dsc->scall_jump && pc == dsc->dest))) {
+            /* The branchy instruction jumped to its destination. */
+            pc = dsc->dest;
+
+            /* Rewrite RA only if the brach executed correctly. */
+            if (dsc->rewrite_RA) {
+                regcache_raw_write_unsigned (regs, tdep->ra_regnum, from + dsc->num_insn_words * 4);
+                if (debug_displaced) printf_filtered ("displaced: rewrite RA\n");
+            }
+    
+            if (dsc->scall_jump) {
+                regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
+                if (debug_displaced) printf_filtered ("displaced: rewrite SPC\n");
+            }
+        } else {
+            /* Uh oh... seems we've taken some exceptional condition. 
+               This means interrupt or H/W trap. */
+            regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
 	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%lx\n", 
 						  (unsigned long)spc);
-	    spc = from + (spc - k1_step_pad_address);
+            gdb_assert (spc == to);
+	    spc = from;
 	    regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
-	}
+            exception = 1;
+        }
+
     }
 
-    if (dsc->rewrite_LE) {
-	regcache_raw_write_unsigned (regs, tdep->ls_regnum,
-				     from + dsc->num_insn_words*4);
-	regcache_raw_write_unsigned (regs, tdep->le_regnum,
-				     dsc->rewrite_LE);
-	if (debug_displaced) printf_filtered ("displaced: rewrite LE: %x\n", dsc->rewrite_LE);
-    } else if (((ps >> 5)&1) /* HLE */) {
-	if (debug_displaced) printf_filtered ("displaced: active loop pc(%llx) le(%llx)\n", pc, le);
-	regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
-	if (pc == le) {
-	    if (debug_displaced) printf_filtered ("displaced: at loop end\n");
-	    regcache_raw_read_unsigned (regs, tdep->lc_regnum, &lc);
-	    if (lc - 1 == 0)
-		regcache_raw_read_unsigned (regs, tdep->le_regnum, &pc);
-	    else
-		regcache_raw_read_unsigned (regs, tdep->ls_regnum, &pc);
-	    if (lc != 0)
-		regcache_raw_write_unsigned (regs, tdep->lc_regnum, lc - 1);
-	}
+    /* Rewrite a patched reg unconditionnaly */
+    if (dsc->rewrite_reg) {
+        regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
+        if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
+    }
+
+    if (((ps >> 5)&1) /* HLE */) {
+
+        /* The loop setup is done only if H/W loops are actually
+           enabled. */
+        if (!exception && dsc->rewrite_LE) {
+            regcache_raw_write_unsigned (regs, tdep->le_regnum, dsc->dest);
+            regcache_raw_write_unsigned (regs, tdep->ls_regnum, from + dsc->num_insn_words*4);
+            if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
+        }
+
+        if (!branched) {
+            regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
+            if (debug_displaced) 
+                printf_filtered ("displaced: active loop pc(%llx) le(%llx)\n", (unsigned long long)pc, (unsigned long long)le);
+            if (pc == le) {
+                if (debug_displaced) printf_filtered ("displaced: at loop end\n");
+                regcache_raw_read_unsigned (regs, tdep->lc_regnum, &lc);
+                if (lc - 1 == 0)
+                    regcache_raw_read_unsigned (regs, tdep->le_regnum, &pc);
+                else
+                    regcache_raw_read_unsigned (regs, tdep->ls_regnum, &pc);
+                if (lc != 0)
+                    regcache_raw_write_unsigned (regs, tdep->lc_regnum, lc - 1);
+            }
+        }
     }
 	
     regcache_write_pc (regs, pc);
@@ -723,8 +899,10 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
   int i, num_pseudos;
-  int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
+  int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
+  int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
 
+  static const char k1_ev_name[] = "ev";
   static const char k1_lc_name[] = "lc";
   static const char k1_ls_name[] = "ls";
   static const char k1_le_name[] = "le";
@@ -783,6 +961,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	      has_ra = i;
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_spc_name) == 0)
 	      has_spc = i;
+	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ev_name) == 0)
+	      has_ev = i;
       
       if (has_pc < 0)
 	  error ("There's no '%s' register!", pc_name);
@@ -802,7 +982,10 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  error ("There's no '%s' register!", k1_ra_name);
       if (has_spc < 0)
 	  error ("There's no '%s' register!", k1_spc_name);
+      if (has_ev < 0)
+	  error ("There's no '%s' register!", k1_ev_name);
 
+      tdep->ev_regnum = has_ev;
       tdep->le_regnum = has_le;
       tdep->ls_regnum = has_ls;
       tdep->lc_regnum = has_lc;
@@ -875,39 +1058,75 @@ static void add_op (struct op_list **list, k1opc_t *op)
 
 static void k1_look_for_insns (void)
 {
-    /* FIXME: consider the k1cp ABI */
-    k1opc_t *op = k1dp_k1optab;
+    int i;
 
-    while (op->as_op[0]) {
-	if (strcmp ("add", op->as_op) == 0) {
-            add_op (&sp_adjust_insns, op);
-            add_op (&prologue_helper_insns, op);
-	} else if (strcmp ("sbf", op->as_op) == 0)
-            add_op (&sp_adjust_insns, op);
-	else if (strcmp ("swm", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("sdm", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("shm", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("sb", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("sh", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("sw", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("sd", op->as_op) == 0)
-            add_op (&sp_store_insns, op);
-	else if (strcmp ("make", op->as_op) == 0)
-	    add_op (&prologue_helper_insns, op);
-	else if (strcmp ("sxb", op->as_op) == 0)
-            add_op (&prologue_helper_insns, op);
-	else if (strcmp ("sxh", op->as_op) == 0)
-            add_op (&prologue_helper_insns, op);
-	else if (strcmp ("extfz", op->as_op) == 0)
-            add_op (&prologue_helper_insns, op);
-
-	++op;
+    for (i = 0; i < K1_NUM_ARCHES; ++i) {
+        k1opc_t *op;
+        
+        switch (i) {
+        case K1_K1V1: op = k1v1_k1optab; break;
+        case K1_K1DP: op = k1dp_k1optab; break;
+        default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
+        }
+        
+        while (op->as_op[0]) {
+            if (strcmp ("add", op->as_op) == 0) {
+                add_op (&sp_adjust_insns[i], op);
+                add_op (&prologue_helper_insns[i], op);
+            } else if (strcmp ("sbf", op->as_op) == 0)
+                add_op (&sp_adjust_insns[i], op);
+            else if (strcmp ("swm", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("sdm", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("shm", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("sb", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("sh", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("sw", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("sd", op->as_op) == 0)
+                add_op (&sp_store_insns[i], op);
+            else if (strcmp ("make", op->as_op) == 0)
+                add_op (&prologue_helper_insns[i], op);
+            else if (strcmp ("sxb", op->as_op) == 0)
+                add_op (&prologue_helper_insns[i], op);
+            else if (strcmp ("sxh", op->as_op) == 0)
+                add_op (&prologue_helper_insns[i], op);
+            else if (strcmp ("extfz", op->as_op) == 0)
+                add_op (&prologue_helper_insns[i], op);
+            else if (strcmp ("call", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("icall", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("goto", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("igoto", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("ret", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("rfe", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("scall", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("trapa", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("trapo", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strncmp ("cb.", op->as_op, 3) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strncmp ("cjl.", op->as_op, 4) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("loopdo", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("loopgtz", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("loopnez", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            ++op;
+        }
     }
 }
 
