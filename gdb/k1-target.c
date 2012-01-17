@@ -28,7 +28,6 @@
 #include "cli/cli-setshow.h"
 
 static cmd_cfunc_ftype *real_run_command;
-static struct observer *exec_file_observer;
 
 static struct target_ops k1_target_ops;
 static char *da_options = NULL;
@@ -37,17 +36,6 @@ static const char *simulation_vehicles[] = { "k1-cluster", "k1-runner", NULL };
 static const char *simulation_vehicle;
 
 pid_t server_pid;
-
-static void 
-k1_target_open (char *name, int from_tty)
-{
-    push_target (&k1_target_ops);
-}
-
-static void k1_target_close (int quitting)
-{
-
-}
 
 static void
 k1_target_new_thread (struct thread_info *t)
@@ -61,10 +49,18 @@ k1_target_new_thread (struct thread_info *t)
 
 static void k1_target_mourn_inferior (struct target_ops *target)
 {
-    unpush_target (target);
-    generic_mourn_inferior ();
-    if (server_pid)
+    struct target_ops *remote_target = find_target_beneath(target);
+
+    gdb_assert (target == &k1_target_ops);
+    remote_target->to_mourn_inferior (remote_target);
+    /* Force disconnect even if we are in extended mode */
+    unpush_target (remote_target);
+    unpush_target (&k1_target_ops);
+
+    if (server_pid) {
 	kill (server_pid, 9);
+        server_pid = 0;
+    }
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
@@ -75,6 +71,17 @@ static int
 k1_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
     return 1;
+}
+
+static void 
+k1_target_open (char *name, int from_tty)
+{
+
+}
+
+static void k1_target_close (int quitting)
+{
+
 }
 
 void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
@@ -106,23 +113,16 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     observer_detach_new_thread (new_thread_observer);
     batch_silent = saved_batch_silent;
     inferior_thread ()->step_multi = 0;
-    current_inferior ()->stop_soon = NO_STOP_QUIETLY;
-
-    /* Our target vector has been poped from the target stack by
-       'target remote'. If we want to keep the ability to 'run', we
-       need to equip the remote target vector with our create_inferior
-       implementation. */
-    ops = find_target_beneath(&current_target);
-    ops->to_create_inferior = k1_target_create_inferior;
-    ops->to_mourn_inferior = k1_target_mourn_inferior;
-    ops->to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
-    current_target.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
+    current_inferior ()->control.stop_soon = NO_STOP_QUIETLY;
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
 				       char *exec_file, char *args,
 				       char **env, int from_tty)
 {
+    char set_target_async_cmd[] = "set target-async";
+    char set_non_stop_cmd[] = "set non-stop";
+    char set_pagination_off_cmd[] = "set pagination off";
     char **argv_args = gdb_buildargv (args);
     char **da_args = gdb_buildargv (da_options);
     char **stub_args;
@@ -137,6 +137,13 @@ static void k1_target_create_inferior (struct target_ops *ops,
     if (exec_file == NULL)
 	error (_("No executable file specified.\n\
 Use the \"file\" or \"exec-file\" command."));
+
+    if (lookup_minimal_symbol_text ("pthread_create", NULL)
+	|| lookup_minimal_symbol_text ("rtems_task_start", NULL)) {
+	execute_command (set_target_async_cmd, 0);
+	execute_command (set_non_stop_cmd, 0);
+	execute_command (set_pagination_off_cmd, 0);
+    }
 
     arg = argv_args;
     while (arg && *arg++) nb_args++;
@@ -302,71 +309,34 @@ attach_mppa_command (char *args, int from_tty)
         set_current_inferior (inf);
         switch_to_thread (null_ptid);
         set_current_program_space (inf->pspace);
-        sprintf (attach_cmd, "attach %i&", pid);
-        printf ("ATTACH cmd is : %s\n", attach_cmd);
+        sprintf (attach_cmd, "attach %li&", pid);
         execute_command (attach_cmd, 0);
     }
     
 }
 
-static void
-run_mppa_command_continuation (void *args)
-{
-      clear_proceed_status ();
-      proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 0);
-}
-
-/* This command is run instead of run when the K1 target is
-   loaded. See k1-tdep.c. */
 void
 run_mppa_command (char *args, int from_tty)
 {
     char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
+    char run_cmd[] = "run";
+
     dont_repeat ();
 
-    if (exec_file_observer) {
-	observer_detach_executable_changed (exec_file_observer);
-	exec_file_observer = NULL;
-    }
-
-    if (lookup_minimal_symbol_text ("pthread_create", NULL)
-	|| lookup_minimal_symbol_text ("rtems_task_start", NULL)) {
-	execute_command (set_target_async_cmd, 0);
-	execute_command (set_non_stop_cmd, 0);
-	execute_command (set_pagination_off_cmd, 0);
-	target_create_inferior (get_exec_file (0), get_inferior_args (),
-				environ_vector (current_inferior ()->environment),
-				from_tty);
-	/* Prevent the stop notification from the freshly connected RM
-	   to show up in the CLI. We restart this core right after
-	   that. */
-	current_inferior ()->stop_soon = STOP_QUIETLY_NO_SIGSTOP;
-	/* We use a continuation, because we want that to run after
-	   the first stop notification has been handled. Note that an
-	   inferior continuation wouldn't do as this is also used by
-	   notice_new_inferior () and we want to run after that. */
-	add_continuation (inferior_thread (),
-			  run_mppa_command_continuation, NULL, NULL);
-    } else {
-	real_run_command (args, from_tty);
-    }
+    execute_command (set_target_async_cmd, 0);
+    execute_command (set_non_stop_cmd, 0);
+    execute_command (set_pagination_off_cmd, 0);
+    execute_command (run_cmd, 0);
 }
 
 static void
-k1_override_run (void)
-{
-    if (real_run_command == 0) {
-	/* Target files are linked first, thus we can't override a
-	   generic function like 'run' in the _initialize_... function
-	   of a targetting file. We do that here. It's ugly, I know. */
-	char *run_cmd_name = xstrdup ("run");
-	struct cmd_list_element *run;
-	
-	run = lookup_cmd (&run_cmd_name, cmdlist, "", 0, 0);
-	real_run_command = run->function.cfunc;
-	run->function.cfunc = run_mppa_command;
+k1_inferior_created (struct target_ops *ops, int from_tty)
+{   
+    if (find_target_beneath (&current_target) != &k1_target_ops) {
+        printf ("PUSHING\n");
+        push_target (&k1_target_ops);
     }
 }
 
@@ -375,11 +345,11 @@ _initialize__k1_target (void)
 {
     simulation_vehicle = simulation_vehicles[0];
     
-    k1_target_ops.to_shortname = "k1-iss";
-    k1_target_ops.to_longname = "K1 target runinng on simulation";
+    k1_target_ops.to_shortname = "mppa";
+    k1_target_ops.to_longname = "Kalray MPPA connection";
     k1_target_ops.to_doc = 
-	"Use the K1 simulation environment to debug your application.";
-    k1_target_ops.to_stratum = arch_stratum + 1;
+	"Connect to a Kalray MPPA execution vehicle.";
+    k1_target_ops.to_stratum = arch_stratum;
 
     k1_target_ops.to_open = k1_target_open;
     k1_target_ops.to_close = k1_target_close;
@@ -392,6 +362,8 @@ _initialize__k1_target (void)
     k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
     k1_target_ops.to_can_async_p = k1_target_can_async;
     k1_target_ops.to_can_run = k1_target_can_run;
+
+    k1_target_ops.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
 
     k1_target_ops.to_magic = OPS_MAGIC;
     
@@ -427,5 +399,5 @@ Usage is `attach-mppa PORT'."));
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));
 
-    exec_file_observer = observer_attach_executable_changed (k1_override_run);
+    observer_attach_inferior_created (k1_inferior_created);
 }
