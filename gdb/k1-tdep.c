@@ -590,7 +590,6 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
 	    regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
             exception = 1;
         }
-
     }
 
     /* Rewrite a patched reg unconditionnaly */
