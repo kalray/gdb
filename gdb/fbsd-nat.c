@@ -1,7 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2004, 2007-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,7 +33,7 @@
 #include "elf-bfd.h"
 #include "fbsd-nat.h"
 
-/* Return a the name of file that can be opened to get the symbols for
+/* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
 char *
@@ -202,7 +201,7 @@ fbsd_make_corefile_notes (bfd *obfd, int *note_size)
 
   if (get_exec_file (0))
     {
-      char *fname = strrchr (get_exec_file (0), '/') + 1;
+      const char *fname = lbasename (get_exec_file (0));
       char *psargs = xstrdup (fname);
 
       if (get_inferior_args ())

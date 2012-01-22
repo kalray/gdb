@@ -1,8 +1,7 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-1996, 1998-2001, 2003-2012 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -460,6 +459,13 @@ serial_ttystate
 ser_base_get_tty_state (struct serial *scb)
 {
   /* Allocate a dummy.  */
+  return (serial_ttystate) XMALLOC (int);
+}
+
+serial_ttystate
+ser_base_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
+{
+  /* Allocate another dummy.  */
   return (serial_ttystate) XMALLOC (int);
 }
 

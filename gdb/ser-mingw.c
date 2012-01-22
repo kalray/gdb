@@ -1,7 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Windows systems
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,6 +43,11 @@ struct ser_windows_state
   DWORD lastCommMask;
   HANDLE except_event;
 };
+
+/* CancelIo is not available for Windows 95 OS, so we need to use
+   LoadLibrary/GetProcAddress to avoid a startup failure.  */
+#define CancelIo dyn_CancelIo
+static BOOL WINAPI (*CancelIo) (HANDLE);
 
 /* Open up a real live device for serial I/O.  */
 
@@ -167,7 +171,7 @@ ser_windows_raw (struct serial *scb)
   scb->current_timeout = 0;
 
   if (SetCommState (h, &state) == 0)
-    warning (_("SetCommState failed\n"));
+    warning (_("SetCommState failed"));
 }
 
 static int
@@ -216,8 +220,12 @@ ser_windows_close (struct serial *scb)
 {
   struct ser_windows_state *state;
 
-  /* Stop any pending selects.  */
-  CancelIo ((HANDLE) _get_osfhandle (scb->fd));
+  /* Stop any pending selects.  On Windows 95 OS, CancelIo function does
+     not exist.  In that case, it can be replaced by a call to CloseHandle,
+     but this is not necessary here as we do close the Windows handle
+     by calling close (scb->fd) below.  */
+  if (CancelIo)
+    CancelIo ((HANDLE) _get_osfhandle (scb->fd));
   state = scb->state;
   CloseHandle (state->ov.hEvent);
   CloseHandle (state->except_event);
@@ -1208,8 +1216,19 @@ _initialize_ser_windows (void)
   WSADATA wsa_data;
   struct serial_ops *ops;
 
-  /* First register the serial port driver.  */
+  HMODULE hm = NULL;
 
+  /* First find out if kernel32 exports CancelIo function.  */
+  hm = LoadLibrary ("kernel32.dll");
+  if (hm)
+    {
+      CancelIo = (void *) GetProcAddress (hm, "CancelIo");
+      FreeLibrary (hm);
+    }
+  else
+    CancelIo = NULL;
+
+  /* Now register the serial port driver.  */
   ops = XMALLOC (struct serial_ops);
   memset (ops, 0, sizeof (struct serial_ops));
   ops->name = "hardwire";
@@ -1224,6 +1243,7 @@ _initialize_ser_windows (void)
   /* These are only used for stdin; we do not need them for serial
      ports, so supply the standard dummies.  */
   ops->get_tty_state = ser_base_get_tty_state;
+  ops->copy_tty_state = ser_base_copy_tty_state;
   ops->set_tty_state = ser_base_set_tty_state;
   ops->print_tty_state = ser_base_print_tty_state;
   ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
@@ -1252,6 +1272,7 @@ _initialize_ser_windows (void)
 
   ops->close = ser_console_close;
   ops->get_tty_state = ser_console_get_tty_state;
+  ops->copy_tty_state = ser_base_copy_tty_state;
   ops->set_tty_state = ser_base_set_tty_state;
   ops->print_tty_state = ser_base_print_tty_state;
   ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
@@ -1277,6 +1298,7 @@ _initialize_ser_windows (void)
   ops->send_break = ser_base_send_break;
   ops->go_raw = ser_base_raw;
   ops->get_tty_state = ser_base_get_tty_state;
+  ops->copy_tty_state = ser_base_copy_tty_state;
   ops->set_tty_state = ser_base_set_tty_state;
   ops->print_tty_state = ser_base_print_tty_state;
   ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
@@ -1311,6 +1333,7 @@ _initialize_ser_windows (void)
   ops->send_break = ser_tcp_send_break;
   ops->go_raw = ser_base_raw;
   ops->get_tty_state = ser_base_get_tty_state;
+  ops->copy_tty_state = ser_base_copy_tty_state;
   ops->set_tty_state = ser_base_set_tty_state;
   ops->print_tty_state = ser_base_print_tty_state;
   ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;

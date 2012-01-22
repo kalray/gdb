@@ -1,7 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2004, 2006-2012 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -28,6 +27,7 @@
 #include "value.h"
 #include "source.h"
 #include "objfiles.h"
+#include "filenames.h"
 
 #include "tui/tui.h"
 #include "tui/tui-data.h"
@@ -114,9 +114,11 @@ tui_update_source_window_as_is (struct tui_win_info *win_info,
 	{
 	  struct symtab_and_line sal;
 	  
+	  init_sal (&sal);
 	  sal.line = line_or_addr.u.line_no +
 	    (win_info->generic.content_size - 2);
 	  sal.symtab = s;
+	  sal.pspace = s->objfile->pspace;
 	  set_current_source_symtab_and_line (&sal);
 	  /* If the focus was in the asm win, put it in the src win if
 	     we don't have a split layout.  */
@@ -452,29 +454,34 @@ tui_update_breakpoint_info (struct tui_win_info *win,
            bp != (struct breakpoint *) NULL;
            bp = bp->next)
         {
+	  struct bp_location *loc;
+
 	  gdb_assert (line->line_or_addr.loa == LOA_LINE
 		      || line->line_or_addr.loa == LOA_ADDRESS);
-          if ((win == TUI_SRC_WIN
-               && bp->source_file
-               && (strcmp (src->filename, bp->source_file) == 0)
-	       && line->line_or_addr.loa == LOA_LINE
-               && bp->line_number == line->line_or_addr.u.line_no)
-              || (win == TUI_DISASM_WIN
-		  && line->line_or_addr.loa == LOA_ADDRESS
-		  && bp->loc != NULL
-                  && bp->loc->address == line->line_or_addr.u.addr))
-            {
-              if (bp->enable_state == bp_disabled)
-                mode |= TUI_BP_DISABLED;
-              else
-                mode |= TUI_BP_ENABLED;
-              if (bp->hit_count)
-                mode |= TUI_BP_HIT;
-              if (bp->loc->cond)
-                mode |= TUI_BP_CONDITIONAL;
-              if (bp->type == bp_hardware_breakpoint)
-                mode |= TUI_BP_HARDWARE;
-            }
+
+	  for (loc = bp->loc; loc != NULL; loc = loc->next)
+	    {
+	      if ((win == TUI_SRC_WIN
+		   && loc->source_file
+		   && (filename_cmp (src->filename, loc->source_file) == 0)
+		   && line->line_or_addr.loa == LOA_LINE
+		   && loc->line_number == line->line_or_addr.u.line_no)
+		  || (win == TUI_DISASM_WIN
+		      && line->line_or_addr.loa == LOA_ADDRESS
+		      && loc->address == line->line_or_addr.u.addr))
+		{
+		  if (bp->enable_state == bp_disabled)
+		    mode |= TUI_BP_DISABLED;
+		  else
+		    mode |= TUI_BP_ENABLED;
+		  if (bp->hit_count)
+		    mode |= TUI_BP_HIT;
+		  if (bp->loc->cond)
+		    mode |= TUI_BP_CONDITIONAL;
+		  if (bp->type == bp_hardware_breakpoint)
+		    mode |= TUI_BP_HARDWARE;
+		}
+	    }
         }
       if (line->has_break != mode)
         {
@@ -642,7 +649,7 @@ tui_alloc_source_buffer (struct tui_win_info *win_info)
 }
 
 
-/* Answer whether the a particular line number or address is displayed
+/* Answer whether a particular line number or address is displayed
    in the current source window.  */
 int
 tui_line_is_displayed (int line, 
@@ -673,7 +680,7 @@ tui_line_is_displayed (int line,
 }
 
 
-/* Answer whether the a particular line number or address is displayed
+/* Answer whether a particular line number or address is displayed
    in the current source window.  */
 int
 tui_addr_is_displayed (CORE_ADDR addr, 

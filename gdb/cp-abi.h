@@ -3,8 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001, 2005-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -139,18 +138,18 @@ extern struct type *value_rtti_type (struct value *value,
                                      int *full, int *top,
 				     int *using_enc);
 
-/* Compute the offset of the baseclass which is
-   the INDEXth baseclass of class TYPE,
-   for value at VALADDR (in host) at ADDRESS (in target).
-   The result is the offset of the baseclass value relative
-   to (the address of)(ARG) + OFFSET.
+/* Compute the offset of the baseclass which is the INDEXth baseclass
+   of class TYPE, for value at VALADDR (in host) at ADDRESS (in
+   target), offset by EMBEDDED_OFFSET.  VALADDR points to the raw
+   contents of VAL.  The result is the offset of the baseclass value
+   relative to (the address of)(ARG) + OFFSET.  */
 
-   -1 is returned on error.  */
+extern int baseclass_offset (struct type *type,
+			     int index, const gdb_byte *valaddr,
+			     int embedded_offset,
+			     CORE_ADDR address,
+			     const struct value *val);
 
-extern int baseclass_offset (struct type *type, int index,
-			     const bfd_byte *valaddr,
-			     CORE_ADDR address);
-                  
 /* Describe the target of a pointer to method.  CONTENTS is the byte
    pattern representing the pointer to method.  TYPE is the pointer to
    method type.  STREAM is the stream to print it to.  */
@@ -204,8 +203,8 @@ struct cp_abi_ops
   struct type *(*rtti_type) (struct value *v, int *full,
 			     int *top, int *using_enc);
   int (*baseclass_offset) (struct type *type, int index,
-			   const bfd_byte *valaddr,
-			   CORE_ADDR address);
+			   const bfd_byte *valaddr, int embedded_offset,
+			   CORE_ADDR address, const struct value *val);
   void (*print_method_ptr) (const gdb_byte *contents,
 			    struct type *type,
 			    struct ui_file *stream);

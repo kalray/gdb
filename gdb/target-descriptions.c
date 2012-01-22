@@ -1,7 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2012 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -706,7 +705,7 @@ tdesc_gdb_type (struct gdbarch *gdbarch, struct tdesc_type *tdesc_type)
 	struct tdesc_type_flag *f;
 	int ix;
 
-	type = arch_flags_type (gdbarch, xstrdup (tdesc_type->name),
+	type = arch_flags_type (gdbarch, tdesc_type->name,
 				tdesc_type->u.f.size);
 	for (ix = 0;
 	     VEC_iterate (tdesc_type_flag, tdesc_type->u.f.flags, ix, f);
