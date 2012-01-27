@@ -217,7 +217,7 @@ char  *t_structs_a (struct struct1 tstruct)
 #ifdef TEST_COMPLEX
 float _Complex t_structs_fc (struct struct1 tstruct) { return tstruct.fc;}
 double _Complex t_structs_dc (struct struct1 tstruct) { return tstruct.dc;}
-long double _Complex t_structs_fc (struct struct1 tstruct) { return tstruct.ldc;}
+long double _Complex t_structs_ldc (struct struct1 tstruct) { return tstruct.ldc;}
 #endif
 #else
 char   t_structs_c (tstruct) struct struct1 tstruct; { return (tstruct.c); }
