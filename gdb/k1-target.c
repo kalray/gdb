@@ -21,6 +21,7 @@
 #include "observer.h"
 #include "osdata.h"
 #include "main.h"
+#include "symfile.h"
 #include "target.h"
 #include "top.h"
 
@@ -35,16 +36,77 @@ static char *da_options = NULL;
 static const char *simulation_vehicles[] = { "k1-cluster", "k1-runner", NULL };
 static const char *simulation_vehicle;
 
-pid_t server_pid;
+static pid_t server_pid;
+static int after_first_resume;
+
+static struct inferior_data *k1_attached_inf_data;
+
+struct inferior_data {
+    const char *cluster;
+    int booted;
+};
+
+static struct inferior_data*
+mppa_init_inferior_data (struct inferior *inf)
+{
+    struct inferior_data *data = xcalloc (1, sizeof (struct inferior_data));
+    char *endptr;
+    struct osdata *osdata;
+    struct osdata_item *last;
+    struct osdata_item *item;
+    int ix_items;
+
+    set_inferior_data (inf, k1_attached_inf_data, data);
+
+    /* Cluster name */
+    data->cluster = "Cluster ?";
+
+    osdata = get_osdata (NULL);
+
+    for (ix_items = 0;
+         VEC_iterate (osdata_item_s, osdata->items,
+                      ix_items, item);
+         ix_items++) {
+        unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+        char *cluster = get_osdata_column (item, "cluster");
+        
+        if (pid != inf->pid) continue;
+
+        data->cluster = cluster;
+    }
+
+    return data;
+}
+
+static struct inferior_data*
+mppa_inferior_data (struct inferior *inf)
+{
+    struct inferior_data *data = inferior_data (inf, k1_attached_inf_data);
+
+    if (!data)
+        data = mppa_init_inferior_data (inf);
+
+    return data;
+}
+
+static void
+k1_push_arch_stratum (struct target_ops *ops, int from_tty)
+{   
+    if (find_target_beneath (&current_target) != &k1_target_ops) {
+        push_target (&k1_target_ops);
+    }
+}
 
 static void
 k1_target_new_thread (struct thread_info *t)
 {
     if (!ptid_equal(inferior_ptid, null_ptid))
-	inferior_thread ()->step_multi = 1;
+        inferior_thread ()->step_multi = 1;
 
-    /* When we attach, don't wait... the K1 is already stopped. */
-    current_target.to_attach_no_wait = 1;
+    /* /\* When we attach, don't wait... the K1 is already stopped. *\/ */
+    /* current_target.to_attach_no_wait = 1; */
+
+    k1_push_arch_stratum (NULL, 0);
 }
 
 static void k1_target_mourn_inferior (struct target_ops *target)
@@ -84,15 +146,44 @@ static void k1_target_close (int quitting)
 
 }
 
+static char *
+mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
+{
+    struct inferior_data *data;
+    struct thread_info *ti;
+    struct target_ops *remote_target = find_target_beneath(ops);
+
+    data = mppa_inferior_data (find_inferior_pid (ptid_get_pid (ptid)));
+    ti = find_thread_ptid (ptid);
+
+    if (ti) {
+        const char *extra = remote_target->to_extra_thread_info (ti);
+
+        if (!extra)
+            return xstrdup (data->cluster);
+        
+        return xstrprintf ("%s of %s", extra, data->cluster);
+    } else
+        return find_target_beneath (ops)->to_pid_to_str (find_target_beneath (ops), ptid);
+}
+
+static char *
+mppa_threads_extra_info (struct thread_info *tp)
+{
+    return NULL;
+}
+
 void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
     char tar_remote_cmd[] = "target extended-remote :        ";
     int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
     char *cmd_port;
+    int print_thread_events_save = print_thread_events;
 
     parse_pid_to_attach (args);
 
+    print_thread_events = 0;
     cmd_port = strchr(tar_remote_cmd, ':');
     sprintf (cmd_port + 1, "%s", args);
 
@@ -109,11 +200,13 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
     execute_command (tar_remote_cmd, 0);
+    k1_push_arch_stratum (NULL, 0);
     /* Remove hacks*/
     observer_detach_new_thread (new_thread_observer);
     batch_silent = saved_batch_silent;
     inferior_thread ()->step_multi = 0;
     current_inferior ()->control.stop_soon = NO_STOP_QUIETLY;
+    print_thread_events = print_thread_events_save;
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
@@ -139,7 +232,7 @@ static void k1_target_create_inferior (struct target_ops *ops,
 Use the \"file\" or \"exec-file\" command."));
 
     if (lookup_minimal_symbol_text ("pthread_create", NULL)
-	|| lookup_minimal_symbol_text ("rtems_task_start", NULL)) {
+        || lookup_minimal_symbol_text ("rtems_task_start", NULL)) {
 	execute_command (set_target_async_cmd, 0);
 	execute_command (set_non_stop_cmd, 0);
 	execute_command (set_pagination_off_cmd, 0);
@@ -237,6 +330,96 @@ Use the \"file\" or \"exec-file\" command."));
 }
 
 static int
+mppa_mark_clusters_booted (struct inferior *inf, void *data)
+{
+    struct thread_info *thread = any_live_thread_of_process (inf->pid);
+    
+    if (thread && is_stopped (thread->ptid))
+        mppa_inferior_data (inf)->booted = 1;
+    
+    return 0;
+}
+
+static void
+mppa_target_resume (struct target_ops *ops,
+                    ptid_t ptid, int step, enum target_signal siggnal)
+{
+    struct target_ops *remote_target = find_target_beneath(ops);
+
+    if (!after_first_resume) {
+        after_first_resume = 1;
+        iterate_over_inferiors (mppa_mark_clusters_booted, NULL);
+    }
+    
+    return remote_target->to_resume (remote_target, ptid, step, siggnal);
+}
+
+static ptid_t
+k1_target_wait (struct target_ops *target,
+                ptid_t ptid, struct target_waitstatus *status, int options)
+{
+    struct target_ops *remote_target = find_target_beneath(target);
+    ptid_t res;
+    struct inferior *inferior;
+    int ix_items;
+
+    res = remote_target->to_wait (remote_target, ptid, status, options);
+
+    if (!after_first_resume)
+        return res;
+
+    inferior = find_inferior_pid (ptid_get_pid (res));
+
+    if (inferior && !mppa_inferior_data (inferior)->booted) {
+        char *endptr;
+        struct osdata *osdata;
+        struct osdata_item *last;
+        struct osdata_item *item;
+
+        osdata = get_osdata (NULL);
+        
+        for (ix_items = 0;
+             VEC_iterate (osdata_item_s, osdata->items,
+                          ix_items, item);
+             ix_items++) {
+            unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+            char *file = get_osdata_column (item, "command");
+            char *cluster = get_osdata_column (item, "cluster");
+         
+            if (pid != ptid_get_pid (res))
+                continue;
+
+            mppa_inferior_data (inferior)->booted = 1;
+
+            if (file && file[0] != 0) {
+                status->kind = TARGET_WAITKIND_EXECD;
+                status->value.execd_pathname = file;
+            } else {
+                printf_filtered ("[ %s booted ]\n", cluster);
+                status->kind = TARGET_WAITKIND_SPURIOUS;
+            }
+            
+            break;                
+        }
+
+    }
+
+    return res;
+}
+
+static void
+mppa_attach (struct target_ops *ops, char *args, int from_tty)
+{
+    struct target_ops *remote_target, *k1_ops = find_target_beneath(&current_target);
+
+    if (k1_ops != &k1_target_ops)
+        error ("Don't know how to attach.  Try \"help target\".");
+
+    remote_target = find_target_beneath(&k1_target_ops);
+    return remote_target->to_attach (remote_target, args, from_tty);
+}
+
+static int
 k1_target_can_run (void)
 {
     return 1;
@@ -273,26 +456,36 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
-
 static void
 attach_mppa_command (char *args, int from_tty)
 {
     char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
-
-    dont_repeat ();
-    
-    execute_command (set_target_async_cmd, 0);
-    execute_command (set_non_stop_cmd, 0);
-    execute_command (set_pagination_off_cmd, 0);
-    k1_target_attach (&current_target, args, from_tty);
-
-    struct osdata *osdata = get_osdata (NULL);
+    struct osdata *osdata;
     struct osdata_item *last;
     struct osdata_item *item;
     int ix_items;
+    struct inferior *cur_inf;
+    ptid_t cur_ptid;
+
+    dont_repeat ();
+
+    print_thread_events = 0;
+    after_first_resume = 0;
+
+    k1_push_arch_stratum (NULL, 0);
+    execute_command (set_target_async_cmd, 0);
+    execute_command (set_non_stop_cmd, 0);
+    execute_command (set_pagination_off_cmd, 0);
+
+    k1_target_attach (&current_target, args, from_tty);
+
+    osdata = get_osdata (NULL);
     
+    cur_inf = current_inferior();
+    cur_ptid = inferior_ptid;
+
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
                       ix_items, item);
@@ -302,8 +495,9 @@ attach_mppa_command (char *args, int from_tty)
         struct inferior *inf;
         char attach_cmd[25];
         
-        if (pid == current_inferior ()->pid)
+        if (pid == cur_inf->pid) {
             continue;
+        }
         
         inf = add_inferior_with_spaces ();
         set_current_inferior (inf);
@@ -312,7 +506,26 @@ attach_mppa_command (char *args, int from_tty)
         sprintf (attach_cmd, "attach %li&", pid);
         execute_command (attach_cmd, 0);
     }
-    
+
+    for (ix_items = 0;
+         VEC_iterate (osdata_item_s, osdata->items,
+                      ix_items, item);
+         ix_items++) {
+        char *endptr;
+        unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+        char *file = get_osdata_column (item, "command");
+        char *running = get_osdata_column (item, "running");
+
+        if (strcmp (running, "yes"))
+            continue;
+
+        if (file && file[0]) {
+            switch_to_thread (any_thread_of_process (pid)->ptid);
+            exec_file_attach (file, 0);
+            symbol_file_add_main (file, 0);
+        }
+    }
+    switch_to_thread (cur_ptid);
 }
 
 void
@@ -325,6 +538,7 @@ run_mppa_command (char *args, int from_tty)
 
     dont_repeat ();
 
+    k1_push_arch_stratum (NULL, 0);
     execute_command (set_target_async_cmd, 0);
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
@@ -332,12 +546,9 @@ run_mppa_command (char *args, int from_tty)
 }
 
 static void
-k1_inferior_created (struct target_ops *ops, int from_tty)
-{   
-    if (find_target_beneath (&current_target) != &k1_target_ops) {
-        printf ("PUSHING\n");
-        push_target (&k1_target_ops);
-    }
+mppa_inferior_data_cleanup (struct inferior *inf, void *data)
+{
+    xfree (data);
 }
 
 void
@@ -354,16 +565,20 @@ _initialize__k1_target (void)
     k1_target_ops.to_open = k1_target_open;
     k1_target_ops.to_close = k1_target_close;
 
-    k1_target_ops.to_attach = noprocess;
-
     k1_target_ops.to_create_inferior = k1_target_create_inferior;
+    k1_target_ops.to_attach = mppa_attach;
     k1_target_ops.to_mourn_inferior = k1_target_mourn_inferior;
+    k1_target_ops.to_wait = k1_target_wait;
+    k1_target_ops.to_resume = mppa_target_resume;
 
     k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
     k1_target_ops.to_can_async_p = k1_target_can_async;
     k1_target_ops.to_can_run = k1_target_can_run;
-
+    k1_target_ops.to_attach_no_wait = 1;
     k1_target_ops.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
+
+    k1_target_ops.to_pid_to_str = mppa_pid_to_str;
+    k1_target_ops.to_extra_thread_info = mppa_threads_extra_info;
 
     k1_target_ops.to_magic = OPS_MAGIC;
     
@@ -399,5 +614,7 @@ Usage is `attach-mppa PORT'."));
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));
 
-    observer_attach_inferior_created (k1_inferior_created);
+
+    observer_attach_inferior_created (k1_push_arch_stratum);
+    k1_attached_inf_data = register_inferior_data_with_cleanup (mppa_inferior_data_cleanup);
 }

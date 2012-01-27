@@ -697,6 +697,7 @@ k1_frame_prev_register (struct frame_info *this_frame,
 
 static const struct frame_unwind k1_frame_unwind = {
     NORMAL_FRAME,
+    default_frame_unwind_stop_reason,
     k1_frame_this_id,
     k1_frame_prev_register,
     NULL,
