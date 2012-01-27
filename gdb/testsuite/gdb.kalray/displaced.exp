@@ -69,6 +69,6 @@ gdb_test "si" ".*in ev .*" "stepi to trap handler"
 gdb_test "si" ".*in ev .*" "stepi in trap handler"
 gdb_test "si" ".*Breakpoint 12.*in test_displaced .*" "rfe 2"
 gdb_test "si" "" "stepi over copy"
-gdb_test "si" ".*Program exited with code 017.*" "stepi to scall"
+gdb_test "si" ".*exited with code 017.*" "stepi to scall"
 
 
