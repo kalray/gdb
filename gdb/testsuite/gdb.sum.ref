@@ -1,4 +1,4 @@
-Test Run By friss on Wed Jun 22 19:10:17 2011
+Test Run By friss on Fri Jan 27 17:50:33 2012
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -9,11 +9,16 @@ Schedule of variations:
 
 Running target k1-iss
 Running ../../../gdb/testsuite/gdb.mi/mi-file-transfer.exp ...
+Running ../../../gdb/testsuite/gdb.mi/mi-stepn.exp ...
+PASS: gdb.mi/mi-stepn.exp: breakpoint at main
+PASS: gdb.mi/mi-stepn.exp: mi runto main
+PASS: gdb.mi/mi-stepn.exp: breakpoint at do_nothing
+PASS: gdb.mi/mi-stepn.exp: breakpoint-hit reported
 Running ../../../gdb/testsuite/gdb.mi/mi-async.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-var-child.exp ...
 PASS: gdb.mi/mi2-var-child.exp: breakpoint at do_children_tests
 PASS: gdb.mi/mi2-var-child.exp: mi runto do_children_tests
-PASS: gdb.mi/mi2-var-child.exp: run to 220 (set breakpoint)
+PASS: gdb.mi/mi2-var-child.exp: run to 237 (set breakpoint)
 PASS: gdb.mi/mi2-var-child.exp: create local variable struct_declarations
 PASS: gdb.mi/mi2-var-child.exp: get children of struct_declarations
 PASS: gdb.mi/mi2-var-child.exp: get number of children of struct_declarations
@@ -198,6 +203,110 @@ PASS: gdb.mi/mi2-var-child.exp: step $line_dct_snp0 + 6
 XFAIL: gdb.mi/mi2-var-child.exp: update all vars psnp->next->long_ptr (and 1.long_ptr) changed
 PASS: gdb.mi/mi2-var-child.exp: step $line_dct_snp0 + 7
 PASS: gdb.mi/mi2-var-child.exp: update all vars psnp->next->next->long_ptr (and 2.long_ptr) changed
+PASS: gdb.mi/mi2-var-child.exp: break in do_anonymous_type_tests
+PASS: gdb.mi/mi2-var-child.exp: continue to do_anonymous_type_tests breakpoint
+PASS: gdb.mi/mi2-var-child.exp: VT: create root varobj for ptr
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.a
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.a
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.b
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.b
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.c
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.c
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.c
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.c.*c
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.c.*c
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.d
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.d
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.e
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.e
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.f
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.f
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.g
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.g
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h.*h
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h.*h
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h.*h
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h.*h.**h
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h.*h.**h
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.integer
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.integer
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.unsigned_integer
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.unsigned_integer
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.character
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.character
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.signed_character
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.signed_character
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.char_ptr
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.char_ptr
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.char_ptr
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.char_ptr.*char_ptr
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.char_ptr.*char_ptr
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.0
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.0
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.1
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.1
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.2
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.2
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.3
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.3
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.4
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.4
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.5
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.5
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.6
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.6
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.7
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.7
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.8
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.8
+PASS: gdb.mi/mi2-var-child.exp: path expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.9
+PASS: gdb.mi/mi2-var-child.exp: expression for ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.simple.*simple.**simple.array_of_10.9
+PASS: gdb.mi/mi2-var-child.exp: VT: create root varobj for v
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of v2
+PASS: gdb.mi/mi2-var-child.exp: path expression for v2
+PASS: gdb.mi/mi2-var-child.exp: expression for v2
+PASS: gdb.mi/mi2-var-child.exp: path expression for v2.x
+PASS: gdb.mi/mi2-var-child.exp: expression for v2.x
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of v2.1_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for v2.1_anonymous
+PASS: gdb.mi/mi2-var-child.exp: expression for v2.1_anonymous
+PASS: gdb.mi/mi2-var-child.exp: VT: list children of v2.2_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for v2.2_anonymous
+PASS: gdb.mi/mi2-var-child.exp: expression for v2.2_anonymous
+PASS: gdb.mi/mi2-var-child.exp: path expression for v2.1_anonymous.a
+PASS: gdb.mi/mi2-var-child.exp: expression for v2.1_anonymous.a
+PASS: gdb.mi/mi2-var-child.exp: path expression for v2.2_anonymous.b
+PASS: gdb.mi/mi2-var-child.exp: expression for v2.2_anonymous.b
 Running ../../../gdb/testsuite/gdb.mi/mi-reverse.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-basics.exp ...
 PASS: gdb.mi/mi2-basics.exp: acceptance of MI operations
@@ -211,6 +320,7 @@ PASS: gdb.mi/mi2-basics.exp: environment-directory empty-string operation
 PASS: gdb.mi/mi2-basics.exp: environment-directory operation
 PASS: gdb.mi/mi2-basics.exp: environment-cd arg operation
 PASS: gdb.mi/mi2-basics.exp: environment-pwd operation
+PASS: gdb.mi/mi2-basics.exp: -environment-path
 PASS: gdb.mi/mi2-basics.exp: environment-path no-args operation
 PASS: gdb.mi/mi2-basics.exp: environment-path dir1 dir2 operation
 PASS: gdb.mi/mi2-basics.exp: environment-path -r dir operation
@@ -245,6 +355,62 @@ PASS: gdb.mi/mi2-stack.exp: stack info-depth 3
 PASS: gdb.mi/mi2-stack.exp: stack info-depth 99
 PASS: gdb.mi/mi2-stack.exp: stack info-depth wrong usage
 Running ../../../gdb/testsuite/gdb.mi/gdb669.exp ...
+PASS: gdb.mi/gdb669.exp: successfully compiled posix threads test case
+PASS: gdb.mi/gdb669.exp: breakpoint at main
+FAIL: gdb.mi/gdb669.exp: mi runto main (timeout)
+PASS: gdb.mi/gdb669.exp: -thread-list-ids (at main)
+PASS: gdb.mi/gdb669.exp: info threads (at main)
+PASS: gdb.mi/gdb669.exp: finding MI result string (at main)
+PASS: gdb.mi/gdb669.exp: finding number of threads in MI output (at main)
+PASS: gdb.mi/gdb669.exp: got number of threads from MI (at main)
+PASS: gdb.mi/gdb669.exp: console and MI have same number of threads (at main)
+PASS: gdb.mi/gdb669.exp: -thread_list_ids (at main)
+PASS: gdb.mi/gdb669.exp: finding threads in MI output (at main)
+PASS: gdb.mi/gdb669.exp: MI and console have same threads (at main)
+FAIL: gdb.mi/gdb669.exp: next, try 0 (MI error)
+FAIL: gdb.mi/gdb669.exp: next, try 0 (timeout)
+PASS: gdb.mi/gdb669.exp: -thread-list-ids (try 0)
+PASS: gdb.mi/gdb669.exp: info threads (try 0)
+PASS: gdb.mi/gdb669.exp: finding MI result string (try 0)
+PASS: gdb.mi/gdb669.exp: finding number of threads in MI output (try 0)
+PASS: gdb.mi/gdb669.exp: got number of threads from MI (try 0)
+PASS: gdb.mi/gdb669.exp: console and MI have same number of threads (try 0)
+PASS: gdb.mi/gdb669.exp: -thread_list_ids (try 0)
+PASS: gdb.mi/gdb669.exp: finding threads in MI output (try 0)
+PASS: gdb.mi/gdb669.exp: MI and console have same threads (try 0)
+FAIL: gdb.mi/gdb669.exp: next, try 1 (MI error)
+FAIL: gdb.mi/gdb669.exp: next, try 1 (timeout)
+PASS: gdb.mi/gdb669.exp: -thread-list-ids (try 1)
+PASS: gdb.mi/gdb669.exp: info threads (try 1)
+PASS: gdb.mi/gdb669.exp: finding MI result string (try 1)
+PASS: gdb.mi/gdb669.exp: finding number of threads in MI output (try 1)
+PASS: gdb.mi/gdb669.exp: got number of threads from MI (try 1)
+PASS: gdb.mi/gdb669.exp: console and MI have same number of threads (try 1)
+PASS: gdb.mi/gdb669.exp: -thread_list_ids (try 1)
+PASS: gdb.mi/gdb669.exp: finding threads in MI output (try 1)
+PASS: gdb.mi/gdb669.exp: MI and console have same threads (try 1)
+FAIL: gdb.mi/gdb669.exp: next, try 2 (MI error)
+FAIL: gdb.mi/gdb669.exp: next, try 2 (timeout)
+PASS: gdb.mi/gdb669.exp: -thread-list-ids (try 2)
+PASS: gdb.mi/gdb669.exp: info threads (try 2)
+PASS: gdb.mi/gdb669.exp: finding MI result string (try 2)
+PASS: gdb.mi/gdb669.exp: finding number of threads in MI output (try 2)
+PASS: gdb.mi/gdb669.exp: got number of threads from MI (try 2)
+PASS: gdb.mi/gdb669.exp: console and MI have same number of threads (try 2)
+PASS: gdb.mi/gdb669.exp: -thread_list_ids (try 2)
+PASS: gdb.mi/gdb669.exp: finding threads in MI output (try 2)
+PASS: gdb.mi/gdb669.exp: MI and console have same threads (try 2)
+FAIL: gdb.mi/gdb669.exp: next, try 3 (MI error)
+FAIL: gdb.mi/gdb669.exp: next, try 3 (timeout)
+PASS: gdb.mi/gdb669.exp: -thread-list-ids (try 3)
+PASS: gdb.mi/gdb669.exp: info threads (try 3)
+PASS: gdb.mi/gdb669.exp: finding MI result string (try 3)
+PASS: gdb.mi/gdb669.exp: finding number of threads in MI output (try 3)
+PASS: gdb.mi/gdb669.exp: got number of threads from MI (try 3)
+PASS: gdb.mi/gdb669.exp: console and MI have same number of threads (try 3)
+PASS: gdb.mi/gdb669.exp: -thread_list_ids (try 3)
+PASS: gdb.mi/gdb669.exp: finding threads in MI output (try 3)
+PASS: gdb.mi/gdb669.exp: MI and console have same threads (try 3)
 Running ../../../gdb/testsuite/gdb.mi/mi-watch.exp ...
 PASS: gdb.mi/mi-watch.exp: hw watchpoints toggle (1)
 PASS: gdb.mi/mi-watch.exp: sw: breakpoint at callee4
@@ -340,7 +506,7 @@ PASS: gdb.mi/mi-var-display.exp: is anons editable
 PASS: gdb.mi/mi-var-display.exp: get number of children of anons
 PASS: gdb.mi/mi-var-display.exp: get children of anons
 PASS: gdb.mi/mi-var-display.exp: create local variable e
-XFAIL: gdb.mi/mi-var-display.exp: eval variable e
+PASS: gdb.mi/mi-var-display.exp: eval variable e
 PASS: gdb.mi/mi-var-display.exp: info type variable e
 PASS: gdb.mi/mi-var-display.exp: is e editable
 PASS: gdb.mi/mi-var-display.exp: get number of children of e
@@ -386,6 +552,7 @@ PASS: gdb.mi/mi-break.exp: breakpoint at main
 PASS: gdb.mi/mi-break.exp: mi runto main
 PASS: gdb.mi/mi-break.exp: breakpoint commands: insert breakpoint at basics.c:callee2, again
 PASS: gdb.mi/mi-break.exp: breakpoint commands: set commands
+PASS: gdb.mi/mi-break.exp: intermediate stop and continue
 PASS: gdb.mi/mi-break.exp: test hitting breakpoint with commands
 Running ../../../gdb/testsuite/gdb.mi/mi-basics.exp ...
 PASS: gdb.mi/mi-basics.exp: acceptance of MI operations
@@ -399,6 +566,7 @@ PASS: gdb.mi/mi-basics.exp: environment-directory empty-string operation
 PASS: gdb.mi/mi-basics.exp: environment-directory operation
 PASS: gdb.mi/mi-basics.exp: environment-cd arg operation
 PASS: gdb.mi/mi-basics.exp: environment-pwd operation
+PASS: gdb.mi/mi-basics.exp: environment-path
 PASS: gdb.mi/mi-basics.exp: environment-path no-args operation
 PASS: gdb.mi/mi-basics.exp: environment-path dir1 dir2 operation
 PASS: gdb.mi/mi-basics.exp: environment-path -r dir operation
@@ -432,7 +600,7 @@ PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "frame 2"
 PASS: gdb.mi/mi-cli.exp: -stack-select-frame 0
 PASS: gdb.mi/mi-cli.exp: check *stopped from CLI command
 PASS: gdb.mi/mi-cli.exp: -break-insert -t basics.c:$line_main_hello
-PASS: gdb.mi/mi-cli.exp: -exec-continue to line 70
+PASS: gdb.mi/mi-cli.exp: -exec-continue to line 65
 PASS: gdb.mi/mi-cli.exp: 34 next: run
 PASS: gdb.mi/mi-cli.exp: 34 next: stop
 PASS: gdb.mi/mi-cli.exp: -interpreter-exec console "list" at basics.c:$line_main_return
@@ -444,7 +612,9 @@ PASS: gdb.mi/mi-hack-cli.exp: 47show architecture
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
 PASS: gdb.mi/mi-nonstop.exp: successfully compiled posix threads test case
 PASS: gdb.mi/mi-nonstop.exp: breakpoint at main
-ERROR: Unable to start target
+PASS: gdb.mi/mi-nonstop.exp: mi runto main
+PASS: gdb.mi/mi-nonstop.exp: breakpoint at marker
+FAIL: gdb.mi/mi-nonstop.exp: resume 1 (MI error)
 Running ../../../gdb/testsuite/gdb.mi/mi2-cli.exp ...
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec with no arguments
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec with one argument
@@ -466,8 +636,8 @@ PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "down"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "frame 2"
 PASS: gdb.mi/mi2-cli.exp: -stack-select-frame 0
 PASS: gdb.mi/mi2-cli.exp: -break-insert -t basics.c:$line_main_hello
-PASS: gdb.mi/mi2-cli.exp: -exec-continue to line 70
-PASS: gdb.mi/mi2-cli.exp: -exec-next to line 72
+PASS: gdb.mi/mi2-cli.exp: -exec-continue to line 65
+PASS: gdb.mi/mi2-cli.exp: -exec-next to line 67
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "list" at basics.c:$line_main_return
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "help set args"
 PASS: gdb.mi/mi2-cli.exp: -interpreter-exec console "set $pc=0x0"
@@ -556,7 +726,7 @@ PASS: gdb.mi/mi2-var-display.exp: is anons editable
 PASS: gdb.mi/mi2-var-display.exp: get number of children of anons
 PASS: gdb.mi/mi2-var-display.exp: get children of anons
 PASS: gdb.mi/mi2-var-display.exp: create local variable e
-XFAIL: gdb.mi/mi2-var-display.exp: eval variable e
+PASS: gdb.mi/mi2-var-display.exp: eval variable e
 PASS: gdb.mi/mi2-var-display.exp: info type variable e
 PASS: gdb.mi/mi2-var-display.exp: is e editable
 PASS: gdb.mi/mi2-var-display.exp: get number of children of e
@@ -590,7 +760,7 @@ PASS: gdb.mi/mi-until.exp: until line number
 PASS: gdb.mi/mi-until.exp: until line number:file
 PASS: gdb.mi/mi-until.exp: until after current function
 Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
-gdb compile failed, /tmp/ccFmGBao.o: In function `main':
+gdb compile failed, /tmp/ccWkaRtW.o: In function `main':
 /work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.mi/ns-stale-regcache.c:28: undefined reference to `usleep'
 collect2: ld returned 1 exit status
 Running ../../../gdb/testsuite/gdb.mi/mi2-regs.exp ...
@@ -627,7 +797,7 @@ PASS: gdb.mi/mi-eval.exp: eval A + 3
 Running ../../../gdb/testsuite/gdb.mi/mi-var-child.exp ...
 PASS: gdb.mi/mi-var-child.exp: breakpoint at do_children_tests
 PASS: gdb.mi/mi-var-child.exp: mi runto do_children_tests
-PASS: gdb.mi/mi-var-child.exp: run to 216 (set breakpoint)
+PASS: gdb.mi/mi-var-child.exp: run to 215 (set breakpoint)
 PASS: gdb.mi/mi-var-child.exp: create local variable struct_declarations
 PASS: gdb.mi/mi-var-child.exp: get children of struct_declarations
 PASS: gdb.mi/mi-var-child.exp: get number of children of struct_declarations
@@ -818,7 +988,7 @@ PASS: gdb.mi/mi-var-child.exp: step $line_dct_snp0 + 6
 XFAIL: gdb.mi/mi-var-child.exp: update all vars psnp->next->long_ptr (and 1.long_ptr) changed
 PASS: gdb.mi/mi-var-child.exp: step $line_dct_snp0 + 7
 PASS: gdb.mi/mi-var-child.exp: update all vars psnp->next->next->long_ptr (and 2.long_ptr) changed
-PASS: gdb.mi/mi-var-child.exp: run to mi-var-child.c:324 (set breakpoint)
+PASS: gdb.mi/mi-var-child.exp: run to mi-var-child.c:323 (set breakpoint)
 PASS: gdb.mi/mi-var-child.exp: create varobj for s
 PASS: gdb.mi/mi-var-child.exp: list children of S
 PASS: gdb.mi/mi-var-child.exp: delete S.a
@@ -958,6 +1128,8 @@ XFAIL: gdb.mi/mi2-break.exp: insert breakpoint with regexp callee
 XFAIL: gdb.mi/mi2-break.exp: insert breakpoint with regexp .*llee
 XFAIL: gdb.mi/mi2-break.exp: list of breakpoints
 PASS: gdb.mi/mi2-break.exp: delete temp breakpoints
+Running ../../../gdb/testsuite/gdb.mi/mi-solib.exp ...
+UNTESTED: gdb.mi/mi-solib.exp: mi-solib.exp
 Running ../../../gdb/testsuite/gdb.mi/mi2-file.exp ...
 PASS: gdb.mi/mi2-file.exp: request path info of current source file (basics.c)
 Running ../../../gdb/testsuite/gdb.mi/gdb701.exp ...
@@ -978,7 +1150,7 @@ PASS: gdb.mi/mi2-var-cmd.exp: create non-existent variable
 PASS: gdb.mi/mi2-var-cmd.exp: create out of scope variable
 PASS: gdb.mi/mi2-var-cmd.exp: breakpoint at do_locals_tests
 PASS: gdb.mi/mi2-var-cmd.exp: mi runto do_locals_tests
-PASS: gdb.mi/mi2-var-cmd.exp: run to 131 (set breakpoint)
+PASS: gdb.mi/mi2-var-cmd.exp: run to 148 (set breakpoint)
 PASS: gdb.mi/mi2-var-cmd.exp: create local variable linteger
 PASS: gdb.mi/mi2-var-cmd.exp: create local variable lpinteger
 PASS: gdb.mi/mi2-var-cmd.exp: create local variable lcharacter
@@ -1141,6 +1313,13 @@ PASS: gdb.mi/mi-disassemble.exp: data-disassemble file, line, number assembly mi
 PASS: gdb.mi/mi-disassemble.exp: data-disassemble file, line, number (zero lines) assembly mixed
 PASS: gdb.mi/mi-disassemble.exp: data-disassemble file, line, number (more than main lines) assembly mixed
 Running ../../../gdb/testsuite/gdb.mi/mi-pthreads.exp ...
+PASS: gdb.mi/mi-pthreads.exp: successfully compiled posix threads test case
+PASS: gdb.mi/mi-pthreads.exp: breakpoint at done_making_threads
+FAIL: gdb.mi/mi-pthreads.exp: mi runto done_making_threads (timeout)
+FAIL: gdb.mi/mi-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
+PASS: gdb.mi/mi-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
+PASS: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select
+PASS: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
 Running ../../../gdb/testsuite/gdb.mi/gdb680.exp ...
 PASS: gdb.mi/gdb680.exp: -data-list-register-names -1, try 0
 PASS: gdb.mi/gdb680.exp: -data-list-register-names -1, try 1
@@ -1150,7 +1329,13 @@ PASS: gdb.mi/gdb680.exp: -data-list-register-names -1, try 4
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp ...
 PASS: gdb.mi/mi-nonstop-exit.exp: successfully compiled posix threads test case
 PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
-ERROR: Unable to start target
+PASS: gdb.mi/mi-nonstop-exit.exp: mi runto main
+FAIL: gdb.mi/mi-nonstop-exit.exp: continue (MI error)
+FAIL: gdb.mi/mi-nonstop-exit.exp: finished exec continue (unknown output after running)
+PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
+PASS: gdb.mi/mi-nonstop-exit.exp: mi runto main
+FAIL: gdb.mi/mi-nonstop-exit.exp: finished exec continue (2) (unknown output after running)
+Running ../../../gdb/testsuite/gdb.mi/mi2-amd64-entry-value.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-file.exp ...
 PASS: gdb.mi/mi-file.exp: request path info of current source file (basics.c)
 PASS: gdb.mi/mi-file.exp: Getting a list of source files.
@@ -1169,6 +1354,13 @@ PASS: gdb.mi/mi2-simplerun.exp: step to callee4
 PASS: gdb.mi/mi2-simplerun.exp: exec-finish
 PASS: gdb.mi/mi2-simplerun.exp: continue to end
 Running ../../../gdb/testsuite/gdb.mi/mi2-pthreads.exp ...
+PASS: gdb.mi/mi2-pthreads.exp: successfully compiled posix threads test case
+PASS: gdb.mi/mi2-pthreads.exp: breakpoint at done_making_threads
+FAIL: gdb.mi/mi2-pthreads.exp: mi runto done_making_threads (timeout)
+FAIL: gdb.mi/mi2-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
+PASS: gdb.mi/mi2-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
+PASS: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select
+PASS: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
 Running ../../../gdb/testsuite/gdb.mi/mi-syn-frame.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-syn-frame.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-return.exp ...
@@ -1178,6 +1370,7 @@ PASS: gdb.mi/mi2-return.exp: delete all breakpoints
 PASS: gdb.mi/mi2-return.exp: return from callee4 now
 Running ../../../gdb/testsuite/gdb.mi/mi-nsintrall.exp ...
 UNSUPPORTED: gdb.mi/mi-nsintrall.exp: Couldn't compile ../../../gdb/testsuite/gdb.mi/nsintrall.c: unrecognized error
+Running ../../../gdb/testsuite/gdb.mi/mi-inheritance-syntax-error.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi2-stepi.exp ...
 PASS: gdb.mi/mi2-stepi.exp: breakpoint at main
 PASS: gdb.mi/mi2-stepi.exp: mi runto main
@@ -1218,13 +1411,16 @@ PASS: gdb.mi/mi-stack.exp: stack info-depth
 PASS: gdb.mi/mi-stack.exp: stack info-depth 3
 PASS: gdb.mi/mi-stack.exp: stack info-depth 99
 PASS: gdb.mi/mi-stack.exp: stack info-depth wrong usage
+Running ../../../gdb/testsuite/gdb.mi/mi-watch-nonstop.exp ...
+PASS: gdb.mi/mi-watch-nonstop.exp: breakpoint at main
+FAIL: gdb.mi/mi-watch-nonstop.exp: mi runto main (timeout)
 Running ../../../gdb/testsuite/gdb.mi/mi-var-cmd.exp ...
 PASS: gdb.mi/mi-var-cmd.exp: create global variable
 PASS: gdb.mi/mi-var-cmd.exp: create non-existent variable
 PASS: gdb.mi/mi-var-cmd.exp: create out of scope variable
 PASS: gdb.mi/mi-var-cmd.exp: breakpoint at do_locals_tests
 PASS: gdb.mi/mi-var-cmd.exp: mi runto do_locals_tests
-PASS: gdb.mi/mi-var-cmd.exp: run to 131 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to 148 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: create local variable linteger
 PASS: gdb.mi/mi-var-cmd.exp: create local variable lpinteger
 PASS: gdb.mi/mi-var-cmd.exp: create local variable lcharacter
@@ -1338,7 +1534,7 @@ PASS: gdb.mi/mi-var-cmd.exp: update selected_a in do_special_tests
 PASS: gdb.mi/mi-var-cmd.exp: floating varobj invalidation
 PASS: gdb.mi/mi-var-cmd.exp: delete selected_a
 PASS: gdb.mi/mi-var-cmd.exp: delete array_ptr
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:334 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:351 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: create varobj for v1
 PASS: gdb.mi/mi-var-cmd.exp: create varobj for v2
 PASS: gdb.mi/mi-var-cmd.exp: list children of v1
@@ -1353,7 +1549,7 @@ PASS: gdb.mi/mi-var-cmd.exp: update varobjs: nothing changed
 PASS: gdb.mi/mi-var-cmd.exp: check V2: 5
 PASS: gdb.mi/mi-var-cmd.exp: update V2 explicitly
 PASS: gdb.mi/mi-var-cmd.exp: check V2: 6
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:368 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:385 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: -var-set-frozen V1 1
 PASS: gdb.mi/mi-var-cmd.exp: update varobjs: nothing changed
 PASS: gdb.mi/mi-var-cmd.exp: check V1.i: 1
@@ -1369,7 +1565,7 @@ PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.j: 8
 PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.k: 9
 PASS: gdb.mi/mi-var-cmd.exp: update V1.i
 PASS: gdb.mi/mi-var-cmd.exp: check V1.i: 7
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:393 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:410 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: -var-set-frozen V1 0
 PASS: gdb.mi/mi-var-cmd.exp: check V1.i: 7
 PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.j: 8
@@ -1378,20 +1574,20 @@ PASS: gdb.mi/mi-var-cmd.exp: update V1
 PASS: gdb.mi/mi-var-cmd.exp: check V1.i: 10
 PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.j: 11
 PASS: gdb.mi/mi-var-cmd.exp: check V1.nested.k: 12
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:493 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:510 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: create varobj for Data
 PASS: gdb.mi/mi-var-cmd.exp: list children of Data
 PASS: gdb.mi/mi-var-cmd.exp: access bitfield
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:436 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:453 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: create floating varobj
 PASS: gdb.mi/mi-var-cmd.exp: update F (1)
 PASS: gdb.mi/mi-var-cmd.exp: check F (1)
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:447 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:464 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: update F (2)
 PASS: gdb.mi/mi-var-cmd.exp: check F (2)
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:455 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:472 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: update F (--all-values)
-PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:461 (set breakpoint)
+PASS: gdb.mi/mi-var-cmd.exp: run to var-cmd.c:478 (set breakpoint)
 PASS: gdb.mi/mi-var-cmd.exp: update F (3)
 PASS: gdb.mi/mi-var-cmd.exp: check F (3)
 PASS: gdb.mi/mi-var-cmd.exp: inside breakpoint inside callee
@@ -1475,6 +1671,13 @@ PASS: gdb.base/bitops.exp: print value of 0.0 || 1.0
 PASS: gdb.base/bitops.exp: print value of 0.0 || 0
 PASS: gdb.base/bitops.exp: print value of 0 || 1 && 0 | 0 ^ 0 == 8
 PASS: gdb.base/bitops.exp: print value of 0 == 8 > 128 >> 1 + 2 * 2
+Running ../../../gdb/testsuite/gdb.base/watchpoint-delete.exp ...
+PASS: gdb.base/watchpoint-delete.exp: set can-use-hw-watchpoints 0
+PASS: gdb.base/watchpoint-delete.exp: continue to breakpoint: break-here
+PASS: gdb.base/watchpoint-delete.exp: watch x
+PASS: gdb.base/watchpoint-delete.exp: delete $bpnum
+Running ../../../gdb/testsuite/gdb.base/gdbindex-stabs.exp ...
+PASS: gdb.base/gdbindex-stabs.exp: list stabs_function
 Running ../../../gdb/testsuite/gdb.base/solib-weak.exp ...
 Running ../../../gdb/testsuite/gdb.base/scope.exp ...
 PASS: gdb.base/scope.exp: print 'scope0.c'::filelocal_ro
@@ -1559,6 +1762,11 @@ PASS: gdb.base/scope.exp: continue to marker1
 PASS: gdb.base/scope.exp: up from marker1 in scope.exp
 PASS: gdb.base/scope.exp: 100 auto variables correctly initialized
 PASS: gdb.base/scope.exp: args in correct order
+Running ../../../gdb/testsuite/gdb.base/kill-after-signal.exp ...
+PASS: gdb.base/kill-after-signal.exp: handle SIGUSR1 stop print pass
+FAIL: gdb.base/kill-after-signal.exp: continue (the program exited)
+FAIL: gdb.base/kill-after-signal.exp: stepi (the program is no longer running)
+FAIL: gdb.base/kill-after-signal.exp: kill (the program is no longer running)
 Running ../../../gdb/testsuite/gdb.base/dup-sect.exp ...
 PASS: gdb.base/dup-sect.exp: rename section
 PASS: gdb.base/dup-sect.exp: split
@@ -2090,6 +2298,7 @@ PASS: gdb.base/whatis-exp.exp: whatis value of  x--
 Running ../../../gdb/testsuite/gdb.base/nostdlib.exp ...
 PASS: gdb.base/nostdlib.exp: stop at run
 PASS: gdb.base/nostdlib.exp: continue to marker
+Running ../../../gdb/testsuite/gdb.base/skip-solib.exp ...
 Running ../../../gdb/testsuite/gdb.base/cursal.exp ...
 PASS: gdb.base/cursal.exp: set listsize 1
 PASS: gdb.base/cursal.exp: list before run
@@ -2264,6 +2473,11 @@ PASS: gdb.base/step-test.exp: set breakpoint at call to large_struct_by_value
 PASS: gdb.base/step-test.exp: run to pass large struct
 PASS: gdb.base/step-test.exp: large struct by value
 PASS: gdb.base/step-test.exp: continue until exit at step-test.exp
+Running ../../../gdb/testsuite/gdb.base/linespecs.exp ...
+PASS: gdb.base/linespecs.exp: list c:/foo/bar/baz.c:1
+PASS: gdb.base/linespecs.exp: list c:/foo/bar/baz.c
+PASS: gdb.base/linespecs.exp: list fooc:/foo/bar/baz.c:1
+PASS: gdb.base/linespecs.exp: list fooc:/foo/bar/baz.c
 Running ../../../gdb/testsuite/gdb.base/hashline2.exp ...
 PASS: gdb.base/hashline2.exp: set breakpoint
 Running ../../../gdb/testsuite/gdb.base/siginfo.exp ...
@@ -2571,10 +2785,10 @@ Running ../../../gdb/testsuite/gdb.base/condbreak.exp ...
 PASS: gdb.base/condbreak.exp: breakpoint function
 PASS: gdb.base/condbreak.exp: break marker1 if 1==1
 PASS: gdb.base/condbreak.exp: delete 2
-PASS: gdb.base/condbreak.exp: break break.c:97 if 1==1
+PASS: gdb.base/condbreak.exp: break break.c:93 if 1==1
 PASS: gdb.base/condbreak.exp: delete 3
 PASS: gdb.base/condbreak.exp: break marker1 if (1==1)
-PASS: gdb.base/condbreak.exp: break break.c:97 if (1==1)
+PASS: gdb.base/condbreak.exp: break break.c:93 if (1==1)
 PASS: gdb.base/condbreak.exp: break marker2 if (a==43)
 PASS: gdb.base/condbreak.exp: break marker3 if (multi_line_if_conditional(1,1,1)==0)
 PASS: gdb.base/condbreak.exp: break marker4
@@ -3496,6 +3710,9 @@ PASS: gdb.base/charset.exp: Assign String32 with prefix U
 PASS: gdb.base/charset.exp: Display String String32 with x/ws
 PASS: gdb.base/charset.exp: Assign String32 with prefix L
 PASS: gdb.base/charset.exp: Display String String32 with x/ws
+PASS: gdb.base/charset.exp: assign string to short array
+PASS: gdb.base/charset.exp: assign string to int array
+PASS: gdb.base/charset.exp: assign string to long array
 Running ../../../gdb/testsuite/gdb.base/solib-nodir.exp ...
 Running ../../../gdb/testsuite/gdb.base/included.exp ...
 PASS: gdb.base/included.exp: set listsize 1
@@ -3504,7 +3721,7 @@ PASS: gdb.base/included.exp: list integer
 PASS: gdb.base/included.exp: ptype integer
 PASS: gdb.base/included.exp: info variables integer
 Running ../../../gdb/testsuite/gdb.base/randomize.exp ...
-UNTESTED: gdb.base/randomize.exp: Disabling randomization is not supported on this GDB platform
+UNTESTED: gdb.base/randomize.exp: Disabling randomization is not supported on this Linux GDB
 Running ../../../gdb/testsuite/gdb.base/finish.exp ...
 PASS: gdb.base/finish.exp: set break on void_func
 PASS: gdb.base/finish.exp: continue to void_func
@@ -3542,7 +3759,7 @@ PASS: gdb.base/value-double-free.exp: print empty()
 PASS: gdb.base/value-double-free.exp: help help
 Running ../../../gdb/testsuite/gdb.base/environ.exp ...
 Running ../../../gdb/testsuite/gdb.base/exe-lock.exp ...
-PASS: gdb.base/exe-lock.exp: continue until program exits
+PASS: gdb.base/exe-lock.exp: continue until exit
 Running ../../../gdb/testsuite/gdb.base/fixsection.exp ...
 Running ../../../gdb/testsuite/gdb.base/signals.exp ...
 Running ../../../gdb/testsuite/gdb.base/watch-cond-infcall.exp ...
@@ -3551,17 +3768,18 @@ PASS: gdb.base/watch-cond-infcall.exp: hw: continue
 PASS: gdb.base/watch-cond-infcall.exp: sw: watch var if return_1 ()
 PASS: gdb.base/watch-cond-infcall.exp: sw: continue
 Running ../../../gdb/testsuite/gdb.base/pending.exp ...
+Running ../../../gdb/testsuite/gdb.base/jit-so.exp ...
+UNTESTED: gdb.base/jit-so.exp: jit-so.exp
 Running ../../../gdb/testsuite/gdb.base/sigaltstack.exp ...
 Running ../../../gdb/testsuite/gdb.base/source.exp ...
 PASS: gdb.base/source.exp: script contains error
 PASS: gdb.base/source.exp: source -v
 PASS: gdb.base/source.exp: source after -v
-PASS: gdb.base/source.exp: dir ../../../gdb/testsuite/gdb.base
+PASS: gdb.base/source.exp: set search directories
 PASS: gdb.base/source.exp: source -s
 PASS: gdb.base/source.exp: source -s -v
 PASS: gdb.base/source.exp: source -v -s
 Running ../../../gdb/testsuite/gdb.base/watch_thread_num.exp ...
-UNSUPPORTED: gdb.base/watch_thread_num.exp: Couldn't compile ../../../gdb/testsuite/gdb.base/watch_thread_num.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.base/psymtab.exp ...
 Running ../../../gdb/testsuite/gdb.base/bfp-test.exp ...
 PASS: gdb.base/bfp-test.exp: continue to breakpoint: return
@@ -3609,20 +3827,18 @@ PASS: gdb.base/longjmp.exp: breakpoint at pattern 3 start
 PASS: gdb.base/longjmp.exp: continue to breakpoint at pattern 3 start
 PASS: gdb.base/longjmp.exp: next over patt3
 Running ../../../gdb/testsuite/gdb.base/gdb1090.exp ...
-PASS: gdb.base/gdb1090.exp: up from marker
+PASS: gdb.base/gdb1090.exp: continue to breakpoint: break-here
 PASS: gdb.base/gdb1090.exp: print s24
 Running ../../../gdb/testsuite/gdb.base/interp.exp ...
 PASS: gdb.base/interp.exp: interpreter-exec mi "-var-update *"
 PASS: gdb.base/interp.exp: interpreter-exec console "show version"
 PASS: gdb.base/interp.exp: interpreter-exec mi "-var-update *"
+PASS: gdb.base/interp.exp: interpreter-exec mi "-stack-info-frame"
+PASS: gdb.base/interp.exp: interpreter-exec mi1 "-break-insert main"
+PASS: gdb.base/interp.exp: interpreter-exec mi2 "-break-insert main"
+PASS: gdb.base/interp.exp: interpreter-exec mi3 "-break-insert main"
+PASS: gdb.base/interp.exp: can list sources
 Running ../../../gdb/testsuite/gdb.base/pr11022.exp ...
-PASS: gdb.base/pr11022.exp: set breakpoint
-PASS: gdb.base/pr11022.exp: set watchpoint
-PASS: gdb.base/pr11022.exp: breakpoint hit
-PASS: gdb.base/pr11022.exp: watchpoint hit
-PASS: gdb.base/pr11022.exp: breakpoint hit 2
-PASS: gdb.base/pr11022.exp: set var x = 1
-PASS: gdb.base/pr11022.exp: watchpoint hit 2
 Running ../../../gdb/testsuite/gdb.base/reread.exp ...
 PASS: gdb.base/reread.exp: breakpoint foo in first file
 PASS: gdb.base/reread.exp: run to foo()
@@ -4036,6 +4252,55 @@ PASS: gdb.base/dfp-exprs.exp: p (_Decimal32) 4
 Running ../../../gdb/testsuite/gdb.base/sizeof.exp ...
 Running ../../../gdb/testsuite/gdb.base/shlib-call.exp ...
 Running ../../../gdb/testsuite/gdb.base/sigchld.exp ...
+Running ../../../gdb/testsuite/gdb.base/skip.exp ...
+PASS: gdb.base/skip.exp: skip file
+PASS: gdb.base/skip.exp: skip function
+PASS: gdb.base/skip.exp: skip
+PASS: gdb.base/skip.exp: info skip empty
+PASS: gdb.base/skip.exp: skip file
+PASS: gdb.base/skip.exp: skip
+PASS: gdb.base/skip.exp: skip file skip1.c
+PASS: gdb.base/skip.exp: skip function baz
+PASS: gdb.base/skip.exp: skip enable 999
+PASS: gdb.base/skip.exp: skip disable 999
+PASS: gdb.base/skip.exp: skip delete 999
+PASS: gdb.base/skip.exp: skip enable a
+PASS: gdb.base/skip.exp: skip disable a
+PASS: gdb.base/skip.exp: skip delete a
+PASS: gdb.base/skip.exp: info skip 999
+PASS: gdb.base/skip.exp: info skip
+PASS: gdb.base/skip.exp: step
+PASS: gdb.base/skip.exp: step after all ignored
+PASS: gdb.base/skip.exp: skip delete 1
+PASS: gdb.base/skip.exp: info skip
+PASS: gdb.base/skip.exp: step after deleting 1 (1)
+PASS: gdb.base/skip.exp: step
+PASS: gdb.base/skip.exp: step after deleting 1 (2)
+PASS: gdb.base/skip.exp: skip disable 3
+PASS: gdb.base/skip.exp: info skip shows entry as disabled
+FAIL: gdb.base/skip.exp: step after disabling 3 (1)
+PASS: gdb.base/skip.exp: step
+FAIL: gdb.base/skip.exp: step after disabling 3 (2)
+PASS: gdb.base/skip.exp: step
+PASS: gdb.base/skip.exp: step after disabling 3 (3)
+PASS: gdb.base/skip.exp: skip enable 3
+PASS: gdb.base/skip.exp: info skip shows entry as enabled
+PASS: gdb.base/skip.exp: step after deleting 1 (1)
+PASS: gdb.base/skip.exp: step
+PASS: gdb.base/skip.exp: step after deleting 1 (2)
+PASS: gdb.base/skip.exp: skip disable
+PASS: gdb.base/skip.exp: info skip after disabling all
+PASS: gdb.base/skip.exp: skip enable
+PASS: gdb.base/skip.exp: info skip after enabling all
+PASS: gdb.base/skip.exp: skip disable 4 2-3
+PASS: gdb.base/skip.exp: info skip after disabling 4 2-3
+PASS: gdb.base/skip.exp: skip enable 2-3
+PASS: gdb.base/skip.exp: info skip after enabling 2-3
+PASS: gdb.base/skip.exp: info skip 2-3
+PASS: gdb.base/skip.exp: skip delete 2 3
+PASS: gdb.base/skip.exp: info skip after deleting 2 3
+PASS: gdb.base/skip.exp: skip delete
+PASS: gdb.base/skip.exp: info skip after deleting all
 Running ../../../gdb/testsuite/gdb.base/auxv.exp ...
 Running ../../../gdb/testsuite/gdb.base/hashline1.exp ...
 PASS: gdb.base/hashline1.exp: set breakpoint
@@ -4265,12 +4530,16 @@ PASS: gdb.base/define.exp: reset gdb_prompt
 Running ../../../gdb/testsuite/gdb.base/ifelse.exp ...
 PASS: gdb.base/ifelse.exp: if 1 with empty body
 PASS: gdb.base/ifelse.exp: if 0 with empty body
+PASS: gdb.base/ifelse.exp: if true else false #1
 PASS: gdb.base/ifelse.exp: if 1 .. else with empty body
+PASS: gdb.base/ifelse.exp: if true else false #2
 PASS: gdb.base/ifelse.exp: if 0 .. else with empty body
+PASS: gdb.base/ifelse.exp: if true else false #3
 PASS: gdb.base/ifelse.exp: create define with empty else
 PASS: gdb.base/ifelse.exp: call original define
 PASS: gdb.base/ifelse.exp: replace define with if .. else with empty body
 PASS: gdb.base/ifelse.exp: call replacement define
+Running ../../../gdb/testsuite/gdb.base/disp-step-syscall.exp ...
 Running ../../../gdb/testsuite/gdb.base/solib-display.exp ...
 Running ../../../gdb/testsuite/gdb.base/so-indr-cl.exp ...
 Running ../../../gdb/testsuite/gdb.base/advance.exp ...
@@ -4282,6 +4551,37 @@ PASS: gdb.base/advance.exp: set breakpoint at call to func3
 PASS: gdb.base/advance.exp: continue to call to func3 in main
 PASS: gdb.base/advance.exp: advance function called as param
 PASS: gdb.base/advance.exp: advance with no argument
+Running ../../../gdb/testsuite/gdb.base/info-macros.exp ...
+PASS: gdb.base/info-macros.exp: info macro -- -all
+PASS: gdb.base/info-macros.exp: info macro  -- -all
+PASS: gdb.base/info-macros.exp: info macro -all --
+PASS: gdb.base/info-macros.exp: info macro -all  --
+PASS: gdb.base/info-macros.exp: info macro  -all  --
+PASS: gdb.base/info-macros.exp: info macro --
+PASS: gdb.base/info-macros.exp: 'info macro -- '
+PASS: gdb.base/info-macros.exp: 'info macro  -- '
+PASS: gdb.base/info-macros.exp: info macro -invalid-option 1
+PASS: gdb.base/info-macros.exp: info macro  -invalid-option
+PASS: gdb.base/info-macros.exp: info macro -invalid-option FOO
+PASS: gdb.base/info-macros.exp: info macro  -invalid-option FOO
+PASS: gdb.base/info-macros.exp: info macro -- FOO
+PASS: gdb.base/info-macros.exp: info macro  -- FOO
+PASS: gdb.base/info-macros.exp: info macro --  FOO
+PASS: gdb.base/info-macros.exp: info macro FOO
+PASS: gdb.base/info-macros.exp: info macro  FOO
+PASS: gdb.base/info-macros.exp: info macro -a FOO 1
+PASS: gdb.base/info-macros.exp: info macro -a -- FOO 1
+PASS: gdb.base/info-macros.exp: info macro -all -- FOO 1
+PASS: gdb.base/info-macros.exp: info macro -a  --  FOO
+PASS: gdb.base/info-macros.exp: info macro  -a  --  FOO
+PASS: gdb.base/info-macros.exp: info macros 2
+PASS: gdb.base/info-macros.exp: info macros 3
+PASS: gdb.base/info-macros.exp: info macros 4
+PASS: gdb.base/info-macros.exp: info macros *$pc
+PASS: gdb.base/info-macros.exp: info macros 5
+PASS: gdb.base/info-macros.exp: info macros 6
+PASS: gdb.base/info-macros.exp: info macros 7
+KFAIL: gdb.base/info-macros.exp: info macros info-macros.c:42 (PRMS: gdb/NNNN)
 Running ../../../gdb/testsuite/gdb.base/remote.exp ...
 PASS: gdb.base/remote.exp: write-packet default
 PASS: gdb.base/remote.exp: set write-packet - NULL
@@ -4446,6 +4746,9 @@ PASS: gdb.base/step-bt.exp: backtrace after first instruction step
 PASS: gdb.base/step-bt.exp: step second instruction
 PASS: gdb.base/step-bt.exp: backtrace after second instruction step
 Running ../../../gdb/testsuite/gdb.base/info-proc.exp ...
+PASS: gdb.base/info-proc.exp: help info proc
+FAIL: gdb.base/info-proc.exp: info proc without a process
+UNSUPPORTED: gdb.base/info-proc.exp: gdb does not support info proc on this target
 Running ../../../gdb/testsuite/gdb.base/lineinc.exp ...
 PASS: gdb.base/lineinc.exp: tolerate macro info with multiple #inclusions per line
 Running ../../../gdb/testsuite/gdb.base/fileio.exp ...
@@ -4455,6 +4758,10 @@ PASS: gdb.base/gdb1056.exp: Test unsigned division by zero
 Running ../../../gdb/testsuite/gdb.base/shreloc.exp ...
 Running ../../../gdb/testsuite/gdb.base/remotetimeout.exp ...
 PASS: gdb.base/remotetimeout.exp: correct remotetimeout printed
+Running ../../../gdb/testsuite/gdb.base/shell.exp ...
+PASS: gdb.base/shell.exp: shell echo foo
+PASS: gdb.base/shell.exp: ! echo foo
+PASS: gdb.base/shell.exp: !echo foo
 Running ../../../gdb/testsuite/gdb.base/watchpoint-solib.exp ...
 Running ../../../gdb/testsuite/gdb.base/funcargs.exp ...
 PASS: gdb.base/funcargs.exp: set print frame-arguments all
@@ -4493,6 +4800,16 @@ PASS: gdb.base/funcargs.exp: continue to call2f
 PASS: gdb.base/funcargs.exp: continue to call2g
 PASS: gdb.base/funcargs.exp: continue to call2h
 PASS: gdb.base/funcargs.exp: continue to call2i
+PASS: gdb.base/funcargs.exp: run to call2a
+PASS: gdb.base/funcargs.exp: continue to callcb
+PASS: gdb.base/funcargs.exp: continue to callcb
+PASS: gdb.base/funcargs.exp: continue to callcd
+PASS: gdb.base/funcargs.exp: continue to callce
+PASS: gdb.base/funcargs.exp: continue to callcf
+PASS: gdb.base/funcargs.exp: run to callc1a
+PASS: gdb.base/funcargs.exp: continue to callc1b
+PASS: gdb.base/funcargs.exp: run to callc2a
+PASS: gdb.base/funcargs.exp: continue to callc2b
 PASS: gdb.base/funcargs.exp: run to call3a
 PASS: gdb.base/funcargs.exp: print *cp
 PASS: gdb.base/funcargs.exp: print *sp
@@ -4602,18 +4919,19 @@ PASS: gdb.base/completion.exp: complete 'info asdfgh '
 PASS: gdb.base/completion.exp: complete 'info'
 PASS: gdb.base/completion.exp: complete 'info '
 PASS: gdb.base/completion.exp: complete (2) 'info '
-PASS: gdb.base/completion.exp: complete help info wat
+PASS: gdb.base/completion.exp: complete 'help info wat'
 PASS: gdb.base/completion.exp: complete 'p "break1'
 XFAIL: gdb.base/completion.exp: complete 'p "break1.'
 PASS: gdb.base/completion.exp: complete 'p 'arg'
 PASS: gdb.base/completion.exp: complete (2) 'p 'arg'
 PASS: gdb.base/completion.exp: complete 'p no_var_named_this-arg'
 PASS: gdb.base/completion.exp: complete (2) 'p no_var_named_this-arg'
+PASS: gdb.base/completion.exp: complete (2) 'p no_var_named_this-' (eat prompt)
 PASS: gdb.base/completion.exp: complete (2) 'p no_var_named_this-'
 PASS: gdb.base/completion.exp: complete 'p values[0].a'
 PASS: gdb.base/completion.exp: complete 'p values[0] . a'
 PASS: gdb.base/completion.exp: complete 'p &values[0] -> a'
-PASS: gdb.base/completion.exp: copmletion of field in anonymous union
+PASS: gdb.base/completion.exp: completion of field in anonymous union
 PASS: gdb.base/completion.exp: cd to ${srcdir}
 PASS: gdb.base/completion.exp: directory completion
 PASS: gdb.base/completion.exp: directory completion 2
@@ -4625,6 +4943,13 @@ PASS: gdb.base/completion.exp: complete 'set follow-fork-mode'
 PASS: gdb.base/completion.exp: field completion with invalid field
 PASS: gdb.base/completion.exp: test non-deprecated completion
 PASS: gdb.base/completion.exp: test deprecated completion
+Running ../../../gdb/testsuite/gdb.base/async-shell.exp ...
+PASS: gdb.base/async-shell.exp: set target-async on
+PASS: gdb.base/async-shell.exp: set non-stop on
+FAIL: gdb.base/async-shell.exp: run & (timeout)
+PASS: gdb.base/async-shell.exp: shell echo foo
+FAIL: gdb.base/async-shell.exp: interrupt (GDB internal error)
+FAIL: gdb.base/async-shell.exp: process stopped (timeout)
 Running ../../../gdb/testsuite/gdb.base/structs.exp ...
 PASS: gdb.base/structs.exp: set print sevenbit-strings
 PASS: gdb.base/structs.exp: set print address off
@@ -5314,10 +5639,36 @@ Running ../../../gdb/testsuite/gdb.base/break-always.exp ...
 PASS: gdb.base/break-always.exp: set breakpoint always-inserted on
 PASS: gdb.base/break-always.exp: confirm breakpoint always-inserted
 PASS: gdb.base/break-always.exp: set breakpoint on bar
+PASS: gdb.base/break-always.exp: set 2nd breakpoint on bar
+PASS: gdb.base/break-always.exp: set 3rd breakpoint on bar
+PASS: gdb.base/break-always.exp: set 4th breakpoint on bar
+PASS: gdb.base/break-always.exp: initial check breakpoint state
+PASS: gdb.base/break-always.exp: initial disable all breakpoints
+PASS: gdb.base/break-always.exp: initial enable all breakpoints
+PASS: gdb.base/break-always.exp: re-disable all breakpoints
+PASS: gdb.base/break-always.exp: enable 3.A
+PASS: gdb.base/break-always.exp: disable 3.B
+PASS: gdb.base/break-always.exp: enable 3.C
+PASS: gdb.base/break-always.exp: enable 2.D
+PASS: gdb.base/break-always.exp: disable 2.E
+PASS: gdb.base/break-always.exp: disable 3.F
+PASS: gdb.base/break-always.exp: enable 3.G
+PASS: gdb.base/break-always.exp: enable 2.H
+PASS: gdb.base/break-always.exp: disable 2.I
+PASS: gdb.base/break-always.exp: before re-enable check breakpoint state
+PASS: gdb.base/break-always.exp: re-enable all breakpoints
+PASS: gdb.base/break-always.exp: set breakpoint on bar 2
+PASS: gdb.base/break-always.exp: save shadow
+PASS: gdb.base/break-always.exp: write 0 to breakpoint's address
+PASS: gdb.base/break-always.exp: read back 0 from the breakpoint's address
+PASS: gdb.base/break-always.exp: write 1 to breakpoint's address
+PASS: gdb.base/break-always.exp: read back 1 from the breakpoint's address
+PASS: gdb.base/break-always.exp: p /x *(char *) 0xce8 = $shadow
 PASS: gdb.base/break-always.exp: continue to breakpoint: bar
 Running ../../../gdb/testsuite/gdb.base/sigstep.exp ...
 Running ../../../gdb/testsuite/gdb.base/tui-layout.exp ...
 PASS: gdb.base/tui-layout.exp: layout asm
+Running ../../../gdb/testsuite/gdb.base/signest.exp ...
 Running ../../../gdb/testsuite/gdb.base/chng-syms.exp ...
 PASS: gdb.base/chng-syms.exp: setting conditional breakpoint on function
 PASS: gdb.base/chng-syms.exp: continue until exit at breakpoint first time through
@@ -5480,6 +5831,7 @@ PASS: gdb.base/help.exp: help info sources
 PASS: gdb.base/help.exp: help info symbol
 PASS: gdb.base/help.exp: help info target
 PASS: gdb.base/help.exp: help info terminal
+PASS: gdb.base/help.exp: help info threads
 PASS: gdb.base/help.exp: help info types
 PASS: gdb.base/help.exp: help info variables
 PASS: gdb.base/help.exp: help info warranty
@@ -5626,6 +5978,10 @@ PASS: gdb.base/help.exp: help target exec
 PASS: gdb.base/help.exp: help target remote
 PASS: gdb.base/help.exp: help target
 PASS: gdb.base/help.exp: help tbreak
+PASS: gdb.base/help.exp: help thread
+PASS: gdb.base/help.exp: help thread apply
+PASS: gdb.base/help.exp: help thread find
+PASS: gdb.base/help.exp: help thread name
 PASS: gdb.base/help.exp: help tty
 PASS: gdb.base/help.exp: help until "u" abbreviation
 PASS: gdb.base/help.exp: help until
@@ -5779,6 +6135,7 @@ PASS: gdb.base/step-resume-infcall.exp: next
 PASS: gdb.base/step-resume-infcall.exp: p cond_hit
 Running ../../../gdb/testsuite/gdb.base/maint.exp ...
 PASS: gdb.base/maint.exp: set height 0
+PASS: gdb.base/maint.exp: maint print registers
 PASS: gdb.base/maint.exp: maint check-symtabs
 PASS: gdb.base/maint.exp: maint space
 PASS: gdb.base/maint.exp: maint space 1
@@ -5851,6 +6208,7 @@ PASS: gdb.base/gcore.exp: set breakpoint at terminal_func
 PASS: gdb.base/gcore.exp: continue to terminal_func
 UNSUPPORTED: gdb.base/gcore.exp: save a corefile
 Running ../../../gdb/testsuite/gdb.base/unload.exp ...
+Running ../../../gdb/testsuite/gdb.base/attach-pie-noexec.exp ...
 Running ../../../gdb/testsuite/gdb.base/return-nodebug.exp ...
 PASS: gdb.base/return-nodebug.exp: signed-char: return from function with no debug info without a cast
 PASS: gdb.base/return-nodebug.exp: signed-char: return from function with no debug info with a cast
@@ -5872,6 +6230,37 @@ PASS: gdb.base/return-nodebug.exp: long-long: return from function with no debug
 PASS: gdb.base/return-nodebug.exp: long-long: return from function with no debug info with a cast
 PASS: gdb.base/return-nodebug.exp: long-long: advance to marker
 PASS: gdb.base/return-nodebug.exp: long-long: full width of the returned result
+Running ../../../gdb/testsuite/gdb.base/memattr.exp ...
+PASS: gdb.base/memattr.exp: create mem region 1
+PASS: gdb.base/memattr.exp: create mem region 2
+PASS: gdb.base/memattr.exp: create mem region 3
+PASS: gdb.base/memattr.exp: create mem region 4
+PASS: gdb.base/memattr.exp: create mem region 5
+PASS: gdb.base/memattr.exp: info mem (1)
+PASS: gdb.base/memattr.exp: mem1 cannot be read
+PASS: gdb.base/memattr.exp: mem1 can be written
+PASS: gdb.base/memattr.exp: mem2 cannot be written
+PASS: gdb.base/memattr.exp: mem2 can be read
+PASS: gdb.base/memattr.exp: disable mem 1
+PASS: gdb.base/memattr.exp: mem 1 was disabled
+PASS: gdb.base/memattr.exp: enable mem 1
+PASS: gdb.base/memattr.exp: mem 1 was enabled
+PASS: gdb.base/memattr.exp: disable mem 2 4
+PASS: gdb.base/memattr.exp: mem 2 and 4 were disabled
+PASS: gdb.base/memattr.exp: enable mem 2-4
+PASS: gdb.base/memattr.exp: mem 2-4 were enabled
+PASS: gdb.base/memattr.exp: disable mem
+PASS: gdb.base/memattr.exp: mem 1 to 5 were disabled
+PASS: gdb.base/memattr.exp: enable mem
+PASS: gdb.base/memattr.exp: mem 1 to 5 were enabled
+PASS: gdb.base/memattr.exp: disable non-existant regions
+PASS: gdb.base/memattr.exp: delete mem 1
+PASS: gdb.base/memattr.exp: mem 1 was deleted
+PASS: gdb.base/memattr.exp: delete mem 2 4
+PASS: gdb.base/memattr.exp: mem 2 and 4 were deleted
+PASS: gdb.base/memattr.exp: delete mem 2-4
+PASS: gdb.base/memattr.exp: mem 2-4 were deleted
+PASS: gdb.base/memattr.exp: delete non-existant region
 Running ../../../gdb/testsuite/gdb.base/watchpoint.exp ...
 PASS: gdb.base/watchpoint.exp: set breakpoint at marker1
 PASS: gdb.base/watchpoint.exp: set breakpoint at marker2
@@ -5955,10 +6344,25 @@ PASS: gdb.base/watchpoint.exp: watch count + 6
 PASS: gdb.base/watchpoint.exp: delete watchpoint `count + 6'
 PASS: gdb.base/watchpoint.exp: watch 7 + count
 PASS: gdb.base/watchpoint.exp: delete watchpoint `7 + count'
+PASS: gdb.base/watchpoint.exp: watch $pc
+PASS: gdb.base/watchpoint.exp: disable watchpoint `$pc'
+PASS: gdb.base/watchpoint.exp: reenable watchpoint `$pc'
+PASS: gdb.base/watchpoint.exp: watchpoint `$pc' is enabled
+PASS: gdb.base/watchpoint.exp: delete watchpoint `$pc'
 PASS: gdb.base/watchpoint.exp: continue to breakpoint: func5 breakpoint here
 PASS: gdb.base/watchpoint.exp: watch -location .x
 PASS: gdb.base/watchpoint.exp: continue with watch -location
 PASS: gdb.base/watchpoint.exp: delete watch -location
+PASS: gdb.base/watchpoint.exp: continue to breakpoint: func6 breakpoint here
+PASS: gdb.base/watchpoint.exp: watch foo2
+PASS: gdb.base/watchpoint.exp: continue with watch foo2
+PASS: gdb.base/watchpoint.exp: delete watch foo2
+PASS: gdb.base/watchpoint.exp: continue to breakpoint: func7 breakpoint here
+PASS: gdb.base/watchpoint.exp: watch foo4
+PASS: gdb.base/watchpoint.exp: continue with watch foo4
+PASS: gdb.base/watchpoint.exp: delete watch foo4
+Running ../../../gdb/testsuite/gdb.base/eu-strip-infcall.exp ...
+PASS: gdb.base/eu-strip-infcall.exp: infcall
 Running ../../../gdb/testsuite/gdb.base/relational.exp ...
 PASS: gdb.base/relational.exp: set variable x=14
 PASS: gdb.base/relational.exp: set variable y=2
@@ -6255,8 +6659,44 @@ PASS: gdb.base/gnu_vector.exp: print i4a + i2
 PASS: gdb.base/gnu_vector.exp: print i2 + i4a
 PASS: gdb.base/gnu_vector.exp: print f4a + f2
 PASS: gdb.base/gnu_vector.exp: print f2 + f4a
+Running ../../../gdb/testsuite/gdb.base/alias.exp ...
+PASS: gdb.base/alias.exp: alias -a set2=set
+PASS: gdb.base/alias.exp: set2 print elements 42
+PASS: gdb.base/alias.exp: verify set2
+PASS: gdb.base/alias.exp: abbrev set2 not present in help command list
+PASS: gdb.base/alias.exp: alias -a set3= set
+PASS: gdb.base/alias.exp: set3 print elements 43
+PASS: gdb.base/alias.exp: verify set3
+PASS: gdb.base/alias.exp: abbrev set3 not present in help command list
+PASS: gdb.base/alias.exp: alias -a set4 =set
+PASS: gdb.base/alias.exp: set4 print elements 44
+PASS: gdb.base/alias.exp: verify set4
+PASS: gdb.base/alias.exp: abbrev set4 not present in help command list
+PASS: gdb.base/alias.exp: alias -a set5 = set
+PASS: gdb.base/alias.exp: set5 print elements 45
+PASS: gdb.base/alias.exp: verify set5
+PASS: gdb.base/alias.exp: abbrev set5 not present in help command list
+PASS: gdb.base/alias.exp: alias -a -- set6 = set
+PASS: gdb.base/alias.exp: set6 print elements 46
+PASS: gdb.base/alias.exp: verify set6
+PASS: gdb.base/alias.exp: abbrev set6 not present in help command list
+PASS: gdb.base/alias.exp: alias -a -- -a = set
+PASS: gdb.base/alias.exp: -a print elements 47
+PASS: gdb.base/alias.exp: verify -a
+PASS: gdb.base/alias.exp: abbrev -a not present in help command list
+PASS: gdb.base/alias.exp: alias set2=set
+PASS: gdb.base/alias.exp: alias foo=bar
+PASS: gdb.base/alias.exp: alias spe = set p elem
+PASS: gdb.base/alias.exp: spe 50
+PASS: gdb.base/alias.exp: verify spe
+PASS: gdb.base/alias.exp: alias set pr elms = set p elem
+PASS: gdb.base/alias.exp: set pr elms 51
+PASS: gdb.base/alias.exp: verify set pr elms
+PASS: gdb.base/alias.exp: help set print
 Running ../../../gdb/testsuite/gdb.base/float.exp ...
 PASS: gdb.base/float.exp: info float (unknown target)
+PASS: gdb.base/float.exp: step
+PASS: gdb.base/float.exp: finish
 Running ../../../gdb/testsuite/gdb.base/eval-skip.exp ...
 PASS: gdb.base/eval-skip.exp: set variable x=14
 PASS: gdb.base/eval-skip.exp: set variable y=2
@@ -6482,6 +6922,7 @@ PASS: gdb.base/logical.exp: evaluate ! x > y || w + z; variables x = 1, y = 2, w
 PASS: gdb.base/logical.exp: evaluate x > y || w == z; variables x = 2, y = 2, w = 2, z = 3; expecting 0
 PASS: gdb.base/logical.exp: evaluate x >= y && w != z; variables x = 2, y = 2, w = 2, z = 3; expecting 1
 PASS: gdb.base/logical.exp: evaluate ! x > y || w + z; variables x = 2, y = 2, w = 2, z = 3; expecting 1
+Running ../../../gdb/testsuite/gdb.base/gnu-ifunc.exp ...
 Running ../../../gdb/testsuite/gdb.base/solib-disc.exp ...
 Running ../../../gdb/testsuite/gdb.base/langs.exp ...
 PASS: gdb.base/langs.exp: break on nonexistent function in langs.exp
@@ -6497,7 +6938,7 @@ PASS: gdb.base/langs.exp: up to langs0__2do in langs.exp
 PASS: gdb.base/langs.exp: show language at langs0__2do in langs.exp
 PASS: gdb.base/langs.exp: up to main in langs.exp
 PASS: gdb.base/langs.exp: show language at main in langs.exp
-PASS: gdb.base/langs.exp: continue to exit in langs.exp
+PASS: gdb.base/langs.exp: continue until exit at langs.exp
 PASS: gdb.base/langs.exp: set lang to minimal
 PASS: gdb.base/langs.exp: print parameter value
 Running ../../../gdb/testsuite/gdb.base/jit.exp ...
@@ -6563,6 +7004,8 @@ PASS: gdb.base/dump.exp: capture /x &intstruct
 PASS: gdb.base/dump.exp: capture /x &intstruct + 1
 PASS: gdb.base/dump.exp: capture intarray
 PASS: gdb.base/dump.exp: capture intstruct
+PASS: gdb.base/dump.exp: capture type of pointer &intarray
+PASS: gdb.base/dump.exp: capture type of pointer &intstruct
 PASS: gdb.base/dump.exp: dump array as memory, default
 PASS: gdb.base/dump.exp: dump struct as memory, default
 PASS: gdb.base/dump.exp: dump array as memory, binary
@@ -6574,39 +7017,7 @@ PASS: gdb.base/dump.exp: dump struct as memory, ihex
 PASS: gdb.base/dump.exp: dump array as memory, tekhex
 PASS: gdb.base/dump.exp: dump struct as memory, tekhex
 PASS: gdb.base/dump.exp: dump array as mem, srec, expressions
-PASS: gdb.base/dump.exp: setting little endianness
-PASS: gdb.base/dump.exp: file binfile; capture intarray
-PASS: gdb.base/dump.exp: start with intarray un-initialized
-PASS: gdb.base/dump.exp: file binfile; capture intstruct
-PASS: gdb.base/dump.exp: start with intstruct un-initialized
-PASS: gdb.base/dump.exp: reload array as value, srec; capture intarray
-PASS: gdb.base/dump.exp: reload array as value, srec; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, srec; capture intstruct
-PASS: gdb.base/dump.exp: reload struct as value, srec; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, srec; capture intarray
-PASS: gdb.base/dump.exp: reload array as memory, srec; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, srec; capture intstruct
-PASS: gdb.base/dump.exp: reload struct as memory, srec; value restored ok
-PASS: gdb.base/dump.exp: reload array as value, intel hex; capture intarray
-PASS: gdb.base/dump.exp: reload array as value, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, intel hex; capture intstruct
-PASS: gdb.base/dump.exp: reload struct as value, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, intel hex; capture intarray
-PASS: gdb.base/dump.exp: reload array as memory, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, intel hex; capture intstruct
-PASS: gdb.base/dump.exp: reload struct as memory, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload array as value, tekhex; capture intarray
-PASS: gdb.base/dump.exp: reload array as value, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, tekhex; capture intstruct
-PASS: gdb.base/dump.exp: reload struct as value, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, tekhex; capture intarray
-PASS: gdb.base/dump.exp: reload array as memory, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, tekhex; capture intstruct
-PASS: gdb.base/dump.exp: reload struct as memory, tekhex; value restored ok
-PASS: gdb.base/dump.exp: load binfile; capture intarray
-PASS: gdb.base/dump.exp: start with intarray un-initialized, runto main
-PASS: gdb.base/dump.exp: load binfile; capture intstruct
-PASS: gdb.base/dump.exp: start with intstruct un-initialized, runto main
+PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as value, srec; file restored ok
 PASS: gdb.base/dump.exp: array as value, srec; capture intarray
 PASS: gdb.base/dump.exp: array as value, srec; value restored ok
@@ -6727,6 +7138,35 @@ PASS: gdb.base/dump.exp: array partial with expressions; capture intarray2[3]
 PASS: gdb.base/dump.exp: array partial with expressions; value restored ok
 PASS: gdb.base/dump.exp: element 2 not changed, == 4
 PASS: gdb.base/dump.exp: element 4 not changed, == 4
+PASS: gdb.base/dump.exp: setting little endianness
+PASS: gdb.base/dump.exp: file binfile; capture intarray
+PASS: gdb.base/dump.exp: start with intarray un-initialized
+PASS: gdb.base/dump.exp: file binfile; capture intstruct
+PASS: gdb.base/dump.exp: start with intstruct un-initialized
+PASS: gdb.base/dump.exp: reload array as value, srec; capture * (int (*)[32]) 0x4b50
+PASS: gdb.base/dump.exp: reload array as value, srec; value restored ok
+PASS: gdb.base/dump.exp: reload struct as value, srec; capture * (struct teststruct *) 0x4a98
+PASS: gdb.base/dump.exp: reload struct as value, srec; value restored ok
+PASS: gdb.base/dump.exp: reload array as memory, srec; capture * (int (*)[32]) 0x4b50
+PASS: gdb.base/dump.exp: reload array as memory, srec; value restored ok
+PASS: gdb.base/dump.exp: reload struct as memory, srec; capture * (struct teststruct *) 0x4a98
+PASS: gdb.base/dump.exp: reload struct as memory, srec; value restored ok
+PASS: gdb.base/dump.exp: reload array as value, intel hex; capture * (int (*)[32]) 0x4b50
+PASS: gdb.base/dump.exp: reload array as value, intel hex; value restored ok
+PASS: gdb.base/dump.exp: reload struct as value, intel hex; capture * (struct teststruct *) 0x4a98
+PASS: gdb.base/dump.exp: reload struct as value, intel hex; value restored ok
+PASS: gdb.base/dump.exp: reload array as memory, intel hex; capture * (int (*)[32]) 0x4b50
+PASS: gdb.base/dump.exp: reload array as memory, intel hex; value restored ok
+PASS: gdb.base/dump.exp: reload struct as memory, intel hex; capture * (struct teststruct *) 0x4a98
+PASS: gdb.base/dump.exp: reload struct as memory, intel hex; value restored ok
+PASS: gdb.base/dump.exp: reload array as value, tekhex; capture * (int (*)[32]) 0x4b50
+PASS: gdb.base/dump.exp: reload array as value, tekhex; value restored ok
+PASS: gdb.base/dump.exp: reload struct as value, tekhex; capture * (struct teststruct *) 0x4a98
+PASS: gdb.base/dump.exp: reload struct as value, tekhex; value restored ok
+PASS: gdb.base/dump.exp: reload array as memory, tekhex; capture * (int (*)[32]) 0x4b50
+PASS: gdb.base/dump.exp: reload array as memory, tekhex; value restored ok
+PASS: gdb.base/dump.exp: reload struct as memory, tekhex; capture * (struct teststruct *) 0x4a98
+PASS: gdb.base/dump.exp: reload struct as memory, tekhex; value restored ok
 Running ../../../gdb/testsuite/gdb.base/watchpoints.exp ...
 PASS: gdb.base/watchpoints.exp: watchpoint hit, first time
 PASS: gdb.base/watchpoints.exp: watchpoint hit, first time
@@ -6852,31 +7292,32 @@ PASS: gdb.base/commands.exp: set $tem = 3 - if_commands_test 2
 PASS: gdb.base/commands.exp: continue - if_commands_test 2
 PASS: gdb.base/commands.exp: first end - if_commands_test 2
 PASS: gdb.base/commands.exp: second end - if_commands_test 2
+PASS: gdb.base/commands.exp: hook-stop 1
+PASS: gdb.base/commands.exp: hook-stop 1a
+PASS: gdb.base/commands.exp: hook-stop 1b
+PASS: gdb.base/commands.exp: main commands 1
+PASS: gdb.base/commands.exp: main commands 1a
+PASS: gdb.base/commands.exp: main commands 1b
+PASS: gdb.base/commands.exp: main commands 1c
+PASS: gdb.base/commands.exp: main commands 2
+PASS: gdb.base/commands.exp: main commands 2a
+PASS: gdb.base/commands.exp: main commands 2b
+PASS: gdb.base/commands.exp: main commands 2c
+PASS: gdb.base/commands.exp: cmd1 error
+PASS: gdb.base/commands.exp: no cmd2
 PASS: gdb.base/commands.exp: define one
 PASS: gdb.base/commands.exp: define hook-one
 PASS: gdb.base/commands.exp: define one in redefine_hook_test
 PASS: gdb.base/commands.exp: enter commands for one redefinition in redefine_hook_test
 PASS: gdb.base/commands.exp: execute one command in redefine_hook_test
-PASS: gdb.base/commands.exp: define backtrace in redefine_backtrace_test
+PASS: gdb.base/commands.exp: define backtrace
+PASS: gdb.base/commands.exp: expect response to define backtrace
 PASS: gdb.base/commands.exp: enter commands in redefine_backtrace_test
 PASS: gdb.base/commands.exp: execute backtrace command in redefine_backtrace_test
 PASS: gdb.base/commands.exp: execute bt command in redefine_backtrace_test
 Running ../../../gdb/testsuite/gdb.base/watch-read.exp ...
-PASS: gdb.base/watch-read.exp: set hardware read watchpoint on global variable
-PASS: gdb.base/watch-read.exp: read watchpoint triggers on first read
-PASS: gdb.base/watch-read.exp: read watchpoint triggers on read after value changed
-PASS: gdb.base/watch-read.exp: set write watchpoint on global variable
-PASS: gdb.base/watch-read.exp: write watchpoint triggers
-PASS: gdb.base/watch-read.exp: only write watchpoint triggers when value changes
-PASS: gdb.base/watch-read.exp: read watchpoint triggers when value doesn't change, trapping reads and writes
-PASS: gdb.base/watch-read.exp: only read watchpoint triggers when value doesn't change
 Running ../../../gdb/testsuite/gdb.base/attach.exp ...
 Running ../../../gdb/testsuite/gdb.base/watch-vfork.exp ...
-gdb compile failed, /work1/friss/tools4/gdb/k1_build/gdb/testsuite/gdb.base/watch-vfork0.o: In function `main':
-/work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/watch-vfork.c:27: undefined reference to `vfork'
-collect2: ld returned 1 exit status
-UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
-UNTESTED: gdb.base/watch-vfork.exp: watch-vfork.exp
 Running ../../../gdb/testsuite/gdb.base/all-bin.exp ...
 PASS: gdb.base/all-bin.exp: continuing after dummy()
 PASS: gdb.base/all-bin.exp: print value of v_int+v_char
@@ -6922,19 +7363,46 @@ PASS: gdb.base/all-bin.exp: print value of v_int&&v_unsigned_long
 PASS: gdb.base/all-bin.exp: print value of v_int&&v_float
 PASS: gdb.base/all-bin.exp: print value of v_int&&v_double
 Running ../../../gdb/testsuite/gdb.base/detach.exp ...
+Running ../../../gdb/testsuite/gdb.base/recpar.exp ...
+PASS: gdb.base/recpar.exp: break recpar.c:26 if n == 3
+PASS: gdb.base/recpar.exp: continue
+PASS: gdb.base/recpar.exp: backtrace
+PASS: gdb.base/recpar.exp: frame 2
+PASS: gdb.base/recpar.exp: print foo::val
+Running ../../../gdb/testsuite/gdb.base/dmsym.exp ...
+PASS: gdb.base/dmsym.exp: set lang ada
+PASS: gdb.base/dmsym.exp: break pck__foo__bar__minsym
+PASS: gdb.base/dmsym.exp: info line pck__foo__bar__minsym
+PASS: gdb.base/dmsym.exp: set lang auto
+PASS: gdb.base/dmsym.exp: Run until breakpoint at BREAK
+PASS: gdb.base/dmsym.exp: continue
+PASS: gdb.base/dmsym.exp: print val
 Running ../../../gdb/testsuite/gdb.base/morestack.exp ...
 gdb compile failed, cc1: error: unrecognized command line option "-fsplit-stack"
 UNTESTED: gdb.base/morestack.exp: morestack.exp
 Running ../../../gdb/testsuite/gdb.base/type-opaque.exp ...
+gdb compile failed, /work1/friss/tools4/devimage/k1tools/bin/../lib/gcc/k1-elf/4.5.4/../../../../k1-elf/lib/k1dp/le/bare/crt0.o: In function `newlib_flushall':
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:27: undefined reference to `_fflush_r'
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:27: undefined reference to `_fflush_r'
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:27: undefined reference to `_fwalk_reent'
+/work1/friss/tools4/devimage/k1tools/bin/../lib/gcc/k1-elf/4.5.4/../../../../k1-elf/lib/k1dp/le/bare/crt0.o: In function `__k1_finish_newlib_init':
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:17: undefined reference to `memset'
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:17: undefined reference to `memset'
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:17: undefined reference to `memset'
+/work1/friss/tools4/devimage/k1tools/bin/../lib/gcc/k1-elf/4.5.4/../../../../k1-elf/lib/k1dp/le/bare/crt0.o: In function `__start1':
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:39: undefined reference to `atexit'
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:40: undefined reference to `atexit'
+/work1/friss/tools4/newlib/k1_build_elf/k1-elf/k1dp/le/bare/libgloss/k1/../../../../../../../libgloss/k1/crt0.c:41: undefined reference to `main'
+collect2: ld returned 1 exit status
 Running ../../../gdb/testsuite/gdb.base/code_elim.exp ...
 PASS: gdb.base/code_elim.exp: add-symbol-file code_elim1 0x100000
 FAIL: gdb.base/code_elim.exp: test eliminated var my_global_symbol
 FAIL: gdb.base/code_elim.exp: test eliminated var my_static_symbol
-FAIL: gdb.base/code_elim.exp: test eliminated var my_global_func
+PASS: gdb.base/code_elim.exp: test eliminated var my_global_func
 PASS: gdb.base/code_elim.exp: get address of main
 FAIL: gdb.base/code_elim.exp: test eliminated var my_global_symbol
 FAIL: gdb.base/code_elim.exp: test eliminated var my_static_symbol
-FAIL: gdb.base/code_elim.exp: test eliminated var my_global_func
+PASS: gdb.base/code_elim.exp: test eliminated var my_global_func
 PASS: gdb.base/code_elim.exp: get address of main
 PASS: gdb.base/code_elim.exp: add-symbol-file code_elim1 0x100000
 PASS: gdb.base/code_elim.exp: add-symbol-file code_elim2 0x200000
@@ -6951,6 +7419,9 @@ PASS: gdb.base/code_elim.exp: get address of my_static_symbol
 PASS: gdb.base/code_elim.exp: get address of my_global_func
 PASS: gdb.base/code_elim.exp: get address of main
 Running ../../../gdb/testsuite/gdb.base/corefile.exp ...
+Running ../../../gdb/testsuite/gdb.base/fortran-sym-case.exp ...
+PASS: gdb.base/fortran-sym-case.exp: set language fortran
+PASS: gdb.base/fortran-sym-case.exp: frame
 Running ../../../gdb/testsuite/gdb.base/printcmds.exp ...
 PASS: gdb.base/printcmds.exp: print $pc
 PASS: gdb.base/printcmds.exp: print "abc"
@@ -7633,6 +8104,7 @@ PASS: gdb.base/printcmds.exp: print {'a','b','c'}
 PASS: gdb.base/printcmds.exp: print {4,5,6}[2]
 PASS: gdb.base/printcmds.exp: print *&{4,5,6}[1]
 PASS: gdb.base/printcmds.exp: print some_volatile_enum
+PASS: gdb.base/printcmds.exp: print three
 PASS: gdb.base/printcmds.exp: printf "x=%d,y=%d,z=%d\n", 5, 6, 7
 PASS: gdb.base/printcmds.exp: printf "string=%.4sxx\n", teststring
 PASS: gdb.base/printcmds.exp: printf "string=%sxx\n", teststring
@@ -7672,6 +8144,19 @@ PASS: gdb.base/printcmds.exp: printf "%DDf\n",1.2E10dl
 PASS: gdb.base/printcmds.exp: printf "%DDf\n",1.2E-10dl
 PASS: gdb.base/printcmds.exp: printf "%DDf\n",1.2E6144dl
 Running ../../../gdb/testsuite/gdb.base/checkpoint.exp ...
+Running ../../../gdb/testsuite/gdb.base/readline-ask.exp ...
+PASS: gdb.base/readline-ask.exp: set width 50
+PASS: gdb.base/readline-ask.exp: set height 3
+PASS: gdb.base/readline-ask.exp: bell for more message
+PASS: gdb.base/readline-ask.exp: more message for 01 and 02
+PASS: gdb.base/readline-ask.exp: more message for 03
+PASS: gdb.base/readline-ask.exp: more finish for 04
+PASS: gdb.base/readline-ask.exp: abort more message
+PASS: gdb.base/readline-ask.exp: bell for ask message
+PASS: gdb.base/readline-ask.exp: ask message
+PASS: gdb.base/readline-ask.exp: ask message for 01 and 02
+PASS: gdb.base/readline-ask.exp: ask message no
+PASS: gdb.base/readline-ask.exp: abort ask message
 Running ../../../gdb/testsuite/gdb.base/page.exp ...
 PASS: gdb.base/page.exp: set pagination off
 PASS: gdb.base/page.exp: pagination is off
@@ -7996,7 +8481,19 @@ PASS: gdb.base/exprs.exp: print v_int--
 PASS: gdb.base/exprs.exp: print --v_int
 PASS: gdb.base/exprs.exp: print v_int++ = 5
 PASS: gdb.base/exprs.exp: print v_int-- = 5
+PASS: gdb.base/exprs.exp: print v_int_array_init
+PASS: gdb.base/exprs.exp: print *v_int_array_init@1
+PASS: gdb.base/exprs.exp: print *v_int_array_init@2
+PASS: gdb.base/exprs.exp: print v_int_array_init[0]@1
+PASS: gdb.base/exprs.exp: print v_int_array_init[0]@2
+PASS: gdb.base/exprs.exp: print v_int_array_init[1]@1
 Running ../../../gdb/testsuite/gdb.base/unwindonsignal.exp ...
+Running ../../../gdb/testsuite/gdb.base/save-bp.exp ...
+PASS: gdb.base/save-bp.exp: add breakpoint commands
+PASS: gdb.base/save-bp.exp: save breakpoint bps
+PASS: gdb.base/save-bp.exp: source bps
+PASS: gdb.base/save-bp.exp: info break
+Running ../../../gdb/testsuite/gdb.base/testenv.exp ...
 Running ../../../gdb/testsuite/gdb.base/pie-execl.exp ...
 Running ../../../gdb/testsuite/gdb.base/hook-stop-continue.exp ...
 PASS: gdb.base/hook-stop-continue.exp: breakpoint line number
@@ -8017,6 +8514,18 @@ PASS: gdb.base/break.exp: breakpoint line number in file
 PASS: gdb.base/break.exp: breakpoint at start of multi line if conditional
 PASS: gdb.base/break.exp: breakpoint at start of multi line while conditional
 PASS: gdb.base/break.exp: breakpoint info
+PASS: gdb.base/break.exp: info break 2 4 6
+PASS: gdb.base/break.exp: info break 3-5
+PASS: gdb.base/break.exp: disable using history values
+PASS: gdb.base/break.exp: check disable with history values
+PASS: gdb.base/break.exp: disable with convenience values
+PASS: gdb.base/break.exp: check disable with convenience values
+PASS: gdb.base/break.exp: disable non-existent breakpoint 10
+PASS: gdb.base/break.exp: set $baz 1.234
+PASS: gdb.base/break.exp: disable with non-integer convenience var
+PASS: gdb.base/break.exp: disable with non-existent convenience var
+PASS: gdb.base/break.exp: disable with non-existent history value
+PASS: gdb.base/break.exp: disable with badly formed history value
 PASS: gdb.base/break.exp: run until function breakpoint
 PASS: gdb.base/break.exp: run until breakpoint set at a line number
 PASS: gdb.base/break.exp: run until file:function(6) breakpoint
@@ -8042,6 +8551,7 @@ PASS: gdb.base/break.exp: catch requires an event name
 PASS: gdb.base/break.exp: set catch fork, never expected to trigger
 PASS: gdb.base/break.exp: set catch vfork, never expected to trigger
 PASS: gdb.base/break.exp: set catch exec, never expected to trigger
+PASS: gdb.base/break.exp: set breakpoint pending off
 PASS: gdb.base/break.exp: break on non-existent source line
 PASS: gdb.base/break.exp: until bp_location1
 PASS: gdb.base/break.exp: break on default location, 1st time
@@ -8164,6 +8674,7 @@ PASS: gdb.base/display.exp: print/a $pc
 PASS: gdb.base/display.exp: print/a &&j
 Running ../../../gdb/testsuite/gdb.base/hashline3.exp ...
 PASS: gdb.base/hashline3.exp: set breakpoint
+Running ../../../gdb/testsuite/gdb.base/break-on-linker-gcd-function.exp ...
 Running ../../../gdb/testsuite/gdb.base/hbreak.exp ...
 Running ../../../gdb/testsuite/gdb.base/moribund-step.exp ...
 PASS: gdb.base/moribund-step.exp: set non-stop on
@@ -8219,6 +8730,18 @@ PASS: gdb.base/callfuncs.exp: p t_double_int(99.0, 1)
 PASS: gdb.base/callfuncs.exp: p t_double_int(99.0, 99)
 PASS: gdb.base/callfuncs.exp: p t_int_double(99, 1.0)
 PASS: gdb.base/callfuncs.exp: p t_int_double(99, 99.0)
+PASS: gdb.base/callfuncs.exp: p t_float_complex_values(fc1, fc2)
+PASS: gdb.base/callfuncs.exp: p t_float_complex_values(fc3, fc4)
+PASS: gdb.base/callfuncs.exp: p t_float_complex_many_args(fc1, fc2, fc3, fc4, fc1, fc2, fc3, fc4, fc1, fc2, fc3, fc4, fc1, fc2, fc3, fc4)
+PASS: gdb.base/callfuncs.exp: p t_float_complex_many_args(fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1)
+PASS: gdb.base/callfuncs.exp: p t_double_complex_values(dc1, dc2)
+PASS: gdb.base/callfuncs.exp: p t_double_complex_values(dc3, dc4)
+PASS: gdb.base/callfuncs.exp: p t_double_complex_many_args(dc1, dc2, dc3, dc4, dc1, dc2, dc3, dc4, dc1, dc2, dc3, dc4, dc1, dc2, dc3, dc4)
+PASS: gdb.base/callfuncs.exp: p t_double_complex_many_args(dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1)
+PASS: gdb.base/callfuncs.exp: p t_long_double_complex_values(ldc1, ldc2)
+PASS: gdb.base/callfuncs.exp: p t_long_double_complex_values(ldc3, ldc4)
+PASS: gdb.base/callfuncs.exp: p t_long_double_complex_many_args(ldc1, ldc2, ldc3, ldc4, ldc1, ldc2, ldc3, ldc4, ldc1, ldc2, ldc3, ldc4, ldc1, ldc2, ldc3, ldc4)
+PASS: gdb.base/callfuncs.exp: p t_long_double_complex_many_args(ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1,ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1)
 PASS: gdb.base/callfuncs.exp: p t_string_values(string_val2,string_val1)
 PASS: gdb.base/callfuncs.exp: p t_string_values(string_val1,string_val2)
 PASS: gdb.base/callfuncs.exp: p t_string_values("string 1","string 2")
@@ -8257,23 +8780,42 @@ PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns int
 PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns long
 PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns float
 PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns double
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns float _Complex
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns double _Complex
+PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns long double _Complex
 PASS: gdb.base/callfuncs.exp: call inferior func with struct - returns char *
 PASS: gdb.base/callfuncs.exp: register contents after gdb function calls
 PASS: gdb.base/callfuncs.exp: gdb function calls preserve register contents
+PASS: gdb.base/callfuncs.exp: set language c
+PASS: gdb.base/callfuncs.exp: next to t_double_values
+PASS: gdb.base/callfuncs.exp: next to t_structs_c
+PASS: gdb.base/callfuncs.exp: retrieve original register contents
 PASS: gdb.base/callfuncs.exp: stop at breakpoint in call dummy function
 PASS: gdb.base/callfuncs.exp: continue from call dummy breakpoint
 PASS: gdb.base/callfuncs.exp: bt after continuing from call dummy breakpoint
 PASS: gdb.base/callfuncs.exp: register contents after stop in call dummy
 PASS: gdb.base/callfuncs.exp: continue after stop in call dummy preserves register contents
+PASS: gdb.base/callfuncs.exp: set language c
+PASS: gdb.base/callfuncs.exp: next to t_double_values
+PASS: gdb.base/callfuncs.exp: next to t_structs_c
+PASS: gdb.base/callfuncs.exp: retrieve original register contents
 PASS: gdb.base/callfuncs.exp: call function causing a breakpoint then do a finish
 PASS: gdb.base/callfuncs.exp: finish from call dummy breakpoint returns correct value
 PASS: gdb.base/callfuncs.exp: bt after finishing from call dummy breakpoint
 PASS: gdb.base/callfuncs.exp: register contents after finish in call dummy
 PASS: gdb.base/callfuncs.exp: finish after stop in call dummy preserves register contents
+PASS: gdb.base/callfuncs.exp: set language c
+PASS: gdb.base/callfuncs.exp: next to t_double_values
+PASS: gdb.base/callfuncs.exp: next to t_structs_c
+PASS: gdb.base/callfuncs.exp: retrieve original register contents
 PASS: gdb.base/callfuncs.exp: call function causing a breakpoint and then do a return
 PASS: gdb.base/callfuncs.exp: back at main after return from call dummy breakpoint
 PASS: gdb.base/callfuncs.exp: register contents after return in call dummy
 PASS: gdb.base/callfuncs.exp: return after stop in call dummy preserves register contents
+PASS: gdb.base/callfuncs.exp: set language c
+PASS: gdb.base/callfuncs.exp: next to t_double_values
+PASS: gdb.base/callfuncs.exp: next to t_structs_c
+PASS: gdb.base/callfuncs.exp: retrieve original register contents
 PASS: gdb.base/callfuncs.exp: stop at nested call level 1
 PASS: gdb.base/callfuncs.exp: backtrace at nested call level 1
 PASS: gdb.base/callfuncs.exp: stop at nested call level 2
@@ -8292,6 +8834,7 @@ PASS: gdb.base/callfuncs.exp: Finish from nested call level 1
 PASS: gdb.base/callfuncs.exp: backtrace after finish from nested call level 1
 PASS: gdb.base/callfuncs.exp: register contents after nested call dummies
 PASS: gdb.base/callfuncs.exp: nested call dummies preserve register contents
+PASS: gdb.base/callfuncs.exp: print callfunc (Lcallfunc, 5)
 Running ../../../gdb/testsuite/gdb.base/solib-overlap.exp ...
 Running ../../../gdb/testsuite/gdb.base/sepdebug.exp ...
 PASS: gdb.base/sepdebug.exp: breakpoint function
@@ -8327,6 +8870,7 @@ PASS: gdb.base/sepdebug.exp: catch requires an event name
 PASS: gdb.base/sepdebug.exp: set catch fork, never expected to trigger
 PASS: gdb.base/sepdebug.exp: set catch vfork, never expected to trigger
 PASS: gdb.base/sepdebug.exp: set catch exec, never expected to trigger
+PASS: gdb.base/sepdebug.exp: set breakpoint pending off
 PASS: gdb.base/sepdebug.exp: break on non-existent source line
 PASS: gdb.base/sepdebug.exp: until bp_location1
 PASS: gdb.base/sepdebug.exp: break on default location, 1st time
@@ -8498,6 +9042,7 @@ PASS: gdb.base/default.exp: info source
 PASS: gdb.base/default.exp: info sources
 PASS: gdb.base/default.exp: info target
 PASS: gdb.base/default.exp: info terminal
+PASS: gdb.base/default.exp: info threads
 PASS: gdb.base/default.exp: info types
 PASS: gdb.base/default.exp: info variables
 PASS: gdb.base/default.exp: info vector
@@ -8638,6 +9183,10 @@ PASS: gdb.base/default.exp: target exec
 PASS: gdb.base/default.exp: target remote
 PASS: gdb.base/default.exp: target
 PASS: gdb.base/default.exp: tbreak
+PASS: gdb.base/default.exp: thread
+PASS: gdb.base/default.exp: thread apply
+PASS: gdb.base/default.exp: thread find
+PASS: gdb.base/default.exp: thread name
 PASS: gdb.base/default.exp: tty
 PASS: gdb.base/default.exp: until "u" abbreviation
 PASS: gdb.base/default.exp: until
@@ -8669,11 +9218,8 @@ PASS: gdb.base/permissions.exp: show may-insert-fast-tracepoints
 PASS: gdb.base/permissions.exp: show may-interrupt
 PASS: gdb.base/permissions.exp: disable observer mode
 PASS: gdb.base/permissions.exp: set non-stop off
-PASS: gdb.base/permissions.exp: set a global
-PASS: gdb.base/permissions.exp: print x
-PASS: gdb.base/permissions.exp: set may-write-memory off
-PASS: gdb.base/permissions.exp: try to set a global
-PASS: gdb.base/permissions.exp: print x
+FAIL: gdb.base/permissions.exp: running to main in runto
+ERROR: couldn't run to breakpoint
 Running ../../../gdb/testsuite/gdb.base/savedregs.exp ...
 Running ../../../gdb/testsuite/gdb.base/list.exp ...
 PASS: gdb.base/list.exp: set width 0
@@ -8785,6 +9331,8 @@ PASS: gdb.base/ui-redirect.exp: set logging on
 PASS: gdb.base/ui-redirect.exp: save breakpoints /dev/null
 PASS: gdb.base/ui-redirect.exp: set logging off
 PASS: gdb.base/ui-redirect.exp: help
+Running ../../../gdb/testsuite/gdb.base/infoline.exp ...
+PASS: gdb.base/infoline.exp: info line infoline.c:18
 Running ../../../gdb/testsuite/gdb.kalray/displaced.exp ...
 PASS: gdb.kalray/displaced.exp: Force displaced stepping
 PASS: gdb.kalray/displaced.exp: Set breakpoints
@@ -8831,12 +9379,12 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		8411
-# of unexpected failures	26
+# of expected passes		8895
+# of unexpected failures	52
 # of unexpected successes	2
-# of expected failures		31
-# of known failures		23
+# of expected failures		29
+# of known failures		24
 # of untested testcases		6
 # of unsupported tests		14
-/work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.2.50.20110206-cvs -nw -nx -data-directory /work1/friss/tools4/gdb/k1_build/gdb/testsuite/../data-directory 
+/work1/friss/tools4/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.4.50.20120122-cvs -nw -nx -data-directory /work1/friss/tools4/gdb/k1_build/gdb/testsuite/../data-directory 
 
