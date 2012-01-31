@@ -434,11 +434,7 @@ k1_target_supports_non_stop (void)
 static int
 k1_target_can_async (void)
 {
-  if (!target_async_permitted)
-    /* We only enable async when the user specifically asks for it.  */
-    return 0;
-
-  return 1;
+  return target_async_permitted;
 }
 
 static struct cmd_list_element *kalray_set_cmdlist;
