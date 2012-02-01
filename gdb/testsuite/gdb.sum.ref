@@ -1413,8 +1413,8 @@ PASS: gdb.mi/mi-stepn.exp: breakpoint-hit reported
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
 PASS: gdb.mi/mi-nonstop.exp: successfully compiled posix threads test case
 PASS: gdb.mi/mi-nonstop.exp: breakpoint at main
-PASS: gdb.mi/mi-nonstop.exp: mi runto main
-PASS: gdb.mi/mi-nonstop.exp: breakpoint at marker
+FAIL: gdb.mi/mi-nonstop.exp: mi runto main
+FAIL: gdb.mi/mi-nonstop.exp: breakpoint at marker
 FAIL: gdb.mi/mi-nonstop.exp: resume 1 (MI error)
 Running ../../../gdb/testsuite/gdb.mi/mi-solib.exp ...
 UNTESTED: gdb.mi/mi-solib.exp: mi-solib.exp
@@ -1601,7 +1601,7 @@ PASS: gdb.mi/gdb680.exp: -data-list-register-names -1, try 4
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop-exit.exp ...
 PASS: gdb.mi/mi-nonstop-exit.exp: successfully compiled posix threads test case
 PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
-PASS: gdb.mi/mi-nonstop-exit.exp: mi runto main
+FAIL: gdb.mi/mi-nonstop-exit.exp: mi runto main
 FAIL: gdb.mi/mi-nonstop-exit.exp: continue (MI error)
 FAIL: gdb.mi/mi-nonstop-exit.exp: finished exec continue (unknown output after running)
 PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
@@ -3213,7 +3213,7 @@ Running ../../../gdb/testsuite/gdb.base/async-shell.exp ...
 PASS: gdb.base/async-shell.exp: set target-async on
 PASS: gdb.base/async-shell.exp: set non-stop on
 FAIL: gdb.base/async-shell.exp: run &
-PASS: gdb.base/async-shell.exp: shell echo foo
+FAIL: gdb.base/async-shell.exp: shell echo foo
 FAIL: gdb.base/async-shell.exp: interrupt
 FAIL: gdb.base/async-shell.exp: process stopped (timeout)
 Running ../../../gdb/testsuite/gdb.base/opaque.exp ...
