@@ -804,7 +804,7 @@ PASS: gdb.mi/mi-pthreads.exp: breakpoint at done_making_threads
 FAIL: gdb.mi/mi-pthreads.exp: mi runto done_making_threads (timeout)
 FAIL: gdb.mi/mi-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
 PASS: gdb.mi/mi-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
-PASS: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select
+FAIL: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select
 PASS: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
 Running ../../../gdb/testsuite/gdb.mi/mi2-break.exp ...
 PASS: gdb.mi/mi2-break.exp: break-insert -t operation
@@ -1395,7 +1395,7 @@ PASS: gdb.mi/mi2-pthreads.exp: breakpoint at done_making_threads
 FAIL: gdb.mi/mi2-pthreads.exp: mi runto done_making_threads (timeout)
 FAIL: gdb.mi/mi2-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
 PASS: gdb.mi/mi2-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
-PASS: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select
+FAIL: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select
 PASS: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
 Running ../../../gdb/testsuite/gdb.mi/mi2-eval.exp ...
 PASS: gdb.mi/mi2-eval.exp: breakpoint at callee4
@@ -1605,7 +1605,7 @@ FAIL: gdb.mi/mi-nonstop-exit.exp: mi runto main
 FAIL: gdb.mi/mi-nonstop-exit.exp: continue (MI error)
 FAIL: gdb.mi/mi-nonstop-exit.exp: finished exec continue (unknown output after running)
 PASS: gdb.mi/mi-nonstop-exit.exp: breakpoint at main
-PASS: gdb.mi/mi-nonstop-exit.exp: mi runto main
+FAIL: gdb.mi/mi-nonstop-exit.exp: mi runto main
 FAIL: gdb.mi/mi-nonstop-exit.exp: finished exec continue (2) (unknown output after running)
 Running ../../../gdb/testsuite/gdb.mi/mi-simplerun.exp ...
 PASS: gdb.mi/mi-simplerun.exp: break-insert operation
