@@ -1,5 +1,5 @@
 /* Plugin support for BFD.
-   Copyright 2009
+   Copyright 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -63,6 +63,7 @@
 #define bfd_plugin_bfd_final_link                     _bfd_generic_final_link
 #define bfd_plugin_bfd_link_split_section             _bfd_generic_link_split_section
 #define bfd_plugin_bfd_gc_sections                    bfd_generic_gc_sections
+#define bfd_plugin_bfd_lookup_section_flags           bfd_generic_lookup_section_flags
 #define bfd_plugin_bfd_merge_sections                 bfd_generic_merge_sections
 #define bfd_plugin_bfd_is_group_section               bfd_generic_is_group_section
 #define bfd_plugin_bfd_discard_group                  bfd_generic_discard_group
@@ -232,11 +233,17 @@ static const bfd_target *
 bfd_plugin_object_p (bfd *abfd)
 {
   int claimed = 0;
-  int t = load_plugin ();
   struct ld_plugin_input_file file;
   bfd *iobfd;
+  static int have_loaded = 0;
+  static int have_plugin = 0;
 
-  if (!t)
+  if (!have_loaded)
+    {
+      have_loaded = 1;
+      have_plugin = load_plugin ();
+    }
+  if (!have_plugin)
     return NULL;
 
   file.name = abfd->filename;
@@ -251,7 +258,7 @@ bfd_plugin_object_p (bfd *abfd)
     {
       iobfd = abfd;
       file.offset = 0;
-      file.filesize = 0; /*FIXME*/
+      file.filesize = 0;
     }
 
   if (!iobfd->iostream && !bfd_open_file (iobfd))
@@ -259,8 +266,18 @@ bfd_plugin_object_p (bfd *abfd)
 
   file.fd = fileno ((FILE *) iobfd->iostream);
 
+  if (!abfd->my_archive)
+    {
+      struct stat stat_buf;
+      if (fstat (file.fd, &stat_buf))
+        return NULL;
+      file.filesize = stat_buf.st_size;
+    }
+
   file.handle = abfd;
+  off_t cur_offset = lseek(file.fd, 0, SEEK_CUR);
   claim_file (&file, &claimed);
+  lseek(file.fd, cur_offset, SEEK_SET);
   if (!claimed)
     return NULL;
 
@@ -462,6 +479,7 @@ const bfd_target plugin_vec =
   0,				/* symbol_leading_char.  */
   '/',				/* ar_pad_char.  */
   15,				/* ar_max_namelen.  */
+  0,				/* match priority.  */
 
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,

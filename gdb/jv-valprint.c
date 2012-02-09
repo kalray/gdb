@@ -1,7 +1,6 @@
 /* Support for printing Java values for GDB, the GNU debugger.
 
-   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1997-2005, 2007-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -179,8 +178,11 @@ java_value_print (struct value *val, struct ui_file *stream,
 		  set_value_lazy (next_v, 1);
 		  set_value_offset (next_v, value_offset (next_v)
 				    + TYPE_LENGTH (el_type));
-		  if (memcmp (value_contents (v), value_contents (next_v),
-			      TYPE_LENGTH (el_type)) != 0)
+		  value_fetch_lazy (next_v);
+		  if (!(value_available_contents_eq
+			(v, value_embedded_offset (v),
+			 next_v, value_embedded_offset (next_v),
+			 TYPE_LENGTH (el_type))))
 		    break;
 		}
 
@@ -413,9 +415,7 @@ java_print_value_fields (struct type *type, const gdb_byte *valaddr,
 		{
 		  struct value_print_options opts;
 
-		  v = value_from_longest
-		    (TYPE_FIELD_TYPE (type, i),
-		     unpack_field_as_long (type, valaddr + offset, i));
+		  v = value_field_bitfield (type, i, valaddr, offset, val);
 
 		  opts = *options;
 		  opts.deref_ref = 0;
@@ -474,12 +474,9 @@ java_print_value_fields (struct type *type, const gdb_byte *valaddr,
   fprintf_filtered (stream, "}");
 }
 
-/* Print data of type TYPE located at VALADDR (within GDB), which came from
-   the inferior at address ADDRESS, onto stdio stream STREAM according to
-   OPTIONS.  The data at VALADDR is in target byte order.
-
-   If the data are a string pointer, returns the number of string characters
-   printed.  */
+/* See val_print for a description of the various parameters of this
+   function; they are identical.  The semantics of the return value is
+   also identical to val_print.  */
 
 int
 java_val_print (struct type *type, const gdb_byte *valaddr,

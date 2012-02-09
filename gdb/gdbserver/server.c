@@ -1,7 +1,6 @@
 /* Main code for remote server for GDB.
-   Copyright (C) 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1989, 1993-1995, 1997-2000, 2002-2012 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +31,6 @@
 
 ptid_t cont_thread;
 ptid_t general_thread;
-ptid_t step_thread;
 
 int server_waiting;
 
@@ -40,8 +38,15 @@ static int extended_protocol;
 static int response_needed;
 static int exit_requested;
 
+/* --once: Exit after the first connection has closed.  */
+int run_once;
+
 int multi_process;
 int non_stop;
+
+/* Whether we should attempt to disable the operating system's address
+   space randomization feature before starting an inferior.  */
+int disable_randomization = 1;
 
 static char **program_argv, **wrapper_argv;
 
@@ -121,7 +126,7 @@ queue_stop_reply (ptid_t ptid, struct target_waitstatus *status)
 {
   struct vstop_notif *new_notif;
 
-  new_notif = malloc (sizeof (*new_notif));
+  new_notif = xmalloc (sizeof (*new_notif));
   new_notif->next = NULL;
   new_notif->ptid = ptid;
   new_notif->status = *status;
@@ -279,7 +284,7 @@ start_inferior (char **argv)
       resume_info.kind = resume_continue;
       resume_info.sig = 0;
 
-      mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
+      last_ptid = mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
 
       if (last_status.kind != TARGET_WAITKIND_STOPPED)
 	return signal_pid;
@@ -288,7 +293,7 @@ start_inferior (char **argv)
 	{
 	  (*the_target->resume) (&resume_info, 1);
 
- 	  mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
+ 	  last_ptid = mywait (pid_to_ptid (signal_pid), &last_status, 0, 0);
 	  if (last_status.kind != TARGET_WAITKIND_STOPPED)
 	    return signal_pid;
 
@@ -332,6 +337,10 @@ attach_inferior (int pid)
      attach function, so that it can be the main thread instead of
      whichever we were told to attach to.  */
   signal_pid = pid;
+
+  /* Clear this so the backend doesn't get confused, thinking
+     CONT_THREAD died, and it needs to resume all threads.  */
+  cont_thread = null_ptid;
 
   if (!non_stop)
     {
@@ -495,6 +504,27 @@ handle_general_set (char *own_buf)
       return;
     }
 
+  if (strncmp ("QDisableRandomization:", own_buf,
+	       strlen ("QDisableRandomization:")) == 0)
+    {
+      char *packet = own_buf + strlen ("QDisableRandomization:");
+      ULONGEST setting;
+
+      unpack_varlen_hex (packet, &setting);
+      disable_randomization = setting;
+
+      if (remote_debug)
+	{
+	  if (disable_randomization)
+	    fprintf (stderr, "[address space randomization disabled]\n");
+	  else
+	    fprintf (stderr, "[address space randomization enabled]\n");
+	}
+
+      write_ok (own_buf);
+      return;
+    }
+
   if (target_supports_tracepoints ()
       && handle_tracepoint_general_set (own_buf))
     return;
@@ -556,12 +586,20 @@ monitor_show_help (void)
   monitor_output ("    Quit GDBserver\n");
 }
 
-/* Read trace frame or inferior memory.  */
+/* Read trace frame or inferior memory.  Returns the number of bytes
+   actually read, zero when no further transfer is possible, and -1 on
+   error.  Return of a positive value smaller than LEN does not
+   indicate there's no more to be read, only the end of the transfer.
+   E.g., when GDB reads memory from a traceframe, a first request may
+   be served from a memory block that does not cover the whole request
+   length.  A following request gets the rest served from either
+   another block (of the same traceframe) or from the read-only
+   regions.  */
 
 static int
 gdb_read_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
 {
-  int ret;
+  int res;
 
   if (current_traceframe >= 0)
     {
@@ -572,22 +610,24 @@ gdb_read_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
 			       memaddr, myaddr, len, &nbytes))
 	return EIO;
       /* Data read from trace buffer, we're done.  */
-      if (nbytes == length)
-	return 0;
+      if (nbytes > 0)
+	return nbytes;
       if (!in_readonly_region (memaddr, length))
-	return EIO;
+	return -1;
       /* Otherwise we have a valid readonly case, fall through.  */
       /* (assume no half-trace half-real blocks for now) */
     }
 
-  ret = prepare_to_access_memory ();
-  if (ret == 0)
+  res = prepare_to_access_memory ();
+  if (res == 0)
     {
-      ret = read_inferior_memory (memaddr, myaddr, len);
+      res = read_inferior_memory (memaddr, myaddr, len);
       done_accessing_memory ();
-    }
 
-  return ret;
+      return res == 0 ? len : -1;
+    }
+  else
+    return -1;
 }
 
 /* Write trace frame or inferior memory.  Actually, writing to trace
@@ -623,7 +663,8 @@ handle_search_memory_1 (CORE_ADDR start_addr, CORE_ADDR search_space_len,
 {
   /* Prime the search buffer.  */
 
-  if (gdb_read_memory (start_addr, search_buf, search_buf_size) != 0)
+  if (gdb_read_memory (start_addr, search_buf, search_buf_size)
+      != search_buf_size)
     {
       warning ("Unable to access target memory at 0x%lx, halting search.",
 	       (long) start_addr);
@@ -675,7 +716,7 @@ handle_search_memory_1 (CORE_ADDR start_addr, CORE_ADDR search_space_len,
 			: chunk_size);
 
 	  if (gdb_read_memory (read_addr, search_buf + keep_len,
-			       nr_to_read) != 0)
+			       nr_to_read) != search_buf_size)
 	    {
 	      warning ("Unable to access target memory "
 		       "at 0x%lx, halting search.",
@@ -904,6 +945,10 @@ handle_qxfer_libraries (const char *annex,
   if (annex[0] != '\0' || !target_running ())
     return -1;
 
+  /* Do not confuse this packet with qXfer:libraries-svr4:read.  */
+  if (the_target->qxfer_libraries_svr4 != NULL)
+    return 0;
+
   /* Over-estimate the necessary memory.  Assume that every character
      in the library name must be escaped.  */
   total_len = 64;
@@ -952,6 +997,23 @@ handle_qxfer_libraries (const char *annex,
   memcpy (readbuf, document + offset, len);
   free (document);
   return len;
+}
+
+/* Handle qXfer:libraries-svr4:read.  */
+
+static int
+handle_qxfer_libraries_svr4 (const char *annex,
+			     gdb_byte *readbuf, const gdb_byte *writebuf,
+			     ULONGEST offset, LONGEST len)
+{
+  if (writebuf != NULL)
+    return -2;
+
+  if (annex[0] != '\0' || !target_running ()
+      || the_target->qxfer_libraries_svr4 == NULL)
+    return -1;
+
+  return the_target->qxfer_libraries_svr4 (annex, readbuf, writebuf, offset, len);
 }
 
 /* Handle qXfer:osadata:read.  */
@@ -1107,16 +1169,84 @@ handle_qxfer_threads (const char *annex,
   return len;
 }
 
+/* Handle qXfer:traceframe-info:read.  */
+
+static int
+handle_qxfer_traceframe_info (const char *annex,
+			      gdb_byte *readbuf, const gdb_byte *writebuf,
+			      ULONGEST offset, LONGEST len)
+{
+  static char *result = 0;
+  static unsigned int result_length = 0;
+
+  if (writebuf != NULL)
+    return -2;
+
+  if (!target_running () || annex[0] != '\0' || current_traceframe == -1)
+    return -1;
+
+  if (offset == 0)
+    {
+      struct buffer buffer;
+
+      /* When asked for data at offset 0, generate everything and
+	 store into 'result'.  Successive reads will be served off
+	 'result'.  */
+      free (result);
+
+      buffer_init (&buffer);
+
+      traceframe_read_info (current_traceframe, &buffer);
+
+      result = buffer_finish (&buffer);
+      result_length = strlen (result);
+      buffer_free (&buffer);
+    }
+
+  if (offset >= result_length)
+    {
+      /* We're out of data.  */
+      free (result);
+      result = NULL;
+      result_length = 0;
+      return 0;
+    }
+
+  if (len > result_length - offset)
+    len = result_length - offset;
+
+  memcpy (readbuf, result + offset, len);
+  return len;
+}
+
+/* Handle qXfer:fdpic:read.  */
+
+static int
+handle_qxfer_fdpic (const char *annex, gdb_byte *readbuf,
+		    const gdb_byte *writebuf, ULONGEST offset, LONGEST len)
+{
+  if (the_target->read_loadmap == NULL)
+    return -2;
+
+  if (!target_running ())
+    return -1;
+
+  return (*the_target->read_loadmap) (annex, offset, readbuf, len);
+}
+
 static const struct qxfer qxfer_packets[] =
   {
     { "auxv", handle_qxfer_auxv },
+    { "fdpic", handle_qxfer_fdpic},
     { "features", handle_qxfer_features },
     { "libraries", handle_qxfer_libraries },
+    { "libraries-svr4", handle_qxfer_libraries_svr4 },
     { "osdata", handle_qxfer_osdata },
     { "siginfo", handle_qxfer_siginfo },
     { "spu", handle_qxfer_spu },
     { "statictrace", handle_qxfer_statictrace },
     { "threads", handle_qxfer_threads },
+    { "traceframe-info", handle_qxfer_traceframe_info },
   };
 
 static int
@@ -1295,7 +1425,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 
       sprintf (own_buf, "QC");
       own_buf += 2;
-      own_buf = write_ptid (own_buf, gdb_id);
+      write_ptid (own_buf, gdb_id);
       return;
     }
 
@@ -1431,9 +1561,14 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 
       sprintf (own_buf, "PacketSize=%x;QPassSignals+", PBUFSIZ - 1);
 
-      /* We do not have any hook to indicate whether the target backend
-	 supports qXfer:libraries:read, so always report it.  */
-      strcat (own_buf, ";qXfer:libraries:read+");
+      if (the_target->qxfer_libraries_svr4 != NULL)
+	strcat (own_buf, ";qXfer:libraries-svr4:read+");
+      else
+	{
+	  /* We do not have any hook to indicate whether the non-SVR4 target
+	     backend supports qXfer:libraries:read, so always report it.  */
+	  strcat (own_buf, ";qXfer:libraries:read+");
+	}
 
       if (the_target->read_auxv != NULL)
 	strcat (own_buf, ";qXfer:auxv:read+");
@@ -1443,6 +1578,9 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 
       if (the_target->qxfer_siginfo != NULL)
 	strcat (own_buf, ";qXfer:siginfo:read+;qXfer:siginfo:write+");
+
+      if (the_target->read_loadmap != NULL)
+	strcat (own_buf, ";qXfer:fdpic:read+");
 
       /* We always report qXfer:features:read, as targets may
 	 install XML files on a subsequent call to arch_setup.
@@ -1462,6 +1600,9 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       if (target_supports_non_stop ())
 	strcat (own_buf, ";QNonStop+");
 
+      if (target_supports_disable_randomization ())
+	strcat (own_buf, ";QDisableRandomization+");
+
       strcat (own_buf, ";qXfer:threads:read+");
 
       if (target_supports_tracepoints ())
@@ -1473,7 +1614,11 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	  if (gdb_supports_qRelocInsn && target_supports_fast_tracepoints ())
 	    strcat (own_buf, ";FastTracepoints+");
 	  strcat (own_buf, ";StaticTracepoints+");
+	  strcat (own_buf, ";InstallInTrace+");
 	  strcat (own_buf, ";qXfer:statictrace:read+");
+	  strcat (own_buf, ";qXfer:traceframe-info:read+");
+	  strcat (own_buf, ";EnableDisableTracepoints+");
+	  strcat (own_buf, ";tracenz+");
 	}
 
       return;
@@ -1886,16 +2031,16 @@ handle_v_run (char *own_buf)
 
       if (program_argv == NULL)
 	{
-	  /* FIXME: new_argv memory leak */
 	  write_enn (own_buf);
+	  freeargv (new_argv);
 	  return 0;
 	}
 
       new_argv[0] = strdup (program_argv[0]);
       if (new_argv[0] == NULL)
 	{
-	  /* FIXME: new_argv memory leak */
 	  write_enn (own_buf);
+	  freeargv (new_argv);
 	  return 0;
 	}
     }
@@ -1999,7 +2144,7 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
 
   if (strncmp (own_buf, "vAttach;", 8) == 0)
     {
-      if (!multi_process && target_running ())
+      if ((!extended_protocol || !multi_process) && target_running ())
 	{
 	  fprintf (stderr, "Already debugging a process\n");
 	  write_enn (own_buf);
@@ -2011,7 +2156,7 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
 
   if (strncmp (own_buf, "vRun;", 5) == 0)
     {
-      if (!multi_process && target_running ())
+      if ((!extended_protocol || !multi_process) && target_running ())
 	{
 	  fprintf (stderr, "Already debugging a process\n");
 	  write_enn (own_buf);
@@ -2228,7 +2373,7 @@ static void
 gdbserver_version (void)
 {
   printf ("GNU gdbserver %s%s\n"
-	  "Copyright (C) 2011 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2012 Free Software Foundation, Inc.\n"
 	  "gdbserver is free software, covered by the "
 	  "GNU General Public License.\n"
 	  "This gdbserver was configured as \"%s\"\n",
@@ -2249,7 +2394,9 @@ gdbserver_usage (FILE *stream)
 	   "  --debug               Enable general debugging output.\n"
 	   "  --remote-debug        Enable remote protocol debugging output.\n"
 	   "  --version             Display version information and exit.\n"
-	   "  --wrapper WRAPPER --  Run WRAPPER to start new programs.\n");
+	   "  --wrapper WRAPPER --  Run WRAPPER to start new programs.\n"
+	   "  --once                Exit after the first connection has "
+								  "closed.\n");
   if (REPORT_BUGS_TO[0] && stream == stdout)
     fprintf (stream, "Report bugs to \"%s\".\n", REPORT_BUGS_TO);
 }
@@ -2374,17 +2521,6 @@ detach_or_kill_for_exit (void)
   for_each_inferior (&all_processes, detach_or_kill_inferior_callback);
 }
 
-static void
-join_inferiors_callback (struct inferior_list_entry *entry)
-{
-  struct process_info *process = (struct process_info *) entry;
-
-  /* If we are attached, then we can exit.  Otherwise, we need to hang
-     around doing nothing, until the child is gone.  */
-  if (!process->attached)
-    join_inferior (ptid_get_pid (process->head.id));
-}
-
 int
 main (int argc, char *argv[])
 {
@@ -2473,6 +2609,19 @@ main (int argc, char *argv[])
 		}
 	    }
 	}
+      else if (strcmp (*next_arg, "-") == 0)
+	{
+	  /* "-" specifies a stdio connection and is a form of port
+	     specification.  */
+	  *next_arg = STDIO_CONNECTION_NAME;
+	  break;
+	}
+      else if (strcmp (*next_arg, "--disable-randomization") == 0)
+	disable_randomization = 1;
+      else if (strcmp (*next_arg, "--no-disable-randomization") == 0)
+	disable_randomization = 0;
+      else if (strcmp (*next_arg, "--once") == 0)
+	run_once = 1;
       else
 	{
 	  fprintf (stderr, "Unknown argument: %s\n", *next_arg);
@@ -2496,6 +2645,12 @@ main (int argc, char *argv[])
       gdbserver_usage (stderr);
       exit (1);
     }
+
+  /* We need to know whether the remote connection is stdio before
+     starting the inferior.  Inferiors created in this scenario have
+     stdin,stdout redirected.  So do this here before we call
+     start_inferior.  */
+  remote_prepare (port);
 
   bad_attach = 0;
   pid = 0;
@@ -2522,7 +2677,6 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  initialize_inferiors ();
   initialize_async_io ();
   initialize_low ();
   if (target_supports_tracepoints ())
@@ -2569,6 +2723,16 @@ main (int argc, char *argv[])
 
   if (setjmp (toplevel))
     {
+      /* If something fails and longjmps while detaching or killing
+	 inferiors, we'd end up here again, stuck in an infinite loop
+	 trap.  Be sure that if that happens, we exit immediately
+	 instead.  */
+      if (setjmp (toplevel))
+	{
+	  fprintf (stderr, "Detach or kill failed.  Exiting\n");
+	  exit (1);
+	}
+
       detach_or_kill_for_exit ();
       exit (1);
     }
@@ -2613,7 +2777,7 @@ main (int argc, char *argv[])
 	 getpkt to fail; close the connection and reopen it at the
 	 top of the loop.  */
 
-      if (exit_requested)
+      if (exit_requested || run_once)
 	{
 	  detach_or_kill_for_exit ();
 	  exit (0);
@@ -2664,6 +2828,7 @@ process_serial_event (void)
   int i = 0;
   int signal;
   unsigned int len;
+  int res;
   CORE_ADDR mem_addr;
   int pid;
   unsigned char sig;
@@ -2778,8 +2943,7 @@ process_serial_event (void)
 	      /* If we are attached, then we can exit.  Otherwise, we
 		 need to hang around doing nothing, until the child is
 		 gone.  */
-	      for_each_inferior (&all_processes,
-				 join_inferiors_callback);
+	      join_inferior (pid);
 	      exit (0);
 	    }
 	}
@@ -2851,8 +3015,6 @@ process_serial_event (void)
 	    }
 	  else if (own_buf[1] == 'c')
 	    cont_thread = thread_id;
-	  else if (own_buf[1] == 's')
-	    step_thread = thread_id;
 
 	  write_ok (own_buf);
 	}
@@ -2902,10 +3064,11 @@ process_serial_event (void)
     case 'm':
       require_running (own_buf);
       decode_m_packet (&own_buf[1], &mem_addr, &len);
-      if (gdb_read_memory (mem_addr, mem_buf, len) == 0)
-	convert_int_to_ascii (mem_buf, own_buf, len);
-      else
+      res = gdb_read_memory (mem_addr, mem_buf, len);
+      if (res < 0)
 	write_enn (own_buf);
+      else
+	convert_int_to_ascii (mem_buf, own_buf, res);
       break;
     case 'M':
       require_running (own_buf);

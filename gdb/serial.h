@@ -1,6 +1,6 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-1996, 1998-2001, 2004-2012 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -129,6 +129,12 @@ extern void serial_raw (struct serial *scb);
 
 extern serial_ttystate serial_get_tty_state (struct serial *scb);
 
+/* Return a pointer to a newly malloc'd ttystate containing a copy
+   of the state in TTYSTATE.  */
+
+extern serial_ttystate serial_copy_tty_state (struct serial *scb,
+					      serial_ttystate ttystate);
+
 /* Set the state of the tty to TTYSTATE.  The change is immediate.
    When changing to or from raw mode, input might be discarded.
    Returns 0 for success, negative value for error (in which case
@@ -250,6 +256,7 @@ struct serial_ops
     int (*send_break) (struct serial *);
     void (*go_raw) (struct serial *);
     serial_ttystate (*get_tty_state) (struct serial *);
+    serial_ttystate (*copy_tty_state) (struct serial *, serial_ttystate);
     int (*set_tty_state) (struct serial *, serial_ttystate);
     void (*print_tty_state) (struct serial *, serial_ttystate,
 			     struct ui_file *);
@@ -271,7 +278,7 @@ struct serial_ops
     int (*write_prim)(struct serial *scb, const void *buf, size_t count);
     /* Return that number of bytes that can be read from FD
        without blocking.  Return value of -1 means that the
-       the read will not block even if less that requested bytes
+       read will not block even if less that requested bytes
        are available.  */
     int (*avail)(struct serial *scb, int fd);
 

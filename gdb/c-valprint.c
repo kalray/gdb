@@ -1,8 +1,7 @@
 /* Support for printing C values for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986, 1988-1989, 1991-2001, 2003, 2005-2012 Free
+   Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -142,13 +141,9 @@ c_textual_element_type (struct type *type, char format)
   return 0;
 }
 
-
-/* Print data of type TYPE located at VALADDR (within GDB), which came
-   from the inferior at address ADDRESS, onto stdio stream STREAM
-   according to OPTIONS.  The data at VALADDR is in target byte order.
-
-   If the data are a string pointer, returns the number of string
-   characters printed.  */
+/* See val_print for a description of the various parameters of this
+   function; they are identical.  The semantics of the return value is
+   also identical to val_print.  */
 
 int
 c_val_print (struct type *type, const gdb_byte *valaddr,
@@ -191,6 +186,8 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	     long as the entire array is valid.  */
           if (c_textual_element_type (unresolved_elttype,
 				      options->format)
+	      && value_bytes_available (original_value, embedded_offset,
+					TYPE_LENGTH (type))
 	      && value_bits_valid (original_value,
 				   TARGET_CHAR_BIT * embedded_offset,
 				   TARGET_CHAR_BIT * TYPE_LENGTH (type)))
@@ -242,7 +239,7 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	}
       /* Array of unspecified length: treat like pointer to first
 	 elt.  */
-      addr = address;
+      addr = address + embedded_offset;
       goto print_unpacked_pointer;
 
     case TYPE_CODE_MEMBERPTR:
@@ -382,10 +379,19 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	{
 	  if (TYPE_CODE (elttype) != TYPE_CODE_UNDEF)
 	    {
-	      struct value *deref_val =
-		value_at
-		(TYPE_TARGET_TYPE (type),
-		 unpack_pointer (type, valaddr + embedded_offset));
+	      struct value *deref_val;
+
+	      deref_val = coerce_ref_if_computed (original_value);
+	      if (deref_val != NULL)
+		{
+		  /* More complicated computed references are not supported.  */
+		  gdb_assert (embedded_offset == 0);
+		}
+	      else
+		deref_val = value_at (TYPE_TARGET_TYPE (type),
+				      unpack_pointer (type,
+						      (valaddr
+						       + embedded_offset)));
 
 	      common_val_print (deref_val, stream, recurse, options,
 				current_language);
@@ -450,10 +456,41 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	{
 	  fputs_filtered (TYPE_FIELD_NAME (type, i), stream);
 	}
-      else
+      else if (TYPE_FLAG_ENUM (type))
 	{
-	  print_longest (stream, 'd', 0, val);
+	  int first = 1;
+
+	  /* We have a "flag" enum, so we try to decompose it into
+	     pieces as appropriate.  A flag enum has disjoint
+	     constants by definition.  */
+	  fputs_filtered ("(", stream);
+	  for (i = 0; i < len; ++i)
+	    {
+	      QUIT;
+
+	      if ((val & TYPE_FIELD_BITPOS (type, i)) != 0)
+		{
+		  if (!first)
+		    fputs_filtered (" | ", stream);
+		  first = 0;
+
+		  val &= ~TYPE_FIELD_BITPOS (type, i);
+		  fputs_filtered (TYPE_FIELD_NAME (type, i), stream);
+		}
+	    }
+
+	  if (first || val != 0)
+	    {
+	      if (!first)
+		fputs_filtered (" | ", stream);
+	      fputs_filtered ("unknown: ", stream);
+	      print_longest (stream, 'd', 0, val);
+	    }
+
+	  fputs_filtered (")", stream);
 	}
+      else
+	print_longest (stream, 'd', 0, val);
       break;
 
     case TYPE_CODE_FLAGS:
@@ -688,29 +725,33 @@ c_value_print (struct value *val, struct ui_file *stream,
 	    }
 	  /* Pointer to class, check real type of object.  */
 	  fprintf_filtered (stream, "(");
-          real_type = value_rtti_target_type (val, &full,
-					      &top, &using_enc);
-          if (real_type)
-	    {
-	      /* RTTI entry found.  */
-              if (TYPE_CODE (type) == TYPE_CODE_PTR)
-                {
-                  /* Create a pointer type pointing to the real
-		     type.  */
-                  type = lookup_pointer_type (real_type);
-                }
-              else
-                {
-                  /* Create a reference type referencing the real
-		     type.  */
-                  type = lookup_reference_type (real_type);
-                }
-	      /* JYG: Need to adjust pointer value.  */
-	      val = value_from_pointer (type, value_as_address (val) - top);
 
-              /* Note: When we look up RTTI entries, we don't get any 
-                 information on const or volatile attributes.  */
-            }
+	  if (value_entirely_available (val))
+ 	    {
+	      real_type = value_rtti_target_type (val, &full, &top, &using_enc);
+	      if (real_type)
+		{
+		  /* RTTI entry found.  */
+		  if (TYPE_CODE (type) == TYPE_CODE_PTR)
+		    {
+		      /* Create a pointer type pointing to the real
+			 type.  */
+		      type = lookup_pointer_type (real_type);
+		    }
+		  else
+		    {
+		      /* Create a reference type referencing the real
+			 type.  */
+		      type = lookup_reference_type (real_type);
+		    }
+		  /* Need to adjust pointer value.  */
+		  val = value_from_pointer (type, value_as_address (val) - top);
+
+		  /* Note: When we look up RTTI entries, we don't get
+		     any information on const or volatile
+		     attributes.  */
+		}
+	    }
           type_print (type, "", stream, -1);
 	  fprintf_filtered (stream, ") ");
 	  val_type = type;

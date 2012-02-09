@@ -1,7 +1,7 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-1996, 1998-1999, 2001, 2005-2012 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,7 +39,9 @@
 
 #ifdef USE_WIN32API
 #include <winsock2.h>
+#ifndef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
+#endif
 #define close(fd) closesocket (fd)
 #define ioctl ioctlsocket
 #else
@@ -390,6 +392,7 @@ _initialize_ser_tcp (void)
   ops->send_break = ser_tcp_send_break;
   ops->go_raw = ser_base_raw;
   ops->get_tty_state = ser_base_get_tty_state;
+  ops->copy_tty_state = ser_base_copy_tty_state;
   ops->set_tty_state = ser_base_set_tty_state;
   ops->print_tty_state = ser_base_print_tty_state;
   ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;

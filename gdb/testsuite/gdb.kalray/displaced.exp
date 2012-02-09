@@ -27,6 +27,7 @@ if {[target_link ${objdir}/${subdir}/${testfile}.o "${binfile}" ${link-flags}] !
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
+gdb_test "set kalray debug_agent_options \"--init-value=0\"" "" "init memory"
 
 gdb_test "set displaced-stepping on" "" "Force displaced stepping"
 gdb_test "rbreak test_displaced.*" ".*Breakpoint 9 at.*" "Set breakpoints"
@@ -69,6 +70,6 @@ gdb_test "si" ".*in ev .*" "stepi to trap handler"
 gdb_test "si" ".*in ev .*" "stepi in trap handler"
 gdb_test "si" ".*Breakpoint 12.*in test_displaced .*" "rfe 2"
 gdb_test "si" "" "stepi over copy"
-gdb_test "si" ".*Program exited with code 017.*" "stepi to scall"
+gdb_test "si" ".*exited with code 017.*" "stepi to scall"
 
 

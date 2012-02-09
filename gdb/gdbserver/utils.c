@@ -1,6 +1,6 @@
 /* General utility routines for the remote server for GDB.
-   Copyright (C) 1986, 1989, 1993, 1995, 1996, 1997, 1999, 2000, 2002, 2003,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1989, 1993, 1995-1997, 1999-2000, 2002-2003,
+   2007-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,70 +35,13 @@
 
 /* Generally useful subroutines used throughout the program.  */
 
-static void malloc_failure (size_t size) ATTR_NORETURN;
-
-static void
-malloc_failure (size_t size)
+void
+malloc_failure (long size)
 {
   fprintf (stderr,
 	   PREFIX "ran out of memory while trying to allocate %lu bytes\n",
 	   (unsigned long) size);
   exit (1);
-}
-
-/* Allocate memory without fail.
-   If malloc fails, this will print a message to stderr and exit.  */
-
-void *
-xmalloc (size_t size)
-{
-  void *newmem;
-
-  if (size == 0)
-    size = 1;
-  newmem = malloc (size);
-  if (!newmem)
-    malloc_failure (size);
-
-  return newmem;
-}
-
-/* Reallocate memory without fail.  This works like xmalloc. */
-
-void *
-xrealloc (void *ptr, size_t size)
-{
-  void *val;
-
-  if (size == 0)
-    size = 1;
-
-  if (ptr != NULL)
-    val = realloc (ptr, size);	/* OK: realloc */
-  else
-    val = malloc (size);	/* OK: malloc */
-  if (val == NULL)
-    malloc_failure (size);
-
-  return val;
-}
-
-/* Allocate memory without fail and set it to zero.
-   If malloc fails, this will print a message to stderr and exit.  */
-
-void *
-xcalloc (size_t nelem, size_t elsize)
-{
-  void *newmem;
-
-  if (nelem == 0 || elsize == 0)
-    nelem = elsize = 1;
-
-  newmem = calloc (nelem, elsize);
-  if (!newmem)
-    malloc_failure (nelem * elsize);
-
-  return newmem;
 }
 
 /* Copy a string into a memory buffer.
@@ -239,43 +182,23 @@ get_cell (void)
   return buf[cell];
 }
 
-/* Stdarg wrapper around vsnprintf.
-   SIZE is the size of the buffer pointed to by STR.  */
-
-int
-xsnprintf (char *str, size_t size, const char *format, ...)
-{
-  va_list args;
-  int ret;
-
-  va_start (args, format);
-  ret = vsnprintf (str, size, format, args);
-  va_end (args);
-
-  return ret;
-}
-
 static char *
-decimal2str (char *sign, ULONGEST addr, int width)
+decimal2str (char *sign, ULONGEST addr)
 {
   /* Steal code from valprint.c:print_decimal().  Should this worry
      about the real size of addr as the above does? */
   unsigned long temp[3];
   char *str = get_cell ();
-
   int i = 0;
+  int width = 9;
+
   do
     {
       temp[i] = addr % (1000 * 1000 * 1000);
       addr /= (1000 * 1000 * 1000);
       i++;
-      width -= 9;
     }
   while (addr != 0 && i < (sizeof (temp) / sizeof (temp[0])));
-
-  width = 9;
-  if (width < 0)
-    width = 0;
 
   switch (i)
     {
@@ -304,7 +227,7 @@ decimal2str (char *sign, ULONGEST addr, int width)
 char *
 pulongest (ULONGEST u)
 {
-  return decimal2str ("", u, 0);
+  return decimal2str ("", u);
 }
 
 /* %d for LONGEST.  The result is stored in a circular static buffer,
@@ -314,9 +237,9 @@ char *
 plongest (LONGEST l)
 {
   if (l < 0)
-    return decimal2str ("-", -l, 0);
+    return decimal2str ("-", -l);
   else
-    return decimal2str ("", l, 0);
+    return decimal2str ("", l);
 }
 
 /* Eliminate warning from compiler on 32-bit systems.  */

@@ -1,6 +1,6 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992, 1993, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-1993, 2000-2001, 2007-2012 Free Software
+   Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -652,6 +652,17 @@ dos_get_tty_state (struct serial *scb)
   return (serial_ttystate) state;
 }
 
+static serial_ttystate
+dos_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
+{
+  struct dos_ttystate *state;
+
+  state = (struct dos_ttystate *) xmalloc (sizeof *state);
+  *state = *(struct dos_ttystate *) ttystate;
+
+  return (serial_ttystate) state;
+}
+
 static int
 dos_set_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
@@ -851,6 +862,7 @@ static struct serial_ops dos_ops =
   dos_sendbreak,
   dos_raw,
   dos_get_tty_state,
+  dos_copy_tty_state,
   dos_set_tty_state,
   dos_print_tty_state,
   dos_noflush_set_tty_state,

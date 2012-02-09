@@ -1,7 +1,7 @@
 /* Support for printing Modula 2 values for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1991, 1992, 1996, 1998, 2000, 2005, 2006,
-                 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986, 1988-1989, 1991-1992, 1996, 1998, 2000, 2005-2012
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -310,12 +310,9 @@ m2_print_array_contents (struct type *type, const gdb_byte *valaddr,
 }
 
 
-/* Print data of type TYPE located at VALADDR (within GDB), which came from
-   the inferior at address ADDRESS, onto stdio stream STREAM according to
-   OPTIONS.  The data at VALADDR is in target byte order.
-
-   If the data are a string pointer, returns the number of string characters
-   printed.  */
+/* See val_print for a description of the various parameters of this
+   function; they are identical.  The semantics of the return value is
+   also identical to val_print.  */
 
 int
 m2_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,

@@ -1,7 +1,6 @@
 /* Target dependent code for CRIS, for GDB, the GNU debugger.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2001-2012 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, and Orjan Friberg.
@@ -448,6 +447,7 @@ cris_sigtramp_frame_sniffer (const struct frame_unwind *self,
 static const struct frame_unwind cris_sigtramp_frame_unwind =
 {
   SIGTRAMP_FRAME,
+  default_frame_unwind_stop_reason,
   cris_sigtramp_frame_this_id,
   cris_sigtramp_frame_prev_register,
   NULL,
@@ -985,6 +985,7 @@ cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 static const struct frame_unwind cris_frame_unwind = 
 {
   NORMAL_FRAME,
+  default_frame_unwind_stop_reason,
   cris_frame_this_id,
   cris_frame_prev_register,
   NULL,
@@ -2567,7 +2568,7 @@ asrq_op (unsigned short inst, inst_env_type *inst_env)
           return;
         }
       /* The shift size is given as a 5 bit quick value, i.e. we don't
-         want the the sign bit of the quick value.  */
+         want the sign bit of the quick value.  */
       shift_steps = cris_get_asr_shift_steps (inst);
       value = inst_env->reg[REG_PC];
       if (value & SIGNED_DWORD_MASK)
@@ -2891,7 +2892,7 @@ none_reg_mode_jump_op (unsigned short inst, inst_env_type *inst_env)
         {
           check_assign (inst, inst_env);
 
-          /* Get the new value for the the PC.  */
+          /* Get the new value for the PC.  */
           newpc = 
             read_memory_unsigned_integer ((CORE_ADDR) inst_env->prefix_value,
                                           4, inst_env->byte_order);

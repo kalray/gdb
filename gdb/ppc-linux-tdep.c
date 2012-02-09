@@ -1,8 +1,7 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-1987, 1989, 1991-1997, 2000-2012 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -167,7 +166,7 @@
    word) to be written back to the now initialized PLT entry thus
    destroying a portion of the initialization that had occurred only a
    short time ago.  When execution continued, the zero word would be
-   executed as an instruction an an illegal instruction trap was
+   executed as an instruction an illegal instruction trap was
    generated instead.  (0 is not a legal instruction.)
 
    The fix for this problem was fairly straightforward.  The function
@@ -218,7 +217,7 @@ ppc_linux_memory_remove_breakpoint (struct gdbarch *gdbarch,
      program modified the code on us, so it is wrong to put back the
      old value.  */
   if (val == 0 && memcmp (bp, old_contents, bplen) == 0)
-    val = target_write_memory (addr, bp_tgt->shadow_contents, bplen);
+    val = target_write_raw_memory (addr, bp_tgt->shadow_contents, bplen);
 
   do_cleanups (cleanup);
   return val;
@@ -1367,7 +1366,12 @@ ppu2spu_prev_register (struct frame_info *this_frame,
   gdb_byte *buf;
 
   buf = alloca (register_size (gdbarch, regnum));
-  regcache_cooked_read (cache->regcache, regnum, buf);
+
+  if (regnum < gdbarch_num_regs (gdbarch))
+    regcache_raw_read (cache->regcache, regnum, buf);
+  else
+    gdbarch_pseudo_register_read (gdbarch, cache->regcache, regnum, buf);
+
   return frame_unwind_got_bytes (this_frame, regnum, buf);
 }
 
@@ -1392,9 +1396,9 @@ ppu2spu_unwind_register (void *src, int regnum, gdb_byte *buf)
   else if (regnum == SPU_PC_REGNUM)
     store_unsigned_integer (buf, 4, byte_order, data->npc);
   else
-    return 0;
+    return REG_UNAVAILABLE;
 
-  return 1;
+  return REG_VALID;
 }
 
 static int
@@ -1472,6 +1476,7 @@ ppu2spu_dealloc_cache (struct frame_info *self, void *this_cache)
 
 static const struct frame_unwind ppu2spu_unwind = {
   ARCH_FRAME,
+  default_frame_unwind_stop_reason,
   ppu2spu_this_id,
   ppu2spu_prev_register,
   NULL,
@@ -1509,7 +1514,7 @@ ppc_linux_init_abi (struct gdbarch_info info,
       /* Until November 2001, gcc did not comply with the 32 bit SysV
 	 R4 ABI requirement that structures less than or equal to 8
 	 bytes should be returned in registers.  Instead GCC was using
-	 the the AIX/PowerOpen ABI - everything returned in memory
+	 the AIX/PowerOpen ABI - everything returned in memory
 	 (well ignoring vectors that is).  When this was corrected, it
 	 wasn't fixed for GNU/Linux native platform.  Use the
 	 PowerOpen struct convention.  */

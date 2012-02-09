@@ -4067,7 +4067,7 @@ sort_bfds (const void *a, const void *b)
   bfd *const *abfd1 = a;
   bfd *const *abfd2 = b;
 
-  return strcmp ((*abfd1)->filename, (*abfd2)->filename);
+  return filename_cmp ((*abfd1)->filename, (*abfd2)->filename);
 }
 
 static unsigned int
@@ -4299,7 +4299,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
 
       qsort (bfd_arr, bfd_count, sizeof (*bfd_arr), sort_bfds);
       for (i = 1; i < bfd_count; ++i)
-	if (strcmp (bfd_arr[i - 1]->filename, bfd_arr[i]->filename) == 0)
+	if (filename_cmp (bfd_arr[i - 1]->filename, bfd_arr[i]->filename) == 0)
 	  {
 	    if (bfd_arr[i - 1]->my_archive == bfd_arr[i]->my_archive)
 	      {
@@ -5000,7 +5000,9 @@ spu_elf_relocate_section (bfd *output_bfd,
       else if (is_ea_sym)
 	unresolved_reloc = TRUE;
 
-      if (unresolved_reloc)
+      if (unresolved_reloc
+	  && _bfd_elf_section_offset (output_bfd, info, input_section,
+				      rel->r_offset) != (bfd_vma) -1)
 	{
 	  (*_bfd_error_handler)
 	    (_("%B(%s+0x%lx): unresolvable %s relocation against symbol `%s'"),
