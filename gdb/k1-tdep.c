@@ -38,6 +38,14 @@
 #include "elf/k1.h"
 #include "opcode/k1.h"
 
+struct k1_inferior_data {
+    CORE_ADDR step_pad_area;
+    int has_step_pad_area_p;
+};
+
+static const struct k1_inferior_data *_k1_inferior_data;
+static const struct inferior_data *k1_inferior_data_token;
+
 struct gdbarch_tdep {
     int ev_regnum;
     int ls_regnum;
@@ -98,6 +106,20 @@ static struct op_list *sp_store_insns[K1_NUM_ARCHES];
 static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
 
 static struct op_list *branch_insns[K1_NUM_ARCHES];
+
+static struct k1_inferior_data*
+k1_inferior_data (struct inferior *inf)
+{
+    struct k1_inferior_data *res;
+
+    res = inferior_data (inf, k1_inferior_data_token);
+    if (!res) {
+        res = xcalloc (0, sizeof(res));
+        set_inferior_data (inf, k1_inferior_data_token, res);
+    }
+
+    return res;
+}
 
 static enum K1_ARCH
 k1_arch ()
@@ -346,29 +368,29 @@ struct displaced_step_closure {
     int reg;
 };
 
-static CORE_ADDR k1_step_pad_address;
-
 static void
 k1_inferior_created (struct target_ops *target, int from_tty)
 {
-    k1_step_pad_address = 0;
     k1_current_arch = K1_NUM_ARCHES;
 }
 
 static CORE_ADDR
 k1_displaced_step_location (struct gdbarch *gdbarch)
 {
-    if (!k1_step_pad_address) {
+    struct k1_inferior_data *data = k1_inferior_data (current_inferior());
+
+    if (!data->has_step_pad_area_p) {
 	struct minimal_symbol *msym = lookup_minimal_symbol ("_debug_start", 
 							     NULL, NULL);
 	if (msym == NULL)
 	    error ("Can not locate a suitable step pad area.");
 	if (SYMBOL_VALUE_ADDRESS(msym) % 4)
 	    warning ("Step pad area is not 4-byte aligned.");
-	k1_step_pad_address = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+	data->step_pad_area = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+        data->has_step_pad_area_p = 1;
     }
 
-    return k1_step_pad_address;
+    return data->step_pad_area;
 }
 
 static int
@@ -1130,6 +1152,11 @@ static void k1_look_for_insns (void)
     }
 }
 
+static void k1_cleanup_inferior_data (struct inferior *inf, void *data)
+{
+    xfree (data);
+}
+
 extern initialize_file_ftype _initialize_k1_tdep; /* -Wmissing-prototypes */
 
 void
@@ -1139,4 +1166,6 @@ _initialize_k1_tdep (void)
   gdbarch_register (bfd_arch_k1, k1_gdbarch_init, NULL);
 
   observer_attach_inferior_created (k1_inferior_created);
+  
+  k1_inferior_data_token = register_inferior_data_with_cleanup (k1_cleanup_inferior_data);
 }
