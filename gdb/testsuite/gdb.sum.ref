@@ -803,9 +803,9 @@ PASS: gdb.mi/mi-pthreads.exp: successfully compiled posix threads test case
 PASS: gdb.mi/mi-pthreads.exp: breakpoint at done_making_threads
 FAIL: gdb.mi/mi-pthreads.exp: mi runto done_making_threads (timeout)
 FAIL: gdb.mi/mi-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
-PASS: gdb.mi/mi-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
+FAIL: gdb.mi/mi-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
 FAIL: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select
-PASS: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
+FAIL: gdb.mi/mi-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
 Running ../../../gdb/testsuite/gdb.mi/mi2-break.exp ...
 PASS: gdb.mi/mi2-break.exp: break-insert -t operation
 PASS: gdb.mi/mi2-break.exp: insert temp breakpoint at basics.c:callee2
@@ -1394,9 +1394,9 @@ PASS: gdb.mi/mi2-pthreads.exp: successfully compiled posix threads test case
 PASS: gdb.mi/mi2-pthreads.exp: breakpoint at done_making_threads
 FAIL: gdb.mi/mi2-pthreads.exp: mi runto done_making_threads (timeout)
 FAIL: gdb.mi/mi2-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
-PASS: gdb.mi/mi2-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
+FAIL: gdb.mi/mi2-pthreads.exp: finding threads in MI output (in check_mi_thread_command_set)
 FAIL: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select
-PASS: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
+FAIL: gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select 123456789
 Running ../../../gdb/testsuite/gdb.mi/mi2-eval.exp ...
 PASS: gdb.mi/mi2-eval.exp: breakpoint at callee4
 PASS: gdb.mi/mi2-eval.exp: mi runto callee4
