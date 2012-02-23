@@ -153,11 +153,11 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
     struct thread_info *ti;
     struct target_ops *remote_target = find_target_beneath(ops);
 
-    data = mppa_inferior_data (find_inferior_pid (ptid_get_pid (ptid)));
     ti = find_thread_ptid (ptid);
 
     if (ti) {
         const char *extra = remote_target->to_extra_thread_info (ti);
+        data = mppa_inferior_data (find_inferior_pid (ptid_get_pid (ptid)));
 
         if (!extra)
             return xstrdup (data->cluster);
