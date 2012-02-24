@@ -3,9 +3,13 @@
 _start:
 	make $r0 = ev
 	;; 
+  or $r0 = $r0,4
+  ;;
 	set $ev = $r0
 	;; 
-	bfx.b0 $ps, 0x28, 0x0 /* Enable H/W loops and traps */
+  make $r1 = 0x2c0000
+  ;;
+	hfxb $ps, $r1 /* Enable H/W loops and traps */
 	;;
 
 test_displaced1:
@@ -60,8 +64,6 @@ test_displaced:
 ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0x8 */
 	nop
 	;;
-	nop
-	;;  
 	set $spc = $r0
 	;;
 	rfe
