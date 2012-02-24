@@ -261,11 +261,11 @@ Use the \"file\" or \"exec-file\" command."));
 
     if (!no_mcore)
 	switch (core) {
-	case ELF_K1_CORE_V1:
-	    stub_args[argidx++] = "--mcore=k1v1";
-	    break;
 	case ELF_K1_CORE_DP:
 	    stub_args[argidx++] = "--mcore=k1dp";
+	    break;
+	case ELF_K1_CORE_IO:
+	    stub_args[argidx++] = "--mcore=k1io";
 	    break;
 	default:
 	    error (_("The K1 binary is compiled for an unknown core."));
