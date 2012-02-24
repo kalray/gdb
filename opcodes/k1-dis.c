@@ -164,11 +164,11 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_regfiles = k1_k1dp_regfiles;
       k1_dec_registers = k1_k1dp_dec_registers;
       break;
-    case bfd_mach_k1v1:
-      opc_table = k1v1_k1optab;
-      k1_registers = k1_k1v1_registers;
-      k1_regfiles = k1_k1v1_regfiles;
-      k1_dec_registers = k1_k1v1_dec_registers;
+    case bfd_mach_k1io:
+      opc_table = k1io_k1optab;
+      k1_registers = k1_k1io_registers;
+      k1_regfiles = k1_k1io_regfiles;
+      k1_dec_registers = k1_k1io_dec_registers;
       break;
     default:
       /* Core not supported */
@@ -294,31 +294,23 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_PRF]+value]].name);
                       break;
                   case RegClass_k1_systemReg:
-                  case RegClass_k1v1_systemReg:
                   case RegClass_k1_nopcpsReg:
-                  case RegClass_k1v1_nopcpsReg:
                   case RegClass_k1_onlypsReg:
-                  case RegClass_k1v1_onlypsReg:
                   case RegClass_k1_onlyraReg:
-                  //case RegClass_k1v1_onlyraReg:
                   case RegClass_k1_onlyfxReg:
-                  case RegClass_k1v1_onlyfxReg:
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_SRF]+value]].name);
                       break;
                   case RegClass_k1_remoteReg:
                       (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_NRF]+value]].name);
                       break;
 
-                  case Immediate_k1_bfxmask:
                   case Immediate_k1_signed32:
                   case Immediate_k1_signed32M:
                   case Immediate_k1_signed5M:
                   case Immediate_k1_unsigned32L:
                   case Immediate_k1_unsigned32:
                   case Immediate_k1_extension22:
-                  case Immediate_k1_eventmask:
                   case Immediate_k1_eventmask2:
-                  case Immediate_k1_flagmask:
                   case Immediate_k1_flagmask2:
                   case Immediate_k1_signed10:
                   case Immediate_k1_signed16:

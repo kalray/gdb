@@ -96,8 +96,8 @@ struct op_list {
 };
 
 static enum K1_ARCH {
-    K1_K1V1,
     K1_K1DP,
+    K1_K1IO,
     K1_NUM_ARCHES
 } k1_current_arch = K1_NUM_ARCHES;
 
@@ -131,18 +131,18 @@ k1_arch ()
 
     if (exec_bfd) {
         switch (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK) {
-        case ELF_K1_CORE_V1:
-            k1_current_arch = K1_K1V1; break;
         case ELF_K1_CORE_DP:
             k1_current_arch = K1_K1DP; break;
+        case ELF_K1_CORE_IO:
+            k1_current_arch = K1_K1IO; break;
         default:
             error (_("The K1 binary is compiled for an unknown core."));
         }  
     } else if (desc) {
         if (tdesc_find_feature (desc, "eu.kalray.core.k1dp"))
             k1_current_arch = K1_K1DP;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1v1"))
-            k1_current_arch = K1_K1V1;
+        else if (tdesc_find_feature (desc, "eu.kalray.core.k1io"))
+            k1_current_arch = K1_K1IO;
         else
             error ("unable to find the current k1 architecture.");
     }
@@ -179,13 +179,13 @@ static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
 static const gdb_byte *
 k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-    static const gdb_byte BREAK_V1[] = { 0, 0, 0x0c, 0 };
-    static const gdb_byte BREAK_V2[] = { 0xFF, 0xFF, 0x1, 0 };
+    static const gdb_byte BREAK_DP[] = { 0xFF, 0xFF, 0x1, 0 };
+    static const gdb_byte BREAK_IO[] = { 0xFF, 0xFF, 0x1, 0 };
     *len = 4;
 
     switch (k1_arch ()) {
-    case K1_K1V1: return BREAK_V1;
-    case K1_K1DP: return BREAK_V2;
+    case K1_K1DP: return BREAK_DP;
+    case K1_K1IO: return BREAK_IO;
     default: internal_error (__FILE__, __LINE__, "Unknown K1 arch !\n");
     }
 }
@@ -233,15 +233,15 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 
     typedef struct op_list_desc prologue_ops[NUM_INSN_LISTS];
     prologue_ops prologue_insns_full[] = { 
-        [K1_K1V1] = {
-	{ sp_adjust_insns[K1_K1V1], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1V1], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1V1], -1 /* unused */},
-        },
         [K1_K1DP] = {
         { sp_adjust_insns[K1_K1DP], 0 /* Dest register */},
 	{ sp_store_insns[K1_K1DP], 1 /* Base register */},
 	{ prologue_helper_insns[K1_K1DP], -1 /* unused */},
+        },
+        [K1_K1IO] = {
+	{ sp_adjust_insns[K1_K1IO], 0 /* Dest register */},
+	{ sp_store_insns[K1_K1IO], 1 /* Base register */},
+	{ prologue_helper_insns[K1_K1IO], -1 /* unused */},
         } };
 
     prologue_ops *prologue_insns = &prologue_insns_full [k1_arch ()];
@@ -1086,8 +1086,8 @@ static void k1_look_for_insns (void)
         k1opc_t *op;
         
         switch (i) {
-        case K1_K1V1: op = k1v1_k1optab; break;
         case K1_K1DP: op = k1dp_k1optab; break;
+        case K1_K1IO: op = k1io_k1optab; break;
         default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
         }
         

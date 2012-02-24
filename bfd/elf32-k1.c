@@ -10,9 +10,11 @@ static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-#define K1DP_K1V1
+#define K1DP_K1IO
 #include "elf32-k1.def"
-#undef K1DP_K1V1
+#undef K1DP_K1IO
+
+#define DEFAULT_STACK_SIZE 0x20000
 
 struct k1_reloc_map
 {
@@ -180,11 +182,11 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
 
   fprintf (f, "\nK1 header:\n");
   switch(e_flags & K1_MACH_MASK) {
-  case bfd_mach_k1v1:
-    fprintf (f, "\nMachine     = k1v1\n");
-    break;
   case bfd_mach_k1dp:
     fprintf (f, "\nMachine     = k1dp\n");
+    break;
+  case bfd_mach_k1io:
+    fprintf (f, "\nMachine     = k1io\n");
     break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
@@ -206,8 +208,8 @@ elf_k1_final_write_processing (bfd *abfd,
 
   switch (mach = bfd_get_mach (abfd))
     {
-    case bfd_mach_k1v1:
     case bfd_mach_k1dp:
+    case bfd_mach_k1io:
       val = mach;
       break;
     default:
@@ -226,8 +228,8 @@ elf_k1_object_p (bfd *abfd)
   int mach = elf_elfheader (abfd)->e_flags & K1_MACH_MASK;
 
   switch (mach) {
-    case bfd_mach_k1v1:
     case bfd_mach_k1dp:
+    case bfd_mach_k1io:
       break;
     default:
       return FALSE;
@@ -399,6 +401,8 @@ k1_elf_relocate_section
   return TRUE;
 }
 
+
+
 #define TARGET_LITTLE_SYM         bfd_elf32_k1_vec
 #define TARGET_LITTLE_NAME        "elf32-k1"
 #define ELF_ARCH                  bfd_arch_k1
@@ -419,7 +423,6 @@ k1_elf_relocate_section
 #define bfd_elf32_bfd_print_private_bfd_data elf_k1_print_private_bfd_data
 #define elf_backend_final_write_processing   elf_k1_final_write_processing
 #define elf_backend_object_p                 elf_k1_object_p
-
 
 #include "elf32-target.h"
 
