@@ -199,6 +199,9 @@ k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
   CORE_ADDR adjusted = bpaddr;
   int i = 0;
 
+  adjusted &= ~3;
+  if (adjusted == 0) return adjusted;
+
   /* Look for the end of the bundle preceeding the requested address. */
   do {
     if (target_read_memory (adjusted - 4, syllab_buf, 4) != 0)
@@ -208,7 +211,7 @@ k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
   } while ((i++ < 7) && (syllab >> 31) && (adjusted -= 4));
 
   if (i == 8) /* Impossible for correct instructions */
-      return bpaddr;
+      return bpaddr & ~3;
 
   return adjusted;
 }
