@@ -3505,29 +3505,29 @@ PASS: gdb.base/dump.exp: file binfile; capture intarray
 PASS: gdb.base/dump.exp: start with intarray un-initialized
 PASS: gdb.base/dump.exp: file binfile; capture intstruct
 PASS: gdb.base/dump.exp: start with intstruct un-initialized
-PASS: gdb.base/dump.exp: reload array as value, srec; capture * (int (*)[32]) 0x4bb0
+PASS: gdb.base/dump.exp: reload array as value, srec; capture * (int (*)[32]) 0x4bd0
 PASS: gdb.base/dump.exp: reload array as value, srec; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, srec; capture * (struct teststruct *) 0x4af8
+PASS: gdb.base/dump.exp: reload struct as value, srec; capture * (struct teststruct *) 0x4b18
 PASS: gdb.base/dump.exp: reload struct as value, srec; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, srec; capture * (int (*)[32]) 0x4bb0
+PASS: gdb.base/dump.exp: reload array as memory, srec; capture * (int (*)[32]) 0x4bd0
 PASS: gdb.base/dump.exp: reload array as memory, srec; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, srec; capture * (struct teststruct *) 0x4af8
+PASS: gdb.base/dump.exp: reload struct as memory, srec; capture * (struct teststruct *) 0x4b18
 PASS: gdb.base/dump.exp: reload struct as memory, srec; value restored ok
-PASS: gdb.base/dump.exp: reload array as value, intel hex; capture * (int (*)[32]) 0x4bb0
+PASS: gdb.base/dump.exp: reload array as value, intel hex; capture * (int (*)[32]) 0x4bd0
 PASS: gdb.base/dump.exp: reload array as value, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, intel hex; capture * (struct teststruct *) 0x4af8
+PASS: gdb.base/dump.exp: reload struct as value, intel hex; capture * (struct teststruct *) 0x4b18
 PASS: gdb.base/dump.exp: reload struct as value, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, intel hex; capture * (int (*)[32]) 0x4bb0
+PASS: gdb.base/dump.exp: reload array as memory, intel hex; capture * (int (*)[32]) 0x4bd0
 PASS: gdb.base/dump.exp: reload array as memory, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, intel hex; capture * (struct teststruct *) 0x4af8
+PASS: gdb.base/dump.exp: reload struct as memory, intel hex; capture * (struct teststruct *) 0x4b18
 PASS: gdb.base/dump.exp: reload struct as memory, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload array as value, tekhex; capture * (int (*)[32]) 0x4bb0
+PASS: gdb.base/dump.exp: reload array as value, tekhex; capture * (int (*)[32]) 0x4bd0
 PASS: gdb.base/dump.exp: reload array as value, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, tekhex; capture * (struct teststruct *) 0x4af8
+PASS: gdb.base/dump.exp: reload struct as value, tekhex; capture * (struct teststruct *) 0x4b18
 PASS: gdb.base/dump.exp: reload struct as value, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, tekhex; capture * (int (*)[32]) 0x4bb0
+PASS: gdb.base/dump.exp: reload array as memory, tekhex; capture * (int (*)[32]) 0x4bd0
 PASS: gdb.base/dump.exp: reload array as memory, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, tekhex; capture * (struct teststruct *) 0x4af8
+PASS: gdb.base/dump.exp: reload struct as memory, tekhex; capture * (struct teststruct *) 0x4b18
 PASS: gdb.base/dump.exp: reload struct as memory, tekhex; value restored ok
 Running ../../../gdb/testsuite/gdb.base/remote.exp ...
 PASS: gdb.base/remote.exp: write-packet default
