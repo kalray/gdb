@@ -3381,59 +3381,59 @@ PASS: gdb.base/dump.exp: dump struct as memory, tekhex
 PASS: gdb.base/dump.exp: dump array as mem, srec, expressions
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as value, srec; file restored ok
-PASS: gdb.base/dump.exp: array as value, srec; capture intarray
+PASS: gdb.base/dump.exp: array as value, srec; capture ok
 PASS: gdb.base/dump.exp: array as value, srec; value restored ok
 PASS: gdb.base/dump.exp: struct as value, srec; file restored ok
-PASS: gdb.base/dump.exp: struct as value, srec; capture intstruct
+PASS: gdb.base/dump.exp: struct as value, srec; capture ok
 PASS: gdb.base/dump.exp: struct as value, srec; value restored ok
 PASS: gdb.base/dump.exp: zero all
 PASS: gdb.base/dump.exp: array as memory, srec; file restored ok
-PASS: gdb.base/dump.exp: array as memory, srec; capture intarray
+PASS: gdb.base/dump.exp: array as memory, srec; capture ok
 PASS: gdb.base/dump.exp: array as memory, srec; value restored ok
 PASS: gdb.base/dump.exp: struct as memory, srec; file restored ok
-PASS: gdb.base/dump.exp: struct as memory, srec; capture intstruct
+PASS: gdb.base/dump.exp: struct as memory, srec; capture ok
 PASS: gdb.base/dump.exp: struct as memory, srec; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as value, ihex; file restored ok
-PASS: gdb.base/dump.exp: array as value, ihex; capture intarray
+PASS: gdb.base/dump.exp: array as value, ihex; capture ok
 PASS: gdb.base/dump.exp: array as value, ihex; value restored ok
 PASS: gdb.base/dump.exp: struct as value, ihex; file restored ok
-PASS: gdb.base/dump.exp: struct as value, ihex; capture intstruct
+PASS: gdb.base/dump.exp: struct as value, ihex; capture ok
 PASS: gdb.base/dump.exp: struct as value, ihex; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as memory, ihex; file restored ok
-PASS: gdb.base/dump.exp: array as memory, ihex; capture intarray
+PASS: gdb.base/dump.exp: array as memory, ihex; capture ok
 PASS: gdb.base/dump.exp: array as memory, ihex; value restored ok
 PASS: gdb.base/dump.exp: struct as memory, ihex; file restored ok
-PASS: gdb.base/dump.exp: struct as memory, ihex; capture intstruct
+PASS: gdb.base/dump.exp: struct as memory, ihex; capture ok
 PASS: gdb.base/dump.exp: struct as memory, ihex; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as value, tekhex; file restored ok
-PASS: gdb.base/dump.exp: array as value, tekhex; capture intarray
+PASS: gdb.base/dump.exp: array as value, tekhex; capture ok
 PASS: gdb.base/dump.exp: array as value, tekhex; value restored ok
 PASS: gdb.base/dump.exp: struct as value, tekhex; file restored ok
-PASS: gdb.base/dump.exp: struct as value, tekhex; capture intstruct
+PASS: gdb.base/dump.exp: struct as value, tekhex; capture ok
 PASS: gdb.base/dump.exp: struct as value, tekhex; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as memory, tekhex; file restored ok
-PASS: gdb.base/dump.exp: array as memory, tekhex; capture intarray
+PASS: gdb.base/dump.exp: array as memory, tekhex; capture ok
 PASS: gdb.base/dump.exp: array as memory, tekhex; value restored ok
 PASS: gdb.base/dump.exp: struct as memory, tekhex; file restored ok
-PASS: gdb.base/dump.exp: struct as memory, tekhex; capture intstruct
+PASS: gdb.base/dump.exp: struct as memory, tekhex; capture ok
 PASS: gdb.base/dump.exp: struct as memory, tekhex; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as value, binary; file restored ok
-PASS: gdb.base/dump.exp: array as value, binary; capture intarray
+PASS: gdb.base/dump.exp: array as value, binary; capture ok
 PASS: gdb.base/dump.exp: array as value, binary; value restored ok
 PASS: gdb.base/dump.exp: struct as value, binary; file restored ok
-PASS: gdb.base/dump.exp: struct as value, binary; capture intstruct
+PASS: gdb.base/dump.exp: struct as value, binary; capture ok
 PASS: gdb.base/dump.exp: struct as value, binary; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array as memory, binary; file restored ok
-PASS: gdb.base/dump.exp: array as memory, binary; capture intarray
+PASS: gdb.base/dump.exp: array as memory, binary; capture ok
 PASS: gdb.base/dump.exp: array as memory, binary; value restored ok
 PASS: gdb.base/dump.exp: struct as memory, binary; file restored ok
-PASS: gdb.base/dump.exp: struct as memory, binary; capture intstruct
+PASS: gdb.base/dump.exp: struct as memory, binary; capture ok
 PASS: gdb.base/dump.exp: struct as memory, binary; value restored ok
 PASS: gdb.base/dump.exp: capture /x &intarray2[0]
 PASS: gdb.base/dump.exp: capture /x &intstruct2
@@ -3441,31 +3441,31 @@ PASS: gdb.base/dump.exp: capture (char *) &intarray2 - (char *) &intarray
 PASS: gdb.base/dump.exp: capture (char *) &intstruct2 - (char *) &intstruct
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array copy, srec; file restored ok
-PASS: gdb.base/dump.exp: array copy, srec; capture intarray2
+PASS: gdb.base/dump.exp: array copy, srec; capture ok
 PASS: gdb.base/dump.exp: array copy, srec; value restored ok
 PASS: gdb.base/dump.exp: struct copy, srec; file restored ok
-PASS: gdb.base/dump.exp: struct copy, srec; capture intstruct2
+PASS: gdb.base/dump.exp: struct copy, srec; capture ok
 PASS: gdb.base/dump.exp: struct copy, srec; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array copy, ihex; file restored ok
-PASS: gdb.base/dump.exp: array copy, ihex; capture intarray2
+PASS: gdb.base/dump.exp: array copy, ihex; capture ok
 PASS: gdb.base/dump.exp: array copy, ihex; value restored ok
 PASS: gdb.base/dump.exp: struct copy, ihex; file restored ok
-PASS: gdb.base/dump.exp: struct copy, ihex; capture intstruct2
+PASS: gdb.base/dump.exp: struct copy, ihex; capture ok
 PASS: gdb.base/dump.exp: struct copy, ihex; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array copy, tekhex; file restored ok
-PASS: gdb.base/dump.exp: array copy, tekhex; capture intarray2
+PASS: gdb.base/dump.exp: array copy, tekhex; capture ok
 PASS: gdb.base/dump.exp: array copy, tekhex; value restored ok
 PASS: gdb.base/dump.exp: struct copy, tekhex; file restored ok
-PASS: gdb.base/dump.exp: struct copy, tekhex; capture intstruct2
+PASS: gdb.base/dump.exp: struct copy, tekhex; capture ok
 PASS: gdb.base/dump.exp: struct copy, tekhex; value restored ok
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array copy, binary; file restored ok
-PASS: gdb.base/dump.exp: array copy, binary; capture intarray2
+PASS: gdb.base/dump.exp: array copy, binary; capture ok
 PASS: gdb.base/dump.exp: array copy, binary; value restored ok
 PASS: gdb.base/dump.exp: struct copy, binary; file restored ok
-PASS: gdb.base/dump.exp: struct copy, binary; capture intstruct2
+PASS: gdb.base/dump.exp: struct copy, binary; capture ok
 PASS: gdb.base/dump.exp: struct copy, binary; value restored ok
 PASS: gdb.base/dump.exp: capture /x &intarray[3]
 PASS: gdb.base/dump.exp: capture /x &intarray[4]
@@ -3473,61 +3473,61 @@ PASS: gdb.base/dump.exp: capture /x (char *) &intarray[3] - (char *) &intarray[0
 PASS: gdb.base/dump.exp: capture /x (char *) &intarray[4] - (char *) &intarray[0]
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, srec; file restored ok
-PASS: gdb.base/dump.exp: array partial, srec; capture intarray[3]
+PASS: gdb.base/dump.exp: array partial, srec; capture ok
 PASS: gdb.base/dump.exp: array partial, srec; value restored ok
 PASS: gdb.base/dump.exp: element 2 not changed - 1
 PASS: gdb.base/dump.exp: element 4 not changed - 1
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, ihex; file restored ok
-PASS: gdb.base/dump.exp: array partial, ihex; capture intarray[3]
+PASS: gdb.base/dump.exp: array partial, ihex; capture ok
 PASS: gdb.base/dump.exp: array partial, ihex; value restored ok
 PASS: gdb.base/dump.exp: element 2 not changed - 2
 PASS: gdb.base/dump.exp: element 4 not changed - 2
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, tekhex; file restored ok
-PASS: gdb.base/dump.exp: array partial, tekhex; capture intarray[3]
+PASS: gdb.base/dump.exp: array partial, tekhex; capture ok
 PASS: gdb.base/dump.exp: array partial, tekhex; value restored ok
 PASS: gdb.base/dump.exp: element 2 not changed - 3
 PASS: gdb.base/dump.exp: element 4 not changed - 3
 PASS: gdb.base/dump.exp: print zero_all ()
 PASS: gdb.base/dump.exp: array partial, binary; file restored ok
-PASS: gdb.base/dump.exp: array partial, binary; capture intarray[3]
+PASS: gdb.base/dump.exp: array partial, binary; capture ok
 PASS: gdb.base/dump.exp: array partial, binary; value restored ok
 PASS: gdb.base/dump.exp: element 2 not changed - 4
 PASS: gdb.base/dump.exp: element 4 not changed - 4
 PASS: gdb.base/dump.exp: array partial with expressions; file restored ok
-PASS: gdb.base/dump.exp: array partial with expressions; capture intarray2[3]
+PASS: gdb.base/dump.exp: array partial with expressions; capture ok
 PASS: gdb.base/dump.exp: array partial with expressions; value restored ok
 PASS: gdb.base/dump.exp: element 2 not changed, == 4
 PASS: gdb.base/dump.exp: element 4 not changed, == 4
 PASS: gdb.base/dump.exp: setting little endianness
-PASS: gdb.base/dump.exp: file binfile; capture intarray
+PASS: gdb.base/dump.exp: file binfile; capture ok
 PASS: gdb.base/dump.exp: start with intarray un-initialized
-PASS: gdb.base/dump.exp: file binfile; capture intstruct
+PASS: gdb.base/dump.exp: file binfile; capture ok
 PASS: gdb.base/dump.exp: start with intstruct un-initialized
-PASS: gdb.base/dump.exp: reload array as value, srec; capture * (int (*)[32]) 0x4bd0
+PASS: gdb.base/dump.exp: reload array as value, srec; capture ok
 PASS: gdb.base/dump.exp: reload array as value, srec; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, srec; capture * (struct teststruct *) 0x4b18
+PASS: gdb.base/dump.exp: reload struct as value, srec; capture ok
 PASS: gdb.base/dump.exp: reload struct as value, srec; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, srec; capture * (int (*)[32]) 0x4bd0
+PASS: gdb.base/dump.exp: reload array as memory, srec; capture ok
 PASS: gdb.base/dump.exp: reload array as memory, srec; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, srec; capture * (struct teststruct *) 0x4b18
+PASS: gdb.base/dump.exp: reload struct as memory, srec; capture ok
 PASS: gdb.base/dump.exp: reload struct as memory, srec; value restored ok
-PASS: gdb.base/dump.exp: reload array as value, intel hex; capture * (int (*)[32]) 0x4bd0
+PASS: gdb.base/dump.exp: reload array as value, intel hex; capture ok
 PASS: gdb.base/dump.exp: reload array as value, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, intel hex; capture * (struct teststruct *) 0x4b18
+PASS: gdb.base/dump.exp: reload struct as value, intel hex; capture ok
 PASS: gdb.base/dump.exp: reload struct as value, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, intel hex; capture * (int (*)[32]) 0x4bd0
+PASS: gdb.base/dump.exp: reload array as memory, intel hex; capture ok
 PASS: gdb.base/dump.exp: reload array as memory, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, intel hex; capture * (struct teststruct *) 0x4b18
+PASS: gdb.base/dump.exp: reload struct as memory, intel hex; capture ok
 PASS: gdb.base/dump.exp: reload struct as memory, intel hex; value restored ok
-PASS: gdb.base/dump.exp: reload array as value, tekhex; capture * (int (*)[32]) 0x4bd0
+PASS: gdb.base/dump.exp: reload array as value, tekhex; capture ok
 PASS: gdb.base/dump.exp: reload array as value, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as value, tekhex; capture * (struct teststruct *) 0x4b18
+PASS: gdb.base/dump.exp: reload struct as value, tekhex; capture ok
 PASS: gdb.base/dump.exp: reload struct as value, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload array as memory, tekhex; capture * (int (*)[32]) 0x4bd0
+PASS: gdb.base/dump.exp: reload array as memory, tekhex; capture ok
 PASS: gdb.base/dump.exp: reload array as memory, tekhex; value restored ok
-PASS: gdb.base/dump.exp: reload struct as memory, tekhex; capture * (struct teststruct *) 0x4b18
+PASS: gdb.base/dump.exp: reload struct as memory, tekhex; capture ok
 PASS: gdb.base/dump.exp: reload struct as memory, tekhex; value restored ok
 Running ../../../gdb/testsuite/gdb.base/remote.exp ...
 PASS: gdb.base/remote.exp: write-packet default
