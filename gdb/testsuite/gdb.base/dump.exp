@@ -130,7 +130,7 @@ proc capture_value { expression args } {
     set output_string ""
     if {[llength $args] > 0} {
 	# Convert $args into a simple string.
-	set test "[join $args]; capture $expression"
+	set test "[join $args]; capture ok"
     } {
 	set test "capture $expression"
     }
