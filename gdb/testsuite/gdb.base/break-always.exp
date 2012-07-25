@@ -84,7 +84,7 @@ gdb_test "p /x *(char *) $bp_address" \
     "read back 1 from the breakpoint's address"
 
 # Restore the original contents.
-gdb_test "p /x *(char *) $bp_address = \$shadow" ""
+gdb_test "p /x *(char *) $bp_address = \$shadow" "" "Restore the original contents"
 
 # Run to breakpoint.
 gdb_continue_to_breakpoint "bar" ".*break-always.c:$bar_location.*"
