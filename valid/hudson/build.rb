@@ -62,7 +62,7 @@ b.target("build") do
   machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
 
   if( arch == "k1" )
-    create_goto_dir! build_path
+    b.create_goto_dir! build_path
 
     version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
     version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
@@ -112,7 +112,7 @@ b.target("gdb") do
   if( arch == "k1" )
     
     # Validation in the valid project
-    create_goto_dir! build_path 
+    b.create_goto_dir! build_path 
     
     # Build native, just to create the build directories
     b.run("../configure")
