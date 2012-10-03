@@ -2968,7 +2968,7 @@ PASS: gdb.base/break-always.exp: write 0 to breakpoint's address
 PASS: gdb.base/break-always.exp: read back 0 from the breakpoint's address
 PASS: gdb.base/break-always.exp: write 1 to breakpoint's address
 PASS: gdb.base/break-always.exp: read back 1 from the breakpoint's address
-PASS: gdb.base/break-always.exp: p /x *(char *) 0xce8 = $shadow
+PASS: gdb.base/break-always.exp: Restore the original contents
 PASS: gdb.base/break-always.exp: continue to breakpoint: bar
 Running ../../../gdb/testsuite/gdb.base/restore.exp ...
 PASS: gdb.base/restore.exp: tbreak caller1
