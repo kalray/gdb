@@ -4094,7 +4094,7 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 
 #define bfd_elf32_bfd_link_hash_table_create    k1_elf_link_hash_table_create
 
-#define elf_backend_can_gc_sections             0
+#define elf_backend_can_gc_sections             1
 #define elf_backend_relocate_section            k1_elf_relocate_section
 #define elf_backend_rela_normal                 1
 
@@ -4126,8 +4126,8 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 #define elf_backend_always_size_sections        elf_k1_always_size_sections
 #define elf_backend_modify_program_headers      elf_k1_modify_program_headers
 #define elf_backend_omit_section_dynsym         _k1fdpic_link_omit_section_dynsym
-#define elf_backend_discard_info                k1fdpic_elf_discard_info
-#define elf_backend_gc_sweep_hook       	k1fdpic_gc_sweep_hook
+// #define elf_backend_discard_info                k1fdpic_elf_discard_info
+// #define elf_backend_gc_sweep_hook       	k1fdpic_gc_sweep_hook
 
 #define elf_backend_may_use_rel_p       1
 #define elf_backend_may_use_rela_p      1
