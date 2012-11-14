@@ -4100,10 +4100,10 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 
 
 
-#define elf_backend_want_got_plt                1
+#define elf_backend_want_got_plt                0
 #define elf_backend_plt_readonly                1
 #define elf_backend_want_plt_sym                0
-#define elf_backend_got_header_size             0
+#define elf_backend_got_header_size             12
 
 
 
