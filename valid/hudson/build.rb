@@ -24,6 +24,8 @@ clean = CleanTarget.new("clean", repo, [])
 build = ParallelTarget.new("build", repo, [], [])
 valid = ParallelTarget.new("valid", repo, [build], [])
 install = Target.new("install", repo, [valid], [])
+install.write_prefix()
+
 valid_valid = Target.new("gdb", repo, [], [])
 
 b = Builder.new("gdb", options, [clean, build, valid, install, valid_valid])
