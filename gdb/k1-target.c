@@ -523,6 +523,12 @@ attach_mppa_command (char *args, int from_tty)
         }
     }
     switch_to_thread (cur_ptid);
+
+    /* This is a hack to populate the dwarf mapping tables now that we
+       have the architecture at hand. Having these tables initialized
+       from the debug reader routines will break as objfile_arch won't
+       have the register descriptions */
+    gdbarch_dwarf2_reg_to_regnum (get_current_arch (), 0);
 }
 
 void
