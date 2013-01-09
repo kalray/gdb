@@ -480,6 +480,7 @@ attach_mppa_command (char *args, int from_tty)
     osdata = get_osdata (NULL);
     
     cur_inf = current_inferior();
+    set_inferior_data (cur_inf, k1_attached_inf_data, NULL);
     cur_ptid = inferior_ptid;
 
     for (ix_items = 0;
