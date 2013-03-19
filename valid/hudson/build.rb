@@ -43,7 +43,7 @@ build_path = gdb_path + "/" + arch + "_build"
 
 prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 
-b.default_targets = [build]
+b.default_targets = [install]
 
 case arch
 when "k1"
