@@ -98,7 +98,7 @@ b.target("valid") do
   if( arch == "k1" )
     Dir.chdir build_path + "/gdb/testsuite"
     
-    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+    b.valid(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
     if(compiler == "open64") then
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.open64.ref gdb.sum")
     else 
