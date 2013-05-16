@@ -81,7 +81,7 @@ typedef union {
 /* (pp) abi */
 #define _ELF_K1_ABI_BIT (0)                             /* 1st bit position in b
                                                            yte */
-#define ELF_K1_ABI_MASK         (0x7f<<_ELF_K1_ABI_BIT)           /* mask */
+#define ELF_K1_ABI_MASK         (0xf<<_ELF_K1_ABI_BIT)           /* mask */
 #define ELF_K1_ABI_NO           (0x0<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_MULTI        (0x1<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_EMBED        (0x2<<_ELF_K1_ABI_BIT)
@@ -90,6 +90,21 @@ typedef union {
 #define ELF_K1_ABI_UNDEF        (0x5<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_RELOC_EMBED  (0x6<<_ELF_K1_ABI_BIT)
 #define _ELF_K1_CHECK_ABI(m) ((m&ELF_K1_ABI_MASK)==m)
+
+
+/* These flags have to be in sync with Linux kernel */
+/* FIXME: Have to clean it up with the flags above
+   however we need to be able to set both PIC and FDPIC together
+   depending on the options so the ABI option is not the best for that */
+
+/* (FD)PIC specific */
+#define _ELF_K1_PIC_BIT (4)
+
+#define ELF_K1_PIC_MASK          (0x3)
+#define ELF_K1_NOPIC             (0x0<<_ELF_K1_PIC_BIT)
+#define ELF_K1_PIC               (0x1<<_ELF_K1_PIC_BIT) /* -fpic   */
+#define ELF_K1_FDPIC             (0x2<<_ELF_K1_PIC_BIT) /* -mfdpic */
+#define _ELF_K1_CHECK_PIC(m) ((m&ELF_K1_PIC_MASK)==m)
 
 /* compatibility with rta directive on solaris : rta bits where writen in the bi
  * ts 28:31 on Solaris */
@@ -112,6 +127,8 @@ const char * code_generation_mode_printable_name(Elf_Internal_Ehdr * i_ehdrp);
 flagword k1_elf_get_private_flags (bfd* abfd);
 void k1_elf_dump_target_info(bfd *abfd, FILE *writer);
 
+#if 0
+/* FIXME: Do we need that? */
 /* (pp) say wether a function can be moved by icacheopt or not */
 #define STO_FUNC_NATURE_BIT (4)
 #define STO_FUNC_NATURE_MASK   (0x1 << STO_FUNC_NATURE_BIT)
@@ -124,6 +141,7 @@ void k1_elf_dump_target_info(bfd *abfd, FILE *writer);
 #define STO_SYMB_USED_MASK   (0x1 << STO_SYMB_USED_BIT)
 #define STO_USED  (0x1 << STO_SYMB_USED_BIT)
 #define is_STO_USED(o) (((o)&STO_SYMB_USED_MASK)==STO_USED)
+#endif//0
 
 #define ELF_STRING_k1_pltoff ".k1.pltoff"
 
@@ -150,13 +168,15 @@ START_RELOC_NUMBERS (elf_k1_reloc_type)
         RELOC_NUMBER(R_K1_PLT_LO10, 19)
         RELOC_NUMBER(R_K1_PLT_HI22, 20)
         RELOC_NUMBER(R_K1_FUNCDESC, 21)
-	RELOC_NUMBER(R_K1_FUNCDESC_GOT_LO10, 22)
+        RELOC_NUMBER(R_K1_FUNCDESC_GOT_LO10, 22)
         RELOC_NUMBER(R_K1_FUNCDESC_GOT_HI22, 23)
         RELOC_NUMBER(R_K1_FUNCDESC_GOTOFF_LO10, 24)
         RELOC_NUMBER(R_K1_FUNCDESC_GOTOFF_HI22, 25)
         RELOC_NUMBER(R_K1_FUNCDESC_VALUE, 26)
-	RELOC_NUMBER(R_K1_GOTOFF, 27)
-	RELOC_NUMBER(R_K1_GOT, 28)
+        RELOC_NUMBER(R_K1_GOTOFF, 27)
+        RELOC_NUMBER(R_K1_GOT, 28)
+        RELOC_NUMBER(R_K1_10_GPREL, 29)
+        RELOC_NUMBER(R_K1_16_GPREL, 30)
   END_RELOC_NUMBERS (R_K1_max)
 
 #endif
