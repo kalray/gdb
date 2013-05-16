@@ -53,6 +53,10 @@ static const struct k1_reloc_map k1_reloc_map[] =
   { BFD_RELOC_K1_FUNCDESC_VALUE,    R_K1_FUNCDESC_VALUE },
   { BFD_RELOC_K1_GOTOFF,    R_K1_GOTOFF },
   { BFD_RELOC_K1_GOT,    R_K1_GOT },
+  { BFD_RELOC_K1_10_GPREL,    R_K1_10_GPREL },
+  { BFD_RELOC_K1_16_GPREL,    R_K1_16_GPREL },
+/*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
+  { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
 };
 
 static reloc_howto_type* k1_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name){
@@ -518,6 +522,7 @@ _k1fdpic_count_nontls_entries (struct k1fdpic_relocs_info *entry,
     && ! (dinfo->info->flags & DF_BIND_NOW)
     && elf_hash_table (dinfo->info)->dynamic_sections_created;
     */
+  entry->lazyplt = 0;
 
   /* Allocate space for a function descriptor.  */
 //   if (entry->fdgotoffhilo)
@@ -767,25 +772,23 @@ elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym)
 }
 
 
-static bfd_vma elf32_k1_gp_base (bfd *output_bfd)
+static bfd_vma elf32_k1_gp_base (bfd *output_bfd, struct bfd_link_info *info)
 {
     bfd_vma res = _bfd_get_gp_value (output_bfd);
-    bfd_vma min_vma = (bfd_vma) -1;
-    asection *os;
-      
-    if (res) return res;
-    
-    /* Point GP at the lowest data section */
-    for (os = output_bfd->sections; os ; os = os->next) {
-	if ((os->flags & (SEC_ALLOC | SEC_DATA)) == (SEC_ALLOC | SEC_DATA)
-	    && os->size > 0) {
-	    if (os->vma < min_vma)
-		min_vma = os->vma;
-	}
-    }
+    struct elf_link_hash_entry *gp;
+    bfd_vma gp_val = (bfd_vma) -1;
 
-    _bfd_set_gp_value (output_bfd, min_vma);
-    return min_vma;
+    /* Point GP at _data_start symbol */
+    
+    if (res) return res;
+
+    gp = elf_link_hash_lookup (elf_hash_table (info), "_data_start", FALSE,
+                                 FALSE, FALSE);
+    if (gp)
+      gp_val = gp->root.u.def.value;
+
+    _bfd_set_gp_value (output_bfd, gp_val);
+    return gp_val;
 }
 
 /* The name of the dynamic interpreter.  This is put in the .interp
@@ -1532,9 +1535,11 @@ k1_elf_relocate_section
 	case R_K1_TPREL_32:
 	    relocation -=  elf_hash_table (info)->tls_sec->vma;
 	    break;
+	case R_K1_10_GPREL:
+	case R_K1_16_GPREL:
 	case R_K1_GPREL_LO10:
 	case R_K1_GPREL_HI22:
-	    relocation -=  elf32_k1_gp_base (output_bfd);
+	    relocation -=  elf32_k1_gp_base (output_bfd, info);
 	    break;
 
         case R_K1_27_PCREL:
@@ -2358,6 +2363,10 @@ k1_check_relocs (bfd * abfd,
 	case R_K1_FUNCDESC_GOT_LO10:
         case R_K1_FUNCDESC_GOT_HI22:
         case R_K1_27_PCREL:
+        case R_K1_10_GPREL:
+        case R_K1_16_GPREL:
+        case R_K1_GPREL_HI22:
+        case R_K1_GPREL_LO10:
         case R_K1_GLOB_DAT:
 //           if (! IS_FDPIC (abfd))
 //             goto bad_reloc;
@@ -2481,6 +2490,8 @@ k1_check_relocs (bfd * abfd,
         case R_K1_32_PCREL:
         case R_K1_LO10:
         case R_K1_HI22:
+        case R_K1_10_GPREL:
+        case R_K1_16_GPREL:
         case R_K1_GPREL_HI22:
         case R_K1_GPREL_LO10:
         case R_K1_TPREL_32:
@@ -4086,7 +4097,7 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 
 #define ELF_TARGET_ID                           K1_ELF_DATA
 #define ELF_MACHINE_CODE                        EM_K1
-#define ELF_MAXPAGESIZE                         64
+#define ELF_MAXPAGESIZE                         0x1000
 #define bfd_elf32_bfd_reloc_type_lookup         k1_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup         k1_reloc_name_lookup
 #define elf_info_to_howto                       k1_elf_info_to_howto
@@ -4126,8 +4137,8 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 #define elf_backend_always_size_sections        elf_k1_always_size_sections
 #define elf_backend_modify_program_headers      elf_k1_modify_program_headers
 #define elf_backend_omit_section_dynsym         _k1fdpic_link_omit_section_dynsym
-// #define elf_backend_discard_info                k1fdpic_elf_discard_info
-// #define elf_backend_gc_sweep_hook       	k1fdpic_gc_sweep_hook
+#define elf_backend_discard_info                k1fdpic_elf_discard_info
+#define elf_backend_gc_sweep_hook               k1fdpic_gc_sweep_hook
 
 #define elf_backend_may_use_rel_p       1
 #define elf_backend_may_use_rela_p      1
