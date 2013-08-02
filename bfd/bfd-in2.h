@@ -4996,6 +4996,9 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_K1_GOT,
   BFD_RELOC_K1_10_GPREL,
   BFD_RELOC_K1_16_GPREL,
+  BFD_RELOC_K1_COPY,
+  BFD_RELOC_K1_JMP_SLOT,
+  BFD_RELOC_K1_RELATIVE,
 
 
 
