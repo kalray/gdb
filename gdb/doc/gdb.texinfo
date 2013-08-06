@@ -4823,7 +4823,7 @@ invocations have returned.
 
 
 @kindex advance @var{location}
-@itemx advance @var{location}
+@item advance @var{location}
 Continue running the program up to the given @var{location}.  An argument is
 required, which should be of one of the forms described in
 @ref{Specify Location}.
@@ -5718,7 +5718,7 @@ function invocation, you end up at the beginning.
 @kindex set exec-direction
 @item set exec-direction
 Set the direction of target execution.
-@itemx set exec-direction reverse
+@item set exec-direction reverse
 @cindex execute forward or backward in time
 @value{GDBN} will perform all execution commands in reverse, until the
 exec-direction mode is changed to ``forward''.  Affected commands include
@@ -38813,7 +38813,7 @@ A string in the constant pool is zero-terminated.
 @printindex cp
 
 @tex
-% I think something like @colophon should be in texinfo.  In the
+% I think something like @@colophon should be in texinfo.  In the
 % meantime:
 \long\def\colophon{\hbox to0pt{}\vfill
 \centerline{The body of this manual is set in}
@@ -38825,7 +38825,7 @@ A string in the constant pool is zero-terminated.
 \centerline{{\sl\fontname\tensl\/}}
 \centerline{are used for emphasis.}\vfill}
 \page\colophon
-% Blame: doc@cygnus.com, 1991.
+% Blame: doc@@cygnus.com, 1991.
 @end tex
 
 @bye
