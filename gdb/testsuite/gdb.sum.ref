@@ -4261,12 +4261,7 @@ PASS: gdb.base/value-double-free.exp: continue
 PASS: gdb.base/value-double-free.exp: print empty()
 PASS: gdb.base/value-double-free.exp: help help
 Running ../../../gdb/testsuite/gdb.base/stack-checking.exp ...
-PASS: gdb.base/stack-checking.exp: continue to breakpoint: breakpoint for small frame
-PASS: gdb.base/stack-checking.exp: bt
-PASS: gdb.base/stack-checking.exp: continue to breakpoint: breakpoint for medium frame
-PASS: gdb.base/stack-checking.exp: bt
-FAIL: gdb.base/stack-checking.exp: continue to breakpoint: breakpoint for big frame
-FAIL: gdb.base/stack-checking.exp: bt
+UNTESTED: gdb.base/stack-checking.exp: stack-checking.exp
 Running ../../../gdb/testsuite/gdb.base/save-bp.exp ...
 PASS: gdb.base/save-bp.exp: add breakpoint commands
 PASS: gdb.base/save-bp.exp: save breakpoint bps
