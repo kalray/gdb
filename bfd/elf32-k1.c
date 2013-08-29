@@ -58,6 +58,10 @@ static const struct k1_reloc_map k1_reloc_map[] =
   { BFD_RELOC_K1_FUNCDESC_VALUE,    R_K1_FUNCDESC_VALUE },
   { BFD_RELOC_K1_GOTOFF,    R_K1_GOTOFF },
   { BFD_RELOC_K1_GOT,    R_K1_GOT },
+  { BFD_RELOC_K1_10_GPREL,    R_K1_10_GPREL },
+  { BFD_RELOC_K1_16_GPREL,    R_K1_16_GPREL },
+/*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
+  { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
 };
 
 static reloc_howto_type* k1_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name){
@@ -523,6 +527,7 @@ _k1fdpic_count_nontls_entries (struct k1fdpic_relocs_info *entry,
     && ! (dinfo->info->flags & DF_BIND_NOW)
     && elf_hash_table (dinfo->info)->dynamic_sections_created;
     */
+  entry->lazyplt = 0;
 
   /* Allocate space for a function descriptor.  */
 //   if (entry->fdgotoffhilo)
@@ -780,7 +785,9 @@ static bfd_vma elf32_k1_gp_base (bfd *output_bfd, struct bfd_link_info *info)
 
     /* Point GP at _data_start symbol */
     
+    /* Point GP at _data_start symbol */
     if (res) return res;
+
     gp = elf_link_hash_lookup (elf_hash_table (info), "_data_start", FALSE,
                                  FALSE, FALSE);
     if (gp)
@@ -1568,6 +1575,8 @@ k1_elf_relocate_section
 	    relocation -=  tls_sec->vma;
 	  }
 	    break;
+	case R_K1_10_GPREL:
+	case R_K1_16_GPREL:
 	case R_K1_GPREL_LO10:
 	case R_K1_GPREL_HI22:
 	    relocation -=  elf32_k1_gp_base (output_bfd, info);
@@ -2406,6 +2415,10 @@ k1_check_relocs (bfd * abfd,
              goto bad_reloc;
 	  /* Fall through.  */
         case R_K1_27_PCREL:
+        case R_K1_10_GPREL:
+        case R_K1_16_GPREL:
+        case R_K1_GPREL_HI22:
+        case R_K1_GPREL_LO10:
         case R_K1_GLOB_DAT:
           if (IS_FDPIC (abfd) && ! dynobj)
             {
@@ -2530,6 +2543,8 @@ k1_check_relocs (bfd * abfd,
         case R_K1_32_PCREL:
         case R_K1_LO10:
         case R_K1_HI22:
+        case R_K1_10_GPREL:
+        case R_K1_16_GPREL:
         case R_K1_GPREL_HI22:
         case R_K1_GPREL_LO10:
         case R_K1_TPREL_32:
@@ -4136,7 +4151,7 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 
 #define ELF_TARGET_ID                           K1_ELF_DATA
 #define ELF_MACHINE_CODE                        EM_K1
-#define ELF_MAXPAGESIZE                         64
+#define ELF_MAXPAGESIZE                         0x1000
 #define bfd_elf32_bfd_reloc_type_lookup         k1_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup         k1_reloc_name_lookup
 #define elf_info_to_howto                       k1_elf_info_to_howto
@@ -4173,6 +4188,12 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 #define elf_backend_object_p                    elf_k1_object_p
 #define elf_backend_discard_info                k1fdpic_elf_discard_info
 
+#define bfd_elf32_bfd_copy_private_bfd_data     elf_k1_copy_private_bfd_data
+#define elf_backend_always_size_sections        elf_k1_always_size_sections
+#define elf_backend_modify_program_headers      elf_k1_modify_program_headers
+#define elf_backend_omit_section_dynsym         _k1fdpic_link_omit_section_dynsym
+#define elf_backend_discard_info                k1fdpic_elf_discard_info
+#define elf_backend_gc_sweep_hook               k1fdpic_gc_sweep_hook
 
 #define elf_backend_may_use_rel_p       1
 #define elf_backend_may_use_rela_p      1

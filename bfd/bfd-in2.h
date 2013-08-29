@@ -4996,6 +4996,9 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_K1_FUNCDESC_VALUE,
   BFD_RELOC_K1_GOTOFF,
   BFD_RELOC_K1_GOT,
+  BFD_RELOC_K1_10_GPREL,
+  BFD_RELOC_K1_16_GPREL,
+
 
 /* Tilera TILEPro Relocations.  */
   BFD_RELOC_TILEPRO_COPY,

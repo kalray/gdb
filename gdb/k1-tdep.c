@@ -809,7 +809,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
 	argslotsnb += newslots;
     }
 
-  for (i = 0; i < argslotsnb; i++)
+  for (i = 0; i < (argslotsnb > 8 ? 8 : argslotsnb); i++)
     regcache_cooked_write (regcache, i+r0_regnum, &argslotsbuf[i*4]);
 
   sp = k1_frame_align (gdbarch, sp);
