@@ -62,6 +62,9 @@ typedef union {
 #define ELF_K1_CORE_V1          (0x0<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_DP          (0x1<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_IO          (0x2<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_B           (0x4<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_B_DP        (ELF_K1_CORE_B | ELF_K1_CORE_DP)
+#define ELF_K1_CORE_B_IO        (ELF_K1_CORE_B | ELF_K1_CORE_IO)
 #define ELF_K1_CORE_UNDEF       (0x7<<_ELF_K1_CORE_BIT)
 #define _ELF_K1_CHECK_CORE(m) ((m&ELF_K1_CORE_MASK)==m)
 
@@ -89,6 +92,7 @@ typedef union {
 #define ELF_K1_ABI_GCC          (0x4<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_UNDEF        (0x5<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_RELOC_EMBED  (0x6<<_ELF_K1_ABI_BIT)
+#define ELF_K1_ABI_FDPIC        (0x7<<_ELF_K1_ABI_BIT)/* -mfdpic */
 #define _ELF_K1_CHECK_ABI(m) ((m&ELF_K1_ABI_MASK)==m)
 
 /* compatibility with rta directive on solaris : rta bits where writen in the bi

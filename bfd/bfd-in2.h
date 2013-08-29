@@ -2180,6 +2180,8 @@ enum bfd_architecture
   bfd_arch_k1,        /* Kalray k1 */
 #define bfd_mach_k1dp                 0
 #define bfd_mach_k1io                 1
+#define bfd_mach_k1bdp                2
+#define bfd_mach_k1bio                3
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -4994,7 +4996,6 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_K1_FUNCDESC_VALUE,
   BFD_RELOC_K1_GOTOFF,
   BFD_RELOC_K1_GOT,
-
 
 /* Tilera TILEPro Relocations.  */
   BFD_RELOC_TILEPRO_COPY,
