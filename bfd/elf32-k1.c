@@ -216,7 +216,6 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
       if (entry == NULL)
         return entry;
     }
-
   /* Call the allocation method of the superclass.  */
   entry = _bfd_elf_link_hash_newfunc (entry, table, string);
   if (entry != NULL)
@@ -785,13 +784,23 @@ static bfd_vma elf32_k1_gp_base (bfd *output_bfd, struct bfd_link_info *info)
 
     /* Point GP at _data_start symbol */
     
-    /* Point GP at _data_start symbol */
     if (res) return res;
 
-    gp = elf_link_hash_lookup (elf_hash_table (info), "_data_start", FALSE,
+    if (IS_FDPIC(output_bfd))
+      {
+        gp = elf_link_hash_lookup (elf_hash_table (info), "_gp", FALSE, FALSE, TRUE);
+        if (gp)
+          gp_val = gp->root.u.def.value
+                 + gp->root.u.def.section->output_section->vma
+                 + gp->root.u.def.section->output_offset;
+      }
+    else
+      {
+        gp = elf_link_hash_lookup (elf_hash_table (info), "_data_start", FALSE,
                                  FALSE, FALSE);
-    if (gp)
-      gp_val = gp->root.u.def.value;
+        if (gp)
+          gp_val = gp->root.u.def.value;
+      }
 
     _bfd_set_gp_value (output_bfd, gp_val);
     return gp_val;
@@ -850,6 +859,9 @@ elf_k1_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   out_flags = elf_elfheader (obfd)->e_flags;
   in_flags = elf_elfheader (ibfd)->e_flags;
 
+  if (in_flags & ELF_K1_FDPIC)
+    in_flags &= ~ELF_K1_PIC;
+
   if (!elf_flags_init (obfd)) {
 #if 0
     /* [JV] I took this from ARM but I do not understand it... */
@@ -883,6 +895,20 @@ elf_k1_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
     bfd_set_error (bfd_error_wrong_format);
     return FALSE;
   }
+
+  if (((in_flags & ELF_K1_FDPIC) == 0) != (! IS_FDPIC (obfd)))
+    {
+      if (IS_FDPIC (obfd))
+        (*_bfd_error_handler)
+          (_("%s: cannot link non-fdpic object file into fdpic executable"),
+            bfd_get_filename (ibfd));
+      else
+        (*_bfd_error_handler)
+          (_("%s: cannot link fdpic object file into non-fdpic executable"),
+            bfd_get_filename (ibfd));
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -923,6 +949,12 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
   }
+
+  if (e_flags & ELF_K1_PIC)
+    fprintf(f, "\n-fpic\n");
+
+  if (e_flags & ELF_K1_FDPIC)
+    fprintf(f, "\n-mfdpic\n");
 
   return _bfd_elf_print_private_bfd_data (abfd, farg);
 }
@@ -1270,6 +1302,7 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
         }
       else if (entry->lazyplt)
         {
+	  abort();
           if (ad)
             return FALSE;
 
@@ -1330,80 +1363,46 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
                                 output_bfd, k1fdpic_plt_section (info),
 				plt_code,
                                 0, entry->fd_entry, 0);
-
-      plt_code += PLT_FULL_ENTRY_SIZE;
-
-//       /* Figure out what kind of PLT entry we need, depending on the
-//          location of the function descriptor within the GOT.  */
-//       if (entry->fd_entry >= -(1 << (18 - 1))
-//           && entry->fd_entry + 4 < (1 << (18 - 1)))
-//         {
-//           /* P1 = [P3 + fd_entry]; P3 = [P3 + fd_entry + 4] */
-//           bfd_put_32 (output_bfd,
-//                       0xe519 | ((entry->fd_entry << 14) & 0xFFFF0000),
-//                       plt_code);
-//           bfd_put_32 (output_bfd,
-//                       0xe51b | (((entry->fd_entry + 4) << 14) & 0xFFFF0000),
-//                       plt_code + 4);
-//           plt_code += 8;
-//         }
-//       else
-//         {
-//           /* P1.L = fd_entry; P1.H = fd_entry;
-//              P3 = P3 + P1;
-//              P1 = [P3];
-//              P3 = [P3 + 4];  */
-//           bfd_put_32 (output_bfd,
-//                       0xe109 | (entry->fd_entry << 16),
-//                       plt_code);
-//           bfd_put_32 (output_bfd,
-//                       0xe149 | (entry->fd_entry & 0xFFFF0000),
-//                       plt_code + 4);
-//           bfd_put_16 (output_bfd, 0x5ad9, plt_code + 8);
-//           bfd_put_16 (output_bfd, 0x9159, plt_code + 10);
-//           bfd_put_16 (output_bfd, 0xac5b, plt_code + 12);
-//           plt_code += 14;
-//         }
-//       /* JUMP (P1) */
-//       bfd_put_16 (output_bfd, 0x0051, plt_code);
     }
 
   /* Generate code for the lazy PLT entry.  */
   if (entry->lzplt_entry != (bfd_vma) -1)
     {
       abort ();
-//       bfd_byte *lzplt_code = k1fdpic_plt_section (info)->contents
-//         + entry->lzplt_entry;
-//       bfd_vma resolverStub_addr;
-// 
-//       bfd_put_32 (output_bfd, fd_lazy_rel_offset, lzplt_code);
-//       lzplt_code += 4;
+#if 0
+      bfd_byte *lzplt_code = k1fdpic_plt_section (info)->contents
+        + entry->lzplt_entry;
+      bfd_vma resolverStub_addr;
 
-//       resolverStub_addr = entry->lzplt_entry / K1FDPIC_LZPLT_BLOCK_SIZE
-//         * K1FDPIC_LZPLT_BLOCK_SIZE + K1FDPIC_LZPLT_RESOLV_LOC;
-//       if (resolverStub_addr >= k1fdpic_plt_initial_offset (info))
-//         resolverStub_addr = k1fdpic_plt_initial_offset (info) - LZPLT_NORMAL_SIZE - LZPLT_RESOLVER_EXTRA;
+      bfd_put_32 (output_bfd, fd_lazy_rel_offset, lzplt_code);
+      lzplt_code += 4;
 
-//       if (entry->lzplt_entry == resolverStub_addr)
-//         {
-//           /* This is a lazy PLT entry that includes a resolver call.
-//              P2 = [P3];
-//              R3 = [P3 + 4];
-//              JUMP (P2);  */
-//           bfd_put_32 (output_bfd,
-//                       0xa05b915a,
-//                       lzplt_code);
-//           bfd_put_16 (output_bfd, 0x0052, lzplt_code + 4);
-//         }
-//       else
-//         {
-//           /* JUMP.S  resolverStub */
-//           bfd_put_16 (output_bfd,
-//                       0x2000
-//                       | (((resolverStub_addr - entry->lzplt_entry)
-//                           / 2) & (((bfd_vma)1 << 12) - 1)),
-//                       lzplt_code);
-//         }
+      resolverStub_addr = entry->lzplt_entry / K1FDPIC_LZPLT_BLOCK_SIZE
+        * K1FDPIC_LZPLT_BLOCK_SIZE + K1FDPIC_LZPLT_RESOLV_LOC;
+      if (resolverStub_addr >= k1fdpic_plt_initial_offset (info))
+        resolverStub_addr = k1fdpic_plt_initial_offset (info) - LZPLT_NORMAL_SIZE - LZPLT_RESOLVER_EXTRA;
+
+      if (entry->lzplt_entry == resolverStub_addr)
+        {
+          /* This is a lazy PLT entry that includes a resolver call.
+             P2 = [P3];
+             R3 = [P3 + 4];
+             JUMP (P2);  */
+          bfd_put_32 (output_bfd,
+                      0xa05b915a,
+                      lzplt_code);
+          bfd_put_16 (output_bfd, 0x0052, lzplt_code + 4);
+        }
+      else
+        {
+          /* JUMP.S  resolverStub */
+          bfd_put_16 (output_bfd,
+                      0x2000
+                      | (((resolverStub_addr - entry->lzplt_entry)
+                          / 2) & (((bfd_vma)1 << 12) - 1)),
+                      lzplt_code);
+        }
+#endif//0
     }
 
   return TRUE;
@@ -1433,7 +1432,7 @@ k1_elf_relocate_section
 
   unsigned isec_segment, got_segment, plt_segment,
     check_segment[2];
-  /*int silence_segment_error = !(info->shared || info->pie);*/
+  int silence_segment_error = !(info->shared || info->pie);
 
 
   isec_segment = _k1fdpic_osec_to_segment (output_bfd,
@@ -1540,7 +1539,7 @@ k1_elf_relocate_section
 	{
 	    RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section, rel,
 					     relend, howto, contents);
-	    continue;
+// 	    continue;
 	}
 
       if (info->relocatable)
@@ -1579,7 +1578,7 @@ k1_elf_relocate_section
 	case R_K1_16_GPREL:
 	case R_K1_GPREL_LO10:
 	case R_K1_GPREL_HI22:
-	    relocation -=  elf32_k1_gp_base (output_bfd, info);
+            relocation -=  elf32_k1_gp_base (output_bfd, info);
 	    break;
 	case R_K1_GLOB_DAT:
         case R_K1_27_PCREL:
@@ -1989,11 +1988,11 @@ k1_elf_relocate_section
 
         }
 
-#if 0
+
         if (check_segment[0] != check_segment[1] && IS_FDPIC (output_bfd))
         {
-#if 1 /* If you take this out, remove the #error from fdpic-static-6.d
-         in the ld testsuite.  */
+          /* If you take this out, remove the #error from fdpic-static-6.d
+             in the ld testsuite.  */
           /* This helps catch problems in GCC while we can't do more
              than static linking.  The idea is to test whether the
              input file basename is crt0.o only once.  */
@@ -2006,23 +2005,28 @@ k1_elf_relocate_section
                              + strlen (input_bfd->filename) - 7,
                              "/crt0.o") == 0)
               ? -1 : 0;
-#endif
           if (!silence_segment_error
               /* We don't want duplicate errors for undefined
                  symbols.  */
               && !(picrel && picrel->symndx == -1
                    && picrel->d.h->root.type == bfd_link_hash_undefined))
-            info->callbacks->warning
-              (info,
-               (info->shared || info->pie)
-               ? _("relocations between different segments are not supported")
-               : _("warning: relocation references a different segment"),
-               name, input_bfd, input_section, rel->r_offset);
-          if (!silence_segment_error && (info->shared || info->pie))
-            return FALSE;
-          elf_elfheader (output_bfd)->e_flags |= EF_K1_PIC;
+            {
+              if (info->shared || info->pie)
+                (*_bfd_error_handler)
+                  (_("%B(%A+0x%lx): reloc against `%s': %s"),
+                   input_bfd, input_section, (long)rel->r_offset, name,
+                   _("relocation references a different segment"));
+              else
+                info->callbacks->warning
+                  (info,
+                   _("relocation references a different segment"),
+                   name, input_bfd, input_section, rel->r_offset);
+            }
+/*           if (!silence_segment_error && (info->shared || info->pie))
+             return FALSE;
+           elf_elfheader (output_bfd)->e_flags |= ELF_K1_PIC; */
         }
-#endif//0
+
 
       switch (r_type)
         {
@@ -2236,8 +2240,10 @@ k1_create_got_section (bfd *abfd, struct bfd_link_info *info)
   flagword flags, pltflags;
   asection *s;
   struct elf_link_hash_entry *h;
+  struct bfd_link_hash_entry *bh;
   const struct elf_backend_data *bed = get_elf_backend_data (abfd);
   int ptralign;
+  int offset;
 
 
   /* This function may be called more than once.  */
@@ -2316,7 +2322,34 @@ k1_create_got_section (bfd *abfd, struct bfd_link_info *info)
         return FALSE;
 
       k1fdpic_gotfixup_section (info) = s;
+      offset = -2048;
+      flags = BSF_GLOBAL;
     }
+  else
+    {
+      offset = 2048;
+      flags = BSF_GLOBAL | BSF_WEAK;
+    }
+
+      /* Define _gp in .rofixup, for FDPIC, or .got otherwise.  If it
+     turns out that we're linking with a different linker script, the
+     linker script will override it.  */
+  bh = NULL;
+  if (!(_bfd_generic_link_add_one_symbol
+        (info, abfd, "_gp", flags, s, offset, (const char *) NULL, FALSE,
+         bed->collect, &bh)))
+    return FALSE;
+  h = (struct elf_link_hash_entry *) bh;
+  h->def_regular = 1;
+  h->type = STT_OBJECT;
+  /* h->other = STV_HIDDEN; */ /* Should we?  */
+
+  /* Machine-specific: we want the symbol for executables as well.  */
+  if (IS_FDPIC (abfd) && ! bfd_elf_link_record_dynamic_symbol (info, h))
+    return FALSE;
+
+  if (!IS_FDPIC (abfd))
+    return TRUE;
 
   pltflags |= SEC_CODE;
   if (bed->plt_not_loaded)
@@ -2335,7 +2368,7 @@ k1_create_got_section (bfd *abfd, struct bfd_link_info *info)
     {
       /* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the
          .plt section.  */
-      struct bfd_link_hash_entry *bh = NULL;
+      bh = NULL;
 
       if (! (_bfd_generic_link_add_one_symbol
              (info, abfd, "_PROCEDURE_LINKAGE_TABLE_", BSF_GLOBAL, s, 0, NULL,
@@ -2397,10 +2430,10 @@ k1_check_relocs (bfd * abfd,
         h = sym_hashes[r_symndx - symtab_hdr->sh_info];
       switch (ELF32_R_TYPE (rel->r_info))
         {
-	case R_K1_GOT:
+        case R_K1_GOT:
         case R_K1_GOT_LO10:
         case R_K1_GOT_HI22:
-	case R_K1_GOTOFF:
+        case R_K1_GOTOFF:
         case R_K1_GOTOFF_LO10:
         case R_K1_GOTOFF_HI22:
         case R_K1_PLT_LO10:
@@ -2409,11 +2442,11 @@ k1_check_relocs (bfd * abfd,
         case R_K1_FUNCDESC_VALUE:
         case R_K1_FUNCDESC_GOTOFF_LO10:
         case R_K1_FUNCDESC_GOTOFF_HI22:
-	case R_K1_FUNCDESC_GOT_LO10:
+        case R_K1_FUNCDESC_GOT_LO10:
         case R_K1_FUNCDESC_GOT_HI22:
           if (! IS_FDPIC (abfd))
              goto bad_reloc;
-	  /* Fall through.  */
+        /* Fall through.  */
         case R_K1_27_PCREL:
         case R_K1_10_GPREL:
         case R_K1_16_GPREL:
@@ -2550,6 +2583,8 @@ k1_check_relocs (bfd * abfd,
         case R_K1_TPREL_32:
         case R_K1_TPREL_HI22:
         case R_K1_TPREL_LO10:
+//         case R_K1_PCREL_HI22:
+//         case R_K1_PCREL_LO10:
         break;
 
         default:
@@ -3061,10 +3096,10 @@ _k1fdpic_assign_plt_entries (void **entryp, void *info_)
       /* Figure out the length of this PLT entry based on the
          addressing mode we need to reach the function descriptor.  */
       BFD_ASSERT (entry->fd_entry);
-      if (entry->fd_entry >= -(1 << (18 - 1))
-          && entry->fd_entry + 4 < (1 << (18 - 1)))
-        size = 10;
-      else
+//       if (entry->fd_entry >= -(1 << (18 - 1))
+//           && entry->fd_entry + 4 < (1 << (18 - 1)))
+//         size = 10;
+//       else
         size = 16;
 
       k1fdpic_plt_section (dinfo->g.info)->size += size;
@@ -3072,6 +3107,7 @@ _k1fdpic_assign_plt_entries (void **entryp, void *info_)
 
   if (entry->lazyplt)
     {
+      abort();
       entry->lzplt_entry = dinfo->g.lzplt;
       dinfo->g.lzplt += LZPLT_NORMAL_SIZE;
       /* If this entry is the one that gets the resolver stub, account
@@ -3537,7 +3573,7 @@ static bfd_boolean
 k1_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
                               struct elf_link_hash_entry *h)
 {
-    bfd * dynobj;
+  bfd * dynobj;
 
   dynobj = elf_hash_table (info)->dynobj;
 
@@ -4143,6 +4179,18 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
   return TRUE;
 }
 
+
+/* Do ignore failed relocs against the tracepoint metadata section. */
+static unsigned int
+k1_bfd_elf_action_discarded (asection *sec)
+{
+    if (strcmp ("__k1_tracepoints", sec->name) == 0)
+        return 0;
+
+    return _bfd_elf_default_action_discarded (sec);
+}
+
+
 // #ifndef ELF_ARCH
 #define TARGET_LITTLE_SYM                       bfd_elf32_k1_vec
 #define TARGET_LITTLE_NAME                      "elf32-k1"
@@ -4180,20 +4228,19 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 
 
 #define elf_backend_check_relocs                k1_check_relocs
+#define elf_backend_action_discarded k1_bfd_elf_action_discarded
+
 
 #define bfd_elf32_bfd_merge_private_bfd_data    elf_k1_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags         elf_k1_set_private_flags
 #define bfd_elf32_bfd_print_private_bfd_data    elf_k1_print_private_bfd_data
+#define bfd_elf32_bfd_copy_private_bfd_data     elf_k1_copy_private_bfd_data
+
 #define elf_backend_final_write_processing      elf_k1_final_write_processing
 #define elf_backend_object_p                    elf_k1_object_p
 #define elf_backend_discard_info                k1fdpic_elf_discard_info
 
-#define bfd_elf32_bfd_copy_private_bfd_data     elf_k1_copy_private_bfd_data
-#define elf_backend_always_size_sections        elf_k1_always_size_sections
-#define elf_backend_modify_program_headers      elf_k1_modify_program_headers
-#define elf_backend_omit_section_dynsym         _k1fdpic_link_omit_section_dynsym
-#define elf_backend_discard_info                k1fdpic_elf_discard_info
-#define elf_backend_gc_sweep_hook               k1fdpic_gc_sweep_hook
+
 
 #define elf_backend_may_use_rel_p       1
 #define elf_backend_may_use_rela_p      1
@@ -4208,15 +4255,21 @@ elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)
 
 #undef ELF_ARCH
 #define ELF_ARCH                             bfd_arch_k1
+#define ELF_MAXPAGESIZE                         0x1000
 
 #undef	elf32_bed
 #define	elf32_bed		elf32_k1_linux_bed
 
+#undef elf_backend_gc_sweep_hook
 #define elf_backend_gc_sweep_hook       	k1fdpic_gc_sweep_hook
+
+#undef elf_backend_omit_section_dynsym
 #define elf_backend_omit_section_dynsym         _k1fdpic_link_omit_section_dynsym
 
-#define bfd_elf32_bfd_copy_private_bfd_data     elf_k1_copy_private_bfd_data
+#undef elf_backend_always_size_sections
 #define elf_backend_always_size_sections        elf_k1_always_size_sections
+
+#undef elf_backend_modify_program_headers
 #define elf_backend_modify_program_headers      elf_k1_modify_program_headers
 
 #include "elf32-target.h"

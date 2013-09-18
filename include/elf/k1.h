@@ -66,7 +66,7 @@ typedef union {
 #define ELF_K1_CORE_B_DP        (ELF_K1_CORE_B | ELF_K1_CORE_DP)
 #define ELF_K1_CORE_B_IO        (ELF_K1_CORE_B | ELF_K1_CORE_IO)
 #define ELF_K1_CORE_UNDEF       (0x7<<_ELF_K1_CORE_BIT)
-#define _ELF_K1_CHECK_CORE(m) ((m&ELF_K1_CORE_MASK)==m)
+#define _ELF_K1_CHECK_CORE(flags,m) (((flags) & ELF_K1_CORE_MASK)==(m))
 
 /* (pp) cut */
 #define _ELF_K1_CUT_BIT (16)                             /* 1st bit position in 
@@ -79,7 +79,7 @@ typedef union {
 #define ELF_K1_CUT_4            (0x4<<_ELF_K1_CUT_BIT)
 #define ELF_K1_CUT_5            (0x5<<_ELF_K1_CUT_BIT)
 #define ELF_K1_CUT_UNDEF        (0x6<<_ELF_K1_CUT_BIT)
-#define _ELF_K1_CHECK_CUT(m) ((m&ELF_K1_CUT_MASK)==m)
+#define _ELF_K1_CHECK_CUT(flags,m) (((flags) & ELF_K1_CUT_MASK)==(m))
 
 /* (pp) abi */
 #define _ELF_K1_ABI_BIT (0)                             /* 1st bit position in b
@@ -92,8 +92,7 @@ typedef union {
 #define ELF_K1_ABI_GCC          (0x4<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_UNDEF        (0x5<<_ELF_K1_ABI_BIT)
 #define ELF_K1_ABI_RELOC_EMBED  (0x6<<_ELF_K1_ABI_BIT)
-#define ELF_K1_ABI_FDPIC        (0x7<<_ELF_K1_ABI_BIT)/* -mfdpic */
-#define _ELF_K1_CHECK_ABI(m) ((m&ELF_K1_ABI_MASK)==m)
+#define _ELF_K1_CHECK_ABI(flags,m) (((flags) & ELF_K1_ABI_MASK)==(m))
 
 
 /* These flags have to be in sync with Linux kernel */
@@ -108,7 +107,7 @@ typedef union {
 #define ELF_K1_NOPIC             (0x0<<_ELF_K1_PIC_BIT)
 #define ELF_K1_PIC               (0x1<<_ELF_K1_PIC_BIT) /* -fpic   */
 #define ELF_K1_FDPIC             (0x2<<_ELF_K1_PIC_BIT) /* -mfdpic */
-#define _ELF_K1_CHECK_PIC(m) ((m&ELF_K1_PIC_MASK)==m)
+#define _ELF_K1_CHECK_PIC(flags,m) (((flags) & ELF_K1_PIC_MASK)==(m))
 
 /* compatibility with rta directive on solaris : rta bits where writen in the bi
  * ts 28:31 on Solaris */
@@ -121,7 +120,7 @@ typedef union {
 #define ELF_K1_MODE_MASK        (0x1<<_ELF_K1_MODE_BIT)           /* mask */
 #define ELF_K1_MODE_USER        (0x0<<_ELF_K1_MODE_BIT)
 #define ELF_K1_MODE_KERNEL      (0x1<<_ELF_K1_MODE_BIT)
-#define _ELF_K1_CHECK_MODE(m) ((m&ELF_K1_MODE_MASK)==m)
+#define _ELF_K1_CHECK_MODE(flags,m) (((flags) & ELF_K1_MODE_MASK)==(m))
 
 const char * core_printable_name(flagword flags);
 const char * cut_printable_name(flagword flags);
