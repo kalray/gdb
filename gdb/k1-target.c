@@ -265,7 +265,7 @@ Use the \"file\" or \"exec-file\" command."));
 	    stub_args[argidx++] = "--mcluster=node";
 	    break;
 	case ELF_K1_CORE_IO:
-	    stub_args[argidx++] = "---mcluster=ioddr";
+	    stub_args[argidx++] = "--mcluster=ioddr";
 	    break;
 	default:
 	    error (_("The K1 binary is compiled for an unknown core."));
