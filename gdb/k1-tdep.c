@@ -510,10 +510,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
 
             dsc->scall_jump = 1;
 	    regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
-            if (k1_arch () == K1_K1DP)
-                dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
-            else
-                dsc->dest = reg_value | 0xc;
+            dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
         } else if (strcmp ("loopdo", op->as_op) == 0
                    || strcmp ("loopgtz", op->as_op) == 0
                    || strcmp ("loopnez", op->as_op) == 0) {
