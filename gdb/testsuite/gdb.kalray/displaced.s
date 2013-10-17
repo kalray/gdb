@@ -49,11 +49,32 @@ test_displaced9:
 	scall 128
 	;;
 test_displaced10:
-	make $r0 = test_displaced
+	make $r0 = test_displaced12
 	;; 
 test_displaced11:
 	.word 0x7bababab /* Invalid opcode */
 	;; 
+test_displaced12:
+        get $r61 = $pc
+        ;;
+test_displaced13:
+        comp.eq $r61 = $r61, test_displaced12
+        add $r2 = $r1, 1
+        ;;
+test_displaced14:
+        cmove.nez $r1 = $r61, $r2
+        make $r0 = 0
+        ;; 
+test_displaced15:
+        get $r62 = $r0
+        ;;
+test_displaced16:
+        comp.eq $r62 = $r62, test_displaced15
+        add $r2 = $r1, 1
+        ;;
+test_displaced17:
+        cmove.nez $r1 = $r62, $r2
+        ;; 
 test_displaced:
 	copy $r0 = $r1
 	;;
