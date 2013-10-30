@@ -1,3 +1,9 @@
+2010-08-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11946
+	* emultempl/elf32.em (_before_allocation): Check audit entry
+	only on ELF input.
+
 2010-08-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/11937
@@ -20,6 +26,10 @@
 
 	* emultempl/elf32.em (_after_open): Check for get_elf_backend_data
 	returning NULL.
+
+2010-08-19  Alan Modra  <amodra@gmail.com>
+
+	* NEWS: Mention change in linker script expression evaluation.
 
 2010-08-19  Alan Modra  <amodra@gmail.com>
 

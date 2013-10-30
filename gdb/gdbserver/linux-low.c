@@ -2200,9 +2200,10 @@ Check if we're already there.\n",
 	      if (debug_threads)
 		fprintf (stderr, "dequeued one signal.\n");
 	    }
-	  else if (debug_threads)
+	  else
 	    {
-	      fprintf (stderr, "no deferred signals.\n");
+	      if (debug_threads)
+		fprintf (stderr, "no deferred signals.\n");
 
 	      if (stabilizing_threads)
 		{
@@ -2391,9 +2392,6 @@ Check if we're already there.\n",
 	     ourstatus->kind,
 	     ourstatus->value.sig);
 
-  if (!stabilizing_threads)
-    current_inferior->last_status = *ourstatus;
-
   return ptid_of (event_child);
 }
 
@@ -2476,6 +2474,12 @@ kill_lwp (unsigned long lwpid, int signo)
 #endif
 
   return kill (lwpid, signo);
+}
+
+void
+linux_stop_lwp (struct lwp_info *lwp)
+{
+  send_sigstop (lwp);
 }
 
 static void
@@ -4709,8 +4713,16 @@ sigchld_handler (int signo)
   int old_errno = errno;
 
   if (debug_threads)
-    /* fprintf is not async-signal-safe, so call write directly.  */
-    write (2, "sigchld_handler\n", sizeof ("sigchld_handler\n") - 1);
+    {
+      do
+	{
+	  /* fprintf is not async-signal-safe, so call write
+	     directly.  */
+	  if (write (2, "sigchld_handler\n",
+		     sizeof ("sigchld_handler\n") - 1) < 0)
+	    break; /* just ignore */
+	} while (0);
+    }
 
   if (target_is_async_p ())
     async_file_mark (); /* trigger a linux_wait */
@@ -4994,6 +5006,25 @@ linux_unpause_all (int unfreeze)
 }
 
 static int
+linux_prepare_to_access_memory (void)
+{
+  /* Neither ptrace nor /proc/PID/mem allow accessing memory through a
+     running LWP.  */
+  if (non_stop)
+    linux_pause_all (1);
+  return 0;
+}
+
+static void
+linux_done_accessing_memory (void)
+{
+  /* Neither ptrace nor /proc/PID/mem allow accessing memory through a
+     running LWP.  */
+  if (non_stop)
+    linux_unpause_all (1);
+}
+
+static int
 linux_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
 					CORE_ADDR collector,
 					CORE_ADDR lockaddr,
@@ -5031,6 +5062,8 @@ static struct target_ops linux_target_ops = {
   linux_wait,
   linux_fetch_registers,
   linux_store_registers,
+  linux_prepare_to_access_memory,
+  linux_done_accessing_memory,
   linux_read_memory,
   linux_write_memory,
   linux_look_up_symbols,
