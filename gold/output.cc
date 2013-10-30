@@ -1911,6 +1911,7 @@ Output_section::Output_section(const char* name, elfcpp::Elf_Word type,
     generate_code_fills_at_write_(false),
     is_entsize_zero_(false),
     section_offsets_need_adjustment_(false),
+    is_noload_(false),
     tls_offset_(0),
     checkpoint_(NULL),
     merge_section_map_(),
@@ -2154,58 +2155,55 @@ Output_section::add_merge_input_section(Relobj* object, unsigned int shndx,
   gold_assert(this->checkpoint_ == NULL);
 
   // Look up merge sections by required properties.
+  Output_merge_base* pomb;
   Merge_section_properties msp(is_string, entsize, addralign);
   Merge_section_by_properties_map::const_iterator p =
     this->merge_section_by_properties_map_.find(msp);
   if (p != this->merge_section_by_properties_map_.end())
     {
-      Output_merge_base* merge_section = p->second;
-      merge_section->add_input_section(object, shndx);
-      gold_assert(merge_section->is_string() == is_string
-		  && merge_section->entsize() == entsize
-		  && merge_section->addralign() == addralign);
-
-      // Link input section to found merge section.
-      Const_section_id csid(object, shndx);
-      this->merge_section_map_[csid] = merge_section;
-      return true;
+      pomb = p->second;
+      gold_assert(pomb->is_string() == is_string
+		  && pomb->entsize() == entsize
+		  && pomb->addralign() == addralign);
     }
-
-  // We handle the actual constant merging in Output_merge_data or
-  // Output_merge_string_data.
-  Output_merge_base* pomb;
-  if (!is_string)
-    pomb = new Output_merge_data(entsize, addralign);
   else
     {
-      switch (entsize)
+      // Create a new Output_merge_data or Output_merge_string_data.
+      if (!is_string)
+	pomb = new Output_merge_data(entsize, addralign);
+      else
 	{
-        case 1:
-	  pomb = new Output_merge_string<char>(addralign);
-	  break;
-        case 2:
-	  pomb = new Output_merge_string<uint16_t>(addralign);
-	  break;
-        case 4:
-	  pomb = new Output_merge_string<uint32_t>(addralign);
-	  break;
-        default:
-	  return false;
+	  switch (entsize)
+	    {
+	    case 1:
+	      pomb = new Output_merge_string<char>(addralign);
+	      break;
+	    case 2:
+	      pomb = new Output_merge_string<uint16_t>(addralign);
+	      break;
+	    case 4:
+	      pomb = new Output_merge_string<uint32_t>(addralign);
+	      break;
+	    default:
+	      return false;
+	    }
 	}
+      // Add new merge section to this output section and link merge
+      // section properties to new merge section in map.
+      this->add_output_merge_section(pomb, is_string, entsize);
+      this->merge_section_by_properties_map_[msp] = pomb;
     }
 
-  // Add new merge section to this output section and link merge section
-  // properties to new merge section in map.
-  this->add_output_merge_section(pomb, is_string, entsize);
-  this->merge_section_by_properties_map_[msp] = pomb;
-
-  // Add input section to new merge section and link input section to new
-  // merge section in map.
-  pomb->add_input_section(object, shndx);
-  Const_section_id csid(object, shndx);
-  this->merge_section_map_[csid] = pomb;
-
-  return true;
+  if (pomb->add_input_section(object, shndx))
+    {
+      // Add input section to new merge section and link input section to new
+      // merge section in map.
+      Const_section_id csid(object, shndx);
+      this->merge_section_map_[csid] = pomb;
+      return true;
+    }
+  else
+    return false;
 }
 
 // Build a relaxation map to speed up relaxation of existing input sections.
@@ -2591,8 +2589,9 @@ Output_section::do_reset_address_and_file_offset()
 {
   // An unallocated section has no address.  Forcing this means that
   // we don't need special treatment for symbols defined in debug
-  // sections.  We do the same in the constructor.
-  if ((this->flags_ & elfcpp::SHF_ALLOC) == 0)
+  // sections.  We do the same in the constructor.  This does not
+  // apply to NOLOAD sections though.
+  if (((this->flags_ & elfcpp::SHF_ALLOC) == 0) && !this->is_noload_)
      this->set_address(0);
 
   for (Input_section_list::iterator p = this->input_sections_.begin();

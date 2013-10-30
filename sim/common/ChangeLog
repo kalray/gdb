@@ -1,3 +1,22 @@
+2010-04-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-fpu.c (sim_fpu_print_status): Add const markings to local
+	"prefix" var.
+	(sim_fpu_print_func): Add const markings to format buffer.
+
+2010-04-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-fpu.c (sim_fpu_print_status): Remove duplicate break statements.
+
+2010-04-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.c (save_data): Add const markings to "buf" argument.
+
+2010-04-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (standard_option_handler): Add const markings to
+	local "type" var.
+
 2010-04-02  Mike Frysinger  <vapier@gentoo.org>
 
 	* hw-ports.h: Fix spelling typos.

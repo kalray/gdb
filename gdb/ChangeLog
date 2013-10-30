@@ -1,11 +1,143 @@
+2010-04-09  Stan Shebs  <stan@codesourcery.com>
+
+	* tracepoint.c (trace_status_mi): Report frames created.
+
+	* tracepoint.c (trace_dump_command): Include default-collect
+	expressions.
+
+2010-04-09  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* symtab.c (find_function_start_sal): Never return SAL pointing
+	before function start address, even if line info is missing.
+
+2010-04-09  Pedro  Alves  <pedro@codesourcery.com>
+
+	* NEWS: Mention tracepoints support.
+
+2010-04-09  Pedro Alves  <pedro@codesourcery.com>
+
+	* tracepoint.c (trace_status_mi): Report disconnected tracing and
+	circular trace buffer statuses.
+
+2010-04-09  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* config/djgpp/fnchange.lst: Fix typo in translations for
+	symbol-without-target_section.exp and symbol-without-target_section.c.
+
+2010-04-09  Pedro Alves  <pedro@codesourcery.com>
+
+	* breakpoint.c (condition_command): Pass condition expression to
+	set_breakpoint_condition stripped from breakpoint number.
+
+2010-04-09  Phil Muldoon  <pmuldoon@redhat.com>
+	    Thiago Jung Bauermann  <bauerman@br.ibm.com>
+	    Tom Tromey  <tromey@redhat.com>
+
+	* breakpoint.c (condition_command): Simplify.  Move condition
+	setting code to ...
+	(set_breakpoint_condition): ... here.  New function.
+	* breakpoint.h  (set_breakpoint_condition): Declare.
+	* Makefile.in (SUBDIR_PYTHON_OBS): Add py-breakpoint.
+	(SUBDIR_PYTHON_SRCS): Likewise.
+	(py-breakpoint.o): New rule.
+	* python/py-breakpoint.c: New file.
+	* python/python-internal.h (gdbpy_breakpoints)
+	(gdbpy_initialize_breakpoints): Declare.
+	(GDB_PY_SET_HANDLE_EXCEPTION) Define.
+
+2010-04-09  Pedro Alves  <pedro@codesourcery.com>
+
+	* regformats/regdat.sh: Include server.h.  Don't include
+	regcache.h.
+
+2010-04-08  Stan Shebs  <stan@codesourcery.com>
+	    Pedro Alves  <pedro@codesourcery.com>
+
+	* tracepoint.h (struct trace_status): New fields disconnected_tracing
+	and circular_buffer.
+	(disconnect_tracing): Rename from disconnect_or_stop_tracing.
+	* tracepoint.c (trace_status_command): Display target's status for
+	disconnected tracing and circular buffer.
+	(disconnect_tracing): Rename from disconnect_or_stop_tracing, add
+	query for non-disconnected-tracing case, remove the stop_tracing
+	call.
+	(tfile_open): Clear disconnected and circular buffer status.
+	(trace_save): Save disconnected and circular buffer status.
+	(parse_trace_status): Parse disconnected and circular buffer status,
+	also recognize disconnected as a stop reason.
+	* remote.c (remote_set_disconnected_tracing): Only set
+	QTDisconnected if the remote end supports disconnected tracing.
+	Warn otherwise, if trying to enable disconnected tracing.
+	* infcmd.c (detach_command): Update disconnect_tracing call.
+	* cli/cli-cmds.c (quit_command): Ditto.
+
+2010-04-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i387-tdep.c (i387_collect_xsave): Replace abort with
+	internal_error.
+
+2010-04-08  Stan Shebs  <stan@codesourcery.com>
+
+	* breakpoint.c (default_collect_info): New function.
+	(breakpoints_info): Call it.
+	(maintenance_info_breakpoints): Ditto.
+	(tracepoints_info): Ditto.
+
+2010-04-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i387-tdep.c (i387_collect_xsave): Re-indent.
+
+2010-04-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-linux-nat.c (have_ptrace_getfpxregs): Initialize to -1
+	if HAVE_PTRACE_GETFPXREGS is defined.
+	(i386_linux_read_description): Set have_ptrace_getfpxregs and
+	have_ptrace_getregset to 0 if ptrace PTRACE_GETFPXREGS failed.
+
+	* i386-linux-tdep.c: Include "features/i386/i386-mmx-linux.c"
+	(i386_linux_core_read_description): Return tdesc_i386_mmx_linux
+	if .reg-xfp section doesn't exist.
+	(_initialize_i386_linux_tdep): Call initialize_tdesc_i386_mmx_linux.
+
+	* i386-linux-tdep.h (tdesc_i386_mmx_linux): New.
+
+	* i386-tdep.c: Include "features/i386/i386-mmx.c".
+	(i386_go32_init_abi): Set tdesc to tdesc_i386_mmx.
+	(i386_validate_tdesc_p): Make org.gnu.gdb.i386.sse optional.  Set
+	xcr0 to I386_XSTATE_X87_MASK if SSE isn't available.
+	(i386_gdbarch_init): Update comments.
+	(_initialize_i386_tdep): Call initialize_tdesc_i386_mmx.
+
+	* common/i386-xstate.h (I386_XSTATE_X87_MASK): New.
+
+	* config/djgpp/fnchange.lst: Add i386 MMX XML files.
+
+	* features/Makefile (i386/i386-mmx-expedite): New.
+	(i386/i386-mmx-linux-expedite): Likewise.
+	($(outdir)/i386/i386-mmx.dat): Likewise.
+	($(outdir)/i386/i386-mmx-linux.dat): Likewise.
+
+	* features/i386/i386-mmx-linux.c: New.
+	* features/i386/i386-mmx-linux.xml: Likewise.
+	* features/i386/i386-mmx.c: Likewise.
+	* features/i386/i386-mmx.xml: Likewise.
+	* regformats/i386/i386-mmx-linux.dat: Likewise.
+	* regformats/i386/i386-mmx.dat: Likewise.
+
+	* features/Makefile (WHICH): Add i386/i386-mmx and
+	i386/i386-mmx-linux.
+
+2010-04-08  Doug Evans  <dje@google.com>
+
+	* source.c (openp): Skip $cdir in PATH.
+
 2010-04-08  Phil Muldoon  <pmuldoon@redhat.com>
 
 	PR python/11417
-
 	* python/py-lazy-string.c (stpy_convert_to_value): Check for
-          a NULL address.
-	  (gdbpy_create_lazy_string_object): Allow strings with a NULL
-          address and a zero length.
+	a NULL address.
+	(gdbpy_create_lazy_string_object): Allow strings with a NULL
+	address and a zero length.
 
 2010-04-08  Hui Zhu  <teawater@gmail.com>
 
