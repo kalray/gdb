@@ -56,7 +56,7 @@ static int default_region_ok_for_hw_watchpoint (CORE_ADDR, int);
 
 static int nosymbol (char *, CORE_ADDR *);
 
-static void tcomplain (void) ATTR_NORETURN;
+static void tcomplain (void) ATTRIBUTE_NORETURN;
 
 static int nomemory (CORE_ADDR, char *, int, int, struct target_ops *);
 
@@ -2575,7 +2575,6 @@ target_supports_non_stop (void)
 char *
 target_get_osdata (const char *type)
 {
-  char *document;
   struct target_ops *t;
 
   /* If we're already connected to something that can get us OS

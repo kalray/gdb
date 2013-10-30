@@ -55,12 +55,12 @@ static void mi_field_string (struct ui_out *uiout, int fldno, int width,
 static void mi_field_fmt (struct ui_out *uiout, int fldno,
 			  int width, enum ui_align align,
 			  const char *fldname, const char *format,
-			  va_list args) ATTR_FORMAT (printf, 6, 0);
+			  va_list args) ATTRIBUTE_PRINTF (6, 0);
 static void mi_spaces (struct ui_out *uiout, int numspaces);
 static void mi_text (struct ui_out *uiout, const char *string);
 static void mi_message (struct ui_out *uiout, int verbosity,
 			const char *format, va_list args)
-     ATTR_FORMAT (printf, 3, 0);
+     ATTRIBUTE_PRINTF (3, 0);
 static void mi_wrap_hint (struct ui_out *uiout, char *identstring);
 static void mi_flush (struct ui_out *uiout);
 
@@ -106,7 +106,6 @@ mi_table_begin (struct ui_out *uiout,
 		int nr_rows,
 		const char *tblid)
 {
-  mi_out_data *data = ui_out_data (uiout);
   mi_open (uiout, tblid, ui_out_type_tuple);
   mi_field_int (uiout, -1/*fldno*/, -1/*width*/, -1/*alin*/,
 		"nr_rows", nr_rows);
