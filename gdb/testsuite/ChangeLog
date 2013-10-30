@@ -1,3 +1,55 @@
+2011-02-04  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* gdb.python/py-evthreads.c: New file.
+	* gdb.python/py-evthreads.exp: New file.
+	* gdb.python/py-events.py: New file.
+	* gdb.python/py-events.exp: New file.
+	* gdb.python/py-events.c: New file.
+
+2011-02-04 David Daney <ddaney@caviumnetworks.com>
+
+	* gdb.base/catch-syscall.exp: Enable for mips*-linux*.
+
+2011-02-03  Andrew Burgess  <aburgess@broadcom.com>
+
+	* gdb.base/disasm-end-cu-1.c, gdb.base/disasm-end-cu-2.c,
+	gdb.base/disasm-end-cu.exp: New test for disassembling over the
+	boundary between two compilation units.
+
+2011-02-02  Pedro Alves  <pedro@codesourcery.com>
+
+	* gdb.cp/virtbase.cc (VirtualBase, VirtualMiddleA, VirtualMiddleB)
+	(Virtual): New structs.
+	(virtual_o, virtual_middle_b): New globals.
+	* gdb.cp/virtbase.exp: New tests.
+
+2011-01-31  Paul Pluzhnikov  <ppluzhnikov@google.com>
+
+	* gdb.base/jit.exp: New file.
+	* gdb.base/jit-main.c: New file.
+	* gdb.base/jit-solib.c: New file.
+
+2011-01-31  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* gdb.opencl/convs_casts.exp: Use tbreak instead of break to
+	proceed to initial kernel entry point.
+	* gdb.opencl/datatypes.exp: Likewise.
+	* gdb.opencl/operators.exp: Likewise.
+	* gdb.opencl/vec_comps.exp: Likewise.
+
+2011-01-31  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* gdb.cp/nsnested.cc: New.
+	* gdb.cp/nsnested.exp: New.
+	* gdb.cp/nsnoimports.exp: New.
+	* gdb.cp/nsnoimports.cc: New.
+
+2011-01-31  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.base/interact.exp: Add extra tests that verify that
+	the value of the interactive-mode setting does not change
+	after the script is sourced.
+
 2011-01-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	* gdb.cp/noparam.exp: New file.

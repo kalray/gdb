@@ -29,9 +29,6 @@
 #include "cli/cli-script.h"
 #include "ada-lang.h"
 
-/* From breakpoint.c.  */
-typedef struct breakpoint_object breakpoint_object;
-
 static PyTypeObject breakpoint_object_type;
 
 /* Number of live breakpoints.  */
@@ -201,7 +198,7 @@ bppy_set_silent (PyObject *self, PyObject *newvalue, void *closure)
   if (cmp < 0)
     return -1;
   else
-    self_bp->bp->silent = cmp;
+    breakpoint_set_silent (self_bp->bp, cmp);
 
   return 0;
 }
@@ -242,7 +239,7 @@ bppy_set_thread (PyObject *self, PyObject *newvalue, void *closure)
       return -1;
     }
 
-  self_bp->bp->thread = id;
+  breakpoint_set_thread (self_bp->bp, id);
 
   return 0;
 }
@@ -283,7 +280,7 @@ bppy_set_task (PyObject *self, PyObject *newvalue, void *closure)
       return -1;
     }
 
-  self_bp->bp->task = id;
+  breakpoint_set_task (self_bp->bp, id);
 
   return 0;
 }
