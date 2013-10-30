@@ -1,3 +1,58 @@
+2010-07-16  Thiago Jung Bauermann  <bauerman@br.ibm.com>
+
+	* NEWS: Mention support for the new ptrace interface and hardware
+	accelerated watchpoint conditions on powerpc-linux.
+
+2010-07-16  Ozkan Sezer  <sezeroz@gmail.com>
+
+	* target.c (debug_to_insert_breakpoint): Instead of casting to unsigned
+	long and %ld, use core_addr_to_string() and %s to print CORE_ADDR vars
+	and host_address_to_string() and %s for pointers.
+	(debug_to_remove_breakpoint): Likewise.
+	(debug_to_region_ok_for_hw_watchpoint): Likewise.
+	(debug_to_can_accel_watchpoint_condition): Likewise.
+	(debug_to_stopped_data_address): Likewise.
+	(debug_to_watchpoint_addr_within_range): Likewise.
+	(debug_to_insert_hw_breakpoint): Likewise.
+	(debug_to_remove_hw_breakpoint): Likewise.
+	(debug_to_insert_watchpoint): Likewise.
+	(debug_to_remove_watchpoint): Likewise.
+
+2010-07-16  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* symtab.h (symbol_set_demangled_name): Now takes an optional objfile*
+	argument.
+	(cplus_specific): New struct.
+	* symtab.c (symbol_set_demangled_name): Updated.
+	Use cplus_specific for cplus symbols.
+	(symbol_get_demangled_name): Retrive the name from the cplus_specific
+	struct for cplus symbols.
+	(symbol_init_language_specific): Set cplus_specific for cplus symbols.
+	(symbol_set_names): Pass objfile to symbol_set_demangled_name.
+	* symtab.c (symbol_init_cplus_specific): New function.
+
+2010-07-16  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* symtab.h (symbol_set_demangled_name): New function.
+	(symbol_get_demangled_name): New function.
+	* symtab.c (symbol_set_demangled_name): New function.
+	(symbol_get_demangled_name): New function.
+	(symbol_init_language_specific): Use demangled_name setter and getter.
+	(symbol_set_names): Ditto.
+	(symbol_natural_name): Ditto.
+	(symbol_demangled_name): Ditto.
+	* dwarf2read.c (new_symbol): Ditto.
+
+2010-07-16  Sami Wagiaalla  <swagiaal@redhat.com>
+
+	* symtab.h: Renamed cplus_specific to mangled_lang.
+	* symtab.c (symbol_init_language_specific): Updated.
+	(symbol_set_names): Updated.
+	(symbol_natural_name): Updated.
+	(symbol_demangled_name): Updated.
+	* ada-lang.c (ada_decode_symbol): Updated.
+	* dwarf2read.c (new_symbol): Updated.
+
 2010-07-14  Ken Werner  <ken.werner@de.ibm.com>
 
 	* valops.c (value_assign): Do not call to value_coerce_to_target.
