@@ -1,3 +1,12 @@
+2010-04-07  Jie Zhang  <jie@codesourcery.com>
+
+	* config/tc-arm.c (make_mapping_symbol): Handle the case
+	that multiple mapping symbols have the same value 0.
+
+2010-04-07  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
 2010-04-06  Nick Clifton  <nickc@redhat.com>
 
 	* po/ru.po: New Russian translation.
