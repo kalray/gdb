@@ -1,3 +1,79 @@
+2010-07-05  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/mips.exp (run_dump_test_arch): Check for the presence
+	of an architecture-specific test first and use it if found,
+	before falling back to the generic one.
+
+2010-07-05  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/mips4-fp.d, gas/mips/mips4-fp.s: Remove checks for
+	branch-likely instructions and place them...
+	* gas/mips/mips4-branch-likely.d, gas/mips/mips4-branch-likely.s:
+	... in this new test.
+	* gas/mips/mips4-fp.l: Update accordingly.
+	* gas/mips/mips4-branch-likely.l: New stderr output for the new
+	test.
+	* gas/mips/mips.exp (mips4-branch-likely): Run a dump test and
+	a list test with mips4-branch-likely similarly to mips4-fp.
+
+2010-07-05  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/beq.d, gas/mips/beq.s: Remove checks for
+	branch-likely instructions.
+	* gas/mips/bge.d, gas/mips/bge.s: Likewise.
+	* gas/mips/bgeu.d, gas/mips/bgeu.s: Likewise.
+	* gas/mips/blt.d, gas/mips/blt.s: Likewise.
+	* gas/mips/bltu.d, gas/mips/bltu.s: Likewise.
+	* gas/mips/branch-likely.d, gas/mips/branch-likely.s: New test,
+	collecting checks for branch-likely instructions removed from
+	the above.
+	* gas/mips/mips.exp: Run the new test and update the
+	constraints for the updated tests to include MIPS I.
+
+2010-07-05  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/mips4-fp.d: Reformat.
+
+2010-07-05  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/beq.d: Reformat.
+	* gas/mips/bge.d, gas/mips/bgeu.d: Likewise.
+	* gas/mips/blt.d, gas/mips/bltu.d: Likewise.
+
+2010-07-05  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/beq.d: Remove leftover symbols/relocs from the
+	change on 2009-02-06.
+
+2010-07-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	AVX Programming Reference (June, 2010)
+	* gas/i386/rdrnd.s: Replace rdrnd with rdrand.
+	* gas/i386/rdrnd-intel.d: Likewise.
+	* gas/i386/rdrnd.d: Likewise.
+	* gas/i386/x86-64-rdrnd-intel.d: Likewise.
+	* gas/i386/x86-64-rdrnd.d: Likewise.
+	* gas/i386/x86-64-rdrnd.s: Likewise.
+
+2010-07-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/10531
+	PR gas/11789
+	* gas/i386/dw2-compress-1.d: Remove bogus line debug info.
+
+	* gas/elf/dwarf2-1.d: New.
+	* gas/elf/dwarf2-1.s: Likewise.
+	* gas/elf/dwarf2-2.d: Likewise.
+	* gas/elf/dwarf2-2.s: Likewise.
+	* gas/elf/dwarf2-3.d: Likewise.
+	* gas/elf/dwarf2-3.s: Likewise.
+	* gas/i386/debug1.d: Likewise.
+	* gas/i386/debug1.s: Likewise.
+
+	* gas/elf/elf.exp: Run dwarf2-1, dwarf2-2 and dwarf2-3.
+
+	* gas/i386/i386.exp: Run debug1 for both 32bit and 64bit.
+
 2010-07-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/dw2-compress-1.d: New.
@@ -88,7 +164,6 @@
 
 2010-06-22  Jan Beulich  <jbeulich@novell.com>
 
-	PR gas/11732
 	* gas/i386/jump.d: Adjust.
 	* gas/i386/jump.s: Add check for branch to 2+$.
 

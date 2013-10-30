@@ -271,7 +271,12 @@ proc mips_arch_list_matching {args} {
 # Invoke "run_dump_test" for test NAME, with extra assembler and
 # disassembler flags to test architecture ARCH.
 proc run_dump_test_arch { name arch } {
-    global subdir
+    global subdir srcdir
+
+    set archname "${arch}@${name}"
+    if { [file exists "$srcdir/$subdir/${archname}.d"] } {
+	set name $archname
+    }
 
     if [catch {run_dump_test $name \
 			     "{name    {([mips_arch_displayname $arch])}}
@@ -412,13 +417,12 @@ if { [istarget mips*-*-vxworks*] } {
     # See http://sources.redhat.com/ml/binutils/2001-10/msg00418.html for
     # more information.  Not sure if the fixes there are correct; should
     # branches to external labels be allowed for ECOFF?
-    # XXX FIXME: the following tests require -mips2 disasm for
-    # branch-likely instructions.  They should be split.
-    run_dump_test_arches "beq"		[mips_arch_list_matching mips2]
-    run_dump_test_arches "bge"		[mips_arch_list_matching mips2]
-    run_dump_test_arches "bgeu"		[mips_arch_list_matching mips2]
-    run_dump_test_arches "blt"		[mips_arch_list_matching mips2]
-    run_dump_test_arches "bltu"		[mips_arch_list_matching mips2]
+    run_dump_test_arches "beq"		[mips_arch_list_matching mips1]
+    run_dump_test_arches "bge"		[mips_arch_list_matching mips1]
+    run_dump_test_arches "bgeu"		[mips_arch_list_matching mips1]
+    run_dump_test_arches "blt"		[mips_arch_list_matching mips1]
+    run_dump_test_arches "bltu"		[mips_arch_list_matching mips1]
+    run_dump_test_arches "branch-likely" [mips_arch_list_matching mips2]
     run_dump_test_arches "branch-misc-1" [mips_arch_list_matching mips1]
     run_dump_test_arches "branch-misc-2" [mips_arch_list_matching mips1]
     run_dump_test_arches "branch-misc-2pic" [mips_arch_list_matching mips1]
@@ -484,6 +488,10 @@ if { [istarget mips*-*-vxworks*] } {
     run_dump_test_arches "mips4"	[mips_arch_list_matching mips4]
     run_dump_test_arches "mips4-fp"	[mips_arch_list_matching mips4]
     run_list_test_arches "mips4-fp" "-32 -msoft-float" \
+					[mips_arch_list_matching mips4]
+    run_dump_test_arches "mips4-branch-likely" \
+					[mips_arch_list_matching mips4]
+    run_list_test_arches "mips4-branch-likely" "-32 -msoft-float" \
 					[mips_arch_list_matching mips4]
     run_dump_test_arches "mips5"	[mips_arch_list_matching mips5]
     run_dump_test "mul"

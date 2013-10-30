@@ -1,3 +1,21 @@
+2010-07-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (nops_for_insn_or_target): Replace
+	MIPS16_INSN_BRANCH with MIPS16_INSN_UNCOND_BRANCH and
+	MIPS16_INSN_COND_BRANCH.
+
+2010-07-05  Jim Wilson  <wilson@codesourcery.com>
+
+	PR gas/10531
+	PR gas/11789
+	* dwarf2dbg.c (dwarf2_finish): Don't generate .debug_line section
+	if it isn't empty.
+
+2010-07-05  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-moxie.c (md_apply_fix): Delete set but otherwise
+	unused var.
+
 2010-07-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* Makefile.am (CONFIG_OBJS): Removed.
@@ -69,11 +87,6 @@
 	(md_assemble): Set it.
 	(ppc_frob_file_before_adjust): Don't warn about toc section size
 	if we have large toc relocs and no small toc relocs.
-
-2010-06-29  Alan Modra  <amodra@gmail.com>
-
-	* config/tc-moxie.c (md_apply_fix): Delete set but otherwise
-	unused variable.
 
 2010-06-29  Alan Modra  <amodra@gmail.com>
 
@@ -158,7 +171,6 @@
 
 2010-06-22  Jan Beulich  <jbeulich@novell.com>
 
-	PR gas/11732
 	* config/tc-i386-intel.c (i386_intel_parse_name): Handle pseudo
 	symbols named "$".
 	(i386_intel_operand): Remove bogus handling of pseudo symbols
