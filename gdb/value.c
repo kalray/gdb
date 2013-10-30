@@ -1850,7 +1850,7 @@ unpack_pointer (struct type *type, const gdb_byte *valaddr)
 }
 
 
-/* Get the value of the FIELDN'th field (which must be static) of
+/* Get the value of the FIELDNO'th field (which must be static) of
    TYPE.  Return NULL if the field doesn't exist or has been
    optimized out. */
 
@@ -1859,12 +1859,13 @@ value_static_field (struct type *type, int fieldno)
 {
   struct value *retval;
 
-  if (TYPE_FIELD_LOC_KIND (type, fieldno) == FIELD_LOC_KIND_PHYSADDR)
+  switch (TYPE_FIELD_LOC_KIND (type, fieldno))
     {
+    case FIELD_LOC_KIND_PHYSADDR:
       retval = value_at_lazy (TYPE_FIELD_TYPE (type, fieldno),
 			      TYPE_FIELD_STATIC_PHYSADDR (type, fieldno));
-    }
-  else
+      break;
+    case FIELD_LOC_KIND_PHYSNAME:
     {
       char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, fieldno);
       /*TYPE_FIELD_NAME (type, fieldno);*/
@@ -1897,7 +1898,12 @@ value_static_field (struct type *type, int fieldno)
       if (retval && VALUE_LVAL (retval) == lval_memory)
 	SET_FIELD_PHYSADDR (TYPE_FIELD (type, fieldno),
 			    value_address (retval));
+      break;
     }
+    default:
+      gdb_assert (0);
+    }
+
   return retval;
 }
 
@@ -2244,6 +2250,43 @@ pack_long (gdb_byte *buf, struct type *type, LONGEST num)
 }
 
 
+/* Pack NUM into BUF using a target format of TYPE.  */
+
+void
+pack_unsigned_long (gdb_byte *buf, struct type *type, ULONGEST num)
+{
+  int len;
+  enum bfd_endian byte_order;
+
+  type = check_typedef (type);
+  len = TYPE_LENGTH (type);
+  byte_order = gdbarch_byte_order (get_type_arch (type));
+
+  switch (TYPE_CODE (type))
+    {
+    case TYPE_CODE_INT:
+    case TYPE_CODE_CHAR:
+    case TYPE_CODE_ENUM:
+    case TYPE_CODE_FLAGS:
+    case TYPE_CODE_BOOL:
+    case TYPE_CODE_RANGE:
+    case TYPE_CODE_MEMBERPTR:
+      store_unsigned_integer (buf, len, byte_order, num);
+      break;
+
+    case TYPE_CODE_REF:
+    case TYPE_CODE_PTR:
+      store_typed_address (buf, type, (CORE_ADDR) num);
+      break;
+
+    default:
+      error (_("\
+Unexpected type (%d) encountered for unsigned integer constant."),
+	     TYPE_CODE (type));
+    }
+}
+
+
 /* Convert C numbers into newly allocated values.  */
 
 struct value *
@@ -2252,6 +2295,19 @@ value_from_longest (struct type *type, LONGEST num)
   struct value *val = allocate_value (type);
 
   pack_long (value_contents_raw (val), type, num);
+  return val;
+}
+
+
+/* Convert C unsigned numbers into newly allocated values.  */
+
+struct value *
+value_from_ulongest (struct type *type, ULONGEST num)
+{
+  struct value *val = allocate_value (type);
+
+  pack_unsigned_long (value_contents_raw (val), type, num);
+
   return val;
 }
 

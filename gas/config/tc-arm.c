@@ -942,6 +942,8 @@ my_get_expression (expressionS * ep, char ** str, int prefix_mode)
       input_line_pointer = save_in;
       return 1;
     }
+#else
+  (void) seg;
 #endif
 
   /* Get rid of any bignums now, so that we don't generate an error for which
@@ -1881,7 +1883,6 @@ parse_neon_el_struct_list (char **str, unsigned *pbase,
   int lane = -1;
   int leading_brace = 0;
   enum arm_reg_type rtype = REG_TYPE_NDQ;
-  int addregs = 1;
   const char *const incr_error = _("register stride must be 1 or 2");
   const char *const type_error = _("mismatched element/structure types in list");
   struct neon_typed_alias firsttype;
@@ -1906,7 +1907,6 @@ parse_neon_el_struct_list (char **str, unsigned *pbase,
           if (rtype == REG_TYPE_NQ)
             {
               reg_incr = 1;
-              addregs = 2;
             }
           firsttype = atype;
         }
@@ -4948,6 +4948,33 @@ parse_shifter_operand_group_reloc (char **str, int i)
   /* Never reached.  */
 }
 
+/* Parse a Neon alignment expression.  Information is written to
+   inst.operands[i].  We assume the initial ':' has been skipped.
+   
+   align	.imm = align << 8, .immisalign=1, .preind=0  */
+static parse_operand_result
+parse_neon_alignment (char **str, int i)
+{
+  char *p = *str;
+  expressionS exp;
+
+  my_get_expression (&exp, &p, GE_NO_PREFIX);
+
+  if (exp.X_op != O_constant)
+    {
+      inst.error = _("alignment must be constant");
+      return PARSE_OPERAND_FAIL;
+    }
+
+  inst.operands[i].imm = exp.X_add_number << 8;
+  inst.operands[i].immisalign = 1;
+  /* Alignments are not pre-indexes.  */
+  inst.operands[i].preind = 0;
+
+  *str = p;
+  return PARSE_OPERAND_SUCCESS;
+}
+
 /* Parse all forms of an ARM address expression.  Information is written
    to inst.operands[i] and/or inst.reloc.
 
@@ -5031,22 +5058,15 @@ parse_address_main (char **str, int i, int group_relocations,
 	      return PARSE_OPERAND_FAIL;
 	}
       else if (skip_past_char (&p, ':') == SUCCESS)
-        {
-          /* FIXME: '@' should be used here, but it's filtered out by generic
-             code before we get to see it here. This may be subject to
-             change.  */
-          expressionS exp;
-          my_get_expression (&exp, &p, GE_NO_PREFIX);
-          if (exp.X_op != O_constant)
-            {
-              inst.error = _("alignment must be constant");
-              return PARSE_OPERAND_FAIL;
-            }
-          inst.operands[i].imm = exp.X_add_number << 8;
-          inst.operands[i].immisalign = 1;
-          /* Alignments are not pre-indexes.  */
-          inst.operands[i].preind = 0;
-        }
+	{
+	  /* FIXME: '@' should be used here, but it's filtered out by generic
+	     code before we get to see it here. This may be subject to
+	     change.  */
+	  parse_operand_result result = parse_neon_alignment (&p, i);
+	  
+	  if (result != PARSE_OPERAND_SUCCESS)
+	    return result;
+	}
       else
 	{
 	  if (inst.operands[i].negative)
@@ -5109,6 +5129,15 @@ parse_address_main (char **str, int i, int group_relocations,
 	    if (my_get_expression (&inst.reloc.exp, &p, GE_IMM_PREFIX))
 	      return PARSE_OPERAND_FAIL;
 	}
+    }
+  else if (skip_past_char (&p, ':') == SUCCESS)
+    {
+      /* FIXME: '@' should be used here, but it's filtered out by generic code
+	 before we get to see it here. This may be subject to change.  */
+      parse_operand_result result = parse_neon_alignment (&p, i);
+      
+      if (result != PARSE_OPERAND_SUCCESS)
+	return result;
     }
 
   if (skip_past_char (&p, ']') == FAIL)

@@ -55,7 +55,6 @@
 #define ARCH_m68hc12
 #define ARCH_m68k
 #define ARCH_m88k
-#define ARCH_maxq
 #define ARCH_mcore
 #define ARCH_mep
 #define ARCH_microblaze
@@ -257,11 +256,6 @@ disassembler (abfd)
 #ifdef ARCH_m88k
     case bfd_arch_m88k:
       disassemble = print_insn_m88k;
-      break;
-#endif
-#ifdef ARCH_maxq
-    case bfd_arch_maxq:
-      disassemble = print_insn_maxq_little;
       break;
 #endif
 #ifdef ARCH_mt

@@ -105,7 +105,6 @@ ALL_MACHINES = \
 	cpu-m68hc12.lo \
 	cpu-m68k.lo \
 	cpu-m88k.lo \
-	cpu-maxq.lo \
 	cpu-mcore.lo \
 	cpu-mep.lo \
 	cpu-microblaze.lo \
@@ -180,7 +179,6 @@ ALL_MACHINES_CFILES = \
 	cpu-m68hc12.c \
 	cpu-m68k.c \
 	cpu-m88k.c \
-	cpu-maxq.c \
 	cpu-mcore.c \
 	cpu-mep.c \
 	cpu-microblaze.c \
@@ -244,7 +242,6 @@ BFD32_BACKENDS = \
 	coff-i960.lo \
 	coff-m68k.lo \
 	coff-m88k.lo \
-	coff-maxq.lo \
 	coff-mips.lo \
 	coff-or32.lo \
 	coff-rs6000.lo \
@@ -429,7 +426,6 @@ BFD32_BACKENDS_CFILES = \
 	coff-i960.c \
 	coff-m68k.c \
 	coff-m88k.c \
-	coff-maxq.c \
 	coff-mips.c \
 	coff-or32.c \
 	coff-rs6000.c \

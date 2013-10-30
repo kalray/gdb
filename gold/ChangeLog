@@ -1,3 +1,40 @@
+2010-06-28  Rafael Espindola  <espindola@google.com>
+
+	* plugin.cc (Plugin::load): Use dlerror.
+
+2010-06-26  Jeffrey Yaskin  <jyasskin@google.com>
+
+	* symtab.cc (detect_odr_violations): When reporting an ODR
+	violation, report an object where the symbol is defined.
+
+2010-06-25  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::can_check_for_functions_pointers): Return true.
+	(Target_arm::section_may_have_icf_unsafe_pointers): New method
+	definition.
+	(Target_arm::Scan::local_reloc_may_be_function_pointer,
+	Target_arm::Scan::global_reloc_may_be_function_pointer): Implement
+	target hook to detect function points.
+	(Target_arm::Scan::possible_function_pointer_reloc): New method.
+	* icf.h (Icf::check_section_for_function_pointers): Change type of
+	parameter SECTION_NAME to const reference to std::string.  Use
+	target hook to determine if section may have unsafe pointers.
+	* target.h (Target::section_may_have_icf_unsafe_pointers): New
+	method definition.
+
+2010-06-21  Rafael Espindola  <espindola@google.com>
+
+	* fileread.cc (Input_file::find_fie): New
+	(Input_file::open): Use Input_file::find_fie.
+	* fileread.h (Input_file::find_fie): New
+	* plugin.cc (set_extra_library_path): New.
+	(Plugin::load): Add set_extra_library_path to the transfer vector.
+	(Plugin_manager::set_extra_library_path): New.
+	(Plugin_manager::add_input_file): Use the extra search path if set.
+	(set_extra_library_path(): New.
+	* plugin.h (Plugin_manager): Add set_extra_library_path and
+	extra_search_path_.
+
 2010-06-19  Cary Coutant  <ccoutant@google.com>
 
 	* layout.cc (gdb_sections): Add .debug_types.
