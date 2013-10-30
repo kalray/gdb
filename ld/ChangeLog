@@ -1,3 +1,39 @@
+2010-05-15  Kai Tietz  <kai.tietz@onevision.com>
+
+	* emultempl/pe.em (is_underscoring): New helper function.
+	(gld_${EMULATION_NAME}_before_parse): Replace code
+	for pe(p)_leading_underscore detection by is_underscoring.
+	(U): Likewise.
+	(GET_INIT_SYMBOL_NAME): Likewise.
+	(U_SIZE): Likewise.
+	(set_pe_name):
+	(set_entry_point):
+	(gld_${EMULATION_NAME}_set_symbols):
+	* emultempl/pep.em: Likewise.
+	* pe-dll.c (pe_detail_list): Set default
+	underscoring for x64 target.
+	(pe_dll_id_target): Add initialization of
+	pe(p)_leading_underscore.
+
+2010-05-15  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* pe-dll.c: Removed trailing whitespaces.
+
+2010-05-14  Alan Modra  <amodra@gmail.com>
+
+	PR ld/11583
+	* ldexp.c (exp_fold_tree_1): If assignment source expression is
+	invalid, make the destination symbol undefined.
+
+2010-05-11  Kai Tietz  <kai.tietz@onevision.com>
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_before_parse):
+	Initialize pe(p)_leading_underscore variable.
+	(set_pe_name): Likewise.
+	* emultempl/pep.em: Likewise.
+	Additional change default to non-underscore for
+	pep_leading_underscore equal to -1.
+
 2010-05-07  Tristan Gingold  <gingold@adacore.com>
 
 	* Makefile.in: Regenerate with automake 1.11.1.

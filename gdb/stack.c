@@ -484,6 +484,7 @@ static void
 gdb_disassembly_stub (void *args)
 {
   struct gdb_disassembly_stub_args *p = args;
+
   gdb_disassembly (p->gdbarch, uiout, 0,
                    DISASSEMBLY_RAW_INSN, p->how_many,
                    p->low, p->high);
@@ -1372,6 +1373,7 @@ static int
 backtrace_command_stub (void *data)
 {
   struct backtrace_command_args *args = data;
+
   backtrace_command_1 (args->count_exp, args->show_locals, args->from_tty);
   return 0;
 }
@@ -1443,6 +1445,7 @@ static void
 backtrace_full_command (char *arg, int from_tty)
 {
   struct backtrace_command_args btargs;
+
   btargs.count_exp = arg;
   btargs.show_locals = 1;
   btargs.from_tty = from_tty;
@@ -1902,6 +1905,7 @@ down_silently_base (char *count_exp)
 {
   struct frame_info *frame;
   int count = -1;
+
   if (count_exp)
     count = -parse_and_eval_long (count_exp);
 
@@ -2140,10 +2144,6 @@ void _initialize_stack (void);
 void
 _initialize_stack (void)
 {
-#if 0
-  backtrace_limit = 30;
-#endif
-
   add_com ("return", class_stack, return_command, _("\
 Make selected stack frame return to its caller.\n\
 Control remains in the debugger, but when you continue\n\
@@ -2248,12 +2248,4 @@ source line."),
 			        show_disassemble_next_line,
 			        &setlist, &showlist);
   disassemble_next_line = AUTO_BOOLEAN_FALSE;
-
-#if 0
-  add_cmd ("backtrace-limit", class_stack, set_backtrace_limit_command, _(\
-"Specify maximum number of frames for \"backtrace\" to print by default."),
-	   &setlist);
-  add_info ("backtrace-limit", backtrace_limit_info, _("\
-The maximum number of frames for \"backtrace\" to print by default."));
-#endif
 }
