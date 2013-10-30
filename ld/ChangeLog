@@ -1,3 +1,23 @@
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (CXX): Removed.
+
+	* configure.in: Add AC_PROG_CXX.
+
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
+
+2011-01-22  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* plugin.c (plugin_get_ir_dummy_bfd): Copy across the bfd's
+	private data and GP size.
+
+2011-01-21  Alan Modra  <amodra@gmail.com>
+
+	* ldexp.c (fold_binary): Set result section for arithmetic and
+	logical operations to NULL when both operands are in same section.
+	* ld.texinfo (Expression Section): Describe this.
+
 2011-01-14  Alan Modra  <amodra@gmail.com>
 
 	* ldmain.c (main): Flush stdout before and stderr after printing
