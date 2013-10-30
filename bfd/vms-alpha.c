@@ -51,6 +51,7 @@
 #include "vms/eobjrec.h"
 #include "vms/egsd.h"
 #include "vms/egps.h"
+#include "vms/esgps.h"
 #include "vms/eeom.h"
 #include "vms/emh.h"
 #include "vms/eiaf.h"
@@ -63,6 +64,7 @@
 #include "vms/esdfv.h"
 #include "vms/esrf.h"
 #include "vms/egst.h"
+#include "vms/eidc.h"
 #include "vms/dsc.h"
 #include "vms/prt.h"
 #include "vms/internal.h"
@@ -545,12 +547,14 @@ _bfd_vms_slurp_eisd (bfd *abfd, unsigned int offset)
 	 what's in each section without examining the data.  This is
 	 especially true of DWARF debug sections.  */
       bfd_flags = SEC_ALLOC;
+      if (vbn != 0)
+        bfd_flags |= SEC_HAS_CONTENTS | SEC_LOAD;
 
       if (flags & EISD__M_EXE)
-	bfd_flags |= SEC_CODE | SEC_HAS_CONTENTS | SEC_LOAD;
+	bfd_flags |= SEC_CODE;
 
       if (flags & EISD__M_NONSHRADR)
-	bfd_flags |= SEC_DATA | SEC_HAS_CONTENTS | SEC_LOAD;
+	bfd_flags |= SEC_DATA;
 
       if (!(flags & EISD__M_WRT))
 	bfd_flags |= SEC_READONLY;
@@ -559,10 +563,10 @@ _bfd_vms_slurp_eisd (bfd *abfd, unsigned int offset)
 	bfd_flags |= SEC_DATA;
 
       if (flags & EISD__M_FIXUPVEC)
-	bfd_flags |= SEC_DATA | SEC_HAS_CONTENTS | SEC_LOAD;
+	bfd_flags |= SEC_DATA;
 
       if (flags & EISD__M_CRF)
-	bfd_flags |= SEC_HAS_CONTENTS | SEC_LOAD;
+	bfd_flags |= SEC_DATA;
 
       if (flags & EISD__M_GBL)
 	{
@@ -663,12 +667,6 @@ _bfd_vms_slurp_eihs (bfd *abfd, unsigned int offset)
 
   if (gstvbn)
     {
-      flagword bfd_flags = SEC_HAS_CONTENTS;
-
-      section = bfd_make_section (abfd, "$GST$");
-      if (!section)
-	return FALSE;
-
       if (bfd_seek (abfd, VMS_BLOCK_SIZE * (gstvbn - 1), SEEK_SET))
 	{
 	  bfd_set_error (bfd_error_file_truncated);
@@ -676,12 +674,6 @@ _bfd_vms_slurp_eihs (bfd *abfd, unsigned int offset)
 	}
 
       if (_bfd_vms_slurp_object_records (abfd) != TRUE)
-	return FALSE;
-
-      section->filepos = VMS_BLOCK_SIZE * (gstvbn - 1);
-      section->size = bfd_tell (abfd) - section->filepos;
-
-      if (!bfd_set_section_flags (abfd, section, bfd_flags))
 	return FALSE;
 
       abfd->flags |= HAS_SYMS;
@@ -1240,7 +1232,10 @@ _bfd_vms_slurp_egsd (bfd * abfd)
           }
 	  break;
 
-	case EGSD__C_IDC:
+        case EGSD__C_SPSC:
+        case EGSD__C_IDC:
+          /* Currently ignored.  */
+          break;
 	case EGSD__C_SYMM:
 	case EGSD__C_SYMV:
 	default:
@@ -2550,6 +2545,178 @@ alpha_vms_object_p (bfd *abfd)
 
 /* Image write.  */
 
+/* Write an EMH/MHD record.  */
+
+static void
+_bfd_vms_write_emh (bfd *abfd)
+{
+  struct vms_rec_wr *recwr = &PRIV (recwr);
+
+  _bfd_vms_output_alignment (recwr, 2);
+
+  /* EMH.  */
+  _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
+  _bfd_vms_output_short (recwr, EMH__C_MHD);
+  _bfd_vms_output_short (recwr, EOBJ__C_STRLVL);
+  _bfd_vms_output_long (recwr, 0);
+  _bfd_vms_output_long (recwr, 0);
+  _bfd_vms_output_long (recwr, MAX_OUTREC_SIZE);
+
+  /* Create module name from filename.  */
+  if (bfd_get_filename (abfd) != 0)
+    {
+      char *module = vms_get_module_name (bfd_get_filename (abfd), TRUE);
+      _bfd_vms_output_counted (recwr, module);
+      free (module);
+    }
+  else
+    _bfd_vms_output_counted (recwr, "NONAME");
+
+  _bfd_vms_output_counted (recwr, BFD_VERSION_STRING);
+  _bfd_vms_output_dump (recwr, get_vms_time_string (), EMH_DATE_LENGTH);
+  _bfd_vms_output_fill (recwr, 0, EMH_DATE_LENGTH);
+  _bfd_vms_output_end (abfd, recwr);
+}
+
+/* Write an EMH/LMN record.  */
+
+static void
+_bfd_vms_write_lmn (bfd *abfd, const char *name)
+{
+  char version [64];
+  struct vms_rec_wr *recwr = &PRIV (recwr);
+  unsigned int ver = BFD_VERSION / 10000;
+
+  /* LMN.  */
+  _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
+  _bfd_vms_output_short (recwr, EMH__C_LNM);
+  snprintf (version, sizeof (version), "%s %d.%d.%d", name,
+            ver / 10000, (ver / 100) % 100, ver % 100);
+  _bfd_vms_output_dump (recwr, (unsigned char *)version, strlen (version));
+  _bfd_vms_output_end (abfd, recwr);
+}
+
+
+/* Write eom record for bfd abfd.  Return FALSE on error.  */
+
+static bfd_boolean
+_bfd_vms_write_eeom (bfd *abfd)
+{
+  struct vms_rec_wr *recwr = &PRIV (recwr);
+
+  vms_debug2 ((2, "vms_write_eeom\n"));
+
+  _bfd_vms_output_alignment (recwr, 2);
+
+  _bfd_vms_output_begin (recwr, EOBJ__C_EEOM);
+  _bfd_vms_output_long (recwr, (unsigned long) (PRIV (vms_linkage_index) >> 1));
+  _bfd_vms_output_byte (recwr, 0);	/* Completion code.  */
+  _bfd_vms_output_byte (recwr, 0);	/* Fill byte.  */
+
+  if ((abfd->flags & EXEC_P) == 0
+      && bfd_get_start_address (abfd) != (bfd_vma)-1)
+    {
+      asection *section;
+
+      section = bfd_get_section_by_name (abfd, ".link");
+      if (section == 0)
+	{
+	  bfd_set_error (bfd_error_nonrepresentable_section);
+	  return FALSE;
+	}
+      _bfd_vms_output_short (recwr, 0);
+      _bfd_vms_output_long (recwr, (unsigned long) (section->index));
+      _bfd_vms_output_long (recwr,
+			     (unsigned long) bfd_get_start_address (abfd));
+      _bfd_vms_output_long (recwr, 0);
+    }
+
+  _bfd_vms_output_end (abfd, recwr);
+  return TRUE;
+}
+
+/* This hash routine borrowed from GNU-EMACS, and strengthened
+   slightly.  ERY.  */
+
+static int
+hash_string (const char *ptr)
+{
+  const unsigned char *p = (unsigned char *) ptr;
+  const unsigned char *end = p + strlen (ptr);
+  unsigned char c;
+  int hash = 0;
+
+  while (p != end)
+    {
+      c = *p++;
+      hash = ((hash << 3) + (hash << 15) + (hash >> 28) + c);
+    }
+  return hash;
+}
+
+/* Generate a length-hashed VMS symbol name (limited to maxlen chars).  */
+
+static char *
+_bfd_vms_length_hash_symbol (bfd *abfd, const char *in, int maxlen)
+{
+  unsigned long result;
+  int in_len;
+  char *new_name;
+  const char *old_name;
+  int i;
+  static char outbuf[EOBJ__C_SYMSIZ + 1];
+  char *out = outbuf;
+
+#if VMS_DEBUG
+  vms_debug (4, "_bfd_vms_length_hash_symbol \"%s\"\n", in);
+#endif
+
+  if (maxlen > EOBJ__C_SYMSIZ)
+    maxlen = EOBJ__C_SYMSIZ;
+
+  /* Save this for later.  */
+  new_name = out;
+
+  /* We may need to truncate the symbol, save the hash for later.  */
+  in_len = strlen (in);
+
+  result = (in_len > maxlen) ? hash_string (in) : 0;
+
+  old_name = in;
+
+  /* Do the length checking.  */
+  if (in_len <= maxlen)
+    i = in_len;
+  else
+    {
+      if (PRIV (flag_hash_long_names))
+	i = maxlen - 9;
+      else
+	i = maxlen;
+    }
+
+  strncpy (out, in, (size_t) i);
+  in += i;
+  out += i;
+
+  if ((in_len > maxlen)
+      && PRIV (flag_hash_long_names))
+    sprintf (out, "_%08lx", result);
+  else
+    *out = 0;
+
+#if VMS_DEBUG
+  vms_debug (4, "--> [%d]\"%s\"\n", (int)strlen (outbuf), outbuf);
+#endif
+
+  if (in_len > maxlen
+	&& PRIV (flag_hash_long_names)
+	&& PRIV (flag_show_after_trunc))
+    printf (_("Symbol %s replaced by %s\n"), old_name, new_name);
+
+  return outbuf;
+}
+
 static void
 vector_grow1 (struct vector_type *vec, size_t elsz)
 {
@@ -2983,88 +3150,6 @@ alpha_vms_write_exec (bfd *abfd)
 
 /* Object write.  */
 
-/* This hash routine borrowed from GNU-EMACS, and strengthened
-   slightly.  ERY.  */
-
-static int
-hash_string (const char *ptr)
-{
-  const unsigned char *p = (unsigned char *) ptr;
-  const unsigned char *end = p + strlen (ptr);
-  unsigned char c;
-  int hash = 0;
-
-  while (p != end)
-    {
-      c = *p++;
-      hash = ((hash << 3) + (hash << 15) + (hash >> 28) + c);
-    }
-  return hash;
-}
-
-/* Generate a length-hashed VMS symbol name (limited to maxlen chars).  */
-
-static char *
-_bfd_vms_length_hash_symbol (bfd *abfd, const char *in, int maxlen)
-{
-  unsigned long result;
-  int in_len;
-  char *new_name;
-  const char *old_name;
-  int i;
-  static char outbuf[EOBJ__C_SYMSIZ + 1];
-  char *out = outbuf;
-
-#if VMS_DEBUG
-  vms_debug (4, "_bfd_vms_length_hash_symbol \"%s\"\n", in);
-#endif
-
-  if (maxlen > EOBJ__C_SYMSIZ)
-    maxlen = EOBJ__C_SYMSIZ;
-
-  /* Save this for later.  */
-  new_name = out;
-
-  /* We may need to truncate the symbol, save the hash for later.  */
-  in_len = strlen (in);
-
-  result = (in_len > maxlen) ? hash_string (in) : 0;
-
-  old_name = in;
-
-  /* Do the length checking.  */
-  if (in_len <= maxlen)
-    i = in_len;
-  else
-    {
-      if (PRIV (flag_hash_long_names))
-	i = maxlen - 9;
-      else
-	i = maxlen;
-    }
-
-  strncpy (out, in, (size_t) i);
-  in += i;
-  out += i;
-
-  if ((in_len > maxlen)
-      && PRIV (flag_hash_long_names))
-    sprintf (out, "_%08lx", result);
-  else
-    *out = 0;
-
-#if VMS_DEBUG
-  vms_debug (4, "--> [%d]\"%s\"\n", (int)strlen (outbuf), outbuf);
-#endif
-
-  if (in_len > maxlen
-	&& PRIV (flag_hash_long_names)
-	&& PRIV (flag_show_after_trunc))
-    printf (_("Symbol %s replaced by %s\n"), old_name, new_name);
-
-  return outbuf;
-}
-
 /* Write section and symbol directory of bfd abfd.  Return FALSE on error.  */
 
 static bfd_boolean
@@ -3292,42 +3377,14 @@ _bfd_vms_write_ehdr (bfd *abfd)
   unsigned int symnum;
   int had_case = 0;
   int had_file = 0;
-  char version [256];
   struct vms_rec_wr *recwr = &PRIV (recwr);
 
   vms_debug2 ((2, "vms_write_ehdr (%p)\n", abfd));
 
   _bfd_vms_output_alignment (recwr, 2);
 
-  /* EMH.  */
-  _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
-  _bfd_vms_output_short (recwr, EMH__C_MHD);
-  _bfd_vms_output_short (recwr, EOBJ__C_STRLVL);
-  _bfd_vms_output_long (recwr, 0);
-  _bfd_vms_output_long (recwr, 0);
-  _bfd_vms_output_long (recwr, MAX_OUTREC_SIZE);
-
-  /* Create module name from filename.  */
-  if (bfd_get_filename (abfd) != 0)
-    {
-      char *module = vms_get_module_name (bfd_get_filename (abfd), TRUE);
-      _bfd_vms_output_counted (recwr, module);
-      free (module);
-    }
-  else
-    _bfd_vms_output_counted (recwr, "NONAME");
-
-  _bfd_vms_output_counted (recwr, BFD_VERSION_STRING);
-  _bfd_vms_output_dump (recwr, get_vms_time_string (), EMH_DATE_LENGTH);
-  _bfd_vms_output_fill (recwr, 0, EMH_DATE_LENGTH);
-  _bfd_vms_output_end (abfd, recwr);
-
-  /* LMN.  */
-  _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
-  _bfd_vms_output_short (recwr, EMH__C_LNM);
-  snprintf (version, sizeof (version), "GAS BFD v%s", BFD_VERSION_STRING);
-  _bfd_vms_output_dump (recwr, (unsigned char *)version, strlen (version));
-  _bfd_vms_output_end (abfd, recwr);
+  _bfd_vms_write_emh (abfd);
+  _bfd_vms_write_lmn (abfd, "GNU AS");
 
   /* SRC.  */
   _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
@@ -3856,41 +3913,6 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
     }
 
   _bfd_vms_output_alignment (recwr, 2);
-  return TRUE;
-}
-
-/* Write eom record for bfd abfd.  Return FALSE on error.  */
-
-static bfd_boolean
-_bfd_vms_write_eeom (bfd *abfd)
-{
-  struct vms_rec_wr *recwr = &PRIV (recwr);
-
-  vms_debug2 ((2, "vms_write_eeom\n"));
-
-  _bfd_vms_output_begin (recwr, EOBJ__C_EEOM);
-  _bfd_vms_output_long (recwr, (unsigned long) (PRIV (vms_linkage_index) >> 1));
-  _bfd_vms_output_byte (recwr, 0);	/* Completion code.  */
-  _bfd_vms_output_byte (recwr, 0);	/* Fill byte.  */
-
-  if (bfd_get_start_address (abfd) != (bfd_vma)-1)
-    {
-      asection *section;
-
-      section = bfd_get_section_by_name (abfd, ".link");
-      if (section == 0)
-	{
-	  bfd_set_error (bfd_error_nonrepresentable_section);
-	  return FALSE;
-	}
-      _bfd_vms_output_short (recwr, 0);
-      _bfd_vms_output_long (recwr, (unsigned long) (section->index));
-      _bfd_vms_output_long (recwr,
-			     (unsigned long) bfd_get_start_address (abfd));
-      _bfd_vms_output_long (recwr, 0);
-    }
-
-  _bfd_vms_output_end (abfd, recwr);
   return TRUE;
 }
 
@@ -5629,6 +5651,37 @@ exav_bfd_print_egsy_flags (unsigned int flags, FILE *file)
 }
 
 static void
+evax_bfd_print_egsd_flags (FILE *file, unsigned int flags)
+{
+  if (flags & EGPS__V_PIC)
+    fputs (_(" PIC"), file);
+  if (flags & EGPS__V_LIB)
+    fputs (_(" LIB"), file);
+  if (flags & EGPS__V_OVR)
+    fputs (_(" OVR"), file);
+  if (flags & EGPS__V_REL)
+    fputs (_(" REL"), file);
+  if (flags & EGPS__V_GBL)
+    fputs (_(" GBL"), file);
+  if (flags & EGPS__V_SHR)
+    fputs (_(" SHR"), file);
+  if (flags & EGPS__V_EXE)
+    fputs (_(" EXE"), file);
+  if (flags & EGPS__V_RD)
+    fputs (_(" RD"), file);
+  if (flags & EGPS__V_WRT)
+    fputs (_(" WRT"), file);
+  if (flags & EGPS__V_VEC)
+    fputs (_(" VEC"), file);
+  if (flags & EGPS__V_NOMOD)
+    fputs (_(" NOMOD"), file);
+  if (flags & EGPS__V_COM)
+    fputs (_(" COM"), file);
+  if (flags & EGPS__V_ALLOC_64BIT)
+    fputs (_(" 64B"), file);
+}
+
+static void
 evax_bfd_print_egsd (FILE *file, unsigned char *rec, unsigned int rec_len)
 {
   unsigned int off = sizeof (struct vms_egsd);
@@ -5661,37 +5714,33 @@ evax_bfd_print_egsd (FILE *file, unsigned char *rec, unsigned int rec_len)
             fprintf (file, _("PSC - Program section definition\n"));
             fprintf (file, _("   alignment  : 2**%u\n"), egps->align);
             fprintf (file, _("   flags      : 0x%04x"), flags);
-            if (flags & EGPS__V_PIC)
-              fputs (_(" PIC"), file);
-            if (flags & EGPS__V_LIB)
-              fputs (_(" LIB"), file);
-            if (flags & EGPS__V_OVR)
-              fputs (_(" OVR"), file);
-            if (flags & EGPS__V_REL)
-              fputs (_(" REL"), file);
-            if (flags & EGPS__V_GBL)
-              fputs (_(" GBL"), file);
-            if (flags & EGPS__V_SHR)
-              fputs (_(" SHR"), file);
-            if (flags & EGPS__V_EXE)
-              fputs (_(" EXE"), file);
-            if (flags & EGPS__V_RD)
-              fputs (_(" RD"), file);
-            if (flags & EGPS__V_WRT)
-              fputs (_(" WRT"), file);
-            if (flags & EGPS__V_VEC)
-              fputs (_(" VEC"), file);
-            if (flags & EGPS__V_NOMOD)
-              fputs (_(" NOMOD"), file);
-            if (flags & EGPS__V_COM)
-              fputs (_(" COM"), file);
-            if (flags & EGPS__V_ALLOC_64BIT)
-              fputs (_(" 64B"), file);
+            evax_bfd_print_egsd_flags (file, flags);
             fputc ('\n', file);
             l = bfd_getl32 (egps->alloc);
             fprintf (file, _("   alloc (len): %u (0x%08x)\n"), l, l);
             fprintf (file, _("   name       : %.*s\n"),
                      egps->namlng, egps->name);
+          }
+          break;
+        case EGSD__C_SPSC:
+          {
+            struct vms_esgps *esgps = (struct vms_esgps *)e;
+            unsigned int flags = bfd_getl16 (esgps->flags);
+            unsigned int l;
+
+            fprintf (file, _("SPSC - Shared Image Program section def\n"));
+            fprintf (file, _("   alignment  : 2**%u\n"), esgps->align);
+            fprintf (file, _("   flags      : 0x%04x"), flags);
+            evax_bfd_print_egsd_flags (file, flags);
+            fputc ('\n', file);
+            l = bfd_getl32 (esgps->alloc);
+            fprintf (file, _("   alloc (len)   : %u (0x%08x)\n"), l, l);
+            fprintf (file, _("   image offset  : 0x%08x\n"),
+                     (unsigned int)bfd_getl32 (esgps->base));
+            fprintf (file, _("   symvec offset : 0x%08x\n"),
+                     (unsigned int)bfd_getl32 (esgps->value));
+            fprintf (file, _("   name          : %.*s\n"),
+                     esgps->namlng, esgps->name);
           }
           break;
         case EGSD__C_SYM:
@@ -5729,6 +5778,33 @@ evax_bfd_print_egsd (FILE *file, unsigned char *rec, unsigned int rec_len)
                 fprintf (file, _("   name       : %.*s\n"),
                          esrf->namlng, esrf->name);
               }
+          }
+          break;
+        case EGSD__C_IDC:
+          {
+            struct vms_eidc *eidc = (struct vms_eidc *)e;
+            unsigned int flags = bfd_getl32 (eidc->flags);
+            unsigned char *p;
+
+            fprintf (file, _("IDC - Ident Consistency check\n"));
+            fprintf (file, _("   flags         : 0x%08x"), flags);
+            if (flags & EIDC__V_BINIDENT)
+              fputs (" BINDENT", file);
+            fputc ('\n', file);
+            fprintf (file, _("   id match      : %x\n"),
+                     (flags >> EIDC__V_IDMATCH_SH) & EIDC__V_IDMATCH_MASK);
+            fprintf (file, _("   error severity: %x\n"),
+                     (flags >> EIDC__V_ERRSEV_SH) & EIDC__V_ERRSEV_MASK);
+            p = eidc->name;
+            fprintf (file, _("   entity name   : %.*s\n"), p[0], p + 1);
+            p += 1 + p[0];
+            fprintf (file, _("   object name   : %.*s\n"), p[0], p + 1);
+            p += 1 + p[0];
+            if (flags & EIDC__V_BINIDENT)
+              fprintf (file, _("   binary ident  : 0x%08x\n"),
+                       (unsigned)bfd_getl32 (p + 1));
+            else
+              fprintf (file, _("   ascii ident   : %.*s\n"), p[0], p + 1);
           }
           break;
         case EGSD__C_SYMG:
@@ -6895,19 +6971,25 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
                     break;
                   case DST__K_INCR_LINUM:
                     val = buf[1];
-                    fprintf (file, _("incr_linum: +%u\n"), val);
+                    fprintf (file, _("incr_linum(b): +%u\n"), val);
                     line += val;
                     cmdlen = 2;
                     break;
                   case DST__K_INCR_LINUM_W:
                     val = bfd_getl16 (buf + 1);
-                    fprintf (file, _("incr_linum: +%u\n"), val);
+                    fprintf (file, _("incr_linum_w: +%u\n"), val);
                     line += val;
                     cmdlen = 3;
                     break;
+                  case DST__K_INCR_LINUM_L:
+                    val = bfd_getl32 (buf + 1);
+                    fprintf (file, _("incr_linum_l: +%u\n"), val);
+                    line += val;
+                    cmdlen = 5;
+                    break;
                   case DST__K_SET_LINUM:
-                    line = (unsigned)bfd_getl16 (buf + 1);
-                    fprintf (file, _("set_line_num %u\n"), line);
+                    line = bfd_getl16 (buf + 1);
+                    fprintf (file, _("set_line_num(w) %u\n"), line);
                     cmdlen = 3;
                     break;
                   case DST__K_SET_LINUM_B:
@@ -6916,12 +6998,12 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
                     cmdlen = 2;
                     break;
                   case DST__K_SET_LINUM_L:
-                    line = (unsigned)bfd_getl32 (buf + 1);
+                    line = bfd_getl32 (buf + 1);
                     fprintf (file, _("set_line_num_l %u\n"), line);
                     cmdlen = 5;
                     break;
                   case DST__K_SET_ABS_PC:
-                    pc = (unsigned)bfd_getl32 (buf + 1);
+                    pc = bfd_getl32 (buf + 1);
                     fprintf (file, _("set_abs_pc: 0x%08x\n"), pc);
                     cmdlen = 5;
                     break;
@@ -6931,7 +7013,7 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
                     cmdlen = 5;
                     break;
                   case DST__K_TERM:
-                    fprintf (file, _("term: 0x%02x"), buf[1]);
+                    fprintf (file, _("term(b): 0x%02x"), buf[1]);
                     pc += buf[1];
                     fprintf (file, _("        pc: 0x%08x\n"), pc);
                     cmdlen = 2;
@@ -7497,7 +7579,7 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
             }
           count = bfd_getl16 (dmth.psect_count);
           fprintf (file,
-                   _(" module address: 0x%08x, size: 0x%08x, (%u psects)\n"),
+                   _(" module offset: 0x%08x, size: 0x%08x, (%u psects)\n"),
                    (unsigned)bfd_getl32 (dmth.modbeg),
                    (unsigned)bfd_getl32 (dmth.size), count);
           dmt_size -= sizeof (dmth);
@@ -8852,7 +8934,8 @@ vms_get_symbol_info (bfd * abfd ATTRIBUTE_UNUSED,
     ret->type = 'U';
   else if (bfd_is_ind_section (sec))
     ret->type = 'I';
-  else if (bfd_get_section_flags (abfd, sec) & SEC_CODE)
+  else if ((symbol->flags & BSF_FUNCTION)
+           || (bfd_get_section_flags (abfd, sec) & SEC_CODE))
     ret->type = 'T';
   else if (bfd_get_section_flags (abfd, sec) & SEC_DATA)
     ret->type = 'D';

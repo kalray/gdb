@@ -77,6 +77,7 @@ static void
 restore_python_env (void *p)
 {
   struct python_env *env = (struct python_env *)p;
+
   PyGILState_Release (env->state);
   python_gdbarch = env->gdbarch;
   python_language = env->language;
@@ -124,6 +125,7 @@ compute_python_string (struct command_line *l)
   for (iter = l; iter; iter = iter->next)
     {
       int len = strlen (iter->line);
+
       strcpy (&script[here], iter->line);
       here += len;
       script[here++] = '\n';
@@ -165,8 +167,8 @@ static void
 python_command (char *arg, int from_tty)
 {
   struct cleanup *cleanup;
-  cleanup = ensure_python_env (get_current_arch (), current_language);
 
+  cleanup = ensure_python_env (get_current_arch (), current_language);
   while (arg && *arg && isspace (*arg))
     ++arg;
   if (arg && *arg)
@@ -180,6 +182,7 @@ python_command (char *arg, int from_tty)
   else
     {
       struct command_line *l = get_command_line (python_control, "");
+
       make_cleanup_free_command_lines (&l);
       execute_control_command_untraced (l);
     }
@@ -204,6 +207,7 @@ gdbpy_parameter_value (enum var_types type, void *var)
     case var_enum:
       {
 	char *str = * (char **) var;
+
 	if (! str)
 	  str = "";
 	return PyString_Decode (str, strlen (str), host_charset (), NULL);
@@ -220,6 +224,7 @@ gdbpy_parameter_value (enum var_types type, void *var)
     case var_auto_boolean:
       {
 	enum auto_boolean ab = * (enum auto_boolean *) var;
+
 	if (ab == AUTO_BOOLEAN_TRUE)
 	  Py_RETURN_TRUE;
 	else if (ab == AUTO_BOOLEAN_FALSE)
@@ -238,6 +243,7 @@ gdbpy_parameter_value (enum var_types type, void *var)
     case var_uinteger:
       {
 	unsigned int val = * (unsigned int *) var;
+
 	if (val == UINT_MAX)
 	  Py_RETURN_NONE;
 	return PyLong_FromUnsignedLong (val);
@@ -286,6 +292,7 @@ static PyObject *
 gdbpy_target_charset (PyObject *self, PyObject *args)
 {
   const char *cset = target_charset (python_gdbarch);
+
   return PyUnicode_Decode (cset, strlen (cset), host_charset (), NULL);
 }
 
@@ -295,6 +302,7 @@ static PyObject *
 gdbpy_target_wide_charset (PyObject *self, PyObject *args)
 {
   const char *cset = target_wide_charset (python_gdbarch);
+
   return PyUnicode_Decode (cset, strlen (cset), host_charset (), NULL);
 }
 
@@ -326,6 +334,7 @@ execute_gdb_command (PyObject *self, PyObject *args)
       /* Copy the argument text in case the command modifies it.  */
       char *copy = xstrdup (arg);
       struct cleanup *cleanup = make_cleanup (xfree, copy);
+
       execute_command (copy, from_tty);
       do_cleanups (cleanup);
     }
@@ -368,6 +377,8 @@ source_python_script (FILE *stream, const char *file)
 
   cleanup = ensure_python_env (get_current_arch (), current_language);
 
+  /* Note: If an exception occurs python will print the traceback and
+     clear the error indicator.  */
   PyRun_SimpleFile (stream, file);
 
   do_cleanups (cleanup);
@@ -383,6 +394,7 @@ static PyObject *
 gdbpy_write (PyObject *self, PyObject *args)
 {
   char *arg;
+
   if (! PyArg_ParseTuple (args, "s", &arg))
     return NULL;
   printf_filtered ("%s", arg);
@@ -404,7 +416,13 @@ void
 gdbpy_print_stack (void)
 {
   if (gdbpy_should_print_stack)
-    PyErr_Print ();
+    {
+      PyErr_Print ();
+      /* PyErr_Print doesn't necessarily end output with a newline.
+	 This works because Python's stdout/stderr is fed through
+	 printf_filtered.  */
+      begin_line ();
+    }
   else
     PyErr_Clear ();
 }
@@ -440,6 +458,7 @@ gdbpy_progspaces (PyObject *unused1, PyObject *unused2)
   ALL_PSPACES (ps)
   {
     PyObject *item = pspace_to_pspace_object (ps);
+
     if (!item || PyList_Append (list, item) == -1)
       {
 	Py_DECREF (list);
@@ -469,10 +488,9 @@ source_python_script_for_objfile (struct objfile *objfile,
   cleanups = ensure_python_env (get_objfile_arch (objfile), current_language);
   gdbpy_current_objfile = objfile;
 
-  /* We don't want to throw an exception here -- but the user
-     would like to know that something went wrong.  */
-  if (PyRun_SimpleFile (stream, file))
-    gdbpy_print_stack ();
+  /* Note: If an exception occurs python will print the traceback and
+     clear the error indicator.  */
+  PyRun_SimpleFile (stream, file);
 
   do_cleanups (cleanups);
   gdbpy_current_objfile = NULL;
@@ -509,6 +527,7 @@ gdbpy_objfiles (PyObject *unused1, PyObject *unused2)
   ALL_OBJFILES (objf)
   {
     PyObject *item = objfile_to_objfile_object (objf);
+
     if (!item || PyList_Append (list, item) == -1)
       {
 	Py_DECREF (list);
@@ -534,6 +553,7 @@ python_command (char *arg, int from_tty)
     {
       struct command_line *l = get_command_line (python_control, "");
       struct cleanup *cleanups = make_cleanup_free_command_lines (&l);
+
       execute_control_command_untraced (l);
       do_cleanups (cleanups);
     }

@@ -546,7 +546,7 @@ class Output_section_element
 {
  public:
   // A list of input sections.
-  typedef std::list<Output_section::Simple_input_section> Input_section_list;
+  typedef std::list<Output_section::Input_section> Input_section_list;
 
   Output_section_element()
   { }
@@ -1195,13 +1195,13 @@ Output_section_element_input::match_name(const char* file_name,
 class Input_section_info
 {
  public:
-  Input_section_info(const Output_section::Simple_input_section& input_section)
+  Input_section_info(const Output_section::Input_section& input_section)
     : input_section_(input_section), section_name_(),
       size_(0), addralign_(1)
   { }
 
   // Return the simple input section.
-  const Output_section::Simple_input_section&
+  const Output_section::Input_section&
   input_section() const
   { return this->input_section_; }
 
@@ -1247,7 +1247,7 @@ class Input_section_info
 
  private:
   // Input section, can be a relaxed section.
-  Output_section::Simple_input_section input_section_;
+  Output_section::Input_section input_section_;
   // Name of the section. 
   std::string section_name_;
   // Section size.
@@ -1418,9 +1418,20 @@ Output_section_element_input::set_section_addresses(
 	   p != matching_sections[i].end();
 	   ++p)
 	{
-	  uint64_t this_subalign = p->addralign();
+	  // Override the original address alignment if SUBALIGN is specified
+	  // and is greater than the original alignment.  We need to make a
+	  // copy of the input section to modify the alignment.
+	  Output_section::Input_section sis(p->input_section());
+
+	  uint64_t this_subalign = sis.addralign();
+	  if (!sis.is_input_section())
+	    sis.output_section_data()->finalize_data_size();	
+	  uint64_t data_size = sis.data_size();
 	  if (this_subalign < subalign)
-	    this_subalign = subalign;
+	    {
+	      this_subalign = subalign;
+	      sis.set_addralign(subalign);
+	    }
 
 	  uint64_t address = align_address(dot, this_subalign);
 
@@ -1434,11 +1445,8 @@ Output_section_element_input::set_section_addresses(
 	      layout->new_output_section_data_from_script(posd);
 	    }
 
-	  output_section->add_simple_input_section(p->input_section(),
-						   p->size(),
-						   this_subalign);
-
-	  dot = address + p->size();
+	  output_section->add_script_input_section(sis);
+	  dot = address + data_size;
 	}
     }
 
@@ -2161,13 +2169,16 @@ Output_section*
 Output_section_definition::allocate_to_segment(String_list** phdrs_list,
 					       bool* orphan)
 {
+  // Update phdrs_list even if we don't have an output section. It
+  // might be used by the following sections.
+  if (this->phdrs_ != NULL)
+    *phdrs_list = this->phdrs_;
+
   if (this->output_section_ == NULL)
     return NULL;
   if ((this->output_section_->flags() & elfcpp::SHF_ALLOC) == 0)
     return NULL;
   *orphan = false;
-  if (this->phdrs_ != NULL)
-    *phdrs_list = this->phdrs_;
   return this->output_section_;
 }
 
@@ -2381,7 +2392,7 @@ Orphan_output_section::set_section_addresses(Symbol_table*, Layout*,
 					     uint64_t*,
                                              uint64_t* load_address)
 {
-  typedef std::list<Output_section::Simple_input_section> Input_section_list;
+  typedef std::list<Output_section::Input_section> Input_section_list;
 
   bool have_load_address = *load_address != *dot_value;
 
@@ -2403,25 +2414,12 @@ Orphan_output_section::set_section_addresses(Symbol_table*, Layout*,
        p != input_sections.end();
        ++p)
     {
-      uint64_t addralign;
-      uint64_t size;
-
-      // We know we are single-threaded, so it is OK to lock the
-      // object.
-      {
-	const Task* task = reinterpret_cast<const Task*>(-1);
-	Task_lock_obj<Object> tl(task, p->relobj());
-	addralign = p->relobj()->section_addralign(p->shndx());
-	if (p->is_relaxed_input_section())
-	  // We use current data size because relxed section sizes may not
-	  // have finalized yet.
-	  size = p->relaxed_input_section()->current_data_size();
-	else
-	  size = p->relobj()->section_size(p->shndx());
-      }
-
+      uint64_t addralign = p->addralign();
+      if (!p->is_input_section())
+	p->output_section_data()->finalize_data_size();	
+      uint64_t size = p->data_size();
       address = align_address(address, addralign);
-      this->os_->add_simple_input_section(*p, size, addralign);
+      this->os_->add_script_input_section(*p);
       address += size;
     }
 
