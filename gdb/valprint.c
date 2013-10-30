@@ -272,7 +272,7 @@ valprint_check_validity (struct ui_file *stream,
       if (! value_bits_valid (val, TARGET_CHAR_BIT * offset,
 			      TARGET_CHAR_BIT * TYPE_LENGTH (type)))
 	{
-	  fprintf_filtered (stream, _("<value optimized out>"));
+	  val_print_optimized_out (stream);
 	  return 0;
 	}
 
@@ -285,6 +285,12 @@ valprint_check_validity (struct ui_file *stream,
     }
 
   return 1;
+}
+
+void
+val_print_optimized_out (struct ui_file *stream)
+{
+  fprintf_filtered (stream, _("<optimized out>"));
 }
 
 /* Print using the given LANGUAGE the data of type TYPE located at VALADDR
@@ -378,7 +384,7 @@ value_check_printable (struct value *val, struct ui_file *stream)
 
   if (value_entirely_optimized_out (val))
     {
-      fprintf_filtered (stream, _("<value optimized out>"));
+      val_print_optimized_out (stream);
       return 0;
     }
 
@@ -508,6 +514,47 @@ val_print_type_code_flags (struct type *type, const gdb_byte *valaddr,
 	}
     }
   fputs_filtered ("]", stream);
+
+/* Print a scalar of data of type TYPE, pointed to in GDB by VALADDR,
+   according to OPTIONS and SIZE on STREAM.  Format i is not supported
+   at this level.
+
+   This is how the elements of an array or structure are printed
+   with a format.  */
+}
+
+void
+val_print_scalar_formatted (struct type *type,
+			    const gdb_byte *valaddr, int embedded_offset,
+			    const struct value *val,
+			    const struct value_print_options *options,
+			    int size,
+			    struct ui_file *stream)
+{
+  gdb_assert (val != NULL);
+  gdb_assert (valaddr == value_contents_for_printing_const (val));
+
+  /* If we get here with a string format, try again without it.  Go
+     all the way back to the language printers, which may call us
+     again.  */
+  if (options->format == 's')
+    {
+      struct value_print_options opts = *options;
+      opts.format = 0;
+      opts.deref_ref = 0;
+      val_print (type, valaddr, embedded_offset, 0, stream, 0, val, &opts,
+		 current_language);
+      return;
+    }
+
+  /* A scalar object that does not have all bits available can't be
+     printed, because all bits contribute to its representation.  */
+  if (!value_bits_valid (val, TARGET_CHAR_BIT * embedded_offset,
+			      TARGET_CHAR_BIT * TYPE_LENGTH (type)))
+    val_print_optimized_out (stream);
+  else
+    print_scalar_formatted (valaddr + embedded_offset, type,
+			    options, size, stream);
 }
 
 /* Print a number according to FORMAT which is one of d,u,x,o,b,h,w,g.
@@ -1108,7 +1155,8 @@ maybe_print_array_index (struct type *index_type, LONGEST index,
    perhaps we should try to use that notation when appropriate.  */
 
 void
-val_print_array_elements (struct type *type, const gdb_byte *valaddr,
+val_print_array_elements (struct type *type,
+			  const gdb_byte *valaddr, int embedded_offset,
 			  CORE_ADDR address, struct ui_file *stream,
 			  int recurse,
 			  const struct value *val,
@@ -1171,8 +1219,10 @@ val_print_array_elements (struct type *type, const gdb_byte *valaddr,
 
       rep1 = i + 1;
       reps = 1;
-      while ((rep1 < len) &&
-	     !memcmp (valaddr + i * eltlen, valaddr + rep1 * eltlen, eltlen))
+      while (rep1 < len
+	     && memcmp (valaddr + embedded_offset + i * eltlen,
+			valaddr + embedded_offset + rep1 * eltlen,
+			eltlen) == 0)
 	{
 	  ++reps;
 	  ++rep1;
@@ -1180,8 +1230,9 @@ val_print_array_elements (struct type *type, const gdb_byte *valaddr,
 
       if (reps > options->repeat_count_threshold)
 	{
-	  val_print (elttype, valaddr + i * eltlen, 0, address + i * eltlen,
-		     stream, recurse + 1, val, options, current_language);
+	  val_print (elttype, valaddr, embedded_offset + i * eltlen,
+		     address, stream, recurse + 1, val, options,
+		     current_language);
 	  annotate_elt_rep (reps);
 	  fprintf_filtered (stream, " <repeats %u times>", reps);
 	  annotate_elt_rep_end ();
@@ -1191,7 +1242,8 @@ val_print_array_elements (struct type *type, const gdb_byte *valaddr,
 	}
       else
 	{
-	  val_print (elttype, valaddr + i * eltlen, 0, address + i * eltlen,
+	  val_print (elttype, valaddr, embedded_offset + i * eltlen,
+		     address,
 		     stream, recurse + 1, val, options, current_language);
 	  annotate_elt ();
 	  things_printed++;
