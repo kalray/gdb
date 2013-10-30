@@ -287,7 +287,7 @@ proc test_cond {} {
 	send_log "$comp_output\n"
 	fail $testname
     } else {
-	if { [regexp_diff dump.out $srcdir/$subdir/cond.l] } {
+	if { [regexp_diff dump.out $srcdir/$subdir/cond.l ""] } {
 	    fail $testname
 	} else {
 	    pass $testname
@@ -339,6 +339,7 @@ if { ![istarget "i960-*-*"] } {
     run_dump_test quad
 }
 
+run_dump_test octa
 
 # .set works differently on some targets.
 case $target_triplet in {

@@ -1,3 +1,60 @@
+2010-08-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (set_cpu_arch): Re-indent.
+	(md_parse_option): Likewise.
+
+2010-08-06  Quentin Neill <quentin.neill@amd.com>
+
+	* config/tc-i386.c (arch_entry): Add negated bit to
+	  disambiguate flag names starting with "no".
+	  (cpu_arch): Add negated bit definitions.  Add
+	  ".nop" CPU extension.
+	  (i386_align_code): Use new .cpunop bit to decide
+	  when to generate alignment using nops.
+	  (set_cpu_arch): Use negated bit instead to decide
+	  when to use cpu_flags or vs. cpu_flags_and_not.
+	  (md_parse_option): Likewise.
+
+2010-08-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (match_template): Move the first i.error
+	out of the loop.
+
+2010-08-04  Alan Modra  <amodra@gmail.com>
+
+	* configure.tgt (m32c): Set endian=little.
+	* config/tc-m32c.h (TARGET_BYTES_BIG_ENDIAN): Define as 0.
+	* config/tc-m32c.c (md_number_to_chars): Revert last change.
+
+2010-08-03  Tristan Gingold  <gingold@adacore.com>
+
+	* makefile.vms (OBJS): Add Add compress-debug.c.
+
+2010-08-03  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-d10v.h (TARGET_BYTES_BIG_ENDIAN): Define as 1.
+	* config/tc-m32c.c (md_number_to_chars): Call bigendian
+	form of number_to_chars, not littleendian.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-d30v.c (d30v_cons_align): Don't align constants
+	in debug sections.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	PR gas/11867
+	* expr.c (operand <'-' and '~'>): Widen bignums.
+	(operand <'!'>): Correct bignum result and convert to O_constant.
+	* read.c (emit_expr): Don't assert on .byte bignum.  Don't display
+	bignum truncated warning for sign extended bignums.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-v850.c (md_assemble): Always pass format string to
+	as_warn.
+	(md_apply_fix): Similarly for as_warn_where.
+
 2010-07-29  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386-intel.c: Reformat.

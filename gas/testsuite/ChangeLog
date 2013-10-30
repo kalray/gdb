@@ -1,3 +1,77 @@
+2010-08-06  Quentin Neill <quentin.neill@amd.com>
+
+	* gas/i386/arch-10-1.l: Add nopl instruction.
+	* gas/i386/arch-10-2.l: Likewise.
+	* gas/i386/arch-10-3.l: Likewise.
+	* gas/i386/arch-10-4.l: Likewise.
+	* gas/i386/arch-10.s: Likewise.
+	* gas/i386/arch-10.d: Add nopl instruction, and +nopl extension
+	flag to as flags.
+	* gas/i386/nops-5-i686.d: Change alignment code generated for
+	-mtune=i686.
+	* gas/i386/nops-5.d: Change alignment code generated for
+	.arch i686.
+	* gas/i386/x86-64-nops-5-k8.d: Likewise.
+	* gas/i386/x86-64-nops-5.d: Likewise.
+
+2010-08-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Run arch-4.
+
+	* gas/i386/arch-4.d: New.
+	* gas/i386/arch-4.s: Likewise.
+
+	* gas/i386/intel.d: Replace ud2a/ud2b with ud2/ud1.
+	* gas/i386/opcode-intel.d: Likewise.
+	* gas/i386/opcode-suffix.d: Likewise.
+	* gas/i386/opcode.d: Likewise.
+
+2010-08-03  Alan Modra  <amodra@gmail.com>
+
+	* gas/all/octa.s, * gas/all/octa.d: New test.
+	* gas/all/gas.exp: Run octa.
+	* gas/elf/data-1.s, * gas/elf/data-1.d: Delete.
+	* gas/elf/elf.exp: Don't run data-1.
+
+2010-08-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf/elf.exp: Run data-1 only for i*86, x86_64 and ia64.
+
+2010-08-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11867
+	* gas/elf/data-1.d: New.
+	* gas/elf/data-1.s: Likewise.
+
+	* elf/elf.exp: Run data-1.
+
+2010-08-02  Tristan Gingold  <gingold@adacore.com>
+
+	* lib/gas-defs.exp (get_standard_section_names): New function.
+	(run_dump_tests): Document the new behavior for objdump,
+	document to new section-subst option.  Automatically perform
+	substitutions for objdump.
+	(objdump_finish): Add REF_SUBST argument.
+	(run_list_test): Adjust call of regexp_diff.
+	(run_list_test_stdin): Ditto.
+	* gas/all/gas.exp (test_cond): Adjust call of regexp_diff.
+	* gas/symver/symver.exp (run_error_test): Ditto.
+	* gas/mt/relocs.exp (regexp_test): Ditto.
+	* gas/mep/complex-relocs.exp (regexp_test): Ditto.
+	* gas/m68k/all.exp: Ditto.
+	* gas/elf/elf.exp (run_elf_list_test): Ditto.
+	* gas/rx/rx-asm-good.d: Set section-subst to no.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	* gas/i386/i386.exp (dw2-compress-1): Only run on ELF targets.
+	(dw2-compress-2, x86-64-dw2-compress-2): Remove unnecessary linux
+	target test.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	* gas/ppc/power4.d: Update for ppc_fix_adjustable change.
+
 2010-07-28  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/i386.exp: Xfail dw2-compress-2 and

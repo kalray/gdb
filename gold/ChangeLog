@@ -1,3 +1,186 @@
+2010-08-04  Ian Lance Taylor  <iant@google.com>
+
+	* x86_64.cc (Target_x86_64::Scan::local): Use
+	R_X86_64_GNU_VTINHERIT instead of R_386_GNU_VTINHERIT and
+	R_X86_64_GNU_VTENTRY instead of R_386_GNU_VTENTRY.
+	(Target_x86_64::Scan::global): Likewise.
+	(Target_x86_64::Relocate::relocate): Likewise.
+	(Target_x86_64::Relocatable_size_for_reloc::get_size_for_reloc):
+	Likewise.
+
+2010-08-03  Cary Coutant  <ccoutant@google.com>
+
+	* merge.cc (Output_merge_string::do_add_input_section): Count strings
+	to reserve space in merged_strings vector. Keep total input size
+	for stats.
+	(Output_merge_string::do_print_merge_stats): Print total input size.
+	* merge.h (Output_merge_string): Add input_size_ field.
+	* stringpool.cc (Stringpool_template::string_length): Move
+	implementations out of Stringpool_template class and place in
+	stringpool.h.
+	* stringpool.h (string_length): Move out of Stringpool_template.
+
+2010-08-03  Ian Lance Taylor  <iant@google.com>
+
+	PR 11712
+	* layout.cc (relaxation_loop_body): If address of load segment is
+	set, adjust address to include headers if possible.
+
+2010-08-03  Ian Lance Taylor  <iant@google.com>
+
+	* version.cc (version_string): Bump to 1.10.
+
+2010-08-03  Ian Lance Taylor  <iant@google.com>
+
+	PR 11805
+	* layout.h (enum Output_section_order): Define.
+	(class Layout): Update declarations.
+	* layout.cc (Layout::get_output_section): Add order parameter.
+	Remove is_interp, is_dynamic_linker_section, is_last_relro, and
+	is_first_non_relro parameters.  Change all callers.
+	(Layout::choose_output_section): Likewise.
+	(Layout::add_output_section_data): Likewise.
+	(Layout::make_output_section): Likewise.  Set order.
+	(Layout::default_section_order): New function.
+	(Layout::layout_eh_frame): Call add_output_section_to_nonload.
+	* output.cc (Output_section::Output_section): Initialize order_.
+	Don't initialize deleted fields.
+	(Output_segment::Output_segment): Don't initialize deleted
+	fields.
+	(Output_segment::add_output_section_to_load): New function
+	replacing add_output_section.  Change all callers to call this or
+	add_output_section_to_nonload.
+	(Output_segment::add_output_section_to_nonload): New function.
+	(Output_segment::remove_output_section): Rewrite.
+	(Output_segment::add_initial_output_data): Likewise.
+	(Output_segment::has_any_data_sections): Likewise.
+	(Output_segment::is_first_section_relro): Likewise.
+	(Output_segment::maximum_alignment): Likewise.
+	(Output_segment::has_dynamic_reloc): New function replacing
+	dynamic_reloc_count.  Change all callers.
+	(Output_segment::has_dynamic_reloc_list): New function replacing
+	dynamic_reloc_count_list.  Change all callers.
+	(Output_segment::set_section_addresses): Rewrite.
+	(Output_segment::set_offset): Rewrite.
+	(Output_segment::find_first_and_last_list): Remove.
+	(Output_segment::set_tls_offsets): Rewrite.
+	(Output_segment::first_section_load_address): Likewise.
+	(Output_segment::output_section_count): Likewise.
+	(Output_segment::section_with_lowest_load_address): Likewise.
+	(Output_segment::write_section_headers): Likewise.
+	(Output_segment::print_sections_to_map): Likewise.
+	* output.h (class Output_data): Remove dynamic_reloc_count_
+	field.  Add has_dynamic_reloc_ field.  Make bools into bitfields.
+	(Output_data::add_dynamic_reloc): Rewrite.
+	(Output_data::has_dynamic_reloc): New function.
+	(Output_data::dynamic_reloc_count): Remove.
+	(class Output_section): Add order_ field.  Remvoe is_relro_local_,
+	is_last_relro_, is_first_non_relro_, is_interp_,
+	is_dynamic_linker_section_ fields.  Add order and set_order
+	functions.  Remove is_relro_local, set_is_relro_local,
+	is_last_relro, set_is_last_relro, is_first_non_relro,
+	set_is_first_non_relro functions, is_interp, set_is_interp,
+	is_dynamic_linker_section, and set_is_dynamic_linker_section
+	functions.
+	(class Output_segment): Change Output_data_list from std::list to
+	std:;vector.  Add output_lists_ field.  Remove output_data_ and
+	output_bss_ fields.  Update declarations.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	* arm.cc (Target_arm::gc_process_relocs): Use typename.
+	* powerpc.cc (Target_powerpc::gc_process_relocs): Likewise.
+	* sparc.cc (Target_sparc::gc_process_relocs): Likewise.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	PR 11855
+	* script.cc (Script_options::Script_options): Initialize
+	symbol_definitions_ and symbol_references_.
+	(Script_options::add_symbol_assignment): Update
+	symbol_definitions_ and symbol_references_.
+	(Script_options::add_symbol_reference): New function.
+	(script_symbol): New function.
+	* script.h (class Script_options): Add symbol_definitions_ and
+	symbol_references_ fields.
+	(Script_options::referenced_const_iterator): New type.
+	(Script_options::referenced_begin): New function.
+	(Script_options::referenced_end): New function.
+	(Script_options::is_referenced): New function.
+	(Script_options::any_unreferenced): New function.
+	* script-c.h (script_symbol): Declare.
+	* yyscript.y (exp): Call script_symbol.
+	* symtab.cc: Include "script.h".
+	(Symbol_table::gc_mark_undef_symbols): Add layout parameter.
+	Change all callers.  Check symbols referenced by scripts.
+	(Symbol_table::add_undefined_symbols_from_command_line): Add
+	layout parameter.  Change all callers.
+	(Symbol_table::do_add_undefined_symbols_from_command_line):
+	Likewise.  Break out loop body.  Check symbols referenced by
+	scripts.
+	(Symbol_table::add_undefined_symbol_from_command_line): New
+	function broken out of
+	do_add_undefined_symbols_from_command_line.
+	* symtab.h (class Symbol_table): Update declarations.
+	* archive.cc: Include "layout.h".
+	(Archive::should_include_member): Add layout parameter.  Change
+	all callers.  Check for symbol mentioned in expression.
+	* archive.h (class Archive): Update declaration.
+	* object.cc (Sized_relobj::do_should_include_member): Add layout
+	parameter.
+	* object.h (Object::should_include_member): Add layout parameter.
+	Change all callers.
+	(Object::do_should_include_member): Add layout parameter.
+	(class Sized_relobj): Update declaration.
+	* dynobj.cc (Sized_dynobj::do_should_include_member): Add layout
+	parameter.
+	* dynobj.h (class Sized_dynobj): Update declaration.
+	* plugin.cc (Sized_pluginobj::do_should_include_member): Add
+	layout parameter.
+	* plugin.h (class Sized_pluginobj): Update declaration.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	PR 11866
+	* output.cc (Output_segment::set_offset): Search for the first and
+	last sections rather than assuming that the list is in order.
+	(Output_segment::find_first_and_last_list): New function.
+	* output.h (class Output_segment): Update declarations.
+	* testsuite/Makefile.am (check_PROGRAMS): Add relro_strip_test.
+	(relro_strip_test_SOURCES): New variable.
+	(relro_strip_test_DEPENDENCIES): New variable.
+	(relro_strip_test_LDFLAGS): New variable.
+	(relro_strip_test_LDADD): New variable.
+	(relro_strip_test.so): New target.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	* i386.cc (class Target_i386): Add got_tlsdesc_ field.
+	(Target_i386::Target_i386):: Initialize got_tlsdesc_.
+	(Target_i386::got_tlsdesc_section): New function.
+	(Target_i386::got_section): Create space for GOT entries for
+	TLSDESC relocations.
+	(Target_i386::Scan::local): Use TLSDESC GOT for unoptimized
+	R_386_TLS_GOTDESC.
+	(Target_i386::Scan::global): Likewise.
+	(Target_i386::Relocate::relocate_tls): Adjust GOT offset when
+	using TLSDESC GOT.
+	* x86_64.cc (class Target_x86_64): Add got_tlsdesc_ field.
+	(Target_x86_64::Target_x86_64):: Initialize got_tlsdesc_.
+	(Target_x86_64::got_tlsdesc_section): New function.
+	(Target_x86_64::got_section): Create space for GOT entries for
+	TLSDESC relocations.
+	(Target_x86_64::Scan::local): Use TLSDESC GOT for unoptimized
+	R_386_TLS_GOTDESC.
+	(Target_x86_64::Scan::global): Likewise.
+	(Target_x86_64::Relocate::relocate_tls): Adjust GOT offset when
+	using TLSDESC GOT.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	* testsuite/final_layout.sh: Use dc to convert from hex to
+	decimal.
+
 2010-07-29  Sriraman Tallam  <tmsriram@google.com>
 
 	* arm.cc (Target_arm<big_endian>::gc_process_relocs): Add template
