@@ -1,3 +1,302 @@
+2010-07-14  Ken Werner  <ken.werner@de.ibm.com>
+
+	* valops.c (value_assign): Do not call to value_coerce_to_target.
+	(value_must_coerce_to_target): Return 0 in case of TYPE_VECTOR.
+
+2010-07-14  Ken Werner  <ken.werner@de.ibm.com>
+
+	* MAINTAINERS: Add myself for write after approval privileges.
+
+2010-07-13  Emmanuel Thomé  <Emmanuel.Thome@gmail.com>
+
+	* c-valprint.c (c_val_print): Add embedded_offset to address in
+	call to val_print_array_elements.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2read.c (dwarf2_read_index): Correctly set 'total_size'.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2read.c (dwarf2_per_cu_text_offset): Fix reference to
+	objfile.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	* symfile.c (set_initial_language): Update.
+	(deduce_language_from_filename): Argument type now const.
+	* symtab.h (find_main_filename): Update.
+	(deduce_language_from_filename): Update.
+	* symtab.c (find_main_filename): Make result const.
+	* dwarf2read.c (dw2_find_symbol_file): Change return type.
+	* psymtab.c (find_symbol_file_from_partial): Change return type.
+	* symfile.h (struct quick_symbol_functions) <find_symbol_file>:
+	Make result const.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	* breakpoint.c (save_cmdlist): No longer static.
+	* gdbcmd.h (save_cmdlist): Declare.
+	* symfile.c (symbol_file_add_with_addrs_or_offsets): Set
+	OBJF_READNOW on objfile if readnow_symbol_files.
+	* elfread.c (elf_symfile_read): Use dwarf2_initialize_objfile.
+	(elf_sym_fns_gdb_index): New global.
+	* dwarf2read.c: Include exceptions.h.
+	(offset_type): New.
+	(struct mapped_index): New.
+	(dwarf2_per_cu_data_ptr): New typedef.
+	(struct dwarf2_per_objfile) <using_index, index_table, gdb_index>:
+	New fields.
+	(GDB_INDEX_SECTION): New define.
+	(struct dwarf2_per_cu_quick_data): New.
+	(struct dwarf2_per_cu_data) <objfile>: New field.
+	<psymtab>: Removed.
+	<v>: New field.
+	(byte_swap): New function.
+	(MAYBE_SWAP): New macro.
+	(INDEX_SUFFIX): New macro.
+	(dw2_do_instantiate_symtab): New function.
+	(dw2_instantiate_symtab): Likewise.
+	(create_cus_from_index): Likewise.
+	(create_addrmap_from_index): Likewise.
+	(mapped_index_string_hash): Likewise.
+	(find_slot_in_mapped_hash): Likewise.
+	(dwarf2_read_index): Likewise.
+	(dw2_setup): Likewise.
+	(dw2_require_line_header): Likewise.
+	(dw2_require_full_path): Likewise.
+	(dw2_find_last_source_symtab): Likewise.
+	(dw2_forget_cached_source_info): Likewise.
+	(dw2_lookup_symtab): Likewise.
+	(dw2_lookup_symbol): Likewise.
+	(dw2_do_expand_symtabs_matching): Likewise.
+	(dw2_pre_expand_symtabs_matching): Likewise.
+	(dw2_print_stats): Likewise.
+	(dw2_dump): Likewise.
+	(dw2_relocate): Likewise.
+	(dw2_expand_symtabs_for_function): Likewise.
+	(dw2_expand_all_symtabs): Likewise.
+	(dw2_expand_symtabs_with_filename): Likewise.
+	(dw2_find_symbol_file): Likewise.
+	(dw2_map_ada_symtabs): Likewise.
+	(dw2_expand_symtabs_matching): Likewise.
+	(dw2_find_pc_sect_symtab): Likewise.
+	(dw2_map_symbol_names): Likewise.
+	(dw2_map_symbol_filenames): Likewise.
+	(dw2_has_symbols): Likewise.
+	(dwarf2_gdb_index_functions): New global.
+	(dwarf2_initialize_objfile): New function.
+	(process_psymtab_comp_unit): Update.
+	(add_partial_subprogram): Likewise.
+	(dwarf2_psymtab_to_symtab): Likewise.
+	(psymtab_to_symtab_1): Use dw2_do_instantiate_symtab.
+	(process_full_comp_unit): Update.
+	(find_file_and_directory): New function.
+	(read_file_scope): Use find_file_and_directory.
+	(dwarf2_per_cu_objfile): Update.
+	(dwarf2_per_cu_addr_size): Update.
+	(dwarf2_per_cu_offset_size): Update.
+	(dwarf2_free_objfile): Free the index, if needed.
+	(dwarf2_per_objfile_free): Unmap the index, if needed.
+	(struct strtab_entry): New.
+	(hash_strtab_entry): New function.
+	(eq_strtab_entry): Likewise.
+	(create_strtab): Likewise.
+	(add_string): Likewise.
+	(struct symtab_index_entry): New.
+	(struct mapped_symtab): New.
+	(hash_symtab_entry): New function.
+	(eq_symtab_entry): Likewise.
+	(delete_symtab_entry): Likewise.
+	(create_index_table): Likewise.
+	(create_mapped_symtab): Likewise.
+	(cleanup_mapped_symtab): Likewise.
+	(find_slot): Likewise.
+	(hash_expand): Likewise.
+	(add_index_entry): Likewise.
+	(add_indices_to_cpool): Likewise.
+	(write_hash_table): Likewise.
+	(add_address_entry): Likewise.
+	(write_psymbols): Likewise.
+	(write_obstack): Likewise.
+	(unlink_if_set): Likewise.
+	(write_psymtabs_to_index): Likewise.
+	(save_gdb_index_command): Likewise.
+	(_initialize_dwarf2_read): Install "save gdb-index"
+	command.
+	(create_all_comp_units): Initialize 'objfile' field of CU.
+	(dwarf2_locate_sections): Check for .gdb_index.
+	* psymtab.h (dwarf2_gdb_index_functions): Declare.
+	* symfile.h (dwarf2_initialize_objfile): Declare.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	* symtab.c (lookup_symbol_aux_symtabs): Call pre-expand hook.
+	(basic_lookup_transparent_type): Likewise.
+	* symfile.h (struct quick_symbol_functions)
+	<pre_expand_symtabs_matching>: New field.
+	* psymtab.c (pre_expand_symtabs_matching_psymtabs): New function.
+	(psym_functions): Update.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	PR breakpoints/8357:
+	* symtab.h (domain_enum_tag) <LABEL_DOMAIN>: Update comment.
+	* linespec.c (decode_line_1): Update comment.  Call decode_label.
+	(decode_label): New function.
+	(symbol_found): Handle LOC_LABEL.
+	* dwarf2read.c (new_symbol) <DW_TAG_label>: Set symbol's type and
+	domain.  Call add_symbol_to_list.
+
+2010-07-13  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2loc.h (dwarf2_per_cu_text_offset): Declare.
+	* dwarf2loc.c (find_location_expression): Use
+	dwarf2_per_cu_text_offset.
+	(dwarf2_evaluate_loc_desc): Likewise.
+	(dwarf2_loc_desc_needs_frame): Likewise.
+	(compile_dwarf_to_ax): Likewise.
+	(loclist_describe_location): Likewise.
+	* dwarf2read.c (dwarf2_per_cu_text_offset): New function.
+	(dwarf2_per_cu_objfile): Update comment.
+
+2010-07-12  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* dwarf2read.c (read_subrange_type): Call read_subrange_type.
+	* p-lang.c (pascal_printstr): Likewise.
+
+2010-07-09  Tom Tromey  <tromey@redhat.com>
+
+	* python/py-prettyprint.c (gdbpy_get_display_hint): Don't use
+	'hint' if it is NULL.
+
+2010-07-09  Hui Zhu  <teawater@gmail.com>
+
+	* source.c (print_source_lines_base): Add check for noprint.
+
+2010-07-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* python/python-config.py: Resync with Python 2.7 version of this
+	script.
+
+2010-07-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* NEWS: Fix typo in section name (s/GDB 7.1/GDB 7.2).
+
+2010-07-07  Joel Brobecker  <brobecker@adacore.com>
+
+	* NEWS: Create a new section for the next release branch.
+	Rename the section of the current branch, now that it has
+	been cut.
+
+2010-07-07  Joel Brobecker  <brobecker@adacore.com>
+
+	GDB 7.2 branch created (branch timestamp: 2010-07-07 17:00 UTC)
+	* version.in: Bump version to 7.2.50.20100707-cvs.
+
+2010-07-07  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2read.c (dwarf2_const_value) <DW_form_addr>: Create a
+	LOC_COMPUTED symbol.
+	* dwarf2loc.c (dwarf2_evaluate_loc_desc): Set new field.
+	(dwarf2_loc_desc_needs_frame): Likewise.
+	(compile_dwarf_to_ax) <DW_OP_addr>: Use offset.
+	* dwarf2expr.h (struct dwarf_expr_context) <offset>: New field.
+	* dwarf2expr.c (execute_stack_op) <DW_OP_addr>: Use offset.
+	* dwarf2-frame.c (execute_stack_op): Set 'offset' field.  Add
+	'offset' argument.
+	(struct dwarf2_frame_cache) <text_offset>: New field.
+	(dwarf2_frame_cache): Set new field.
+	(dwarf2_frame_prev_register): Update.
+	(dwarf2_frame_sniffer): Update.
+	(dwarf2_frame_base_sniffer): Update.
+	(dwarf2_frame_find_fde): Add 'out_offset' argument.
+
+2010-07-07  Sergio Durigan Junior  <sergiodj@linux.vnet.ibm.com>
+	    Thiago Jung Bauermann  <bauerman@br.ibm.com>
+
+	Support for hw accelerated condition watchpoints in booke powerpc.
+
+	* breakpoint.c (fetch_watchpoint_value): Rename to fetch_subexp_value
+	and move to eval.c.  Change callers.
+	(insert_bp_location): Pass watchpoint condition in
+	target_insert_watchpoint.
+	(remove_breakpoint_1) Pass watchpoint condition in
+	target_remove_watchpoint.
+	(watchpoint_locations_match): Call
+	target_can_accel_watchpoint_condition.
+	* eval.c: Include wrapper.h.
+	(fetch_subexp_value): Moved from breakpoint.c.
+	* ppc-linux-nat.c (ppc_linux_region_ok_for_hw_watchpoint):
+	Formatting fix.
+	(can_use_watchpoint_cond_accel): New function.
+	(calculate_dvc): Likewise.
+	(num_memory_accesses): Likewise.
+	(check_condition): Likewise.
+	(ppc_linux_can_accel_watchpoint_condition): Likewise
+	(ppc_linux_insert_watchpoint): Call can_use_watchpoint_cond_accel,
+	check_condition and calculate_dvc.
+	(ppc_linux_remove_watchpoint): Likewise.
+	(_initialize_ppc_linux_nat): Set to_can_accel_watchpoint_condition to
+	ppc_linux_can_accel_watchpoint_condition
+	* target.c (debug_to_insert_watchpoint): Add argument for watchpoint
+	condition.
+	(debug_to_remove_watchpoint): Likewise.
+	(debug_to_can_accel_watchpoint_condition): New function.
+	(update_current_target): Set to_can_accel_watchpoint_condition.
+	(setup_target_debug): Set to_can_accel_watchpoint_condition.
+	* target.h: Add opaque declaration for struct expression.
+	(struct target_ops) <to_insert_watchpoint>,
+	<to_remove_watchpoint>: Add new arguments to pass the watchpoint
+	<to_can_accel_watchpoint_condition>: New member.
+	condition.  Update all callers and implementations.
+	(target_can_accel_watchpoint_condition): New macro.
+	* value.c (free_value_chain): New function.
+	* value.h (fetch_subexp_value): New prototype.
+	(free_value_chain): Likewise.
+
+2010-07-07  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* linux-nat.c (linux_nat_do_thread_registers): Use section size
+	from gdbarch_core_regset_sections also for .reg if present.
+
+	* amd64-linux-tdep.c (amd64_linux_regset_sections): Fix incorrect
+	section size for .reg.
+	* ppc-linux-tdep.c (ppc_linux_vsx_regset_sections): Likewise.
+	(ppc_linux_vmx_regset_sections): Likewise.
+	(ppc_linux_fp_regset_sections): Likewise.
+	(ppc64_linux_vsx_regset_sections): New variable.
+	(ppc64_linux_vmx_regset_sections): Likewise.
+	(ppc64_linux_fp_regset_sections): Likewise.
+	(ppc_linux_init_abi): Install core_regset_section lists appropriate
+	for current word size.
+
+2010-07-06  Joel Brobecker  <brobecker@adacore.com>
+
+	* server.c (myresume): Make static.
+
+2010-07-06  Tom Tromey  <tromey@redhat.com>
+
+	* configure, config.in: Rebuild.
+	* configure.ac (HAVE_LIBPYTHON2_7): New define.
+	* python/python-internal.h: Handle HAVE_LIBPYTHON2_7.
+
+2010-07-06  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* breakpoint.c (_initialize_breakpoint): Add "cl" as alias for
+	"clear".
+
+2010-07-06  Ken Werner  <ken.werner@de.ibm.com>
+
+	* gdbtypes.h (floatformats_ieee_half): Add declaration.
+	* gdbtypes.c (floatformats_ieee_half): New variable.
+	* doublest.c (floatformat_from_length): Set format to
+	gdbarch_half_format if length matches.
+	* gdbarch.sh (half_bit): New architecture method.
+	(half_format): Likewise.
+	* gdbarch.h: Regenerate.
+	* gdbarch.c: Likewise.
+
 2010-07-05  Jan Kratochvil  <jan.kratochvil@redhat.com>
 	    Joel Brobecker  <brobecker@adacore.com>
 

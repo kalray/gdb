@@ -1,3 +1,51 @@
+2010-07-15  Rhonda Wittels  <rhonda@codesourcery.com>
+
+	* config/obj-elf.c (get_sym_from_input_line_and_check): New
+	function to catch missing pseudo-op arguments.
+	(obj_elf_local): Call new function.
+	(obj_elf_weak): Likewise.
+	(obj_elf_visibility): Likewise.
+	(obj_elf_vtable_entry): Likewise.
+	(obj_elf_type): Likewise.
+
+2010-07-15  Kai Tietz  <kai.tietz@onevision.com>
+
+	* config/obj-coff-seh.c
+	(seh_getelm_data_size): New.
+	(seh_read_offset): Handle negative values.
+	(obj_coff_seh_push): Handle offset for save-register store.
+	(obj_coff_seh_setframe): Add unwind-information for frame.
+	(seh_store_elm_data): New.
+	(seh_getelm_data_size): Return additionally unaligned element count.
+	(seh_make_unwind_entry): Correct tweak about element count.
+
+2010-07-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11806
+	* config/tc-i386-intel.c (i386_intel_simplify): Restore fall
+	through patch for O_multiply.
+
+2010-07-11  Kai Tietz  <kai.tietz@onevision.com>
+
+	PR ld/11612
+	* config/obj-coff.c (obj_common_parse): Quote symbol-name.
+
+2010-07-08 Tejas Belagod <tejas.belagod@arm.com>
+
+	* tc-arm.c (OP_oBARRIER): Remove.
+	(OP_oBARRIER_I15): Add.
+	(po_barrier_or_imm): Add macro.
+	(parse_operands): Improve OP_oBARRIER_I15 operand parsing.
+	(do_barrier): Check correct immediate range.
+	(do_t_barrier): Likewise.
+	(barrier_opt_names): Add entries for more symbolic operands.
+	(insns): Replace OP_oBARRIER with OP_oBARRIER_I15 for barriers.
+
+2010-07-08  Daniel Gutson  <dgutson@codesourcery.com>
+
+	* config/tc-arm.c (tc_gen_reloc): Add BFD_RELOC_ARM_T32_OFFSET_IMM
+	error message.
+
 2010-07-06  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* config/tc-mips.c (mips_frob_file): Use symbol_same_p to match

@@ -1,3 +1,133 @@
+2010-07-15  Cary Coutant  <ccoutant@google.com>
+
+	* plugin.cc (Plugin_finish::run): Don't call cleanup handlers from
+	here.
+
+2010-07-14  Ian Lance Taylor  <iant@google.com>
+
+	* descriptors.cc (Descriptors::open): Report correct name in error
+	message.
+
+2010-07-13  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_input_section::Arm_input_section): For a
+	SHT_ARM_EXIDX section, always keeps the input sections.
+	(Arm_input_section::set_exidx_section_link): New method.
+	(Arm_exidx_input_section::Arm_exidx_input_section): Initialize
+	has_errors_ to false.
+	(Arm_exidx_input_section::has_errors,
+	Arm_exidx_input_section::set_has_errors): New methods.
+	(Arm_exidx_input_section::has_errors_): New data member.
+	(Arm_relobj::get_exidx_shndx_list): New method.
+	(Arm_output_section::append_text_sections_to_list): Do not skip
+	section without SHF_EXECINSTR.
+	(Arm_output_section::fix_exidx_coverage): Skip input sections with
+	errors.
+ 	(Arm_relobj::make_exidx_input_section): Add new parameter for text
+	section header.  Make error messages more verbose.  Check for
+	a non-executable section linked to an EXIDX section.
+	(Arm_relobj::do_read_symbols): Remove error checking, which has been
+	moved to Arm_relobj::make_exidx_input_section.  Add an assertion to
+	check that there is no deferred EXIDX section if we exit early.
+	Instead of not making an EXIDX section in case of an error, make one
+	and set the has_errors flag of it.
+	(Target_arm::do_finalize_sections): Fix up links of EXIDX sections
+	in a relocatable link.
+	(Target_arm::do_relax): Look for the EXIDX output section instead of
+	assuming that it is called .ARM.exidx.
+ 	(Target_arm::fix_exidx_coverage): Add a new parameter for input
+	section list.  Do not check for SHF_EXECINSTR section flags but
+	skip any input section with errors.
+	* output.cc (Output_section::Output_section): Initialize
+	always_keeps_input_sections_ to false.
+	(Output_section::add_input_section): Check for
+	always_keeps_input_sections_.
+	*  output.h (Output_section::always_keeps_input_sections,
+	Output_section::set_always_keeps_input_sections): New methods.
+	(Output_section::always_keeps_input_sections): New data member.
+
+2010-07-13  Rafael Espindola  <espindola@google.com>
+
+	* fileread.cc (try_extra_search_path, find_file): Move to Input_file.
+	* fileread.h (Input_file): Add try_extra_search_path and find_file.
+
+2010-07-13  Philip Herron  <herron.philip@googlemail.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	* output.h (Output_section_lookup_maps::add_merge_section):
+	Correct check of whether value was inserted.
+	(Output_section_lookup_maps::add_merge_input_section): Likewise.
+	(Output_section_lookup_maps::add_relaxed_input_section):
+	Likewise.
+	* arm.cc (Target_arm::got_section): Remove used local os.
+	* i386.cc (Target_i386::got_section): Likewise.
+	* x86_64.cc (Target_x86_64::got_section): Likewise.
+	* sparc.cc (Target_sparc::got_section): Likewise.
+	(Target_sparc::relocate): Remove unused local have_got_offset.
+	* powerpc.cc (Target_powerpc::relocate): Likewise.
+
+2010-07-13  Ian Lance Taylor  <iant@google.com>
+
+	* compressed_output.cc (zlib_decompress): Fix signature in
+	!HAVE_ZLIB_H case.
+
+	* archive.cc (Archive::include_member): Unlock an external member
+	of a thin archive.  Don't bother to delete an object we know is
+	NULL.
+
+2010-07-12  Cary Coutant  <ccoutant@google.com>
+
+	* compressed_output.cc (zlib_decompress): New function.
+	(get_uncompressed_size): New function.
+	(decompress_input_section): New function.
+	* compressed_output.h (get_uncompressed_size): New function.
+	(decompress_input_section): New function.
+	* dwarf_reader.cc (Sized_dwarf_line_info::Sized_dwarf_line_info)
+	Handle compressed debug sections.
+	* layout.cc (is_compressed_debug_section): New function.
+	(Layout::output_section_name): Map compressed section names to
+	canonical names.
+	* layout.h (is_compressed_debug_section): New function.
+	(is_debug_info_section): Recognize compressed debug sections.
+	* merge.cc: Include compressed_output.h.
+	(Output_merge_data::do_add_input_section): Handle compressed
+	debug sections.
+	(Output_merge_string::do_add_input_section): Handle compressed
+	debug sections.
+	* object.cc: Include compressed_output.h.
+	(Sized_relobj::Sized_relobj): Initialize new data members.
+	(build_compressed_section_map): New function.
+	(Sized_relobj::do_read_symbols): Handle compressed debug sections.
+	* object.h (Object::section_is_compressed): New method.
+	(Object::do_section_is_compressed): New method.
+	(Sized_relobj::Compressed_section_map): New type.
+	(Sized_relobj::do_section_is_compressed): New method.
+	(Sized_relobj::compressed_sections_): New data member.
+	* output.cc (Output_section::add_input_section): Handle compressed
+	debug sections.
+	* reloc.cc: Include compressed_output.h.
+	(Sized_relobj::write_sections): Handle compressed debug sections.
+
+2010-07-08  Cary Coutant  <ccoutant@google.com>
+
+	* resolve.cc (Symbol_table::resolve): Remember whether undef was
+	weak when resolving to a dynamic def.
+	(Symbol_table::should_override): Add adjust_dyndef flag; set it
+	for weak undef/dynamic def cases. Adjust callers.
+	* symtab.cc (Symbol::init_fields): Initialize undef_binding_set_ and
+	undef_binding_weak_.
+	(Symbol_table::sized_write_globals): Adjust symbol binding.
+	(Symbol_table::sized_write_symbol): Add binding parameter.
+	* symtab.h (Symbol::set_undef_binding): New method.
+	(Symbol::is_undef_binding_weak): New method.
+	(Symbol::undef_binding_set_, Symbol::undef_binding_weak_): New members.
+	(Symbol_table::should_override): Add new parameter.
+	(Symbol_table::sized_write_symbol): Add new parameter.
+
+	* testsuite/weak_undef_file1.cc: Add new test case.
+	* testsuite/weak_undef_file2.cc: Fix header comment.
+	* testsuite/weak_undef_test.cc: Add new test case.
+
 2010-06-29  Doug Kwan  <dougkwan@google.com>
 
 	* arm-reloc-property.cc (Arm_reloc_property::Arm_reloc_property):

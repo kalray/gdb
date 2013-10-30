@@ -2432,7 +2432,7 @@ class Output_section_lookup_maps
     std::pair<Merge_section_properties, Output_merge_base*> value(msp, pomb);
     std::pair<Merge_sections_by_properties::iterator, bool> result =
       this->merge_sections_by_properties_.insert(value);
-    gold_assert(value.second);
+    gold_assert(result.second);
   }
   
   // Add a mapping from a merged input section in OBJECT with index SHNDX
@@ -2445,7 +2445,7 @@ class Output_section_lookup_maps
     std::pair<Const_section_id, Output_merge_base*> value(csid, pomb);
     std::pair<Merge_sections_by_id::iterator, bool> result =
       this->merge_sections_by_id_.insert(value);
-    gold_assert(value.second);
+    gold_assert(result.second);
   }
 
   // Find a relaxed input section of OBJECT with index SHNDX.
@@ -2469,7 +2469,7 @@ class Output_section_lookup_maps
       value(csid, poris);
     std::pair<Relaxed_input_sections_by_id::iterator, bool> result =
       this->relaxed_input_sections_by_id_.insert(value);
-    gold_assert(value.second);
+    gold_assert(result.second);
   }
 
  private:
@@ -3468,6 +3468,19 @@ class Output_section : public Output_data
   input_sections() const
   { return this->input_sections_; }
 
+  // Whether this always keeps an input section list
+  bool
+  always_keeps_input_sections() const
+  { return this->always_keeps_input_sections_; }
+
+  // Always keep an input section list.
+  void
+  set_always_keeps_input_sections()
+  {
+    gold_assert(this->current_data_size_for_child() == 0);
+    this->always_keeps_input_sections_ = true;
+  }
+
  private:
   // We only save enough information to undo the effects of section layout.
   class Checkpoint_output_section
@@ -3784,6 +3797,8 @@ class Output_section : public Output_data
   bool section_offsets_need_adjustment_ : 1;
   // Whether this is a NOLOAD section.
   bool is_noload_ : 1;
+  // Whether this always keeps input section.
+  bool always_keeps_input_sections_ : 1;
   // For SHT_TLS sections, the offset of this section relative to the base
   // of the TLS segment.
   uint64_t tls_offset_;

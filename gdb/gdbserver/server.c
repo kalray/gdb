@@ -1779,6 +1779,10 @@ handle_v_cont (char *own_buf)
       last_ptid = mywait (minus_one_ptid, &last_status, 0, 1);
       prepare_resume_reply (own_buf, last_ptid, &last_status);
       disable_async_io ();
+
+      if (last_status.kind == TARGET_WAITKIND_EXITED
+          || last_status.kind == TARGET_WAITKIND_SIGNALLED)
+        mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
     }
   return;
 
@@ -2035,7 +2039,7 @@ handle_v_requests (char *own_buf, int packet_len, int *new_packet_len)
 /* Resume inferior and wait for another event.  In non-stop mode,
    don't really wait here, but return immediatelly to the event
    loop.  */
-void
+static void
 myresume (char *own_buf, int step, int sig)
 {
   struct thread_resume resume_info[2];
@@ -2079,6 +2083,10 @@ myresume (char *own_buf, int step, int sig)
       last_ptid = mywait (minus_one_ptid, &last_status, 0, 1);
       prepare_resume_reply (own_buf, last_ptid, &last_status);
       disable_async_io ();
+
+      if (last_status.kind == TARGET_WAITKIND_EXITED
+          || last_status.kind == TARGET_WAITKIND_SIGNALLED)
+        mourn_inferior (find_process_pid (ptid_get_pid (last_ptid)));
     }
 }
 
