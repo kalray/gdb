@@ -178,7 +178,7 @@ queue_initial_tasks(const General_options& options,
     thread_count = cmdline.number_of_input_files();
   workqueue->set_thread_count(thread_count);
 
-  if (cmdline.options().incremental())
+  if (parameters->incremental())
     {
       Incremental_checker incremental_checker(
           parameters->options().output_file_name(),
@@ -359,6 +359,7 @@ queue_middle_tasks(const General_options& options,
            p != input_objects->relobj_end();
            ++p)
         {
+          Task_lock_obj<Object> tlo(task, *p);
           (*p)->layout(symtab, layout, NULL);
         }
     }

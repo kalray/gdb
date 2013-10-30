@@ -1,3 +1,79 @@
+2011-01-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-hw.c (sim_hw_uninstall): Uncomment hw_tree_delete.
+
+2011-01-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-module.c (sim_pre_argv_init): Return SIM_RC_FAIL when asprintf
+	fails.
+	* sim-options.c (sim_parse_args): Issue an error and return SIM_RC_FAIL
+	when asprintf fails.
+	* sim-utils.c (sim_do_commandf): Issue an error and return when
+	asprintf fails.
+	* sim-watch.c (sim_watchpoint_install): Return SIM_RC_FAIL when
+	asprintf fails.
+
+2011-01-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-memopt.c (do_memopt_add): Set nr_bytes to s.st_size before
+	bytes has been calculated and when mmap_next_fd is valid and
+	nr_bytes is 0.
+	(memory_option_handler): Allow missing size when mmap_next_fd is
+	valid.
+
+2011-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4 (SIM_AC_OPTION_HARDWARE): Set $hardware to $2 when $2 is
+	not empty, and always append $3 to $hardware.
+
+2011-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* hw-device.h (hw_abort, hw_vabort, hw_halt): Add noreturn attribute.
+	* sim-hw.h (sim_hw_abort): Likewise.
+
+2011-01-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-load.c (sim_load_file): Change buffer type to unsigned char *.
+
+2011-01-05  Joel Brobecker  <brobecker@adacore.com>
+
+	* run.1: Copyright year update.
+
+2010-12-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* hw-alloc.h (HW_NALLOC): Define.
+
+010-12-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* hw-alloc.h (HW_NZALLOC): Change ME,TYPE,N to me,type,n.
+
+2010-12-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-memopt.c (OPTION_MAP_INFO): Define.
+	(memory_options): Handle --map-info.
+	(memory_option_handler): Handle OPTION_MAP_INFO.
+
+2010-11-22  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-profile.c (PROFILE_PC_FREQ, PROFILE_PC_NR_BUCKETS,
+	PROFILE_PC_SHIFT, PROFILE_PC_START, PROFILE_PC_END,
+	PROFILE_INSN_COUNT): Add stubs when profile is disabled.
+
+2010-11-22  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-core.c (WITH_HW): Add device casts to device_error,
+	device_io_read_buffer, and device_io_write_buffer.
+
+2010-11-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-sockser.c (dv_sockser_write_buffer): New function.
+	(dv_sockser_write): Rewrite to use dv_sockser_write_buffer.
+	* dv-sockser.h (dv_sockser_write_buffer): New prototype.
+
+2010-10-07  Hans-Peter Nilsson  <hp@axis.com>
+
+	* callback.c (os_lseek): Call wrap on lseek result.
+
 2010-05-26  Ozkan Sezer  <sezeroz@gmail.com>
 
 	* dv-sockser.c (dv_sockser_init): Check error return from socket()

@@ -1,6 +1,6 @@
 // options.c -- handle command line options for gold
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -50,7 +50,7 @@ namespace options
 {
 
 // This flag is TRUE if we should register the command-line options as they
-// are constructed.  It is set after contruction of the options within
+// are constructed.  It is set after construction of the options within
 // class Position_dependent_options.
 static bool ready_to_register = false;
 
@@ -59,7 +59,7 @@ static std::vector<const One_option*> registered_options;
 
 // These are set up at the same time -- the variables that accept one
 // dash, two, or require -z.  A single variable may be in more than
-// one of thes data structures.
+// one of these data structures.
 typedef Unordered_map<std::string, One_option*> Option_map;
 static Option_map* long_options = NULL;
 static One_option* short_options[128];
@@ -317,6 +317,34 @@ General_options::parse_defsym(const char*, const char* arg,
 }
 
 void
+General_options::parse_incremental(const char*, const char*,
+                                   Command_line*)
+{
+  this->incremental_mode_ = INCREMENTAL_AUTO;
+}
+
+void
+General_options::parse_no_incremental(const char*, const char*,
+                                      Command_line*)
+{
+  this->incremental_mode_ = INCREMENTAL_OFF;
+}
+
+void
+General_options::parse_incremental_full(const char*, const char*,
+					Command_line*)
+{
+  this->incremental_mode_ = INCREMENTAL_FULL;
+}
+
+void
+General_options::parse_incremental_update(const char*, const char*,
+					  Command_line*)
+{
+  this->incremental_mode_ = INCREMENTAL_UPDATE;
+}
+
+void
 General_options::parse_incremental_changed(const char*, const char*,
                                            Command_line*)
 {
@@ -514,7 +542,7 @@ General_options::parse_end_lib(const char*, const char*,
 }
 
 // The function add_excluded_libs() in ld/ldlang.c of GNU ld breaks up a list
-// of names seperated by commas or colons and puts them in a linked list.
+// of names separated by commas or colons and puts them in a linked list.
 // We implement the same parsing of names here but store names in an unordered
 // map to speed up searching of names.
 
@@ -852,6 +880,7 @@ General_options::General_options()
     do_demangle_(false),
     plugins_(NULL),
     dynamic_list_(),
+    incremental_mode_(INCREMENTAL_OFF),
     incremental_disposition_(INCREMENTAL_CHECK),
     implicit_incremental_(false),
     excluded_libs_(),
@@ -1137,7 +1166,7 @@ General_options::finalize()
 		 "[0.0, 1.0)"),
 	       this->hash_bucket_empty_fraction());
 
-  if (this->implicit_incremental_ && !this->incremental())
+  if (this->implicit_incremental_ && this->incremental_mode_ == INCREMENTAL_OFF)
     gold_fatal(_("Options --incremental-changed, --incremental-unchanged, "
                  "--incremental-unknown require the use of --incremental"));
 

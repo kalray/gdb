@@ -608,6 +608,8 @@ gld${EMULATION_NAME}_after_open (void)
   bfd_boolean r;
   struct set_info *p;
 
+  after_open_default ();
+
   /* Call ldctor_build_sets, after pretending that this is a
      relocatable link.  We do this because AIX requires relocation
      entries for all references to symbols, even in a final
@@ -1193,7 +1195,7 @@ gld${EMULATION_NAME}_read_file (const char *filename, bfd_boolean import)
 	    {
 	      struct export_symbol_list *n;
 
-	      ldlang_add_undef (symname);
+	      ldlang_add_undef (symname, TRUE);
 	      n = ((struct export_symbol_list *)
 		   xmalloc (sizeof (struct export_symbol_list)));
 	      n->next = export_symbols;
@@ -1426,7 +1428,7 @@ gld${EMULATION_NAME}_open_dynamic_archive (const char *arch,
 {
   char *path;
 
-  if (!entry->is_archive)
+  if (!entry->maybe_archive)
     return FALSE;
 
   path = concat (search->name, "/lib", entry->filename, arch, ".a", NULL);

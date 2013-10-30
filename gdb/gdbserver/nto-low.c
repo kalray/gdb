@@ -1,6 +1,6 @@
 /* QNX Neutrino specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -174,7 +174,7 @@ do_attach (pid_t pid)
       close (nto_inferior.ctl_fd);
       init_nto_inferior (&nto_inferior);
     }
-  snprintf (nto_inferior.nto_procfs_path, PATH_MAX - 1, "/proc/%d/as", pid);
+  xsnprintf (nto_inferior.nto_procfs_path, PATH_MAX - 1, "/proc/%d/as", pid);
   nto_inferior.ctl_fd = open (nto_inferior.nto_procfs_path, O_RDWR);
   if (nto_inferior.ctl_fd == -1)
     {
@@ -635,7 +635,8 @@ nto_fetch_registers (struct regcache *regcache, int regno)
 	    {
 	      const unsigned int registeroffset
 		= the_low_target.register_offset (regno);
-	      supply_register (regcache, regno, ((char *)&greg) + registeroffset);
+	      supply_register (regcache, regno,
+			       ((char *)&greg) + registeroffset);
 	    }
 	}
       else

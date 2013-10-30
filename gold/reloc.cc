@@ -303,7 +303,7 @@ Sized_relobj<size, big_endian>::do_read_relocs(Read_relocs_data* rd)
       if (!is_section_allocated
 	  && !parameters->options().relocatable()
 	  && !parameters->options().emit_relocs()
-	  && !parameters->options().incremental())
+	  && !parameters->incremental())
 	continue;
 
       if (this->adjust_shndx(shdr.get_sh_link()) != this->symtab_shndx_)
@@ -369,7 +369,7 @@ Sized_relobj<size, big_endian>::do_read_relocs(Read_relocs_data* rd)
 }
 
 // Process the relocs to generate mappings from source sections to referenced
-// sections.  This is used during garbage colletion to determine garbage 
+// sections.  This is used during garbage collection to determine garbage
 // sections.
 
 template<int size, bool big_endian>
@@ -1000,7 +1000,7 @@ Sized_relobj<size, big_endian>::do_relocate_sections(
 	    this->emit_relocs(&relinfo, i, sh_type, prelocs, reloc_count,
 			      os, output_offset, view, address, view_size,
 			      (*pviews)[i].view, (*pviews)[i].view_size);
-	  if (parameters->options().incremental())
+	  if (parameters->incremental())
 	    this->incremental_relocs_write(&relinfo, sh_type, prelocs,
 					   reloc_count, os, output_offset, of);
 	}
@@ -1589,6 +1589,20 @@ Track_relocs<size, big_endian>::next_symndx() const
   // symbol index.
   elfcpp::Rel<size, big_endian> rel(this->prelocs_ + this->pos_);
   return elfcpp::elf_r_sym<size>(rel.get_r_info());
+}
+
+// Return the addend of the next reloc, or 0 if there isn't one.
+
+template<int size, bool big_endian>
+uint64_t
+Track_relocs<size, big_endian>::next_addend() const
+{
+  if (this->pos_ >= this->len_)
+    return 0;
+  if (this->reloc_size_ == elfcpp::Elf_sizes<size>::rel_size)
+    return 0;
+  elfcpp::Rela<size, big_endian> rela(this->prelocs_ + this->pos_);
+  return rela.get_r_addend();
 }
 
 // Advance to the next reloc whose r_offset is greater than or equal

@@ -1,6 +1,6 @@
 // dwarf_reader.cc -- parse dwarf2/3 debug information
 
-// Copyright 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -68,16 +68,19 @@ Sized_dwarf_line_info<size, big_endian>::Sized_dwarf_line_info(Object* object,
     directories_(), files_(), current_header_index_(-1)
 {
   unsigned int debug_shndx;
-  for (debug_shndx = 0; debug_shndx < object->shnum(); ++debug_shndx)
-    // FIXME: do this more efficiently: section_name() isn't super-fast
-    if (object->section_name(debug_shndx) == ".debug_line")
-      {
-        section_size_type buffer_size;
-        this->buffer_ = object->section_contents(debug_shndx, &buffer_size,
-						 false);
-        this->buffer_end_ = this->buffer_ + buffer_size;
-        break;
-      }
+  for (debug_shndx = 1; debug_shndx < object->shnum(); ++debug_shndx)
+    {
+      // FIXME: do this more efficiently: section_name() isn't super-fast
+      std::string name = object->section_name(debug_shndx);
+      if (name == ".debug_line" || name == ".zdebug_line")
+	{
+	  section_size_type buffer_size;
+	  this->buffer_ = object->section_contents(debug_shndx, &buffer_size,
+						   false);
+	  this->buffer_end_ = this->buffer_ + buffer_size;
+	  break;
+	}
+    }
   if (this->buffer_ == NULL)
     return;
 
@@ -110,6 +113,7 @@ Sized_dwarf_line_info<size, big_endian>::Sized_dwarf_line_info(Object* object,
 	{
 	  got_relocs = this->track_relocs_.initialize(object, reloc_shndx,
                                                       reloc_sh_type);
+	  this->track_relocs_type_ = reloc_sh_type;
 	  break;
 	}
     }
@@ -267,10 +271,6 @@ Sized_dwarf_line_info<size, big_endian>::read_header_tables(
 
 // Process a single opcode in the .debug.line structure.
 
-// Templating on size and big_endian would yield more efficient (and
-// simpler) code, but would bloat the binary.  Speed isn't important
-// here.
-
 template<int size, bool big_endian>
 bool
 Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
@@ -389,13 +389,21 @@ Sized_dwarf_line_info<size, big_endian>::process_one_opcode(
 
           case elfcpp::DW_LNE_set_address:
             {
-              lsm->address = elfcpp::Swap_unaligned<size, big_endian>::readval(start);
+              lsm->address =
+		elfcpp::Swap_unaligned<size, big_endian>::readval(start);
               typename Reloc_map::const_iterator it
-                  = reloc_map_.find(start - this->buffer_);
+                  = this->reloc_map_.find(start - this->buffer_);
               if (it != reloc_map_.end())
                 {
-                  // value + addend.
-                  lsm->address += it->second.second;
+		  // If this is a SHT_RELA section, then ignore the
+		  // section contents.  This assumes that this is a
+		  // straight reloc which just uses the reloc addend.
+		  // The reloc addend has already been included in the
+		  // symbol value.
+		  if (this->track_relocs_type_ == elfcpp::SHT_RELA)
+		    lsm->address = 0;
+		  // Add in the symbol value.
+		  lsm->address += it->second.second;
                   lsm->shndx = it->second.first;
                 }
               else
@@ -485,7 +493,18 @@ Sized_dwarf_line_info<size, big_endian>::read_lines(unsigned const char* lineptr
               Offset_to_lineno_entry entry
                   = { lsm.address, this->current_header_index_,
                       lsm.file_num, lsm.line_num };
-              line_number_map_[lsm.shndx].push_back(entry);
+	      std::vector<Offset_to_lineno_entry>&
+		map(this->line_number_map_[lsm.shndx]);
+	      // If we see two consecutive entries with the same
+	      // offset and a real line number, then always use the
+	      // second one.
+	      if (!map.empty()
+		  && (map.back().offset == static_cast<off_t>(lsm.address))
+		  && lsm.line_num != -1
+		  && map.back().line_num != -1)
+		map.back() = entry;
+	      else
+		map.push_back(entry);
             }
           lineptr += oplength;
         }
@@ -533,7 +552,10 @@ Sized_dwarf_line_info<size, big_endian>::read_relocs(Object* object)
       // There is no reason to record non-ordinary section indexes, or
       // SHN_UNDEF, because they will never match the real section.
       if (is_ordinary && shndx != elfcpp::SHN_UNDEF)
-	this->reloc_map_[reloc_offset] = std::make_pair(shndx, value);
+	{
+	  value += this->track_relocs_.next_addend();
+	  this->reloc_map_[reloc_offset] = std::make_pair(shndx, value);
+	}
 
       this->track_relocs_.advance(reloc_offset + 1);
     }

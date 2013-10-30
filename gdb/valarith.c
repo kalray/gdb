@@ -2,7 +2,7 @@
 
    Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
    1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009,
-   2010 Free Software Foundation, Inc.
+   2010, 2011 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,7 +34,7 @@
 #include "exceptions.h"
 
 /* Define whether or not the C operator '/' truncates towards zero for
-   differently signed operands (truncation direction is undefined in C). */
+   differently signed operands (truncation direction is undefined in C).  */
 
 #ifndef TRUNCATION_TOWARDS_ZERO
 #define TRUNCATION_TOWARDS_ZERO ((-5 / 2) == -2)
@@ -47,8 +47,7 @@ void _initialize_valarith (void);
    If the pointer type is void *, then return 1.
    If the target type is incomplete, then error out.
    This isn't a general purpose function, but just a 
-   helper for value_ptradd.
-*/
+   helper for value_ptradd.  */
 
 static LONGEST
 find_size_for_pointer_math (struct type *ptr_type)
@@ -90,13 +89,17 @@ value_ptradd (struct value *arg1, LONGEST arg2)
 {
   struct type *valptrtype;
   LONGEST sz;
+  struct value *result;
 
   arg1 = coerce_array (arg1);
   valptrtype = check_typedef (value_type (arg1));
   sz = find_size_for_pointer_math (valptrtype);
 
-  return value_from_pointer (valptrtype,
-			     value_as_address (arg1) + sz * arg2);
+  result = value_from_pointer (valptrtype,
+			       value_as_address (arg1) + sz * arg2);
+  if (VALUE_LVAL (result) != lval_internalvar)
+    set_value_component_location (result, arg1);
+  return result;
 }
 
 /* Given two compatible pointer values ARG1 and ARG2, return the
@@ -118,9 +121,9 @@ value_ptrdiff (struct value *arg1, struct value *arg2)
 
   if (TYPE_LENGTH (check_typedef (TYPE_TARGET_TYPE (type1)))
       != TYPE_LENGTH (check_typedef (TYPE_TARGET_TYPE (type2))))
-    error (_("\
-First argument of `-' is a pointer and second argument is neither\n\
-an integer nor a pointer of the same type."));
+    error (_("First argument of `-' is a pointer and "
+	     "second argument is neither\n"
+	     "an integer nor a pointer of the same type."));
 
   sz = TYPE_LENGTH (check_typedef (TYPE_TARGET_TYPE (type1)));
   if (sz == 0) 
@@ -142,7 +145,7 @@ an integer nor a pointer of the same type."));
    See comments in value_coerce_array() for rationale for reason for
    doing lower bounds adjustment here rather than there.
    FIXME:  Perhaps we should validate that the index is valid and if
-   verbosity is set, warn about invalid indices (but still use them). */
+   verbosity is set, warn about invalid indices (but still use them).  */
 
 struct value *
 value_subscript (struct value *array, LONGEST index)
@@ -202,12 +205,14 @@ value_subscripted_rvalue (struct value *array, LONGEST index, int lowerbound)
 			     && elt_offs >= TYPE_LENGTH (array_type)))
     error (_("no such vector element"));
 
-  v = allocate_value (elt_type);
   if (VALUE_LVAL (array) == lval_memory && value_lazy (array))
-    set_value_lazy (v, 1);
+    v = allocate_value_lazy (elt_type);
   else
-    memcpy (value_contents_writeable (v),
-	    value_contents (array) + elt_offs, elt_size);
+    {
+      v = allocate_value (elt_type);
+      memcpy (value_contents_writeable (v),
+	      value_contents (array) + elt_offs, elt_size);
+    }
 
   set_value_component_location (v, array);
   VALUE_REGNUM (v) = VALUE_REGNUM (array);
@@ -339,7 +344,7 @@ value_user_defined_cpp_op (struct value **args, int nargs, char *operator,
   int i;
 
   arg_types = (struct type **) alloca (nargs * (sizeof (struct type *)));
-  /* Prepare list of argument types for overload resolution */
+  /* Prepare list of argument types for overload resolution.  */
   for (i = 0; i < nargs; i++)
     arg_types[i] = value_type (args[i]);
 
@@ -413,7 +418,7 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
   argvec[2] = arg2;
   argvec[3] = 0;
 
-  /* make the right function name up */
+  /* Make the right function name up.  */
   strcpy (tstr, "operator__");
   ptr = tstr + 8;
   switch (op)
@@ -539,16 +544,18 @@ value_x_binop (struct value *arg1, struct value *arg2, enum exp_opcode op,
 	    = TYPE_TARGET_TYPE (check_typedef (value_type (argvec[0])));
 	  return value_zero (return_type, VALUE_LVAL (arg1));
 	}
-      return call_function_by_hand (argvec[0], 2 - static_memfuncp, argvec + 1);
+      return call_function_by_hand (argvec[0], 2 - static_memfuncp,
+				    argvec + 1);
     }
-  error (_("member function %s not found"), tstr);
+  throw_error (NOT_FOUND_ERROR,
+               _("member function %s not found"), tstr);
 #ifdef lint
   return call_function_by_hand (argvec[0], 2 - static_memfuncp, argvec + 1);
 #endif
 }
 
 /* We know that arg1 is a structure, so try to find a unary user
-   defined operator that matches the operator in question.  
+   defined operator that matches the operator in question.
    Create an argument vector that calls arg1.operator @ (arg1)
    and return that value (where '@' is (almost) any unary operator which
    is legal for GNU C++).  */
@@ -576,7 +583,7 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
 
   nargs = 1;
 
-  /* make the right function name up */
+  /* Make the right function name up.  */
   strcpy (tstr, "operator__");
   ptr = tstr + 8;
   strcpy (mangle_tstr, "__");
@@ -616,6 +623,9 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
     case UNOP_IND:
       strcpy (ptr, "*");
       break;
+    case STRUCTOP_PTR:
+      strcpy (ptr, "->");
+      break;
     default:
       error (_("Invalid unary operation specified."));
     }
@@ -641,7 +651,9 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
 	}
       return call_function_by_hand (argvec[0], nargs, argvec + 1);
     }
-  error (_("member function %s not found"), tstr);
+  throw_error (NOT_FOUND_ERROR,
+               _("member function %s not found"), tstr);
+
   return 0;			/* For lint -- never reached */
 }
 
@@ -664,8 +676,7 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
    values of length 1.
 
    (3)  Character values are also allowed and are treated as character
-   string values of length 1.
- */
+   string values of length 1.  */
 
 struct value *
 value_concat (struct value *arg1, struct value *arg2)
@@ -685,7 +696,7 @@ value_concat (struct value *arg1, struct value *arg2)
      or a repeat count and a value to be repeated.  INVAL1 is set to the
      first of two concatenated values, or the repeat count.  INVAL2 is set
      to the second of the two concatenated values or the value to be 
-     repeated. */
+     repeated.  */
 
   if (TYPE_CODE (type2) == TYPE_CODE_INT)
     {
@@ -702,12 +713,12 @@ value_concat (struct value *arg1, struct value *arg2)
       inval2 = arg2;
     }
 
-  /* Now process the input values. */
+  /* Now process the input values.  */
 
   if (TYPE_CODE (type1) == TYPE_CODE_INT)
     {
       /* We have a repeat count.  Validate the second value and then
-         construct a value repeated that many times. */
+         construct a value repeated that many times.  */
       if (TYPE_CODE (type2) == TYPE_CODE_STRING
 	  || TYPE_CODE (type2) == TYPE_CODE_CHAR)
 	{
@@ -750,7 +761,7 @@ value_concat (struct value *arg1, struct value *arg2)
   else if (TYPE_CODE (type1) == TYPE_CODE_STRING
 	   || TYPE_CODE (type1) == TYPE_CODE_CHAR)
     {
-      /* We have two character strings to concatenate. */
+      /* We have two character strings to concatenate.  */
       if (TYPE_CODE (type2) != TYPE_CODE_STRING
 	  && TYPE_CODE (type2) != TYPE_CODE_CHAR)
 	{
@@ -785,17 +796,18 @@ value_concat (struct value *arg1, struct value *arg2)
   else if (TYPE_CODE (type1) == TYPE_CODE_BITSTRING
 	   || TYPE_CODE (type1) == TYPE_CODE_BOOL)
     {
-      /* We have two bitstrings to concatenate. */
+      /* We have two bitstrings to concatenate.  */
       if (TYPE_CODE (type2) != TYPE_CODE_BITSTRING
 	  && TYPE_CODE (type2) != TYPE_CODE_BOOL)
 	{
-	  error (_("Bitstrings or booleans can only be concatenated with other bitstrings or booleans."));
+	  error (_("Bitstrings or booleans can only be concatenated "
+		   "with other bitstrings or booleans."));
 	}
       error (_("unimplemented support for bitstring/boolean concatenation."));
     }
   else
     {
-      /* We don't know how to concatenate these operands. */
+      /* We don't know how to concatenate these operands.  */
       error (_("illegal operands for concatenation."));
     }
   return (outval);
@@ -803,6 +815,7 @@ value_concat (struct value *arg1, struct value *arg2)
 
 /* Integer exponentiation: V1**V2, where both arguments are
    integers.  Requires V1 != 0 if V2 < 0.  Returns 1 for 0 ** 0.  */
+
 static LONGEST
 integer_pow (LONGEST v1, LONGEST v2)
 {
@@ -815,7 +828,7 @@ integer_pow (LONGEST v1, LONGEST v2)
     }
   else 
     {
-      /* The Russian Peasant's Algorithm */
+      /* The Russian Peasant's Algorithm.  */
       LONGEST v;
       
       v = 1;
@@ -833,6 +846,7 @@ integer_pow (LONGEST v1, LONGEST v2)
 
 /* Integer exponentiation: V1**V2, where both arguments are
    integers.  Requires V1 != 0 if V2 < 0.  Returns 1 for 0 ** 0.  */
+
 static ULONGEST
 uinteger_pow (ULONGEST v1, LONGEST v2)
 {
@@ -845,7 +859,7 @@ uinteger_pow (ULONGEST v1, LONGEST v2)
     }
   else 
     {
-      /* The Russian Peasant's Algorithm */
+      /* The Russian Peasant's Algorithm.  */
       ULONGEST v;
       
       v = 1;
@@ -882,7 +896,8 @@ value_args_as_decimal (struct value *arg1, struct value *arg2,
     /* The DFP extension to the C language does not allow mixing of
      * decimal float types with other float types in expressions
      * (see WDTR 24732, page 12).  */
-    error (_("Mixing decimal floating types with other floating types is not allowed."));
+    error (_("Mixing decimal floating types with "
+	     "other floating types is not allowed."));
 
   /* Obtain decimal value of arg1, converting from other types
      if necessary.  */
@@ -1025,7 +1040,8 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	  errno = 0;
 	  v = pow (v1, v2);
 	  if (errno)
-	    error (_("Cannot perform exponentiation: %s"), safe_strerror (errno));
+	    error (_("Cannot perform exponentiation: %s"),
+		   safe_strerror (errno));
 	  break;
 
 	case BINOP_MIN:
@@ -1161,7 +1177,7 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 
 	    case BINOP_MOD:
 	      /* Knuth 1.2.4, integer only.  Note that unlike the C '%' op,
-	         v1 mod 0 has a defined value, v1. */
+	         v1 mod 0 has a defined value, v1.  */
 	      if (v2 == 0)
 		{
 		  v = v1;
@@ -1169,7 +1185,7 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	      else
 		{
 		  v = v1 / v2;
-		  /* Note floor(v1/v2) == v1/v2 for unsigned. */
+		  /* Note floor(v1/v2) == v1/v2 for unsigned.  */
 		  v = v1 - (v2 * v);
 		}
 	      break;
@@ -1287,7 +1303,7 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 
 	    case BINOP_MOD:
 	      /* Knuth 1.2.4, integer only.  Note that unlike the C '%' op,
-	         X mod 0 has a defined value, X. */
+	         X mod 0 has a defined value, X.  */
 	      if (v2 == 0)
 		{
 		  v = v1;
@@ -1295,7 +1311,7 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	      else
 		{
 		  v = v1 / v2;
-		  /* Compute floor. */
+		  /* Compute floor.  */
 		  if (TRUNCATION_TOWARDS_ZERO && (v < 0) && ((v1 % v2) != 0))
 		    {
 		      v--;
@@ -1388,7 +1404,8 @@ vector_binop (struct value *val1, struct value *val2, enum exp_opcode op)
 {
   struct value *val, *tmp, *mark;
   struct type *type1, *type2, *eltype1, *eltype2, *result_type;
-  int t1_is_vec, t2_is_vec, elsize, n, i;
+  int t1_is_vec, t2_is_vec, elsize, i;
+  LONGEST low_bound1, high_bound1, low_bound2, high_bound2;
 
   type1 = check_typedef (value_type (val1));
   type2 = check_typedef (value_type (val2));
@@ -1401,23 +1418,23 @@ vector_binop (struct value *val1, struct value *val2, enum exp_opcode op)
   if (!t1_is_vec || !t2_is_vec)
     error (_("Vector operations are only supported among vectors"));
 
+  if (!get_array_bounds (type1, &low_bound1, &high_bound1)
+      || !get_array_bounds (type2, &low_bound2, &high_bound2))
+    error (_("Could not determine the vector bounds"));
+
   eltype1 = check_typedef (TYPE_TARGET_TYPE (type1));
   eltype2 = check_typedef (TYPE_TARGET_TYPE (type2));
+  elsize = TYPE_LENGTH (eltype1);
 
   if (TYPE_CODE (eltype1) != TYPE_CODE (eltype2)
-      || TYPE_LENGTH (eltype1) != TYPE_LENGTH (eltype2)
-      || TYPE_UNSIGNED (eltype1) != TYPE_UNSIGNED (eltype2))
+      || elsize != TYPE_LENGTH (eltype2)
+      || TYPE_UNSIGNED (eltype1) != TYPE_UNSIGNED (eltype2)
+      || low_bound1 != low_bound2 || high_bound1 != high_bound2)
     error (_("Cannot perform operation on vectors with different types"));
-
-  elsize = TYPE_LENGTH (eltype1);
-  n = TYPE_LENGTH (type1) / elsize;
-
-  if (n != TYPE_LENGTH (type2) / TYPE_LENGTH (eltype2))
-    error (_("Cannot perform operation on vectors with different sizes"));
 
   val = allocate_value (type1);
   mark = value_mark ();
-  for (i = 0; i < n; i++)
+  for (i = 0; i < high_bound1 - low_bound1 + 1; i++)
     {
       tmp = value_binop (value_subscript (val1, i),
 			 value_subscript (val2, i), op);
@@ -1435,14 +1452,34 @@ vector_binop (struct value *val1, struct value *val2, enum exp_opcode op)
 struct value *
 value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 {
+  struct value *val;
   struct type *type1 = check_typedef (value_type (arg1));
   struct type *type2 = check_typedef (value_type (arg2));
+  int t1_is_vec = (TYPE_CODE (type1) == TYPE_CODE_ARRAY
+		   && TYPE_VECTOR (type1));
+  int t2_is_vec = (TYPE_CODE (type2) == TYPE_CODE_ARRAY
+		   && TYPE_VECTOR (type2));
 
-  if ((TYPE_CODE (type1) == TYPE_CODE_ARRAY && TYPE_VECTOR (type1))
-	  || (TYPE_CODE (type2) == TYPE_CODE_ARRAY && TYPE_VECTOR (type2)))
-    return vector_binop (arg1, arg2, op);
+  if (!t1_is_vec && !t2_is_vec)
+    val = scalar_binop (arg1, arg2, op);
+  else if (t1_is_vec && t2_is_vec)
+    val = vector_binop (arg1, arg2, op);
   else
-    return scalar_binop (arg1, arg2, op);
+    {
+      /* Widen the scalar operand to a vector.  */
+      struct value **v = t1_is_vec ? &arg2 : &arg1;
+      struct type *t = t1_is_vec ? type2 : type1;
+      
+      if (TYPE_CODE (t) != TYPE_CODE_FLT
+	  && TYPE_CODE (t) != TYPE_CODE_DECFLOAT
+	  && !is_integral_type (t))
+	error (_("Argument to operation not a number or boolean."));
+
+      *v = value_cast (t1_is_vec ? type1 : type2, *v);
+      val = vector_binop (arg1, arg2, op);
+    }
+
+  return val;
 }
 
 /* Simulate the C operator ! -- return 1 if ARG1 contains zero.  */
@@ -1476,7 +1513,7 @@ value_logical_not (struct value *arg1)
 }
 
 /* Perform a comparison on two string values (whose content are not
-   necessarily null terminated) based on their length */
+   necessarily null terminated) based on their length.  */
 
 static int
 value_strcmp (struct value *arg1, struct value *arg2)
@@ -1582,7 +1619,7 @@ value_equal (struct value *arg1, struct value *arg2)
   else
     {
       error (_("Invalid type combination in equality test."));
-      return 0;			/* For lint -- never reached */
+      return 0;			/* For lint -- never reached.  */
     }
 }
 
@@ -1686,10 +1723,18 @@ value_pos (struct value *arg1)
     {
       return value_from_longest (type, value_as_long (arg1));
     }
+  else if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
+    {
+      struct value *val = allocate_value (type);
+
+      memcpy (value_contents_raw (val), value_contents (arg1),
+              TYPE_LENGTH (type));
+      return val;
+    }
   else
     {
-      error ("Argument to positive operation not a number.");
-      return 0;			/* For lint -- never reached */
+      error (_("Argument to positive operation not a number."));
+      return 0;			/* For lint -- never reached.  */
     }
 }
 
@@ -1705,7 +1750,7 @@ value_neg (struct value *arg1)
     {
       struct value *val = allocate_value (type);
       int len = TYPE_LENGTH (type);
-      gdb_byte decbytes[16];  /* a decfloat is at most 128 bits long */
+      gdb_byte decbytes[16];  /* a decfloat is at most 128 bits long.  */
 
       memcpy (decbytes, value_contents (arg1), len);
 
@@ -1723,10 +1768,28 @@ value_neg (struct value *arg1)
     {
       return value_from_longest (type, -value_as_long (arg1));
     }
+  else if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
+    {
+      struct value *tmp, *val = allocate_value (type);
+      struct type *eltype = check_typedef (TYPE_TARGET_TYPE (type));
+      int i;
+      LONGEST low_bound, high_bound;
+
+      if (!get_array_bounds (type, &low_bound, &high_bound))
+	error (_("Could not determine the vector bounds"));
+
+      for (i = 0; i < high_bound - low_bound + 1; i++)
+	{
+	  tmp = value_neg (value_subscript (arg1, i));
+	  memcpy (value_contents_writeable (val) + i * TYPE_LENGTH (eltype),
+		  value_contents_all (tmp), TYPE_LENGTH (eltype));
+	}
+      return val;
+    }
   else
     {
       error (_("Argument to negate operation not a number."));
-      return 0;			/* For lint -- never reached */
+      return 0;			/* For lint -- never reached.  */
     }
 }
 
@@ -1734,19 +1797,40 @@ struct value *
 value_complement (struct value *arg1)
 {
   struct type *type;
+  struct value *val;
 
   arg1 = coerce_ref (arg1);
   type = check_typedef (value_type (arg1));
 
-  if (!is_integral_type (type))
-    error (_("Argument to complement operation not an integer or boolean."));
+  if (is_integral_type (type))
+    val = value_from_longest (type, ~value_as_long (arg1));
+  else if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
+    {
+      struct value *tmp;
+      struct type *eltype = check_typedef (TYPE_TARGET_TYPE (type));
+      int i;
+      LONGEST low_bound, high_bound;
 
-  return value_from_longest (type, ~value_as_long (arg1));
+      if (!get_array_bounds (type, &low_bound, &high_bound))
+	error (_("Could not determine the vector bounds"));
+
+      val = allocate_value (type);
+      for (i = 0; i < high_bound - low_bound + 1; i++)
+        {
+          tmp = value_complement (value_subscript (arg1, i));
+          memcpy (value_contents_writeable (val) + i * TYPE_LENGTH (eltype),
+                  value_contents_all (tmp), TYPE_LENGTH (eltype));
+        }
+    }
+  else
+    error (_("Argument to complement operation not an integer, boolean."));
+
+  return val;
 }
 
 /* The INDEX'th bit of SET value whose value_type is TYPE,
    and whose value_contents is valaddr.
-   Return -1 if out of range, -2 other error. */
+   Return -1 if out of range, -2 other error.  */
 
 int
 value_bit_index (struct type *type, const gdb_byte *valaddr, int index)

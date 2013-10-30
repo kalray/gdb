@@ -1,6 +1,6 @@
 dnl Autoconf configure script for GDB server.
 dnl Copyright (C) 2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-dnl 2010 Free Software Foundation, Inc.
+dnl 2010, 2011 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -36,6 +36,7 @@ AC_ARG_PROGRAM
 
 AC_HEADER_STDC
 
+AC_FUNC_ALLOCA
 AC_CHECK_HEADERS(sgtty.h termio.h termios.h sys/reg.h string.h dnl
 		 proc_service.h sys/procfs.h thread_db.h linux/elf.h dnl
 		 stdlib.h unistd.h dnl
@@ -43,7 +44,7 @@ AC_CHECK_HEADERS(sgtty.h termio.h termios.h sys/reg.h string.h dnl
 		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
 		 netinet/tcp.h arpa/inet.h sys/wait.h)
 AC_CHECK_FUNCS(pread pwrite pread64)
-AC_REPLACE_FUNCS(memmem)
+AC_REPLACE_FUNCS(memmem vasprintf vsnprintf)
 
 # Check for UST
 ustlibs=""
@@ -160,7 +161,7 @@ AC_TRY_LINK([
   [AC_MSG_RESULT(no)])
 fi
 
-AC_CHECK_DECLS([strerror, perror, memmem])
+AC_CHECK_DECLS([strerror, perror, memmem, vasprintf, vsnprintf])
 
 AC_CHECK_TYPES(socklen_t, [], [],
 [#include <sys/types.h>
@@ -211,6 +212,8 @@ elif test "${srv_mingw}" = "yes"; then
   LIBS="$LIBS -lws2_32"
 elif test "${srv_qnx}" = "yes"; then
   LIBS="$LIBS -lsocket"
+elif test "${srv_lynxos}" = "yes"; then
+  LIBS="$LIBS -lnetinet"
 fi
 
 if test "${srv_mingw}" = "yes"; then
@@ -354,15 +357,35 @@ AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),
 	        	[gdbsrv_cv_have_visibility_hidden=no])
 CFLAGS="$saved_cflags"
 
-IPA_DEPFILES=""
 
-# Rather than allowing to build a broken IPA, we simply disable it if
-# we don't find a compiler supporting all the features we need.
+IPA_DEPFILES=""
+extra_libraries=""
+
+# check whether to enable the inprocess agent
 if test "$ipa_obj" != "" \
    -a "$gdbsrv_cv_have_sync_builtins" = yes \
    -a "$gdbsrv_cv_have_visibility_hidden" = yes; then
-   IPA_DEPFILES="$ipa_obj"
-   extra_libraries="libinproctrace.so"
+   have_ipa=true
+else
+   have_ipa=false
+fi
+
+AC_ARG_ENABLE(inprocess-agent,
+AS_HELP_STRING([--enable-inprocess-agent], [inprocess agent]),
+[case "$enableval" in
+  yes) want_ipa=true ;;
+  no) want_ipa=false ;;
+  *) AC_MSG_ERROR([bad value $enableval for inprocess-agent]) ;;
+esac],
+[want_ipa=$have_ipa])
+
+if $want_ipa ; then
+   if $have_ipa ; then
+     IPA_DEPFILES="$ipa_obj"
+     extra_libraries="$extra_libraries libinproctrace.so"
+   else
+     AC_MSG_ERROR([inprocess agent not supported for this target])
+   fi
 fi
 
 AC_SUBST(GDBSERVER_DEPFILES)

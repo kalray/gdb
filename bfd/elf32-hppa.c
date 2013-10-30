@@ -3741,17 +3741,10 @@ elf32_hppa_relocate_section (bfd *output_bfd,
 	}
 
       if (sym_sec != NULL && elf_discarded_section (sym_sec))
-	{
-	  /* For relocs against symbols from removed linkonce
-	     sections, or sections discarded by a linker script,
-	     we just want the section contents zeroed.  Avoid any
-	     special processing.  */
-	  _bfd_clear_contents (elf_hppa_howto_table + r_type, input_bfd,
-			       contents + rela->r_offset);
-	  rela->r_info = 0;
-	  rela->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rela, relend,
+					 elf_hppa_howto_table + r_type,
+					 contents);
 
       if (info->relocatable)
 	continue;
@@ -4472,7 +4465,7 @@ static enum elf_reloc_type_class
 elf32_hppa_reloc_type_class (const Elf_Internal_Rela *rela)
 {
   /* Handle TLS relocs first; we don't want them to be marked
-     relative by the "if (ELF32_R_SYM (rela->r_info) == 0)"
+     relative by the "if (ELF32_R_SYM (rela->r_info) == STN_UNDEF)"
      check below.  */
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -4482,7 +4475,7 @@ elf32_hppa_reloc_type_class (const Elf_Internal_Rela *rela)
         return reloc_class_normal;
     }
 
-  if (ELF32_R_SYM (rela->r_info) == 0)
+  if (ELF32_R_SYM (rela->r_info) == STN_UNDEF)
     return reloc_class_relative;
 
   switch ((int) ELF32_R_TYPE (rela->r_info))

@@ -1,6 +1,6 @@
 /* Multi-process control for GDB, the GNU debugger.
 
-   Copyright (C) 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -124,7 +124,7 @@ add_inferior_silent (int pid)
   memset (inf, 0, sizeof (*inf));
   inf->pid = pid;
 
-  inf->stop_soon = NO_STOP_QUIETLY;
+  inf->control.stop_soon = NO_STOP_QUIETLY;
 
   inf->num = ++highest_inferior_num;
   inf->next = inferior_list;
@@ -461,16 +461,29 @@ have_inferiors (void)
 int
 have_live_inferiors (void)
 {
-  struct target_ops *t;
+  struct cleanup *old_chain;
+  struct inferior *inf;
 
-  /* The check on stratum suffices, as GDB doesn't currently support
-     multiple target interfaces.  */
-  if (have_inferiors ())
-    for (t = current_target.beneath; t != NULL; t = t->beneath)
-      if (t->to_stratum == process_stratum)
-	return 1;
+  old_chain = make_cleanup_restore_current_thread ();
 
-  return 0;
+  for (inf = inferior_list; inf; inf = inf->next)
+    if (inf->pid != 0)
+      {
+	struct thread_info *tp;
+	
+	tp = any_thread_of_process (inf->pid);
+	if (tp)
+	  {
+	    switch_to_thread (tp->ptid);
+
+	    if (target_has_execution)
+	      break;
+	  }
+      }
+
+  do_cleanups (old_chain);
+
+  return inf != NULL;
 }
 
 /* Prune away automatically added program spaces that aren't required
@@ -741,6 +754,9 @@ remove_inferior_command (char *args, int from_tty)
 
   if (inf == current_inferior ())
     error (_("Can not remove current symbol inferior."));
+    
+  if (inf->pid != 0)
+    error (_("Can not remove an active inferior."));
 
   delete_inferior_1 (inf, 1);
 }
@@ -814,7 +830,7 @@ add_inferior_command (char *args, int from_tty)
       if (exec != NULL)
 	{
 	  /* Switch over temporarily, while reading executable and
-	     symbols.q  */
+	     symbols.q.  */
 	  set_current_program_space (inf->pspace);
 	  set_current_inferior (inf);
 	  switch_to_thread (null_ptid);

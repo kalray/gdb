@@ -2619,7 +2619,7 @@ mips_elf64_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	    default:
 	      if (! used_sym)
 		{
-		  if (rela.r_sym == 0)
+		  if (rela.r_sym == STN_UNDEF)
 		    relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 		  else
 		    {
@@ -2722,13 +2722,13 @@ mips_elf64_slurp_reloc_table (bfd *abfd, asection *asect,
 	  || asect->reloc_count == 0)
 	return TRUE;
 
-      rel_hdr = &d->rel_hdr;
-      reloc_count = NUM_SHDR_ENTRIES (rel_hdr);
-      rel_hdr2 = d->rel_hdr2;
+      rel_hdr = d->rel.hdr;
+      reloc_count = rel_hdr ? NUM_SHDR_ENTRIES (rel_hdr) : 0;
+      rel_hdr2 = d->rela.hdr;
       reloc_count2 = (rel_hdr2 ? NUM_SHDR_ENTRIES (rel_hdr2) : 0);
 
       BFD_ASSERT (asect->reloc_count == reloc_count + reloc_count2);
-      BFD_ASSERT (asect->rel_filepos == rel_hdr->sh_offset
+      BFD_ASSERT ((rel_hdr && asect->rel_filepos == rel_hdr->sh_offset)
 		  || (rel_hdr2 && asect->rel_filepos == rel_hdr2->sh_offset));
 
     }
@@ -2756,19 +2756,18 @@ mips_elf64_slurp_reloc_table (bfd *abfd, asection *asect,
   /* The slurp_one_reloc_table routine increments reloc_count.  */
   asect->reloc_count = 0;
 
-  if (! mips_elf64_slurp_one_reloc_table (abfd, asect,
-					  rel_hdr, reloc_count,
-					  relents,
-					  symbols, dynamic))
+  if (rel_hdr != NULL
+      && ! mips_elf64_slurp_one_reloc_table (abfd, asect,
+					     rel_hdr, reloc_count,
+					     relents,
+					     symbols, dynamic))
     return FALSE;
-  if (d->rel_hdr2 != NULL)
-    {
-      if (! mips_elf64_slurp_one_reloc_table (abfd, asect,
-					      rel_hdr2, reloc_count2,
-					      relents + reloc_count * 3,
-					      symbols, dynamic))
-	return FALSE;
-    }
+  if (rel_hdr2 != NULL
+      && ! mips_elf64_slurp_one_reloc_table (abfd, asect,
+					     rel_hdr2, reloc_count2,
+					     relents + reloc_count * 3,
+					     symbols, dynamic))
+    return FALSE;
 
   asect->relocation = relents;
   return TRUE;
@@ -2827,7 +2826,7 @@ mips_elf64_write_relocs (bfd *abfd, asection *sec, void *data)
 	}
     }
 
-  rel_hdr = &elf_section_data (sec)->rel_hdr;
+  rel_hdr = _bfd_elf_single_rel_hdr (sec);
 
   /* Do the actual relocation.  */
 
@@ -3354,4 +3353,37 @@ extern bfd_boolean bfd_elf64_archive_write_armap
 #define elf64_bed			elf64_tradbed
 
 /* Include the target file again for this target.  */
+#include "elf64-target.h"
+
+
+/* FreeBSD support.  */
+
+#undef TARGET_LITTLE_SYM
+#undef TARGET_LITTLE_NAME
+#undef TARGET_BIG_SYM
+#undef TARGET_BIG_NAME
+
+#define	TARGET_LITTLE_SYM		bfd_elf64_tradlittlemips_freebsd_vec
+#define	TARGET_LITTLE_NAME		"elf64-tradlittlemips-freebsd"
+#define	TARGET_BIG_SYM			bfd_elf64_tradbigmips_freebsd_vec
+#define	TARGET_BIG_NAME			"elf64-tradbigmips-freebsd"
+
+#undef	ELF_OSABI
+#define	ELF_OSABI			ELFOSABI_FREEBSD
+
+/* The kernel recognizes executables as valid only if they carry a
+   "FreeBSD" label in the ELF header.  So we put this label on all
+   executables and (for simplicity) also all other object files.  */
+
+static void
+elf_fbsd_post_process_headers (bfd *abfd, struct bfd_link_info *info)
+{
+  _bfd_elf_set_osabi (abfd, info);
+}
+
+#undef	elf_backend_post_process_headers
+#define	elf_backend_post_process_headers	elf_fbsd_post_process_headers
+#undef	elf64_bed
+#define elf64_bed				elf64_fbsd_tradbed
+
 #include "elf64-target.h"

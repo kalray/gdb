@@ -470,7 +470,8 @@ class Layout
   // .note.GNU-stack section.  GNU_STACK_FLAGS is the section flags
   // from that section if there was one.
   void
-  layout_gnu_stack(bool seen_gnu_stack, uint64_t gnu_stack_flags);
+  layout_gnu_stack(bool seen_gnu_stack, uint64_t gnu_stack_flags,
+		   const Object*);
 
   // Add an Output_section_data to the layout.  This is used for
   // special sections like the GOT section.  ORDER is where the
@@ -1140,7 +1141,7 @@ class Layout
   Incremental_inputs* incremental_inputs_;
   // Whether we record output section data created in script
   bool record_output_section_data_from_script_;
-  // List of output data that needs to be removed at relexation clean up.
+  // List of output data that needs to be removed at relaxation clean up.
   Output_section_data_list script_output_section_data_list_;
   // Structure to save segment states before entering the relaxation loop.
   Segment_states* segment_states_;

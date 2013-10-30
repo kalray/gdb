@@ -1,5 +1,6 @@
 /* Generic simulator watchpoint support.
-   Copyright (C) 1997, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -411,9 +412,10 @@ sim_watchpoint_install (SIM_DESC sd)
 	    char *name;
 	    int nr = interrupt_nr * nr_watchpoint_types + type;
 	    OPTION *option = &int_options[nr];
-	    asprintf (&name, "watch-%s-%s",
-		      watchpoint_type_to_str (sd, type),
-		      interrupt_nr_to_str (sd, interrupt_nr));
+	    if (asprintf (&name, "watch-%s-%s",
+			  watchpoint_type_to_str (sd, type),
+			  interrupt_nr_to_str (sd, interrupt_nr)) < 0)
+	      return SIM_RC_FAIL;
 	    option->opt.name = name;
 	    option->opt.has_arg = required_argument;
 	    option->opt.val = type_to_option (sd, type, interrupt_nr);

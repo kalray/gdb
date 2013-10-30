@@ -1,5 +1,5 @@
 @c Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-@c 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+@c 2006, 2007, 2008, 2009, 2010, 2011  Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -102,7 +102,10 @@ recognized:
 @code{arm1020e},
 @code{arm1022e},
 @code{arm1026ej-s},
+@code{fa606te} (Faraday FA606TE processor),
+@code{fa616te} (Faraday FA616TE processor),
 @code{fa626te} (Faraday FA626TE processor),
+@code{fmp626} (Faraday FMP626 processor),
 @code{fa726te} (Faraday FA726TE processor),
 @code{arm1136j-s},
 @code{arm1136jf-s},
@@ -115,8 +118,10 @@ recognized:
 @code{cortex-a5},
 @code{cortex-a8},
 @code{cortex-a9},
+@code{cortex-a15},
 @code{cortex-r4},
 @code{cortex-r4f},
+@code{cortex-m4},
 @code{cortex-m3},
 @code{cortex-m1},
 @code{cortex-m0},
@@ -131,12 +136,33 @@ assembler to accept instructions valid for any ARM processor.
 In addition to the basic instruction set, the assembler can be told to 
 accept various extension mnemonics that extend the processor using the 
 co-processor instruction space.  For example, @code{-mcpu=arm920+maverick}
-is equivalent to specifying @code{-mcpu=ep9312}.  The following extensions
-are currently supported: 
-@code{+maverick}
-@code{+iwmmxt}
+is equivalent to specifying @code{-mcpu=ep9312}.  
+
+Multiple extensions may be specified, separated by a @code{+}.  The 
+extensions should be specified in ascending alphabetical order.
+
+Some extensions may be restricted to particular architectures; this is 
+documented in the list of extensions below.
+
+Extension mnemonics may also be removed from those the assembler accepts.  
+This is done be prepending @code{no} to the option that adds the extension.  
+Extensions that are removed should be listed after all extensions which have 
+been added, again in ascending alphabetical order.  For example, 
+@code{-mcpu=ep9312+nomaverick} is equivalent to specifying @code{-mcpu=arm920}.
+
+
+The following extensions are currently supported:
+@code{idiv}, (Integer Divide Extensions for v7-A architecture),
+@code{iwmmxt},
+@code{iwmmxt2},
+@code{maverick},
+@code{mp} (Multiprocessing Extensions for v7-A and v7-R architectures),
+@code{os} (Operating System for v6M architecture),
+@code{sec} (Security Extensions for v6K and v7-A architectures),
+@code{virt} (Virtualization Extensions for v7-A architecture, implies 
+@code{idiv}),
 and
-@code{+xscale}.
+@code{xscale}.
 
 @cindex @code{-march=} command line option, ARM
 @item -march=@var{architecture}[+@var{extension}@dots{}]
@@ -164,6 +190,8 @@ names are recognized:
 @code{armv6k},
 @code{armv6z},
 @code{armv6zk},
+@code{armv6-m},
+@code{armv6s-m},
 @code{armv7},
 @code{armv7-a},
 @code{armv7-r},
@@ -383,9 +411,13 @@ affix.
 
 @cindex line comment character, ARM
 @cindex ARM line comment character
-The presence of a @samp{@@} on a line indicates the start of a comment
-that extends to the end of the current line.  If a @samp{#} appears as
-the first character of a line, the whole line is treated as a comment.
+The presence of a @samp{@@} anywhere on a line indicates the start of
+a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
 
 @cindex line separator, ARM
 @cindex statement separator, ARM
@@ -453,6 +485,8 @@ The following relocations are supported:
 @code{TLSGD},
 @code{TLSLDM},
 @code{TLSLDO},
+@code{TLSDESC},
+@code{TLSCALL},
 @code{GOTTPOFF},
 @code{GOT_PREL}
 and
@@ -501,6 +535,18 @@ boundary).  This is for compatibility with ARM's own assembler.
 Select the target architecture.  Valid values for @var{name} are the same as
 for the @option{-march} commandline option.
 
+Specifying @code{.arch} clears any previously selected architecture 
+extensions.
+
+@cindex @code{.arch_extension} directive, ARM
+@item .arch_extension @var{name}
+Add or remove an architecture extension to the target architecture.  Valid 
+values for @var{name} are the same as those accepted as architectural 
+extensions by the @option{-mcpu} commandline option.
+
+@code{.arch_extension} may be used multiple times to add or remove extensions
+incrementally to the architecture being compiled for.
+
 @cindex @code{.arm} directive, ARM
 @item .arm
 This performs the same action as @var{.code 32}.
@@ -534,6 +580,9 @@ selects Thumb, with the value 32 selecting ARM.
 @item .cpu @var{name}
 Select the target processor.  Valid values for @var{name} are the same as
 for the @option{-mcpu} commandline option.
+
+Specifying @code{.cpu} clears any previously selected architecture 
+extensions.
 
 @c DDDDDDDDDDDDDDDDDDDDDDDDDD
 
@@ -823,6 +872,12 @@ creates a symbol which is an alias for another symbol (possibly not yet
 defined).  This directive also has the added property in that it marks
 the aliased symbol as being a thumb function entry point, in the same
 way that the @code{.thumb_func} directive does.
+
+@cindex @code{.tlsdescseq} directive, ARM
+@item .tlsdescseq @var{tls-variable}
+This directive is used to annotate parts of an inlined TLS descriptor
+trampoline.  Normally the trampoline is provided by the linker, and
+this directive is not needed.
 
 @c UUUUUUUUUUUUUUUUUUUUUUUUUU
 

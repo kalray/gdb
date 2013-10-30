@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -272,7 +272,7 @@ sparc64_register_name (struct gdbarch *gdbarch, int regnum)
 }
 
 /* Return the GDB type object for the "standard" data type of data in
-   register REGNUM. */
+   register REGNUM.  */
 
 static struct type *
 sparc64_register_type (struct gdbarch *gdbarch, int regnum)
@@ -938,6 +938,13 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
 }
 
 static CORE_ADDR
+sparc64_frame_align (struct gdbarch *gdbarch, CORE_ADDR address)
+{
+  /* The ABI requires 16-byte alignment.  */
+  return address & ~0xf;
+}
+
+static CORE_ADDR
 sparc64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 			 struct regcache *regcache, CORE_ADDR bp_addr,
 			 int nargs, struct value **args, CORE_ADDR sp,
@@ -1136,6 +1143,7 @@ sparc64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_pc_regnum (gdbarch, SPARC64_PC_REGNUM); /* %pc */
 
   /* Call dummy code.  */
+  set_gdbarch_frame_align (gdbarch, sparc64_frame_align);
   set_gdbarch_call_dummy_location (gdbarch, AT_ENTRY_POINT);
   set_gdbarch_push_dummy_code (gdbarch, NULL);
   set_gdbarch_push_dummy_call (gdbarch, sparc64_push_dummy_call);

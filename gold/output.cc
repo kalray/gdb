@@ -2165,7 +2165,7 @@ Output_section::add_input_section(Layout* layout,
       || parameters->target().may_relax()
       || parameters->options().section_ordering_file())
     {
-      Input_section isecn(object, shndx, shdr.get_sh_size(), addralign);
+      Input_section isecn(object, shndx, input_section_size, addralign);
       if (parameters->options().section_ordering_file())
         {
           unsigned int section_order_index =
@@ -2203,9 +2203,25 @@ Output_section::add_output_section_data(Output_section_data* posd)
 // Add a relaxed input section.
 
 void
-Output_section::add_relaxed_input_section(Output_relaxed_input_section* poris)
+Output_section::add_relaxed_input_section(Layout* layout,
+					  Output_relaxed_input_section* poris,
+					  const std::string& name)
 {
   Input_section inp(poris);
+
+  // If the --section-ordering-file option is used to specify the order of
+  // sections, we need to keep track of sections.
+  if (parameters->options().section_ordering_file())
+    {
+      unsigned int section_order_index =
+        layout->find_section_order_index(name);
+      if (section_order_index != 0)
+        {
+          inp.set_section_order_index(section_order_index);
+          this->set_input_section_order_specified();
+        }
+    }
+
   this->add_output_section_data(&inp);
   if (this->lookup_maps_->is_valid())
     this->lookup_maps_->add_relaxed_input_section(poris->relobj(),
@@ -2373,7 +2389,13 @@ Output_section::convert_input_sections_in_list_to_relaxed_sections(
       Relaxation_map::const_iterator p = map.find(sid);
       gold_assert(p != map.end());
       gold_assert((*input_sections)[p->second].is_input_section());
+
+      // Remember section order index of original input section
+      // if it is set.  Copy it to the relaxed input section.
+      unsigned int soi =
+	(*input_sections)[p->second].section_order_index();
       (*input_sections)[p->second] = Input_section(poris);
+      (*input_sections)[p->second].set_section_order_index(soi);
     }
 }
   
@@ -3575,13 +3597,17 @@ Output_segment::has_any_data_sections() const
   return false;
 }
 
-// Return whether the first data section is a relro section.
+// Return whether the first data section (not counting TLS sections)
+// is a relro section.
 
 bool
 Output_segment::is_first_section_relro() const
 {
   for (int i = 0; i < static_cast<int>(ORDER_MAX); ++i)
     {
+      if (i == static_cast<int>(ORDER_TLS_DATA)
+	  || i == static_cast<int>(ORDER_TLS_BSS))
+	continue;
       const Output_data_list* pdl = &this->output_lists_[i];
       if (!pdl->empty())
 	{
@@ -3656,19 +3682,27 @@ Output_segment::has_dynamic_reloc_list(const Output_data_list* pdl) const
 // Set the section addresses for an Output_segment.  If RESET is true,
 // reset the addresses first.  ADDR is the address and *POFF is the
 // file offset.  Set the section indexes starting with *PSHNDX.
-// Return the address of the immediately following segment.  Update
-// *POFF and *PSHNDX.
+// INCREASE_RELRO is the size of the portion of the first non-relro
+// section that should be included in the PT_GNU_RELRO segment.
+// If this segment has relro sections, and has been aligned for
+// that purpose, set *HAS_RELRO to TRUE.  Return the address of
+// the immediately following segment.  Update *HAS_RELRO, *POFF,
+// and *PSHNDX.
 
 uint64_t
 Output_segment::set_section_addresses(const Layout* layout, bool reset,
                                       uint64_t addr,
-				      unsigned int increase_relro,
+				      unsigned int* increase_relro,
+				      bool* has_relro,
 				      off_t* poff,
 				      unsigned int* pshndx)
 {
   gold_assert(this->type_ == elfcpp::PT_LOAD);
 
+  uint64_t last_relro_pad = 0;
   off_t orig_off = *poff;
+
+  bool in_tls = false;
 
   // If we have relro sections, we need to pad forward now so that the
   // relro sections plus INCREASE_RELRO end on a common page boundary.
@@ -3678,7 +3712,8 @@ Output_segment::set_section_addresses(const Layout* layout, bool reset,
     {
       uint64_t relro_size = 0;
       off_t off = *poff;
-      for (int i = 0; i < static_cast<int>(ORDER_MAX); ++i)
+      uint64_t max_align = 0;
+      for (int i = 0; i <= static_cast<int>(ORDER_RELRO_LAST); ++i)
 	{
 	  Output_data_list* pdl = &this->output_lists_[i];
 	  Output_data_list::iterator p;
@@ -3686,9 +3721,23 @@ Output_segment::set_section_addresses(const Layout* layout, bool reset,
 	    {
 	      if (!(*p)->is_section())
 		break;
-	      Output_section* pos = (*p)->output_section();
-	      if (!pos->is_relro())
-		break;
+	      uint64_t align = (*p)->addralign();
+	      if (align > max_align)
+		max_align = align;
+	      if ((*p)->is_section_flag_set(elfcpp::SHF_TLS))
+		in_tls = true;
+	      else if (in_tls)
+		{
+		  // Align the first non-TLS section to the alignment
+		  // of the TLS segment.
+		  align = max_align;
+		  in_tls = false;
+		}
+	      relro_size = align_address(relro_size, align);
+	      // Ignore the size of the .tbss section.
+	      if ((*p)->is_section_flag_set(elfcpp::SHF_TLS)
+		  && (*p)->is_section_type(elfcpp::SHT_NOBITS))
+		continue;
 	      if ((*p)->is_address_valid())
 		relro_size += (*p)->data_size();
 	      else
@@ -3703,12 +3752,18 @@ Output_segment::set_section_addresses(const Layout* layout, bool reset,
 	  if (p != pdl->end())
 	    break;
 	}
-      relro_size += increase_relro;
+      relro_size += *increase_relro;
+      // Pad the total relro size to a multiple of the maximum
+      // section alignment seen.
+      uint64_t aligned_size = align_address(relro_size, max_align);
+      // Note the amount of padding added after the last relro section.
+      last_relro_pad = aligned_size - relro_size;
+      *has_relro = true;
 
       uint64_t page_align = parameters->target().common_pagesize();
 
       // Align to offset N such that (N + RELRO_SIZE) % PAGE_ALIGN == 0.
-      uint64_t desired_align = page_align - (relro_size % page_align);
+      uint64_t desired_align = page_align - (aligned_size % page_align);
       if (desired_align < *poff % page_align)
 	*poff += page_align - *poff % page_align;
       *poff += desired_align - *poff % page_align;
@@ -3728,7 +3783,7 @@ Output_segment::set_section_addresses(const Layout* layout, bool reset,
       this->are_addresses_set_ = true;
     }
 
-  bool in_tls = false;
+  in_tls = false;
 
   this->offset_ = orig_off;
 
@@ -3736,6 +3791,18 @@ Output_segment::set_section_addresses(const Layout* layout, bool reset,
   uint64_t ret;
   for (int i = 0; i < static_cast<int>(ORDER_MAX); ++i)
     {
+      if (i == static_cast<int>(ORDER_RELRO_LAST))
+	{
+	  *poff += last_relro_pad;
+	  addr += last_relro_pad;
+	  if (this->output_lists_[i].empty())
+	    {
+	      // If there is nothing in the ORDER_RELRO_LAST list,
+	      // the padding will occur at the end of the relro
+	      // segment, and we need to add it to *INCREASE_RELRO.
+	      *increase_relro += last_relro_pad;
+	    }
+	}
       addr = this->set_section_list_addresses(layout, reset,
 					      &this->output_lists_[i],
 					      addr, poff, pshndx, &in_tls);
@@ -3953,6 +4020,15 @@ Output_segment::set_offset(unsigned int increase)
 
   this->filesz_ += increase;
   this->memsz_ += increase;
+
+  // If this is a RELRO segment, verify that the segment ends at a
+  // page boundary.
+  if (this->type_ == elfcpp::PT_GNU_RELRO)
+    {
+      uint64_t page_align = parameters->target().common_pagesize();
+      uint64_t segment_end = this->vaddr_ + this->memsz_;
+      gold_assert(segment_end == align_address(segment_end, page_align));
+    }
 
   // If this is a TLS segment, align the memory size.  The code in
   // set_section_list ensures that the section after the TLS segment

@@ -190,9 +190,6 @@
 /* Define if <sys/procfs.h> has gregset_t. */
 #undef HAVE_GREGSET_T
 
-/* Define if you have HPUX threads */
-#undef HAVE_HPUX_THREAD_SUPPORT
-
 /* Define if you have the iconv() function. */
 #undef HAVE_ICONV
 
@@ -675,6 +672,9 @@
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
+
+/* Define to 1 if you have the `waitpid' function. */
+#undef HAVE_WAITPID
 
 /* Define to 1 if you have the <wait.h> header file. */
 #undef HAVE_WAIT_H

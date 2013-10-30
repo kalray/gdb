@@ -1,6 +1,6 @@
 /* Frame unwinder for frames with DWARF Call Frame Information.
 
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010
+   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    Contributed by Mark Kettenis.
@@ -113,10 +113,6 @@ void dwarf2_append_unwinders (struct gdbarch *gdbarch);
 
 extern const struct frame_base *
   dwarf2_frame_base_sniffer (struct frame_info *this_frame);
-
-/* Register the DWARF CFI for OBJFILE.  */
-
-void dwarf2_frame_build_info (struct objfile *objfile);
 
 /* Compute the DWARF CFA for a frame.  */
 

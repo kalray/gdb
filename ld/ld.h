@@ -1,6 +1,6 @@
 /* ld.h -- general linker header file
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -86,7 +86,8 @@ typedef enum {sort_none, sort_ascending, sort_descending} sort_order;
 /* A wildcard specification.  */
 
 typedef enum {
-  none, by_name, by_alignment, by_name_alignment, by_alignment_name
+  none, by_name, by_alignment, by_name_alignment, by_alignment_name,
+  by_init_priority
 } sort_type;
 
 extern sort_type sort_section;
@@ -290,6 +291,10 @@ typedef struct {
   /* If set, only search library directories explicitly selected
      on the command line.  */
   bfd_boolean only_cmd_line_lib_dirs;
+
+  /* If set, numbers and absolute symbols are simply treated as
+     numbers everywhere.  */
+  bfd_boolean sane_expr;
 
   /* The rpath separation character.  Usually ':'.  */
   char rpath_separator;

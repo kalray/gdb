@@ -189,6 +189,10 @@ class Target_x86_64 : public Target_freebsd<64, false>
   can_check_for_function_pointers() const
   { return !parameters->options().pie(); }
 
+  virtual bool
+  can_icf_inline_merge_sections () const
+  { return true; }
+
   // Hook for a new output section.
   void
   do_new_output_section(Output_section*) const;
@@ -305,7 +309,7 @@ class Target_x86_64 : public Target_freebsd<64, false>
   do_plt_section_for_local(const Relobj*, unsigned int) const
   { return this->plt_section(); }
 
-  // Adjust -fstack-split code which calls non-stack-split code.
+  // Adjust -fsplit-stack code which calls non-split-stack code.
   void
   do_calls_non_split(Relobj* object, unsigned int shndx,
 		     section_offset_type fnoffset, section_size_type fnsize,
@@ -357,6 +361,9 @@ class Target_x86_64 : public Target_freebsd<64, false>
     Scan()
       : issued_non_pic_error_(false)
     { }
+
+    static inline int
+    get_reference_flags(unsigned int r_type);
 
     inline void
     local(Symbol_table* symtab, Layout* layout, Target_x86_64* target,
@@ -420,7 +427,7 @@ class Target_x86_64 : public Target_freebsd<64, false>
   {
    public:
     Relocate()
-      : skip_call_tls_get_addr_(false), saw_tls_block_reloc_(false)
+      : skip_call_tls_get_addr_(false)
     { }
 
     ~Relocate()
@@ -511,12 +518,6 @@ class Target_x86_64 : public Target_freebsd<64, false>
     // This is set if we should skip the next reloc, which should be a
     // PLT32 reloc against ___tls_get_addr.
     bool skip_call_tls_get_addr_;
-
-    // This is set if we see a relocation which could load the address
-    // of the TLS block.  Whether we see such a relocation determines
-    // how we handle the R_X86_64_DTPOFF32 relocation, which is used
-    // in debugging sections.
-    bool saw_tls_block_reloc_;
   };
 
   // A class which returns the size required for a relocation type,
@@ -1238,6 +1239,73 @@ Target_x86_64::optimize_tls_reloc(bool is_final, int r_type)
     }
 }
 
+// Get the Reference_flags for a particular relocation.
+
+int
+Target_x86_64::Scan::get_reference_flags(unsigned int r_type)
+{
+  switch (r_type)
+    {
+    case elfcpp::R_X86_64_NONE:
+    case elfcpp::R_X86_64_GNU_VTINHERIT:
+    case elfcpp::R_X86_64_GNU_VTENTRY:
+    case elfcpp::R_X86_64_GOTPC32:
+    case elfcpp::R_X86_64_GOTPC64:
+      // No symbol reference.
+      return 0;
+
+    case elfcpp::R_X86_64_64:
+    case elfcpp::R_X86_64_32:
+    case elfcpp::R_X86_64_32S:
+    case elfcpp::R_X86_64_16:
+    case elfcpp::R_X86_64_8:
+      return Symbol::ABSOLUTE_REF;
+
+    case elfcpp::R_X86_64_PC64:
+    case elfcpp::R_X86_64_PC32:
+    case elfcpp::R_X86_64_PC16:
+    case elfcpp::R_X86_64_PC8:
+    case elfcpp::R_X86_64_GOTOFF64:
+      return Symbol::RELATIVE_REF;
+
+    case elfcpp::R_X86_64_PLT32:
+    case elfcpp::R_X86_64_PLTOFF64:
+      return Symbol::FUNCTION_CALL | Symbol::RELATIVE_REF;
+
+    case elfcpp::R_X86_64_GOT64:
+    case elfcpp::R_X86_64_GOT32:
+    case elfcpp::R_X86_64_GOTPCREL64:
+    case elfcpp::R_X86_64_GOTPCREL:
+    case elfcpp::R_X86_64_GOTPLT64:
+      // Absolute in GOT.
+      return Symbol::ABSOLUTE_REF;
+
+    case elfcpp::R_X86_64_TLSGD:            // Global-dynamic
+    case elfcpp::R_X86_64_GOTPC32_TLSDESC:  // Global-dynamic (from ~oliva url)
+    case elfcpp::R_X86_64_TLSDESC_CALL:
+    case elfcpp::R_X86_64_TLSLD:            // Local-dynamic
+    case elfcpp::R_X86_64_DTPOFF32:
+    case elfcpp::R_X86_64_DTPOFF64:
+    case elfcpp::R_X86_64_GOTTPOFF:         // Initial-exec
+    case elfcpp::R_X86_64_TPOFF32:          // Local-exec
+      return Symbol::TLS_REF;
+
+    case elfcpp::R_X86_64_COPY:
+    case elfcpp::R_X86_64_GLOB_DAT:
+    case elfcpp::R_X86_64_JUMP_SLOT:
+    case elfcpp::R_X86_64_RELATIVE:
+    case elfcpp::R_X86_64_IRELATIVE:
+    case elfcpp::R_X86_64_TPOFF64:
+    case elfcpp::R_X86_64_DTPMOD64:
+    case elfcpp::R_X86_64_TLSDESC:
+    case elfcpp::R_X86_64_SIZE32:
+    case elfcpp::R_X86_64_SIZE64:
+    default:
+      // Not expected.  We will give an error later.
+      return 0;
+    }
+}
+
 // Report an unsupported relocation against a local symbol.
 
 void
@@ -1261,7 +1329,8 @@ Target_x86_64::Scan::check_non_pic(Relobj* object, unsigned int r_type)
 {
   switch (r_type)
     {
-      // These are the relocation types supported by glibc for x86_64.
+      // These are the relocation types supported by glibc for x86_64
+      // which should always work.
     case elfcpp::R_X86_64_RELATIVE:
     case elfcpp::R_X86_64_IRELATIVE:
     case elfcpp::R_X86_64_GLOB_DAT:
@@ -1270,9 +1339,18 @@ Target_x86_64::Scan::check_non_pic(Relobj* object, unsigned int r_type)
     case elfcpp::R_X86_64_DTPOFF64:
     case elfcpp::R_X86_64_TPOFF64:
     case elfcpp::R_X86_64_64:
+    case elfcpp::R_X86_64_COPY:
+      return;
+
+      // glibc supports these reloc types, but they can overflow.
     case elfcpp::R_X86_64_32:
     case elfcpp::R_X86_64_PC32:
-    case elfcpp::R_X86_64_COPY:
+      if (this->issued_non_pic_error_)
+	return;
+      gold_assert(parameters->options().output_is_position_independent());
+      object->error(_("requires dynamic reloc which may overflow at runtime; "
+		      "recompile with -fPIC"));
+      this->issued_non_pic_error_ = true;
       return;
 
     default:
@@ -1299,63 +1377,11 @@ bool
 Target_x86_64::Scan::reloc_needs_plt_for_ifunc(Sized_relobj<64, false>* object,
 					       unsigned int r_type)
 {
-  switch (r_type)
-    {
-    case elfcpp::R_X86_64_NONE:
-    case elfcpp::R_X86_64_GNU_VTINHERIT:
-    case elfcpp::R_X86_64_GNU_VTENTRY:
-      return false;
-
-    case elfcpp::R_X86_64_64:
-    case elfcpp::R_X86_64_32:
-    case elfcpp::R_X86_64_32S:
-    case elfcpp::R_X86_64_16:
-    case elfcpp::R_X86_64_8:
-    case elfcpp::R_X86_64_PC64:
-    case elfcpp::R_X86_64_PC32:
-    case elfcpp::R_X86_64_PC16:
-    case elfcpp::R_X86_64_PC8:
-    case elfcpp::R_X86_64_PLT32:
-    case elfcpp::R_X86_64_GOTPC32:
-    case elfcpp::R_X86_64_GOTOFF64:
-    case elfcpp::R_X86_64_GOTPC64:
-    case elfcpp::R_X86_64_PLTOFF64:
-    case elfcpp::R_X86_64_GOT64:
-    case elfcpp::R_X86_64_GOT32:
-    case elfcpp::R_X86_64_GOTPCREL64:
-    case elfcpp::R_X86_64_GOTPCREL:
-    case elfcpp::R_X86_64_GOTPLT64:
-      return true;
-
-    case elfcpp::R_X86_64_COPY:
-    case elfcpp::R_X86_64_GLOB_DAT:
-    case elfcpp::R_X86_64_JUMP_SLOT:
-    case elfcpp::R_X86_64_RELATIVE:
-    case elfcpp::R_X86_64_IRELATIVE:
-    case elfcpp::R_X86_64_TPOFF64:
-    case elfcpp::R_X86_64_DTPMOD64:
-    case elfcpp::R_X86_64_TLSDESC:
-      // We will give an error later.
-      return false;
-
-    case elfcpp::R_X86_64_TLSGD:
-    case elfcpp::R_X86_64_GOTPC32_TLSDESC:
-    case elfcpp::R_X86_64_TLSDESC_CALL:
-    case elfcpp::R_X86_64_TLSLD:
-    case elfcpp::R_X86_64_DTPOFF32:
-    case elfcpp::R_X86_64_DTPOFF64:
-    case elfcpp::R_X86_64_GOTTPOFF:
-    case elfcpp::R_X86_64_TPOFF32:
-      gold_error(_("%s: unsupported TLS reloc %u for IFUNC symbol"),
-		 object->name().c_str(), r_type);
-      return false;
-
-    case elfcpp::R_X86_64_SIZE32:
-    case elfcpp::R_X86_64_SIZE64:
-    default:
-      // We will give an error later.
-      return false;
-    }
+  int flags = Scan::get_reference_flags(r_type);
+  if (flags & Symbol::TLS_REF)
+    gold_error(_("%s: unsupported TLS reloc %u for IFUNC symbol"),
+               object->name().c_str(), r_type);
+  return flags != 0;
 }
 
 // Scan a relocation for a local symbol.
@@ -1781,7 +1807,7 @@ Target_x86_64::Scan::global(Symbol_table* symtab,
               gsym->set_needs_dynsym_value();
           }
         // Make a dynamic relocation if necessary.
-        if (gsym->needs_dynamic_reloc(Symbol::ABSOLUTE_REF))
+        if (gsym->needs_dynamic_reloc(Scan::get_reference_flags(r_type)))
           {
             if (gsym->may_need_copy_reloc())
               {
@@ -1838,10 +1864,7 @@ Target_x86_64::Scan::global(Symbol_table* symtab,
         if (gsym->needs_plt_entry())
           target->make_plt_entry(symtab, layout, gsym);
         // Make a dynamic relocation if necessary.
-        int flags = Symbol::NON_PIC_REF;
-        if (gsym->is_func())
-          flags |= Symbol::FUNCTION_CALL;
-        if (gsym->needs_dynamic_reloc(flags))
+        if (gsym->needs_dynamic_reloc(Scan::get_reference_flags(r_type)))
           {
             if (gsym->may_need_copy_reloc())
               {
@@ -2244,10 +2267,7 @@ Target_x86_64::Relocate::relocate(const Relocate_info<64, false>* relinfo,
   // Pick the value to use for symbols defined in the PLT.
   Symbol_value<64> symval;
   if (gsym != NULL
-      && gsym->use_plt_offset(r_type == elfcpp::R_X86_64_PC64
-			      || r_type == elfcpp::R_X86_64_PC32
-			      || r_type == elfcpp::R_X86_64_PC16
-			      || r_type == elfcpp::R_X86_64_PC8))
+      && gsym->use_plt_offset(Scan::get_reference_flags(r_type)))
     {
       symval.set_output_value(target->plt_section()->address()
 			      + gsym->plt_offset());
@@ -2492,18 +2512,29 @@ Target_x86_64::Relocate::relocate_tls(const Relocate_info<64, false>* relinfo,
 
   const Sized_relobj<64, false>* object = relinfo->object;
   const elfcpp::Elf_Xword addend = rela.get_r_addend();
+  elfcpp::Shdr<64, false> data_shdr(relinfo->data_shdr);
+  bool is_executable = (data_shdr.get_sh_flags() & elfcpp::SHF_EXECINSTR) != 0;
 
   elfcpp::Elf_types<64>::Elf_Addr value = psymval->value(relinfo->object, 0);
 
   const bool is_final = (gsym == NULL
 			 ? !parameters->options().shared()
 			 : gsym->final_value_is_known());
-  const tls::Tls_optimization optimized_type
+  tls::Tls_optimization optimized_type
       = Target_x86_64::optimize_tls_reloc(is_final, r_type);
   switch (r_type)
     {
     case elfcpp::R_X86_64_TLSGD:            // Global-dynamic
-      this->saw_tls_block_reloc_ = true;
+      if (!is_executable && optimized_type == tls::TLSOPT_TO_LE)
+	{
+	  // If this code sequence is used in a non-executable section,
+	  // we will not optimize the R_X86_64_DTPOFF32/64 relocation,
+	  // on the assumption that it's being used by itself in a debug
+	  // section.  Therefore, in the unlikely event that the code
+	  // sequence appears in a non-executable section, we simply
+	  // leave it unoptimized.
+	  optimized_type = tls::TLSOPT_NONE;
+	}
       if (optimized_type == tls::TLSOPT_TO_LE)
 	{
 	  gold_assert(tls_segment != NULL);
@@ -2554,7 +2585,11 @@ Target_x86_64::Relocate::relocate_tls(const Relocate_info<64, false>* relinfo,
 
     case elfcpp::R_X86_64_GOTPC32_TLSDESC:  // Global-dynamic (from ~oliva url)
     case elfcpp::R_X86_64_TLSDESC_CALL:
-      this->saw_tls_block_reloc_ = true;
+      if (!is_executable && optimized_type == tls::TLSOPT_TO_LE)
+	{
+	  // See above comment for R_X86_64_TLSGD.
+	  optimized_type = tls::TLSOPT_NONE;
+	}
       if (optimized_type == tls::TLSOPT_TO_LE)
 	{
 	  gold_assert(tls_segment != NULL);
@@ -2617,7 +2652,11 @@ Target_x86_64::Relocate::relocate_tls(const Relocate_info<64, false>* relinfo,
       break;
 
     case elfcpp::R_X86_64_TLSLD:            // Local-dynamic
-      this->saw_tls_block_reloc_ = true;
+      if (!is_executable && optimized_type == tls::TLSOPT_TO_LE)
+	{
+	  // See above comment for R_X86_64_TLSGD.
+	  optimized_type = tls::TLSOPT_NONE;
+	}
       if (optimized_type == tls::TLSOPT_TO_LE)
         {
           gold_assert(tls_segment != NULL);
@@ -2642,31 +2681,27 @@ Target_x86_64::Relocate::relocate_tls(const Relocate_info<64, false>* relinfo,
       break;
 
     case elfcpp::R_X86_64_DTPOFF32:
-      if (optimized_type == tls::TLSOPT_TO_LE)
-        {
-          // This relocation type is used in debugging information.
-          // In that case we need to not optimize the value.  If we
-          // haven't seen a TLSLD reloc, then we assume we should not
-          // optimize this reloc.
-          if (this->saw_tls_block_reloc_)
-	    {
-              gold_assert(tls_segment != NULL);
-              value -= tls_segment->memsz();
-	    }
-        }
+      // This relocation type is used in debugging information.
+      // In that case we need to not optimize the value.  If the
+      // section is not executable, then we assume we should not
+      // optimize this reloc.  See comments above for R_X86_64_TLSGD,
+      // R_X86_64_GOTPC32_TLSDESC, R_X86_64_TLSDESC_CALL, and
+      // R_X86_64_TLSLD.
+      if (optimized_type == tls::TLSOPT_TO_LE && is_executable)
+	{
+	  gold_assert(tls_segment != NULL);
+	  value -= tls_segment->memsz();
+	}
       Relocate_functions<64, false>::rela32(view, value, addend);
       break;
 
     case elfcpp::R_X86_64_DTPOFF64:
-      if (optimized_type == tls::TLSOPT_TO_LE)
-        {
-          // See R_X86_64_DTPOFF32, just above, for why we test this.
-          if (this->saw_tls_block_reloc_)
-	    {
-	      gold_assert(tls_segment != NULL);
-	      value -= tls_segment->memsz();
-	    }
-        }
+      // See R_X86_64_DTPOFF32, just above, for why we check for is_executable.
+      if (optimized_type == tls::TLSOPT_TO_LE && is_executable)
+	{
+	  gold_assert(tls_segment != NULL);
+	  value -= tls_segment->memsz();
+	}
       Relocate_functions<64, false>::rela64(view, value, addend);
       break;
 
@@ -3213,7 +3248,7 @@ Target_x86_64::do_reloc_addend(void* arg, unsigned int r_type,
 }
 
 // FNOFFSET in section SHNDX in OBJECT is the start of a function
-// compiled with -fstack-split.  The function calls non-stack-split
+// compiled with -fsplit-stack.  The function calls non-split-stack
 // code.  We have to change the function so that it always ensures
 // that it has enough stack space to run some random function.
 

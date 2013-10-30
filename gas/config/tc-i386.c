@@ -277,6 +277,9 @@ struct _i386_insn
     /* Swap operand in encoding.  */
     unsigned int swap_operand;
 
+    /* Force 32bit displacement in encoding.  */
+    unsigned int disp32_encoding;
+
     /* Error message.  */
     enum i386_error error;
   };
@@ -386,7 +389,23 @@ enum flag_code {
 
 static enum flag_code flag_code;
 static unsigned int object_64bit;
+static unsigned int disallow_64bit_reloc;
 static int use_rela_relocations = 0;
+
+#if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
+     || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
+     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
+
+/* The ELF ABI to use.  */
+enum x86_elf_abi
+{
+  I386_ABI,
+  X86_64_ABI,
+  X86_64_X32_ABI
+};
+
+static enum x86_elf_abi x86_elf_abi = I386_ABI;
+#endif
 
 /* The names used to print error messages.  */
 static const char *flag_code_names[] =
@@ -712,6 +731,10 @@ static const arch_entry cpu_arch[] =
     CPU_SSE4A_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".abm"), PROCESSOR_UNKNOWN,
     CPU_ABM_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".bmi"), PROCESSOR_UNKNOWN,
+    CPU_BMI_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".tbm"), PROCESSOR_UNKNOWN,
+    CPU_TBM_FLAGS, 0, 0 },
 };
 
 #ifdef I386COFF
@@ -2204,16 +2227,19 @@ i386_arch (void)
 unsigned long
 i386_mach ()
 {
-  if (!strcmp (default_arch, "x86_64"))
+  if (!strncmp (default_arch, "x86_64", 6))
     {
       if (cpu_arch_isa == PROCESSOR_L1OM)
 	{
-	  if (OUTPUT_FLAVOR != bfd_target_elf_flavour)
+	  if (OUTPUT_FLAVOR != bfd_target_elf_flavour
+	      || default_arch[6] != '\0')
 	    as_fatal (_("Intel L1OM is 64bit ELF only"));
 	  return bfd_mach_l1om;
 	}
-      else
+      else if (default_arch[6] == '\0')
 	return bfd_mach_x86_64;
+      else
+	return bfd_mach_x64_32;
     }
   else if (!strcmp (default_arch, "i386"))
     return bfd_mach_i386_i386;
@@ -2803,6 +2829,7 @@ build_vex_prefix (const insn_template *t)
 
   /* Use 2-byte VEX prefix if possible.  */
   if (i.tm.opcode_modifier.vexopcode == VEX0F
+      && i.tm.opcode_modifier.vexw != VEXW1
       && (i.rex & (REX_W | REX_X | REX_B)) == 0)
     {
       /* 2-byte VEX prefix.  */
@@ -2981,6 +3008,7 @@ md_assemble (char *line)
   /* Don't optimize displacement for movabs since it only takes 64bit
      displacement.  */
   if (i.disp_operands
+      && !i.disp32_encoding
       && (flag_code != CODE_64BIT
 	  || strcmp (mnemonic, "movabs") != 0))
     optimize_disp ();
@@ -3255,9 +3283,15 @@ parse_insn (char *line, char *mnemonic)
 
   if (!current_templates)
     {
-      /* Check if we should swap operand in encoding.  */
+      /* Check if we should swap operand or force 32bit displacement in
+	 encoding.  */
       if (mnem_p - 2 == dot_p && dot_p[1] == 's')
 	i.swap_operand = 1;
+      else if (mnem_p - 4 == dot_p 
+	       && dot_p[1] == 'd'
+	       && dot_p[2] == '3'
+	       && dot_p[3] == '2')
+	i.disp32_encoding = 1;
       else
 	goto check_suffix;
       mnem_p = dot_p;
@@ -3985,9 +4019,8 @@ match_template (void)
 	    }
 	  }
 
-      /* We check register size only if size of operands can be
-	 encoded the canonical way.  */
-      check_register = t->opcode_modifier.w;
+      /* We check register size if needed.  */
+      check_register = t->opcode_modifier.checkregsize;
       overlap0 = operand_type_and (i.types[0], operand_types[0]);
       switch (t->operands)
 	{
@@ -5287,16 +5320,34 @@ build_modrm_byte (void)
 	  if (i.tm.opcode_modifier.vexvvvv == VEXXDS)
 	    {
 	      /* For instructions with VexNDS, the register-only
-		 source operand must be XMM or YMM register. It is
-		 encoded in VEX prefix.  We need to clear RegMem bit
-		 before calling operand_type_equal.  */
-	      i386_operand_type op = i.tm.operand_types[dest];
+		 source operand must be 32/64bit integer, XMM or
+		 YMM register.  It is encoded in VEX prefix.  We
+		 need to clear RegMem bit before calling
+		 operand_type_equal.  */
+
+	      i386_operand_type op;
+	      unsigned int vvvv;
+
+	      /* Check register-only source operand when two source
+		 operands are swapped.  */
+	      if (!i.tm.operand_types[source].bitfield.baseindex
+		  && i.tm.operand_types[dest].bitfield.baseindex)
+		{
+		  vvvv = source;
+		  source = dest;
+		}
+	      else
+		vvvv = dest;
+
+	      op = i.tm.operand_types[vvvv];
 	      op.bitfield.regmem = 0;
 	      if ((dest + 1) >= i.operands
-		  || (!operand_type_equal (&op, &regxmm)
+		  || (op.bitfield.reg32 != 1
+		      && !op.bitfield.reg64 != 1
+		      && !operand_type_equal (&op, &regxmm)
 		      && !operand_type_equal (&op, &regymm)))
 		abort ();
-	      i.vex.register_specifier = i.op[dest].regs;
+	      i.vex.register_specifier = i.op[vvvv].regs;
 	      dest++;
 	    }
 	}
@@ -5624,30 +5675,51 @@ build_modrm_byte (void)
 		}
 	      else
 		{
-		  vex_reg = op + 1;
-		  gas_assert (vex_reg < i.operands);
+		  /* Check register-only source operand when two source
+		     operands are swapped.  */
+		  if (!i.tm.operand_types[op].bitfield.baseindex
+		      && i.tm.operand_types[op + 1].bitfield.baseindex)
+		    {
+		      vex_reg = op;
+		      op += 2;
+		      gas_assert (mem == (vex_reg + 1)
+				  && op < i.operands);
+		    }
+		  else
+		    {
+		      vex_reg = op + 1;
+		      gas_assert (vex_reg < i.operands);
+		    }
 		}
 	    }
 	  else if (i.tm.opcode_modifier.vexvvvv == VEXNDD)
 	    {
-	      /* For instructions with VexNDD, there should be
-		 no memory operand and the register destination
+	      /* For instructions with VexNDD, the register destination
 		 is encoded in VEX prefix.  */
-	      gas_assert (i.mem_operands == 0
-			  && (op + 2) == i.operands);
-	      vex_reg = op + 1;
+	      if (i.mem_operands == 0)
+		{
+		  /* There is no memory operand.  */
+		  gas_assert ((op + 2) == i.operands);
+		  vex_reg = op + 1;
+		}
+	      else
+		{ 
+		  /* There are only 2 operands.  */
+		  gas_assert (op < 2 && i.operands == 2);
+		  vex_reg = 1;
+		}
 	    }
 	  else
 	    gas_assert (op < i.operands);
 
 	  if (vex_reg != (unsigned int) ~0)
 	    {
-	      gas_assert (i.reg_operands == 2);
+	      i386_operand_type *type = &i.tm.operand_types[vex_reg];
 
-	      if (!operand_type_equal (&i.tm.operand_types[vex_reg],
-				       &regxmm)
-		  && !operand_type_equal (&i.tm.operand_types[vex_reg],
-					  &regymm))
+	      if (type->bitfield.reg32 != 1
+		  && type->bitfield.reg64 != 1
+		  && !operand_type_equal (type, &regxmm)
+		  && !operand_type_equal (type, &regymm))
 		abort ();
 
 	      i.vex.register_specifier = i.op[vex_reg].regs;
@@ -5690,15 +5762,15 @@ static void
 output_branch (void)
 {
   char *p;
+  int size;
   int code16;
   int prefix;
   relax_substateT subtype;
   symbolS *sym;
   offsetT off;
 
-  code16 = 0;
-  if (flag_code == CODE_16BIT)
-    code16 = CODE16;
+  code16 = flag_code == CODE_16BIT ? CODE16 : 0;
+  size = i.disp32_encoding ? BIG : SMALL;
 
   prefix = 0;
   if (i.prefix[DATA_PREFIX] != 0)
@@ -5741,11 +5813,11 @@ output_branch (void)
   *p = i.tm.base_opcode;
 
   if ((unsigned char) *p == JUMP_PC_RELATIVE)
-    subtype = ENCODE_RELAX_STATE (UNCOND_JUMP, SMALL);
+    subtype = ENCODE_RELAX_STATE (UNCOND_JUMP, size);
   else if (cpu_arch_flags.bitfield.cpui386)
-    subtype = ENCODE_RELAX_STATE (COND_JUMP, SMALL);
+    subtype = ENCODE_RELAX_STATE (COND_JUMP, size);
   else
-    subtype = ENCODE_RELAX_STATE (COND_JUMP86, SMALL);
+    subtype = ENCODE_RELAX_STATE (COND_JUMP86, size);
   subtype |= code16;
 
   sym = i.op[0].disps->X_add_symbol;
@@ -6626,8 +6698,8 @@ i386_finalize_immediate (segT exp_seg ATTRIBUTE_UNUSED, expressionS *exp,
     {
       /* Size it properly later.  */
       i.types[this_operand].bitfield.imm64 = 1;
-      /* If BFD64, sign extend val.  */
-      if (!use_rela_relocations
+      /* If not 64bit, sign extend val.  */
+      if (flag_code != CODE_64BIT
 	  && (exp->X_add_number & ~(((addressT) 2 << 31) - 1)) == 0)
 	exp->X_add_number
 	  = (exp->X_add_number ^ ((addressT) 1 << 31)) - ((addressT) 1 << 31);
@@ -8083,6 +8155,7 @@ const char *md_shortopts = "qn";
 #define OPTION_MSSE2AVX (OPTION_MD_BASE + 10)
 #define OPTION_MSSE_CHECK (OPTION_MD_BASE + 11)
 #define OPTION_MAVXSCALAR (OPTION_MD_BASE + 12)
+#define OPTION_X32 (OPTION_MD_BASE + 13)
 
 struct option md_longopts[] =
 {
@@ -8090,6 +8163,9 @@ struct option md_longopts[] =
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
      || defined (TE_PE) || defined (TE_PEP))
   {"64", no_argument, NULL, OPTION_64},
+#endif
+#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
+  {"x32", no_argument, NULL, OPTION_X32},
 #endif
   {"divide", no_argument, NULL, OPTION_DIVIDE},
   {"march", required_argument, NULL, OPTION_MARCH},
@@ -8162,6 +8238,28 @@ md_parse_option (int c, char *arg)
 	  as_fatal (_("No compiled in support for x86_64"));
 	free (list);
       }
+      break;
+#endif
+
+#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
+    case OPTION_X32:
+      if (IS_ELF)
+	{
+	  const char **list, **l;
+
+	  list = bfd_target_list ();
+	  for (l = list; *l != NULL; l++)
+	    if (CONST_STRNEQ (*l, "elf32-x86-64"))
+	      {
+		default_arch = "x86_64:32";
+		break;
+	      }
+	  if (*l == NULL)
+	    as_fatal (_("No compiled in support for 32bit x86_64"));
+	  free (list);
+	}
+      else
+	as_fatal (_("32bit x86_64 is only supported for ELF"));
       break;
 #endif
 
@@ -8428,7 +8526,7 @@ md_show_usage (FILE *stream)
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
      || defined (TE_PE) || defined (TE_PEP))
   fprintf (stream, _("\
-  --32/--64               generate 32bit/64bit code\n"));
+  --32/--64/--x32         generate 32bit/64bit/x32 code\n"));
 #endif
 #ifdef SVR4_COMMENT_CHARS
   fprintf (stream, _("\
@@ -8476,8 +8574,14 @@ md_show_usage (FILE *stream)
 const char *
 i386_target_format (void)
 {
-  if (!strcmp (default_arch, "x86_64"))
-    update_code_flag (CODE_64BIT, 1);
+  if (!strncmp (default_arch, "x86_64", 6))
+    {
+      update_code_flag (CODE_64BIT, 1);
+      if (default_arch[6] == '\0')
+	x86_elf_abi = X86_64_ABI;
+      else
+	x86_elf_abi = X86_64_X32_ABI;
+    }
   else if (!strcmp (default_arch, "i386"))
     update_code_flag (CODE_32BIT, 1);
   else
@@ -8509,20 +8613,33 @@ i386_target_format (void)
 #if defined (OBJ_MAYBE_ELF) || defined (OBJ_ELF)
     case bfd_target_elf_flavour:
       {
-	if (flag_code == CODE_64BIT)
+	const char *format;
+
+	switch (x86_elf_abi)
 	  {
-	    object_64bit = 1;
+	  default:
+	    format = ELF_TARGET_FORMAT;
+	    break;
+	  case X86_64_ABI:
 	    use_rela_relocations = 1;
+	    object_64bit = 1;
+	    format = ELF_TARGET_FORMAT64;
+	    break;
+	  case X86_64_X32_ABI:
+	    use_rela_relocations = 1;
+	    object_64bit = 1;
+	    disallow_64bit_reloc = 1;
+	    format = ELF_TARGET_FORMAT32;
+	    break;
 	  }
 	if (cpu_arch_isa == PROCESSOR_L1OM)
 	  {
-	    if (flag_code != CODE_64BIT)
+	    if (x86_elf_abi != X86_64_ABI)
 	      as_fatal (_("Intel L1OM is 64bit only"));
 	    return ELF_TARGET_L1OM_FORMAT;
 	  }
 	else
-	  return (flag_code == CODE_64BIT
-		  ? ELF_TARGET_FORMAT64 : ELF_TARGET_FORMAT);
+	  return format;
       }
 #endif
 #if defined (OBJ_MACH_O)
@@ -8813,6 +8930,27 @@ tc_gen_reloc (section, fixp)
   /* Use the rela in 64bit mode.  */
   else
     {
+      if (disallow_64bit_reloc)
+	switch (code)
+	  {
+	  case BFD_RELOC_64:
+	  case BFD_RELOC_X86_64_DTPOFF64:
+	  case BFD_RELOC_X86_64_TPOFF64:
+	  case BFD_RELOC_64_PCREL:
+	  case BFD_RELOC_X86_64_GOTOFF64:
+	  case BFD_RELOC_X86_64_GOT64:
+	  case BFD_RELOC_X86_64_GOTPCREL64:
+	  case BFD_RELOC_X86_64_GOTPC64:
+	  case BFD_RELOC_X86_64_GOTPLT64:
+	  case BFD_RELOC_X86_64_PLTOFF64:
+	    as_bad_where (fixp->fx_file, fixp->fx_line,
+			  _("cannot represent relocation type %s in x32 mode"),
+			  bfd_get_reloc_code_name (code));
+	    break;
+	  default:
+	    break;
+	  }
+
       if (!fixp->fx_pcrel)
 	rel->addend = fixp->fx_offset;
       else
@@ -8948,10 +9086,10 @@ x86_64_section_letter (int letter, char **ptr_msg)
       if (letter == 'l')
 	return SHF_X86_64_LARGE;
 
-      *ptr_msg = _("Bad .section directive: want a,l,w,x,M,S,G,T in string");
+      *ptr_msg = _("bad .section directive: want a,l,w,x,M,S,G,T in string");
     }
   else
-    *ptr_msg = _("Bad .section directive: want a,w,x,M,S,G,T in string");
+    *ptr_msg = _("bad .section directive: want a,w,x,M,S,G,T in string");
   return -1;
 }
 

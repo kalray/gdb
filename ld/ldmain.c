@@ -1,6 +1,6 @@
 /* Main program of GNU linker.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
@@ -40,6 +40,11 @@
 #include "ldfile.h"
 #include "ldemul.h"
 #include "ldctor.h"
+#ifdef ENABLE_PLUGINS
+#include "plugin.h"
+#include "plugin-api.h"
+#include "libbfd.h"
+#endif /* ENABLE_PLUGINS */
 
 /* Somewhere above, sys/stat.h got included.  */
 #if !defined(S_ISDIR) && defined(S_IFDIR)
@@ -116,7 +121,7 @@ static const char *get_sysroot
 static char *get_emulation
   (int, char **);
 static bfd_boolean add_archive_element
-  (struct bfd_link_info *, bfd *, const char *);
+  (struct bfd_link_info *, bfd *, const char *, bfd **);
 static bfd_boolean multiple_definition
   (struct bfd_link_info *, const char *, bfd *, asection *, bfd_vma,
    bfd *, asection *, bfd_vma);
@@ -546,12 +551,14 @@ main (int argc, char **argv)
 #endif
       long run_time = get_run_time () - start_time;
 
+      fflush (stdout);
       fprintf (stderr, _("%s: total time in link: %ld.%06ld\n"),
 	       program_name, run_time / 1000000, run_time % 1000000);
 #ifdef HAVE_SBRK
       fprintf (stderr, _("%s: data size %ld\n"), program_name,
 	       (long) (lim - (char *) &environ));
 #endif
+      fflush (stderr);
     }
 
   /* Prevent remove_output from doing anything, after a successful link.  */
@@ -781,15 +788,64 @@ add_keepsyms_file (const char *filename)
 static bfd_boolean
 add_archive_element (struct bfd_link_info *info,
 		     bfd *abfd,
-		     const char *name)
+		     const char *name,
+		     bfd **subsbfd ATTRIBUTE_UNUSED)
 {
   lang_input_statement_type *input;
+  lang_input_statement_type orig_input;
 
   input = (lang_input_statement_type *)
       xcalloc (1, sizeof (lang_input_statement_type));
   input->filename = abfd->filename;
   input->local_sym_name = abfd->filename;
   input->the_bfd = abfd;
+
+  /* Save the original data for trace files/tries below, as plugins
+     (if enabled) may possibly alter it to point to a replacement
+     BFD, but we still want to output the original BFD filename.  */
+  orig_input = *input;
+#ifdef ENABLE_PLUGINS
+  if (bfd_my_archive (abfd) != NULL && plugin_active_plugins_p ())
+    {
+      /* We must offer this archive member to the plugins to claim.  */
+      int fd = open (bfd_my_archive (abfd)->filename, O_RDONLY | O_BINARY);
+      if (fd >= 0)
+	{
+	  struct ld_plugin_input_file file;
+	  int claimed = 0;
+	  /* Offset and filesize must refer to the individual archive
+	     member, not the whole file, and must exclude the header.
+	     Fortunately for us, that is how the data is stored in the
+	     origin field of the bfd and in the arelt_data.  */
+	  file.name = bfd_my_archive (abfd)->filename;
+	  file.offset = abfd->origin;
+	  file.filesize = arelt_size (abfd);
+	  file.fd = fd;
+	  /* We create a dummy BFD, initially empty, to house
+	     whatever symbols the plugin may want to add.  */
+	  file.handle = plugin_get_ir_dummy_bfd (abfd->filename, abfd);
+	  if (plugin_call_claim_file (&file, &claimed))
+	    einfo (_("%P%F: %s: plugin reported error claiming file\n"),
+		   plugin_error_plugin ());
+	  /* fd belongs to us, not the plugin; but we don't need it.  */
+	  close (fd);
+	  if (claimed)
+	    {
+	      /* Substitute the dummy BFD.  */
+	      input->the_bfd = file.handle;
+	      input->claimed = TRUE;
+	      bfd_make_readable (input->the_bfd);
+	      *subsbfd = input->the_bfd;
+	    }
+	  else
+	    {
+	      /* Abandon the dummy BFD.  */
+	      bfd_close_all_done (file.handle);
+	      input->claimed = FALSE;
+	    }
+	}
+    }
+#endif /* ENABLE_PLUGINS */
 
   ldlang_add_file (input);
 
@@ -871,8 +927,7 @@ add_archive_element (struct bfd_link_info *info,
     }
 
   if (trace_files || trace_file_tries)
-    info_msg ("%I\n", input);
-
+    info_msg ("%I\n", &orig_input);
   return TRUE;
 }
 
@@ -889,11 +944,22 @@ multiple_definition (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 		     asection *nsec,
 		     bfd_vma nval)
 {
+#ifdef ENABLE_PLUGINS
+  /* We may get called back even when --allow-multiple-definition is in
+     effect, as the plugin infrastructure needs to use this hook in
+     order to swap out IR-only symbols for real ones.  In that case,
+     it will let us know not to continue by returning TRUE even if this
+     is not an IR-only vs. non-IR symbol conflict.  */
+  if (plugin_multiple_definition (info, name, obfd, osec, oval, nbfd,
+				  nsec, nval))
+    return TRUE;
+#endif /* ENABLE_PLUGINS */
+
   /* If either section has the output_section field set to
      bfd_abs_section_ptr, it means that the section is being
      discarded, and this is not really a multiple definition at all.
-     FIXME: It would be cleaner to somehow ignore symbols defined in
-     sections which are being discarded.  */
+FIXME: It would be cleaner to somehow ignore symbols defined in
+sections which are being discarded.  */
   if ((osec->output_section != NULL
        && ! bfd_is_abs_section (osec)
        && bfd_is_abs_section (osec->output_section))
@@ -1371,7 +1437,10 @@ unattached_reloc (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 
 /* This is called if link_info.notice_all is set, or when a symbol in
    link_info.notice_hash is found.  Symbols are put in notice_hash
-   using the -y option.  */
+   using the -y option, while notice_all is set if the --cref option
+   has been supplied, or if there are any NOCROSSREFS sections in the
+   linker script; and if plugins are active, since they need to monitor
+   all references from non-IR files.  */
 
 static bfd_boolean
 notice (struct bfd_link_info *info,
@@ -1387,9 +1456,17 @@ notice (struct bfd_link_info *info,
       return TRUE;
     }
 
-  if (! info->notice_all
-      || (info->notice_hash != NULL
-	  && bfd_hash_lookup (info->notice_hash, name, FALSE, FALSE) != NULL))
+#ifdef ENABLE_PLUGINS
+  /* We should hide symbols in the dummy IR BFDs from the nocrossrefs list
+     and let the real object files that are generated and added later trip
+     the error instead.  Similarly would be better to trace the real symbol
+     from the real file than the temporary dummy.  */
+  if (!plugin_notice (info, name, abfd, section, value))
+    return TRUE;
+#endif /* ENABLE_PLUGINS */
+
+  if (info->notice_hash != NULL
+	&& bfd_hash_lookup (info->notice_hash, name, FALSE, FALSE) != NULL)
     {
       if (bfd_is_und_section (section))
 	einfo ("%B: reference to %s\n", abfd, name);

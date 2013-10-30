@@ -1,6 +1,6 @@
 /* Target signal translation functions for GDB.
    Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2006, 2007, 2008, 2009, 2010
+   2000, 2001, 2002, 2003, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
@@ -48,17 +48,16 @@ struct gdbarch;
 # endif
 #endif
 
-/* This table must match in order and size the signals in enum target_signal.  */
+/* This table must match in order and size the signals in enum
+   target_signal.  */
 
 static const struct {
   const char *name;
   const char *string;
   } signals [] =
 {
-#define SET(symbol, constant, name, string) ANY (symbol, name, string)
-#define ANY(symbol, name, string) { name, string },
+#define SET(symbol, constant, name, string) { name, string },
 #include "gdb/signals.def"
-#undef ANY
 #undef SET
 };
 
@@ -350,7 +349,8 @@ target_signal_from_host (int hostsig)
 	return (enum target_signal)
 	  (hostsig - 64 + (int) TARGET_SIGNAL_REALTIME_64);
       else
-	error ("GDB bug: target.c (target_signal_from_host): unrecognized real-time signal");
+	error ("GDB bug: target.c (target_signal_from_host): "
+	       "unrecognized real-time signal");
     }
 #endif
 

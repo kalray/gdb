@@ -399,6 +399,7 @@ typedef struct identify_data_t
 static char *head_label;
 static char *imp_name_lab;
 static char *dll_name;
+static int dll_name_set_by_exp_name;
 static int add_indirect = 0;
 static int add_underscore = 0;
 static int add_stdcall_underscore = 0;
@@ -1089,6 +1090,11 @@ def_name (const char *name, int base)
   if (d_is_dll)
     non_fatal (_("Can't have LIBRARY and NAME"));
 
+  if (dll_name_set_by_exp_name && name && *name != 0)
+    {
+      dll_name = NULL;
+      dll_name_set_by_exp_name = 0;
+    }
   /* If --dllname not provided, use the one in the DEF file.
      FIXME: Is this appropriate for executables?  */
   if (!dll_name)
@@ -1104,6 +1110,12 @@ def_library (const char *name, int base)
 
   if (d_is_exe)
     non_fatal (_("Can't have LIBRARY and NAME"));
+
+  if (dll_name_set_by_exp_name && name && *name != 0)
+    {
+      dll_name = NULL;
+      dll_name_set_by_exp_name = 0;
+    }
 
   /* If --dllname not provided, use the one in the DEF file.  */
   if (!dll_name)
@@ -1399,12 +1411,26 @@ scan_drectve_symbols (bfd *abfd)
 	  flagword flags = BSF_FUNCTION;
 
 	  p += 8;
-	  name = p;
-	  while (p < e && *p != ',' && *p != ' ' && *p != '-')
-	    p++;
+	  /* Do we have a quoted export?  */
+	  if (*p == '"')
+	    {
+	      p++;
+	      name = p;
+	      while (p < e && *p != '"')
+		++p;
+	    }
+	  else
+	    {
+	      name = p;
+	      while (p < e && *p != ',' && *p != ' ' && *p != '-')
+		p++;
+	    }
 	  c = xmalloc (p - name + 1);
 	  memcpy (c, name, p - name);
 	  c[p - name] = 0;
+	  /* Advance over trailing quote.  */
+	  if (p < e && *p == '"')
+	    ++p;
 	  if (p < e && *p == ',')       /* found type tag.  */
 	    {
 	      char *tag_start = ++p;
@@ -4163,6 +4189,7 @@ main (int ac, char **av)
       dll_name = xmalloc (len);
       strcpy (dll_name, exp_basename);
       strcat (dll_name, ".dll");
+      dll_name_set_by_exp_name = 1;
     }
 
   if (as_name == NULL)

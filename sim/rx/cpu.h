@@ -1,6 +1,7 @@
 /* cpu.h --- declarations for the RX core.
 
-Copyright (C) 2005, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
+Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -235,6 +236,7 @@ extern unsigned int heaptop;
 extern unsigned int heapbottom;
 
 extern int decode_opcode (void);
+extern void reset_decoder (void);
 extern void reset_pipeline_stats (void);
 extern void halt_pipeline_stats (void);
 extern void pipeline_stats (void);

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+# Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
 # Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -545,6 +545,7 @@ gld${EMULATION_NAME}_finish (void)
 				  config.stats ? &msg : NULL))
 	einfo ("%X%P: can not build stubs: %E\n");
 
+      fflush (stdout);
       for (line = msg; line != NULL; line = endline)
 	{
 	  endline = strchr (line, '\n');
@@ -552,6 +553,7 @@ gld${EMULATION_NAME}_finish (void)
 	    *endline++ = '\0';
 	  fprintf (stderr, "%s: %s\n", program_name, line);
 	}
+      fflush (stderr);
       if (msg != NULL)
 	free (msg);
     }
@@ -599,6 +601,7 @@ gld${EMULATION_NAME}_new_vers_pattern (struct bfd_elf_version_expr *entry)
   dot_pat[0] = '.';
   memcpy (dot_pat + 1, entry->pattern, len - 1);
   dot_entry->pattern = dot_pat;
+  dot_entry->script = 1;
   return dot_entry;
 }
 

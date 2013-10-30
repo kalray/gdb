@@ -1,5 +1,5 @@
 /* Memory breakpoint operations for the remote server for GDB.
-   Copyright (C) 2002, 2003, 2005, 2007, 2008, 2009, 2010
+   Copyright (C) 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
@@ -20,9 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 const unsigned char *breakpoint_data;
 int breakpoint_len;
@@ -360,7 +357,8 @@ set_fast_tracepoint_jump (CORE_ADDR where,
      the current shadow contents, because write_inferior_memory
      updates any shadow memory with what we pass here, and we want
      that to be a nop.  */
-  err = write_inferior_memory (where, fast_tracepoint_jump_shadow (jp), length);
+  err = write_inferior_memory (where, fast_tracepoint_jump_shadow (jp),
+			       length);
   if (err != 0)
     {
       if (debug_threads)

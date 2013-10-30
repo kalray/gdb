@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright (C) 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -232,7 +232,8 @@ x86_get_thread_area (int lwpid, CORE_ADDR *addr)
     idx = gs >> reg_thread_area;
 
     if (ptrace (PTRACE_GET_THREAD_AREA,
-		lwpid_of (lwp), (void *) (long) idx, (unsigned long) &desc) < 0)
+		lwpid_of (lwp),
+		(void *) (long) idx, (unsigned long) &desc) < 0)
       return -1;
 
     *addr = desc[1];
@@ -659,7 +660,8 @@ x86_linux_prepare_to_resume (struct lwp_info *lwp)
       int i;
       int pid = ptid_get_pid (ptid);
       struct process_info *proc = find_process_pid (pid);
-      struct i386_debug_reg_state *state = &proc->private->arch_private->debug_reg_state;
+      struct i386_debug_reg_state *state
+	= &proc->private->arch_private->debug_reg_state;
 
       for (i = DR_FIRSTADDR; i <= DR_LASTADDR; i++)
 	x86_linux_dr_set (ptid, i, state->dr_mirror[i]);
@@ -792,8 +794,10 @@ compat_siginfo_from_siginfo (compat_siginfo_t *to, siginfo_t *from)
   to->si_errno = from->si_errno;
   to->si_code = from->si_code;
 
-  if (to->si_code < 0)
+  if (to->si_code == SI_TIMER)
     {
+      to->cpt_si_timerid = from->si_timerid;
+      to->cpt_si_overrun = from->si_overrun;
       to->cpt_si_ptr = (intptr_t) from->si_ptr;
     }
   else if (to->si_code == SI_USER)
@@ -801,10 +805,10 @@ compat_siginfo_from_siginfo (compat_siginfo_t *to, siginfo_t *from)
       to->cpt_si_pid = from->si_pid;
       to->cpt_si_uid = from->si_uid;
     }
-  else if (to->si_code == SI_TIMER)
+  else if (to->si_code < 0)
     {
-      to->cpt_si_timerid = from->si_timerid;
-      to->cpt_si_overrun = from->si_overrun;
+      to->cpt_si_pid = from->si_pid;
+      to->cpt_si_uid = from->si_uid;
       to->cpt_si_ptr = (intptr_t) from->si_ptr;
     }
   else
@@ -846,8 +850,10 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
   to->si_errno = from->si_errno;
   to->si_code = from->si_code;
 
-  if (to->si_code < 0)
+  if (to->si_code == SI_TIMER)
     {
+      to->si_timerid = from->cpt_si_timerid;
+      to->si_overrun = from->cpt_si_overrun;
       to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
     }
   else if (to->si_code == SI_USER)
@@ -855,10 +861,10 @@ siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
       to->si_pid = from->cpt_si_pid;
       to->si_uid = from->cpt_si_uid;
     }
-  else if (to->si_code == SI_TIMER)
+  else if (to->si_code < 0)
     {
-      to->si_timerid = from->cpt_si_timerid;
-      to->si_overrun = from->cpt_si_overrun;
+      to->si_pid = from->cpt_si_pid;
+      to->si_uid = from->cpt_si_uid;
       to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
     }
   else
@@ -1540,7 +1546,7 @@ add_insns (unsigned char *start, int len)
     {									\
       extern unsigned char start_ ## NAME, end_ ## NAME;		\
       add_insns (&start_ ## NAME, &end_ ## NAME - &start_ ## NAME);	\
-      __asm__ ("jmp end_" #NAME "\n"				\
+      __asm__ ("jmp end_" #NAME "\n"					\
 	       "\t" "start_" #NAME ":"					\
 	       "\t" INSNS "\n"						\
 	       "\t" "end_" #NAME ":");					\

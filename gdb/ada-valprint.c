@@ -1,7 +1,7 @@
 /* Support for printing Ada values for GDB, the GNU debugger.
 
    Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1997, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -261,18 +261,19 @@ printable_val_type (struct type *type, const gdb_byte *valaddr)
 
 /* Print the character C on STREAM as part of the contents of a literal
    string whose delimiter is QUOTER.  TYPE_LEN is the length in bytes
-   (1 or 2) of the character.  */
+   of the character.  */
 
 void
 ada_emit_char (int c, struct type *type, struct ui_file *stream,
 	       int quoter, int type_len)
 {
-  if (type_len != 2)
-    type_len = 1;
-
-  c &= (1 << (type_len * TARGET_CHAR_BIT)) - 1;
-
-  if (isascii (c) && isprint (c))
+  /* If this character fits in the normal ASCII range, and is
+     a printable character, then print the character as if it was
+     an ASCII character, even if this is a wide character.
+     The UCHAR_MAX check is necessary because the isascii function
+     requires that its argument have a value of an unsigned char,
+     or EOF (EOF is obviously not printable).  */
+  if (c <= UCHAR_MAX && isascii (c) && isprint (c))
     {
       if (c == quoter && c == '"')
 	fprintf_filtered (stream, "\"\"");
@@ -283,8 +284,8 @@ ada_emit_char (int c, struct type *type, struct ui_file *stream,
     fprintf_filtered (stream, "[\"%0*x\"]", type_len * 2, c);
 }
 
-/* Character #I of STRING, given that TYPE_LEN is the size in bytes (1
-   or 2) of a character.  */
+/* Character #I of STRING, given that TYPE_LEN is the size in bytes
+   of a character.  */
 
 static int
 char_at (const gdb_byte *string, int i, int type_len,
@@ -293,10 +294,11 @@ char_at (const gdb_byte *string, int i, int type_len,
   if (type_len == 1)
     return string[i];
   else
-    return (int) extract_unsigned_integer (string + 2 * i, 2, byte_order);
+    return (int) extract_unsigned_integer (string + type_len * i,
+                                           type_len, byte_order);
 }
 
-/* Wrapper around memcpy to make it legal argument to ui_file_put */
+/* Wrapper around memcpy to make it legal argument to ui_file_put.  */
 static void
 ui_memcpy (void *dest, const char *buffer, long len)
 {
@@ -366,7 +368,7 @@ void
 ada_printchar (int c, struct type *type, struct ui_file *stream)
 {
   fputs_filtered ("'", stream);
-  ada_emit_char (c, type, stream, '\'', 1);
+  ada_emit_char (c, type, stream, '\'', TYPE_LENGTH (type));
   fputs_filtered ("'", stream);
 }
 
@@ -453,9 +455,8 @@ ada_print_scalar (struct type *type, LONGEST val, struct ui_file *stream)
 /* Print the character string STRING, printing at most LENGTH characters.
    Printing stops early if the number hits print_max; repeat counts
    are printed as appropriate.  Print ellipses at the end if we
-   had to stop before printing LENGTH characters, or if
-   FORCE_ELLIPSES.   TYPE_LEN is the length (1 or 2) of the character type.
- */
+   had to stop before printing LENGTH characters, or if FORCE_ELLIPSES.
+   TYPE_LEN is the length (1 or 2) of the character type.  */
 
 static void
 printstr (struct ui_file *stream, struct type *elttype, const gdb_byte *string,
@@ -549,8 +550,9 @@ printstr (struct ui_file *stream, struct type *elttype, const gdb_byte *string,
 }
 
 void
-ada_printstr (struct ui_file *stream, struct type *type, const gdb_byte *string,
-	      unsigned int length, const char *encoding, int force_ellipses,
+ada_printstr (struct ui_file *stream, struct type *type,
+	      const gdb_byte *string, unsigned int length,
+	      const char *encoding, int force_ellipses,
 	      const struct value_print_options *options)
 {
   printstr (stream, type, string, length, force_ellipses, TYPE_LENGTH (type),
@@ -603,23 +605,24 @@ ada_val_print_array (struct type *type, const gdb_byte *valaddr,
 {
   enum bfd_endian byte_order = gdbarch_byte_order (get_type_arch (type));
   struct type *elttype = TYPE_TARGET_TYPE (type);
-  unsigned int eltlen;
-  unsigned int len;
   int result = 0;
-
-  if (elttype == NULL)
-    eltlen = 0;
-  else
-    eltlen = TYPE_LENGTH (elttype);
-  if (eltlen == 0)
-    len = 0;
-  else
-    len = TYPE_LENGTH (type) / eltlen;
 
   /* For an array of chars, print with string syntax.  */
   if (ada_is_string_type (type)
       && (options->format == 0 || options->format == 's'))
     {
+      unsigned int eltlen;
+      unsigned int len;
+
+      if (elttype == NULL)
+        eltlen = 0;
+      else
+        eltlen = TYPE_LENGTH (elttype);
+      if (eltlen == 0)
+        len = 0;
+      else
+        len = TYPE_LENGTH (type) / eltlen;
+
       if (options->prettyprint_arrays)
         print_spaces_filtered (2 + 2 * recurse, stream);
 
@@ -683,10 +686,14 @@ ada_val_print_1 (struct type *type, const gdb_byte *valaddr0,
       struct value *val;
 
       val = value_from_contents_and_address (type, valaddr, address);
-      val = ada_coerce_to_simple_array_ptr (val);
+      if (TYPE_CODE (type) == TYPE_CODE_TYPEDEF)  /* array access type.  */
+	val = ada_coerce_to_simple_array_ptr (val);
+      else
+	val = ada_coerce_to_simple_array (val);
       if (val == NULL)
 	{
-	  fprintf_filtered (stream, "(null)");
+	  gdb_assert (TYPE_CODE (type) == TYPE_CODE_TYPEDEF);
+	  fprintf_filtered (stream, "0x0");
 	  retn = 0;
 	}
       else
@@ -756,7 +763,8 @@ ada_val_print_1 (struct type *type, const gdb_byte *valaddr0,
 	  else
 	    return ada_val_print_1 (TYPE_TARGET_TYPE (type),
 				    valaddr0, embedded_offset,
-				    address, stream, recurse, original_value, options);
+				    address, stream, recurse,
+				    original_value, options);
 	}
       else
 	{
@@ -904,7 +912,8 @@ static int
 print_variant_part (struct type *type, int field_num, const gdb_byte *valaddr,
 		    struct ui_file *stream, int recurse,
 		    const struct value *val,
-		    const struct value_print_options *options, int comma_needed,
+		    const struct value_print_options *options,
+		    int comma_needed,
 		    struct type *outer_type, const gdb_byte *outer_valaddr)
 {
   struct type *var_type = TYPE_FIELD_TYPE (type, field_num);
@@ -946,9 +955,15 @@ ada_value_print (struct value *val0, struct ui_file *stream,
     }
   else if (ada_is_array_descriptor_type (type))
     {
-      fprintf_filtered (stream, "(");
-      type_print (type, "", stream, -1);
-      fprintf_filtered (stream, ") ");
+      /* We do not print the type description unless TYPE is an array
+	 access type (this is encoded by the compiler as a typedef to
+	 a fat pointer - hence the check against TYPE_CODE_TYPEDEF).  */
+      if (TYPE_CODE (type) == TYPE_CODE_TYPEDEF)
+        {
+	  fprintf_filtered (stream, "(");
+	  type_print (type, "", stream, -1);
+	  fprintf_filtered (stream, ") ");
+	}
     }
   else if (ada_is_bogus_array_descriptor (type))
     {

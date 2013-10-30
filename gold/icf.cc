@@ -182,6 +182,11 @@ preprocess_for_unique_sections(const std::vector<Section_id>& id_section,
       section_size_type plen;
       if (section_contents == NULL)
         {
+          // Lock the object so we can read from it.  This is only called
+          // single-threaded from queue_middle_tasks, so it is OK to lock.
+          // Unfortunately we have no way to pass in a Task token.
+          const Task* dummy_task = reinterpret_cast<const Task*>(-1);
+          Task_lock_obj<Object> tl(dummy_task, secn.first);
           const unsigned char* contents;
           contents = secn.first->section_contents(secn.second,
                                                   &plen,
@@ -237,6 +242,11 @@ get_section_contents(bool first_iteration,
 
   if (first_iteration)
     {
+      // Lock the object so we can read from it.  This is only called
+      // single-threaded from queue_middle_tasks, so it is OK to lock.
+      // Unfortunately we have no way to pass in a Task token.
+      const Task* dummy_task = reinterpret_cast<const Task*>(-1);
+      Task_lock_obj<Object> tl(dummy_task, secn.first);
       contents = secn.first->section_contents(secn.second,
                                               &plen,
                                               false);
@@ -283,7 +293,7 @@ get_section_contents(bool first_iteration,
       for (; it_v != v.end(); ++it_v, ++it_s, ++it_a, ++it_o, ++it_addend_size)
         {
           // ADDEND_STR stores the symbol value and addend and offset,
-          // each atmost 16 hex digits long.  it_a points to a pair
+          // each at most 16 hex digits long.  it_a points to a pair
           // where first is the symbol value and second is the
           // addend.
           char addend_str[50];
@@ -363,10 +373,17 @@ get_section_contents(bool first_iteration,
               if (!first_iteration)
                 continue;
 
+              // Lock the object so we can read from it.  This is only called
+              // single-threaded from queue_middle_tasks, so it is OK to lock.
+              // Unfortunately we have no way to pass in a Task token.
+              const Task* dummy_task = reinterpret_cast<const Task*>(-1);
+              Task_lock_obj<Object> tl(dummy_task, it_v->first);
+
               uint64_t secn_flags = (it_v->first)->section_flags(it_v->second);
               // This reloc points to a merge section.  Hash the
               // contents of this section.
-              if ((secn_flags & elfcpp::SHF_MERGE) != 0)
+              if ((secn_flags & elfcpp::SHF_MERGE) != 0
+		  && parameters->target().can_icf_inline_merge_sections ())
                 {
                   uint64_t entsize =
                     (it_v->first)->section_entsize(it_v->second);
@@ -533,7 +550,7 @@ get_section_contents(bool first_iteration,
 // KEPT_SECTION_ID    : Vector which maps folded sections to kept sections.
 // ID_SECTION         : Vector mapping a section to an unique integer.
 // IS_SECN_OR_GROUP_UNIQUE : To check if a section or a group of identical
-//                            sectionsis already known to be unique.
+//                            sections is already known to be unique.
 // SECTION_CONTENTS   : Store the section's text and relocs to non-ICF
 //                      sections.
 
@@ -681,6 +698,12 @@ Icf::find_identical_sections(const Input_objects* input_objects,
        p != input_objects->relobj_end();
        ++p)
     {
+      // Lock the object so we can read from it.  This is only called
+      // single-threaded from queue_middle_tasks, so it is OK to lock.
+      // Unfortunately we have no way to pass in a Task token.
+      const Task* dummy_task = reinterpret_cast<const Task*>(-1);
+      Task_lock_obj<Object> tl(dummy_task, *p);
+
       for (unsigned int i = 0;i < (*p)->shnum(); ++i)
         {
 	  const char* section_name = (*p)->section_name(i).c_str();

@@ -1,9 +1,9 @@
 #readelf: -SW
-#name: automatic section group
+#name: automatic section group a
 #source: groupauto.s
 
 #...
-[ 	]*\[.*\][ 	]+some_group[ 	]+GROUP.*
+[ 	]*\[.*\][ 	]+\.group[ 	]+GROUP.*
 #...
 [ 	]*\[.*\][ 	]+\.text[ 	]+PROGBITS.*[ 	]+AX[ 	]+.*
 #...
