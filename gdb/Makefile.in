@@ -737,7 +737,7 @@ ia64-tdep.h ada-lang.h varobj.h frv-tdep.h nto-tdep.h serial.h \
 c-lang.h d-lang.h frame.h event-loop.h block.h cli/cli-setshow.h	\
 cli/cli-decode.h cli/cli-cmds.h cli/cli-dump.h \
 cli/cli-script.h macrotab.h symtab.h version.h gnulib/wchar.in.h \
-gnulib/string.in.h gnulib/str-two-way.h gnulib/extra/link-warning.h \
+gnulib/string.in.h gnulib/str-two-way.h \
 gnulib/stdint.in.h remote.h gdb.h sparc-nat.h gdbserver/win32-low.h \
 gdbserver/i387-fp.h gdbserver/server.h gdbserver/terminal.h \
 gdbserver/mem-break.h gdbserver/wincecompat.h gdbserver/target.h \
@@ -1018,7 +1018,16 @@ install-only: $(CONFIG_INSTALL) xml-syscall-install
 		$(SHELL) $(srcdir)/../mkinstalldirs \
 			$(DESTDIR)$(man1dir) ; \
 		$(INSTALL_DATA) $(srcdir)/gdb.1 \
-			$(DESTDIR)$(man1dir)/$$transformed_name.1
+			$(DESTDIR)$(man1dir)/$$transformed_name.1; \
+	transformed_name=`t='$(program_transform_name)'; \
+			  echo gdb-add-index | sed -e "$$t"` ; \
+		if test "x$$transformed_name" = x; then \
+		  transformed_name=gdb-add-index ; \
+		else \
+		  true ; \
+		fi ; \
+		$(INSTALL_PROGRAM) $(srcdir)/gdb-add-index.sh \
+			$(DESTDIR)$(bindir)/$$transformed_name$(EXEEXT)
 	@$(MAKE) DO=install "DODIRS=$(SUBDIRS)" $(FLAGS_TO_PASS) subdir_do
 .PHONY: install-tui
 install-tui:

@@ -2605,6 +2605,43 @@ linux_nat_stopped_data_address (struct target_ops *ops, CORE_ADDR *addr_p)
   return lp->stopped_data_address_p;
 }
 
+/* Commonly any breakpoint / watchpoint generate only SIGTRAP.  */
+
+static int
+sigtrap_is_event (int status)
+{
+  return WIFSTOPPED (status) && WSTOPSIG (status) == SIGTRAP;
+}
+
+/* SIGTRAP-like events recognizer.  */
+
+static int (*linux_nat_status_is_event) (int status) = sigtrap_is_event;
+
+/* Check for SIGTRAP-like events in LP.  */
+
+static int
+linux_nat_lp_status_is_event (struct lwp_info *lp)
+{
+  /* We check for lp->waitstatus in addition to lp->status, because we can
+     have pending process exits recorded in lp->status
+     and W_EXITCODE(0,0) == 0.  We should probably have an additional
+     lp->status_p flag.  */
+
+  return (lp->waitstatus.kind == TARGET_WAITKIND_IGNORE
+	  && linux_nat_status_is_event (lp->status));
+}
+
+/* Set alternative SIGTRAP-like events recognizer.  If
+   breakpoint_inserted_here_p there then gdbarch_decr_pc_after_break will be
+   applied.  */
+
+void
+linux_nat_set_status_is_event (struct target_ops *t,
+			       int (*status_is_event) (int status))
+{
+  linux_nat_status_is_event = status_is_event;
+}
+
 /* Wait until LP is stopped.  */
 
 static int
@@ -2645,7 +2682,7 @@ stop_wait_callback (struct lwp_info *lp, void *data)
 
       if (WSTOPSIG (status) != SIGSTOP)
 	{
-	  if (WSTOPSIG (status) == SIGTRAP)
+	  if (linux_nat_status_is_event (status))
 	    {
 	      /* If a LWP other than the LWP that we're reporting an
 	         event for has hit a GDB breakpoint (as opposed to
@@ -2800,8 +2837,7 @@ count_events_callback (struct lwp_info *lp, void *data)
   gdb_assert (count != NULL);
 
   /* Count only resumed LWPs that have a SIGTRAP event pending.  */
-  if (lp->status != 0 && lp->resumed
-      && WIFSTOPPED (lp->status) && WSTOPSIG (lp->status) == SIGTRAP)
+  if (lp->resumed && linux_nat_lp_status_is_event (lp))
     (*count)++;
 
   return 0;
@@ -2828,8 +2864,7 @@ select_event_lwp_callback (struct lwp_info *lp, void *data)
   gdb_assert (selector != NULL);
 
   /* Select only resumed LWPs that have a SIGTRAP event pending. */
-  if (lp->status != 0 && lp->resumed
-      && WIFSTOPPED (lp->status) && WSTOPSIG (lp->status) == SIGTRAP)
+  if (lp->resumed && linux_nat_lp_status_is_event (lp))
     if ((*selector)-- == 0)
       return 1;
 
@@ -2889,9 +2924,7 @@ cancel_breakpoints_callback (struct lwp_info *lp, void *data)
      delete or disable the breakpoint, but the LWP will have already
      tripped on it.  */
 
-  if (lp->waitstatus.kind == TARGET_WAITKIND_IGNORE
-      && lp->status != 0
-      && WIFSTOPPED (lp->status) && WSTOPSIG (lp->status) == SIGTRAP
+  if (linux_nat_lp_status_is_event (lp)
       && cancel_breakpoint (lp))
     /* Throw away the SIGTRAP.  */
     lp->status = 0;
@@ -3064,7 +3097,7 @@ linux_nat_filter_event (int lwpid, int status, int options)
 	return NULL;
     }
 
-  if (WIFSTOPPED (status) && WSTOPSIG (status) == SIGTRAP)
+  if (linux_nat_status_is_event (status))
     {
       /* Save the trap's siginfo in case we need it later.  */
       save_siginfo (lp);
@@ -3410,8 +3443,7 @@ retry:
 			 always cancels breakpoint hits in all
 			 threads.  */
 		      if (non_stop
-			  && lp->waitstatus.kind == TARGET_WAITKIND_IGNORE
-			  && WSTOPSIG (lp->status) == SIGTRAP
+			  && linux_nat_lp_status_is_event (lp)
 			  && cancel_breakpoint (lp))
 			{
 			  /* Throw away the SIGTRAP.  */
@@ -3627,7 +3659,7 @@ retry:
   else
     lp->resumed = 0;
 
-  if (WIFSTOPPED (status) && WSTOPSIG (status) == SIGTRAP)
+  if (linux_nat_status_is_event (status))
     {
       if (debug_linux_nat)
 	fprintf_unfiltered (gdb_stdlog,
@@ -4190,7 +4222,8 @@ linux_nat_do_thread_registers (bfd *obfd, ptid_t ptid,
 	if (strcmp (sect_list->sect_name, ".reg") == 0)
 	  note_data = (char *) elfcore_write_prstatus
 				(obfd, note_data, note_size,
-				 lwp, stop_signal, gdb_regset);
+				 lwp, target_signal_to_host (stop_signal),
+				 gdb_regset);
 	else
 	  note_data = (char *) elfcore_write_register_note
 				(obfd, note_data, note_size,
@@ -4217,11 +4250,9 @@ linux_nat_do_thread_registers (bfd *obfd, ptid_t ptid,
       else
 	fill_gregset (regcache, &gregs, -1);
 
-      note_data = (char *) elfcore_write_prstatus (obfd,
-						   note_data,
-						   note_size,
-						   lwp,
-						   stop_signal, &gregs);
+      note_data = (char *) elfcore_write_prstatus
+	(obfd, note_data, note_size, lwp, target_signal_to_host (stop_signal),
+	 &gregs);
 
       if (core_regset_p
           && (regset = gdbarch_regset_from_core_section (gdbarch, ".reg2",
