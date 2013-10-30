@@ -6219,6 +6219,8 @@ macro (struct mips_cl_insn *ip)
 		      /* Quiet this warning.  */
 		      mips_cprestore_valid = 1;
 		    }
+		  if (mips_opts.noreorder)
+		    macro_build (NULL, "nop", "");
 		  expr1.X_add_number = mips_cprestore_offset;
   		  macro_build_ldst_constoffset (&expr1, ADDRESS_LOAD_INSN,
 						mips_gp_register,
@@ -15666,20 +15668,16 @@ MIPS options:\n\
 #endif
 }
 
+#ifdef TE_IRIX
 enum dwarf2_format
 mips_dwarf2_format (asection *sec ATTRIBUTE_UNUSED)
 {
   if (HAVE_64BIT_SYMBOLS)
-    {
-#ifdef TE_IRIX
-      return dwarf2_format_64bit_irix;
-#else
-      return dwarf2_format_64bit;
-#endif
-    }
+    return dwarf2_format_64bit_irix;
   else
     return dwarf2_format_32bit;
 }
+#endif
 
 int
 mips_dwarf2_addr_size (void)

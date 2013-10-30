@@ -1073,7 +1073,6 @@ restore_child_signals_mask (sigset_t *prev_mask)
 static int stop_wait_callback (struct lwp_info *lp, void *data);
 static int linux_thread_alive (ptid_t ptid);
 static char *linux_child_pid_to_exec_file (int pid);
-static int cancel_breakpoint (struct lwp_info *lp);
 
 
 /* Convert wait status STATUS to a string.  Used for printing debug
@@ -2149,7 +2148,6 @@ linux_handle_extended_wait (struct lwp_info *lp, int status,
 {
   int pid = GET_LWP (lp->ptid);
   struct target_waitstatus *ourstatus = &lp->waitstatus;
-  struct lwp_info *new_lp = NULL;
   int event = status >> 16;
 
   if (event == PTRACE_EVENT_FORK || event == PTRACE_EVENT_VFORK
@@ -2213,7 +2211,10 @@ linux_handle_extended_wait (struct lwp_info *lp, int status,
 	ourstatus->kind = TARGET_WAITKIND_VFORKED;
       else
 	{
+	  struct lwp_info *new_lp;
+
 	  ourstatus->kind = TARGET_WAITKIND_IGNORE;
+
 	  new_lp = add_lwp (BUILD_LWP (new_pid, GET_PID (lp->ptid)));
 	  new_lp->cloned = 1;
 	  new_lp->stopped = 1;
@@ -2276,6 +2277,23 @@ linux_handle_extended_wait (struct lwp_info *lp, int status,
 
 	      linux_ops->to_resume (linux_ops, pid_to_ptid (new_pid),
 				    0, signo);
+	    }
+	  else
+	    {
+	      if (status != 0)
+		{
+		  /* We created NEW_LP so it cannot yet contain STATUS.  */
+		  gdb_assert (new_lp->status == 0);
+
+		  /* Save the wait status to report later.  */
+		  if (debug_linux_nat)
+		    fprintf_unfiltered (gdb_stdlog,
+					"LHEW: waitpid of new LWP %ld, "
+					"saving status %s\n",
+					(long) GET_LWP (new_lp->ptid),
+					status_to_str (status));
+		  new_lp->status = status;
+		}
 	    }
 
 	  if (debug_linux_nat)
@@ -3365,6 +3383,9 @@ retry:
 
 	  lp = linux_nat_filter_event (lwpid, status, options);
 
+	  /* STATUS is now no longer valid, use LP->STATUS instead.  */
+	  status = 0;
+
 	  if (lp
 	      && ptid_is_pid (ptid)
 	      && ptid_get_pid (lp->ptid) != ptid_get_pid (ptid))
@@ -3373,7 +3394,7 @@ retry:
 
 	      if (debug_linux_nat)
 		fprintf (stderr, "LWP %ld got an event %06x, leaving pending.\n",
-			 ptid_get_lwp (lp->ptid), status);
+			 ptid_get_lwp (lp->ptid), lp->status);
 
 	      if (WIFSTOPPED (lp->status))
 		{
@@ -3410,7 +3431,7 @@ retry:
 		      lp->signalled = 0;
 		    }
 		}
-	      else if (WIFEXITED (status) || WIFSIGNALED (status))
+	      else if (WIFEXITED (lp->status) || WIFSIGNALED (lp->status))
 		{
 		  if (debug_linux_nat)
 		    fprintf (stderr, "Process %ld exited while stopping LWPs\n",

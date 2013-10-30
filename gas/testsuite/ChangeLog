@@ -1,3 +1,63 @@
+2010-07-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/jal-svr4pic-noreorder.d: New test case.
+	* gas/mips/mips1@jal-svr4pic-noreorder.d: New test
+	subarchitecture.
+	* gas/mips/r3000@jal-svr4pic-noreorder.d: Likewise.
+	* gas/mips/jal-svr4pic-noreorder.s: Source for the new test
+	case.
+	* gas/mips/mips.exp: Run the new test case.
+
+2010-07-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/jal-svr4pic.d: Rename to...
+	* gas/mips/mips1@jal-svr4pic.d: ... this.
+	* gas/mips/r3000@jal-svr4pic.d: New test subarchitecture.
+	* gas/mips/jal-svr4pic.d: New default subarchitecture patterns.
+	* gas/mips/mips.exp: Run jal-svr4pic with run_dump_test_arches
+	rather than run_dump_test.
+
+2010-07-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/jal-svr4pic.d: Reformat.  Use --show-raw-insn with
+	`objdump'.
+	* gas/mips/jal-svr4pic.s: Reformat.  Fix up trailing zeroes.
+
+2010-07-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* lib/gas-defs.exp (run_dump_test): Handle the "dump" option.
+
+2010-07-23  Naveen.H.S  <naveen.S@kpitcummins.com>
+	    Ina Pandit  <ina.pandit@kpitcummins.com>
+
+	* gas/v850/split-lo16.d: Update the "ld" instructions with a space
+	for second operand.
+	* gas/v850/v850e1.d: Likewise.
+
+2010-07-22  Alan Modra  <amodra@gmail.com>
+
+	* gas/arm/mapdir.s: Don't specify attr/type for .fini_array.
+	* gas/elf/dwarf2-3.s: Don't specify attr for .init_array.
+	* gas/elf/dwarf2-3.d: Don't run on h8300.
+
+2010-07-19  Andreas Schwab  <schwab@redhat.com>
+
+	* gas/i386/x86-64-unwind.d: Ignore "Key to Flags" contents.
+	* gas/ia64/alias-ilp32.d: Likewise.
+	* gas/ia64/alias.d: Likewise.
+	* gas/ia64/group-1.d: Likewise.
+	* gas/ia64/group-2.d: Likewise.
+	* gas/ia64/secname-ilp32.d: Likewise.
+	* gas/ia64/secname.d: Likewise.
+	* gas/ia64/unwind-ilp32.d: Likewise.
+	* gas/ia64/unwind.d: Likewise.
+	* gas/mmix/byte-1.d: Likewise.
+	* gas/mmix/loc-1.d: Likewise.
+	* gas/mmix/loc-2.d: Likewise.
+	* gas/mmix/loc-3.d: Likewise.
+	* gas/mmix/loc-4.d: Likewise.
+	* gas/mmix/loc-5.d: Likewise.
+
 2010-07-16  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/i386.exp: Run dw2-compress-2 only for 32bit.

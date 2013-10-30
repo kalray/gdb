@@ -125,6 +125,7 @@
 #include "elf/mmix.h"
 #include "elf/mn10200.h"
 #include "elf/mn10300.h"
+#include "elf/moxie.h"
 #include "elf/mt.h"
 #include "elf/msp430.h"
 #include "elf/or32.h"
@@ -646,6 +647,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_CYGNUS_MN10200:
     case EM_MN10300:
     case EM_CYGNUS_MN10300:
+    case EM_MOXIE:
     case EM_MSP430:
     case EM_MSP430_OLD:
     case EM_MT:
@@ -1128,6 +1130,10 @@ dump_relocations (FILE * file,
 
 	case EM_MMIX:
 	  rtype = elf_mmix_reloc_type (type);
+	  break;
+
+	case EM_MOXIE:
+	  rtype = elf_moxie_reloc_type (type);
 	  break;
 
 	case EM_MSP430:
@@ -1906,6 +1912,7 @@ get_machine_name (unsigned e_machine)
     case EM_MN10300:		return "mn10300";
     case EM_CYGNUS_MN10200:
     case EM_MN10200:		return "mn10200";
+    case EM_MOXIE:		return "Moxie";
     case EM_CYGNUS_FR30:
     case EM_FR30:		return "Fujitsu FR30";
     case EM_CYGNUS_FRV:		return "Fujitsu FR-V";
@@ -2345,8 +2352,14 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	case EM_CYGNUS_V850:
 	  switch (e_flags & EF_V850_ARCH)
 	    {
-	    case E_V850E1_ARCH:
-	      strcat (buf, ", v850e1");
+	    case E_V850E2V3_ARCH:
+	      strcat (buf, ", v850e2v3");
+	      break;
+	    case E_V850E2_ARCH:
+	      strcat (buf, ", v850e2");
+	      break;
+            case E_V850E1_ARCH:
+              strcat (buf, ", v850e1");
 	      break;
 	    case E_V850E_ARCH:
 	      strcat (buf, ", v850e");
@@ -3889,8 +3902,8 @@ process_program_headers (FILE * file)
 
 	  for (j = 1; j < elf_header.e_shnum; j++, section++)
 	    {
-	      if (ELF_SECTION_SIZE (section, segment) != 0
-		  && ELF_SECTION_IN_SEGMENT (section, segment))
+	      if (!ELF_TBSS_SPECIAL (section, segment)
+		  && ELF_SECTION_IN_SEGMENT_STRICT (section, segment))
 		printf ("%s ", SECTION_NAME (section));
 	    }
 
@@ -4818,7 +4831,7 @@ process_section_headers (FILE * file)
   if (!do_section_details)
     printf (_("Key to Flags:\n\
   W (write), A (alloc), X (execute), M (merge), S (strings)\n\
-  I (info), L (link order), G (group), x (unknown)\n\
+  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)\n\
   O (extra OS processing required) o (OS specific), p (processor specific)\n"));
 
   return 1;
@@ -9240,6 +9253,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
     case EM_CYGNUS_MN10300:
     case EM_MN10300:
       return reloc_type == 1; /* R_MN10300_32.  */
+    case EM_MOXIE:
+      return reloc_type == 1; /* R_MOXIE_32.  */
     case EM_MSP430_OLD:
     case EM_MSP430:
       return reloc_type == 1; /* R_MSP43_32.  */
@@ -9501,6 +9516,7 @@ is_none_reloc (unsigned int reloc_type)
     case EM_X86_64:  /* R_X86_64_NONE.  */
     case EM_L1OM:    /* R_X86_64_NONE.  */
     case EM_MN10300: /* R_MN10300_NONE.  */
+    case EM_MOXIE:   /* R_MOXIE_NONE.  */
     case EM_M32R:    /* R_M32R_NONE.  */
     case EM_TI_C6000:/* R_C6000_NONE.  */
     case EM_XC16X:
