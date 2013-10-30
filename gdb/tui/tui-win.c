@@ -1,7 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2004, 2006-2012 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -650,8 +649,8 @@ tui_refresh_all_win (void)
 }
 
 
-/* Resize all the windows based on the the terminal size.  This
-   function gets called from within the readline sinwinch handler.  */
+/* Resize all the windows based on the terminal size.  This function
+   gets called from within the readline sinwinch handler.  */
 void
 tui_resize_all (void)
 {

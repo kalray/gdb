@@ -604,6 +604,7 @@ LTLIBOBJS
 LIBOBJS
 EMULATION_VECTOR
 EMULATION
+OBJDUMP_PRIVATE_OFILES
 OBJDUMP_DEFS
 BUILD_INSTALL_MISC
 BUILD_MISC
@@ -770,10 +771,12 @@ enable_fast_install
 with_gnu_ld
 enable_libtool_lock
 enable_targets
+enable_deterministic_archives
 enable_werror
 enable_build_warnings
 enable_nls
 enable_maintainer_mode
+with_zlib
 enable_rpath
 with_libiconv_prefix
 '
@@ -1416,6 +1419,8 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-targets        alternative target configurations
+  --enable-deterministic-archives
+                          ar and ranlib default to -D behavior
   --enable-werror         treat compile warnings as errors
   --enable-build-warnings enable build-time compiler warnings
   --disable-nls           do not use Native Language Support
@@ -1429,6 +1434,7 @@ Optional Packages:
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+  --with-zlib             include zlib support (auto/yes/no) default=auto
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
@@ -9421,10 +9427,6 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       hardcode_shlibpath_var=no
       ;;
 
-    freebsd1*)
-      ld_shlibs=no
-      ;;
-
     # FreeBSD 2.2.[012] allows us to include c++rt0.o to get C++ constructor
     # support.  Future versions do this automatically, but an explicit c++rt0.o
     # does not break anything, and helps significantly (at the cost of a little
@@ -10343,10 +10345,6 @@ dgux*)
   shlibpath_var=LD_LIBRARY_PATH
   ;;
 
-freebsd1*)
-  dynamic_linker=no
-  ;;
-
 freebsd* | dragonfly*)
   # DragonFly does not have aout.  When/if they implement a new
   # versioning mechanism, adjust this.
@@ -11206,7 +11204,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11209 "configure"
+#line 11207 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11312,7 +11310,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11315 "configure"
+#line 11313 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11559,6 +11557,25 @@ if test "${enable_targets+set}" = set; then :
   *)        enable_targets=$enableval ;;
 esac
 fi
+
+# Check whether --enable-deterministic-archives was given.
+if test "${enable_deterministic_archives+set}" = set; then :
+  enableval=$enable_deterministic_archives;
+if test "${enableval}" = no; then
+  default_ar_deterministic=0
+else
+  default_ar_deterministic=1
+fi
+else
+  default_ar_deterministic=0
+fi
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define DEFAULT_AR_DETERMINISTIC $default_ar_deterministic
+_ACEOF
+
 
 
 GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
@@ -12979,7 +12996,19 @@ _ACEOF
 # Link in zlib if we can.  This allows us to read compressed debug
 # sections.  This is used only by readelf.c (objdump uses bfd for
 # reading compressed sections).
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
+
+  # See if the user specified whether he wants zlib support or not.
+
+# Check whether --with-zlib was given.
+if test "${with_zlib+set}" = set; then :
+  withval=$with_zlib;
+else
+  with_zlib=auto
+fi
+
+
+  if test "$with_zlib" != "no"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
 $as_echo_n "checking for library containing zlibVersion... " >&6; }
 if test "${ac_cv_search_zlibVersion+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -13045,6 +13074,11 @@ fi
 done
 
 fi
+
+    if test "$with_zlib" = "yes" -a "$ac_cv_header_zlib_h" != "yes"; then
+      as_fn_error "zlib (libz) library was explicitly requested but not found" "$LINENO" 5
+    fi
+  fi
 
 
 
@@ -13787,6 +13821,9 @@ BUILD_DLLWRAP=
 BUILD_MISC=
 BUILD_INSTALL_MISC=
 OBJDUMP_DEFS=
+OBJDUMP_PRIVATE_VECTORS=
+OBJDUMP_PRIVATE_OFILES=
+od_vectors=
 
 for targ in $target $canon_targets
 do
@@ -13804,6 +13841,7 @@ do
 	fi
 	DLLTOOL_DEFS="$DLLTOOL_DEFS -DDLLTOOL_I386"
 	BUILD_DLLWRAP='$(DLLWRAP_PROG)$(EXEEXT)'
+	od_vectors="$od_vectors objdump_private_desc_xcoff"
     else
 	case $targ in
 	i[3-7]86*-*-netware*)
@@ -13823,9 +13861,11 @@ do
 	  NLMCONV_DEFS="$NLMCONV_DEFS -DNLMCONV_SPARC"
 	  ;;
 	esac
+
 	case $targ in
 	*-*-hms*) BUILD_SRCONV='$(SRCONV_PROG)' ;;
 	esac
+
 	case $targ in
 	arm-epoc-pe*)
   	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
@@ -13846,15 +13886,6 @@ do
 	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
 	  ;;
 	arm-*-pe*)
-  	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
-	  if test -z "$DLLTOOL_DEFAULT"; then
-	    DLLTOOL_DEFAULT="-DDLLTOOL_DEFAULT_ARM"
-	  fi
-	  DLLTOOL_DEFS="$DLLTOOL_DEFS -DDLLTOOL_ARM"
-	  BUILD_WINDRES='$(WINDRES_PROG)$(EXEEXT)'
-	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
-	  ;;
-	thumb-*-pe*)
   	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
 	  if test -z "$DLLTOOL_DEFAULT"; then
 	    DLLTOOL_DEFAULT="-DDLLTOOL_DEFAULT_ARM"
@@ -13905,7 +13936,10 @@ do
 	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
 	  ;;
 	powerpc*-*-linux* | powerpc*-*-elf* | powerpc*-*-eabi*)
-	  BUILD_INSTALL_MISC="${BUILD_INSTALL_MISC} embedspu"
+	  case "$BUILD_INSTALL_MISC" in
+	    *embedspu*) ;;
+	    *) BUILD_INSTALL_MISC="${BUILD_INSTALL_MISC} embedspu"
+	  esac
 	  ;;
 	sh*-*-pe)
   	  BUILD_DLLTOOL='$(DLLTOOL_PROG)$(EXEEXT)'
@@ -13948,7 +13982,49 @@ do
 	  OBJDUMP_DEFS="-DSKIP_ZEROES=256 -DSKIP_ZEROES_AT_END=0"
 	  ;;
 	esac
+
+	# Add objdump private vectors.
+	case $targ in
+	powerpc-*-aix*)
+	  od_vectors="$od_vectors objdump_private_desc_xcoff"
+	  ;;
+        *-*-darwin*)
+	  od_vectors="$od_vectors objdump_private_desc_mach_o"
+	  ;;
+	esac
     fi
+done
+
+# Uniq objdump private vector, build objdump target ofiles.
+od_files=
+f=""
+for i in $od_vectors ; do
+    case " $f " in
+    *" $i "*) ;;
+    *)
+	f="$f $i"
+	OBJDUMP_PRIVATE_VECTORS="$OBJDUMP_PRIVATE_VECTORS &$i,"
+	case $i in
+	objdump_private_desc_xcoff)
+	    od_files="$od_files od-xcoff" ;;
+	objdump_private_desc_mach_o)
+	    od_files="$od_files od-macho" ;;
+	*) as_fn_error "*** unknown private vector $i" "$LINENO" 5 ;;
+	esac
+	;;
+    esac
+done
+
+# Uniq objdump target ofiles
+f=""
+for i in $od_files ; do
+    case " $f " in
+    *" $i "*) ;;
+    *)
+	f="$f $i"
+	OBJDUMP_PRIVATE_OFILES="$OBJDUMP_PRIVATE_OFILES $i.$objext"
+	;;
+    esac
 done
 
 DLLTOOL_DEFS="$DLLTOOL_DEFS $DLLTOOL_DEFAULT"
@@ -13960,6 +14036,9 @@ fi
 if test "${with_windmc+set}" = set; then
 	  BUILD_WINDMC='$(WINDMC_PROG)$(EXEEXT)'
 fi
+
+OBJDUMP_DEFS="${OBJDUMP_DEFS} -DOBJDUMP_PRIVATE_VECTORS=\"${OBJDUMP_PRIVATE_VECTORS}\""
+
 
 
 

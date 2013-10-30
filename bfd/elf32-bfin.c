@@ -1585,7 +1585,9 @@ bfin_relocate_section (bfd * output_bfd,
          because such sections are not SEC_ALLOC and thus ld.so will
          not process them.  */
       if (unresolved_reloc
-	  && !((input_section->flags & SEC_DEBUGGING) != 0 && h->def_dynamic))
+	  && !((input_section->flags & SEC_DEBUGGING) != 0 && h->def_dynamic)
+	  && _bfd_elf_section_offset (output_bfd, info, input_section,
+				      rel->r_offset) != (bfd_vma) -1)
 	{
 	  (*_bfd_error_handler)
 	    (_("%B(%A+0x%lx): unresolvable relocation against symbol `%s'"),
@@ -2731,7 +2733,9 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	default:
 	non_fdpic:
 	  picrel = NULL;
-	  if (h && ! BFINFDPIC_SYM_LOCAL (info, h))
+	  if (h && ! BFINFDPIC_SYM_LOCAL (info, h)
+	      && _bfd_elf_section_offset (output_bfd, info, input_section,
+					  rel->r_offset) != (bfd_vma) -1)
 	    {
 	      info->callbacks->warning
 		(info, _("relocation references symbol not defined in the module"),
@@ -3103,10 +3107,10 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	  if (silence_segment_error == 1)
 	    silence_segment_error =
 	      (strlen (input_bfd->filename) == 6
-	       && strcmp (input_bfd->filename, "crt0.o") == 0)
+	       && filename_cmp (input_bfd->filename, "crt0.o") == 0)
 	      || (strlen (input_bfd->filename) > 6
-		  && strcmp (input_bfd->filename
-			     + strlen (input_bfd->filename) - 7,
+		  && filename_cmp (input_bfd->filename
+				   + strlen (input_bfd->filename) - 7,
 			     "/crt0.o") == 0)
 	      ? -1 : 0;
 #endif
@@ -5450,9 +5454,6 @@ bfin_discard_copies (struct elf_link_hash_entry *h, PTR inf)
 {
   struct bfd_link_info *info = (struct bfd_link_info *) inf;
   struct bfin_pcrel_relocs_copied *s;
-
-  if (h->root.type == bfd_link_hash_warning)
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
   if (!h->def_regular || (!info->symbolic && !h->forced_local))
     {

@@ -1,6 +1,5 @@
 /* Line completion stuff for GDB, the GNU debugger.
-   Copyright (C) 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2001, 2007-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -590,7 +589,7 @@ complete_line_internal (const char *text,
     {
       /* An empty line we want to consider ambiguous; that is, it
 	 could be any command.  */
-      c = (struct cmd_list_element *) -1;
+      c = CMD_LIST_AMBIGUOUS;
       result_list = 0;
     }
   else
@@ -610,7 +609,7 @@ complete_line_internal (const char *text,
 	 possible completions.  */
       list = NULL;
     }
-  else if (c == (struct cmd_list_element *) -1)
+  else if (c == CMD_LIST_AMBIGUOUS)
     {
       char *q;
 
@@ -914,10 +913,10 @@ line_completion_function (const char *text, int matches,
 }
 
 /* Skip over the possibly quoted word STR (as defined by the quote
-   characters QUOTECHARS and the the word break characters
-   BREAKCHARS).  Returns pointer to the location after the "word".  If
-   either QUOTECHARS or BREAKCHARS is NULL, use the same values used
-   by the completer.  */
+   characters QUOTECHARS and the word break characters BREAKCHARS).
+   Returns pointer to the location after the "word".  If either
+   QUOTECHARS or BREAKCHARS is NULL, use the same values used by the
+   completer.  */
 
 char *
 skip_quoted_chars (char *str, char *quotechars, char *breakchars)

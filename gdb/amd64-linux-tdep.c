@@ -1,7 +1,6 @@
 /* Target-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001, 2003-2012 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -339,9 +338,9 @@ amd64_all_but_ip_registers_record (struct regcache *regcache)
    process record.  */
 
 static enum gdb_syscall
-amd64_canonicalize_syscall (enum amd64_syscall syscall)
+amd64_canonicalize_syscall (enum amd64_syscall syscall_number)
 {
-  switch (syscall) {
+  switch (syscall_number) {
   case amd64_sys_read:
     return gdb_sys_read;
 
@@ -1174,25 +1173,24 @@ amd64_linux_syscall_record (struct regcache *regcache)
       break;
 
     case amd64_sys_arch_prctl:
-      if (syscall_native == amd64_sys_arch_prctl)
-        {
-          ULONGEST arg3;
+      {
+	ULONGEST arg3;
 
-          regcache_raw_read_unsigned (regcache, amd64_linux_record_tdep.arg3,
-                                      &arg3);
-          if (arg3 == RECORD_ARCH_GET_FS || arg3 == RECORD_ARCH_GET_GS)
-            {
-	      CORE_ADDR addr;
+	regcache_raw_read_unsigned (regcache, amd64_linux_record_tdep.arg3,
+				    &arg3);
+	if (arg3 == RECORD_ARCH_GET_FS || arg3 == RECORD_ARCH_GET_GS)
+	  {
+	    CORE_ADDR addr;
 
-	      regcache_raw_read_unsigned (regcache,
-                                          amd64_linux_record_tdep.arg2,
-                                          &addr);
-	      if (record_arch_list_add_mem (addr,
-                                            amd64_linux_record_tdep.size_ulong))
-                return -1;
-            }
-          goto record_regs;
-        }
+	    regcache_raw_read_unsigned (regcache,
+					amd64_linux_record_tdep.arg2,
+					&addr);
+	    if (record_arch_list_add_mem (addr,
+					  amd64_linux_record_tdep.size_ulong))
+	      return -1;
+	  }
+	goto record_regs;
+      }
       break;
     }
 

@@ -1,7 +1,7 @@
 /* as.c - GAS main program.
    Copyright 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
    1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011
+   2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -284,6 +284,9 @@ Options:\n\
   --execstack             require executable stack for this object\n"));
   fprintf (stream, _("\
   --noexecstack           don't require executable stack for this object\n"));
+  fprintf (stream, _("\
+  --size-check=[error|warning]\n\
+			  ELF .size directive check (default --size-check=error)\n"));
 #endif
   fprintf (stream, _("\
   -f                      skip whitespace and comment preprocessing\n"));
@@ -443,6 +446,7 @@ parse_args (int * pargc, char *** pargv)
       OPTION_TARGET_HELP,
       OPTION_EXECSTACK,
       OPTION_NOEXECSTACK,
+      OPTION_SIZE_CHECK,
       OPTION_ALTERNATE,
       OPTION_AL,
       OPTION_HASH_TABLE_SIZE,
@@ -457,7 +461,7 @@ parse_args (int * pargc, char *** pargv)
   static const struct option std_longopts[] =
   {
     /* Note: commas are placed at the start of the line rather than
-       the end of the preceeding line so that it is simpler to
+       the end of the preceding line so that it is simpler to
        selectively add and remove lines from this list.  */
     {"alternate", no_argument, NULL, OPTION_ALTERNATE}
     /* The entry for "a" is here to prevent getopt_long_only() from
@@ -476,6 +480,7 @@ parse_args (int * pargc, char *** pargv)
 #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
     ,{"execstack", no_argument, NULL, OPTION_EXECSTACK}
     ,{"noexecstack", no_argument, NULL, OPTION_NOEXECSTACK}
+    ,{"size-check", required_argument, NULL, OPTION_SIZE_CHECK}
 #endif
     ,{"fatal-warnings", no_argument, NULL, OPTION_WARN_FATAL}
     ,{"gdwarf-2", no_argument, NULL, OPTION_GDWARF2}
@@ -618,7 +623,7 @@ parse_args (int * pargc, char *** pargv)
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
-	  printf (_("Copyright 2011 Free Software Foundation, Inc.\n"));
+	  printf (_("Copyright 2012 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or later.\n\
@@ -812,6 +817,15 @@ This program has absolutely no warranty.\n"));
 	case OPTION_NOEXECSTACK:
 	  flag_noexecstack = 1;
 	  flag_execstack = 0;
+	  break;
+
+	case OPTION_SIZE_CHECK:
+	  if (strcasecmp (optarg, "error") == 0)
+	    flag_size_check = size_check_error;
+	  else if (strcasecmp (optarg, "warning") == 0)
+	    flag_size_check = size_check_warning;
+	  else
+	    as_fatal (_("Invalid --size-check= option: `%s'"), optarg);
 	  break;
 #endif
 	case 'Z':
@@ -1023,10 +1037,13 @@ static void
 perform_an_assembly_pass (int argc, char ** argv)
 {
   int saw_a_file = 0;
+#ifndef OBJ_MACH_O
   flagword applicable;
+#endif
 
   need_pass_2 = 0;
 
+#ifndef OBJ_MACH_O
   /* Create the standard sections, and those the assembler uses
      internally.  */
   text_section = subseg_new (TEXT_SECTION_NAME, 0);
@@ -1043,12 +1060,15 @@ perform_an_assembly_pass (int argc, char ** argv)
 				       | SEC_DATA));
   bfd_set_section_flags (stdoutput, bss_section, applicable & SEC_ALLOC);
   seg_info (bss_section)->bss = 1;
+#endif
   subseg_new (BFD_ABS_SECTION_NAME, 0);
   subseg_new (BFD_UND_SECTION_NAME, 0);
   reg_section = subseg_new ("*GAS `reg' section*", 0);
   expr_section = subseg_new ("*GAS `expr' section*", 0);
 
+#ifndef OBJ_MACH_O
   subseg_set (text_section, 0);
+#endif
 
   /* This may add symbol table entries, which requires having an open BFD,
      and sections already created.  */
@@ -1191,6 +1211,9 @@ main (int argc, char ** argv)
   itbl_init ();
 
   dwarf2_init ();
+
+  local_symbol_make (".gasversion.", absolute_section,
+		     BFD_VERSION / 10000UL, &predefined_address_frag);
 
   /* Now that we have fully initialized, and have created the output
      file, define any symbols requested by --defsym command line

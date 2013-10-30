@@ -15,7 +15,7 @@ AM_CPPFLAGS = \
 	-I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../elfcpp \
 	-DLOCALEDIR="\"$(datadir)/locale\"" \
 	-DBINDIR="\"$(bindir)\"" -DTOOLBINDIR="\"$(tooldir)/bin\"" \
-	@INCINTL@
+	-DTOOLLIBDIR="\"$(tooldir)/lib\"" @INCINTL@
 
 LIBIBERTY = ../libiberty/libiberty.a
 
@@ -151,12 +151,14 @@ libgold_a_LIBADD = $(LIBOBJS)
 
 sources_var = main.cc
 deps_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL_DEP)
-ldadd_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(LIBINTL) \
+ldadd_var = $(TARGETOBJS) libgold.a $(LIBIBERTY) $(GOLD_LDADD) $(LIBINTL) \
 	 $(THREADSLIB) $(LIBDL)
+ldflags_var = $(GOLD_LDFLAGS)
 
 ld_new_SOURCES = $(sources_var)
 ld_new_DEPENDENCIES = $(deps_var)
 ld_new_LDADD = $(ldadd_var)
+ld_new_LDFLAGS = $(ldflags_var)
 
 EXTRA_ld_new_SOURCES = $(TARGETSOURCES)
 

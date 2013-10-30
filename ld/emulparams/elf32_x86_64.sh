@@ -1,3 +1,4 @@
+. ${srcdir}/emulparams/plt_unwind.sh
 SCRIPT_NAME=elf
 ELFSIZE=32
 OUTPUT_FORMAT="elf32-x86-64"
@@ -28,7 +29,7 @@ fi
 case "$target" in
   x86_64*-linux*|i[3-7]86-*-linux-*)
     case "$EMULATION_NAME" in
-      *32*) LIBPATH_SUFFIX=32 ;;
+      *32*) LIBPATH_SUFFIX=x32 ;;
       *64*) LIBPATH_SUFFIX=64 ;;
     esac
     ;;

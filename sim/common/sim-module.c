@@ -1,7 +1,6 @@
 /* Module support.
 
-   Copyright 1996, 1997, 1998, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1996-1998, 2003, 2007-2012 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -228,7 +227,7 @@ sim_module_uninstall (SIM_DESC sd)
     for (d = modules->init_list; d != NULL; d = n)
       {
 	n = d->next;
-	zfree (d);
+	free (d);
       }
   }
 
@@ -238,7 +237,7 @@ sim_module_uninstall (SIM_DESC sd)
     for (d = modules->resume_list; d != NULL; d = n)
       {
 	n = d->next;
-	zfree (d);
+	free (d);
       }
   }
 
@@ -248,7 +247,7 @@ sim_module_uninstall (SIM_DESC sd)
     for (d = modules->suspend_list; d != NULL; d = n)
       {
 	n = d->next;
-	zfree (d);
+	free (d);
       }
   }
 
@@ -258,7 +257,7 @@ sim_module_uninstall (SIM_DESC sd)
     for (d = modules->uninstall_list; d != NULL; d = n)
       {
 	n = d->next;
-	zfree (d);
+	free (d);
       }
   }
 
@@ -268,11 +267,11 @@ sim_module_uninstall (SIM_DESC sd)
     for (d = modules->info_list; d != NULL; d = n)
       {
 	n = d->next;
-	zfree (d);
+	free (d);
       }
   }
 
-  zfree (modules);
+  free (modules);
   STATE_MODULES (sd) = NULL;
 }
 

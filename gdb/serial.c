@@ -1,8 +1,6 @@
 /* Generic serial interface routines
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2002, 2004-2012 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -214,7 +212,7 @@ serial_open (const char *name)
   scb->bufp = scb->buf;
   scb->error_fd = -1;
 
-  /* `...->open (...)' would get expanded by an the open(2) syscall macro.  */
+  /* `...->open (...)' would get expanded by the open(2) syscall macro.  */
   if ((*scb->ops->open) (scb, open_name))
     {
       xfree (scb);
@@ -491,6 +489,12 @@ serial_ttystate
 serial_get_tty_state (struct serial *scb)
 {
   return scb->ops->get_tty_state (scb);
+}
+
+serial_ttystate
+serial_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
+{
+  return scb->ops->copy_tty_state (scb, ttystate);
 }
 
 int

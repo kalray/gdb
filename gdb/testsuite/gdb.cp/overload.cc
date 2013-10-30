@@ -110,7 +110,7 @@ int main ()
     unsigned long arg10 =10;
     float arg11 =100.0;
     double arg12 = 200.0;
-    int arg13 = 200.0;
+    int arg13 = 200;
     char arg14 = 'a';
 
     A a;
@@ -134,11 +134,6 @@ int main ()
     N::nsoverload();
     N::nsoverload(2);
     N::nsoverload(2, 3);
-
-    #ifdef usestubs
-       set_debug_traps();
-       breakpoint();
-    #endif
 
     overloadNamespace (1);
     overloadNamespace (dummyInstance);

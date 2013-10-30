@@ -181,7 +181,9 @@ proc shared_test { progname testname main sh1 sh2 dat args } {
     pass "$testname"
 }
 
-if [istarget mips*-*-*] {
+# Old version of GCC for MIPS default to enabling -fpic
+# and get confused if it is used on the command line.
+if { [istarget mips*-*-*] && ! [at_least_gcc_version 4 3] } then {
     set picflag ""
 } else {
     # Unfortunately, the gcc argument is -fpic and the cc argument is
@@ -234,7 +236,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	if { [istarget sparc*-*-linux*] && [is_elf64 $tmpdir/mainnp.o] } {
 	    setup_xfail "sparc*-*-linux*"
 	}
-	setup_xfail "x86_64-*-linux*"
+	if { [is_elf64 $tmpdir/mainnp.o] } {
+	    setup_xfail "x86_64-*-linux*"
+	}
 	setup_xfail "s390x-*-linux*"
 	if [ string match $shared_needs_pic "yes" ] {
 	    setup_xfail "arm*-*-linux*"
@@ -257,7 +261,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	if { [istarget sparc*-*-linux*] && [is_elf64 $tmpdir/mainnp.o] } {
 	    setup_xfail "sparc*-*-linux*"
 	}
-	setup_xfail "x86_64-*-linux*"
+	if { [is_elf64 $tmpdir/mainnp.o] } {
+	    setup_xfail "x86_64-*-linux*"
+	}
 	setup_xfail "s390x-*-linux*"
 	if [ string match $shared_needs_pic "yes" ] {
 	    setup_xfail "arm*-*-linux*"
@@ -310,7 +316,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
 	    if { [istarget sparc*-*-linux*] && [is_elf64 $tmpdir/mainp.o] } {
 		setup_xfail "sparc*-*-linux*"
 	    }
-	    setup_xfail "x86_64-*-linux*"
+	    if { [is_elf64 $tmpdir/mainp.o] } {
+		setup_xfail "x86_64-*-linux*"
+	    }
 	    setup_xfail "s390x-*-linux*"
 	    if [ string match $shared_needs_pic "yes" ] {
 		setup_xfail "arm*-*-linux*"

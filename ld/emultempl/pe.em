@@ -56,6 +56,7 @@ fragment <<EOF
 #include "bfdlink.h"
 #include "getopt.h"
 #include "libiberty.h"
+#include "filenames.h"
 #include "ld.h"
 #include "ldmain.h"
 #include "ldexp.h"
@@ -1196,8 +1197,7 @@ This should work unless it involves constant data structures referencing symbols
 static bfd_boolean
 pr_sym (struct bfd_hash_entry *h, void *inf ATTRIBUTE_UNUSED)
 {
-  if (pe_dll_extra_pe_debug)
-    printf ("+%s\n", h->string);
+  printf ("+%s\n", h->string);
 
   return TRUE;
 }
@@ -1405,8 +1405,9 @@ gld_${EMULATION_NAME}_after_open (void)
 			    ? bfd_get_filename (blhe->u.def.section->owner->my_archive)
 			    : bfd_get_filename (blhe->u.def.section->owner);
 
-			if (strcmp (bfd_get_filename (is->the_bfd->my_archive),
-				    other_bfd_filename) == 0)
+			if (filename_cmp (bfd_get_filename
+					    (is->the_bfd->my_archive),
+					  other_bfd_filename) == 0)
 			  continue;
 
 			/* Rename this implib to match the other one.  */
@@ -1460,7 +1461,7 @@ gld_${EMULATION_NAME}_after_open (void)
 		       extension, and use that for the remainder of the
 		       comparisons.  */
 		    pnt = strrchr (is3->the_bfd->filename, '.');
-		    if (pnt != NULL && strcmp (pnt, ".dll") == 0)
+		    if (pnt != NULL && filename_cmp (pnt, ".dll") == 0)
 		      break;
 		  }
 
@@ -1477,11 +1478,11 @@ gld_${EMULATION_NAME}_after_open (void)
 			/* Skip static members, ie anything with a .obj
 			   extension.  */
 			pnt = strrchr (is2->the_bfd->filename, '.');
-			if (pnt != NULL && strcmp (pnt, ".obj") == 0)
+			if (pnt != NULL && filename_cmp (pnt, ".obj") == 0)
 			  continue;
 
-			if (strcmp (is3->the_bfd->filename,
-				    is2->the_bfd->filename))
+			if (filename_cmp (is3->the_bfd->filename,
+					  is2->the_bfd->filename))
 			  {
 			    is_ms_arch = 0;
 			    break;
@@ -1495,7 +1496,7 @@ gld_${EMULATION_NAME}_after_open (void)
 	       then leave the filename alone.  */
 	    pnt = strrchr (is->the_bfd->filename, '.');
 
-	    if (is_ms_arch && (strcmp (pnt, ".dll") == 0))
+	    if (is_ms_arch && (filename_cmp (pnt, ".dll") == 0))
 	      {
 		int idata2 = 0, reloc_count=0;
 		asection *sec;
@@ -1588,8 +1589,10 @@ gld_${EMULATION_NAME}_after_open (void)
 			/* If the symbol in the stub section has no other
 			   undefined references, exclude the stub section
 			   from the final link.  */
-			if (blhe && (blhe->type == bfd_link_hash_defined)
-			    && (blhe->u.undef.next == NULL))
+			if (blhe != NULL
+			    && blhe->type == bfd_link_hash_defined
+			    && blhe->u.undef.next == NULL
+			    && blhe != link_info.hash->undefs_tail)
 			  stub_sec->flags |= SEC_EXCLUDE;
 		      }
 		  }
@@ -1668,7 +1671,7 @@ gld_${EMULATION_NAME}_unrecognized_file (lang_input_statement_type *entry ATTRIB
 #ifdef DLL_SUPPORT
   const char *ext = entry->filename + strlen (entry->filename) - 4;
 
-  if (strcmp (ext, ".def") == 0 || strcmp (ext, ".DEF") == 0)
+  if (filename_cmp (ext, ".def") == 0 || filename_cmp (ext, ".DEF") == 0)
     {
       pe_def_file = def_file_parse (entry->filename, pe_def_file);
 
@@ -2007,10 +2010,17 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
 		     ->output_section_statement);
 	}
 
-      /* All sections in an executable must be aligned to a page boundary.  */
+      /* All sections in an executable must be aligned to a page boundary.
+	 In a relocatable link, just preserve the incoming alignment; the
+	 address is discarded by lang_insert_orphan in that case, anyway.  */
       address = exp_unop (ALIGN_K, exp_nameop (NAME, "__section_alignment__"));
       os = lang_insert_orphan (s, secname, constraint, after, place, address,
 			       &add_child);
+      if (link_info.relocatable)
+	{
+	  os->section_alignment = s->alignment_power;
+	  os->bfd_section->alignment_power = s->alignment_power;
+	}
     }
 
   /* If the section name has a '\$', sort it with the other '\$'

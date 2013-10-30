@@ -38,6 +38,7 @@ case ${cpu} in
   cr16*)		cpu_type=cr16 endian=little ;;
   crisv32)		cpu_type=cris arch=crisv32 ;;
   crx*)			cpu_type=crx endian=little ;;
+  epiphany*)		cpu_type=epiphany endian=little ;;
   fido)			cpu_type=m68k ;;
   hppa*)		cpu_type=hppa ;;
   i[3-7]86)		cpu_type=i386 arch=i386;;
@@ -64,6 +65,7 @@ case ${cpu} in
   powerpc*le*)		cpu_type=ppc endian=little ;;
   powerpc*)		cpu_type=ppc endian=big ;;
   rs6000*)		cpu_type=ppc ;;
+  rl78*)		cpu_type=rl78 ;;
   rx)			cpu_type=rx ;;
   s390x*)		cpu_type=s390 arch=s390x ;;
   s390*)		cpu_type=s390 arch=s390 ;;
@@ -80,13 +82,8 @@ case ${cpu} in
   sparclet*)		cpu_type=sparc arch=sparclet ;;
   sparclite*)		cpu_type=sparc arch=sparclite ;;
   sparc*)		cpu_type=sparc arch=sparclite ;; # ??? See tc-sparc.c.
-  strongarm*be)		cpu_type=arm endian=big ;;
-  strongarm*b)		cpu_type=arm endian=big ;;
-  strongarm*)		cpu_type=arm endian=little ;;
   v850*)		cpu_type=v850 ;;
   x86_64*)		cpu_type=i386 arch=x86_64;;
-  xscale*be|xscale*b)	cpu_type=arm endian=big ;;
-  xscale*)		cpu_type=arm endian=little ;;
   xtensa*)		cpu_type=xtensa arch=xtensa ;;
   *)			cpu_type=${cpu} ;;
 esac
@@ -106,9 +103,9 @@ case ${generic_target} in
   arc-*-elf*)				fmt=elf ;;
 
   arm-*-aout)				fmt=aout ;;
-  arm-*-coff | thumb-*-coff)		fmt=coff ;;
-  arm-*-rtems* | thumb-*-rtems*)	fmt=elf ;;
-  arm-*-elf | thumb-*-elf)		fmt=elf ;;
+  arm-*-coff)				fmt=coff ;;
+  arm-*-rtems*)				fmt=elf ;;
+  arm-*-elf)				fmt=elf ;;
   arm-*-eabi*)				fmt=elf em=armeabi ;;
   arm-*-symbianelf*)			fmt=elf em=symbian ;;
   arm-*-kaos*)				fmt=elf ;;
@@ -121,10 +118,10 @@ case ${generic_target} in
   arm-*-netbsdelf*)			fmt=elf  em=nbsd ;;
   arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
   arm-*-nto*)				fmt=elf ;;
-  arm-epoc-pe | thumb-epoc-pe)		fmt=coff em=epoc-pe ;;
+  arm-epoc-pe)				fmt=coff em=epoc-pe ;;
   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
 					fmt=coff em=wince-pe ;;
-  arm-*-pe | thumb-*-pe)		fmt=coff em=pe ;;
+  arm-*-pe)				fmt=coff em=pe ;;
   arm-*-riscix*)			fmt=aout em=riscix ;;
 
   avr-*-*)				fmt=elf bfd_gas=yes ;;
@@ -145,6 +142,8 @@ case ${generic_target} in
   d10v-*-*)				fmt=elf ;;
   d30v-*-*)				fmt=elf ;;
   dlx-*-*)				fmt=elf ;;
+
+  epiphany-*-*)				fmt=elf ;;
 
   fr30-*-*)				fmt=elf ;;
   frv-*-*linux*)			fmt=elf em=linux;;
@@ -205,8 +204,8 @@ case ${generic_target} in
   i386-*-freebsdaout*)			fmt=aout em=386bsd ;;
   i386-*-freebsd[12].*)			fmt=aout em=386bsd ;;
   i386-*-freebsd[12])			fmt=aout em=386bsd ;;
-  i386-*-freebsd* | i386-*-kfreebsd*-gnu | i386-*-dragonfly*)
-					fmt=elf em=freebsd ;;
+  i386-*-freebsd* \
+  | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
   i386-*-sysv*)				fmt=coff ;;
   i386-*-sco3.2v5*coff)			fmt=coff ;;
   i386-*-isc*)				fmt=coff ;;
@@ -404,13 +403,12 @@ case ${generic_target} in
   tic54x-*-* | c54x*-*-*)		fmt=coff bfd_gas=yes need_libm=yes;;
   tic6x-*-*)				fmt=elf ;;
 
+  tilepro-*-* | tilegx-*-*)		fmt=elf ;;
+
   v850*-*-*)				fmt=elf ;;
 
   vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
   vax-*-linux-*)			fmt=elf em=linux ;;
-
-  xscale-*-coff)			fmt=coff ;;
-  xscale-*-elf)				fmt=elf ;;
 
   xstormy16-*-*)			fmt=elf ;;
 
@@ -421,6 +419,7 @@ case ${generic_target} in
   z8k-*-coff | z8k-*-sim)		fmt=coff ;;
 
   *-*-aout | *-*-scout)			fmt=aout ;;
+  *-*-dragonfly*)			fmt=elf em=dragonfly ;;
   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
   *-*-bsd*)				fmt=aout em=sun3 ;;
   *-*-generic)				fmt=generic ;;

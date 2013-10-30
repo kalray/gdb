@@ -1,6 +1,7 @@
 /* tc-i386.c -- Assemble code for the Intel 80386
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+   2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -217,7 +218,9 @@ enum i386_error
     old_gcc_only,
     unsupported_with_intel_mnemonic,
     unsupported_syntax,
-    unsupported
+    unsupported,
+    invalid_vsib_address,
+    unsupported_vector_index_register
   };
 
 struct _i386_insn
@@ -277,8 +280,13 @@ struct _i386_insn
     /* Swap operand in encoding.  */
     unsigned int swap_operand;
 
-    /* Force 32bit displacement in encoding.  */
-    unsigned int disp32_encoding;
+    /* Prefer 8bit or 32bit displacement in encoding.  */
+    enum
+      {
+	disp_encoding_default = 0,
+	disp_encoding_8bit,
+	disp_encoding_32bit
+      } disp_encoding;
 
     /* Error message.  */
     enum i386_error error;
@@ -303,6 +311,7 @@ const char extra_symbol_chars[] = "*%-(["
 	 && !defined (TE_LINUX)				\
  	 && !defined (TE_NETWARE)			\
 	 && !defined (TE_FreeBSD)			\
+	 && !defined (TE_DragonFly)			\
 	 && !defined (TE_NetBSD)))
 /* This array holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful.  The option
@@ -629,6 +638,8 @@ static const arch_entry cpu_arch[] =
     CPU_COREI7_FLAGS, 0, 0 },
   { STRING_COMMA_LEN ("l1om"), PROCESSOR_L1OM,
     CPU_L1OM_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN ("k1om"), PROCESSOR_K1OM,
+    CPU_K1OM_FLAGS, 0, 0 },
   { STRING_COMMA_LEN ("k6"), PROCESSOR_K6,
     CPU_K6_FLAGS, 0, 0 },
   { STRING_COMMA_LEN ("k6_2"), PROCESSOR_K6,
@@ -643,8 +654,10 @@ static const arch_entry cpu_arch[] =
     CPU_K8_FLAGS, 0, 0 },
   { STRING_COMMA_LEN ("amdfam10"), PROCESSOR_AMDFAM10,
     CPU_AMDFAM10_FLAGS, 0, 0 },
-  { STRING_COMMA_LEN ("bdver1"), PROCESSOR_BDVER1,
+  { STRING_COMMA_LEN ("bdver1"), PROCESSOR_BD,
     CPU_BDVER1_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN ("bdver2"), PROCESSOR_BD,
+    CPU_BDVER2_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".8087"), PROCESSOR_UNKNOWN,
     CPU_8087_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".287"), PROCESSOR_UNKNOWN,
@@ -675,10 +688,14 @@ static const arch_entry cpu_arch[] =
     CPU_ANY_SSE_FLAGS, 0, 1 },
   { STRING_COMMA_LEN (".avx"), PROCESSOR_UNKNOWN,
     CPU_AVX_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".avx2"), PROCESSOR_UNKNOWN,
+    CPU_AVX2_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".noavx"), PROCESSOR_UNKNOWN,
     CPU_ANY_AVX_FLAGS, 0, 1 },
   { STRING_COMMA_LEN (".vmx"), PROCESSOR_UNKNOWN,
     CPU_VMX_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".vmfunc"), PROCESSOR_UNKNOWN,
+    CPU_VMFUNC_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".smx"), PROCESSOR_UNKNOWN,
     CPU_SMX_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".xsave"), PROCESSOR_UNKNOWN,
@@ -697,6 +714,8 @@ static const arch_entry cpu_arch[] =
     CPU_RDRND_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".f16c"), PROCESSOR_UNKNOWN,
     CPU_F16C_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".bmi2"), PROCESSOR_UNKNOWN,
+    CPU_BMI2_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".fma"), PROCESSOR_UNKNOWN,
     CPU_FMA_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".fma4"), PROCESSOR_UNKNOWN,
@@ -709,6 +728,10 @@ static const arch_entry cpu_arch[] =
     CPU_MOVBE_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".ept"), PROCESSOR_UNKNOWN,
     CPU_EPT_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".lzcnt"), PROCESSOR_UNKNOWN,
+    CPU_LZCNT_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".invpcid"), PROCESSOR_UNKNOWN,
+    CPU_INVPCID_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".clflush"), PROCESSOR_UNKNOWN,
     CPU_CLFLUSH_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".nop"), PROCESSOR_UNKNOWN,
@@ -1020,7 +1043,7 @@ i386_align_code (fragS *fragP, int count)
      PROCESSOR_CORE, PROCESSOR_CORE2, PROCESSOR_COREI7, and
      PROCESSOR_GENERIC64, alt_long_patt will be used.
      3. For PROCESSOR_ATHLON, PROCESSOR_K6, PROCESSOR_K8 and
-     PROCESSOR_AMDFAM10, and PROCESSOR_BDVER1, alt_short_patt
+     PROCESSOR_AMDFAM10, and PROCESSOR_BD, alt_short_patt
      will be used.
 
      When -mtune= isn't used, alt_long_patt will be used if
@@ -1060,13 +1083,13 @@ i386_align_code (fragS *fragP, int count)
 	      else
 		patt = f32_patt;
 	      break;
-	    case PROCESSOR_PENTIUMPRO:
 	    case PROCESSOR_PENTIUM4:
 	    case PROCESSOR_NOCONA:
 	    case PROCESSOR_CORE:
 	    case PROCESSOR_CORE2:
 	    case PROCESSOR_COREI7:
 	    case PROCESSOR_L1OM:
+	    case PROCESSOR_K1OM:
 	    case PROCESSOR_GENERIC64:
 	      patt = alt_long_patt;
 	      break;
@@ -1074,12 +1097,13 @@ i386_align_code (fragS *fragP, int count)
 	    case PROCESSOR_ATHLON:
 	    case PROCESSOR_K8:
 	    case PROCESSOR_AMDFAM10:
-	    case PROCESSOR_BDVER1:
+	    case PROCESSOR_BD:
 	      patt = alt_short_patt;
 	      break;
 	    case PROCESSOR_I386:
 	    case PROCESSOR_I486:
 	    case PROCESSOR_PENTIUM:
+	    case PROCESSOR_PENTIUMPRO:
 	    case PROCESSOR_GENERIC32:
 	      patt = f32_patt;
 	      break;
@@ -1102,7 +1126,7 @@ i386_align_code (fragS *fragP, int count)
 	    case PROCESSOR_ATHLON:
 	    case PROCESSOR_K8:
 	    case PROCESSOR_AMDFAM10:
-	    case PROCESSOR_BDVER1:
+	    case PROCESSOR_BD:
 	    case PROCESSOR_GENERIC32:
 	      /* We use cpu_arch_isa_flags to check if we CAN optimize
 		 with nops.  */
@@ -1118,6 +1142,7 @@ i386_align_code (fragS *fragP, int count)
 	    case PROCESSOR_CORE2:
 	    case PROCESSOR_COREI7:
 	    case PROCESSOR_L1OM:
+	    case PROCESSOR_K1OM:
 	      if (fragP->tc_frag_data.isa_flags.bitfield.cpunop)
 		patt = alt_long_patt;
 	      else
@@ -2110,6 +2135,11 @@ check_cpu_arch_compatible (const char *name ATTRIBUTE_UNUSED,
       || new_flag.bitfield.cpul1om)
     return;
 
+  /* If we are targeting Intel K1OM, we must enable it.  */
+  if (get_elf_backend_data (stdoutput)->elf_machine_code != EM_K1OM
+      || new_flag.bitfield.cpuk1om)
+    return;
+
   as_bad (_("`%s' is not supported on `%s'"), name, arch);
 #endif
 }
@@ -2176,6 +2206,7 @@ set_cpu_arch (int dummy ATTRIBUTE_UNUSED)
 		  else
 		    cpu_sub_arch_name = xstrdup (cpu_arch[j].name);
 		  cpu_arch_flags = flags;
+		  cpu_arch_isa_flags = flags;
 		}
 	      *input_line_pointer = e;
 	      demand_empty_rest_of_line ();
@@ -2220,12 +2251,19 @@ i386_arch (void)
 	as_fatal (_("Intel L1OM is 64bit ELF only"));
       return bfd_arch_l1om;
     }
+  else if (cpu_arch_isa == PROCESSOR_K1OM)
+    {
+      if (OUTPUT_FLAVOR != bfd_target_elf_flavour
+	  || flag_code != CODE_64BIT)
+	as_fatal (_("Intel K1OM is 64bit ELF only"));
+      return bfd_arch_k1om;
+    }
   else
     return bfd_arch_i386;
 }
 
 unsigned long
-i386_mach ()
+i386_mach (void)
 {
   if (!strncmp (default_arch, "x86_64", 6))
     {
@@ -2236,6 +2274,13 @@ i386_mach ()
 	    as_fatal (_("Intel L1OM is 64bit ELF only"));
 	  return bfd_mach_l1om;
 	}
+      else if (cpu_arch_isa == PROCESSOR_K1OM)
+	{
+	  if (OUTPUT_FLAVOR != bfd_target_elf_flavour
+	      || default_arch[6] != '\0')
+	    as_fatal (_("Intel K1OM is 64bit ELF only"));
+	  return bfd_mach_k1om;
+	}
       else if (default_arch[6] == '\0')
 	return bfd_mach_x86_64;
       else
@@ -2244,11 +2289,11 @@ i386_mach ()
   else if (!strcmp (default_arch, "i386"))
     return bfd_mach_i386_i386;
   else
-    as_fatal (_("Unknown architecture"));
+    as_fatal (_("unknown architecture"));
 }
 
 void
-md_begin ()
+md_begin (void)
 {
   const char *hash_err;
 
@@ -2278,7 +2323,7 @@ md_begin ()
 				    (void *) core_optab);
 	    if (hash_err)
 	      {
-		as_fatal (_("Internal Error:  Can't hash %s: %s"),
+		as_fatal (_("internal Error:  Can't hash %s: %s"),
 			  (optab - 1)->name,
 			  hash_err);
 	      }
@@ -2300,7 +2345,7 @@ md_begin ()
       {
 	hash_err = hash_insert (reg_hash, regtab->reg_name, (void *) regtab);
 	if (hash_err)
-	  as_fatal (_("Internal Error:  Can't hash %s: %s"),
+	  as_fatal (_("internal Error:  Can't hash %s: %s"),
 		    regtab->reg_name,
 		    hash_err);
       }
@@ -2590,7 +2635,7 @@ reloc (unsigned int size,
 	  }
 
       /* Sign-checking 4-byte relocations in 16-/32-bit code is pointless.  */
-      if (size == 4 && flag_code != CODE_64BIT)
+      if (size == 4 && (flag_code != CODE_64BIT || disallow_64bit_reloc))
 	sign = -1;
 
       rel = bfd_reloc_type_lookup (stdoutput, other);
@@ -3013,7 +3058,7 @@ md_assemble (char *line)
   /* Don't optimize displacement for movabs since it only takes 64bit
      displacement.  */
   if (i.disp_operands
-      && !i.disp32_encoding
+      && i.disp_encoding != disp_encoding_32bit
       && (flag_code != CODE_64BIT
 	  || strcmp (mnemonic, "movabs") != 0))
     optimize_disp ();
@@ -3292,11 +3337,15 @@ parse_insn (char *line, char *mnemonic)
 	 encoding.  */
       if (mnem_p - 2 == dot_p && dot_p[1] == 's')
 	i.swap_operand = 1;
+      else if (mnem_p - 3 == dot_p 
+	       && dot_p[1] == 'd'
+	       && dot_p[2] == '8')
+	i.disp_encoding = disp_encoding_8bit;
       else if (mnem_p - 4 == dot_p 
 	       && dot_p[1] == 'd'
 	       && dot_p[2] == '3'
 	       && dot_p[3] == '2')
-	i.disp32_encoding = 1;
+	i.disp_encoding = disp_encoding_32bit;
       else
 	goto check_suffix;
       mnem_p = dot_p;
@@ -3828,6 +3877,38 @@ optimize_disp (void)
       }
 }
 
+/* Check if operands are valid for the instruction.  */
+
+static int
+check_VecOperands (const insn_template *t)
+{
+  /* Without VSIB byte, we can't have a vector register for index.  */
+  if (!t->opcode_modifier.vecsib
+      && i.index_reg
+      && (i.index_reg->reg_type.bitfield.regxmm
+	  || i.index_reg->reg_type.bitfield.regymm))
+    {
+      i.error = unsupported_vector_index_register;
+      return 1;
+    }
+
+  /* For VSIB byte, we need a vector register for index and no PC
+     relative addressing is allowed.  */
+  if (t->opcode_modifier.vecsib
+      && (!i.index_reg
+	  || !((t->opcode_modifier.vecsib == VecSIB128
+		&& i.index_reg->reg_type.bitfield.regxmm)
+	       || (t->opcode_modifier.vecsib == VecSIB256
+		   && i.index_reg->reg_type.bitfield.regymm))
+	  || (i.base_reg && i.base_reg->reg_num == RegRip)))
+    {
+      i.error = invalid_vsib_address;
+      return 1;
+    }
+
+  return 0;
+}
+
 /* Check if operands are valid for the instruction.  Update VEX
    operand types.  */
 
@@ -4164,6 +4245,10 @@ check_reverse:
 	  continue;
 	}
 
+      /* Check if vector operands are valid.  */
+      if (check_VecOperands (t))
+	continue;
+
       /* Check if VEX operands are valid.  */
       if (VEX_check_operands (t))
 	continue;
@@ -4209,6 +4294,12 @@ check_reverse:
 	  break;
 	case unsupported:
 	  err_msg = _("unsupported");
+	  break;
+	case invalid_vsib_address:
+	  err_msg = _("invalid VSIB address");
+	  break;
+	case unsupported_vector_index_register:
+	  err_msg = _("unsupported vector index register");
 	  break;
 	}
       as_bad (_("%s for `%s'"), err_msg,
@@ -4590,7 +4681,7 @@ check_byte_reg (void)
 	  if (flag_code == CODE_64BIT
 	      && !i.tm.operand_types[op].bitfield.inoutportreg)
 	    {
-	      as_bad (_("Incorrect register `%s%s' used with `%c' suffix"),
+	      as_bad (_("incorrect register `%s%s' used with `%c' suffix"),
 		      register_prefix, i.op[op].regs->reg_name,
 		      i.suffix);
 	      return 0;
@@ -4665,7 +4756,7 @@ check_long_reg (void)
 	   lowering is more complicated.  */
 	if (flag_code == CODE_64BIT)
 	  {
-	    as_bad (_("Incorrect register `%s%s' used with `%c' suffix"),
+	    as_bad (_("incorrect register `%s%s' used with `%c' suffix"),
 		    register_prefix, i.op[op].regs->reg_name,
 		    i.suffix);
 	    return 0;
@@ -4694,7 +4785,7 @@ check_long_reg (void)
 	  }
 	else
 	  {
-	    as_bad (_("Incorrect register `%s%s' used with `%c' suffix"),
+	    as_bad (_("incorrect register `%s%s' used with `%c' suffix"),
 		    register_prefix, i.op[op].regs->reg_name,
 		    i.suffix);
 	    return 0;
@@ -4740,7 +4831,7 @@ check_qword_reg (void)
 	  }
 	else
 	  {
-	    as_bad (_("Incorrect register `%s%s' used with `%c' suffix"),
+	    as_bad (_("incorrect register `%s%s' used with `%c' suffix"),
 		    register_prefix, i.op[op].regs->reg_name,
 		    i.suffix);
 	    return 0;
@@ -4778,7 +4869,7 @@ check_word_reg (void)
 	   lowering is more complicated.  */
 	if (flag_code == CODE_64BIT)
 	  {
-	    as_bad (_("Incorrect register `%s%s' used with `%c' suffix"),
+	    as_bad (_("incorrect register `%s%s' used with `%c' suffix"),
 		    register_prefix, i.op[op].regs->reg_name,
 		    i.suffix);
 	    return 0;
@@ -5406,15 +5497,53 @@ build_modrm_byte (void)
 	      break;
 	  gas_assert (op < i.operands);
 
+	  if (i.tm.opcode_modifier.vecsib)
+	    {
+	      if (i.index_reg->reg_num == RegEiz
+		  || i.index_reg->reg_num == RegRiz)
+		abort ();
+
+	      i.rm.regmem = ESCAPE_TO_TWO_BYTE_ADDRESSING;
+	      if (!i.base_reg)
+		{
+		  i.sib.base = NO_BASE_REGISTER;
+		  i.sib.scale = i.log2_scale_factor;
+		  i.types[op].bitfield.disp8 = 0;
+		  i.types[op].bitfield.disp16 = 0;
+		  i.types[op].bitfield.disp64 = 0;
+		  if (flag_code != CODE_64BIT)
+		    {
+		      /* Must be 32 bit */
+		      i.types[op].bitfield.disp32 = 1;
+		      i.types[op].bitfield.disp32s = 0;
+		    }
+		  else
+		    {
+		      i.types[op].bitfield.disp32 = 0;
+		      i.types[op].bitfield.disp32s = 1;
+		    }
+		}
+	      i.sib.index = i.index_reg->reg_num;
+	      if ((i.index_reg->reg_flags & RegRex) != 0)
+		i.rex |= REX_X;
+	    }
+
 	  default_seg = &ds;
 
 	  if (i.base_reg == 0)
 	    {
 	      i.rm.mode = 0;
 	      if (!i.disp_operands)
-		fake_zero_displacement = 1;
+		{
+		  fake_zero_displacement = 1;
+		  /* Instructions with VSIB byte need 32bit displacement
+		     if there is no base register.  */
+		  if (i.tm.opcode_modifier.vecsib)
+		    i.types[op].bitfield.disp32 = 1;
+		}
 	      if (i.index_reg == 0)
 		{
+		  gas_assert (!i.tm.opcode_modifier.vecsib);
 		  /* Operand is just <disp>  */
 		  if (flag_code == CODE_64BIT)
 		    {
@@ -5440,8 +5569,9 @@ build_modrm_byte (void)
 		      i.types[op] = disp32;
 		    }
 		}
-	      else /* !i.base_reg && i.index_reg  */
+	      else if (!i.tm.opcode_modifier.vecsib)
 		{
+		  /* !i.base_reg && i.index_reg  */
 		  if (i.index_reg->reg_num == RegEiz
 		      || i.index_reg->reg_num == RegRiz)
 		    i.sib.index = NO_INDEX_REGISTER;
@@ -5472,6 +5602,7 @@ build_modrm_byte (void)
 	  else if (i.base_reg->reg_num == RegRip ||
 		   i.base_reg->reg_num == RegEip)
 	    {
+	      gas_assert (!i.tm.opcode_modifier.vecsib);
 	      i.rm.regmem = NO_BASE_REGISTER;
 	      i.types[op].bitfield.disp8 = 0;
 	      i.types[op].bitfield.disp16 = 0;
@@ -5484,6 +5615,7 @@ build_modrm_byte (void)
 	    }
 	  else if (i.base_reg->reg_type.bitfield.reg16)
 	    {
+	      gas_assert (!i.tm.opcode_modifier.vecsib);
 	      switch (i.base_reg->reg_num)
 		{
 		case 3: /* (%bx)  */
@@ -5527,7 +5659,8 @@ build_modrm_byte (void)
 		    i.types[op].bitfield.disp32 = 1;
 		}
 
-	      i.rm.regmem = i.base_reg->reg_num;
+	      if (!i.tm.opcode_modifier.vecsib)
+		i.rm.regmem = i.base_reg->reg_num;
 	      if ((i.base_reg->reg_flags & RegRex) != 0)
 		i.rex |= REX_B;
 	      i.sib.base = i.base_reg->reg_num;
@@ -5549,6 +5682,7 @@ build_modrm_byte (void)
 	      i.sib.scale = i.log2_scale_factor;
 	      if (i.index_reg == 0)
 		{
+		  gas_assert (!i.tm.opcode_modifier.vecsib);
 		  /* <disp>(%esp) becomes two byte modrm with no index
 		     register.  We've already stored the code for esp
 		     in i.rm.regmem ie. ESCAPE_TO_TWO_BYTE_ADDRESSING.
@@ -5556,7 +5690,7 @@ build_modrm_byte (void)
 		     extra modrm byte.  */
 		  i.sib.index = NO_INDEX_REGISTER;
 		}
-	      else
+	      else if (!i.tm.opcode_modifier.vecsib)
 		{
 		  if (i.index_reg->reg_num == RegEiz
 		      || i.index_reg->reg_num == RegRiz)
@@ -5573,7 +5707,19 @@ build_modrm_byte (void)
 		      || i.reloc[op] == BFD_RELOC_X86_64_TLSDESC_CALL))
 		i.rm.mode = 0;
 	      else
-		i.rm.mode = mode_from_disp_size (i.types[op]);
+		{
+		  if (!fake_zero_displacement
+		      && !i.disp_operands
+		      && i.disp_encoding)
+		    {
+		      fake_zero_displacement = 1;
+		      if (i.disp_encoding == disp_encoding_8bit)
+			i.types[op].bitfield.disp8 = 1;
+		      else
+			i.types[op].bitfield.disp32 = 1;
+		    }
+		  i.rm.mode = mode_from_disp_size (i.types[op]);
+		}
 	    }
 
 	  if (fake_zero_displacement)
@@ -5775,7 +5921,7 @@ output_branch (void)
   offsetT off;
 
   code16 = flag_code == CODE_16BIT ? CODE16 : 0;
-  size = i.disp32_encoding ? BIG : SMALL;
+  size = i.disp_encoding == disp_encoding_32bit ? BIG : SMALL;
 
   prefix = 0;
   if (i.prefix[DATA_PREFIX] != 0)
@@ -6404,7 +6550,8 @@ x86_cons_fix_new (fragS *frag, unsigned int off, unsigned int len,
   fix_new_exp (frag, off, len, exp, 0, r);
 }
 
-#if (!defined (OBJ_ELF) && !defined (OBJ_MAYBE_ELF)) || defined (LEX_AT)
+#if !(defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) || defined (OBJ_MACH_O)) \
+    || defined (LEX_AT)
 # define lex_got(reloc, adjust, types) NULL
 #else
 /* Parse operands of the form
@@ -6487,8 +6634,10 @@ lex_got (enum bfd_reloc_code_real *rel,
   char *cp;
   unsigned int j;
 
+#if defined (OBJ_MAYBE_ELF)
   if (!IS_ELF)
     return NULL;
+#endif
 
   for (cp = input_line_pointer; *cp != '@'; cp++)
     if (is_end_of_line[(unsigned char) *cp] || *cp == ',')
@@ -6555,6 +6704,7 @@ lex_got (enum bfd_reloc_code_real *rel,
   /* Might be a symbol version string.  Don't as_bad here.  */
   return NULL;
 }
+#endif
 
 void
 x86_cons (expressionS *exp, int size)
@@ -6567,7 +6717,7 @@ x86_cons (expressionS *exp, int size)
       /* Handle @GOTOFF and the like in an expression.  */
       char *save;
       char *gotfree_input_line;
-      int adjust;
+      int adjust = 0;
 
       save = input_line_pointer;
       gotfree_input_line = lex_got (&got_reloc, &adjust, NULL);
@@ -6606,7 +6756,6 @@ x86_cons (expressionS *exp, int size)
   if (intel_syntax)
     i386_intel_simplify (exp);
 }
-#endif
 
 static void
 signed_cons (int size)
@@ -6619,8 +6768,7 @@ signed_cons (int size)
 
 #ifdef TE_PE
 static void
-pe_directive_secrel (dummy)
-     int dummy ATTRIBUTE_UNUSED;
+pe_directive_secrel (int dummy ATTRIBUTE_UNUSED)
 {
   expressionS exp;
 
@@ -7118,6 +7266,8 @@ i386_index_check (const char *operand_string)
 	       || i.base_reg->reg_num !=
 		  (i.prefix[ADDR_PREFIX] == 0 ? RegRip : RegEip)))
 	  || (i.index_reg
+	      && !(i.index_reg->reg_type.bitfield.regxmm
+		   || i.index_reg->reg_type.bitfield.regymm)
 	      && (!i.index_reg->reg_type.bitfield.baseindex
 		  || (i.prefix[ADDR_PREFIX] == 0
 		      && i.index_reg->reg_num != RegRiz
@@ -7151,6 +7301,8 @@ i386_index_check (const char *operand_string)
 	  if ((i.base_reg
 	       && !i.base_reg->reg_type.bitfield.reg32)
 	      || (i.index_reg
+		  && !i.index_reg->reg_type.bitfield.regxmm
+		  && !i.index_reg->reg_type.bitfield.regymm
 		  && ((!i.index_reg->reg_type.bitfield.reg32
 		       && i.index_reg->reg_num != RegEiz)
 		      || !i.index_reg->reg_type.bitfield.baseindex)))
@@ -7508,9 +7660,7 @@ i386_att_operand (char *operand_string)
    returned value.  */
 
 int
-md_estimate_size_before_relax (fragP, segment)
-     fragS *fragP;
-     segT segment;
+md_estimate_size_before_relax (fragS *fragP, segT segment)
 {
   /* We've already got fragP->fr_subtype right;  all we have to do is
      check for un-relaxable symbols.  On an ELF system, we can't relax
@@ -7633,10 +7783,8 @@ md_estimate_size_before_relax (fragP, segment)
 	Caller will turn frag into a ".space 0".  */
 
 void
-md_convert_frag (abfd, sec, fragP)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     segT sec ATTRIBUTE_UNUSED;
-     fragS *fragP;
+md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
+                 fragS *fragP)
 {
   unsigned char *opcode;
   unsigned char *where_to_put_displacement = NULL;
@@ -7733,21 +7881,17 @@ md_convert_frag (abfd, sec, fragP)
   fragP->fr_fix += extension;
 }
 
-/* Apply a fixup (fixS) to segment data, once it has been determined
+/* Apply a fixup (fixP) to segment data, once it has been determined
    by our caller that we have all the info we need to fix it up.
+
+   Parameter valP is the pointer to the value of the bits.
 
    On the 386, immediates, displacements, and data pointers are all in
    the same (little-endian) format, so we don't need to care about which
    we are handling.  */
 
 void
-md_apply_fix (fixP, valP, seg)
-     /* The fix we're to put in.  */
-     fixS *fixP;
-     /* Pointer to the value of the bits.  */
-     valueT *valP;
-     /* Segment fix is from.  */
-     segT seg ATTRIBUTE_UNUSED;
+md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 {
   char *p = fixP->fx_where + fixP->fx_frag->fr_literal;
   valueT value = *valP;
@@ -8166,7 +8310,7 @@ struct option md_longopts[] =
 {
   {"32", no_argument, NULL, OPTION_32},
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
-     || defined (TE_PE) || defined (TE_PEP))
+     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
   {"64", no_argument, NULL, OPTION_64},
 #endif
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
@@ -8224,7 +8368,7 @@ md_parse_option (int c, char *arg)
       break;
 #endif
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
-     || defined (TE_PE) || defined (TE_PEP))
+     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
     case OPTION_64:
       {
 	const char **list, **l;
@@ -8234,13 +8378,14 @@ md_parse_option (int c, char *arg)
 	  if (CONST_STRNEQ (*l, "elf64-x86-64")
 	      || strcmp (*l, "coff-x86-64") == 0
 	      || strcmp (*l, "pe-x86-64") == 0
-	      || strcmp (*l, "pei-x86-64") == 0)
+	      || strcmp (*l, "pei-x86-64") == 0
+	      || strcmp (*l, "mach-o-x86-64") == 0)
 	    {
 	      default_arch = "x86_64";
 	      break;
 	    }
 	if (*l == NULL)
-	  as_fatal (_("No compiled in support for x86_64"));
+	  as_fatal (_("no compiled in support for x86_64"));
 	free (list);
       }
       break;
@@ -8260,7 +8405,7 @@ md_parse_option (int c, char *arg)
 		break;
 	      }
 	  if (*l == NULL)
-	    as_fatal (_("No compiled in support for 32bit x86_64"));
+	    as_fatal (_("no compiled in support for 32bit x86_64"));
 	  free (list);
 	}
       else
@@ -8294,7 +8439,7 @@ md_parse_option (int c, char *arg)
       do
 	{
 	  if (*arch == '.')
-	    as_fatal (_("Invalid -march= option: `%s'"), arg);
+	    as_fatal (_("invalid -march= option: `%s'"), arg);
 	  next = strchr (arch, '+');
 	  if (next)
 	    *next++ = '\0';
@@ -8343,13 +8488,14 @@ md_parse_option (int c, char *arg)
 		      else
 			cpu_sub_arch_name = xstrdup (cpu_arch[j].name);
 		      cpu_arch_flags = flags;
+		      cpu_arch_isa_flags = flags;
 		    }
 		  break;
 		}
 	    }
 
 	  if (j >= ARRAY_SIZE (cpu_arch))
-	    as_fatal (_("Invalid -march= option: `%s'"), arg);
+	    as_fatal (_("invalid -march= option: `%s'"), arg);
 
 	  arch = next;
 	}
@@ -8358,7 +8504,7 @@ md_parse_option (int c, char *arg)
 
     case OPTION_MTUNE:
       if (*arg == '.')
-	as_fatal (_("Invalid -mtune= option: `%s'"), arg);
+	as_fatal (_("invalid -mtune= option: `%s'"), arg);
       for (j = 0; j < ARRAY_SIZE (cpu_arch); j++)
 	{
 	  if (strcmp (arg, cpu_arch [j].name) == 0)
@@ -8370,7 +8516,7 @@ md_parse_option (int c, char *arg)
 	    }
 	}
       if (j >= ARRAY_SIZE (cpu_arch))
-	as_fatal (_("Invalid -mtune= option: `%s'"), arg);
+	as_fatal (_("invalid -mtune= option: `%s'"), arg);
       break;
 
     case OPTION_MMNEMONIC:
@@ -8379,7 +8525,7 @@ md_parse_option (int c, char *arg)
       else if (strcasecmp (arg, "intel") == 0)
 	intel_mnemonic = 1;
       else
-	as_fatal (_("Invalid -mmnemonic= option: `%s'"), arg);
+	as_fatal (_("invalid -mmnemonic= option: `%s'"), arg);
       break;
 
     case OPTION_MSYNTAX:
@@ -8388,7 +8534,7 @@ md_parse_option (int c, char *arg)
       else if (strcasecmp (arg, "intel") == 0)
 	intel_syntax = 1;
       else
-	as_fatal (_("Invalid -msyntax= option: `%s'"), arg);
+	as_fatal (_("invalid -msyntax= option: `%s'"), arg);
       break;
 
     case OPTION_MINDEX_REG:
@@ -8415,7 +8561,7 @@ md_parse_option (int c, char *arg)
       else if (strcasecmp (arg, "none") == 0)
 	sse_check = sse_check_none;
       else
-	as_fatal (_("Invalid -msse-check= option: `%s'"), arg);
+	as_fatal (_("invalid -msse-check= option: `%s'"), arg);
       break;
 
     case OPTION_MAVXSCALAR:
@@ -8424,7 +8570,7 @@ md_parse_option (int c, char *arg)
       else if (strcasecmp (arg, "256") == 0)
 	avxscalar = vex256;
       else
-	as_fatal (_("Invalid -mavxscalar= option: `%s'"), arg);
+	as_fatal (_("invalid -mavxscalar= option: `%s'"), arg);
       break;
 
     default:
@@ -8590,7 +8736,7 @@ i386_target_format (void)
   else if (!strcmp (default_arch, "i386"))
     update_code_flag (CODE_32BIT, 1);
   else
-    as_fatal (_("Unknown architecture"));
+    as_fatal (_("unknown architecture"));
 
   if (cpu_flags_all_zero (&cpu_arch_isa_flags))
     cpu_arch_isa_flags = cpu_arch[flag_code == CODE_64BIT].flags;
@@ -8643,13 +8789,26 @@ i386_target_format (void)
 	      as_fatal (_("Intel L1OM is 64bit only"));
 	    return ELF_TARGET_L1OM_FORMAT;
 	  }
+	if (cpu_arch_isa == PROCESSOR_K1OM)
+	  {
+	    if (x86_elf_abi != X86_64_ABI)
+	      as_fatal (_("Intel K1OM is 64bit only"));
+	    return ELF_TARGET_K1OM_FORMAT;
+	  }
 	else
 	  return format;
       }
 #endif
 #if defined (OBJ_MACH_O)
     case bfd_target_mach_o_flavour:
-      return flag_code == CODE_64BIT ? "mach-o-x86-64" : "mach-o-i386";
+      if (flag_code == CODE_64BIT)
+	{
+	  use_rela_relocations = 1;
+	  object_64bit = 1;
+	  return "mach-o-x86-64";
+	}
+      else
+	return "mach-o-i386";
 #endif
     default:
       abort ();
@@ -8702,8 +8861,7 @@ i386_elf_emit_arch_note (void)
 #endif
 
 symbolS *
-md_undefined_symbol (name)
-     char *name;
+md_undefined_symbol (char *name)
 {
   if (name[0] == GLOBAL_OFFSET_TABLE_NAME[0]
       && name[1] == GLOBAL_OFFSET_TABLE_NAME[1]
@@ -8725,9 +8883,7 @@ md_undefined_symbol (name)
 /* Round up a section size to the appropriate boundary.  */
 
 valueT
-md_section_align (segment, size)
-     segT segment ATTRIBUTE_UNUSED;
-     valueT size;
+md_section_align (segT segment ATTRIBUTE_UNUSED, valueT size)
 {
 #if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT))
   if (OUTPUT_FLAVOR == bfd_target_aout_flavour)
@@ -8798,9 +8954,7 @@ i386_validate_fix (fixS *fixp)
 }
 
 arelent *
-tc_gen_reloc (section, fixp)
-     asection *section ATTRIBUTE_UNUSED;
-     fixS *fixp;
+tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *rel;
   bfd_reloc_code_real_type code;
@@ -8938,7 +9092,6 @@ tc_gen_reloc (section, fixp)
       if (disallow_64bit_reloc)
 	switch (code)
 	  {
-	  case BFD_RELOC_64:
 	  case BFD_RELOC_X86_64_DTPOFF64:
 	  case BFD_RELOC_X86_64_TPOFF64:
 	  case BFD_RELOC_64_PCREL:
@@ -9045,6 +9198,16 @@ tc_x86_frame_initial_instructions (void)
 
   cfi_add_CFA_def_cfa (sp_regno[flag_code >> 1], -x86_cie_data_alignment);
   cfi_add_CFA_offset (x86_dwarf2_return_column, x86_cie_data_alignment);
+}
+
+int
+x86_dwarf2_addr_size (void)
+{
+#if defined (OBJ_MAYBE_ELF) || defined (OBJ_ELF)
+  if (x86_elf_abi == X86_64_X32_ABI)
+    return 4;
+#endif
+  return bfd_arch_bits_per_address (stdoutput) / 8;
 }
 
 int

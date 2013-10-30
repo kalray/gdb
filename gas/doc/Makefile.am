@@ -35,8 +35,9 @@ CPU_DOCS = \
 	c-avr.texi \
 	c-bfin.texi \
 	c-cr16.texi \
-	c-d10v.texi \
 	c-cris.texi \
+	c-d10v.texi \
+	c-epiphany.texi \
 	c-h8300.texi \
 	c-hppa.texi \
 	c-i370.texi \
@@ -58,6 +59,7 @@ CPU_DOCS = \
 	c-pdp11.texi \
 	c-pj.texi \
 	c-ppc.texi \
+	c-rl78.texi \
 	c-rx.texi \
 	c-s390.texi \
 	c-score.texi \
@@ -66,8 +68,11 @@ CPU_DOCS = \
 	c-sparc.texi \
         c-tic54x.texi \
         c-tic6x.texi \
+	c-tilegx.texi \
+	c-tilepro.texi \
 	c-vax.texi \
 	c-v850.texi \
+	c-xstormy16.texi \
 	c-xtensa.texi \
 	c-z80.texi \
 	c-z8k.texi

@@ -1,6 +1,6 @@
 /* ar.c - Archive modify and extract.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -97,7 +97,7 @@ int write_armap = 0;
 /* Operate in deterministic mode: write zero for timestamps, uids,
    and gids for archive members and the archive symbol table, and write
    consistent file modes.  */
-int deterministic = 0;
+int deterministic = -1;			/* Determinism indeterminate.  */
 
 /* Nonzero means it's the name of an existing member; position new or moved
    files with respect to this one.  */
@@ -276,7 +276,20 @@ usage (int help)
   fprintf (s, _(" command specific modifiers:\n"));
   fprintf (s, _("  [a]          - put file(s) after [member-name]\n"));
   fprintf (s, _("  [b]          - put file(s) before [member-name] (same as [i])\n"));
-  fprintf (s, _("  [D]          - use zero for timestamps and uids/gids\n"));
+  if (DEFAULT_AR_DETERMINISTIC)
+    {
+      fprintf (s, _("\
+  [D]          - use zero for timestamps and uids/gids (default)\n"));
+      fprintf (s, _("\
+  [U]          - use actual timestamps and uids/gids\n"));
+    }
+  else
+    {
+      fprintf (s, _("\
+  [D]          - use zero for timestamps and uids/gids\n"));
+      fprintf (s, _("\
+  [U]          - use actual timestamps and uids/gids (default)\n"));
+    }
   fprintf (s, _("  [N]          - use instance [count] of name\n"));
   fprintf (s, _("  [f]          - truncate inserted file names\n"));
   fprintf (s, _("  [P]          - use full path names when matching\n"));
@@ -290,6 +303,7 @@ usage (int help)
   fprintf (s, _("  [v]          - be verbose\n"));
   fprintf (s, _("  [V]          - display the version number\n"));
   fprintf (s, _("  @<file>      - read options from <file>\n"));
+  fprintf (s, _("  --target=BFDNAME - specify the target object format as BFDNAME\n"));
 #if BFD_SUPPORTS_PLUGINS
   fprintf (s, _(" optional:\n"));
   fprintf (s, _("  --plugin <p> - load the specified plugin\n"));
@@ -321,6 +335,14 @@ ranlib_usage (int help)
   fprintf (s, _("\
   --plugin <name>              Load the specified plugin\n"));
 #endif
+  if (DEFAULT_AR_DETERMINISTIC)
+    fprintf (s, _("\
+  -D                           Use zero for symbol map timestamp (default)\n\
+  -U                           Use an actual symbol map timestamp\n"));
+  else
+    fprintf (s, _("\
+  -D                           Use zero for symbol map timestamp\n\
+  -U                           Use actual symbol map timestamp (default)\n"));
   fprintf (s, _("\
   -t                           Update the archive's symbol map timestamp\n\
   -h --help                    Print this help message\n\
@@ -432,7 +454,7 @@ decode_options (int argc, char **argv)
       argv = new_argv;
     }
 
-  while ((c = getopt_long (argc, argv, "hdmpqrtxlcoVsSuvabiMNfPTD",
+  while ((c = getopt_long (argc, argv, "hdmpqrtxlcoVsSuvabiMNfPTDU",
 			   long_options, NULL)) != EOF)
     {
       switch (c)
@@ -529,6 +551,9 @@ decode_options (int argc, char **argv)
         case 'D':
           deterministic = TRUE;
           break;
+        case 'U':
+          deterministic = FALSE;
+          break;
 	case OPTION_PLUGIN:
 #if BFD_SUPPORTS_PLUGINS
 	  plugin_target = "plugin";
@@ -551,6 +576,15 @@ decode_options (int argc, char **argv)
   return &argv[optind];
 }
 
+/* If neither -D nor -U was not specified explicitly,
+   then use the configured default.  */
+static void
+default_deterministic (void)
+{
+  if (deterministic < 0)
+    deterministic = DEFAULT_AR_DETERMINISTIC;
+}
+
 static void
 ranlib_main (int argc, char **argv)
 {
@@ -558,10 +592,16 @@ ranlib_main (int argc, char **argv)
   bfd_boolean touch = FALSE;
   int c;
 
-  while ((c = getopt_long (argc, argv, "hHvVt", long_options, NULL)) != EOF)
+  while ((c = getopt_long (argc, argv, "DhHUvVt", long_options, NULL)) != EOF)
     {
       switch (c)
         {
+	case 'D':
+	  deterministic = TRUE;
+	  break;
+        case 'U':
+          deterministic = FALSE;
+          break;
 	case 'h':
 	case 'H':
 	  show_help = 1;
@@ -580,12 +620,14 @@ ranlib_main (int argc, char **argv)
     ranlib_usage (0);
 
   if (show_help)
-    usage (1);
+    ranlib_usage (1);
 
   if (show_version)
     print_version ("ranlib");
 
-  arg_index = 1;
+  default_deterministic ();
+
+  arg_index = optind;
 
   while (arg_index < argc)
     {
@@ -694,8 +736,14 @@ main (int argc, char **argv)
       if (newer_only && operation != replace)
 	fatal (_("`u' is only meaningful with the `r' option."));
 
-      if (newer_only && deterministic)
-	fatal (_("`u' is not meaningful with the `D' option."));
+      if (newer_only && deterministic > 0)
+        fatal (_("`u' is not meaningful with the `D' option."));
+
+      if (newer_only && deterministic < 0 && DEFAULT_AR_DETERMINISTIC)
+        non_fatal (_("\
+`u' modifier ignored since `D' is the default (see `U')"));
+
+      default_deterministic ();
 
       if (postype != pos_default)
 	posname = argv[arg_index++];
@@ -744,11 +792,17 @@ main (int argc, char **argv)
 	  break;
 
 	case move:
-	  if (files != NULL)
-	    move_members (arch, files);
-	  else
-	    output_filename = NULL;
-	  break;
+	  /* PR 12558: Creating and moving at the same time does
+	     not make sense.  Just create the archive instead.  */
+	  if (! silent_create)
+	    {
+	      if (files != NULL)
+		move_members (arch, files);
+	      else
+		output_filename = NULL;
+	      break;
+	    }
+	  /* Fall through.  */
 
 	case replace:
 	case quick_append:
@@ -808,9 +862,9 @@ open_inarch (const char *archive_filename, const char *file)
 	  return NULL;
 	}
 
-      /* Try to figure out the target to use for the archive from the
-         first object on the list.  */
-      if (file != NULL)
+      /* If the target isn't set, try to figure out the target to use
+	 for the archive from the first object on the list.  */
+      if (target == NULL && file != NULL)
 	{
 	  bfd *obj;
 
@@ -1024,7 +1078,7 @@ write_archive (bfd *iarch)
   new_name = make_tempname (old_name);
 
   if (new_name == NULL)
-    bfd_fatal ("could not create temporary file whilst writing archive");
+    bfd_fatal (_("could not create temporary file whilst writing archive"));
 
   output_filename = new_name;
 
@@ -1068,6 +1122,7 @@ write_archive (bfd *iarch)
 
   if (smart_rename (new_name, old_name, 0) != 0)
     xexit (1);
+  free (old_name);
 }
 
 /* Return a pointer to the pointer to the entry which should be rplacd'd
@@ -1356,6 +1411,9 @@ ranlib_touch (const char *archname)
   if (! bfd_has_map (arch))
     /* xgettext:c-format */
     fatal (_("%s: no archive map to update"), archname);
+
+  if (deterministic)
+    arch->flags |= BFD_DETERMINISTIC_OUTPUT;
 
   bfd_update_armap_timestamp (arch);
 

@@ -37,6 +37,7 @@
 #include "libiberty.h"
 #include "demangle.h"
 #include "bucomm.h"
+#include "elf-bfd.h"
 
 static bfd_boolean unwind_inlines;	/* -i, unwind inlined functions. */
 static bfd_boolean with_addresses;	/* -a, show addresses.  */
@@ -195,6 +196,8 @@ find_offset_in_section (bfd *abfd, asection *section)
 static void
 translate_addresses (bfd *abfd, asection *section)
 {
+  const struct elf_backend_data * bed;
+
   int read_stdin = (naddr == 0);
 
   for (;;)
@@ -214,6 +217,12 @@ translate_addresses (bfd *abfd, asection *section)
 	  --naddr;
 	  pc = bfd_scan_vma (*addr++, NULL, 16);
 	}
+
+      if (bfd_get_flavour (abfd) == bfd_target_elf_flavour
+	  && (bed = get_elf_backend_data (abfd)) != NULL
+	  && bed->sign_extend_vma
+	  && (pc & (bfd_vma) 1 << (bed->s->arch_size - 1)))
+	pc |= ((bfd_vma) -1) << bed->s->arch_size;
 
       if (with_addresses)
         {
@@ -259,6 +268,11 @@ translate_addresses (bfd *abfd, asection *section)
 
                   printf ("%s", name);
                   if (pretty_print)
+		    /* Note for translators:  This printf is used to join the
+		       function name just printed above to the line number/
+		       file name pair that is about to be printed below.  Eg:
+
+		         foo at 123:bar.c  */
                     printf (_(" at "));
                   else
                     printf ("\n");
@@ -280,10 +294,17 @@ translate_addresses (bfd *abfd, asection *section)
               if (!unwind_inlines)
                 found = FALSE;
               else
-                found = bfd_find_inliner_info (abfd, &filename, &functionname, &line);
+                found = bfd_find_inliner_info (abfd, &filename, &functionname,
+					       &line);
               if (! found)
                 break;
               if (pretty_print)
+		/* Note for translators: This printf is used to join the
+		   line number/file name pair that has just been printed with
+		   the line number/file name pair that is going to be printed
+		   by the next iteration of the while loop.  Eg:
+
+		     123:bar.c (inlined by) 456:main.c  */
                 printf (_(" (inlined by) "));
             }
 	}
