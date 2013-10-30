@@ -624,6 +624,8 @@ typedef struct rx_bytesT
   int n_relax;
   int link_relax;
   fixS *link_relax_fixP;
+  char times_grown;
+  char times_shrank;
 } rx_bytesT;
 
 static rx_bytesT rx_bytes;
@@ -1117,11 +1119,51 @@ md_section_align (segT segment, valueT size)
   return ((size + (1 << align) - 1) & (-1 << align));
 }
 
+				/* NOP - 1 cycle */
+static unsigned char nop_1[] = { 0x03};
+				/* MOV.L R0,R0 - 1 cycle */
+static unsigned char nop_2[] = { 0xef, 0x00};
+				/* MAX R0,R0 - 1 cycle */
+static unsigned char nop_3[] = { 0xfc, 0x13, 0x00 };
+				/* MUL #1,R0 - 1 cycle */
+static unsigned char nop_4[] = { 0x76, 0x10, 0x01, 0x00 };
+				/* MUL #1,R0 - 1 cycle */
+static unsigned char nop_5[] = { 0x77, 0x10, 0x01, 0x00, 0x00 };
+				/* MUL #1,R0 - 1 cycle */
+static unsigned char nop_6[] = { 0x74, 0x10, 0x01, 0x00, 0x00, 0x00 };
+				/* BRA.S .+7 - 1 cycle */
+static unsigned char nop_7[] = { 0x0F, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 };
+
+static unsigned char *nops[] = { NULL, nop_1, nop_2, nop_3, nop_4, nop_5, nop_6, nop_7 };
+#define BIGGEST_NOP 7
+
 /* When relaxing, we need to output a reloc for any .align directive
    so that we can retain this alignment as we adjust opcode sizes.  */
 void
 rx_handle_align (fragS * frag)
 {
+  if ((frag->fr_type == rs_align
+       || frag->fr_type == rs_align_code)
+      && subseg_text_p (now_seg))
+    {
+      int count = (frag->fr_next->fr_address
+		   - frag->fr_address	
+		   - frag->fr_fix);
+      unsigned char *base = (unsigned char *)frag->fr_literal + frag->fr_fix;
+
+      if (count > BIGGEST_NOP)
+	{
+	  base[0] = 0x2e;
+	  base[1] = count;
+	  frag->fr_var = 2;
+	}
+      else if (count > 0)
+	{
+	  memcpy (base, nops[count], count);
+	  frag->fr_var = count;
+	}
+    }
+
   if (linkrelax
       && (frag->fr_type == rs_align
 	  || frag->fr_type == rs_align_code)
@@ -1484,6 +1526,21 @@ rx_relax_frag (segT segment ATTRIBUTE_UNUSED, fragS * fragP, long stretch)
       case OT_other:
 	break;
       }
+
+  /* This prevents infinite loops in align-heavy sources.  */
+  if (newsize < oldsize)
+    {
+      if (fragP->tc_frag_data->times_shrank > 10
+         && fragP->tc_frag_data->times_grown > 10)
+       newsize = oldsize;
+      if (fragP->tc_frag_data->times_shrank < 20)
+       fragP->tc_frag_data->times_shrank ++;
+    }
+  else if (newsize > oldsize)
+    {
+      if (fragP->tc_frag_data->times_grown < 20)
+       fragP->tc_frag_data->times_grown ++;
+    }
 
   fragP->fr_subtype = newsize;
   tprintf (" -> new %d old %d delta %d\n", newsize, oldsize, newsize-oldsize);

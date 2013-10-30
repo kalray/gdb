@@ -1,3 +1,80 @@
+2010-07-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (CONFIG_OBJS): Removed.
+	(GENERIC_OBJS): Likewise.
+	(OBJS): Likewise.
+	* Makefile.in: Regenerated.
+
+2010-07-03  Jan Beulich  <jbeulich@novell.com>
+
+	PR gas/11732
+	* config/tc-i386.c (i386_finalize_displacement): Don't call
+	section_symbol() with expr_section.
+
+2010-07-03  Cary Coutant  <ccoutant@google.com>
+
+	* Makefile.am: Add compress-debug.c and compress-debug.h.
+	* Makefile.in: Regenerate.
+	* config.in: Add HAVE_ZLIB_H.
+	* configure.in: Check for zlib.h.
+	* configure: Regenerate.
+
+	* as.c (parse_args): Add --compress-debug-sections and
+	--nocompress-debug-sections.
+	* as.h (flag_compress_debug): New variable.
+	* compress-debug.c: New file.
+	* compress-debug.h: New file.
+	* write.c: Include compress-debug.h.
+	(compress_frag): New function.
+	(compress_debug): New function.
+	(write_object_file): Compress debug sections if requested.
+
+2010-07-03  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* config/tc-ppc.c (ppc_set_cpu): Cast PPC_OPCODE_xxx to ppc_cpu_t
+	before inverting.
+
+2010-07-03  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (ppc_set_cpu): Remove old opcode flags.
+	(ppc_setup_opcodes): Likewise.  Simplify opcode selection.
+
+2010-07-02  DJ Delorie  <dj@redhat.com>
+
+	* config/tc-rx.h (md_do_align): New.
+	(MAX_MEM_FOR_RS_ALIGN_CODE): New.
+	* config/tc-rx.c (nops): New.
+	(rx_handle_align): Use various sized nops to align code.
+
+	* config/tc-rx.c (rx_bytesT): Add grown/shrank counters for
+	relaxation.
+	(rx_relax_frag): Prevent infinite loops of grow/shrink/grow/etc.
+
+2010-07-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	AVX Programming Reference (June, 2010)
+	* config/tc-i386.c (cpu_arch): Add .xsaveopt, .fsgsbase, .rdrnd
+	and .f16c.
+
+	* doc/c-i386.texi: Document xsaveopt, fsgsbase, rdrnd and f16c.
+
+2010-07-01  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (do_t_mov_cmp): Fix reporting of unpredictable and
+	deprecated mov register instructions.
+
+2010-07-01  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (toc_reloc_types): New variable.
+	(md_assemble): Set it.
+	(ppc_frob_file_before_adjust): Don't warn about toc section size
+	if we have large toc relocs and no small toc relocs.
+
+2010-06-29  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-moxie.c (md_apply_fix): Delete set but otherwise
+	unused variable.
+
 2010-06-29  Alan Modra  <amodra@gmail.com>
 
 	* config/tc-maxq.h: Delete file.

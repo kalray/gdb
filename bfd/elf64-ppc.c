@@ -8039,13 +8039,21 @@ ppc64_elf_edit_toc (struct bfd_link_info *info)
 			      r_symndx, ibfd))
 		goto error_ret;
 
-	      if (!SYMBOL_REFERENCES_LOCAL (info, h))
+	      if (!SYMBOL_CALLS_LOCAL (info, h))
 		continue;
 
 	      if (h != NULL)
-		val = h->root.u.def.value;
+		{
+		  if (h->type == STT_GNU_IFUNC)
+		    continue;
+		  val = h->root.u.def.value;
+		}
 	      else
-		val = sym->st_value;
+		{
+		  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC)
+		    continue;
+		  val = sym->st_value;
+		}
 	      val += rel->r_addend;
 	      val += sym_sec->output_section->vma + sym_sec->output_offset;
 
@@ -12367,7 +12375,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 		    if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared,
 							  &h->elf)
 			|| (info->shared
-			    && SYMBOL_REFERENCES_LOCAL (info, &h->elf)))
+			    && SYMBOL_CALLS_LOCAL (info, &h->elf)))
 		      /* This is actually a static link, or it is a
 			 -Bsymbolic link and the symbol is defined
 			 locally, or the symbol was forced to be local
@@ -12744,7 +12752,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 
 	      if (skip)
 		memset (&outrel, 0, sizeof outrel);
-	      else if (!SYMBOL_REFERENCES_LOCAL (info, &h->elf)
+	      else if (!SYMBOL_CALLS_LOCAL (info, &h->elf)
 		       && !is_opd
 		       && r_type != R_PPC64_TOC)
 		outrel.r_info = ELF64_R_INFO (h->elf.dynindx, r_type);

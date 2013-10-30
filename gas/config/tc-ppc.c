@@ -183,6 +183,12 @@ int ppc_cie_data_alignment;
 /* The type of processor we are assembling for.  This is one or more
    of the PPC_OPCODE flags defined in opcode/ppc.h.  */
 ppc_cpu_t ppc_cpu = 0;
+
+/* Flags set on encountering toc relocs.  */
+enum {
+  has_large_toc_reloc = 1,
+  has_small_toc_reloc = 2
+} toc_reloc_types;
 
 /* The target specific pseudo-ops which we support.  */
 
@@ -1242,19 +1248,19 @@ ppc_set_cpu (void)
   const char *default_os  = TARGET_OS;
   const char *default_cpu = TARGET_CPU;
 
-  if ((ppc_cpu & ~PPC_OPCODE_ANY) == 0)
+  if ((ppc_cpu & ~(ppc_cpu_t) PPC_OPCODE_ANY) == 0)
     {
       if (ppc_obj64)
-	ppc_cpu |= PPC_OPCODE_PPC | PPC_OPCODE_CLASSIC | PPC_OPCODE_64;
+	ppc_cpu |= PPC_OPCODE_PPC | PPC_OPCODE_64;
       else if (strncmp (default_os, "aix", 3) == 0
 	       && default_os[3] >= '4' && default_os[3] <= '9')
-	ppc_cpu |= PPC_OPCODE_COMMON | PPC_OPCODE_32;
+	ppc_cpu |= PPC_OPCODE_COMMON;
       else if (strncmp (default_os, "aix3", 4) == 0)
-	ppc_cpu |= PPC_OPCODE_POWER | PPC_OPCODE_32;
+	ppc_cpu |= PPC_OPCODE_POWER;
       else if (strcmp (default_cpu, "rs6000") == 0)
-	ppc_cpu |= PPC_OPCODE_POWER | PPC_OPCODE_32;
+	ppc_cpu |= PPC_OPCODE_POWER;
       else if (strncmp (default_cpu, "powerpc", 7) == 0)
-	ppc_cpu |= PPC_OPCODE_PPC | PPC_OPCODE_CLASSIC | PPC_OPCODE_32;
+	ppc_cpu |= PPC_OPCODE_PPC;
       else
 	as_fatal (_("Unknown default cpu = %s, os = %s"),
 		  default_cpu, default_os);
@@ -1467,11 +1473,7 @@ ppc_setup_opcodes (void)
 	      }
 	}
 
-      if ((op->flags & ppc_cpu & ~(PPC_OPCODE_32 | PPC_OPCODE_64)) != 0
-	  && ((op->flags & (PPC_OPCODE_32 | PPC_OPCODE_64)) == 0
-	      || ((op->flags & (PPC_OPCODE_32 | PPC_OPCODE_64))
-		  == (ppc_cpu & (PPC_OPCODE_32 | PPC_OPCODE_64)))
-	      || (ppc_cpu & PPC_OPCODE_64_BRIDGE) != 0)
+      if ((ppc_cpu & op->flags) != 0
 	  && !(ppc_cpu & op->deprecated))
 	{
 	  const char *retval;
@@ -1479,11 +1481,6 @@ ppc_setup_opcodes (void)
 	  retval = hash_insert (ppc_hash, op->name, (void *) op);
 	  if (retval != NULL)
 	    {
-	      /* Ignore Power duplicates for -m601.  */
-	      if ((ppc_cpu & PPC_OPCODE_601) != 0
-		  && (op->flags & PPC_OPCODE_POWER) != 0)
-		continue;
-
 	      as_bad (_("duplicate instruction %s"),
 		      op->name);
 	      bad_insn = TRUE;
@@ -2168,6 +2165,7 @@ ppc_frob_file_before_adjust (void)
 
   toc = bfd_get_section_by_name (stdoutput, ".toc");
   if (toc != NULL
+      && toc_reloc_types != has_large_toc_reloc
       && bfd_section_size (stdoutput, toc) > 0x10000)
     as_warn (_("TOC section size exceeds 64k"));
 
@@ -2781,6 +2779,20 @@ md_assemble (char *str)
 		    default:
 		      break;
 		    }
+		}
+
+	      switch (reloc)
+		{
+		case BFD_RELOC_PPC_TOC16:
+		  toc_reloc_types |= has_small_toc_reloc;
+		  break;
+		case BFD_RELOC_PPC64_TOC16_LO:
+		case BFD_RELOC_PPC64_TOC16_HI:
+		case BFD_RELOC_PPC64_TOC16_HA:
+		  toc_reloc_types |= has_large_toc_reloc;
+		  break;
+		default:
+		  break;
 		}
 
 	      if (ppc_obj64

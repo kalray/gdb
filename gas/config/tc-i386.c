@@ -663,12 +663,20 @@ static const arch_entry cpu_arch[] =
     CPU_SMX_FLAGS, 0 },
   { STRING_COMMA_LEN (".xsave"), PROCESSOR_UNKNOWN,
     CPU_XSAVE_FLAGS, 0 },
+  { STRING_COMMA_LEN (".xsaveopt"), PROCESSOR_UNKNOWN,
+    CPU_XSAVEOPT_FLAGS, 0 },
   { STRING_COMMA_LEN (".aes"), PROCESSOR_UNKNOWN,
     CPU_AES_FLAGS, 0 },
   { STRING_COMMA_LEN (".pclmul"), PROCESSOR_UNKNOWN,
     CPU_PCLMUL_FLAGS, 0 },
   { STRING_COMMA_LEN (".clmul"), PROCESSOR_UNKNOWN,
     CPU_PCLMUL_FLAGS, 1 },
+  { STRING_COMMA_LEN (".fsgsbase"), PROCESSOR_UNKNOWN,
+    CPU_FSGSBASE_FLAGS, 0 },
+  { STRING_COMMA_LEN (".rdrnd"), PROCESSOR_UNKNOWN,
+    CPU_RDRND_FLAGS, 0 },
+  { STRING_COMMA_LEN (".f16c"), PROCESSOR_UNKNOWN,
+    CPU_F16C_FLAGS, 0 },
   { STRING_COMMA_LEN (".fma"), PROCESSOR_UNKNOWN,
     CPU_FMA_FLAGS, 0 },
   { STRING_COMMA_LEN (".fma4"), PROCESSOR_UNKNOWN,
@@ -6870,7 +6878,8 @@ i386_finalize_displacement (segT exp_seg ATTRIBUTE_UNUSED, expressionS *exp,
 	goto inv_disp;
 
       if (S_IS_LOCAL (exp->X_add_symbol)
-	  && S_GET_SEGMENT (exp->X_add_symbol) != undefined_section)
+	  && S_GET_SEGMENT (exp->X_add_symbol) != undefined_section
+	  && S_GET_SEGMENT (exp->X_add_symbol) != expr_section)
 	section_symbol (S_GET_SEGMENT (exp->X_add_symbol));
       exp->X_op = O_subtract;
       exp->X_op_symbol = GOT_symbol;
