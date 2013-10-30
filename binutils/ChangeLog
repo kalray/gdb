@@ -1,3 +1,7 @@
+2010-08-19  Alan Modra  <amodra@gmail.com>
+
+	* NEWS: Mention change in linker script expression evaluation.
+
 2010-08-13  Dan Rosenberg  <dan.j.rosenberg@gmail.com>
 
 	PR binutils/11889
@@ -232,6 +236,9 @@
 
 	* readelf.c: Add _() macros to constant strings that are
 	translatable.
+
+	* readelf.c (display_mips_gnu_attribute): Replace GCC options
+	with a textual description of single and double precision float.
 
 2010-04-15  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
 

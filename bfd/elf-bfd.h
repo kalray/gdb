@@ -1998,6 +1998,8 @@ extern int bfd_elf32_core_file_failing_signal
   (bfd *);
 extern bfd_boolean bfd_elf32_core_file_matches_executable_p
   (bfd *, bfd *);
+extern int bfd_elf32_core_file_pid
+  (bfd *);
 
 extern bfd_boolean bfd_elf32_swap_symbol_in
   (bfd *, const void *, const void *, Elf_Internal_Sym *);
@@ -2042,6 +2044,8 @@ extern int bfd_elf64_core_file_failing_signal
   (bfd *);
 extern bfd_boolean bfd_elf64_core_file_matches_executable_p
   (bfd *, bfd *);
+extern int bfd_elf64_core_file_pid
+  (bfd *);
 
 extern bfd_boolean bfd_elf64_swap_symbol_in
   (bfd *, const void *, const void *, Elf_Internal_Sym *);

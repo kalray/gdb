@@ -1,3 +1,259 @@
+2010-08-20  Pedro Alves  <pedro@codesourcery.com>
+
+	* python/python.c: Include "serial.h".
+	(gdbpy_event_fds): Change type to `struct serial *' a array from
+	int array.
+	(gdbpy_run_events): Change parameters.  Use serial_readchar in
+	place of read.
+	(gdbpy_post_event): Use serial_write in place of write.
+	(gdbpy_initialize_events): Use serial_pipe instead of pipe, and
+	serial_async in place of add_file_handler.
+
+2010-08-20  Pedro Alves  <pedro@codesourcery.com>
+
+	* serial.h (gdb_pipe, serial_pipe): Declare.
+	* serial.c (serial_interface_lookup): Take a const char pointer.
+	(serial_fdopen): Rename to ...
+	(serial_fdopen_ops): ... this.  Add an OPS parameter and use it.
+	Call the OPS' fdopen function if there is one.
+	(serial_fdopen): Rewrite as wrapper to serial_fdopen_ops.
+	(serial_pipe): New.
+	(struct serial_ops) <fdopen>: New field.
+
+	* ser-mingw.c (free_pipe_state):
+	(free_pipe_state): Close output on non-pex pipes.
+	(pipe_windows_fdopen): New.
+	(gdb_pipe): New.
+	(_initialize_ser_windows): Register pipe_windows_fdopen.
+	* ser-go32.c (gdb_pipe): New.
+	* ser-pipe.c (pipe_close): Close file descriptor even if there's
+	no state pointer.
+	(pipe_ops): Delete.
+	(gdb_pipe): New.
+
+2010-08-20  Keith Seitz  <keiths@redhat.com>
+
+	PR symtab/11465:
+ 	* dwarf2read.c (struct delayed_method_info): New struct.
+	(struct dwarf2_cu): Add vector method_list.
+	(scan_partial_symbols): Count methods for union, class, structure,
+	and interface types.
+	(add_to_method_list): New function.
+	(free_delayed_list): New function.
+	(compute_delayed_physnames): New function.
+	(process_full_comp_unit): Make a cleanup for the CU's delayed
+	physname list, compute the delayed physnames, and free the
+	the list.
+	(dwarf2_add_member_fn): For C++ and Java, delay the computation
+	of the physname until after the CU is read.
+
+	* dwarf2read.c (read_structure_type): Check if the current
+	DIE's type was already completed after dwarf2_full_name
+	was called.
+2010-08-19  Stan Shebs  <stan@codesourcery.com>
+
+	* NEWS: Mention some additional changes.
+
+2010-08-19  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.in (install-python): Add DESTDIR.
+
+2010-08-19  Doug Evans  <dje@google.com>
+
+	PR exp/11926
+	* parser-defs.h (parse_float, parse_c_float): Declare.
+	* parse.c (parse_float, parse_c_float): New function.
+	* c-exp.y (parse_number): Call parse_c_float.
+	* objc-exp.y (parse_number): Ditto.
+	* p-exp.y (parse_number): Ditto.  Use ANSI/ISO-style definition.
+	* jv-exp.y (parse_number): Call parse_float, fix suffix handling.
+
+2010-08-19  Joel Brobecker  <brobecker@adacore.com>
+
+	* psymtab.c (map_symbol_filenames_psymtab): Call FUN with
+	the arguments in the correct order.
+	* symtab.c (maybe_add_partial_symtab_filename): Declare
+	the arguments in the correct order.
+
+2010-08-19  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* varobj.c (varobj_create): Replace variable old_fi with old_id,
+	initialize it by null_frame_id, wrap its usage by get_frame_id,
+	frame_id_p and frame_find_by_id.
+
+2010-08-18  Tom Tromey  <tromey@redhat.com>
+
+	PR python/11900:
+	* configure: Rebuild.
+	* configure.ac: Add install-python to CONFIG_INSTALL.
+	* Makefile.in (install-python): New.
+
+2010-08-18  Doug Evans  <dje@google.com>
+
+	* gdb_assert.h (gdb_assert_not_reached): New macro.
+	(gdb_assert_fail): Fix typo in comment.
+	* avr-tdep.c (avr_return_value): Use gdb_assert_not_reached instead of
+	gdb_assert (0).
+	* darwin-nat.c (darwin_check_new_threads): Ditto.
+	* dwarf2read.c (dwarf2_get_section_info): Ditto.
+	(munmap_section_buffer): Ditto.
+	* m32c-tdep.c (make_types): Ditto.
+	(m32c_decode_srcdest4, m32c_decode_sd23, m32c_frame_base): Ditto.
+	* macroexp.c (get_character_constant): Ditto.
+	(get_string_literal): Ditto.
+	* mep-tdep.c (mep_pseudo_cr_size): Ditto.
+	(mep_pseudo_cr_index, mep_register_type): Ditto.
+	(mep_pseudo_register_read, mep_pseudo_register_write): Ditto.
+	(mep_get_insn, mep_analyze_prologue): Ditto.
+	* objfiles.c (qsort_cmp): Ditto.
+	* prologue-value.c (pv_is_identical): Ditto.
+	* record.c (record_get_loc): Ditto.
+	* value.c (value_static_field): Ditto.
+	* xtensa-tdep.c (call0_track_op): Ditto.
+
+2010-08-18  Tom Tromey  <tromey@redhat.com>
+
+	PR symtab/11919:
+	* gdbtypes.c (lookup_struct_elt_type): Clean up error emission.
+	* parse.c (parse_field_expression): Use RETURN_MASK_ERROR.  Move
+	name-copying lower.  Document exception behavior.
+	* completer.c (expression_completer): Catch exceptions from
+	parse_field_expression.
+
+2010-08-18  Pedro Alves  <pedro@codesourcery.com>
+
+	PR corefile/8210
+
+	* linux-thread-db.c (add_thread_db_info): Skip glibc/BZ5983
+	workaround on core files.
+	(try_thread_db_load_1): Don't try enabling thread event reporting
+	on core files.
+	(thread_db_load): Allow thread_db on core files.
+	(attach_thread): Don't check thread signals on core files, nor try
+	really attaching to the thread, nor enabling thread event event
+	reporting.
+	(thread_db_detach): Don't try disabing thread event reporting or
+	removing thread event breakpoints when debugging a core file.
+	(find_new_threads_callback): Don't try enabling thread event
+	reporting on core files.
+	(thread_db_find_new_threads_2): Don't look for a stopped lwp when
+	debugging a core file.
+	(thread_db_find_new_threads): Don't update thread
+	cores (processors) when debugging a core (dump).
+
+2010-08-18  Pedro Alves  <pedro@codesourcery.com>
+
+	PR corefile/8210
+
+	* corelow.c (add_to_thread_list): Don't use
+	gdbarch_core_reg_section_encodes_pid.  Use bfd_core_file_pid.
+	(get_core_register_section): Don't use
+	gdbarch_core_reg_section_encodes_pid.
+
+	* gdbarch.sh (core_reg_section_encodes_pid): Delete.
+	* gdbarch.h, gdbarch.c: Regenerate.
+	* amd64-sol2-tdep.c (amd64_sol2_init_abi): Don't set
+	gdbarch_core_reg_section_encodes_pid.
+	* i386-sol2-tdep.c (i386_sol2_init_abi): Ditto.
+	* sparc-sol2-tdep.c (sparc32_sol2_init_abi): Ditto.
+	* sparc64-sol2-tdep.c (sparc64_sol2_init_abi): Ditto.
+
+2010-08-18  Yao Qi  <yao@codesourcery.com>
+
+	* MAINTAINERS : Add myself under Write After Approval.
+
+2010-08-17  Tom Tromey  <tromey@redhat.com>
+
+	* NEWS: Mention template parameter support.
+
+2010-08-17  Pedro Alves  <pedro@codesourcery.com>
+
+	PR breakpoints/11371
+
+	* breakpoint.c (decref_bp_location): Assert the reference count is
+	sane.
+
+2010-08-17  Pedro Alves  <pedro@codesourcery.com>
+
+	PR breakpoints/11371
+
+	* breakpoint.c (breakpoint_init_inferior): Decrement the
+	location's reference count instead of deleting right away.
+	(bpstat_free): Decrement the location's reference count.  Make
+	static.
+	(bpstat_copy): Increment the location's reference count.
+	(bpstat_find_breakpoint): Adjust.
+	(bpstat_num): Adjust.
+	(print_it_typical): Adjust.  Use the breakpoint pointer in the
+	bpstat instead of the location's owner.
+	(bpstat_alloc): Remove const qualifier from the 'bl' parameter.
+	Adjust to record the location's owner in the bpstat.
+	(watchpoint_check): Use the breakpoint pointer in the bpstat
+	instead of the location's owner.
+	(bpstat_check_breakpoint_conditions): Don't handle
+	bp_watchpoint_scope here.  Use the breakpoint pointer in the
+	bpstat instead of the location's owner.
+	(bpstat_stop_status): Defer inferior function calls to after
+	building the bpstat list.  Handle bp_watchpoint_scope here.  Use
+	the breakpoint pointer in the bpstat instead of the location's
+	owner.
+	(bpstat_what): Use the breakpoint pointer in the bpstat instead of
+	the location's owner.
+	(free_bp_location): Don't walk bpstats clearing locations.
+	(incref_bp_location): New.
+	(decref_bp_location): New.
+	(breakpoint_auto_delete): Use the breakpoint pointer in the bpstat
+	instead of the location's owner.
+	(update_global_location_list): Clear the location's owner, and
+	decrement the location's reference count instead of deleting it
+	right away.
+	(breakpoint_retire_moribund): Decrement the location's reference
+	count instead of deleting it right away.
+	(bpstat_remove_bp_location): Delete.
+	(bpstat_remove_breakpoint): New.
+	(bpstat_remove_bp_location_callback): Delete.
+	(bpstat_remove_breakpoint_callback): New.
+	(delete_breakpoint): Iterate over all threads' stop_bpstat's
+	clearing references to the breakpoint that is being deleted.
+
+	* breakpoint.h (struct bp_location) <refc>: New field.
+	<owner>: Update comments.
+	(bpstat_free): Delete declaration.
+	(struct bpstats): Change the type of the breakpoint_at field to
+	struct breakpoint point, from struct bp_location pointer.  Add new
+	field bp_location_at.
+
+2010-08-16  Tom Tromey  <tromey@redhat.com>
+
+	* NEWS: Fix typo.
+
+2010-08-16  Tom Tromey  <tromey@redhat.com>
+
+	* NEWS: Mention watch -location.
+
+2010-08-16  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* breakpoint.c (update_watchpoint): Add source empty line.  Prefer
+	EXP_STRING_REPARSE to EXP_STRING.
+	(watch_command_1): Set also EXP_STRING_REPARSE.
+	(delete_breakpoint): Free also EXP_STRING_REPARSE.
+	* breakpoint.h (struct breakpoint): New field exp_string_reparse.
+	Update comment for exp_string.
+
+2010-08-16  Tom Tromey  <tromey@redhat.com>
+
+	* value.c (release_value): Clear 'next' pointer.
+	* breakpoint.c (watch_command_1): Add 'just_location' argument.
+	(watch_command_wrapper): Update.
+	(watch_maybe_just_location): New function.
+	(watch_command): Update.
+	(rwatch_command_wrapper): Update.
+	(rwatch_command): Update.
+	(awatch_command_wrapper): Update.
+	(awatch_command): Update.
+	(check_for_argument): New function.
+	(_initialize_breakpoint): Update help text.
+
 2010-08-14  Ulrich Weigand  <uweigand@de.ibm.com>
 
 	* arm-tdep.c (arm_push_dummy_call): Handle pointers to

@@ -3789,7 +3789,7 @@ optimize_disp (void)
       }
 }
 
-/* Check if operands are valid for the instrucrtion.  Update VEX
+/* Check if operands are valid for the instruction.  Update VEX
    operand types.  */
 
 static int
@@ -5264,15 +5264,15 @@ build_modrm_byte (void)
 			  && i.imm_operands == 1
 			  && (i.types[0].bitfield.imm8
 			      || i.types[i.operands - 1].bitfield.imm8)));
-	  if (i.tm.opcode_modifier.vexvvvv == VEXXDS)
+	  if (i.imm_operands == 2)
+	    source = 2;
+	  else
 	    {
 	      if (i.types[0].bitfield.imm8)
 		source = 1;
 	      else
 		source = 0;
 	    }
-	  else
-	    source = 2;
 	  break;
 	case 5:
 	  break;
