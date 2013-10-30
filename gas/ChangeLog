@@ -1,3 +1,97 @@
+2010-04-22  Nick Clifton  <nickc@redhat.com>
+
+	* po/gas.pot: Updated by the Translation project.
+
+2010-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (i386_is_register): Removed.
+	(x86_cons): Don't use i386_is_register.
+	(parse_register): Likewise.
+	* config/tc-i386-intel.c (i386_intel_simplify): Likewise.
+	(i386_intel_operand): Likewise.
+
+2010-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (tc_x86_parse_to_dw2regnum): Don't use
+	i386_is_register.
+
+2010-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (i386_is_register): Remove is_intel_syntax.
+	(x86_cons): Updated.
+	(parse_register): Likewise.
+	(tc_x86_parse_to_dw2regnum): Likewise.
+	* config/tc-i386-intel.c (i386_intel_simplify): Likewise.
+	(i386_intel_operand): Likewise.
+
+2010-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11509
+	* config/tc-i386-intel.c (i386_intel_simplify_register): New.
+	(i386_intel_simplify): Use i386_is_register and
+	i386_intel_simplify_register. Set X_md for O_register and
+	check X_md for O_constant.
+	(i386_intel_operand): Use i386_is_register.
+
+	* config/tc-i386.c (i386_is_register): New.
+	(x86_cons): Initialize the X_md field.  Use i386_is_register.
+	(parse_register): Use i386_is_register.
+	(tc_x86_parse_to_dw2regnum): Likewise.
+
+2010-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* expr.c (expr): Initialize the X_md field.
+
+2010-04-20  Joseph Myers  <joseph@codesourcery.com>
+
+	* config/tc-tic6x.c (OPTION_MGENERATE_REL): New.
+	(md_longopts): Add -mgenerate-rel.
+	(tic6x_generate_rela): New.
+	(md_parse_option): Handle -mgenerate-rel.
+	(md_show_usage): Add comment that -mgenerate-rel is undocumented.
+	(tic6x_init_after_args): New.
+	(md_apply_fix): Correct shift calculations for SB-relative
+	relocations.
+	(md_pcrel_from): Change to tic6x_pcrel_from_section.  Do not
+	adjust addresses for relocations referencing symbols in other
+	sections.
+	(tc_gen_reloc): Adjust addend calculations for REL relocations.
+	* config/tc-tic6x.h (MD_PCREL_FROM_SECTION,
+	tic6x_pcrel_from_section, tc_init_after_args,
+	tic6x_init_after_args): New.
+
+2010-04-20  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/11507
+	* macro.c (macro_expand_body): Do not treat LOCAL as a keyword in
+	altmacro mode if found inside a quoted string.
+
+2010-04-20  Mike Frysinger  <vapier@gentoo.org>
+
+	* config/bfin-lex.l (parse_int): Change index() to strchr().
+
+2010-04-16  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/11395
+	* config/tc-hppa.c (pa_ip): Do not allow 64-bit add condition
+	matcher to accept and unconditional 32-bit add instruction.
+	(pa_build_unwind_subspace): Cope with error conditions not
+	allowing the start symbol to be set.
+
+2010-04-15  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (arm_convert_symbolic_attribute): Add support for
+	new tag names in v2.08 of ARM ABI.
+	* doc/c-arm.texi: Document new tag names in ABI.
+
+2010-04-14  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c: Includes vms/egps.h on EVAX.
+	(s_alpha_comm): Used new EGPS macros from egps.h
+	(RGPS__V_NO_SHIFT, EGPS__V_MASK): New local macros.
+	(s_alpha_section_word): Add comments.  Use new EGPS macros.
+	Adjust for modified bfd_vms_set_section_flags function.
+
 2010-04-10  Alan Modra  <amodra@gmail.com>
 
 	PR gas/11486

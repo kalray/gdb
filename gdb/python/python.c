@@ -23,6 +23,7 @@
 #include "ui-out.h"
 #include "cli/cli-script.h"
 #include "gdbcmd.h"
+#include "progspace.h"
 #include "objfiles.h"
 #include "observer.h"
 #include "value.h"
@@ -249,7 +250,8 @@ parameter_to_python (struct cmd_list_element *cmd)
       }
     }
 
-  return PyErr_Format (PyExc_RuntimeError, "programmer error: unhandled type");
+  return PyErr_Format (PyExc_RuntimeError, 
+		       _("Programmer error: unhandled type."));
 }
 
 /* A Python function which returns a gdb parameter's value as a Python
@@ -276,10 +278,11 @@ gdbpy_parameter (PyObject *self, PyObject *args)
   GDB_PY_HANDLE_EXCEPTION (except);
   if (!found)
     return PyErr_Format (PyExc_RuntimeError,
-			 "could not find parameter `%s'", arg);
+			 _("Could not find parameter `%s'."), arg);
 
   if (! cmd->var)
-    return PyErr_Format (PyExc_RuntimeError, "`%s' is not a parameter", arg);
+    return PyErr_Format (PyExc_RuntimeError, 
+			 _("`%s' is not a parameter."), arg);
   return parameter_to_python (cmd);
 }
 
@@ -362,10 +365,11 @@ gdbpy_parse_and_eval (PyObject *self, PyObject *args)
 }
 
 /* Read a file as Python code.  STREAM is the input file; FILE is the
-   name of the file.  */
+   name of the file.
+   STREAM is not closed, that is the caller's responsibility.  */
 
 void
-source_python_script (FILE *stream, char *file)
+source_python_script (FILE *stream, const char *file)
 {
   struct cleanup *cleanup;
 
@@ -373,7 +377,6 @@ source_python_script (FILE *stream, char *file)
 
   PyRun_SimpleFile (stream, file);
 
-  fclose (stream);
   do_cleanups (cleanup);
 }
 
@@ -411,6 +414,47 @@ gdbpy_print_stack (void)
     PyErr_Print ();
   else
     PyErr_Clear ();
+}
+
+
+
+/* Return the current Progspace.
+   There always is one.  */
+
+static PyObject *
+gdbpy_get_current_progspace (PyObject *unused1, PyObject *unused2)
+{
+  PyObject *result;
+
+  result = pspace_to_pspace_object (current_program_space);
+  if (result)
+    Py_INCREF (result);
+  return result;
+}
+
+/* Return a sequence holding all the Progspaces.  */
+
+static PyObject *
+gdbpy_progspaces (PyObject *unused1, PyObject *unused2)
+{
+  struct program_space *ps;
+  PyObject *list;
+
+  list = PyList_New (0);
+  if (!list)
+    return NULL;
+
+  ALL_PSPACES (ps)
+  {
+    PyObject *item = pspace_to_pspace_object (ps);
+    if (!item || PyList_Append (list, item) == -1)
+      {
+	Py_DECREF (list);
+	return NULL;
+      }
+  }
+
+  return list;
 }
 
 
@@ -510,6 +554,7 @@ gdbpy_get_current_objfile (PyObject *unused1, PyObject *unused2)
 }
 
 /* Return a sequence holding all the Objfiles.  */
+
 static PyObject *
 gdbpy_objfiles (PyObject *unused1, PyObject *unused2)
 {
@@ -560,9 +605,8 @@ eval_python_from_control_command (struct command_line *cmd)
 }
 
 void
-source_python_script (FILE *stream, char *file)
+source_python_script (FILE *stream, const char *file)
 {
-  fclose (stream);
   throw_error (UNSUPPORTED_ERROR,
 	       _("Python scripting is not supported in this copy of GDB."));
 }
@@ -667,6 +711,7 @@ Enables or disables auto-loading of Python code when an object is opened."),
   gdbpy_initialize_blocks ();
   gdbpy_initialize_functions ();
   gdbpy_initialize_types ();
+  gdbpy_initialize_pspace ();
   gdbpy_initialize_objfile ();
   gdbpy_initialize_breakpoints ();
   gdbpy_initialize_lazy_string ();
@@ -732,6 +777,11 @@ static PyMethodDef GdbMethods[] =
 
   { "default_visualizer", gdbpy_default_visualizer, METH_VARARGS,
     "Find the default visualizer for a Value." },
+
+  { "current_progspace", gdbpy_get_current_progspace, METH_NOARGS,
+    "Return the current Progspace." },
+  { "progspaces", gdbpy_progspaces, METH_NOARGS,
+    "Return a sequence of all progspaces." },
 
   { "current_objfile", gdbpy_get_current_objfile, METH_NOARGS,
     "Return the current Objfile being loaded, or None." },

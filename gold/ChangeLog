@@ -1,3 +1,66 @@
+2010-04-22  Nick Clifton  <nickc@redhat.com>
+
+	* po/gold.pot: Updated by the Translation project.
+	* po/vi.po: Updated Vietnamese translation.
+
+2010-04-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testsuite/Makefile.am (check_PROGRAMS): Add
+	icf_virtual_function_folding_test.
+	* testsuite/Makefile.in: Regenerated.
+
+2010-04-15  Andrew Haley  <aph@redhat.com>
+
+	* options.h (merge_exidx_entries): New option.
+	* arm.cc (class Arm_exidx_fixup): Add new arg, merge_exidx_entries.
+	(class Arm_exidx_fixup::merge_exidx_entries_): New member.
+	(Output_section::fix_exidx_coverage): Add new arg, merge_exidx_entries.
+	(Target_arm::merge_exidx_entries): New function.
+	(process_exidx_entry): Don't merge if merge_exidx_entries_ is false.
+	(Arm_output_section::fix_exidx_coverage): Pass merge_exidx_entries
+	to Arm_exidx_fixup constructor.
+	Add new arg, merge_exidx_entries.
+	(Target_arm::fix_exidx_coverage): pass merge_exidx_entries to
+	Arm_output_section::fix_exidx_coverage.
+
+2010-04-18  Sriraman Tallam  <tmsriram@google.com>
+
+	* icf.cc (get_section_contents): Check for preemptible functions.
+	Ignore addend when appropriate.
+	* symtab.cc (should_add_dynsym_entry): Add new parameter.  Check for
+	section folded.
+	(add_from_relobj): Check for section folded.
+	(set_dynsym_indexes): Fix call to should_add_dynsym_entry.
+	* symtab.h (should_add_dynsym_entry): Add new parameter.
+	* target-reloc.h (scan_relocs): Check for section folded.
+	* x86_64.cc (Target_x86_64::Scan::possible_function_pointer_reloc):
+	Check reloc types for function pointers in shared objects.
+	* testsuite/Makefile.am (icf_virtual_function_folding_test): New test
+	case.
+	(icf_preemptible_functions_test): New test case.
+	(icf_string_merge_test): New test case.
+	* testsuite.Makefile.in: Regenerate.
+	* testsuite/icf_safe_so_test.sh: Change to not fold foo_glob and
+	bar_glob.  Refactor code.
+	* testsuite/icf_preemptible_functions_test.cc: New file.
+	* testsuite/icf_preemptible_functions_test.sh: New file.
+	* testsuite/icf_string_merge_test.cc: New file.
+	* testsuite/icf_string_merge_test.sh: New file.
+	* testsuite/icf_virtual_function_folding_test.cc: New file.
+	* testsuite/icf_virtual_function_folding_test.sh: New file.
+
+2010-04-14  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_output_section::fix_exidx_coverage): Mark object
+	for local symbol recounting if we remove a section due to ICF.
+	* gold.cc (queue_middle_gc_tasks): Create a dummy blocker if
+	there are no regular objects in input.
+
+2010-04-13  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_input_section::set_final_data_size): Compute
+	accurate final data size instead of using current data size.
+
 2010-04-09  Doug Kwan  <dougkwan@google.com>
 
 	* layout.cc (Layout::choose_output_section): Handle script section
@@ -48,7 +111,7 @@
 	(opt_address_and_section_type): Change type to output_section_header.
 	(section_type): New non-terminal
 	(section_header): Handle section type.
- 	(opt_address_and_section_type): Return section type value.
+	(opt_address_and_section_type): Return section type value.
 
 2010-04-09  H.J. Lu  <hongjiu.lu@intel.com>
 

@@ -233,6 +233,49 @@ static INLINE void i386_intel_fold (expressionS *e, symbolS *sym)
     }
 }
 
+static int
+i386_intel_simplify_register (expressionS *e)
+{
+  int reg_num;
+
+  if (this_operand < 0 || intel_state.in_offset)
+    {
+      as_bad (_("invalid use of register"));
+      return 0;
+    }
+
+  if (e->X_op == O_register)
+    reg_num = e->X_add_number;
+  else
+    reg_num = e->X_md - 1;
+
+  if (!intel_state.in_bracket)
+    {
+      if (i.op[this_operand].regs)
+	{
+	  as_bad (_("invalid use of register"));
+	  return 0;
+	}
+      if (i386_regtab[reg_num].reg_type.bitfield.sreg3
+	  && i386_regtab[reg_num].reg_num == RegFlat)
+	{
+	  as_bad (_("invalid use of pseudo-register"));
+	  return 0;
+	}
+      i.op[this_operand].regs = i386_regtab + reg_num;
+    }
+  else if (!intel_state.base && !intel_state.in_scale)
+    intel_state.base = i386_regtab + reg_num;
+  else if (!intel_state.index)
+    intel_state.index = i386_regtab + reg_num;
+  else
+    {
+      /* esp is invalid as index */
+      intel_state.index = i386_regtab + REGNAM_EAX + 4;
+    }
+  return 2;
+}
+
 static int i386_intel_simplify (expressionS *);
 
 static INLINE int i386_intel_simplify_symbol(symbolS *sym)
@@ -328,40 +371,6 @@ static int i386_intel_simplify (expressionS *e)
       i386_intel_fold (e, e->X_op_symbol);
       break;
 
-    case O_register:
-      if (this_operand < 0 || intel_state.in_offset)
-	{
-	  as_bad (_("invalid use of register"));
-	  return 0;
-	}
-      if (!intel_state.in_bracket)
-	{
-	  if (i.op[this_operand].regs)
-	    {
-	      as_bad (_("invalid use of register"));
-	      return 0;
-	    }
-	  if (i386_regtab[e->X_add_number].reg_type.bitfield.sreg3
-	      && i386_regtab[e->X_add_number].reg_num == RegFlat)
-	    {
-	      as_bad (_("invalid use of pseudo-register"));
-	      return 0;
-	    }
-	  i.op[this_operand].regs = i386_regtab + e->X_add_number;
-	}
-      else if (!intel_state.base && !intel_state.in_scale)
-	intel_state.base = i386_regtab + e->X_add_number;
-      else if (!intel_state.index)
-	intel_state.index = i386_regtab + e->X_add_number;
-      else
-	{
-	  /* esp is invalid as index */
-	  intel_state.index = i386_regtab + REGNAM_EAX + 4;
-	}
-      e->X_op = O_constant;
-      e->X_add_number = 0;
-      return 2;
-
     case O_multiply:
       if (this_operand >= 0 && intel_state.in_bracket)
 	{
@@ -418,6 +427,22 @@ static int i386_intel_simplify (expressionS *e)
 
 	  break;
 	}
+
+    case O_register:
+      ret = i386_intel_simplify_register (e);
+      if (ret == 2)
+	{
+	  gas_assert (e->X_add_number < (unsigned short) -1);
+	  e->X_md = (unsigned short) e->X_add_number + 1;
+	  e->X_op = O_constant;
+	  e->X_add_number = 0;
+	}
+      return ret;
+
+    case O_constant:
+      if (e->X_md)
+	return i386_intel_simplify_register (e);
+
       /* FALLTHROUGH */
     default:
       if (e->X_add_symbol && !i386_intel_simplify_symbol (e->X_add_symbol))

@@ -6451,6 +6451,7 @@ x86_cons (expressionS *exp, int size)
 {
   intel_syntax = -intel_syntax;
 
+  exp->X_md = 0;
   if (size == 4 || (object_64bit && size == 8))
     {
       /* Handle @GOTOFF and the like in an expression.  */
