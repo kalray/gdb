@@ -1,3 +1,253 @@
+2010-06-11  Stan Shebs  <stan@codesourcery.com>
+
+	Add per-operation permission flags.
+
+	* target.h (struct target_ops): New method to_set_permissions.
+	(target_set_permissions): New macro.
+	(target_insert_breakpoint): Change macro to function.
+	(target_remove_breakpoint): Ditto.
+	(target_stop): Ditto.
+	(may_write_registers): Declare.
+	(may_write_memory): Declare.
+	(may_insert_breakpoints): Declare.
+	(may_insert_tracepoints): Declare.
+	(may_insert_fast_tracepoints): Declare.
+	(may_stop): Declare.
+	* target.c (may_write_registers, may_write_registers_1): New globals.
+	(may_write_memory, may_write_memory_1): New globals.
+	(may_insert_breakpoints, may_insert_breakpoints_1): New globals.
+	(may_insert_tracepoints, may_insert_tracepoints_1): New globals.
+	(may_insert_fast_tracepoints, may_insert_fast_tracepoints_1): New
+	globals.
+	(may_stop, may_stop_1): New global.
+	(target_xfer_partial): Test for write permission.
+	(target_store_registers): Ditto.
+	(target_insert_breakpoint): New function.
+	(target_remove_breakpoint): New function.
+	(target_stop): New function.
+	(_initialize_targets): Add new set/show variables.
+	(set_write_memory_permission): New function.
+	(update_target_permissions): New function.
+	(set_target_permissions): New function.
+	(update_current_target): Default to_set_permissions.
+	(_initialize_targets): Use new globals and setter function.
+	* tracepoint.c (start_tracing): Test for permission.
+	* inferior.h (update_observer_mode): Declare.
+	* infrun.c (non_stop_1): Define earlier.
+	(observer_mode, observer_mode_1): New globals.
+	(set_observer_mode, show_observer_mode): New functions.
+	(update_observer_mode): New function.
+	(_initialize_infrun): Define "set observer" command.
+	* remote.c (PACKET_QAllow): New optional packet.
+	(remote_protocol_features): Add QAllow.
+	(remote_set_permissions): New function.
+	(remote_start_remote): Call it.
+	(init_remote_ops): Add it to target vector.
+	(_initialize_remote): Add config command for QAllow.
+
+2010-06-11  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf2read.c (dwarf2_add_member_fn): Handle correct form of
+	DW_AT_vtable_elem_location even when GCC extension is seen.
+
+2010-06-11  Tom Tromey  <tromey@redhat.com>
+
+	PR gdb/9977, PR exp/11636:
+	* value.h (value_offset): Update.
+	(struct lval_funcs) <check_validity>: New field.
+	<copy_closure>: Make argument const.
+	(value_computed_closure): Update.
+	(value_contents_for_printing): Declare.
+	(value_bits_valid): Likewise.
+	(val_print): Likewise.
+	(set_value_component_location): Update.
+	(value_entirely_optimized_out): Declare.
+	* value.c (value_offset): Argument now const.
+	(require_not_optimized_out): New function.
+	(value_contents_for_printing): New function.
+	(value_contents_all): Call require_not_optimized_out.
+	(value_contents): Likewise.
+	(value_bits_valid): New function.
+	(value_computed_closure): Argument now const.
+	(set_value_component_location): Make 'whole' argument const.
+	(value_entirely_optimized_out): New function.
+	(value_bitsize): Argument now 'const'.
+	(value_bitpos): Likewise.
+	(value_type): Likewise.
+	* valprint.h (val_print_array_elements): Update.
+	* valprint.c (val_print): Add 'val' argument.  Use
+	valprint_check_validity.
+	(valprint_check_validity): New function.
+	(value_check_printable): Use value_entirely_optimized_out.
+	(common_val_print): Update.
+	(value_print): Likewise.
+	(val_print_array_elements): Add 'val' argument.
+	* valops.c (value_fetch_lazy): Use value_contents_for_printing,
+	value_bits_valid.  Reinit frame cache for lval_computed.
+	* sh64-tdep.c (sh64_do_register): Update.
+	* scm-valprint.c (scm_val_print): Add 'val' argument.
+	* scm-lang.h (scm_val_print): Update.
+	* python/python.h (apply_val_pretty_printer): Update.
+	* python/py-prettyprint.c (apply_val_pretty_printer): Add 'val'
+	argument.  Call set_value_component_location.
+	* printcmd.c (print_scalar_formatted): Update.
+	* p-valprint.c (pascal_val_print): Add 'val' argument.
+	(pascal_object_print_value_fields): Likewise.
+	(pascal_object_print_value): Likewise.
+	(pascal_object_print_static_field): Update.
+	* p-lang.h (pascal_val_print): Update.
+	(pascal_object_print_value_fields): Update.
+	* mt-tdep.c (mt_registers_info): Update.
+	* mi/mi-main.c (get_register): Update.
+	(mi_cmd_data_evaluate_expression): Use common_val_print.
+	* m2-valprint.c (m2_print_array_contents): Add 'val' argument.
+	(m2_print_unbounded_array): Likewise.
+	(m2_val_print): Likewise.
+	* m2-lang.h (m2_val_print): Update.
+	* language.h (struct language_defn) <la_val_print>: Add 'val'
+	argument.
+	(LA_VAL_PRINT): Likewise.
+	* language.c (unk_lang_val_print): Add 'val' argument.
+	* jv-valprint.c (java_print_value_fields): Add 'val' argument.
+	(java_val_print): Likewise.
+	* jv-lang.h (java_val_print): Add 'val' argument.
+	* infcmd.c (default_print_registers_info): Update.
+	* f-valprint.c (f77_print_array_1): Add 'val' argument.
+	(f77_print_array): Likewise.
+	(f_val_print): Likewise.
+	* f-lang.h (f_val_print): Add 'val' argument.
+	* dwarf2loc.c (read_pieced_value): Use value_bitsize and
+	value_bitpos.
+	<DWARF_VALUE_OPTIMIZED_OUT>: Don't print warning.  Call
+	set_value_optimized_out.
+	(write_pieced_value): Use value_bitsize and value_bitpos.
+	<default>: Don't exit loop.
+	(check_pieced_value_validity): New function.
+	(pieced_value_funcs): Reference check_pieced_value_validity,
+	check_pieced_value_invalid.
+	(copy_pieced_value_closure): Update.
+	(check_pieced_value_bits): New function.
+	(check_pieced_value_invalid): New function.
+	* d-valprint.c (dynamic_array_type): Add 'val' argument.
+	(d_val_print): Likewise.
+	* d-lang.h (d_val_print): Update.
+	* cp-valprint.c (cp_print_value_fields): Add 'val' argument.
+	(cp_print_value_fields_rtti): Likewise.
+	(cp_print_value): Likewise.
+	(cp_print_static_field): Update.
+	* c-valprint.c (c_val_print): Add 'val' argument.
+	(c_value_print): Update.
+	* c-lang.h (c_val_print): Update.
+	(cp_print_value_fields): Likewise.
+	(cp_print_value_fields_rtti): Likewise.
+	* ada-valprint.c (struct ada_val_print_args): Remove.
+	(val_print_packed_array_elements): Add 'val' argument.
+	(ada_val_print): Likewise.  Rewrite.
+	(ada_val_print_stub): Remove.
+	(ada_val_print_array): Add 'val' argument.
+	(ada_val_print_1): Likewise.
+	(print_variant_part): Likewise.
+	(ada_value_print): Update.
+	(print_record): Add 'val' argument.
+	(print_field_values): Likewise.
+	* ada-lang.h (ada_val_print): Update.
+
+2010-06-11  Tom Tromey  <tromey@redhat.com>
+
+	* vec.h (VEC_cleanup): New macro.
+	(DEF_VEC_ALLOC_FUNC_I): Update.
+	(DEF_VEC_ALLOC_FUNC_P): Likewise.
+	(DEF_VEC_ALLOC_FUNC_O): Likewise.
+	* dwarf2loc.c (struct axs_var_loc): Remove.
+	(unimplemented): New function.
+	(translate_register): Likewise.
+	(access_memory): Likewise.
+	(compile_dwarf_to_ax): Likewise.
+	(dwarf2_tracepoint_var_loc): Remove.
+	(dwarf2_tracepoint_var_access): Likewise.
+	(dwarf2_tracepoint_var_ref): Likewise.
+	(locexpr_tracepoint_var_ref): Use compile_dwarf_to_ax.
+	(loclist_tracepoint_var_ref): Likewise.
+	* dwarf2expr.h (dwarf_expr_require_composition): Declare.
+	* dwarf2expr.c (dwarf_expr_require_composition): Rename from
+	require_composition.  No longer static.
+	(execute_stack_op): Update.
+	* ax-gdb.h (trace_kludge): Declare.
+
+2010-06-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* breakpoint.c (breakpoint_restore_shadows): New OWNER comment.
+	(should_be_inserted): Return zero also on NULL OWNER.
+	(breakpoint_program_space_exit): New OWNER comment.
+	(insert_breakpoint_locations): Extend comment for OWNER.
+	(remove_breakpoint_1, remove_breakpoint): Assert on OWNER.
+	(breakpoint_init_inferior, breakpoint_here_p, breakpoint_thread_match):
+	New OWNER comment.
+	(print_it_typical): Return PRINT_UNKNOWN on NULL OWNER.
+	(watchpoint_check): New assert on BREAKPOINT_AT and OWNER.
+	(bpstat_check_location): New assert on OWNER.
+	(bpstat_check_watchpoint, bpstat_check_breakpoint_conditions): Move BL
+	and B initializations to the code block.  New assert on them.
+	(print_one_breakpoint_location): New OWNER comment.
+	(watchpoint_locations_match): Assert on OWNER.
+	(breakpoint_locations_match): Move HW_POINT1 and HW_POINT2
+	initializations to the code block.  New assert on OWNER.
+	(set_breakpoint_location_function): New assert on OWNER.
+	(disable_breakpoints_in_shlibs, disable_breakpoints_in_unloaded_shlib)
+	(bp_location_compare, update_global_location_list)
+	(update_global_location_list): New OWNER comment.
+
+2010-06-09  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* Makefile.in (HFILES_NO_SRCDIR): Remove config/i386/nm-linux.h
+
+2010-06-09  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* config/nm-linux.h (struct target_ops): Remove forward declaration.
+	(lin_thread_get_thread_signals): Remove prototype.
+	(GET_THREAD_SIGNALS): Remove.
+	* linux-nat.h (lin_thread_get_thread_signals): Add prototype.
+	* linux-thread-db.c (check_thread_signals): Directly call
+	lin_thread_get_thread_signals; do not check GET_THREAD_SIGNALS.
+
+2010-06-09  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* gregset.h (GDB_FPXREGSET_T): Remove.
+	(gdb_fpxregset_t): Likewise.
+	(supply_fpxregset): Remove prototype.
+	(fill_fpxregset): Likewise.
+	* i386-linux-nat.c (supply_fpxregset): Remove.
+	(fill_fpxregset): Likewise.
+	(fetch_fpxregs): Inline supply_fpxregset call.
+	(store_fpxregs): Inline fill_fpxregset call.
+
+	* config/i386/linux.mh: Set NAT_FILE to config/nm-linux.h.
+	* config/i386/nm-linux.h: Remove file.
+
+2010-06-09  Michael Snyder  <msnyder@vmware.com>
+
+	* target.c (update_current_target): Fix spelling error in comment.
+	(target_mourn_inferior): Fix spelling error in error message.
+
+2010-06-08  Paul Hilfinger  <hilfingr@adacore.com>
+
+      * dictionary.h (dict_iter_name_first, dict_iter_name_next): Refer to
+      SYMBOL_SEARCH_NAME, not SYMBOL_BEST_NAME, in comments.
+
+2010-06-08  Michael Snyder  <msnyder@vmware.com>
+
+	* remote.c (remote_close): Set inferior_ptid to null_ptid.
+
+2010-06-08  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* configure.ac <"${have_libpython}" != no>: New workaround of
+	python#4434.
+	* configure: Regenerate.
+
+2010-06-08  Hui Zhu  <teawater@gmail.com>
+
+	* record.c (record_wait): Move signal out of replay code.
+
 2010-06-07  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Fix PR 10640.

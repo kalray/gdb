@@ -135,6 +135,7 @@ typedef struct
 }
 arch_entry;
 
+static void update_code_flag (int, int);
 static void set_code_flag (int);
 static void set_16bit_gcc_code_flag (int);
 static void set_intel_syntax (int);
@@ -562,6 +563,8 @@ const relax_typeS md_relax_table[] =
 
 static const arch_entry cpu_arch[] =
 {
+  /* Do not replace the first two entries - i386_target_format()
+     relies on them being there in this order.  */
   { STRING_COMMA_LEN ("generic32"), PROCESSOR_GENERIC32,
     CPU_GENERIC32_FLAGS, 0 },
   { STRING_COMMA_LEN ("generic64"), PROCESSOR_GENERIC64,
@@ -1920,8 +1923,10 @@ add_prefix (unsigned int prefix)
 }
 
 static void
-set_code_flag (int value)
+update_code_flag (int value, int check)
 {
+  PRINTF_LIKE ((*as_error));
+
   flag_code = (enum flag_code) value;
   if (flag_code == CODE_64BIT)
     {
@@ -1935,13 +1940,29 @@ set_code_flag (int value)
     }
   if (value == CODE_64BIT && !cpu_arch_flags.bitfield.cpulm )
     {
-      as_bad (_("64bit mode not supported on this CPU."));
+      if (check)
+	as_error = as_fatal;
+      else
+	as_error = as_bad;
+      (*as_error) (_("64bit mode not supported on `%s'."),
+		   cpu_arch_name ? cpu_arch_name : default_arch);
     }
   if (value == CODE_32BIT && !cpu_arch_flags.bitfield.cpui386)
     {
-      as_bad (_("32bit mode not supported on this CPU."));
+      if (check)
+	as_error = as_fatal;
+      else
+	as_error = as_bad;
+      (*as_error) (_("32bit mode not supported on `%s'."),
+		   cpu_arch_name ? cpu_arch_name : default_arch);
     }
   stackop_size = '\0';
+}
+
+static void
+set_code_flag (int value)
+{
+  update_code_flag (value, 0);
 }
 
 static void
@@ -2341,7 +2362,7 @@ static void ps (symbolS *);
 static void
 pi (char *line, i386_insn *x)
 {
-  unsigned int i;
+  unsigned int j;
 
   fprintf (stdout, "%s: template ", line);
   pte (&x->tm);
@@ -2358,35 +2379,35 @@ pi (char *line, i386_insn *x)
 	   (x->rex & REX_R) != 0,
 	   (x->rex & REX_X) != 0,
 	   (x->rex & REX_B) != 0);
-  for (i = 0; i < x->operands; i++)
+  for (j = 0; j < x->operands; j++)
     {
-      fprintf (stdout, "    #%d:  ", i + 1);
-      pt (x->types[i]);
+      fprintf (stdout, "    #%d:  ", j + 1);
+      pt (x->types[j]);
       fprintf (stdout, "\n");
-      if (x->types[i].bitfield.reg8
-	  || x->types[i].bitfield.reg16
-	  || x->types[i].bitfield.reg32
-	  || x->types[i].bitfield.reg64
-	  || x->types[i].bitfield.regmmx
-	  || x->types[i].bitfield.regxmm
-	  || x->types[i].bitfield.regymm
-	  || x->types[i].bitfield.sreg2
-	  || x->types[i].bitfield.sreg3
-	  || x->types[i].bitfield.control
-	  || x->types[i].bitfield.debug
-	  || x->types[i].bitfield.test)
-	fprintf (stdout, "%s\n", x->op[i].regs->reg_name);
-      if (operand_type_check (x->types[i], imm))
-	pe (x->op[i].imms);
-      if (operand_type_check (x->types[i], disp))
-	pe (x->op[i].disps);
+      if (x->types[j].bitfield.reg8
+	  || x->types[j].bitfield.reg16
+	  || x->types[j].bitfield.reg32
+	  || x->types[j].bitfield.reg64
+	  || x->types[j].bitfield.regmmx
+	  || x->types[j].bitfield.regxmm
+	  || x->types[j].bitfield.regymm
+	  || x->types[j].bitfield.sreg2
+	  || x->types[j].bitfield.sreg3
+	  || x->types[j].bitfield.control
+	  || x->types[j].bitfield.debug
+	  || x->types[j].bitfield.test)
+	fprintf (stdout, "%s\n", x->op[j].regs->reg_name);
+      if (operand_type_check (x->types[j], imm))
+	pe (x->op[j].imms);
+      if (operand_type_check (x->types[j], disp))
+	pe (x->op[j].disps);
     }
 }
 
 static void
 pte (insn_template *t)
 {
-  unsigned int i;
+  unsigned int j;
   fprintf (stdout, " %d operands ", t->operands);
   fprintf (stdout, "opcode %x ", t->base_opcode);
   if (t->extension_opcode != None)
@@ -2396,10 +2417,10 @@ pte (insn_template *t)
   if (t->opcode_modifier.w)
     fprintf (stdout, "W");
   fprintf (stdout, "\n");
-  for (i = 0; i < t->operands; i++)
+  for (j = 0; j < t->operands; j++)
     {
-      fprintf (stdout, "    #%d type ", i + 1);
-      pt (t->operand_types[i]);
+      fprintf (stdout, "    #%d type ", j + 1);
+      pt (t->operand_types[j]);
       fprintf (stdout, "\n");
     }
 }
@@ -8166,6 +8187,9 @@ md_parse_option (int c, char *arg)
 	      if (strcmp (arch, cpu_arch [j].name) == 0)
 		{
 		  /* Processor.  */
+		  if (! cpu_arch[j].flags.bitfield.cpui386)
+		    continue;
+
 		  cpu_arch_name = cpu_arch[j].name;
 		  cpu_sub_arch_name = NULL;
 		  cpu_arch_flags = cpu_arch[j].flags;
@@ -8297,7 +8321,7 @@ md_parse_option (int c, char *arg)
 "                                                                                "
 
 static void
-show_arch (FILE *stream, int ext)
+show_arch (FILE *stream, int ext, int check)
 {
   static char message[] = MESSAGE_TEMPLATE;
   char *start = message + 27;
@@ -8332,6 +8356,11 @@ show_arch (FILE *stream, int ext)
       else if (ext)
 	{
 	  /* It is an processor.  Skip if we show only extension.  */
+	  continue;
+	}
+      else if (check && ! cpu_arch[j].flags.bitfield.cpui386)
+	{
+	  /* It is an impossible processor - skip.  */
 	  continue;
 	}
 
@@ -8398,13 +8427,13 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\
   -march=CPU[,+EXTENSION...]\n\
                           generate code for CPU and EXTENSION, CPU is one of:\n"));
-  show_arch (stream, 0);
+  show_arch (stream, 0, 1);
   fprintf (stream, _("\
                           EXTENSION is combination of:\n"));
-  show_arch (stream, 1);
+  show_arch (stream, 1, 0);
   fprintf (stream, _("\
   -mtune=CPU              optimize for CPU, CPU is one of:\n"));
-  show_arch (stream, 0);
+  show_arch (stream, 0, 0);
   fprintf (stream, _("\
   -msse2avx               encode SSE instructions with VEX prefix\n"));
   fprintf (stream, _("\
@@ -8435,54 +8464,17 @@ const char *
 i386_target_format (void)
 {
   if (!strcmp (default_arch, "x86_64"))
-    {
-      set_code_flag (CODE_64BIT);
-      if (cpu_flags_all_zero (&cpu_arch_isa_flags))
-	{
-	  cpu_arch_isa_flags.bitfield.cpui186 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui286 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui386 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui486 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui586 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui686 = 1;
-	  cpu_arch_isa_flags.bitfield.cpuclflush = 1;
-	  cpu_arch_isa_flags.bitfield.cpummx= 1;
-	  cpu_arch_isa_flags.bitfield.cpusse = 1;
-	  cpu_arch_isa_flags.bitfield.cpusse2 = 1;
-	  cpu_arch_isa_flags.bitfield.cpulm = 1;
-	}
-      if (cpu_flags_all_zero (&cpu_arch_tune_flags))
-	{
-	  cpu_arch_tune_flags.bitfield.cpui186 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui286 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui386 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui486 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui586 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui686 = 1;
-	  cpu_arch_tune_flags.bitfield.cpuclflush = 1;
-	  cpu_arch_tune_flags.bitfield.cpummx= 1;
-	  cpu_arch_tune_flags.bitfield.cpusse = 1;
-	  cpu_arch_tune_flags.bitfield.cpusse2 = 1;
-	}
-    }
+    update_code_flag (CODE_64BIT, 1);
   else if (!strcmp (default_arch, "i386"))
-    {
-      set_code_flag (CODE_32BIT);
-      if (cpu_flags_all_zero (&cpu_arch_isa_flags))
-	{
-	  cpu_arch_isa_flags.bitfield.cpui186 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui286 = 1;
-	  cpu_arch_isa_flags.bitfield.cpui386 = 1;
-	}
-      if (cpu_flags_all_zero (&cpu_arch_tune_flags))
-	{
-	  cpu_arch_tune_flags.bitfield.cpui186 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui286 = 1;
-	  cpu_arch_tune_flags.bitfield.cpui386 = 1;
-	}
-    }
+    update_code_flag (CODE_32BIT, 1);
   else
     as_fatal (_("Unknown architecture"));
+
+  if (cpu_flags_all_zero (&cpu_arch_isa_flags))
+    cpu_arch_isa_flags = cpu_arch[flag_code == CODE_64BIT].flags;
+  if (cpu_flags_all_zero (&cpu_arch_tune_flags))
+    cpu_arch_tune_flags = cpu_arch[flag_code == CODE_64BIT].flags;
+
   switch (OUTPUT_FLAVOR)
     {
 #if defined (OBJ_MAYBE_AOUT) || defined (OBJ_AOUT)

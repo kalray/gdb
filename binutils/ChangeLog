@@ -1,3 +1,39 @@
+2010-06-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* readelf.c (dump_ia64_vms_dynamic_fixups): Cast to unsigned long
+	for 0x%lx.
+
+2010-06-11  Tristan Gingold  <gingold@adacore.com>
+	    Doug Rupp <rupp@gnat.com>
+
+	* readelf.c (is_ia64_vms): New function.
+	(dump_relocations): Use it.
+	(get_machine_flags): Display IA-64 OpenVMS flags.
+	(process_program_headers): No error on OpenVMS if no .dynamic section.
+	(struct ia64_vms_dynfixup, struct ia64_vms_dynimgrela): New
+	declarations.
+	(dump_ia64_vms_dynamic_fixups): New function.
+	(dump_ia64_vms_dynamic_relocs): Ditto.
+	(process_ia64_vms_dynamic_relocs): Ditto.
+	(process_relocs): Handle IA-64 OpenVMS relocs.
+	(VMS_EPOCH_OFFSET, VMS_GRANULARITY_FACTOR): New macros.
+	(print_vms_time): New function.
+	(dynamic_section_ia64_val): Handle DT_IA_64_VMS_LINKTIME and
+	DT_IA_64_VMS_LNKFLAGS.
+	(get_ia64_symbol_other): New function.
+	(get_symbol_other): Handle EM_IA_64.
+
+2010-06-11  Tristan Gingold  <gingold@adacore.com>
+
+	* unwind-ia64.c (unw_print_abreg): Add const to special_reg.
+	(UNW_DEC_ABI): Ditto for abiname.
+	(unw_decode_table): Make it const.
+
+2010-06-10  Tristan Gingold  <gingold@adacore.com>
+
+	* readelf.c (slurp_ia64_unwind_table): IA64 rela relocations are
+	not inplace.
+
 2010-05-25  Daniel Jacobowitz  <dan@codesourcery.com>
 	    Joseph Myers  <joseph@codesourcery.com>
 	    Andrew Stubbs  <ams@codesourcery.com>

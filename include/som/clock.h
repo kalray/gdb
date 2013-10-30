@@ -1,10 +1,8 @@
-/* Native support for GNU/Linux x86.
+/* SOM clock definition for BFD.
+   Copyright 2010  Free Software Foundation, Inc.
+   Contributed by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
-   Copyright 1986, 1987, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
-
-   This file is part of GDB.
+   This file is part of BFD, the Binary File Descriptor library.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,16 +15,16 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software Foundation,
+   Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#ifndef NM_LINUX_H
-#define NM_LINUX_H
+#ifndef _SOM_CLOCK_H
+#define _SOM_CLOCK_H
 
-#include "config/nm-linux.h"
+struct som_external_clock
+{
+  unsigned char secs[4];
+  unsigned char nanosecs[4];
+};
 
-#ifdef HAVE_PTRACE_GETFPXREGS
-/* Include register set support for the SSE registers.  */
-#define FILL_FPXREGSET
-#endif
-
-#endif /* nm-linux.h */
+#endif /* _SOM_CLOCK_H */
