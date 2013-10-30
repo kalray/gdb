@@ -204,6 +204,20 @@ union i386_op
     const reg_entry *regs;
   };
 
+enum i386_error
+  {
+    operand_size_mismatch,
+    operand_type_mismatch,
+    register_type_mismatch,
+    number_of_operands_mismatch,
+    invalid_instruction_suffix,
+    bad_imm4,
+    old_gcc_only,
+    unsupported_with_intel_mnemonic,
+    unsupported_syntax,
+    unsupported
+  };
+
 struct _i386_insn
   {
     /* TM holds the template for the insn were currently assembling.  */
@@ -262,7 +276,7 @@ struct _i386_insn
     unsigned int swap_operand;
 
     /* Error message.  */
-    const char *err_msg;
+    enum i386_error error;
   };
 
 typedef struct _i386_insn i386_insn;
@@ -1565,7 +1579,7 @@ operand_size_match (const insn_template *t)
   else if (!t->opcode_modifier.d && !t->opcode_modifier.floatd)
     {
 mismatch:
-      i.err_msg = _("operand size mismatch");
+      i.error = operand_size_mismatch;
       return 0;
     }
 
@@ -1611,7 +1625,7 @@ operand_type_match (i386_operand_type overlap,
     return 1;
 
 mismatch:
-  i.err_msg = _("operand type mismatch");
+  i.error = operand_type_mismatch;
   return 0;
 }
 
@@ -1661,7 +1675,7 @@ operand_type_register_match (i386_operand_type m0,
       && !(t0.bitfield.reg64 & t1.bitfield.reg64))
     return 1;
 
-  i.err_msg = _("register type mismatch");
+  i.error = register_type_mismatch;
 
   return 0;
 }
@@ -3758,7 +3772,7 @@ VEX_check_operands (const insn_template *t)
       if (i.op[0].imms->X_op != O_constant
 	  || !fits_in_imm4 (i.op[0].imms->X_add_number))
 	{
-	  i.err_msg = _("Imm4 isn't the first operand");
+	  i.error = bad_imm4;
 	  return 1;
 	}
 
@@ -3810,35 +3824,35 @@ match_template (void)
       addr_prefix_disp = -1;
 
       /* Must have right number of operands.  */
-      i.err_msg = _("number of operands mismatch");
+      i.error = number_of_operands_mismatch;
       if (i.operands != t->operands)
 	continue;
 
       /* Check processor support.  */
-      i.err_msg = _("unsupported");
+      i.error = unsupported;
       found_cpu_match = (cpu_flags_match (t)
 			 == CPU_FLAGS_PERFECT_MATCH);
       if (!found_cpu_match)
 	continue;
 
       /* Check old gcc support. */
-      i.err_msg = _("only supported with old gcc");
+      i.error = old_gcc_only;
       if (!old_gcc && t->opcode_modifier.oldgcc)
 	continue;
 
       /* Check AT&T mnemonic.   */
-      i.err_msg = _("unsupported with Intel mnemonic");
+      i.error = unsupported_with_intel_mnemonic;
       if (intel_mnemonic && t->opcode_modifier.attmnemonic)
 	continue;
 
       /* Check AT&T/Intel syntax.   */
-      i.err_msg = _("unsupported syntax");
+      i.error = unsupported_syntax;
       if ((intel_syntax && t->opcode_modifier.attsyntax)
 	  || (!intel_syntax && t->opcode_modifier.intelsyntax))
 	continue;
 
       /* Check the suffix, except for some instructions in intel mode.  */
-      i.err_msg = _("invalid instruction suffix");
+      i.error = invalid_instruction_suffix;
       if ((!intel_syntax || !t->opcode_modifier.ignoresize)
 	  && ((t->opcode_modifier.no_bsuf && suffix_check.no_bsuf)
 	      || (t->opcode_modifier.no_wsuf && suffix_check.no_wsuf)
@@ -4090,7 +4104,43 @@ check_reverse:
   if (t == current_templates->end)
     {
       /* We found no match.  */
-      as_bad (_("%s for `%s'"), i.err_msg,
+      const char *err_msg;
+      switch (i.error)
+	{
+	default:
+	  abort ();
+	case operand_size_mismatch:
+	  err_msg = _("operand size mismatch");
+	  break;
+	case operand_type_mismatch:
+	  err_msg = _("operand type mismatch");
+	  break;
+	case register_type_mismatch:
+	  err_msg = _("register type mismatch");
+	  break;
+	case number_of_operands_mismatch:
+	  err_msg = _("number of operands mismatch");
+	  break;
+	case invalid_instruction_suffix:
+	  err_msg = _("invalid instruction suffix");
+	  break;
+	case bad_imm4:
+	  err_msg = _("Imm4 isn't the first operand");
+	  break;
+	case old_gcc_only:
+	  err_msg = _("only supported with old gcc");
+	  break;
+	case unsupported_with_intel_mnemonic:
+	  err_msg = _("unsupported with Intel mnemonic");
+	  break;
+	case unsupported_syntax:
+	  err_msg = _("unsupported syntax");
+	  break;
+	case unsupported:
+	  err_msg = _("unsupported");
+	  break;
+	}
+      as_bad (_("%s for `%s'"), err_msg,
 	      current_templates->start->name);
       return NULL;
     }
@@ -6268,60 +6318,60 @@ lex_got (enum bfd_reloc_code_real *rel,
      and adjust the reloc according to the real size in reloc().  */
   static const struct {
     const char *str;
+    int len;
     const enum bfd_reloc_code_real rel[2];
     const i386_operand_type types64;
   } gotrel[] = {
-    { "PLTOFF",   { _dummy_first_bfd_reloc_code_real,
-		    BFD_RELOC_X86_64_PLTOFF64 },
+    { STRING_COMMA_LEN ("PLTOFF"),   { _dummy_first_bfd_reloc_code_real,
+				       BFD_RELOC_X86_64_PLTOFF64 },
       OPERAND_TYPE_IMM64 },
-    { "PLT",      { BFD_RELOC_386_PLT32,
-		    BFD_RELOC_X86_64_PLT32    },
+    { STRING_COMMA_LEN ("PLT"),      { BFD_RELOC_386_PLT32,
+				       BFD_RELOC_X86_64_PLT32    },
       OPERAND_TYPE_IMM32_32S_DISP32 },
-    { "GOTPLT",   { _dummy_first_bfd_reloc_code_real,
-		    BFD_RELOC_X86_64_GOTPLT64 },
+    { STRING_COMMA_LEN ("GOTPLT"),   { _dummy_first_bfd_reloc_code_real,
+				       BFD_RELOC_X86_64_GOTPLT64 },
       OPERAND_TYPE_IMM64_DISP64 },
-    { "GOTOFF",   { BFD_RELOC_386_GOTOFF,
-		    BFD_RELOC_X86_64_GOTOFF64 },
+    { STRING_COMMA_LEN ("GOTOFF"),   { BFD_RELOC_386_GOTOFF,
+				       BFD_RELOC_X86_64_GOTOFF64 },
       OPERAND_TYPE_IMM64_DISP64 },
-    { "GOTPCREL", { _dummy_first_bfd_reloc_code_real,
-		    BFD_RELOC_X86_64_GOTPCREL },
+    { STRING_COMMA_LEN ("GOTPCREL"), { _dummy_first_bfd_reloc_code_real,
+				       BFD_RELOC_X86_64_GOTPCREL },
       OPERAND_TYPE_IMM32_32S_DISP32 },
-    { "TLSGD",    { BFD_RELOC_386_TLS_GD,
-		    BFD_RELOC_X86_64_TLSGD    },
+    { STRING_COMMA_LEN ("TLSGD"),    { BFD_RELOC_386_TLS_GD,
+				       BFD_RELOC_X86_64_TLSGD    },
       OPERAND_TYPE_IMM32_32S_DISP32 },
-    { "TLSLDM",   { BFD_RELOC_386_TLS_LDM,
-		    _dummy_first_bfd_reloc_code_real },
+    { STRING_COMMA_LEN ("TLSLDM"),   { BFD_RELOC_386_TLS_LDM,
+				       _dummy_first_bfd_reloc_code_real },
       OPERAND_TYPE_NONE },
-    { "TLSLD",    { _dummy_first_bfd_reloc_code_real,
-		    BFD_RELOC_X86_64_TLSLD    },
+    { STRING_COMMA_LEN ("TLSLD"),    { _dummy_first_bfd_reloc_code_real,
+				       BFD_RELOC_X86_64_TLSLD    },
       OPERAND_TYPE_IMM32_32S_DISP32 },
-    { "GOTTPOFF", { BFD_RELOC_386_TLS_IE_32,
-		    BFD_RELOC_X86_64_GOTTPOFF },
+    { STRING_COMMA_LEN ("GOTTPOFF"), { BFD_RELOC_386_TLS_IE_32,
+				       BFD_RELOC_X86_64_GOTTPOFF },
       OPERAND_TYPE_IMM32_32S_DISP32 },
-    { "TPOFF",    { BFD_RELOC_386_TLS_LE_32,
-		    BFD_RELOC_X86_64_TPOFF32  },
+    { STRING_COMMA_LEN ("TPOFF"),    { BFD_RELOC_386_TLS_LE_32,
+				       BFD_RELOC_X86_64_TPOFF32  },
       OPERAND_TYPE_IMM32_32S_64_DISP32_64 },
-    { "NTPOFF",   { BFD_RELOC_386_TLS_LE,
-		    _dummy_first_bfd_reloc_code_real },
+    { STRING_COMMA_LEN ("NTPOFF"),   { BFD_RELOC_386_TLS_LE,
+				       _dummy_first_bfd_reloc_code_real },
       OPERAND_TYPE_NONE },
-    { "DTPOFF",   { BFD_RELOC_386_TLS_LDO_32,
-		    BFD_RELOC_X86_64_DTPOFF32 },
-
+    { STRING_COMMA_LEN ("DTPOFF"),   { BFD_RELOC_386_TLS_LDO_32,
+				       BFD_RELOC_X86_64_DTPOFF32 },
       OPERAND_TYPE_IMM32_32S_64_DISP32_64 },
-    { "GOTNTPOFF",{ BFD_RELOC_386_TLS_GOTIE,
-		    _dummy_first_bfd_reloc_code_real },
+    { STRING_COMMA_LEN ("GOTNTPOFF"),{ BFD_RELOC_386_TLS_GOTIE,
+				       _dummy_first_bfd_reloc_code_real },
       OPERAND_TYPE_NONE },
-    { "INDNTPOFF",{ BFD_RELOC_386_TLS_IE,
-		    _dummy_first_bfd_reloc_code_real },
+    { STRING_COMMA_LEN ("INDNTPOFF"),{ BFD_RELOC_386_TLS_IE,
+				       _dummy_first_bfd_reloc_code_real },
       OPERAND_TYPE_NONE },
-    { "GOT",      { BFD_RELOC_386_GOT32,
-		    BFD_RELOC_X86_64_GOT32    },
+    { STRING_COMMA_LEN ("GOT"),      { BFD_RELOC_386_GOT32,
+				       BFD_RELOC_X86_64_GOT32    },
       OPERAND_TYPE_IMM32_32S_64_DISP32 },
-    { "TLSDESC",  { BFD_RELOC_386_TLS_GOTDESC,
-		    BFD_RELOC_X86_64_GOTPC32_TLSDESC },
+    { STRING_COMMA_LEN ("TLSDESC"),  { BFD_RELOC_386_TLS_GOTDESC,
+				       BFD_RELOC_X86_64_GOTPC32_TLSDESC },
       OPERAND_TYPE_IMM32_32S_DISP32 },
-    { "TLSCALL",  { BFD_RELOC_386_TLS_DESC_CALL,
-		    BFD_RELOC_X86_64_TLSDESC_CALL },
+    { STRING_COMMA_LEN ("TLSCALL"),  { BFD_RELOC_386_TLS_DESC_CALL,
+				       BFD_RELOC_X86_64_TLSDESC_CALL },
       OPERAND_TYPE_IMM32_32S_DISP32 },
   };
   char *cp;
@@ -6336,9 +6386,7 @@ lex_got (enum bfd_reloc_code_real *rel,
 
   for (j = 0; j < ARRAY_SIZE (gotrel); j++)
     {
-      int len;
-
-      len = strlen (gotrel[j].str);
+      int len = gotrel[j].len;
       if (strncasecmp (cp + 1, gotrel[j].str, len) == 0)
 	{
 	  if (gotrel[j].rel[object_64bit] != 0)

@@ -36,6 +36,8 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
      return -1
 }
 
+get_compiler_info ${binfile}
+
 # Set the current language to C.  This counts as a test.  If it
 # fails, then we skip the other tests.
 
@@ -686,6 +688,10 @@ proc test_printf {} {
 
     # Regression test for C lexer bug.
     gdb_test "printf \"%c\\n\", \"x\"\[1,0\]" "x"
+
+    # Regression test for "%% at end of format string.
+    # See http://sourceware.org/bugzilla/show_bug.cgi?id=11345
+    gdb_test "printf \"%%%d%%\\n\", 5" "%5%"
 }
 
 #Test printing DFP values with printf
@@ -764,7 +770,7 @@ gdb_test "ptype \"abc\"" " = char \\\[4\\\]"
 gdb_test "print \$cvar = \"abc\"" " = \"abc\""
 gdb_test "print sizeof (\$cvar)" " = 4"
 
-gdb_load ${binfile}
+gdb_file_cmd ${binfile}
 
 gdb_test "print \$pc" "No registers\\." "print \$pc (with file)"
 
@@ -773,8 +779,15 @@ gdb_test "set print address off" ""
 gdb_test "set width 0" ""
 
 if [set_lang_c] then {
+    if { [test_compiler_info "armcc-*"] } {
+	# ARM RealView compresses large arrays in the data segment.
+	# Before the program starts, we can not read them.  There is
+	# nothing in the file to indicate that data is compressed.
+	setup_xfail "arm*-*-eabi"
+    }
     gdb_test "p ctable1\[120\]" "120 'x'" "p ctable1\[120\] #1"
 
+    gdb_load ${binfile}
     if [runto_main] then {
 	test_integer_literals_accepted
 	test_integer_literals_rejected

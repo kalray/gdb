@@ -1,3 +1,73 @@
+2010-04-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf.c (struct Frame_Chunk): Add ptr_size and segment_size
+	fields.
+	(display_debug_frames): Handle CIE version 4.
+
+	* dwarf.c (struct State_Machine_Registers): Add op_index field,
+	change end_sequence type to unsigned char.
+	(reset_state_machine): Clear op_index.
+	(process_extended_line_op): For DW_LNE_set_address clear op_index.
+	(display_debug_lines_raw): Initialize li_max_ops_per_insn.
+	Track op_index state machine register and print it if
+	li_max_ops_per_insn is != 1.
+	(display_debug_lines_decoded): Likewise.
+
+2010-04-01  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf.c (read_and_display_attr_value): Don't reject
+	dwarf_version == 4.  Handle DW_FORM_sec_offset, DW_FORM_flag_present
+	and DW_FORM_exprloc.
+	(process_debug_info): Handle cu_version == 4.
+	(display_debug_lines_raw, display_debug_lines_decoded): Handle
+	li_version == 4.
+
+2010-03-30  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.am (CONFIG_STATUS_DEPENDENCIES): Define.
+	* Makefile.in: Regenerate.
+
+2010-03-25  Joseph Myers  <joseph@codesourcery.com>
+
+	* MAINTAINERS: Add self as TI C6X maintainer.
+	* NEWS: Add news entry for TI C6X support.
+	* readelf.c: Include elf/tic6x.h.
+	(guess_is_rela): Handle EM_TI_C6000.
+	(dump_relocations): Likewise.
+	(get_tic6x_dynamic_type): New.
+	(get_dynamic_type): Call it.
+	(get_machine_flags): Handle EF_C6000_REL.
+	(get_osabi_name): Handle machine-specific values only for relevant
+	machines.  Handle C6X values.
+	(get_tic6x_segment_type): New.
+	(get_segment_type): Call it.
+	(get_tic6x_section_type_name): New.
+	(get_section_type_name): Call it.
+	(is_32bit_abs_reloc, is_16bit_abs_reloc, is_none_reloc): Handle
+	EM_TI_C6000.
+
+2010-03-25  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* doc/binutils.texi (readelf) <unwind information>: Mention support for
+	ARM unwind tables.
+
+2010-03-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* readelf.c (decode_arm_unwind): Increase buf size to 9 byte.
+
+2010-03-17  Alan Modra  <amodra@gmail.com>
+
+	* readelf.c (dump_arm_unwind): Warning fix.
+
+2010-03-16  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* MAINTAINERS: Update my email address.  List Tristan Gingold
+	as the release branch maintainer.
+
+2010-03-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* readelf.c (get_ver_flags): Handle VER_FLG_INFO.
+
 2010-03-02  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* NEWS: Document .ARM.exidx / .ARM.extab support.

@@ -43,6 +43,7 @@
 #include "solib.h"
 #include "exec.h"
 #include "inline-frame.h"
+#include "tracepoint.h"
 
 static void target_info (char *, int);
 
@@ -658,6 +659,7 @@ update_current_target (void)
       INHERIT (to_upload_trace_state_variables, t);
       INHERIT (to_get_raw_trace_data, t);
       INHERIT (to_set_disconnected_tracing, t);
+      INHERIT (to_set_circular_trace_buffer, t);
       INHERIT (to_magic, t);
       /* Do not inherit to_memory_map.  */
       /* Do not inherit to_flash_erase.  */
@@ -834,7 +836,7 @@ update_current_target (void)
 	    (int (*) (int, LONGEST *))
 	    return_zero);
   de_fault (to_save_trace_data,
-	    (int (*) (char *))
+	    (int (*) (const char *))
 	    tcomplain);
   de_fault (to_upload_tracepoints,
 	    (int (*) (struct uploaded_tp **))
@@ -847,7 +849,10 @@ update_current_target (void)
 	    tcomplain);
   de_fault (to_set_disconnected_tracing,
 	    (void (*) (int))
-	    tcomplain);
+	    target_ignore);
+  de_fault (to_set_circular_trace_buffer,
+	    (void (*) (int))
+	    target_ignore);
 #undef de_fault
 
   /* Finally, position the target-stack beneath the squashed
@@ -1292,6 +1297,10 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
     inf = NULL;
 
   if (inf != NULL
+      /* The dcache reads whole cache lines; that doesn't play well
+	 with reading from a trace buffer, because reading outside of
+	 the collected memory range fails.  */
+      && get_traceframe_number () == -1
       && (region->attrib.cache
 	  || (stack_cache_enabled_p && object == TARGET_OBJECT_STACK_MEMORY)))
     {
@@ -2838,6 +2847,9 @@ init_dummy_target (void)
   dummy_target.to_has_stack = (int (*) (struct target_ops *)) return_zero;
   dummy_target.to_has_registers = (int (*) (struct target_ops *)) return_zero;
   dummy_target.to_has_execution = (int (*) (struct target_ops *)) return_zero;
+  dummy_target.to_stopped_by_watchpoint = return_zero;
+  dummy_target.to_stopped_data_address =
+    (int (*) (struct target_ops *, CORE_ADDR *)) return_zero;
   dummy_target.to_magic = OPS_MAGIC;
 }
 
@@ -3059,6 +3071,28 @@ target_core_of_thread (ptid_t ptid)
     }
 
   return -1;
+}
+
+int
+target_verify_memory (const gdb_byte *data, CORE_ADDR memaddr, ULONGEST size)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_verify_memory != NULL)
+	{
+	  int retval = t->to_verify_memory (t, data, memaddr, size);
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog, "target_verify_memory (%s, %s) = %d\n",
+				paddress (target_gdbarch, memaddr),
+				pulongest (size),
+				retval);
+	  return retval;
+	}
+    }
+
+  tcomplain ();
 }
 
 static void

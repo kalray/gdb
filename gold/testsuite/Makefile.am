@@ -1086,6 +1086,12 @@ script_test_3: basic_test.o gcctestdir/ld script_test_3.t
 script_test_3.stdout: script_test_3
 	$(TEST_READELF) -SlW script_test_3 > script_test_3.stdout
 
+check_PROGRAMS += tls_phdrs_script_test
+tls_phdrs_script_test_SOURCES = $(tls_test_SOURCES)
+tls_phdrs_script_test_DEPENDENCIES = $(tls_test_DEPENDENCIES) $(srcdir)/script_test_3.t
+tls_phdrs_script_test_LDFLAGS = $(tls_test_LDFLAGS) -T $(srcdir)/script_test_3.t
+tls_phdrs_script_test_LDADD = $(tls_test_LDADD)
+
 check_SCRIPTS += script_test_4.sh
 check_DATA += script_test_4.stdout
 MOSTLYCLEANFILES += script_test_4
@@ -1093,6 +1099,12 @@ script_test_4: basic_test.o gcctestdir/ld $(srcdir)/script_test_4.t
 	$(CXXLINK) -Bgcctestdir/ basic_test.o -T $(srcdir)/script_test_4.t
 script_test_4.stdout: script_test_4
 	$(TEST_READELF) -SlW script_test_4 > script_test_4.stdout
+
+check_PROGRAMS += tls_script_test
+tls_script_test_SOURCES = $(tls_test_SOURCES)
+tls_script_test_DEPENDENCIES = $(tls_test_DEPENDENCIES) $(srcdir)/script_test_4.t
+tls_script_test_LDFLAGS = $(tls_test_LDFLAGS) -T $(srcdir)/script_test_4.t
+tls_script_test_LDADD = $(tls_test_LDADD)
 
 check_SCRIPTS += script_test_5.sh
 check_DATA += script_test_5.stdout
@@ -1285,8 +1297,14 @@ local_labels_test: local_labels_test.o
 
 check_PROGRAMS += discard_locals_test
 check_SCRIPTS += discard_locals_test.sh
-check_DATA += discard_locals_test.syms
-MOSTLYCLEANFILES += discard_locals_test.syms
+check_DATA += discard_locals_test.syms \
+	discard_locals_relocatable_test1.syms \
+	discard_locals_relocatable_test2.syms
+MOSTLYCLEANFILES += discard_locals_test.syms \
+	discard_locals_relocatable_test1.syms \
+	discard_locals_relocatable_test2.syms \
+	discard_locals_relocatable_test1.out \
+	discard_locals_relocatable_test2.out
 discard_locals_test_SOURCES = discard_locals_test.c
 discard_locals_test_LDFLAGS = -Bgcctestdir/ -Wl,--discard-locals
 discard_locals_test.syms: discard_locals_test
@@ -1294,6 +1312,18 @@ discard_locals_test.syms: discard_locals_test
 # '-Wa,-L' is required to preserve the local label used for testing.
 discard_locals_test.o: discard_locals_test.c
 	$(COMPILE) -c -Wa,-L -o $@ $<
+
+discard_locals_relocatable_test1.syms: discard_locals_relocatable_test1.out
+	$(TEST_READELF) -sW $< >$@ 2>/dev/null
+discard_locals_relocatable_test.o: discard_locals_relocatable_test.c
+	$(COMPILE) -c -Wa,-L -fPIC -o $@ $<
+discard_locals_relocatable_test1.out: discard_locals_relocatable_test.o ../ld-new
+	../ld-new --discard-locals -relocatable -o $@ $<
+
+discard_locals_relocatable_test2.syms: discard_locals_relocatable_test2.out
+	$(TEST_READELF) -sW $< >$@ 2>/dev/null
+discard_locals_relocatable_test2.out: discard_locals_relocatable_test.o ../ld-new
+	../ld-new --discard-all -relocatable -o $@ $<
 
 if MCMODEL_MEDIUM
 check_PROGRAMS += large
@@ -1456,11 +1486,11 @@ check_SCRIPTS += arm_abs_global.sh
 check_DATA += arm_abs_global.stdout
 arm_abs_lib.o: arm_abs_lib.s
 	$(TEST_AS) -march=armv7-a -o $@ $<
-libarm_abs.so: arm_abs_lib.o
+libarm_abs.so: arm_abs_lib.o ../ld-new
 	../ld-new -shared -o $@ arm_abs_lib.o
 arm_abs_global.o: arm_abs_global.s
 	$(TEST_AS) -march=armv7-a -o $@ $<
-arm_abs_global: arm_abs_global.o libarm_abs.so
+arm_abs_global: arm_abs_global.o libarm_abs.so ../ld-new
 	../ld-new -o $@ arm_abs_global.o -L. -larm_abs
 arm_abs_global.stdout: arm_abs_global
 	$(TEST_READELF) -r $< > $@
@@ -1470,12 +1500,14 @@ MOSTLYCLEANFILES += arm_abs_global
 check_SCRIPTS += arm_branch_in_range.sh
 check_DATA += arm_bl_in_range.stdout arm_bl_out_of_range.stdout \
 	thumb_bl_in_range.stdout thumb_bl_out_of_range.stdout \
-	thumb2_bl_in_range.stdout thumb2_bl_out_of_range.stdout
+	thumb2_bl_in_range.stdout thumb2_bl_out_of_range.stdout \
+	thumb_blx_in_range.stdout thumb_blx_out_of_range.stdout \
+	thumb2_blx_in_range.stdout thumb2_blx_out_of_range.stdout
 
 arm_bl_in_range.stdout: arm_bl_in_range
 	$(TEST_OBJDUMP) -D $< > $@
 
-arm_bl_in_range: arm_bl_in_range.o
+arm_bl_in_range: arm_bl_in_range.o ../ld-new
 	../ld-new -T $(srcdir)/arm_branch_range.t -o $@ $<
 
 arm_bl_in_range.o: arm_bl_in_range.s
@@ -1484,7 +1516,7 @@ arm_bl_in_range.o: arm_bl_in_range.s
 arm_bl_out_of_range.stdout: arm_bl_out_of_range
 	$(TEST_OBJDUMP) -S $< > $@
 
-arm_bl_out_of_range: arm_bl_out_of_range.o
+arm_bl_out_of_range: arm_bl_out_of_range.o ../ld-new
 	../ld-new -T $(srcdir)/arm_branch_range.t -o $@ $<
 
 arm_bl_out_of_range.o: arm_bl_out_of_range.s
@@ -1493,7 +1525,7 @@ arm_bl_out_of_range.o: arm_bl_out_of_range.s
 thumb_bl_in_range.stdout: thumb_bl_in_range
 	$(TEST_OBJDUMP) -D $< > $@
 
-thumb_bl_in_range: thumb_bl_in_range.o
+thumb_bl_in_range: thumb_bl_in_range.o ../ld-new
 	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
 
 thumb_bl_in_range.o: thumb_bl_in_range.s
@@ -1502,16 +1534,16 @@ thumb_bl_in_range.o: thumb_bl_in_range.s
 thumb_bl_out_of_range.stdout: thumb_bl_out_of_range
 	$(TEST_OBJDUMP) -D $< > $@
 
-thumb_bl_out_of_range: thumb_bl_in_range.o
+thumb_bl_out_of_range: thumb_bl_out_of_range.o ../ld-new
 	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
 
-thumb_bl_out_of_range.o: thumb_bl_in_range.s
+thumb_bl_out_of_range.o: thumb_bl_out_of_range.s
 	$(TEST_AS) -o $@ -march=armv5te $<
 
 thumb2_bl_in_range.stdout: thumb2_bl_in_range
 	$(TEST_OBJDUMP) -D $< > $@
 
-thumb2_bl_in_range: thumb2_bl_in_range.o
+thumb2_bl_in_range: thumb2_bl_in_range.o ../ld-new
 	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
 
 thumb2_bl_in_range.o: thumb_bl_in_range.s
@@ -1520,14 +1552,52 @@ thumb2_bl_in_range.o: thumb_bl_in_range.s
 thumb2_bl_out_of_range.stdout: thumb2_bl_out_of_range
 	$(TEST_OBJDUMP) -D $< > $@
 
-thumb2_bl_out_of_range: thumb2_bl_in_range.o
+thumb2_bl_out_of_range: thumb2_bl_out_of_range.o ../ld-new
 	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
 
-thumb2_bl_out_of_range.o: thumb_bl_in_range.s
+thumb2_bl_out_of_range.o: thumb_bl_out_of_range.s
+	$(TEST_AS) -o $@ -march=armv7-a $<
+
+thumb_blx_in_range.stdout: thumb_blx_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb_blx_in_range: thumb_blx_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+thumb_blx_in_range.o: thumb_blx_in_range.s
+	$(TEST_AS) -o $@ -march=armv5te $<
+
+thumb_blx_out_of_range.stdout: thumb_blx_out_of_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb_blx_out_of_range: thumb_blx_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+thumb_blx_out_of_range.o: thumb_blx_out_of_range.s
+	$(TEST_AS) -o $@ -march=armv5te $<
+
+thumb2_blx_in_range.stdout: thumb2_blx_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb2_blx_in_range: thumb2_blx_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+thumb2_blx_in_range.o: thumb_blx_in_range.s
+	$(TEST_AS) -o $@ -march=armv7-a $<
+
+thumb2_blx_out_of_range.stdout: thumb2_blx_out_of_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb2_blx_out_of_range: thumb2_blx_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+thumb2_blx_out_of_range.o: thumb_blx_out_of_range.s
 	$(TEST_AS) -o $@ -march=armv7-a $<
 
 MOSTLYCLEANFILES += arm_bl_in_range arm_bl_out_of_range thumb_bl_in_range \
-	thumb_bl_out_of_range thumb2_bl_in_range thumb2_bl_out_of_range
+	thumb_bl_out_of_range thumb2_bl_in_range thumb2_bl_out_of_range \
+	thumb_blx_in_range thumb_blx_out_of_range thumb2_blx_in_range \
+	thumb2_blx_out_of_range
 
 check_SCRIPTS += arm_fix_v4bx.sh
 check_DATA += arm_fix_v4bx.stdout arm_fix_v4bx_interworking.stdout \
@@ -1536,7 +1606,7 @@ check_DATA += arm_fix_v4bx.stdout arm_fix_v4bx_interworking.stdout \
 arm_fix_v4bx.stdout: arm_fix_v4bx
 	$(TEST_OBJDUMP) -D -j.text $< > $@
 
-arm_fix_v4bx: arm_fix_v4bx.o
+arm_fix_v4bx: arm_fix_v4bx.o ../ld-new
 	../ld-new --fix-v4bx -o $@ $<
 
 arm_fix_v4bx.o: arm_fix_v4bx.s
@@ -1545,13 +1615,13 @@ arm_fix_v4bx.o: arm_fix_v4bx.s
 arm_fix_v4bx_interworking.stdout: arm_fix_v4bx_interworking
 	$(TEST_OBJDUMP) -D -j.text $< > $@
 
-arm_fix_v4bx_interworking: arm_fix_v4bx.o
+arm_fix_v4bx_interworking: arm_fix_v4bx.o ../ld-new
 	../ld-new --fix-v4bx-interworking -o $@ $<
 
 arm_no_fix_v4bx.stdout: arm_no_fix_v4bx
 	$(TEST_OBJDUMP) -D -j.text $< > $@
 
-arm_no_fix_v4bx: arm_fix_v4bx.o
+arm_no_fix_v4bx: arm_fix_v4bx.o ../ld-new
 	../ld-new -o $@ $<
 
 MOSTLYCLEANFILES += arm_fix_v4bx arm_fix_v4bx_interworking arm_no_fix_v4bx

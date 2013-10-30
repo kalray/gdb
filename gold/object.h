@@ -30,6 +30,7 @@
 #include "elfcpp_file.h"
 #include "fileread.h"
 #include "target.h"
+#include "archive.h"
 
 namespace gold
 {
@@ -37,7 +38,6 @@ namespace gold
 class General_options;
 class Task;
 class Cref;
-class Archive;
 class Layout;
 class Output_section;
 class Output_file;
@@ -382,6 +382,12 @@ class Object
   add_symbols(Symbol_table* symtab, Read_symbols_data* sd, Layout *layout)
   { this->do_add_symbols(symtab, sd, layout); }
 
+  // Add symbol information to the global symbol table.
+  Archive::Should_include
+  should_include_member(Symbol_table* symtab, Read_symbols_data* sd,
+                        std::string* why)
+  { return this->do_should_include_member(symtab, sd, why); }
+
   // Functions and types for the elfcpp::Elf_file interface.  This
   // permit us to use Object as the File template parameter for
   // elfcpp::Elf_file.
@@ -510,6 +516,10 @@ class Object
   // child class.
   virtual void
   do_add_symbols(Symbol_table*, Read_symbols_data*, Layout*) = 0;
+
+  virtual Archive::Should_include
+  do_should_include_member(Symbol_table* symtab, Read_symbols_data*,
+                           std::string* why) = 0;
 
   // Return the location of the contents of a section.  Implemented by
   // child class.
@@ -1087,17 +1097,39 @@ class Symbol_value
   input_value() const
   { return this->u_.value; }
 
-  // Return whether this symbol should go into the output symbol
+  // Return whether we have set the index in the output symbol table
+  // yet.
+  bool
+  is_output_symtab_index_set() const
+  {
+    return (this->output_symtab_index_ != 0
+	    && this->output_symtab_index_ != -2U);
+  }
+
+  // Return whether this symbol may be discarded from the normal
+  // symbol table.
+  bool
+  may_be_discarded_from_output_symtab() const
+  {
+    gold_assert(!this->is_output_symtab_index_set());
+    return this->output_symtab_index_ != -2U;
+  }
+
+  // Return whether this symbol has an entry in the output symbol
   // table.
   bool
-  needs_output_symtab_entry() const
-  { return this->output_symtab_index_ != -1U; }
+  has_output_symtab_entry() const
+  {
+    gold_assert(this->is_output_symtab_index_set());
+    return this->output_symtab_index_ != -1U;
+  }
 
   // Return the index in the output symbol table.
   unsigned int
   output_symtab_index() const
   {
-    gold_assert(this->output_symtab_index_ != 0);
+    gold_assert(this->is_output_symtab_index_set()
+		&& this->output_symtab_index_ != -1U);
     return this->output_symtab_index_;
   }
 
@@ -1105,7 +1137,8 @@ class Symbol_value
   void
   set_output_symtab_index(unsigned int i)
   {
-    gold_assert(this->output_symtab_index_ == 0);
+    gold_assert(!this->is_output_symtab_index_set());
+    gold_assert(i != 0 && i != -1U && i != -2U);
     this->output_symtab_index_ = i;
   }
 
@@ -1118,6 +1151,15 @@ class Symbol_value
     this->output_symtab_index_ = -1U;
   }
 
+  // Record that this symbol must go into the output symbol table,
+  // because it there is a relocation that uses it.
+  void
+  set_must_have_output_symtab_entry()
+  {
+    gold_assert(!this->is_output_symtab_index_set());
+    this->output_symtab_index_ = -2U;
+  }
+
   // Set the index in the output dynamic symbol table.
   void
   set_needs_output_dynsym_entry()
@@ -1126,11 +1168,20 @@ class Symbol_value
     this->output_dynsym_index_ = 0;
   }
 
-  // Return whether this symbol should go into the output symbol
+  // Return whether this symbol should go into the dynamic symbol
   // table.
   bool
   needs_output_dynsym_entry() const
   {
+    return this->output_dynsym_index_ != -1U;
+  }
+
+  // Return whether this symbol has an entry in the dynamic symbol
+  // table.
+  bool
+  has_output_dynsym_entry() const
+  {
+    gold_assert(this->output_dynsym_index_ != 0);
     return this->output_dynsym_index_ != -1U;
   }
 
@@ -1139,6 +1190,7 @@ class Symbol_value
   set_output_dynsym_index(unsigned int i)
   {
     gold_assert(this->output_dynsym_index_ == 0);
+    gold_assert(i != 0 && i != -1U);
     this->output_dynsym_index_ = i;
   }
 
@@ -1195,10 +1247,13 @@ class Symbol_value
 
  private:
   // The index of this local symbol in the output symbol table.  This
-  // will be -1 if the symbol should not go into the symbol table.
+  // will be 0 if no value has been assigned yet, and the symbol may
+  // be omitted.  This will be -1U if the symbol should not go into
+  // the symbol table.  This will be -2U if the symbol must go into
+  // the symbol table, but no index has been assigned yet.
   unsigned int output_symtab_index_;
   // The index of this local symbol in the dynamic symbol table.  This
-  // will be -1 if the symbol should not go into the symbol table.
+  // will be -1U if the symbol should not go into the symbol table.
   unsigned int output_dynsym_index_;
   // The section index in the input file in which this symbol is
   // defined.
@@ -1421,6 +1476,14 @@ class Sized_relobj : public Relobj
     return this->local_values_[sym].input_shndx(is_ordinary);
   }
 
+  // Record that local symbol SYM must be in the output symbol table.
+  void
+  set_must_have_output_symtab_entry(unsigned int sym)
+  {
+    gold_assert(sym < this->local_values_.size());
+    this->local_values_[sym].set_must_have_output_symtab_entry();
+  }
+
   // Record that local symbol SYM needs a dynamic symbol entry.
   void
   set_needs_output_dynsym_entry(unsigned int sym)
@@ -1520,6 +1583,10 @@ class Sized_relobj : public Relobj
   // Add the symbols to the symbol table.
   void
   do_add_symbols(Symbol_table*, Read_symbols_data*, Layout*);
+
+  Archive::Should_include
+  do_should_include_member(Symbol_table* symtab, Read_symbols_data*,
+                           std::string* why);
 
   // Read the relocs.
   void

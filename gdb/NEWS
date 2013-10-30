@@ -3,10 +3,37 @@
 
 *** Changes since GDB 7.1
 
+* GDB now sends xmlRegisters= in qSupported packet to indicate that
+  it understands register description.
+
+* The --batch flag now disables pagination and queries.
+
+* X86 general purpose registers
+
+  GDB now supports reading/writing byte, word and double-word x86
+  general purpose registers directly.  This means you can use, say,
+  $ah or $ax to refer, respectively, to the byte register AH and
+  16-bit word register AX that are actually portions of the 32-bit
+  register EAX or 64-bit register RAX.
+
+* The `commands' command now accepts a range of breakpoints to modify.
+  A plain `commands' following a command that creates multiple
+  breakpoints affects all the breakpoints set by that command.  This
+  applies to breakpoints set by `rbreak', and also applies when a
+  single `break' command creates multiple breakpoints (e.g.,
+  breakpoints on overloaded c++ functions).
+
 * Python scripting
 
-The GDB Python API now has access to symbols, symbol tables, and
-frame's code blocks.
+** The GDB Python API now has access to symbols, symbol tables, and
+   frame's code blocks.
+
+** New methods gdb.target_charset and gdb.target_wide_charset.
+
+* Tracepoint actions were unified with breakpoint commands. In particular,
+there are no longer differences in "info break" output for breakpoints and
+tracepoints and the "commands" command can be used for both tracepoints and
+regular breakpoints.
 
 * New targets
 
@@ -102,7 +129,14 @@ Renesas RX			rx
   tracing run at the moment that it was saved.  To create a trace
   file, use "tsave <filename>", and to use it, do "target tfile
   <name>".
-  
+
+  ** Circular trace buffer
+
+  You can ask the target agent to handle the trace buffer as a
+  circular buffer, discarding the oldest trace frames to make room for
+  newer ones, by setting circular-trace-buffer to on.  This feature may
+  not be available for all target agents.
+
 * Changed commands
 
 disassemble
@@ -203,6 +237,13 @@ show disconnected-tracing
    loses its connection to GDB.  If 0, the target is to stop tracing
    upon disconnection.
 
+set circular-trace-buffer
+show circular-trace-buffer
+   If set to on, the target is instructed to use a circular trace buffer
+   and discard the oldest trace frames instead of stopping the trace due
+   to a full trace buffer.  If set to off, the trace stops when the buffer
+   fills up.  Some targets may not support this.
+
 set script-extension off|soft|strict
 show script-extension
    If set to "off", the debugger does not perform any script language
@@ -245,6 +286,9 @@ qTV
 
 QTDisconnected
    Set desired tracing behavior upon disconnection.
+
+QTBuffer:circular
+   Set the trace buffer to be linear or circular.
 
 qTfP, qTsP
    Get data about the tracepoints currently in use.

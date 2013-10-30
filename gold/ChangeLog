@@ -1,3 +1,302 @@
+2010-03-30  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::using_thumb_only): Handle v6-M
+
+2010-03-25  Doug Kwan  <dougkwan@google.com>
+
+	* gold/arm.cc (Arm_exidx_fixup::update_offset_map): Rearrange code
+	to avoid a conversion warning on a 32-bit host.
+
+2010-03-24  Ian Lance Taylor  <iant@google.com>
+
+	* testsuite/script_test_3.t: Add a TLS segment.
+	* testsuite/Makefile.am (check_PROGRAMS): Add
+	tls_phdrs_script_test.
+	(tls_phdrs_script_test_SOURCES): Define.
+	(tls_phdrs_script_test_DEPENDENCIES): Define.
+	(tls_phdrs_script_test_LDFLAGS): Define.
+	(tls_phdrs_script_test_LDADD): Define.
+	* testsuite/Makefile.in: Rebuild.
+
+2010-03-23  Cary Coutant  <ccoutant@google.com>
+
+	* fileread.cc (find_or_make_view): Fix comment.
+
+2010-03-23  Ian Lance Taylor  <iant@google.com>
+
+	* script-sections.cc (class Orphan_section_placement): Define
+	PLACE_TLS and PLACE_TLS_BSS.
+	(Orphan_section_placement::Orphan_section_placement): Initialize
+	new places.
+	(Orphan_section_placement::find_place): Handle SHF_TLS sections.
+	* testsuite/Makefile.am (check_PROGRAMS): Add tls_script_test.
+	(tls_script_test_SOURCES): Define.
+	(tls_script_test_DEPENDENCIES): Define.
+	(tls_script_test_LDFLAGS): Define.
+	(tls_script_test_LDADD): Define.
+	* testsuite/Makefile.in: Rebuild.
+
+2010-03-22  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relocate_functions::abs8,
+	Arm_relocate_functions::abs16): Use correct check for overflow
+	specified in the ARM ELF specs.
+	(Arm_relocate_functions): thumb_branch_common.  Handle bit 1 of branch
+	target of a BLX instruction specially.
+	(Reloc_stub::stub_type_for_reloc): Ditto.
+	(Relocate::relocate): Use symbolic names instead of numeric relocation
+	codes to report error.
+	(Target_arm::do_relox): Reduce default stub-group size for Cortex-A8
+	workaround.
+	* testsuite/Makefile.am (check_DATA): add thumb_blx_in_range.stdout,
+	thumb_blx_out_of_range.stdout, thumb2_blx_in_range.stdout and
+	thumb2_blx_out_of_range.stdout
+	(thumb_bl_out_of_range, thumb_bl_out_of_range.o,
+	thumb2_bl_out_of_range, thumb2_bl_out_of_range.o): Fix dependenices.
+	(thumb_blx_in_range.stdout, thumb_blx_in_range, thumb_blx_in_range.o,
+	thumb_blx_out_of_range.stdout, thumb_blx_out_of_range,
+	thumb_blx_out_of_range.o, thumb2_blx_in_range.stdout,
+	thumb2_blx_in_range, thumb2_blx_in_range.o,
+	thumb2_blx_out_of_range.stdout, thumb2_blx_out_of_range,
+	thumb2_blx_out_of_range.o): New rules.
+ 	(MOSTLYCLEANFILES): Add thumb_blx_in_range, thumb_blx_out_of_range,
+	thumb2_blx_in_range and	thumb2_blx_out_of_range.
+	* testsuite/Makefile.in: Regenerate.
+	* arm_branch_in_range.sh: Add tests for THUMB BLX.
+	* testsuite/thumb_blx_in_range.s: New file.
+	* testsuite/thumb_blx_out_of_range.s: New file.
+
+2010-03-22  Rafael Espindola  <espindola@google.com>
+
+	* archive.cc (Should_include): Move to archive.h.
+	(should_include_member): Make it a member of Archive.
+	(Lib_group): New.
+	(Add_lib_group_symbols): New.
+	* archive.h: Include options.h.
+	(Archive_member): Moved from Archive.
+	(Should_include): Moved from archive.cc.
+	(Lib_group): New.
+	(Add_lib_group_symbols): New.
+	* dynobj.cc (do_should_include_member): New.
+	* dynobj.h (do_should_include_member): New.
+	* gold.cc (queue_initial_tasks): Update call to queue.
+	* main.cc (main): Print lib group stats.
+	* object.cc (do_should_include_member): New.
+	* object.h: Include archive.h.
+	(Object::should_include_member): New.
+	(Object::do_should_include_member): New.
+	(Sized_relobj::do_should_include_member): New.
+	* options.cc (General_options::parse_start_lib): New.
+	(General_options::parse_end_lib): New.
+	(Input_arguments::add_file): Handle lib groups.
+	(Input_arguments::start_group): Check we are not in a lib.
+	(Input_arguments::start_lib): New.
+	(Input_arguments::end_lib): New.
+	* options.h (General_options): Add start_lib and end_lib.
+	(Input_argument::lib_): New.
+	(Input_argument::lib): New.
+	(Input_argument::is_lib): New.
+	(Input_file_lib): New.
+	(Input_arguments::in_lib_): New.
+	(Input_arguments::in_lib): New.
+	(Input_arguments::start_lib): New.
+	(Input_arguments::end_lib_): New.
+	* plugin.cc (Pluginobj::get_symbol_resolution_info): Mark symbols
+	in unused members as preempted.
+	(Sized_pluginobj::do_should_include_member): New.
+	* plugin.h (Sized_pluginobj::do_should_include_member): New.
+	* readsyms.cc (Read_symbols::locks): If we are just reading a member,
+	return the blocker.
+	(Read_symbols::do_whole_lib_group): New.
+	(Read_symbols::do_lib_group): New.
+	(Read_symbols::do_read_symbols): Handle lib groups.
+	(Read_symbols::get_name): Handle lib groups.
+	* readsyms.h (Read_symbols): Add an archive member pointer.
+	(Read_symbols::do_whole_lib_group): New.
+	(Read_symbols::do_lib_group): New.
+	(Read_symbols::member_): New.
+	* script.cc (read_input_script): Update call to queue_soon.
+
+2010-03-19  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Stub_table::Stub_table): Initialize new data members
+	Stub_table::reloc_stubs_size_ and Stub_table::reloc_stubs_addralign_.
+	(Stub_table::add_reloc_stub): Assign stub offset and update
+	Stub_table::reloc_stubs_size_ and Stub_table::reloc_stubs_addralign_.
+	(Stub_table::reloc_stubs_size_, Stub_table::reloc_stubs_addralign_):
+	New data members.
+ 	(Stub_table::update_data_size_and_addralign): Use
+	Stub_table::reloc_stubs_size_ and Stub_table::reloc_stubs_addralign_
+	instead of going over all reloc stubs.
+ 	(Stub_table::finalize_stubs): Do not assign reloc stub offsets.
+	* stringpool.cc (Stringpool_template::Stringpool_template): Initialize
+	Stringpool_template::offset_ to size of Stringpool_char.
+ 	(Stringpool_template::new_key_offset): Remove code to initialize
+	Stringpool_template::offset_.
+	* stringpool.h (Stringpool_template::set_no_zero_null): Set
+	Stringpool_template::offset_ to zero.
+
+2010-03-15  Doug Kwan  <dougkwan@google.com>
+
+	* stringpool.cc (Stringpool_template::Stringpool_template): Initialize
+	offset_.
+	(Stringpool_template::new_key_offset): New method.
+	(Stringpool_template::add_string): Assign offsets when adding new
+	strings.
+	(Stringpool_template::set_string_offsets): Do not set string offsets
+	when not optimizing.
+	* stringpool.h (Chunked_vector::Chunked_vector): Initialize data
+	member size_.
+   	(Chunked_vector::clear): Clear size_.
+   	(Chunked_vector::reserve): Call reserve method of all Element_vectors.
+   	(Chunked_vector::size): Return size_.
+   	(Chunked_vector::push_back): Use size_ to find insert position.
+	(Chunked_vector::size_): New data member. 
+	(Stringpool_template::set_no_zero_null): Assert string set is empty.
+	(Stringpool_template::new_key_offset): New method declaration.
+	(Stringpool_template::offset_): New data member.
+
+2010-03-15   Rafael Espindola  <espindola@google.com>
+
+	* readsyms.cc (Read_symbols::do_read_symbols): Update calls to
+	Add_symbols' constructor.
+	* readsyms.h (Add_symbols): Remove the input_group member.
+
+2010-03-10  Ian Lance Taylor  <iant@google.com>
+
+	* reloc.cc (Sized_relobj::split_stack_adjust_reltype): Call the
+	target to ask whether a reference to a symbol requires a stack
+	split.
+	* target.h (Target::is_call_to_non_split): New function.
+	(Target::do_is_call_to_non_split): Declare virtual function.
+	* target.cc: Include "symtab.h".
+	(Target::do_is_call_to_non_split): New function.
+	* i386.cc (Target_i386::do_is_call_to_non_split): New function.
+
+2010-03-10  Cary Coutant  <ccoutant@google.com>
+
+	* fileread.cc (File_read::~File_read): Don't delete whole_file_view_.
+	(File_read::open[1]): Remove initial mapping of whole_file_view_.
+	(File_read::open[2]): Add whole_file_view_ to list of views.
+	(File_read::make_view): Remove test of whole_file_view_.
+	(File_read::find_or_make_view): Create whole_file_view_ if
+	necessary.
+	(File_read::clear_views): Replace bool parameter with enum;
+	adjust all callers.  Don't delete views with permanent data;
+	do delete cached views and views from archives if
+	--no-keep-files-mapped is set.  Set whole_file_view_ to NULL
+	if clearing the corresponding view.
+	* fileread.h (File_read::Clear_views_mode): New enum.
+	(File_read::View::is_permanent_view): New method.
+	(File_read::clear_views): Replace bool parameter
+	with enum; adjust all callers.
+	* options.h (General_options): Change keep_files_mapped option;
+	add map_whole_files.
+	* readsyms.cc (Add_symbols::run): Delete sd_ object before
+	releasing the file.
+	* reloc.cc (Scan_relocs::run): Delete rd_ object before releasing
+	the file.
+
+2010-03-10  David S. Miller  <davem@davemloft.net>
+
+	* sparc.cc (Target_sparc::Scan::local): Accept R_SPARC_WPLT30.
+
+2010-03-09  Sriraman Tallam  <tmsriram@google.com>
+
+	* icf.cc (get_section_contents): Add '@' marker after processing the
+	merge reloc.
+
+2010-03-08  Doug Kwan  <dougkwan@google.com>
+
+	* gold/arm.cc (Arm_exidx_fixup::update_offset_map): Fix build breakage
+	due to a conversion warning.
+	(Arm_relobj::update_output_local_symbol_count): Check for local
+	symbol with unset output index.
+
+2010-03-05  Ian Lance Taylor  <iant@google.com>
+
+	* options.h (class General_options): Add --spare-dynamic-tags.
+	* output.cc (Output_data_dynamic::set_final_data_size): Implement
+	--spare-dynamic-tags.
+
+2010-03-05  Ian Lance Taylor  <iant@google.com>
+
+	* incremental.cc: Include "libiberty.h".
+
+2010-03-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* dynobj.h (Verdef::Verdef): Add is_info arg, is_info member
+	function, is_info_ member.
+	* dynobj.cc (Verdef::write): Set VER_FLG_INFO if this->is_info_.
+	(Versions::Versions): Update caller.
+	(Versions::define_base_version): Likewise.
+	(Versions::add_def): Likewise.
+
+2010-03-03  Sriraman Tallam  <tmsriram@google.com>
+
+	* i386.cc (Target_i386::can_check_for_function_pointers): New function.
+	(Scan::possible_function_pointer_reloc): New function.
+	(Scan::local_reloc_may_be_function_pointer): Change to call
+	possible_function_pointer_reloc.
+	(Scan::global_reloc_may_be_function_pointer): Ditto.
+	* icf.h (Icf::check_section_for_function_pointers): Change to reject
+	relocations in ".data.rel.ro._ZTV" section.
+	* testsuite/icf_safe_so_test.sh: Change to pass i386.
+	* testsuite/icf_safe_so_test.cc: Ditto.
+	* testsuite/icf_safe_test.cc: Ditto.
+	* testsuite/icf_safe_test.sh: Ditto.
+
+2010-03-03  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	* target-reloc.h (relocate_section): Check the symbol table index
+	for -1U before setting the local symbol index.
+	(scan_relocatable_relocs): If copying the relocation, record that
+	the local symbol is required.
+	* object.h (Symbol_value::is_output_symtab_index_set): New
+	function.
+	(Symbol_value::may_be_discarded_from_output_symtab): New
+	function.
+	(Symbol_value::has_output_symtab_entry): New function.
+	(Symbol_value::needs_output_symtab_entry): Remove.
+	(Symbol_value::output_symtab_index): Make sure the symbol index is
+	set.
+	(Symbol_value::set_output_symtab_index): Make sure the symbol
+	index is not set.  Make sure the new index is valid.
+	(Symbol_value::set_must_have_output_symtab_entry): New function.
+	(Symbol_value::has_output_dynsym_entry): New function.
+	(Symbol_value::set_output_dynsym_index): Make sure the new index
+	is valid.
+	(Sized_relobj::set_must_have_output_symtab_entry): New function.
+	* object.cc (Sized_relobj::do_count_local_symbols): Only discard a
+	local symbol if permitted.
+	(Sized_relobj::do_finalize_local_symbols): Call
+	is_output_symtab_index_set rather than needs_output_symtab_entry.
+	(Sized_relobj::write_local_symbols): Call has_output_symtab_entry
+	rather than needs_output_symtab_entry.  Call
+	has_output_dynsym_entry rather than needs_output_dynsym_entry.
+	* arm.cc (Arm_relobj::update_output_local_symbol_count): Call
+	is_output_symtab_index_set rather than needs_output_symtab_entry.
+	* testsuite/discard_locals_relocatable_test.c: New file.
+	* testsuite/discard_locals_test.sh: Test -r.
+	* testsuite/Makefile.am (check_DATA): Add
+	discard_locals_relocatable_test1.syms,
+	discard_local_relocatable_test2.syms.
+	(MOSTLYCLEANFILES): Likewise.  Also add
+	discard_locals_relocatable_test1.lout and
+	discard_locals_relocatable_test2.out.
+	(discard_locals_relocatable_test1.syms): New target.
+	(discard_locals_relocatable_test.o): New target.
+	(discard_locals_relocatable_test1.out): New target.
+	(discard_locals_relocatable_test2.syms): New target.
+	(discard_locals_relocatable_test2.out): New target.
+	(various): Add missing ../ld-new dependencies.
+	* testsuite/Makefile.in: Rebuild.
+
+2010-03-03  Nick Clifton  <nickc@redhat.com>
+
+	* po/fi.po: New Finnish translation.
+
 2010-03-01  Doug Kwan  <dougkwan@google.com>
 
 	* layout.cc (Layout::Layout): Force section types of .init_array*,

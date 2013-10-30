@@ -223,6 +223,8 @@ check_PROGRAMS = object_unittest$(EXEEXT) binary_unittest$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	relro_script_test script_test_1 \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	script_test_2 justsyms \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	binary_test script_test_3 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	tls_phdrs_script_test \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	tls_script_test \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	thin_archive_test_1 \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	thin_archive_test_2
 @GCC_FALSE@script_test_1_DEPENDENCIES =
@@ -276,6 +278,8 @@ check_PROGRAMS = object_unittest$(EXEEXT) binary_unittest$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	no_version_test.sh
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am__append_28 = exclude_libs_test.syms \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_test.syms \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_relocatable_test1.syms \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_relocatable_test2.syms \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	hidden_test.err \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	retain_symbols_file_test.stdout \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	no_version_test.stdout
@@ -284,6 +288,10 @@ check_PROGRAMS = object_unittest$(EXEEXT) binary_unittest$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	libexclude_libs_test_2.a \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	alt/libexclude_libs_test_3.a \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_test.syms \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_relocatable_test1.syms \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_relocatable_test2.syms \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_relocatable_test1.out \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	discard_locals_relocatable_test2.out \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	hidden_test hidden_test.err \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	retain_symbols_file_test \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	retain_symbols_file_test.in \
@@ -332,6 +340,10 @@ check_PROGRAMS = object_unittest$(EXEEXT) binary_unittest$(EXEEXT) \
 @DEFAULT_TARGET_ARM_TRUE@	thumb_bl_out_of_range.stdout \
 @DEFAULT_TARGET_ARM_TRUE@	thumb2_bl_in_range.stdout \
 @DEFAULT_TARGET_ARM_TRUE@	thumb2_bl_out_of_range.stdout \
+@DEFAULT_TARGET_ARM_TRUE@	thumb_blx_in_range.stdout \
+@DEFAULT_TARGET_ARM_TRUE@	thumb_blx_out_of_range.stdout \
+@DEFAULT_TARGET_ARM_TRUE@	thumb2_blx_in_range.stdout \
+@DEFAULT_TARGET_ARM_TRUE@	thumb2_blx_out_of_range.stdout \
 @DEFAULT_TARGET_ARM_TRUE@	arm_fix_v4bx.stdout \
 @DEFAULT_TARGET_ARM_TRUE@	arm_fix_v4bx_interworking.stdout \
 @DEFAULT_TARGET_ARM_TRUE@	arm_no_fix_v4bx.stdout
@@ -340,7 +352,11 @@ check_PROGRAMS = object_unittest$(EXEEXT) binary_unittest$(EXEEXT) \
 @DEFAULT_TARGET_ARM_TRUE@	thumb_bl_in_range \
 @DEFAULT_TARGET_ARM_TRUE@	thumb_bl_out_of_range \
 @DEFAULT_TARGET_ARM_TRUE@	thumb2_bl_in_range \
-@DEFAULT_TARGET_ARM_TRUE@	thumb2_bl_out_of_range arm_fix_v4bx \
+@DEFAULT_TARGET_ARM_TRUE@	thumb2_bl_out_of_range \
+@DEFAULT_TARGET_ARM_TRUE@	thumb_blx_in_range \
+@DEFAULT_TARGET_ARM_TRUE@	thumb_blx_out_of_range \
+@DEFAULT_TARGET_ARM_TRUE@	thumb2_blx_in_range \
+@DEFAULT_TARGET_ARM_TRUE@	thumb2_blx_out_of_range arm_fix_v4bx \
 @DEFAULT_TARGET_ARM_TRUE@	arm_fix_v4bx_interworking \
 @DEFAULT_TARGET_ARM_TRUE@	arm_no_fix_v4bx
 subdir = testsuite
@@ -446,6 +462,8 @@ libgoldtest_a_OBJECTS = $(am_libgoldtest_a_OBJECTS)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	justsyms$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	binary_test$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	script_test_3$(EXEEXT) \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	tls_phdrs_script_test$(EXEEXT) \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	tls_script_test$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	thin_archive_test_1$(EXEEXT) \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	thin_archive_test_2$(EXEEXT)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@PLUGINS_TRUE@am__EXEEXT_16 = plugin_test_1$(EXEEXT) \
@@ -782,6 +800,19 @@ am__thin_archive_test_2_SOURCES_DIST = thin_archive_main.cc
 thin_archive_test_2_OBJECTS = $(am_thin_archive_test_2_OBJECTS)
 thin_archive_test_2_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(thin_archive_test_2_LDFLAGS) $(LDFLAGS) -o $@
+am__tls_phdrs_script_test_SOURCES_DIST = tls_test.cc tls_test_file2.cc \
+	tls_test_main.cc tls_test.h
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__objects_3 =  \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test.$(OBJEXT) \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_file2.$(OBJEXT) \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_main.$(OBJEXT)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@am_tls_phdrs_script_test_OBJECTS =  \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__objects_3)
+tls_phdrs_script_test_OBJECTS = $(am_tls_phdrs_script_test_OBJECTS)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__DEPENDENCIES_2 =  \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_c.o
+tls_phdrs_script_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(tls_phdrs_script_test_LDFLAGS) $(LDFLAGS) -o $@
 am__tls_pic_test_SOURCES_DIST = tls_test_main.cc
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am_tls_pic_test_OBJECTS = tls_test_main.$(OBJEXT)
 tls_pic_test_OBJECTS = $(am_tls_pic_test_OBJECTS)
@@ -799,6 +830,13 @@ tls_pie_test_LDADD = $(LDADD)
 tls_pie_test_DEPENDENCIES = libgoldtest.a ../libgold.a \
 	../../libiberty/libiberty.a $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__tls_script_test_SOURCES_DIST = tls_test.cc tls_test_file2.cc \
+	tls_test_main.cc tls_test.h
+@GCC_TRUE@@NATIVE_LINKER_TRUE@am_tls_script_test_OBJECTS =  \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__objects_3)
+tls_script_test_OBJECTS = $(am_tls_script_test_OBJECTS)
+tls_script_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(tls_script_test_LDFLAGS) $(LDFLAGS) -o $@
 am__tls_shared_gd_to_ie_test_SOURCES_DIST = tls_test_main.cc
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am_tls_shared_gd_to_ie_test_OBJECTS = tls_test_main.$(OBJEXT)
 tls_shared_gd_to_ie_test_OBJECTS =  \
@@ -833,10 +871,10 @@ tls_shared_test_OBJECTS = $(am_tls_shared_test_OBJECTS)
 tls_shared_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(tls_shared_test_LDFLAGS) $(LDFLAGS) -o $@
 am__tls_static_pic_test_SOURCES_DIST = tls_test_main.cc
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__objects_3 = tls_test_main.$(OBJEXT)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@STATIC_TLS_TRUE@@TLS_TRUE@am_tls_static_pic_test_OBJECTS = $(am__objects_3)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__objects_4 = tls_test_main.$(OBJEXT)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@STATIC_TLS_TRUE@@TLS_TRUE@am_tls_static_pic_test_OBJECTS = $(am__objects_4)
 tls_static_pic_test_OBJECTS = $(am_tls_static_pic_test_OBJECTS)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__DEPENDENCIES_2 =  \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__DEPENDENCIES_3 =  \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_pic.o \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_file2_pic.o \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_c_pic.o
@@ -844,14 +882,8 @@ tls_static_pic_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(tls_static_pic_test_LDFLAGS) $(LDFLAGS) -o $@
 am__tls_static_test_SOURCES_DIST = tls_test.cc tls_test_file2.cc \
 	tls_test_main.cc tls_test.h
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__objects_4 =  \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test.$(OBJEXT) \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_file2.$(OBJEXT) \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_main.$(OBJEXT)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@STATIC_TLS_TRUE@@TLS_TRUE@am_tls_static_test_OBJECTS = $(am__objects_4)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@STATIC_TLS_TRUE@@TLS_TRUE@am_tls_static_test_OBJECTS = $(am__objects_3)
 tls_static_test_OBJECTS = $(am_tls_static_test_OBJECTS)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@am__DEPENDENCIES_3 =  \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@@TLS_TRUE@	tls_test_c.o
 tls_static_test_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(tls_static_test_LDFLAGS) $(LDFLAGS) -o $@
 am__tls_test_SOURCES_DIST = tls_test.cc tls_test_file2.cc \
@@ -1138,7 +1170,8 @@ SOURCES = $(libgoldtest_a_SOURCES) basic_pic_test.c basic_pie_test.c \
 	$(script_test_1_SOURCES) $(script_test_2_SOURCES) \
 	script_test_3.c $(searched_file_test_SOURCES) \
 	$(thin_archive_test_1_SOURCES) $(thin_archive_test_2_SOURCES) \
-	$(tls_pic_test_SOURCES) tls_pie_pic_test.c tls_pie_test.c \
+	$(tls_phdrs_script_test_SOURCES) $(tls_pic_test_SOURCES) \
+	tls_pie_pic_test.c tls_pie_test.c $(tls_script_test_SOURCES) \
 	$(tls_shared_gd_to_ie_test_SOURCES) \
 	$(tls_shared_gnu2_gd_to_ie_test_SOURCES) \
 	$(tls_shared_gnu2_test_SOURCES) $(tls_shared_ie_test_SOURCES) \
@@ -1201,8 +1234,10 @@ DIST_SOURCES = $(libgoldtest_a_SOURCES) basic_pic_test.c \
 	$(am__searched_file_test_SOURCES_DIST) \
 	$(am__thin_archive_test_1_SOURCES_DIST) \
 	$(am__thin_archive_test_2_SOURCES_DIST) \
+	$(am__tls_phdrs_script_test_SOURCES_DIST) \
 	$(am__tls_pic_test_SOURCES_DIST) tls_pie_pic_test.c \
-	tls_pie_test.c $(am__tls_shared_gd_to_ie_test_SOURCES_DIST) \
+	tls_pie_test.c $(am__tls_script_test_SOURCES_DIST) \
+	$(am__tls_shared_gd_to_ie_test_SOURCES_DIST) \
 	$(am__tls_shared_gnu2_gd_to_ie_test_SOURCES_DIST) \
 	$(am__tls_shared_gnu2_test_SOURCES_DIST) \
 	$(am__tls_shared_ie_test_SOURCES_DIST) \
@@ -1749,6 +1784,14 @@ binary_unittest_SOURCES = binary_unittest.cc
 @GCC_TRUE@@NATIVE_LINKER_TRUE@binary_test_DEPENDENCIES = gcctestdir/ld binary.txt
 @GCC_TRUE@@NATIVE_LINKER_TRUE@binary_test_LDFLAGS = -Bgcctestdir/ -Wl,--format,binary,binary.txt,--format,elf
 @GCC_TRUE@@NATIVE_LINKER_TRUE@binary_test_LDADD = 
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_phdrs_script_test_SOURCES = $(tls_test_SOURCES)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_phdrs_script_test_DEPENDENCIES = $(tls_test_DEPENDENCIES) $(srcdir)/script_test_3.t
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_phdrs_script_test_LDFLAGS = $(tls_test_LDFLAGS) -T $(srcdir)/script_test_3.t
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_phdrs_script_test_LDADD = $(tls_test_LDADD)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_script_test_SOURCES = $(tls_test_SOURCES)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_script_test_DEPENDENCIES = $(tls_test_DEPENDENCIES) $(srcdir)/script_test_4.t
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_script_test_LDFLAGS = $(tls_test_LDFLAGS) -T $(srcdir)/script_test_4.t
+@GCC_TRUE@@NATIVE_LINKER_TRUE@tls_script_test_LDADD = $(tls_test_LDADD)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@thin_archive_test_1_SOURCES = thin_archive_main.cc
 @GCC_TRUE@@NATIVE_LINKER_TRUE@thin_archive_test_1_DEPENDENCIES = gcctestdir/ld libthin1.a alt/libthin2.a
 @GCC_TRUE@@NATIVE_LINKER_TRUE@thin_archive_test_1_LDFLAGS = -Bgcctestdir/ -Lalt
@@ -2039,6 +2082,9 @@ thin_archive_test_1$(EXEEXT): $(thin_archive_test_1_OBJECTS) $(thin_archive_test
 thin_archive_test_2$(EXEEXT): $(thin_archive_test_2_OBJECTS) $(thin_archive_test_2_DEPENDENCIES) 
 	@rm -f thin_archive_test_2$(EXEEXT)
 	$(thin_archive_test_2_LINK) $(thin_archive_test_2_OBJECTS) $(thin_archive_test_2_LDADD) $(LIBS)
+tls_phdrs_script_test$(EXEEXT): $(tls_phdrs_script_test_OBJECTS) $(tls_phdrs_script_test_DEPENDENCIES) 
+	@rm -f tls_phdrs_script_test$(EXEEXT)
+	$(tls_phdrs_script_test_LINK) $(tls_phdrs_script_test_OBJECTS) $(tls_phdrs_script_test_LDADD) $(LIBS)
 tls_pic_test$(EXEEXT): $(tls_pic_test_OBJECTS) $(tls_pic_test_DEPENDENCIES) 
 	@rm -f tls_pic_test$(EXEEXT)
 	$(tls_pic_test_LINK) $(tls_pic_test_OBJECTS) $(tls_pic_test_LDADD) $(LIBS)
@@ -2060,6 +2106,9 @@ tls_pic_test$(EXEEXT): $(tls_pic_test_OBJECTS) $(tls_pic_test_DEPENDENCIES)
 @TLS_FALSE@tls_pie_test$(EXEEXT): $(tls_pie_test_OBJECTS) $(tls_pie_test_DEPENDENCIES) 
 @TLS_FALSE@	@rm -f tls_pie_test$(EXEEXT)
 @TLS_FALSE@	$(LINK) $(tls_pie_test_OBJECTS) $(tls_pie_test_LDADD) $(LIBS)
+tls_script_test$(EXEEXT): $(tls_script_test_OBJECTS) $(tls_script_test_DEPENDENCIES) 
+	@rm -f tls_script_test$(EXEEXT)
+	$(tls_script_test_LINK) $(tls_script_test_OBJECTS) $(tls_script_test_LDADD) $(LIBS)
 tls_shared_gd_to_ie_test$(EXEEXT): $(tls_shared_gd_to_ie_test_OBJECTS) $(tls_shared_gd_to_ie_test_DEPENDENCIES) 
 	@rm -f tls_shared_gd_to_ie_test$(EXEEXT)
 	$(tls_shared_gd_to_ie_test_LINK) $(tls_shared_gd_to_ie_test_OBJECTS) $(tls_shared_gd_to_ie_test_LDADD) $(LIBS)
@@ -3142,6 +3191,18 @@ uninstall-am:
 # '-Wa,-L' is required to preserve the local label used for testing.
 @GCC_TRUE@@NATIVE_LINKER_TRUE@discard_locals_test.o: discard_locals_test.c
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(COMPILE) -c -Wa,-L -o $@ $<
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@discard_locals_relocatable_test1.syms: discard_locals_relocatable_test1.out
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(TEST_READELF) -sW $< >$@ 2>/dev/null
+@GCC_TRUE@@NATIVE_LINKER_TRUE@discard_locals_relocatable_test.o: discard_locals_relocatable_test.c
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(COMPILE) -c -Wa,-L -fPIC -o $@ $<
+@GCC_TRUE@@NATIVE_LINKER_TRUE@discard_locals_relocatable_test1.out: discard_locals_relocatable_test.o ../ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	../ld-new --discard-locals -relocatable -o $@ $<
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@discard_locals_relocatable_test2.syms: discard_locals_relocatable_test2.out
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(TEST_READELF) -sW $< >$@ 2>/dev/null
+@GCC_TRUE@@NATIVE_LINKER_TRUE@discard_locals_relocatable_test2.out: discard_locals_relocatable_test.o ../ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	../ld-new --discard-all -relocatable -o $@ $<
 @GCC_TRUE@@NATIVE_LINKER_TRUE@libhidden.so: hidden_test_1.c gcctestdir/ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(COMPILE) -Bgcctestdir/ -g -shared -fPIC -w -o $@ $(srcdir)/hidden_test_1.c
 @GCC_TRUE@@NATIVE_LINKER_TRUE@hidden_test: hidden_test_main.o libhidden.so gcctestdir/ld
@@ -3231,11 +3292,11 @@ uninstall-am:
 @DEFAULT_TARGET_X86_64_TRUE@	../ld-new -r split_x86_64_1.o split_x86_64_n.o -o split_x86_64_r > $@ 2>&1 || exit 0
 @DEFAULT_TARGET_ARM_TRUE@arm_abs_lib.o: arm_abs_lib.s
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -march=armv7-a -o $@ $<
-@DEFAULT_TARGET_ARM_TRUE@libarm_abs.so: arm_abs_lib.o
+@DEFAULT_TARGET_ARM_TRUE@libarm_abs.so: arm_abs_lib.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -shared -o $@ arm_abs_lib.o
 @DEFAULT_TARGET_ARM_TRUE@arm_abs_global.o: arm_abs_global.s
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -march=armv7-a -o $@ $<
-@DEFAULT_TARGET_ARM_TRUE@arm_abs_global: arm_abs_global.o libarm_abs.so
+@DEFAULT_TARGET_ARM_TRUE@arm_abs_global: arm_abs_global.o libarm_abs.so ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -o $@ arm_abs_global.o -L. -larm_abs
 @DEFAULT_TARGET_ARM_TRUE@arm_abs_global.stdout: arm_abs_global
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_READELF) -r $< > $@
@@ -3243,7 +3304,7 @@ uninstall-am:
 @DEFAULT_TARGET_ARM_TRUE@arm_bl_in_range.stdout: arm_bl_in_range
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@arm_bl_in_range: arm_bl_in_range.o
+@DEFAULT_TARGET_ARM_TRUE@arm_bl_in_range: arm_bl_in_range.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/arm_branch_range.t -o $@ $<
 
 @DEFAULT_TARGET_ARM_TRUE@arm_bl_in_range.o: arm_bl_in_range.s
@@ -3252,7 +3313,7 @@ uninstall-am:
 @DEFAULT_TARGET_ARM_TRUE@arm_bl_out_of_range.stdout: arm_bl_out_of_range
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -S $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@arm_bl_out_of_range: arm_bl_out_of_range.o
+@DEFAULT_TARGET_ARM_TRUE@arm_bl_out_of_range: arm_bl_out_of_range.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/arm_branch_range.t -o $@ $<
 
 @DEFAULT_TARGET_ARM_TRUE@arm_bl_out_of_range.o: arm_bl_out_of_range.s
@@ -3261,7 +3322,7 @@ uninstall-am:
 @DEFAULT_TARGET_ARM_TRUE@thumb_bl_in_range.stdout: thumb_bl_in_range
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@thumb_bl_in_range: thumb_bl_in_range.o
+@DEFAULT_TARGET_ARM_TRUE@thumb_bl_in_range: thumb_bl_in_range.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
 
 @DEFAULT_TARGET_ARM_TRUE@thumb_bl_in_range.o: thumb_bl_in_range.s
@@ -3270,16 +3331,16 @@ uninstall-am:
 @DEFAULT_TARGET_ARM_TRUE@thumb_bl_out_of_range.stdout: thumb_bl_out_of_range
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@thumb_bl_out_of_range: thumb_bl_in_range.o
+@DEFAULT_TARGET_ARM_TRUE@thumb_bl_out_of_range: thumb_bl_out_of_range.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
 
-@DEFAULT_TARGET_ARM_TRUE@thumb_bl_out_of_range.o: thumb_bl_in_range.s
+@DEFAULT_TARGET_ARM_TRUE@thumb_bl_out_of_range.o: thumb_bl_out_of_range.s
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -o $@ -march=armv5te $<
 
 @DEFAULT_TARGET_ARM_TRUE@thumb2_bl_in_range.stdout: thumb2_bl_in_range
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@thumb2_bl_in_range: thumb2_bl_in_range.o
+@DEFAULT_TARGET_ARM_TRUE@thumb2_bl_in_range: thumb2_bl_in_range.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
 
 @DEFAULT_TARGET_ARM_TRUE@thumb2_bl_in_range.o: thumb_bl_in_range.s
@@ -3288,16 +3349,52 @@ uninstall-am:
 @DEFAULT_TARGET_ARM_TRUE@thumb2_bl_out_of_range.stdout: thumb2_bl_out_of_range
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@thumb2_bl_out_of_range: thumb2_bl_in_range.o
+@DEFAULT_TARGET_ARM_TRUE@thumb2_bl_out_of_range: thumb2_bl_out_of_range.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
 
-@DEFAULT_TARGET_ARM_TRUE@thumb2_bl_out_of_range.o: thumb_bl_in_range.s
+@DEFAULT_TARGET_ARM_TRUE@thumb2_bl_out_of_range.o: thumb_bl_out_of_range.s
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -o $@ -march=armv7-a $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb_blx_in_range.stdout: thumb_blx_in_range
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
+
+@DEFAULT_TARGET_ARM_TRUE@thumb_blx_in_range: thumb_blx_in_range.o ../ld-new
+@DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb_blx_in_range.o: thumb_blx_in_range.s
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -o $@ -march=armv5te $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb_blx_out_of_range.stdout: thumb_blx_out_of_range
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
+
+@DEFAULT_TARGET_ARM_TRUE@thumb_blx_out_of_range: thumb_blx_out_of_range.o ../ld-new
+@DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb_blx_out_of_range.o: thumb_blx_out_of_range.s
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -o $@ -march=armv5te $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb2_blx_in_range.stdout: thumb2_blx_in_range
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
+
+@DEFAULT_TARGET_ARM_TRUE@thumb2_blx_in_range: thumb2_blx_in_range.o ../ld-new
+@DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb2_blx_in_range.o: thumb_blx_in_range.s
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -o $@ -march=armv7-a $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb2_blx_out_of_range.stdout: thumb2_blx_out_of_range
+@DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D $< > $@
+
+@DEFAULT_TARGET_ARM_TRUE@thumb2_blx_out_of_range: thumb2_blx_out_of_range.o ../ld-new
+@DEFAULT_TARGET_ARM_TRUE@	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+@DEFAULT_TARGET_ARM_TRUE@thumb2_blx_out_of_range.o: thumb_blx_out_of_range.s
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_AS) -o $@ -march=armv7-a $<
 
 @DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx.stdout: arm_fix_v4bx
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D -j.text $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx: arm_fix_v4bx.o
+@DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx: arm_fix_v4bx.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new --fix-v4bx -o $@ $<
 
 @DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx.o: arm_fix_v4bx.s
@@ -3306,13 +3403,13 @@ uninstall-am:
 @DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx_interworking.stdout: arm_fix_v4bx_interworking
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D -j.text $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx_interworking: arm_fix_v4bx.o
+@DEFAULT_TARGET_ARM_TRUE@arm_fix_v4bx_interworking: arm_fix_v4bx.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new --fix-v4bx-interworking -o $@ $<
 
 @DEFAULT_TARGET_ARM_TRUE@arm_no_fix_v4bx.stdout: arm_no_fix_v4bx
 @DEFAULT_TARGET_ARM_TRUE@	$(TEST_OBJDUMP) -D -j.text $< > $@
 
-@DEFAULT_TARGET_ARM_TRUE@arm_no_fix_v4bx: arm_fix_v4bx.o
+@DEFAULT_TARGET_ARM_TRUE@arm_no_fix_v4bx: arm_fix_v4bx.o ../ld-new
 @DEFAULT_TARGET_ARM_TRUE@	../ld-new -o $@ $<
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -1486,6 +1486,55 @@ Sized_relobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
   sd->symbol_names = NULL;
 }
 
+// Find out if this object, that is a member of a lib group, should be included
+// in the link. We check every symbol defined by this object. If the symbol
+// table has a strong undefined reference to that symbol, we have to include
+// the object.
+
+template<int size, bool big_endian>
+Archive::Should_include
+Sized_relobj<size, big_endian>::do_should_include_member(Symbol_table* symtab,
+                                                         Read_symbols_data* sd,
+                                                         std::string* why)
+{
+  char* tmpbuf = NULL;
+  size_t tmpbuflen = 0;
+  const char* sym_names =
+      reinterpret_cast<const char*>(sd->symbol_names->data());
+  const unsigned char* syms =
+      sd->symbols->data() + sd->external_symbols_offset;
+  const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
+  size_t symcount = ((sd->symbols_size - sd->external_symbols_offset)
+                         / sym_size);
+
+  const unsigned char* p = syms;
+
+  for (size_t i = 0; i < symcount; ++i, p += sym_size)
+    {
+      elfcpp::Sym<size, big_endian> sym(p);
+      unsigned int st_shndx = sym.get_st_shndx();
+      if (st_shndx == elfcpp::SHN_UNDEF)
+	continue;
+
+      unsigned int st_name = sym.get_st_name();
+      const char* name = sym_names + st_name;
+      Symbol* symbol;
+      Archive::Should_include t = Archive::should_include_member(symtab, name,
+								 &symbol, why,
+								 &tmpbuf,
+								 &tmpbuflen);
+      if (t == Archive::SHOULD_INCLUDE_YES)
+	{
+	  if (tmpbuf != NULL)
+	    free(tmpbuf);
+	  return t;
+	}
+    }
+  if (tmpbuf != NULL)
+    free(tmpbuf);
+  return Archive::SHOULD_INCLUDE_UNKNOWN;
+}
+
 // First pass over the local symbols.  Here we add their names to
 // *POOL and *DYNPOOL, and we store the symbol value in
 // THIS->LOCAL_VALUES_.  This function is always called from a
@@ -1591,7 +1640,7 @@ Sized_relobj<size, big_endian>::do_count_local_symbols(Stringpool* pool,
           ++dyncount;
         }
 
-      if (discard_all)
+      if (discard_all && lv.may_be_discarded_from_output_symtab())
 	{
 	  lv.set_no_output_symtab_entry();
 	  continue;
@@ -1612,6 +1661,7 @@ Sized_relobj<size, big_endian>::do_count_local_symbols(Stringpool* pool,
       if (discard_locals
 	  && sym.get_st_type() != elfcpp::STT_FILE
 	  && !lv.needs_output_dynsym_entry()
+	  && lv.may_be_discarded_from_output_symtab()
 	  && parameters->target().is_local_label_name(name))
 	{
 	  lv.set_no_output_symtab_entry();
@@ -1774,7 +1824,7 @@ Sized_relobj<size, big_endian>::do_finalize_local_symbols(unsigned int index,
 				+ lv.input_value());
 	}
 
-      if (lv.needs_output_symtab_entry())
+      if (!lv.is_output_symtab_index_set())
         {
           lv.set_output_symtab_index(index);
           ++index;
@@ -1937,16 +1987,16 @@ Sized_relobj<size, big_endian>::write_local_symbols(
 	  st_shndx = out_sections[st_shndx]->out_shndx();
 	  if (st_shndx >= elfcpp::SHN_LORESERVE)
 	    {
-	      if (lv.needs_output_symtab_entry() && !strip_all)
+	      if (lv.has_output_symtab_entry())
 		symtab_xindex->add(lv.output_symtab_index(), st_shndx);
-	      if (lv.needs_output_dynsym_entry())
+	      if (lv.has_output_dynsym_entry())
 		dynsym_xindex->add(lv.output_dynsym_index(), st_shndx);
 	      st_shndx = elfcpp::SHN_XINDEX;
 	    }
 	}
 
       // Write the symbol to the output symbol table.
-      if (!strip_all && lv.needs_output_symtab_entry())
+      if (lv.has_output_symtab_entry())
         {
           elfcpp::Sym_write<size, big_endian> osym(ov);
 
@@ -1963,7 +2013,7 @@ Sized_relobj<size, big_endian>::write_local_symbols(
         }
 
       // Write the symbol to the output dynamic symbol table.
-      if (lv.needs_output_dynsym_entry())
+      if (lv.has_output_dynsym_entry())
         {
           gold_assert(dyn_ov < dyn_oview + dyn_output_size);
           elfcpp::Sym_write<size, big_endian> osym(dyn_ov);

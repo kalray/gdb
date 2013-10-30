@@ -868,8 +868,9 @@ class Stub_table : public Output_data
 {
  public:
   Stub_table(Arm_input_section<big_endian>* owner)
-    : Output_data(), owner_(owner), reloc_stubs_(), cortex_a8_stubs_(),
-      arm_v4bx_stubs_(0xf), prev_data_size_(0), prev_addralign_(1)
+    : Output_data(), owner_(owner), reloc_stubs_(), reloc_stubs_size_(0),
+      reloc_stubs_addralign_(1), cortex_a8_stubs_(), arm_v4bx_stubs_(0xf),
+      prev_data_size_(0), prev_addralign_(1)
   { }
 
   ~Stub_table()
@@ -902,6 +903,15 @@ class Stub_table : public Output_data
     const Stub_template* stub_template = stub->stub_template();
     gold_assert(stub_template->type() == key.stub_type());
     this->reloc_stubs_[key] = stub;
+
+    // Assign stub offset early.  We can do this because we never remove
+    // reloc stubs and they are in the beginning of the stub table.
+    uint64_t align = stub_template->alignment();
+    this->reloc_stubs_size_ = align_address(this->reloc_stubs_size_, align);
+    stub->set_offset(this->reloc_stubs_size_);
+    this->reloc_stubs_size_ += stub_template->size();
+    this->reloc_stubs_addralign_ =
+      std::max(this->reloc_stubs_addralign_, align);
   }
 
   // Add a Cortex-A8 STUB that fixes up a THUMB branch at ADDRESS.
@@ -1010,6 +1020,10 @@ class Stub_table : public Output_data
   Arm_input_section<big_endian>* owner_;
   // The relocation stubs.
   Reloc_stub_map reloc_stubs_;
+  // Size of reloc stubs.
+  off_t reloc_stubs_size_;
+  // Maximum address alignment of reloc stubs.
+  uint64_t reloc_stubs_addralign_;
   // The cortex_a8_stubs.
   Cortex_a8_stub_list cortex_a8_stubs_;
   // The Arm V4BX relocation stubs.
@@ -2039,6 +2053,10 @@ class Target_arm : public Sized_target<32, big_endian>
   {
     Object_attribute* attr =
       this->get_aeabi_object_attribute(elfcpp::Tag_CPU_arch);
+
+    if (attr->int_value() == elfcpp::TAG_CPU_ARCH_V6_M
+	|| attr->int_value() == elfcpp::TAG_CPU_ARCH_V6S_M)
+      return true;
     if (attr->int_value() != elfcpp::TAG_CPU_ARCH_V7
 	&& attr->int_value() != elfcpp::TAG_CPU_ARCH_V7E_M)
       return false;
@@ -2971,7 +2989,10 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
     Reltype x = psymval->value(object, addend);
     val = utils::bit_select(val, x, 0xffU);
     elfcpp::Swap<8, big_endian>::writeval(wv, val);
-    return (utils::has_signed_unsigned_overflow<8>(x)
+
+    // R_ARM_ABS8 permits signed or unsigned results.
+    int signed_x = static_cast<int32_t>(x);
+    return ((signed_x < -128 || signed_x > 255)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -2990,7 +3011,10 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
     Reltype x = psymval->value(object, addend);
     val = utils::bit_select(val, x << 6, 0x7e0U);
     elfcpp::Swap<16, big_endian>::writeval(wv, val);
-    return (utils::has_overflow<5>(x)
+
+    // R_ARM_ABS16 permits signed or unsigned results.
+    int signed_x = static_cast<int32_t>(x);
+    return ((signed_x < -32768 || signed_x > 65535)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -3817,11 +3841,16 @@ Arm_relocate_functions<big_endian>::thumb_branch_common(
  
   int32_t addend = This::thumb32_branch_offset(upper_insn, lower_insn);
   Arm_address branch_target = psymval->value(object, addend);
+
+  // For BLX, bit 1 of target address comes from bit 1 of base address.
+  bool may_use_blx = arm_target->may_use_blx();
+  if (thumb_bit == 0 && may_use_blx)
+    branch_target = utils::bit_select(branch_target, address, 0x2);
+
   int32_t branch_offset = branch_target - address;
 
   // We need a stub if the branch offset is too large or if we need
   // to switch mode.
-  bool may_use_blx = arm_target->may_use_blx();
   bool thumb2 = arm_target->using_thumb2();
   if ((!thumb2 && utils::has_overflow<23>(branch_offset))
       || (thumb2 && utils::has_overflow<25>(branch_offset))
@@ -3847,6 +3876,8 @@ Arm_relocate_functions<big_endian>::thumb_branch_common(
 	  gold_assert(stub != NULL);
 	  thumb_bit = stub->stub_template()->entry_in_thumb_mode() ? 1 : 0;
 	  branch_target = stub_table->address() + stub->offset() + addend;
+	  if (thumb_bit == 0 && may_use_blx) 
+	    branch_target = utils::bit_select(branch_target, address, 0x2);
 	  branch_offset = branch_target - address;
 	}
     }
@@ -3867,12 +3898,12 @@ Arm_relocate_functions<big_endian>::thumb_branch_common(
       lower_insn |= 0x1000U;
     }
 
+  // For a BLX instruction, make sure that the relocation is rounded up
+  // to a word boundary.  This follows the semantics of the instruction
+  // which specifies that bit 1 of the target address will come from bit
+  // 1 of the base address.
   if ((lower_insn & 0x5000U) == 0x4000U)
-    // For a BLX instruction, make sure that the relocation is rounded up
-    // to a word boundary.  This follows the semantics of the instruction
-    // which specifies that bit 1 of the target address will come from bit
-    // 1 of the base address.
-    branch_offset = (branch_offset + 2) & ~3;
+    gold_assert((branch_offset & 3) == 0);
 
   // Put BRANCH_OFFSET back into the insn.  Assumes two's complement.
   // We use the Thumb-2 encoding, which is safe even if dealing with
@@ -3882,6 +3913,8 @@ Arm_relocate_functions<big_endian>::thumb_branch_common(
 
   elfcpp::Swap<16, big_endian>::writeval(wv, upper_insn);
   elfcpp::Swap<16, big_endian>::writeval(wv + 1, lower_insn);
+
+  gold_assert(!utils::has_overflow<25>(branch_offset));
 
   return ((thumb2
 	   ? utils::has_overflow<25>(branch_offset)
@@ -4211,10 +4244,15 @@ Reloc_stub::stub_type_for_reloc(
       thumb_only = little_endian_target->using_thumb_only();
     }
 
-  int64_t branch_offset = (int64_t)destination - location;
-
+  int64_t branch_offset;
   if (r_type == elfcpp::R_ARM_THM_CALL || r_type == elfcpp::R_ARM_THM_JUMP24)
     {
+      // For THUMB BLX instruction, bit 1 of target comes from bit 1 of the
+      // base address (instruction address + 4).
+      if ((r_type == elfcpp::R_ARM_THM_CALL) && may_use_blx && !target_is_thumb)
+	destination = utils::bit_select(destination, location, 0x2);
+      branch_offset = static_cast<int64_t>(destination) - location;
+	
       // Handle cases where:
       // - this call goes too far (different Thumb/Thumb2 max
       //   distance)
@@ -4295,6 +4333,7 @@ Reloc_stub::stub_type_for_reloc(
 	   || r_type == elfcpp::R_ARM_JUMP24
 	   || r_type == elfcpp::R_ARM_PLT32)
     {
+      branch_offset = static_cast<int64_t>(destination) - location;
       if (target_is_thumb)
 	{
 	  // Arm to thumb.
@@ -4720,20 +4759,9 @@ template<bool big_endian>
 bool
 Stub_table<big_endian>::update_data_size_and_addralign()
 {
-  off_t size = 0;
-  unsigned addralign = 1;
-
   // Go over all stubs in table to compute data size and address alignment.
-  
-  for (typename Reloc_stub_map::const_iterator p = this->reloc_stubs_.begin();
-      p != this->reloc_stubs_.end();
-      ++p)
-    {
-      const Stub_template* stub_template = p->second->stub_template();
-      addralign = std::max(addralign, stub_template->alignment());
-      size = (align_address(size, stub_template->alignment())
-	      + stub_template->size());
-    }
+  off_t size = this->reloc_stubs_size_;
+  unsigned addralign = this->reloc_stubs_addralign_;
 
   for (Cortex_a8_stub_list::const_iterator p = this->cortex_a8_stubs_.begin();
        p != this->cortex_a8_stubs_.end();
@@ -4778,19 +4806,7 @@ template<bool big_endian>
 void
 Stub_table<big_endian>::finalize_stubs()
 {
-  off_t off = 0;
-  for (typename Reloc_stub_map::const_iterator p = this->reloc_stubs_.begin();
-      p != this->reloc_stubs_.end();
-      ++p)
-    {
-      Reloc_stub* stub = p->second;
-      const Stub_template* stub_template = stub->stub_template();
-      uint64_t stub_addralign = stub_template->alignment();
-      off = align_address(off, stub_addralign);
-      stub->set_offset(off);
-      off += stub_template->size();
-    }
-
+  off_t off = this->reloc_stubs_size_;
   for (Cortex_a8_stub_list::const_iterator p = this->cortex_a8_stubs_.begin();
        p != this->cortex_a8_stubs_.end();
        ++p)
@@ -5194,9 +5210,11 @@ Arm_exidx_fixup::update_offset_map(
 {
   if (this->section_offset_map_ == NULL)
     this->section_offset_map_ = new Arm_exidx_section_offset_map();
-  section_offset_type output_offset = (delete_entry
-				       ? -1
-				       : input_offset - deleted_bytes);
+  section_offset_type output_offset;
+  if (delete_entry)
+    output_offset = Arm_exidx_input_section::invalid_offset;
+  else
+    output_offset = input_offset - deleted_bytes;
   (*this->section_offset_map_)[input_offset] = output_offset;
 }
 
@@ -6506,7 +6524,7 @@ Arm_relobj<big_endian>::update_output_local_symbol_count()
       Symbol_value<32>& lv((*this->local_values())[i]);
 
       // This local symbol was already discarded by do_count_local_symbols.
-      if (!lv.needs_output_symtab_entry())
+      if (lv.is_output_symtab_index_set() && !lv.has_output_symtab_entry())
 	continue;
 
       bool is_ordinary;
@@ -8570,16 +8588,16 @@ Target_arm<big_endian>::Relocate::relocate(
       break;
     case Arm_relocate_functions::STATUS_OVERFLOW:
       gold_error_at_location(relinfo, relnum, rel.get_r_offset(),
-			     _("relocation overflow in relocation %u"),
-			     r_type);
+			     _("relocation overflow in %s"),
+			     reloc_property->name().c_str());
       break;
     case Arm_relocate_functions::STATUS_BAD_RELOC:
       gold_error_at_location(
 	relinfo,
 	relnum,
 	rel.get_r_offset(),
-	_("unexpected opcode while processing relocation %u"),
-	r_type);
+	_("unexpected opcode while processing relocation %s"),
+	reloc_property->name().c_str());
       break;
     default:
       gold_unreachable();
@@ -10305,13 +10323,18 @@ Target_arm<big_endian>::do_relax(
 	  // Default value.
 	  // Thumb branch range is +-4MB has to be used as the default
 	  // maximum size (a given section can contain both ARM and Thumb
-	  // code, so the worst case has to be taken into account).
+	  // code, so the worst case has to be taken into account).  If we are
+	  // fixing cortex-a8 errata, the branch range has to be even smaller,
+	  // since wide conditional branch has a range of +-1MB only.
 	  //
 	  // This value is 24K less than that, which allows for 2025
 	  // 12-byte stubs.  If we exceed that, then we will fail to link.
 	  // The user will have to relink with an explicit group size
 	  // option.
-	  stub_group_size = 4170000;
+	  if (this->fix_cortex_a8_)
+	    stub_group_size = 1024276;
+	  else
+	    stub_group_size = 4170000;
 	}
 
       group_sections(layout, stub_group_size, stubs_always_after_branch);

@@ -6927,6 +6927,10 @@ do
 
     . ${srcdir}/configure.tgt
 
+    if test -z "${gdb_target_obs}"; then :
+  as_fn_error "configuration ${targ} is unsupported." "$LINENO" 5
+fi
+
     # Target-specific object files
     for i in ${gdb_target_obs}; do
         case " $TARGET_OBS " in
@@ -11234,7 +11238,7 @@ for ac_func in canonicalize_file_name realpath getrusage getuid \
 		getgid pipe poll pread64 sbrk setpgid setpgrp setsid \
 		sigaction sigprocmask sigsetmask socketpair syscall \
 		ttrace wborder setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit
+		setrlimit getrlimit posix_madvise
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

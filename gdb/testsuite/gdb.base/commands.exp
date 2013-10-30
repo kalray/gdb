@@ -299,7 +299,7 @@ proc watchpoint_command_test {} {
 
     send_gdb "commands $wp_id\n"
     gdb_expect {
-      -re "Type commands for when breakpoint $wp_id is hit, one per line.*>" {
+      -re "Type commands for breakpoint.*, one per line.*>" {
 	  pass "begin commands on watch"
       }
       -re "$gdb_prompt $" {fail "begin commands on watch"}
@@ -452,7 +452,7 @@ proc bp_deleted_in_command_test {} {
     
     send_gdb "commands\n"
     gdb_expect {
-      -re "Type commands for when breakpoint .* is hit, one per line.*>" {
+      -re "Type commands for breakpoint.*>" {
           pass "begin commands in bp_deleted_in_command_test"
       }
       -re "$gdb_prompt $" {fail "begin commands in bp_deleted_in_command_test"}
@@ -488,7 +488,7 @@ proc bp_deleted_in_command_test {} {
 
     gdb_run_cmd
     gdb_expect {
-        -re ".*factorial command-list executed.*1.*$gdb_prompt $" {
+        -re ".*factorial command-list executed.*$gdb_prompt $" {
 	    pass "run factorial until breakpoint"
         }
 	-re ".*$gdb_prompt $" {
@@ -519,7 +519,7 @@ proc temporary_breakpoint_commands {} {
     
     send_gdb "commands\n"
     gdb_expect {
-	-re "Type commands for when breakpoint .* is hit, one per line.*>" {
+	-re "Type commands for breakpoint.*>" {
 	    pass "begin commands in bp_deleted_in_command_test"
 	}
 	-re "$gdb_prompt $" {fail "begin commands in bp_deleted_in_command_test"}
@@ -550,7 +550,7 @@ proc temporary_breakpoint_commands {} {
 
     gdb_run_cmd
     gdb_expect {
-	-re ".*factorial tbreak commands executed.*1.*$gdb_prompt $" {
+	-re ".*factorial tbreak commands executed.*$gdb_prompt $" {
 	    pass "run factorial until temporary breakpoint"
 	}
 	timeout { fail "(timeout) run factorial until temporary breakpoint" }

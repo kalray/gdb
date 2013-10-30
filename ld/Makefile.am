@@ -163,7 +163,10 @@ ALL_EMULATIONS = \
 	eelf32_i960.o \
 	eelf32_i860.o \
 	eelf32_sparc.o \
+	eelf32_sparc_sol2.o \
 	eelf32_sparc_vxworks.o \
+	eelf32_tic6x_be.o \
+	eelf32_tic6x_le.o \
 	eelf32b4300.o \
 	eelf32bfin.o \
 	eelf32bfinfd.o \
@@ -198,7 +201,7 @@ ALL_EMULATIONS = \
 	eelf32mcore.o \
 	eelf32mep.o \
 	eelf32mb_linux.o \
- 	eelf32microblaze.o \
+	eelf32microblaze.o \
 	eelf32mipswindiss.o \
 	eelf32mt.o \
 	eelf32openrisc.o \
@@ -221,6 +224,7 @@ ALL_EMULATIONS = \
 	eelf_i386_chaos.o \
 	eelf_i386_fbsd.o \
 	eelf_i386_ldso.o \
+	eelf_i386_sol2.o \
 	eelf_i386_vxworks.o \
 	eelf_s390.o \
 	egld960.o \
@@ -422,11 +426,13 @@ ALL_64_EMULATIONS = \
 	eshlelf64_nbsd.o \
 	eelf_x86_64.o \
 	eelf_x86_64_fbsd.o \
+	eelf_x86_64_sol2.o \
 	eelf_l1om.o \
 	eelf_l1om_fbsd.o \
 	eelf64_s390.o \
 	eelf64_sparc.o \
 	eelf64_sparc_fbsd.o \
+	eelf64_sparc_sol2.o \
 	eelf64alpha.o \
 	eelf64alpha_fbsd.o \
 	eelf64alpha_nbsd.o \
@@ -769,6 +775,12 @@ eelf32bfinfd.c: $(srcdir)/emulparams/elf32bfinfd.sh $(srcdir)/emulparams/bfin.sh
 eelf32_dlx.c: $(srcdir)/emulparams/elf32_dlx.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/dlx.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32_dlx "$(tdir_elf32_dlx)"
+eelf32_tic6x_be.c: $(srcdir)/emulparams/elf32_tic6x_be.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32_tic6x_be "$(tdir_elf32_tic6x_be)"
+eelf32_tic6x_le.c: $(srcdir)/emulparams/elf32_tic6x_le.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32_tic6x_le "$(tdir_elf32_tic6x_le)"
 eelf32xc16x.c: $(srcdir)/emulparams/elf32xc16x.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/needrelax.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
@@ -833,6 +845,11 @@ em32rlelf_linux.c: $(srcdir)/emulparams/m32rlelf_linux.sh \
 eelf32_sparc.c: $(srcdir)/emulparams/elf32_sparc.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32_sparc "$(tdir_elf32_sparc)"
+eelf32_sparc_sol2.c: $(srcdir)/emulparams/elf32_sparc_sol2.sh \
+  $(srcdir)/emulparams/elf32_sparc.sh \
+  $(srcdir)/emultempl/solaris2.em $(ELF_DEPS) \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32_sparc_sol2 "$(tdir_elf32_sparc_sol2)"
 eelf32_sparc_vxworks.c: $(srcdir)/emulparams/elf32_sparc_vxworks.sh \
   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/elf32_sparc.sh \
   $(srcdir)/emultempl/vxworks.em $(ELF_DEPS) \
@@ -1086,6 +1103,11 @@ eelf64_sparc_fbsd.c: $(srcdir)/emulparams/elf64_sparc_fbsd.sh \
   $(srcdir)/emulparams/elf64_sparc.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64_sparc_fbsd "$(tdir_elf64_sparc_fbsd)"
+eelf64_sparc_sol2.c: $(srcdir)/emulparams/elf64_sparc_sol2.sh \
+  $(srcdir)/emulparams/elf64_sparc.sh \
+  $(srcdir)/emultempl/solaris2.em \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64_sparc_sol2 "$(tdir_elf64_sparc_sol2)"
 eelf64bmip.c: $(srcdir)/emulparams/elf64bmip.sh \
   $(srcdir)/emulparams/elf64bmip-defs.sh \
   $(srcdir)/emulparams/elf32bmipn32-defs.sh $(ELF_DEPS) \
@@ -1121,6 +1143,11 @@ eelf_x86_64_fbsd.c: $(srcdir)/emulparams/elf_x86_64_fbsd.sh \
   $(srcdir)/emulparams/elf_x86_64.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf_x86_64_fbsd "$(tdir_elf_x86_64_fbsd)"
+eelf_x86_64_sol2.c: $(srcdir)/emulparams/elf_x86_64_sol2.sh \
+  $(srcdir)/emulparams/elf_x86_64.sh \
+  $(srcdir)/emultempl/solaris2.em \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf_x86_64_sol2 "$(tdir_elf_x86_64_sol2)"
 eelf_l1om.c: $(srcdir)/emulparams/elf_l1om.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf_l1om "$(tdir_elf_l1om)"
@@ -1141,6 +1168,10 @@ eelf_i386_fbsd.c: $(srcdir)/emulparams/elf_i386_fbsd.sh \
 eelf_i386_ldso.c: $(srcdir)/emulparams/elf_i386_ldso.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf_i386_ldso "$(tdir_elf_i386_ldso)"
+eelf_i386_sol2.c: $(srcdir)/emulparams/elf_i386_sol2.sh \
+  $(srcdir)/emultempl/solaris2.em \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf_i386_sol2 "$(tdir_elf_i386_sol2)"
 eelf_i386_vxworks.c: $(srcdir)/emulparams/elf_i386_vxworks.sh \
   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emultempl/vxworks.em \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}

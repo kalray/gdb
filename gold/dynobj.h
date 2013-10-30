@@ -177,6 +177,10 @@ class Sized_dynobj : public Dynobj
   void
   do_add_symbols(Symbol_table*, Read_symbols_data*, Layout*);
 
+  Archive::Should_include
+  do_should_include_member(Symbol_table* symtab, Read_symbols_data*,
+                           std::string* why);
+
   // Get the size of a section.
   uint64_t
   do_section_size(unsigned int shndx)
@@ -360,9 +364,9 @@ class Verdef : public Version_base
 {
  public:
   Verdef(const char* name, const std::vector<std::string>& deps,
-         bool is_base, bool is_weak, bool is_symbol_created)
+         bool is_base, bool is_weak, bool is_info, bool is_symbol_created)
     : name_(name), deps_(deps), is_base_(is_base), is_weak_(is_weak),
-      is_symbol_created_(is_symbol_created)
+      is_info_(is_info), is_symbol_created_(is_symbol_created)
   { }
 
   // Return the version name.
@@ -390,6 +394,11 @@ class Verdef : public Version_base
   void
   clear_weak()
   { this->is_weak_ = false; }
+
+  // Return whether this definition is informational.
+  bool
+  is_info() const
+  { return this->is_info_; }
 
   // Return whether a version symbol has been created for this
   // definition.
@@ -419,6 +428,8 @@ class Verdef : public Version_base
   bool is_base_;
   // Whether this version is weak.
   bool is_weak_;
+  // Whether this version is informational.
+  bool is_info_;
   // Whether a version symbol has been created.
   bool is_symbol_created_;
 };

@@ -1,6 +1,6 @@
 /* Generic target-file-type support for the BFD library.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -603,6 +603,7 @@ extern const bfd_target bfd_elf32_hppa_nbsd_vec;
 extern const bfd_target bfd_elf32_hppa_vec;
 extern const bfd_target bfd_elf32_i370_vec;
 extern const bfd_target bfd_elf32_i386_freebsd_vec;
+extern const bfd_target bfd_elf32_i386_sol2_vec;
 extern const bfd_target bfd_elf32_i386_vxworks_vec;
 extern const bfd_target bfd_elf32_i386_vec;
 extern const bfd_target bfd_elf32_i860_little_vec;
@@ -678,6 +679,8 @@ extern const bfd_target bfd_elf32_shvxworks_vec;
 extern const bfd_target bfd_elf32_sparc_vec;
 extern const bfd_target bfd_elf32_sparc_vxworks_vec;
 extern const bfd_target bfd_elf32_spu_vec;
+extern const bfd_target bfd_elf32_tic6x_be_vec;
+extern const bfd_target bfd_elf32_tic6x_le_vec;
 extern const bfd_target bfd_elf32_tradbigmips_vec;
 extern const bfd_target bfd_elf32_tradlittlemips_vec;
 extern const bfd_target bfd_elf32_us_cris_vec;
@@ -714,6 +717,7 @@ extern const bfd_target bfd_elf64_sparc_freebsd_vec;
 extern const bfd_target bfd_elf64_tradbigmips_vec;
 extern const bfd_target bfd_elf64_tradlittlemips_vec;
 extern const bfd_target bfd_elf64_x86_64_freebsd_vec;
+extern const bfd_target bfd_elf64_x86_64_sol2_vec;
 extern const bfd_target bfd_elf64_x86_64_vec;
 extern const bfd_target bfd_elf64_l1om_freebsd_vec;
 extern const bfd_target bfd_elf64_l1om_vec;
@@ -828,6 +832,7 @@ extern const bfd_target vaxnetbsd_vec;
 extern const bfd_target vax1knetbsd_vec;
 extern const bfd_target versados_vec;
 extern const bfd_target vms_alpha_vec;
+extern const bfd_target vms_lib_txt_vec;
 extern const bfd_target vms_vax_vec;
 extern const bfd_target w65_vec;
 extern const bfd_target we32kcoff_vec;
@@ -944,6 +949,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&bfd_elf32_hppa_vec,
 	&bfd_elf32_i370_vec,
 	&bfd_elf32_i386_freebsd_vec,
+	&bfd_elf32_i386_sol2_vec,
 	&bfd_elf32_i386_vxworks_vec,
 	&bfd_elf32_i386_vec,
 	&bfd_elf32_i860_little_vec,
@@ -1026,6 +1032,8 @@ static const bfd_target * const _bfd_target_vector[] =
 	&bfd_elf32_sparc_vec,
 	&bfd_elf32_sparc_vxworks_vec,
 	&bfd_elf32_spu_vec,
+	&bfd_elf32_tic6x_be_vec,
+	&bfd_elf32_tic6x_le_vec,
 	&bfd_elf32_tradbigmips_vec,
 	&bfd_elf32_tradlittlemips_vec,
 	&bfd_elf32_us_cris_vec,
@@ -1063,6 +1071,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&bfd_elf64_tradbigmips_vec,
 	&bfd_elf64_tradlittlemips_vec,
 	&bfd_elf64_x86_64_freebsd_vec,
+	&bfd_elf64_x86_64_sol2_vec,
 	&bfd_elf64_x86_64_vec,
 	&bfd_elf64_l1om_freebsd_vec,
 	&bfd_elf64_l1om_vec,
@@ -1228,6 +1237,7 @@ static const bfd_target * const _bfd_target_vector[] =
 #ifdef BFD64
 	&vms_alpha_vec,
 #endif
+        &vms_lib_txt_vec,
 	&vms_vax_vec,
 	&w65_vec,
 	&we32kcoff_vec,

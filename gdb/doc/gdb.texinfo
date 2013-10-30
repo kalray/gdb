@@ -1028,7 +1028,9 @@ Run in batch mode.  Exit with status @code{0} after processing all the
 command files specified with @samp{-x} (and all commands from
 initialization files, if not inhibited with @samp{-n}).  Exit with
 nonzero status if an error occurs in executing the @value{GDBN} commands
-in the command files.
+in the command files.  Batch mode also disables pagination;
+@pxref{Screen Size} and acts as if @kbd{set confirm off} were in
+effect (@pxref{Messages/Warnings}).
 
 Batch mode may be useful for running @value{GDBN} as a filter, for
 example to download and run a program on another computer; in order to
@@ -3386,7 +3388,6 @@ The @code{rbreak} command can be used to set breakpoints in
 @cindex @code{$_} and @code{info breakpoints}
 @item info breakpoints @r{[}@var{n}@r{]}
 @itemx info break @r{[}@var{n}@r{]}
-@itemx info watchpoints @r{[}@var{n}@r{]}
 Print a table of all breakpoints, watchpoints, and catchpoints set and
 not deleted.  Optional argument @var{n} means print information only
 about the specified breakpoint (or watchpoint or catchpoint).  For
@@ -3703,8 +3704,8 @@ or written into by the program.
 
 @kindex info watchpoints @r{[}@var{n}@r{]}
 @item info watchpoints
-This command prints a list of watchpoints, breakpoints, and catchpoints;
-it is the same as @code{info break} (@pxref{Set Breaks}).
+This command prints a list of watchpoints, using the same format as
+@code{info break} (@pxref{Set Breaks}).
 @end table
 
 @value{GDBN} sets a @dfn{hardware watchpoint} if possible.  Hardware
@@ -3870,7 +3871,7 @@ A call to @code{exec}.  This is currently only available for HP-UX
 and @sc{gnu}/Linux.
 
 @item syscall
-@itemx syscall @r{[}@var{name} @r{|} @var{number}@r{]} @r{...}
+@itemx syscall @r{[}@var{name} @r{|} @var{number}@r{]} @dots{} 
 @cindex break on a system call.
 A call to or return from a system call, a.k.a.@: @dfn{syscall}.  A
 syscall is a mechanism for application programs to request a service
@@ -4133,10 +4134,10 @@ it had been deleted, but remembers the information on the breakpoint so
 that you can @dfn{enable} it again later.
 
 You disable and enable breakpoints, watchpoints, and catchpoints with
-the @code{enable} and @code{disable} commands, optionally specifying one
-or more breakpoint numbers as arguments.  Use @code{info break} or
-@code{info watch} to print a list of breakpoints, watchpoints, and
-catchpoints if you do not know which numbers to use.
+the @code{enable} and @code{disable} commands, optionally specifying
+one or more breakpoint numbers as arguments.  Use @code{info break} to
+print a list of all breakpoints, watchpoints, and catchpoints if you
+do not know which numbers to use.
 
 Disabling and enabling a breakpoint that has multiple locations
 affects all of its locations.
@@ -4326,19 +4327,24 @@ enable other breakpoints.
 @table @code
 @kindex commands
 @kindex end@r{ (breakpoint commands)}
-@item commands @r{[}@var{bnum}@r{]}
+@item commands @r{[}@var{range}@dots{}@r{]}
 @itemx @dots{} @var{command-list} @dots{}
 @itemx end
-Specify a list of commands for breakpoint number @var{bnum}.  The commands
+Specify a list of commands for the given breakpoints.  The commands
 themselves appear on the following lines.  Type a line containing just
 @code{end} to terminate the commands.
 
 To remove all commands from a breakpoint, type @code{commands} and
 follow it immediately with @code{end}; that is, give no commands.
 
-With no @var{bnum} argument, @code{commands} refers to the last
-breakpoint, watchpoint, or catchpoint set (not to the breakpoint most
-recently encountered).
+With no argument, @code{commands} refers to the last breakpoint,
+watchpoint, or catchpoint set (not to the breakpoint most recently
+encountered).  If the most recent breakpoints were set with a single
+command, then the @code{commands} will apply to all the breakpoints
+set by that command.  This applies to breakpoints set by
+@code{rbreak}, and also applies when a single @code{break} command
+creates multiple breakpoints (@pxref{Ambiguous Expressions,,Ambiguous
+Expressions}).
 @end table
 
 Pressing @key{RET} as a means of repeating the last @value{GDBN} command is
@@ -6661,7 +6667,8 @@ The usual way to examine data in your program is with the @code{print}
 command (abbreviated @code{p}), or its synonym @code{inspect}.  It
 evaluates and prints the value of an expression of the language your
 program is written in (@pxref{Languages, ,Using @value{GDBN} with
-Different Languages}).
+Different Languages}).  It may also print the expression using a
+Python-based pretty-printer (@pxref{Pretty Printing}).
 
 @table @code
 @item print @var{expr}
@@ -7159,8 +7166,10 @@ array.
 @item r
 @cindex raw printing
 Print using the @samp{raw} formatting.  By default, @value{GDBN} will
-use a type-specific pretty-printer.  The @samp{r} format bypasses any
-pretty-printer which might exist for the value's type.
+use a Python-based pretty-printer, if one is available (@pxref{Pretty
+Printing}).  This typically results in a higher-level display of the
+value's contents.  The @samp{r} format bypasses any Python
+pretty-printer which might exist.
 @end table
 
 For example, to print the program counter in hex (@pxref{Registers}), type
@@ -9325,10 +9334,10 @@ local variables, or global data.  Later, you can use @value{GDBN}
 commands to examine the values these data had at the time the
 tracepoint was hit.
 
-Tracepoints do not support every breakpoint feature.  Conditional
-expressions and ignore counts on tracepoints have no effect, and
-tracepoints cannot run @value{GDBN} commands when they are
-hit.  Tracepoints may not be thread-specific either.
+Tracepoints do not support every breakpoint feature.  Ignore counts on
+tracepoints have no effect, and tracepoints cannot run @value{GDBN}
+commands when they are hit.  Tracepoints may not be thread-specific
+either.
 
 @cindex fast tracepoints
 Some targets may support @dfn{fast tracepoints}, which are inserted in
@@ -9347,6 +9356,7 @@ conditions and actions.
 * Tracepoint Actions::
 * Listing Tracepoints::
 * Starting and Stopping Trace Experiments::
+* Tracepoint Restrictions::
 @end menu
 
 @node Create and Delete Tracepoints
@@ -9591,7 +9601,7 @@ recently defined (so that you can define a tracepoint and then say
 @code{actions} without bothering about its number).  You specify the
 actions themselves on the following lines, one action at a time, and
 terminate the actions list with a line containing just @code{end}.  So
-far, the only defined actions are @code{collect} and
+far, the only defined actions are @code{collect}, @code{teval}, and
 @code{while-stepping}.
 
 @cindex remove actions from a tracepoint
@@ -9610,10 +9620,10 @@ In the following example, the action list begins with @code{collect}
 commands indicating the things to be collected when the tracepoint is
 hit.  Then, in order to single-step and collect additional data
 following the tracepoint, a @code{while-stepping} command is used,
-followed by the list of things to be collected while stepping.  The
-@code{while-stepping} command is terminated by its own separate
-@code{end} command.  Lastly, the action list is terminated by an
-@code{end} command.
+followed by the list of things to be collected after each step in a
+sequence of single steps.  The @code{while-stepping} command is
+terminated by its own separate @code{end} command.  Lastly, the action
+list is terminated by an @code{end} command.
 
 @smallexample
 (@value{GDBP}) @b{trace foo}
@@ -9663,10 +9673,10 @@ action were used.
 
 @kindex while-stepping @r{(tracepoints)}
 @item while-stepping @var{n}
-Perform @var{n} single-step traces after the tracepoint, collecting
-new data at each step.  The @code{while-stepping} command is
-followed by the list of what to collect while stepping (followed by
-its own @code{end} command):
+Perform @var{n} single-step instruction traces after the tracepoint,
+collecting new data after each step.  The @code{while-stepping}
+command is followed by the list of what to collect while stepping
+(followed by its own @code{end} command):
 
 @smallexample
 > while-stepping 12
@@ -9676,7 +9686,9 @@ its own @code{end} command):
 @end smallexample
 
 @noindent
-You may abbreviate @code{while-stepping} as @code{ws} or
+Note that @code{$pc} is not automatically collected by
+@code{while-stepping}; you need to explicitly collect that register if
+you need it.  You may abbreviate @code{while-stepping} as @code{ws} or
 @code{stepping}.
 
 @item set default-collect @var{expr1}, @var{expr2}, @dots{}
@@ -9829,6 +9841,113 @@ debugger will create a new tracepoint, so that you have a number with
 which to specify that tracepoint.  This matching-up process is
 necessarily heuristic, and it may result in useless tracepoints being
 created; you may simply delete them if they are of no use.
+
+@cindex circular trace buffer
+If your target agent supports a @dfn{circular trace buffer}, then you
+can run a trace experiment indefinitely without filling the trace
+buffer; when space runs out, the agent deletes already-collected trace
+frames, oldest first, until there is enough room to continue
+collecting.  This is especially useful if your tracepoints are being
+hit too often, and your trace gets terminated prematurely because the
+buffer is full.  To ask for a circular trace buffer, simply set
+@samp{circular_trace_buffer} to on.  You can set this at any time,
+including during tracing; if the agent can do it, it will change
+buffer handling on the fly, otherwise it will not take effect until
+the next run.
+
+@table @code
+@item set circular-trace-buffer on
+@itemx set circular-trace-buffer off
+@kindex set circular-trace-buffer
+Choose whether a tracing run should use a linear or circular buffer
+for trace data.  A linear buffer will not lose any trace data, but may
+fill up prematurely, while a circular buffer will discard old trace
+data, but it will have always room for the latest tracepoint hits.
+
+@item show circular-trace-buffer
+@kindex show circular-trace-buffer
+Show the current choice for the trace buffer.  Note that this may not
+match the agent's current buffer handling, nor is it guaranteed to
+match the setting that might have been in effect during a past run,
+for instance if you are looking at frames from a trace file.
+
+@end table
+
+@node Tracepoint Restrictions
+@subsection Tracepoint Restrictions
+
+@cindex tracepoint restrictions
+There are a number of restrictions on the use of tracepoints.  As
+described above, tracepoint data gathering occurs on the target
+without interaction from @value{GDBN}.  Thus the full capabilities of
+the debugger are not available during data gathering, and then at data
+examination time, you will be limited by only having what was
+collected.  The following items describe some common problems, but it
+is not exhaustive, and you may run into additional difficulties not
+mentioned here.
+
+@itemize @bullet
+
+@item
+Tracepoint expressions are intended to gather objects (lvalues).  Thus
+the full flexibility of GDB's expression evaluator is not available.
+You cannot call functions, cast objects to aggregate types, access
+convenience variables or modify values (except by assignment to trace
+state variables).  Some language features may implicitly call
+functions (for instance Objective-C fields with accessors), and therefore
+cannot be collected either.
+
+@item
+Collection of local variables, either individually or in bulk with
+@code{$locals} or @code{$args}, during @code{while-stepping} may
+behave erratically.  The stepping action may enter a new scope (for
+instance by stepping into a function), or the location of the variable
+may change (for instance it is loaded into a register).  The
+tracepoint data recorded uses the location information for the
+variables that is correct for the tracepoint location.  When the
+tracepoint is created, it is not possible, in general, to determine
+where the steps of a @code{while-stepping} sequence will advance the
+program---particularly if a conditional branch is stepped.
+
+@item
+Collection of an incompletely-initialized or partially-destroyed object
+may result in something that @value{GDBN} cannot display, or displays
+in a misleading way.
+
+@item
+When @value{GDBN} displays a pointer to character it automatically
+dereferences the pointer to also display characters of the string
+being pointed to.  However, collecting the pointer during tracing does
+not automatically collect the string.  You need to explicitly
+dereference the pointer and provide size information if you want to
+collect not only the pointer, but the memory pointed to.  For example,
+@code{*ptr@@50} can be used to collect the 50 element array pointed to
+by @code{ptr}.
+
+@item
+It is not possible to collect a complete stack backtrace at a
+tracepoint.  Instead, you may collect the registers and a few hundred
+bytes from the stack pointer with something like @code{*$esp@@300}
+(adjust to use the name of the actual stack pointer register on your
+target architecture, and the amount of stack you wish to capture).
+Then the @code{backtrace} command will show a partial backtrace when
+using a trace frame.  The number of stack frames that can be examined
+depends on the sizes of the frames in the collected stack.  Note that
+if you ask for a block so large that it goes past the bottom of the
+stack, the target agent may report an error trying to read from an
+invalid address.
+
+@item
+If you do not collect registers at a tracepoint, @value{GDBN} can
+infer that the value of @code{$pc} must be the same as the address of
+the tracepoint and use that when you are looking at a trace frame
+for that tracepoint.  However, this cannot work if the tracepoint has
+multiple locations (for instance if it was set in a function that was
+inlined), or if it has a @code{while-stepping} loop.  In those cases
+@value{GDBN} will warn you that it can't infer @code{$pc}, and default
+it to zero.
+
+@end itemize
 
 @node Analyze Collected Data
 @section Using the Collected Data
@@ -10030,6 +10149,22 @@ gdb_long_test = 17 '\021'
 
 (@value{GDBP})
 @end smallexample
+
+@code{tdump} works by scanning the tracepoint's current collection
+actions and printing the value of each expression listed.  So
+@code{tdump} can fail, if after a run, you change the tracepoint's
+actions to mention variables that were not collected during the run.
+
+Also, for tracepoints with @code{while-stepping} loops, @code{tdump}
+uses the collected value of @code{$pc} to distinguish between trace
+frames that were collected at the tracepoint hit, and frames that were
+collected while stepping.  This allows it to correctly choose whether
+to display the basic list of collections, or the collections from the
+body of the while-stepping loop.  However, if @code{$pc} was not collected,
+then @code{tdump} will always attempt to dump using the basic collection
+list, and may fail if a while-stepping frame does not include all the
+same data that is collected at the tracepoint hit.
+@c This is getting pretty arcane, example would be good.
 
 @node save-tracepoints
 @subsection @code{save-tracepoints @var{filename}}
@@ -14792,7 +14927,7 @@ useful if you have some other way of getting the stub to the target
 system, and you can put it somewhere in memory where it won't get
 clobbered by the download.
 
-@item target sim
+@item target sim @r{[}@var{simargs}@r{]} @dots{}
 @cindex built-in simulator target
 Builtin CPU simulator.  @value{GDBN} includes simulators for most architectures.
 In general,
@@ -17188,6 +17323,25 @@ well as the Angel monitor.
 Show the setting of RDI heartbeat packets.
 @end table
 
+@table @code
+@item target sim @r{[}@var{simargs}@r{]} @dots{} 
+The @value{GDBN} ARM simulator accepts the following optional arguments.
+
+@table @code
+@item --swi-support=@var{type}
+Tell the simulator which SWI interfaces to support.
+@var{type} may be a comma separated list of the following values.
+The default value is @code{all}.
+
+@table @code
+@item none
+@item demon
+@item angel
+@item redboot
+@item all
+@end table
+@end table
+@end table
 
 @node M32R/D
 @subsection Renesas M32R/D and M32R/SDI
@@ -18491,7 +18645,9 @@ from wrapping its output.
 @itemx set pagination off
 @kindex set pagination
 Turn the output pagination on or off; the default is on.  Turning
-pagination off is the alternative to @code{set height 0}.
+pagination off is the alternative to @code{set height 0}.  Note that
+running @value{GDBN} with the @option{--batch} option (@pxref{Mode
+Options, -batch}) also automatically disables pagination.
 
 @item show pagination
 @kindex show pagination
@@ -18714,7 +18870,9 @@ commands, you can disable this ``feature'':
 @cindex confirmation
 @cindex stupid questions
 @item set confirm off
-Disables confirmation requests.
+Disables confirmation requests.  Note that running @value{GDBN} with
+the @option{--batch} option (@pxref{Mode Options, -batch}) also
+automatically disables confirmation requests.
 
 @item set confirm on
 Enables confirmation requests (the default).
@@ -19631,6 +19789,21 @@ Flush @value{GDBN}'s paginated standard output stream.  Flushing
 function.
 @end defun
 
+@findex gdb.target_charset
+@defun target_charset
+Return the name of the current target character set (@pxref{Character
+Sets}).  This differs from @code{gdb.parameter('target-charset')} in
+that @samp{auto} is never returned.
+@end defun
+
+@findex gdb.target_wide_charset
+@defun target_wide_charset
+Return the name of the current target wide character set
+(@pxref{Character Sets}).  This differs from
+@code{gdb.parameter('target-wide-charset')} in that @samp{auto} is
+never returned.
+@end defun
+
 @node Exception Handling
 @subsubsection Exception Handling
 @cindex python exceptions
@@ -19700,8 +19873,8 @@ feature, and view its current state.
 @item maint set python auto-load [yes|no]
 Enable or disable the Python auto-loading feature.
 
-@kindex show python auto-load
-@item show python auto-load
+@kindex maint show python auto-load
+@item maint show python auto-load
 Show whether Python auto-loading is enabled or disabled.
 @end table
 
@@ -21506,6 +21679,12 @@ These commands are always available, even when @value{GDBN} is not in
 the TUI mode.  When @value{GDBN} is in the standard mode, most
 of these commands will automatically switch to the TUI mode.
 
+Note that if @value{GDBN}'s @code{stdout} is not connected to a
+terminal, or @value{GDBN} has been started with the machine interface
+interpreter (@pxref{GDB/MI, ,The @sc{gdb/mi} Interface}), most of
+these commands will fail with an error, because it would not be
+possible or desirable to enable curses window management.
+
 @table @code
 @item info win
 @kindex info win
@@ -23006,7 +23185,7 @@ N.A.
 @subsubheading Synopsis
 
 @smallexample
- -break-insert [ -t ] [ -h ] [ -f ] [ -d ]
+ -break-insert [ -t ] [ -h ] [ -f ] [ -d ] [ -a ]
     [ -c @var{condition} ] [ -i @var{ignore-count} ]
     [ -p @var{thread} ] [ @var{location} ]
 @end smallexample
@@ -23043,6 +23222,9 @@ an error, and won't create a breakpoint, if @var{location}
 cannot be parsed.
 @item -d
 Create a disabled breakpoint.
+@item -a
+Create a tracepoint.  @xref{Tracepoints}.  When this parameter
+is used together with @samp{-h}, a fast tracepoint is created.
 @end table
 
 @subsubheading Result
@@ -23179,6 +23361,20 @@ hdr=[@{width="3",alignment="-1",col_name="number",colhdr="Num"@},
 body=[]@}
 (gdb)
 @end smallexample
+
+@subheading The @code{-break-passcount} Command
+@findex -break-passcount
+
+@subsubheading Synopsis
+
+@smallexample
+ -break-passcount @var{tracepoint-number} @var{passcount}
+@end smallexample
+
+Set the passcount for tracepoint @var{tracepoint-number} to
+@var{passcount}.  If the breakpoint referred to by @var{tracepoint-number}
+is not a tracepoint, error is emitted.  This corresponds to CLI
+command @samp{passcount}.
 
 @subheading The @code{-break-watch} Command
 @findex -break-watch
@@ -25837,37 +26033,256 @@ next-page="0x000013c0",prev-page="0x00001380",memory=[
 @node GDB/MI Tracepoint Commands
 @section @sc{gdb/mi} Tracepoint Commands
 
-The tracepoint commands are not yet implemented.
+The commands defined in this section implement MI support for
+tracepoints.  For detailed introduction, see @ref{Tracepoints}.
 
-@c @subheading -trace-actions
+@subheading The @code{-trace-find} Command
+@findex -trace-find
 
-@c @subheading -trace-delete
+@subsubheading Synopsis
 
-@c @subheading -trace-disable
+@smallexample
+ -trace-find @var{mode} [@var{parameters}@dots{}]
+@end smallexample
 
-@c @subheading -trace-dump
+Find a trace frame using criteria defined by @var{mode} and
+@var{parameters}.  The following table lists permissible
+modes and their parameters.  For details of operation, see @ref{tfind}.
 
-@c @subheading -trace-enable
+@table @samp
 
-@c @subheading -trace-exists
+@item none
+No parameters are required.  Stops examining trace frames.
 
-@c @subheading -trace-find
+@item frame-number
+An integer is required as parameter.  Selects tracepoint frame with
+that index.
 
-@c @subheading -trace-frame-number
+@item tracepoint-number
+An integer is required as parameter.  Finds next
+trace frame that corresponds to tracepoint with the specified number.
 
-@c @subheading -trace-info
+@item pc
+An address is required as parameter.  Finds
+next trace frame that corresponds to any tracepoint at the specified
+address.
 
-@c @subheading -trace-insert
+@item pc-inside-range
+Two addresses are required as parameters.  Finds next trace
+frame that corresponds to a tracepoint at an address inside the
+specified range.  Both bounds are considered to be inside the range.
 
-@c @subheading -trace-list
+@item pc-outside-range
+Two addresses are required as parameters.  Finds
+next trace frame that corresponds to a tracepoint at an address outside
+the specified range.  Both bounds are considered to be inside the range.
 
-@c @subheading -trace-pass-count
+@item line
+Line specification is required as parameter.  @xref{Specify Location}.
+Finds next trace frame that corresponds to a tracepoint at
+the specified location.
 
-@c @subheading -trace-save
+@end table
 
-@c @subheading -trace-start
+If @samp{none} was passed as @var{mode}, the response does not
+have fields.  Otherwise, the response may have the following fields:
 
-@c @subheading -trace-stop
+@table @samp
+@item found
+This field has either @samp{0} or @samp{1} as the value, depending
+on whether a matching tracepoint was found.
+
+@item traceframe
+The index of the found traceframe.  This field is present iff
+the @samp{found} field has value of @samp{1}.
+
+@item tracepoint
+The index of the found tracepoint.  This field is present iff
+the @samp{found} field has value of @samp{1}.
+
+@item frame
+The information about the frame corresponding to the found trace
+frame.  This field is present only if a trace frame was found.
+@xref{GDB/MI Frame Information}, for description of this field.
+
+@end table
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tfind}.
+
+@subheading -trace-define-variable
+@findex -trace-define-variable
+
+@subsubheading Synopsis
+
+@smallexample
+ -trace-define-variable @var{name} [ @var{value} ]
+@end smallexample
+
+Create trace variable @var{name} if it does not exist.  If
+@var{value} is specified, sets the initial value of the specified
+trace variable to that value.  Note that the @var{name} should start
+with the @samp{$} character.
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tvariable}.
+
+@subheading -trace-list-variables
+@findex -trace-list-variables
+
+@subsubheading Synopsis
+
+@smallexample
+ -trace-list-variables
+@end smallexample
+
+Return a table of all defined trace variables.  Each element of the
+table has the following fields:
+
+@table @samp
+@item name
+The name of the trace variable.  This field is always present.
+
+@item initial
+The initial value.  This is a 64-bit signed integer.  This
+field is always present.
+
+@item current
+The value the trace variable has at the moment.  This is a 64-bit
+signed integer.  This field is absent iff current value is
+not defined, for example if the trace was never run, or is
+presently running.
+
+@end table
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tvariables}.
+
+@subsubheading Example
+
+@smallexample
+(gdb)
+-trace-list-variables
+^done,trace-variables=@{nr_rows="1",nr_cols="3",
+hdr=[@{width="15",alignment="-1",col_name="name",colhdr="Name"@},
+     @{width="11",alignment="-1",col_name="initial",colhdr="Initial"@},
+     @{width="11",alignment="-1",col_name="current",colhdr="Current"@}],
+body=[variable=@{name="$trace_timestamp",initial="0"@}
+      variable=@{name="$foo",initial="10",current="15"@}]@}
+(gdb)
+@end smallexample
+
+@subheading -trace-save
+@findex -trace-save
+
+@subsubheading Synopsis
+
+@smallexample
+ -trace-save [-r ] @var{filename}
+@end smallexample
+
+Saves the collected trace data to @var{filename}.  Without the
+@samp{-r} option, the data is downloaded from the target and saved
+in a local file.  With the @samp{-r} option the target is asked
+to perform the save.
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tsave}.
+
+
+@subheading -trace-start
+@findex -trace-start
+
+@subsubheading Synopsis
+
+@smallexample
+ -trace-start
+@end smallexample
+
+Starts a tracing experiments.  The result of this command does not
+have any fields.
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tstart}.
+
+@subheading -trace-status
+@findex -trace-status
+
+@subsubheading Synopsis
+
+@smallexample
+ -trace-status
+@end smallexample
+
+Obtains the status of a tracing experiement.  The result may include
+the following fields:
+
+@table @samp
+
+@item supported
+May have a value of either @samp{0}, when no tracing operations are
+supported, @samp{1}, when all tracing operations are supported, or
+@samp{file} when examining trace file.  In the latter case, examining
+of trace frame is possible but new tracing experiement cannot be
+started.  This field is always present.
+
+@item running
+May have a value of either @samp{0} or @samp{1} depending on whether
+tracing experiement is in progress on target.  This field is present
+if @samp{supported} field is not @samp{0}.
+
+@item stop-reason
+Report the reason why the tracing was stopped last time.  This field
+may be absent iff tracing was never stopped on target yet.  The
+value of @samp{request} means the tracing was stopped as result of
+the @code{-trace-stop} command.  The value of @samp{overflow} means
+the tracing buffer is full.  The value of @samp{disconnection} means
+tracing was automatically stopped when @value{GDBN} has disconnected.
+The value of @samp{passcount} means tracing was stopped when a
+tracepoint was passed a maximal number of times for that tracepoint.
+This field is present if @samp{supported} field is not @samp{0}.
+
+@item stopping-tracepoint
+The number of tracepoint whose passcount as exceeded.  This field is
+present iff the @samp{stop-reason} field has the value of
+@samp{passcount}.
+
+@item frames
+This field is an integer number of currently collected frames.  This
+field is optional.
+
+@item buffer-size
+@itemx buffer-free
+These fields tell the current size of the tracing buffer and the
+remaining space.  These field is optional.
+
+@end table
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tstatus}.
+
+@subheading -trace-stop
+@findex -trace-stop
+
+@subsubheading Synopsis
+
+@smallexample
+ -trace-stop
+@end smallexample
+
+Stops a tracing experiment.  The result of this command has the same
+fields as @code{-trace-status}, except that the @samp{supported} and
+@samp{running} fields are not output.
+
+@subsubheading @value{GDBN} Command
+
+The corresponding @value{GDBN} command is @samp{tstop}.
 
 
 @c %%%%%%%%%%%%%%%%%%%%%%%%%%%% SECTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30250,6 +30665,12 @@ extensions to the remote protocol.  @value{GDBN} does not use such
 extensions unless the stub also reports that it supports them by
 including @samp{multiprocess+} in its @samp{qSupported} reply.
 @xref{multiprocess extensions}, for details.
+
+@item xmlRegisters
+This feature indicates that @value{GDBN} supports the XML target
+description.  If the stub sees @samp{xmlRegisters=} with target
+specific strings separated by a comma, it will report register
+description.
 @end table
 
 Stubs should ignore any unknown values for
@@ -30379,6 +30800,11 @@ These are the currently defined stub features and their properties:
 @tab @samp{-}
 @tab No
 
+@item @samp{TracepointSource}
+@tab No
+@tab @samp{-}
+@tab No
+
 @end multitable
 
 These are the currently defined stub features, in more detail:
@@ -30472,6 +30898,10 @@ The remote stub accepts and implements the reverse continue packet
 The remote stub accepts and implements the reverse step packet
 (@pxref{bs}).
 
+@item TracepointSource
+The remote stub understands the @samp{QTDPsrc} packet that supplies
+the source form of tracepoint definitions.
+
 @end table
 
 @item qSymbol::
@@ -30512,8 +30942,10 @@ encoded).  @value{GDBN} will continue to supply the values of symbols
 @end table
 
 @item qTBuffer
+@item QTBuffer
 @item QTDisconnected
 @itemx QTDP
+@itemx QTDPsrc
 @itemx QTDV
 @itemx qTfP
 @itemx qTfV
@@ -30915,6 +31347,40 @@ The packet was understood and carried out.
 The packet was not recognized.
 @end table
 
+@item QTDPsrc:@var{n}:@var{addr}:@var{type}:@var{start}:@var{slen}:@var{bytes}
+@cindex @samp{QTDPsrc} packet
+Specify a source string of tracepoint @var{n} at address @var{addr}.
+This is useful to get accurate reproduction of the tracepoints
+originally downloaded at the beginning of the trace run.  @var{type}
+is the name of the tracepoint part, such as @samp{cond} for the
+tracepoint's conditional expression (see below for a list of types), while
+@var{bytes} is the string, encoded in hexadecimal.
+
+@var{start} is the offset of the @var{bytes} within the overall source
+string, while @var{slen} is the total length of the source string.
+This is intended for handling source strings that are longer than will
+fit in a single packet.
+@c Add detailed example when this info is moved into a dedicated
+@c tracepoint descriptions section.
+
+The available string types are @samp{at} for the location,
+@samp{cond} for the conditional, and @samp{cmd} for an action command.
+@value{GDBN} sends a separate packet for each command in the action
+list, in the same order in which the commands are stored in the list.
+
+The target does not need to do anything with source strings except
+report them back as part of the replies to the @samp{qTfP}/@samp{qTsP}
+query packets.
+
+Although this packet is optional, and @value{GDBN} will only send it
+if the target replies with @samp{TracepointSource} @xref{General
+Query Packets}, it makes both disconnected tracing and trace files
+much easier to use.  Otherwise the user must be careful that the
+tracepoints in effect while looking at trace frames are identical to
+the ones in effect during the trace run; even a small discrepancy
+could cause @samp{tdump} not to work, or a particular trace frame not
+be found.
+
 @item QTDV:@var{n}:@var{value}
 @cindex define trace state variable, remote request
 @cindex @samp{QTDV} packet
@@ -30996,12 +31462,68 @@ continue the tracing run, while 0 tells the target to stop tracing if
 @item qTStatus
 Ask the stub if there is a trace experiment running right now.
 
-Replies:
+The reply has the form:
+
 @table @samp
-@item T0
-There is no trace experiment running.
-@item T1
-There is a trace experiment running.
+
+@item T@var{running}@r{[};@var{field}@r{]}@dots{}
+@var{running} is a single digit @code{1} if the trace is presently
+running, or @code{0} if not.  It is followed by semicolon-separated
+optional fields that an agent may use to report additional status.
+
+@end table
+
+If the trace is not running, the agent may report any of several
+explanations as one of the optional fields:
+
+@table @samp
+
+@item tnotrun:0
+No trace has been run yet.
+
+@item tstop:0
+The trace was stopped by a user-originated stop command.
+
+@item tfull:0
+The trace stopped because the trace buffer filled up.
+
+@item tdisconnected:0
+The trace stopped because @value{GDBN} disconnected from the target.
+
+@item tpasscount:@var{tpnum}
+The trace stopped because tracepoint @var{tpnum} exceeded its pass count.
+
+@item terror:@var{text}:@var{tpnum}
+The trace stopped because tracepoint @var{tpnum} had an error.  The
+string @var{text} is available to describe the nature of the error
+(for instance, a divide by zero in the condition expression).
+@var{text} is hex encoded.
+
+@item tunknown:0
+The trace stopped for some other reason.
+
+@end table
+
+Additional optional fields supply statistical information.  Although
+not required, they are extremely useful for users monitoring the
+progress of a trace run.  If a trace has stopped, and these numbers
+are reported, they must reflect the state of the just-stopped trace.
+
+@table @samp
+
+@item tframes:@var{n}
+The number of trace frames in the buffer.
+
+@item tcreated:@var{n}
+The total number of trace frames created during the run. This may
+be larger than the trace frame count, if the buffer is circular.
+
+@item tsize:@var{n}
+The total size of the trace buffer, in bytes.
+
+@item tfree:@var{n}
+The number of bytes still unused in the buffer.
+
 @end table
 
 @item qTV:@var{var}
@@ -31055,6 +31577,10 @@ The reply consists as many hex-encoded bytes as the target can deliver
 in a packet; it is not an error to return fewer than were asked for.
 A reply consisting of just @code{l} indicates that no bytes are
 available.
+
+@item QTBuffer:circular:@var{value}
+This packet directs the target to use a circular trace buffer if
+@var{value} is 1, or a linear buffer if the value is 0.
 
 @end table
 
@@ -33330,6 +33856,17 @@ describe registers:
 @samp{xmm0} through @samp{xmm15} for amd64
 @item 
 @samp{mxcsr}
+@end itemize
+
+The @samp{org.gnu.gdb.i386.avx} feature is optional.  It should
+describe the upper 128 bits of @sc{ymm} registers:
+
+@itemize @minus
+@item
+@samp{ymm0h} through @samp{ymm7h} for i386
+@item
+@samp{ymm0h} through @samp{ymm15h} for amd64
+@item 
 @end itemize
 
 The @samp{org.gnu.gdb.i386.linux} feature is optional.  It should

@@ -173,7 +173,7 @@ gdb_expect {
 	# This is what happens on ARM in thumb mode -fn 2000-02-01
 	pass "step out of main"
     }
-    -re ".*__rt_entry ().*$gdb_prompt $" {
+    -re ".*__rt_entry.* ().*$gdb_prompt $" {
 	# This is what happens on the ARM RVDS runtime
 	pass "step out of main"
     }
@@ -187,6 +187,10 @@ gdb_expect {
 	# On sh, another wrapper function (start_l) exists, so
 	# another `next' is necessary.
 	gdb_test "next" ".*in start_l ().*" "step out of main"
+    }
+    -re "E32Main (.*).*$gdb_prompt $" {
+	# On SymbianOS there's a different function which calls main.
+	pass "step out of main"
     }
     -re ".*in.*currently asm.*$gdb_prompt $" { 
         pass "step out of main"

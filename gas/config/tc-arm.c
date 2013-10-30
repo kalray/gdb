@@ -1,6 +1,6 @@
 /* tc-arm.c -- Assemble for the ARM
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009
+   2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
@@ -2500,7 +2500,15 @@ make_mapping_symbol (enum mstate state, valueT value, fragS *frag)
       frag->tc_frag_data.first_map = symbolP;
     }
   if (frag->tc_frag_data.last_map != NULL)
-    know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+    {
+      know (S_GET_VALUE (frag->tc_frag_data.last_map) <= S_GET_VALUE (symbolP));
+      /* If .fill or other data filling directive generates zero sized data,
+	 the mapping symbol for the following code will have the same value
+	 as the one generated for the data filling directive.  In this case,
+	 we replace the old symbol with the new one at the same address.  */
+      if (S_GET_VALUE (frag->tc_frag_data.last_map) == S_GET_VALUE (symbolP))
+	symbol_remove (frag->tc_frag_data.last_map, &symbol_rootP, &symbol_lastP);
+    }
   frag->tc_frag_data.last_map = symbolP;
 }
 
@@ -16191,7 +16199,8 @@ static struct reloc_entry reloc_names[] =
   { "tlsldm",  BFD_RELOC_ARM_TLS_LDM32}, { "TLSLDM",  BFD_RELOC_ARM_TLS_LDM32},
   { "tlsldo",  BFD_RELOC_ARM_TLS_LDO32}, { "TLSLDO",  BFD_RELOC_ARM_TLS_LDO32},
   { "gottpoff",BFD_RELOC_ARM_TLS_IE32},  { "GOTTPOFF",BFD_RELOC_ARM_TLS_IE32},
-  { "tpoff",   BFD_RELOC_ARM_TLS_LE32},  { "TPOFF",   BFD_RELOC_ARM_TLS_LE32}
+  { "tpoff",   BFD_RELOC_ARM_TLS_LE32},  { "TPOFF",   BFD_RELOC_ARM_TLS_LE32},
+  { "got_prel", BFD_RELOC_ARM_GOT_PREL}, { "GOT_PREL", BFD_RELOC_ARM_GOT_PREL}
 };
 #endif
 
@@ -20477,7 +20486,12 @@ md_apply_fix (fixS *	fixP,
       if (fixP->fx_done || !seg->use_rela_p)
 	md_number_to_chars (buf, 0, 4);
       break;
-      
+
+    case BFD_RELOC_ARM_GOT_PREL:
+      if (fixP->fx_done || !seg->use_rela_p)
+        md_number_to_chars (buf, value, 4);
+      break;
+
     case BFD_RELOC_ARM_TARGET2:
       /* TARGET2 is not partial-inplace, so we need to write the
          addend here for REL targets, because it won't be written out
@@ -21062,6 +21076,7 @@ tc_gen_reloc (asection *section, fixS *fixp)
 #ifdef OBJ_ELF
     case BFD_RELOC_ARM_GOT32:
     case BFD_RELOC_ARM_GOTOFF:
+    case BFD_RELOC_ARM_GOT_PREL:
     case BFD_RELOC_ARM_PLT32:
     case BFD_RELOC_ARM_TARGET1:
     case BFD_RELOC_ARM_ROSEGREL32:
@@ -22179,6 +22194,7 @@ static const struct arm_cpu_option_table arm_cpus[] =
                                                           NULL},
   {"cortex-r4",		ARM_ARCH_V7R,	 FPU_NONE,	  NULL},
   {"cortex-r4f",	ARM_ARCH_V7R,	 FPU_ARCH_VFP_V3D16,	  NULL},
+  {"cortex-m4",		ARM_ARCH_V7EM,	 FPU_NONE,	  NULL},
   {"cortex-m3",		ARM_ARCH_V7M,	 FPU_NONE,	  NULL},
   {"cortex-m1",		ARM_ARCH_V6M,	 FPU_NONE,	  NULL},
   {"cortex-m0",		ARM_ARCH_V6M,	 FPU_NONE,	  NULL},

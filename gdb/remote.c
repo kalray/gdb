@@ -72,8 +72,8 @@
 static char *target_buf;
 static long target_buf_size;
 /*static*/ void
-encode_actions (struct breakpoint *t, char ***tdp_actions,
-		char ***stepping_actions);
+encode_actions (struct breakpoint *t, struct bp_location *tloc,
+		char ***tdp_actions, char ***stepping_actions);
 
 /* The size to align memory write packets, when practical.  The protocol
    does not guarantee any alignment, and gdb will generate short
@@ -172,8 +172,6 @@ static int hexnumnstr (char *, ULONGEST, int);
 static CORE_ADDR remote_address_masked (CORE_ADDR);
 
 static void print_packet (char *);
-
-static unsigned long crc32 (unsigned char *, int, unsigned int);
 
 static void compare_sections_command (char *, int);
 
@@ -1156,6 +1154,7 @@ enum {
   PACKET_FastTracepoints,
   PACKET_bc,
   PACKET_bs,
+  PACKET_TracepointSource,
   PACKET_MAX
 };
 
@@ -2451,7 +2450,7 @@ end_thread (struct gdb_xml_parser *parser,
   struct threads_parsing_context *data = user_data;
 
   if (body_text && *body_text)
-    VEC_last (thread_item_t, data->items)->extra = strdup (body_text);
+    VEC_last (thread_item_t, data->items)->extra = xstrdup (body_text);
 }
 
 const struct gdb_xml_attribute thread_attributes[] = {
@@ -2679,6 +2678,15 @@ remote_threads_extra_info (struct thread_info *tp)
 	  }
       }
   return NULL;
+}
+
+
+/* Implement the to_get_ada_task_ptid function for the remote targets.  */
+
+static ptid_t
+remote_get_ada_task_ptid (long lwp, long thread)
+{
+  return ptid_build (ptid_get_pid (inferior_ptid), 0, lwp);
 }
 
 
@@ -3455,7 +3463,56 @@ static struct protocol_feature remote_protocol_features[] = {
     PACKET_bc },
   { "ReverseStep", PACKET_DISABLE, remote_supported_packet,
     PACKET_bs },
+  { "TracepointSource", PACKET_DISABLE, remote_supported_packet,
+    PACKET_TracepointSource },
 };
+
+static char *remote_support_xml;
+
+/* Register string appended to "xmlRegisters=" in qSupported query.  */
+
+void
+register_remote_support_xml (const char *xml ATTRIBUTE_UNUSED)
+{
+#if defined(HAVE_LIBEXPAT)
+  if (remote_support_xml == NULL)
+    remote_support_xml = concat ("xmlRegisters=", xml, NULL);
+  else
+    {
+      char *copy = xstrdup (remote_support_xml + 13);
+      char *p = strtok (copy, ",");
+
+      do
+	{
+	  if (strcmp (p, xml) == 0)
+	    {
+	      /* already there */
+	      xfree (copy);
+	      return;
+	    }
+	}
+      while ((p = strtok (NULL, ",")) != NULL);
+      xfree (copy);
+
+      p = concat (remote_support_xml, ",", xml, NULL);
+      xfree (remote_support_xml);
+      remote_support_xml = p;
+    }
+#endif
+}
+
+static char *
+remote_query_supported_append (char *msg, const char *append)
+{
+  if (msg)
+    {
+      char *p = concat (msg, ";", append, NULL);
+      xfree (msg);
+      return p;
+    }
+  else
+    return xstrdup (append);
+}
 
 static void
 remote_query_supported (void)
@@ -3475,24 +3532,27 @@ remote_query_supported (void)
   rs->buf[0] = 0;
   if (remote_protocol_packets[PACKET_qSupported].support != PACKET_DISABLE)
     {
+      char *q = NULL;
       const char *qsupported = gdbarch_qsupported (target_gdbarch);
+
+      if (rs->extended)
+	q = remote_query_supported_append (q, "multiprocess+");
+      
       if (qsupported)
+	q = remote_query_supported_append (q, qsupported);
+
+      if (remote_support_xml)
+	q = remote_query_supported_append (q, remote_support_xml);
+
+      if (q)
 	{
-	  char *q;
-	  if (rs->extended)
-	    q = concat ("qSupported:multiprocess+;", qsupported, NULL);
-	  else
-	    q = concat ("qSupported:", qsupported, NULL);
-	  putpkt (q);
+	  char *p = concat ("qSupported:", q, NULL);
 	  xfree (q);
+	  putpkt (p);
+	  xfree (p);
 	}
       else
-	{
-	  if (rs->extended)
-	    putpkt ("qSupported:multiprocess+");
-	  else
-	    putpkt ("qSupported");
-	}
+	putpkt ("qSupported");
 
       getpkt (&rs->buf, &rs->buf_size, 0);
 
@@ -4824,7 +4884,7 @@ Packet: '%s'\n"),
 	      if (reg == NULL)
 		error (_("Remote sent bad register number %s: %s\n\
 Packet: '%s'\n"),
-		       phex_nz (pnum, 0), p, buf);
+		       hex_string (pnum), p, buf);
 
 	      cached_reg.num = reg->regnum;
 
@@ -7533,7 +7593,7 @@ static unsigned long crc32_table[256] =
 {0, 0};
 
 static unsigned long
-crc32 (unsigned char *buf, int len, unsigned int crc)
+crc32 (const unsigned char *buf, int len, unsigned int crc)
 {
   if (!crc32_table[1])
     {
@@ -7557,38 +7617,59 @@ crc32 (unsigned char *buf, int len, unsigned int crc)
   return crc;
 }
 
+/* Verify memory using the "qCRC:" request.  */
+
+static int
+remote_verify_memory (struct target_ops *ops,
+		      const gdb_byte *data, CORE_ADDR lma, ULONGEST size)
+{
+  struct remote_state *rs = get_remote_state ();
+  unsigned long host_crc, target_crc;
+  char *tmp;
+
+  /* FIXME: assumes lma can fit into long.  */
+  xsnprintf (rs->buf, get_remote_packet_size (), "qCRC:%lx,%lx",
+	     (long) lma, (long) size);
+  putpkt (rs->buf);
+
+  /* Be clever; compute the host_crc before waiting for target
+     reply.  */
+  host_crc = crc32 (data, size, 0xffffffff);
+
+  getpkt (&rs->buf, &rs->buf_size, 0);
+  if (rs->buf[0] == 'E')
+    return -1;
+
+  if (rs->buf[0] != 'C')
+    error (_("remote target does not support this operation"));
+
+  for (target_crc = 0, tmp = &rs->buf[1]; *tmp; tmp++)
+    target_crc = target_crc * 16 + fromhex (*tmp);
+
+  return (host_crc == target_crc);
+}
+
 /* compare-sections command
 
    With no arguments, compares each loadable section in the exec bfd
    with the same memory range on the target, and reports mismatches.
-   Useful for verifying the image on the target against the exec file.
-   Depends on the target understanding the new "qCRC:" request.  */
-
-/* FIXME: cagney/1999-10-26: This command should be broken down into a
-   target method (target verify memory) and generic version of the
-   actual command.  This will allow other high-level code (especially
-   generic_load()) to make use of this target functionality.  */
+   Useful for verifying the image on the target against the exec file.  */
 
 static void
 compare_sections_command (char *args, int from_tty)
 {
-  struct remote_state *rs = get_remote_state ();
   asection *s;
-  unsigned long host_crc, target_crc;
   struct cleanup *old_chain;
-  char *tmp;
   char *sectdata;
   const char *sectname;
   bfd_size_type size;
   bfd_vma lma;
   int matched = 0;
   int mismatched = 0;
+  int res;
 
   if (!exec_bfd)
     error (_("command cannot be used without an exec file"));
-  if (!current_target.to_shortname ||
-      strcmp (current_target.to_shortname, "remote") != 0)
-    error (_("command can only be used with remote target"));
 
   for (s = exec_bfd->sections; s; s = s->next)
     {
@@ -7605,33 +7686,22 @@ compare_sections_command (char *args, int from_tty)
 
       matched = 1;		/* do this section */
       lma = s->lma;
-      /* FIXME: assumes lma can fit into long.  */
-      xsnprintf (rs->buf, get_remote_packet_size (), "qCRC:%lx,%lx",
-		 (long) lma, (long) size);
-      putpkt (rs->buf);
 
-      /* Be clever; compute the host_crc before waiting for target
-	 reply.  */
       sectdata = xmalloc (size);
       old_chain = make_cleanup (xfree, sectdata);
       bfd_get_section_contents (exec_bfd, s, sectdata, 0, size);
-      host_crc = crc32 ((unsigned char *) sectdata, size, 0xffffffff);
 
-      getpkt (&rs->buf, &rs->buf_size, 0);
-      if (rs->buf[0] == 'E')
+      res = target_verify_memory (sectdata, lma, size);
+
+      if (res == -1)
 	error (_("target memory fault, section %s, range %s -- %s"), sectname,
 	       paddress (target_gdbarch, lma),
 	       paddress (target_gdbarch, lma + size));
-      if (rs->buf[0] != 'C')
-	error (_("remote target does not support this operation"));
-
-      for (target_crc = 0, tmp = &rs->buf[1]; *tmp; tmp++)
-	target_crc = target_crc * 16 + fromhex (*tmp);
 
       printf_filtered ("Section %s, range %s -- %s: ", sectname,
 		       paddress (target_gdbarch, lma),
 		       paddress (target_gdbarch, lma + size));
-      if (host_crc == target_crc)
+      if (res)
 	printf_filtered ("matched.\n");
       else
 	{
@@ -9250,11 +9320,52 @@ free_actions_list (char **actions_list)
   xfree (actions_list);
 }
 
+/* Recursive routine to walk through command list including loops, and
+   download packets for each command.  */
+
+static void
+remote_download_command_source (int num, ULONGEST addr,
+				struct command_line *cmds)
+{
+  struct remote_state *rs = get_remote_state ();
+  struct command_line *cmd;
+
+  for (cmd = cmds; cmd; cmd = cmd->next)
+    {
+      QUIT;	/* allow user to bail out with ^C */
+      strcpy (rs->buf, "QTDPsrc:");
+      encode_source_string (num, addr, "cmd", cmd->line,
+			    rs->buf + strlen (rs->buf),
+			    rs->buf_size - strlen (rs->buf));
+      putpkt (rs->buf);
+      remote_get_noisy_reply (&target_buf, &target_buf_size);
+      if (strcmp (target_buf, "OK"))
+	warning (_("Target does not support source download."));
+
+      if (cmd->control_type == while_control
+	  || cmd->control_type == while_stepping_control)
+	{
+	  remote_download_command_source (num, addr, *cmd->body_list);
+
+	  QUIT;	/* allow user to bail out with ^C */
+	  strcpy (rs->buf, "QTDPsrc:");
+	  encode_source_string (num, addr, "cmd", "end",
+				rs->buf + strlen (rs->buf),
+				rs->buf_size - strlen (rs->buf));
+	  putpkt (rs->buf);
+	  remote_get_noisy_reply (&target_buf, &target_buf_size);
+	  if (strcmp (target_buf, "OK"))
+	    warning (_("Target does not support source download."));
+	}
+    }
+}
+
 static void
 remote_download_tracepoint (struct breakpoint *t)
 {
+  struct bp_location *loc;
   CORE_ADDR tpaddr;
-  char tmp[40];
+  char addrbuf[40];
   char buf[2048];
   char **tdp_actions;
   char **stepping_actions;
@@ -9264,111 +9375,143 @@ remote_download_tracepoint (struct breakpoint *t)
   struct cleanup *aexpr_chain = NULL;
   char *pkt;
 
-  encode_actions (t, &tdp_actions, &stepping_actions);
-  old_chain = make_cleanup (free_actions_list_cleanup_wrapper,
-			    tdp_actions);
-  (void) make_cleanup (free_actions_list_cleanup_wrapper, stepping_actions);
-
-  tpaddr = t->loc->address;
-  sprintf_vma (tmp, (t->loc ? tpaddr : 0));
-  sprintf (buf, "QTDP:%x:%s:%c:%lx:%x", t->number, 
-	   tmp, /* address */
-	   (t->enable_state == bp_enabled ? 'E' : 'D'),
-	   t->step_count, t->pass_count);
-  /* Fast tracepoints are mostly handled by the target, but we can
-     tell the target how big of an instruction block should be moved
-     around.  */
-  if (t->type == bp_fast_tracepoint)
+  /* Iterate over all the tracepoint locations.  It's up to the target to
+     notice multiple tracepoint packets with the same number but different
+     addresses, and treat them as multiple locations.  */
+  for (loc = t->loc; loc; loc = loc->next)
     {
-      /* Only test for support at download time; we may not know
-	 target capabilities at definition time.  */
-      if (remote_supports_fast_tracepoints ())
-	{
-	  int isize;
+      encode_actions (t, loc, &tdp_actions, &stepping_actions);
+      old_chain = make_cleanup (free_actions_list_cleanup_wrapper,
+				tdp_actions);
+      (void) make_cleanup (free_actions_list_cleanup_wrapper, stepping_actions);
 
-	  if (gdbarch_fast_tracepoint_valid_at (target_gdbarch,
-						tpaddr, &isize, NULL))
-	    sprintf (buf + strlen (buf), ":F%x", isize);
+      tpaddr = loc->address;
+      sprintf_vma (addrbuf, tpaddr);
+      sprintf (buf, "QTDP:%x:%s:%c:%lx:%x", t->number, 
+	       addrbuf, /* address */
+	       (t->enable_state == bp_enabled ? 'E' : 'D'),
+	       t->step_count, t->pass_count);
+      /* Fast tracepoints are mostly handled by the target, but we can
+	 tell the target how big of an instruction block should be moved
+	 around.  */
+      if (t->type == bp_fast_tracepoint)
+	{
+	  /* Only test for support at download time; we may not know
+	     target capabilities at definition time.  */
+	  if (remote_supports_fast_tracepoints ())
+	    {
+	      int isize;
+
+	      if (gdbarch_fast_tracepoint_valid_at (target_gdbarch,
+						    tpaddr, &isize, NULL))
+		sprintf (buf + strlen (buf), ":F%x", isize);
+	      else
+		/* If it passed validation at definition but fails now,
+		   something is very wrong.  */
+		internal_error (__FILE__, __LINE__,
+				"Fast tracepoint not valid during download");
+	    }
 	  else
-	    /* If it passed validation at definition but fails now,
-	       something is very wrong.  */
-	    internal_error (__FILE__, __LINE__,
-			    "Fast tracepoint not valid during download");
+	    /* Fast tracepoints are functionally identical to regular
+	       tracepoints, so don't take lack of support as a reason to
+	       give up on the trace run.  */
+	    warning (_("Target does not support fast tracepoints, downloading %d as regular tracepoint"), t->number);
 	}
-      else
-	/* Fast tracepoints are functionally identical to regular
-	   tracepoints, so don't take lack of support as a reason to
-	   give up on the trace run.  */
-	warning (_("Target does not support fast tracepoints, downloading %d as regular tracepoint"), t->number);
-    }
-  /* If the tracepoint has a conditional, make it into an agent
-     expression and append to the definition.  */
-  if (t->loc->cond)
-    {
-      /* Only test support at download time, we may not know target
-	 capabilities at definition time.  */
-      if (remote_supports_cond_tracepoints ())
+      /* If the tracepoint has a conditional, make it into an agent
+	 expression and append to the definition.  */
+      if (loc->cond)
 	{
-	  aexpr = gen_eval_for_expr (t->loc->address, t->loc->cond);
-	  aexpr_chain = make_cleanup_free_agent_expr (aexpr);
-	  sprintf (buf + strlen (buf), ":X%x,", aexpr->len);
-	  pkt = buf + strlen (buf);
-	  for (ndx = 0; ndx < aexpr->len; ++ndx)
-	    pkt = pack_hex_byte (pkt, aexpr->buf[ndx]);
-	  *pkt = '\0';
-	  do_cleanups (aexpr_chain);
+	  /* Only test support at download time, we may not know target
+	     capabilities at definition time.  */
+	  if (remote_supports_cond_tracepoints ())
+	    {
+	      aexpr = gen_eval_for_expr (tpaddr, loc->cond);
+	      aexpr_chain = make_cleanup_free_agent_expr (aexpr);
+	      sprintf (buf + strlen (buf), ":X%x,", aexpr->len);
+	      pkt = buf + strlen (buf);
+	      for (ndx = 0; ndx < aexpr->len; ++ndx)
+		pkt = pack_hex_byte (pkt, aexpr->buf[ndx]);
+	      *pkt = '\0';
+	      do_cleanups (aexpr_chain);
+	    }
+	  else
+	    warning (_("Target does not support conditional tracepoints, ignoring tp %d cond"), t->number);
 	}
-      else
-	warning (_("Target does not support conditional tracepoints, ignoring tp %d cond"), t->number);
-    }
 
-  if (t->actions || *default_collect)
-    strcat (buf, "-");
-  putpkt (buf);
-  remote_get_noisy_reply (&target_buf, &target_buf_size);
-  if (strcmp (target_buf, "OK"))
-    error (_("Target does not support tracepoints."));
+  if (t->commands || *default_collect)
+	strcat (buf, "-");
+      putpkt (buf);
+      remote_get_noisy_reply (&target_buf, &target_buf_size);
+      if (strcmp (target_buf, "OK"))
+	error (_("Target does not support tracepoints."));
 
-  if (!t->actions && !*default_collect)
-    return;
-
-  /* do_single_steps (t); */
-  if (tdp_actions)
-    {
-      for (ndx = 0; tdp_actions[ndx]; ndx++)
+      /* do_single_steps (t); */
+      if (tdp_actions)
 	{
-	  QUIT;	/* allow user to bail out with ^C */
-	  sprintf (buf, "QTDP:-%x:%s:%s%c",
-		   t->number, tmp, /* address */
-		   tdp_actions[ndx],
-		   ((tdp_actions[ndx + 1] || stepping_actions)
-		    ? '-' : 0));
-	  putpkt (buf);
-	  remote_get_noisy_reply (&target_buf,
-				  &target_buf_size);
-	  if (strcmp (target_buf, "OK"))
-	    error (_("Error on target while setting tracepoints."));
+	  for (ndx = 0; tdp_actions[ndx]; ndx++)
+	    {
+	      QUIT;	/* allow user to bail out with ^C */
+	      sprintf (buf, "QTDP:-%x:%s:%s%c",
+		       t->number, addrbuf, /* address */
+		       tdp_actions[ndx],
+		       ((tdp_actions[ndx + 1] || stepping_actions)
+			? '-' : 0));
+	      putpkt (buf);
+	      remote_get_noisy_reply (&target_buf,
+				      &target_buf_size);
+	      if (strcmp (target_buf, "OK"))
+		error (_("Error on target while setting tracepoints."));
+	    }
 	}
-    }
-  if (stepping_actions)
-    {
-      for (ndx = 0; stepping_actions[ndx]; ndx++)
+      if (stepping_actions)
 	{
-	  QUIT;	/* allow user to bail out with ^C */
-	  sprintf (buf, "QTDP:-%x:%s:%s%s%s",
-		   t->number, tmp, /* address */
-		   ((ndx == 0) ? "S" : ""),
-		   stepping_actions[ndx],
-		   (stepping_actions[ndx + 1] ? "-" : ""));
-	  putpkt (buf);
-	  remote_get_noisy_reply (&target_buf,
-				  &target_buf_size);
-	  if (strcmp (target_buf, "OK"))
-	    error (_("Error on target while setting tracepoints."));
+	  for (ndx = 0; stepping_actions[ndx]; ndx++)
+	    {
+	      QUIT;	/* allow user to bail out with ^C */
+	      sprintf (buf, "QTDP:-%x:%s:%s%s%s",
+		       t->number, addrbuf, /* address */
+		       ((ndx == 0) ? "S" : ""),
+		       stepping_actions[ndx],
+		       (stepping_actions[ndx + 1] ? "-" : ""));
+	      putpkt (buf);
+	      remote_get_noisy_reply (&target_buf,
+				      &target_buf_size);
+	      if (strcmp (target_buf, "OK"))
+		error (_("Error on target while setting tracepoints."));
+	    }
 	}
+
+      if (remote_protocol_packets[PACKET_TracepointSource].support == PACKET_ENABLE)
+	{
+	  if (t->addr_string)
+	    {
+	      strcpy (buf, "QTDPsrc:");
+	      encode_source_string (t->number, loc->address,
+				    "at", t->addr_string, buf + strlen (buf),
+				    2048 - strlen (buf));
+
+	      putpkt (buf);
+	      remote_get_noisy_reply (&target_buf, &target_buf_size);
+	      if (strcmp (target_buf, "OK"))
+		warning (_("Target does not support source download."));
+	    }
+	  if (t->cond_string)
+	    {
+	      strcpy (buf, "QTDPsrc:");
+	      encode_source_string (t->number, loc->address,
+				    "cond", t->cond_string, buf + strlen (buf),
+				    2048 - strlen (buf));
+	      putpkt (buf);
+	      remote_get_noisy_reply (&target_buf, &target_buf_size);
+	      if (strcmp (target_buf, "OK"))
+		warning (_("Target does not support source download."));
+	    }
+	  remote_download_command_source (t->number, loc->address,
+					  breakpoint_commands (t));
+	}
+
+      do_cleanups (old_chain);
     }
-  do_cleanups (old_chain);
-  return;
 }
 
 static void
@@ -9518,12 +9661,18 @@ remote_trace_find (enum trace_find_type type, int num,
     switch (*reply)
       {
       case 'F':
-	if ((target_frameno = (int) strtol (++reply, &reply, 16)) == -1)
-	  error (_("Target failed to find requested trace frame."));
+	p = ++reply;
+	target_frameno = (int) strtol (p, &reply, 16);
+	if (reply == p)
+	  error (_("Unable to parse trace frame number"));
+	if (target_frameno == -1)
+	  return -1;
 	break;
       case 'T':
-	if ((target_tracept = (int) strtol (++reply, &reply, 16)) == -1)
-	  error (_("Target failed to find requested trace frame."));
+	p = ++reply;
+	target_tracept = (int) strtol (p, &reply, 16);
+	if (reply == p)
+	  error (_("Unable to parse tracepoint number"));
 	break;
       case 'O':		/* "OK"? */
 	if (reply[1] == 'K' && reply[2] == '\0')
@@ -9562,7 +9711,7 @@ remote_get_trace_state_variable_value (int tsvnum, LONGEST *val)
 }
 
 static int
-remote_save_trace_data (char *filename)
+remote_save_trace_data (const char *filename)
 {
   struct remote_state *rs = get_remote_state ();
   char *p, *reply;
@@ -9644,6 +9793,18 @@ remote_core_of_thread (struct target_ops *ops, ptid_t ptid)
 }
 
 static void
+remote_set_circular_trace_buffer (int val)
+{
+  struct remote_state *rs = get_remote_state ();
+
+  sprintf (rs->buf, "QTBuffer:circular:%x", val);
+  putpkt (rs->buf);
+  remote_get_noisy_reply (&target_buf, &target_buf_size);
+  if (strcmp (target_buf, "OK"))
+    error (_("Target does not support this command."));
+}
+
+static void
 init_remote_ops (void)
 {
   remote_ops.to_shortname = "remote";
@@ -9679,6 +9840,7 @@ Specify the serial device it is connected to\n\
   remote_ops.to_find_new_threads = remote_threads_info;
   remote_ops.to_pid_to_str = remote_pid_to_str;
   remote_ops.to_extra_thread_info = remote_threads_extra_info;
+  remote_ops.to_get_ada_task_ptid = remote_get_ada_task_ptid;
   remote_ops.to_stop = remote_stop;
   remote_ops.to_xfer_partial = remote_xfer_partial;
   remote_ops.to_rcmd = remote_rcmd;
@@ -9720,7 +9882,9 @@ Specify the serial device it is connected to\n\
   remote_ops.to_upload_trace_state_variables = remote_upload_trace_state_variables;
   remote_ops.to_get_raw_trace_data = remote_get_raw_trace_data;
   remote_ops.to_set_disconnected_tracing = remote_set_disconnected_tracing;
+  remote_ops.to_set_circular_trace_buffer = remote_set_circular_trace_buffer;
   remote_ops.to_core_of_thread = remote_core_of_thread;
+  remote_ops.to_verify_memory = remote_verify_memory;
 }
 
 /* Set up the extended remote vector by making a copy of the standard
@@ -10187,6 +10351,9 @@ Show the maximum size of the address (in bits) in a memory packet."), NULL,
   add_packet_config_cmd (&remote_protocol_packets[PACKET_FastTracepoints],
 			 "FastTracepoints", "fast-tracepoints", 0);
 
+  add_packet_config_cmd (&remote_protocol_packets[PACKET_TracepointSource],
+			 "TracepointSource", "TracepointSource", 0);
+
   /* Keep the old ``set remote Z-packet ...'' working.  Each individual
      Z sub-packet has its own set and show commands, but users may
      have sets to this variable in their .gdbinit files (or in their
@@ -10238,3 +10405,4 @@ Show the remote pathname for \"run\""), NULL, NULL, NULL,
   target_buf_size = 2048;
   target_buf = xmalloc (target_buf_size);
 }
+

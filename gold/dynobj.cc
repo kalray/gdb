@@ -751,6 +751,14 @@ Sized_dynobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
   this->clear_view_cache_marks();
 }
 
+template<int size, bool big_endian>
+Archive::Should_include
+Sized_dynobj<size, big_endian>::do_should_include_member(
+    Symbol_table*, Read_symbols_data*, std::string*)
+{
+  return Archive::SHOULD_INCLUDE_YES;
+}
+
 // Get symbol counts.
 
 template<int size, bool big_endian>
@@ -1221,7 +1229,8 @@ Verdef::write(const Stringpool* dynpool, bool is_last, unsigned char* pb) const
   elfcpp::Verdef_write<size, big_endian> vd(pb);
   vd.set_vd_version(elfcpp::VER_DEF_CURRENT);
   vd.set_vd_flags((this->is_base_ ? elfcpp::VER_FLG_BASE : 0)
-		  | (this->is_weak_ ? elfcpp::VER_FLG_WEAK : 0));
+		  | (this->is_weak_ ? elfcpp::VER_FLG_WEAK : 0)
+		  | (this->is_info_ ? elfcpp::VER_FLG_INFO : 0));
   vd.set_vd_ndx(this->index());
   vd.set_vd_cnt(1 + this->deps_.size());
   vd.set_vd_hash(Dynobj::elf_hash(this->name()));
@@ -1353,7 +1362,7 @@ Versions::Versions(const Version_script_info& version_script,
           Verdef* const vd = new Verdef(
               version,
               this->version_script_.get_dependencies(version),
-              false, false, false);
+              false, false, false, false);
           this->defs_.push_back(vd);
           Key key(version_key, 0);
           this->version_table_.insert(std::make_pair(key, vd));
@@ -1391,7 +1400,7 @@ Versions::define_base_version(Stringpool* dynpool)
     name = parameters->options().output_file_name();
   name = dynpool->add(name, false, NULL);
   Verdef* vdbase = new Verdef(name, std::vector<std::string>(),
-                              true, false, true);
+                              true, false, false, true);
   this->defs_.push_back(vdbase);
   this->needs_base_version_ = false;
 }
@@ -1474,7 +1483,7 @@ Versions::add_def(const Symbol* sym, const char* version,
       // When creating a regular executable, automatically define
       // a new version.
       Verdef* vd = new Verdef(version, std::vector<std::string>(),
-                              false, false, false);
+                              false, false, false, false);
       this->defs_.push_back(vd);
       ins.first->second = vd;
     }

@@ -36,6 +36,7 @@
 #include "gdb-stabs.h"
 #include "complaints.h"
 #include "demangle.h"
+#include "psympriv.h"
 
 extern void _initialize_elfread (void);
 
@@ -695,7 +696,6 @@ find_separate_debug_file_by_buildid (struct objfile *objfile)
   char *debugfile = NULL;
   char *canon_name = NULL;
   bfd_size_type debuglink_size;
-  unsigned long crc32;
   int i;
   struct build_id *build_id;
 
@@ -885,10 +885,6 @@ elf_symfile_read (struct objfile *objfile, int symfile_flags)
       dwarf2_build_psymtabs (objfile);
     }
 
-  /* FIXME: kettenis/20030504: This still needs to be integrated with
-     dwarf2read.c in a better way.  */
-  dwarf2_build_frame_info (objfile);
-
   /* If the file has its own symbol tables it has no separate debug info.
      `.dynsym'/`.symtab' go to MSYMBOLS, `.debug_info' goes to SYMTABS/PSYMTABS.
      `.gnu_debuglink' may no longer be present with `.note.gnu.build-id'.  */
@@ -1058,6 +1054,7 @@ static struct sym_fns elf_sym_fns =
 				   a file.  */
   NULL,                         /* sym_read_linetable */
   default_symfile_relocate,	/* sym_relocate: Relocate a debug section.  */
+  &psym_functions,
   NULL				/* next: pointer to next struct sym_fns */
 };
 

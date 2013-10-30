@@ -1,3 +1,113 @@
+2010-03-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11456
+	* input-scrub.c (input_scrub_next_buffer): Use memmove instead
+	of memcpy to copy overlap memory.
+
+2010-03-25  Joseph Myers  <joseph@codesourcery.com>
+
+	* Makefile.am (TARGET_CPU_CFILES): Add config/tc-tic6x.c.
+	(TARGET_CPU_HFILES): Add config/tc-tic6x.h.
+	* Makefile.in: Regenerate.
+	* NEWS: Add news entry for TI C6X support.
+	* app.c (do_scrub_chars): Handle "||^" for TI C6X.  Handle
+	TC_PREDICATE_START_CHAR and TC_PREDICATE_END_CHAR.  Keep spaces in
+	operands if TC_KEEP_OPERAND_SPACES.
+	* configure.tgt (tic6x-*-*): New.
+	* config/tc-ia64.h (TC_PREDICATE_START_CHAR,
+	TC_PREDICATE_END_CHAR): Define.
+	* config/tc-tic6x.c, config/tc-tic6x.h: New.
+	* doc/Makefile.am (CPU_DOCS): Add c-tic6x.texi.
+	* doc/Makefile.in: Regenerate.
+	* doc/all.texi (TIC6X): Define.
+	* doc/as.texinfo: Add TI C6X documentation.  Include c-tic6x.texi.
+	* doc/c-tic6x.texi: New.
+
+2010-03-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (lex_got): Use STRING_COMMA_LEN on gotrel.
+
+2010-03-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (i386_error): Replace oprand_size_mismatch
+	with operand_size_mismatch.
+	(operand_size_match): Updated.
+	(match_template): Likewise.
+
+2010-03-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (i386_error): New.
+	(_i386_insn): Replace err_msg with error.
+	(operand_size_match): Set error instead of err_msg on failure.
+	(operand_type_match): Likewise.
+	(operand_type_register_match): Likewise.
+	(VEX_check_operands): Likewise.
+	(match_template): Likewise.  Use error instead of err_msg with
+	as_bad.
+
+2010-03-19  Jie Zhang  <jie@codesourcery.com>
+
+	* config/tc-arm.c (make_mapping_symbol): Hanle the case
+	that two mapping symbols have the same value.
+
+2010-03-18  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* doc/c-arm.texi (.setfp): Correct example.
+
+2010-03-18  Wei Guozhi  <carrot@google.com>
+
+	PR gas/11323
+	* config/tc-arm.c (reloc_names): New relocation names.
+	(md_apply_fix): New case for BFD_RELOC_ARM_GOT_PREL.
+	(tc_gen_reloc): New case for BFD_RELOC_ARM_GOT_PREL.
+	* doc/c-arm.texi (ARM-Relocations): Document the new relocation.
+
+2010-03-15  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* dw2gencfi.c (output_cie): Consider emitting the S augmentation in all
+	cases, and not only for .eh_frame.
+
+	* dw2gencfi.c (output_cie): Make it more explicit which code paths
+	belong to .eh_frame only.
+
+2010-03-13  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* config/tc-v850.c (v850_insert_operand): Handle out-of-range
+	assembler constants on 64-bit hosts.
+
+2010-03-10  Mike Frysinger  <michael.frysinger@analog.com>
+
+	* bfin-defs.h, bfin-lex.l, bfin-parse.y, tc-bfin.c, tc-bfin.h:
+	Strip trailing whitespace.
+
+2010-03-10  Mike Frysinger  <michael.frysinger@analog.com>
+
+	* doc/c-bfin.texi (-mcpu): Add bf504 and bf506.
+	* config/tc-bfin.c (bfin_cpu_type): Add BFIN_CPU_BF504 and
+	BFIN_CPU_BF506.
+	(bfin_cpus[]): Add 0.0 for bf504 and bf506.
+
+2010-03-10  Jie Zhang  <jie@codesourcery.com>
+
+	* doc/as.texinfo: Add Blackfin options.
+	* doc/c-bfin.texi: Document -mfdpic, -mno-fdpic and -mnopic.
+	* config/tc-bfin.c (md_show_usage): Show usage for all
+	Blackfin specific options.
+
+2010-03-09  Alan Modra  <amodra@gmail.com>
+
+	PR gas/11356
+	* listing.c (listing_newline): Correct backslash quote logic.
+
+2010-03-08  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/tc-i386.h [TE_SOLARIS] (ELF_TARGET_FORMAT): Define.
+	(ELF_TARGET_FORMAT64): Define.
+
+2010-03-05  Paul Brook  <paul@codesourcery.com>
+
+	* config/tc-arm.c (arm_cpu_option_table): Add cortex-m4.
+
 2010-03-02  Andrew Stubbs  <ams@codesourcery.com>
 
 	* config/tc-sh.c (get_specific): Move overflow checking code to avoid
