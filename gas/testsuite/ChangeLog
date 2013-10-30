@@ -1,3 +1,44 @@
+2010-05-28  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/thumb2_it_auto.d: Update for change in movs encoding.
+	gas/arm/thumb2_it.d: Likewise.
+	gas/arm/thumb32.d: Likewise.
+
+2010-05-27  Matthew Gretton-Dann <matthew.gretton-dann@arm.com>
+
+	* gas/arm/thumb2_ldmstm.d: Add new testcases.
+	* gas/arm/thumb2_ldmstm.s: Likeiwse.
+	* gas/arm/thumb2_ldmstm_bad.d: Add testcases to check for
+	UNPREDICTABLE ldm/stm.
+	* gas/arm/thumb2_ldmstm_bad.l: Likewise.
+	* gas/arm/thumb2_ldmstm_bad.s: Likewise.
+
+2010-05-26  Catherine Moore  <clm@codesoucery.com>
+	    Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	* gas/mips/set-arch.d: Expect ehb.
+
+2010-05-26  Catherine Moore  <clm@codesoucery.com>
+
+	* gas/mips/mips-no-jalx.l: Delete.
+	* gas/mips/mips-no-jalx.s: Delete.
+	* gas/mips/mips-jalx-2.d: New.
+	* gas/mips/mips-jalx-2.s: New.
+	* gas/mips/mips.exp (mips-jalx-2): Run new test.
+	(mips-no-jalx): Remove deleted test.
+
+2010-05-25  Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
+	    Andrew Stubbs  <ams@codesourcery.com>
+
+	* gas/sh/basic.exp: Run new tests.  Handle uClinux like Linux.
+	* gas/sh/fdpic.d: New file.
+	* gas/sh/fdpic.s: New file.
+	* gas/sh/reg-prefix.d: Force big-endian.
+	* gas/sh/sh2a-pic.d: New file.
+	* gas/sh/sh2a-pic.s: New file.
+	* lib/gas-defs.exp (is_elf_format): Include sh*-*-uclinux*.
+
 2010-05-18  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR gas/11600

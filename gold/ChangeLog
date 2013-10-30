@@ -1,3 +1,41 @@
+2010-05-27  Doug Kwan  <dougkwan@google.com>
+
+	* object.cc (Sized_relobj::do_finalize_local_symbols): Use offset
+	from start of output section instead of address for a local symbol
+	in a merged or relaxed section when doing a relocatable link.
+
+2010-05-26  Rafael Espindola  <espindola@google.com>
+
+       PR 11604
+	* gold/object.cc(Sized_relobj::do_layout_deferred_sections): Avoid
+	adding sections the garbage collector removed.
+	* gold/testsuite/Makefile.am: Add test.
+	* gold/testsuite/Makefile.in: Regenerate.
+	* gold/testsuite/plugin_test_7.sh: New.
+	* gold/testsuite/plugin_test_7_1.c: New.
+	* gold/testsuite/plugin_test_7_2.c: New.
+
+2010-05-26  Rafael Espindola  <espindola@google.com>
+
+	* script-sections.cc (Output_section_definition::set_section_addresses):
+	Check for --section-start.
+
+2010-05-26  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_scan_relocatable_relocs): New class.
+	(Target_arm::relocate_special_relocatable): New method.
+	(Arm_relocate_functions::arm_branch_common): Handle relocatable link.
+	(Arm_relocate_functions::thumb_branch_common): Same.
+	(Target_arm::scan_relocatable_relocs): Use Arm_scan_relocatable_relocs
+	instead of Default_scan_relocatable_relocs.
+	* target-reloc.h (relocate_for_relocatable): Let target handle
+	relocation strategy Relocatable_relocs::RELOC_SPECIAL.
+	* target.h (Sized_target::relocate_special_relocatable): New method.
+
+2010-05-25  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* timer.cc: Only #include <sys/times.h> if HAVE_TIMES is defined.
+
 2010-05-23  Doug Kwan  <dougkwan@google.com>
 
 	* arm.cc (Arm_input_section::do_output_offset): Use convert_types

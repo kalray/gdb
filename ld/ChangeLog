@@ -1,3 +1,55 @@
+2010-05-28  Nick Clifton  <nickc@redhat.com>
+
+	* Makefile.am (eshlelf_fd.c): Fix typo in rule.
+	* Makefile.in: Regenerate.
+
+2010-05-26  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11628
+	* ldexp.c (fold_binary): Warn if value of SEGMENT_START isn't
+	multiple of maximum page size.
+
+2010-05-25  Nick Clifton  <nickc@redhat.com>
+
+	* Makefile.am: Fix typo.
+	* Makefile.in: Regenerate.
+
+2010-05-25  Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
+	    Andrew Stubbs  <ams@codesourcery.com>
+
+	* Makefile.am (ALL_EMULATIONS): Add eshelf_fd.o and eshlelf_fd.o.
+	(eshelf_fd.c, eshlelf_fd.c): New rules.
+	* Makefile.in: Regenerate.
+	* configure.tgt (sh-*-uclinux*): Add shelf_fd and shlelf_fd
+	emulations.
+	* emulparams/shelf_fd.sh: New file.
+	* emulparams/shlelf_fd.sh: New file.
+	* emulparams/shlelf_linux.sh: Update comment.
+
+2010-05-25  Jay Krell  <jay.krell@cornell.edu>
+
+	PR ld/11621
+	* Makefile.am: Replace all occurences of .o with .@OBJEXT@
+	* Makefile.in: Regenerate.
+
+2010-05-25  Kai Tietz  <kai.tietz@onevision.com>
+
+	* deffilep.y (opt_name): Allow leading dot.
+	(dot_name): Likewise.
+	(anylang_id): Likewise.
+	* emultempl/pep.em (gld_${EMULATION_NAME}_before_parse): Enable by
+	default auto_import.
+	(gld${EMULATION_NAME}_handle_option): Warn about v1.
+	(pep_find_data_imports): Remove superflous warnings about
+	auto-import.
+	(gld_${EMULATION_NAME}_get_script): Don't merge for auto-import
+	and active pseudo-relocation-v2 rdata into data section.
+	* emultempl/pe.em (default_merge_rdata): New shell variable.
+	(MERGE_RDATA_V2): New macro.
+	(gld_${EMULATION_NAME}_get_script): Adjust rule for auto-import
+	selected script.
+
 2010-05-15  Kai Tietz  <kai.tietz@onevision.com>
 
 	* emultempl/pe.em (is_underscoring): New helper function.

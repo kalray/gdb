@@ -1461,6 +1461,11 @@ Sized_relobj<size, big_endian>::do_layout_deferred_sections(Layout* layout)
        ++deferred)
     {
       typename This::Shdr shdr(deferred->shdr_data_);
+      // If the section is not included, it is because the garbage collector
+      // decided it is not needed.  Avoid reverting that decision.
+      if (!this->is_section_included(deferred->shndx_))
+        continue;
+
       this->layout_section(layout, deferred->shndx_, deferred->name_.c_str(),
                            shdr, deferred->reloc_shndx_, deferred->reloc_type_);
     }
@@ -1822,7 +1827,12 @@ Sized_relobj<size, big_endian>::do_finalize_local_symbols(unsigned int index,
 		  const Output_section_data* posd =
 		    os->find_relaxed_input_section(this, shndx);
 		  if (posd != NULL)
-		    lv.set_output_value(posd->address());
+		    {
+		      Address relocatable_link_adjustment =
+			relocatable ? os->address() : 0;
+		      lv.set_output_value(posd->address()
+					  - relocatable_link_adjustment);
+		    }
 		  else
 		    lv.set_output_value(os->address());
 		}
@@ -1830,9 +1840,14 @@ Sized_relobj<size, big_endian>::do_finalize_local_symbols(unsigned int index,
 		{
 		  // We have to consider the addend to determine the
 		  // value to use in a relocation.  START is the start
-		  // of this input section.
+		  // of this input section.  If we are doing a relocatable
+		  // link, use offset from start output section instead of
+		  // address.
+		  Address adjusted_start =
+		    relocatable ? start - os->address() : start;
 		  Merged_symbol_value<size>* msv =
-		    new Merged_symbol_value<size>(lv.input_value(), start);
+		    new Merged_symbol_value<size>(lv.input_value(),
+						  adjusted_start);
 		  lv.set_merged_symbol_value(msv);
 		}
 	    }

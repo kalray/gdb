@@ -57,6 +57,8 @@ PyObject *gdbpy_children_cst;
 PyObject *gdbpy_display_hint_cst;
 PyObject *gdbpy_doc_cst;
 
+/* The GdbError exception.  */
+PyObject *gdbpy_gdberror_exc;
 
 /* Architecture and language to be used in callbacks from
    the Python interpreter.  */
@@ -645,6 +647,17 @@ Enables or disables printing of Python stack traces."),
 			   &show_python_list);
 
 #ifdef HAVE_PYTHON
+#ifdef WITH_PYTHON_PATH
+  /* Work around problem where python gets confused about where it is,
+     and then can't find its libraries, etc.
+     NOTE: Python assumes the following layout:
+     /foo/bin/python
+     /foo/lib/pythonX.Y/...
+     This must be done before calling Py_Initialize.  */
+  Py_SetProgramName (concat (ldirname (python_libdir), SLASH_STRING, "bin",
+			     SLASH_STRING, "python", NULL));
+#endif
+
   Py_Initialize ();
   PyEval_InitThreads ();
 
@@ -654,6 +667,9 @@ Enables or disables printing of Python stack traces."),
   PyModule_AddStringConstant (gdb_module, "VERSION", (char*) version);
   PyModule_AddStringConstant (gdb_module, "HOST_CONFIG", (char*) host_name);
   PyModule_AddStringConstant (gdb_module, "TARGET_CONFIG", (char*) target_name);
+
+  gdbpy_gdberror_exc = PyErr_NewException ("gdb.GdbError", NULL, NULL);
+  PyModule_AddObject (gdb_module, "GdbError", gdbpy_gdberror_exc);
 
   gdbpy_initialize_auto_load ();
   gdbpy_initialize_values ();
@@ -770,6 +786,12 @@ Return the name of the current target charset." },
   { "target_wide_charset", gdbpy_target_wide_charset, METH_NOARGS,
     "target_wide_charset () -> string.\n\
 Return the name of the current target wide charset." },
+
+  { "string_to_argv", gdbpy_string_to_argv, METH_VARARGS,
+    "string_to_argv (String) -> Array.\n\
+Parse String and return an argv-like array.\n\
+Arguments are separate by spaces and may be quoted."
+  },
 
   { "write", gdbpy_write, METH_VARARGS,
     "Write a string using gdb's filtered stream." },
