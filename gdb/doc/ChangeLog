@@ -1,3 +1,28 @@
+2010-04-26  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* gdbint.texinfo (CANNOT_STEP_HW_WATCHPOINTS): Remove explanation
+	of macro deleted from GDB code.
+
+2010-04-24  Pedro Alves  <pedro@codesourcery.com>
+
+	* gdb.texinfo (Commands to specify files): Describe what how GDB
+	looks up DOS-based filesystem paths on the system root.  Document
+	the new `set/show target-file-system-kind' commands.
+
+2010-04-23  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Python): Move Auto-loading section here ...
+	(Python API): from here.
+	(Auto-loading): Add docs for .debug_gdb_scripts auto-loaded scripts.
+	(Maintenance Commands): Add docs for "maint print section-scripts".
+
+2010-04-20  Chris Moller  <cmoller@redhat.com>
+
+	* gdb.texinfo (Setting Breakpoints): Added description of
+	filename-qualified rbreak.
+	* refcard.tex (Breakpoints and Watchpoints): Added brief
+	description of filename-qualified rbreak.
+
 2010-04-22  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	* gdb.texinfo (Data): New @menu reference to Pretty Printing.

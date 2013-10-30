@@ -1,3 +1,39 @@
+2010-04-24  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	PR breakpoints/11531.
+	* gdb.base/gdb11531.c: New file.
+	* gdb.base/gdb11531.exp: New file.
+
+2010-04-26  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.base/completion.exp: Add tests for completion and deprecated
+	commands.
+
+2010-04-26  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.pascal/gdb11492.exp (print integer_array, print /d char_array)
+	(print /x char_array): Escape curly brackets.
+
+2010-04-23  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix deadlock on looped list of loaded shared objects.
+	* gdb.base/solib-corrupted.exp: New.
+
+2010-04-23  Doug Evans  <dje@google.com>
+
+	* gdb.python/py-section-script.c: New file.
+	* gdb.python/py-section-script.exp: New file.
+	* gdb.python/py-section-script.py: New file.
+
+2010-04-20  Chris Moller  <cmoller@redhat.com>
+
+	PR 10179
+
+	* gdb.base/Makefile.in (EXECUTABLES): Added pr10179.
+	* gdb.base/pr10179-a.c:
+	* gdb.base/pr10179-b.c:
+	* gdb.base/pr10179.exp: New files.
+
 2010-04-22  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Fix crashes on dangling display expressions.

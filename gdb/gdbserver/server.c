@@ -241,6 +241,14 @@ start_inferior (char **argv)
       new_argv[count] = NULL;
     }
 
+  if (debug_threads)
+    {
+      int i;
+      for (i = 0; new_argv[i]; ++i)
+	fprintf (stderr, "new_argv[%d] = \"%s\"\n", i, new_argv[i]);
+      fflush (stderr);
+    }
+
 #ifdef SIGTTOU
   signal (SIGTTOU, SIG_DFL);
   signal (SIGTTIN, SIG_DFL);
@@ -371,7 +379,8 @@ write_qxfer_response (char *buf, const void *data, int len, int is_more)
 }
 
 /* Handle all of the extended 'Q' packets.  */
-void
+
+static void
 handle_general_set (char *own_buf)
 {
   if (strncmp ("QPassSignals:", own_buf, strlen ("QPassSignals:")) == 0)
