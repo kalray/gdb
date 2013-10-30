@@ -271,8 +271,11 @@ struct vms_private_data_struct
 
   struct hdr_struct hdr_data;		/* data from HDR/EMH record  */
   struct eom_struct eom_data;		/* data from EOM/EEOM record  */
-  unsigned int section_count;		/* # of sections in following array  */
-  asection **sections;			/* array of GSD/EGSD sections  */
+
+  /* Array of GSD sections to get the correspond BFD one.  */
+  unsigned int section_max; 		/* Size of the sections array.  */
+  unsigned int section_count;		/* Number of GSD sections.  */
+  asection **sections;
 
   /* Array of raw symbols.  */
   struct vms_symbol_entry **syms;
@@ -1040,23 +1043,12 @@ vms_esecflag_by_name (struct sec_flags_struct *section_flags,
   return section_flags[i].vflags_always;
 }
 
-/* Input routines.  */
+/* Add SYM to the symbol table of ABFD.
+   Return FALSE in case of error.  */
 
-static struct vms_symbol_entry *
-add_symbol (bfd *abfd, const unsigned char *ascic)
+static bfd_boolean
+add_symbol_entry (bfd *abfd, struct vms_symbol_entry *sym)
 {
-  struct vms_symbol_entry *entry;
-  int len;
-
-  len = *ascic++;
-  entry = (struct vms_symbol_entry *)bfd_zalloc (abfd, sizeof (*entry) + len);
-  if (entry == NULL)
-    return NULL;
-  entry->namelen = len;
-  memcpy (entry->name, ascic, len);
-  entry->name[len] = 0;
-  entry->owner = abfd;
-
   if (PRIV (gsd_sym_count) >= PRIV (max_sym_count))
     {
       if (PRIV (max_sym_count) == 0)
@@ -1073,17 +1065,40 @@ add_symbol (bfd *abfd, const unsigned char *ascic)
              (PRIV (max_sym_count) * sizeof (struct vms_symbol_entry *)));
         }
       if (PRIV (syms) == NULL)
-        return NULL;
+        return FALSE;
     }
 
-  PRIV (syms)[PRIV (gsd_sym_count)++] = entry;
+  PRIV (syms)[PRIV (gsd_sym_count)++] = sym;
+  return TRUE;
+}
+
+/* Create a symbol whose name is ASCIC and add it to ABFD.
+   Return NULL in case of error.  */
+
+static struct vms_symbol_entry *
+add_symbol (bfd *abfd, const unsigned char *ascic)
+{
+  struct vms_symbol_entry *entry;
+  int len;
+
+  len = *ascic++;
+  entry = (struct vms_symbol_entry *)bfd_zalloc (abfd, sizeof (*entry) + len);
+  if (entry == NULL)
+    return NULL;
+  entry->namelen = len;
+  memcpy (entry->name, ascic, len);
+  entry->name[len] = 0;
+  entry->owner = abfd;
+
+  if (!add_symbol_entry (abfd, entry))
+    return NULL;
   return entry;
 }
 
 /* Read and process EGSD.  Return FALSE on failure.  */
 
 static bfd_boolean
-_bfd_vms_slurp_egsd (bfd * abfd)
+_bfd_vms_slurp_egsd (bfd *abfd)
 {
   int gsd_type, gsd_size;
   asection *section;
@@ -1116,10 +1131,12 @@ _bfd_vms_slurp_egsd (bfd * abfd)
 	  {
 	    /* Program section definition.  */
             struct vms_egps *egps = (struct vms_egps *)vms_rec;
+
 	    name = _bfd_vms_save_counted_string (&egps->namlng);
 	    section = bfd_make_section (abfd, name);
 	    if (!section)
 	      return FALSE;
+
 	    old_flags = bfd_getl16 (egps->flags);
             vms_section_data (section)->flags = old_flags;
             vms_section_data (section)->no_flags = 0;
@@ -1141,6 +1158,23 @@ _bfd_vms_slurp_egsd (bfd * abfd)
 	    section->vma = (bfd_vma)base_addr;
 	    base_addr += section->size;
 	    section->filepos = (unsigned int)-1;
+
+            /* Append it to the section array.  */
+            if (PRIV (section_count) >= PRIV (section_max))
+              {
+                if (PRIV (section_max) == 0)
+                  PRIV (section_max) = 16;
+                else
+                  PRIV (section_max) *= 2;
+                PRIV (sections) = bfd_realloc_or_free
+                  (PRIV (sections), PRIV (section_max) * sizeof (asection *));
+                if (PRIV (sections) == NULL)
+                  return FALSE;
+              }
+
+            PRIV (sections)[PRIV (section_count)] = section;
+            PRIV (section_count)++;
+
 #if VMS_DEBUG
 	    vms_debug (4, "EGSD P-section %d (%s, flags %04x) ",
 		       section->index, name, old_flags);
@@ -3075,6 +3109,7 @@ alpha_vms_write_exec (bfd *abfd)
       PRIV (file_pos) += sec->size;
     }
 
+  /* Update EIHS.  */
   if (eihs != NULL && dst != NULL)
     {
       bfd_putl32 ((dst->filepos / VMS_BLOCK_SIZE) + 1, eihs->dstvbn);
@@ -3210,10 +3245,11 @@ _bfd_vms_write_egsd (bfd *abfd)
 	}
 
       /* Don't know if this is necessary for the linker but for now it keeps
-	 vms_slurp_gsd happy  */
+	 vms_slurp_gsd happy.  */
       sname = (char *)section->name;
       if (*sname == '.')
 	{
+          /* Remove leading dot.  */
 	  sname++;
 	  if ((*sname == 't') && (strcmp (sname, "text") == 0))
 	    sname = EVAX_CODE_NAME;
@@ -3359,7 +3395,6 @@ done:
       _bfd_vms_output_counted (recwr, hash);
 
       _bfd_vms_output_end_subrec (recwr);
-
     }
 
   _bfd_vms_output_alignment (recwr, 8);
@@ -4663,7 +4698,6 @@ alpha_vms_convert_symbol (bfd *abfd, struct vms_symbol_entry *e, asymbol *sym)
         value -= sbase;
       }
 #endif
-
       break;
 
     default:
@@ -8825,27 +8859,10 @@ vms_new_section_hook (bfd * abfd, asection *section)
 {
   bfd_size_type amt;
 
-  /* Count hasn't been incremented yet.  */
-  unsigned int section_count = abfd->section_count + 1;
-
-  vms_debug2 ((1, "vms_new_section_hook (%p, [%d]%s), count %d\n",
-               abfd, section->index, section->name, section_count));
+  vms_debug2 ((1, "vms_new_section_hook (%p, [%d]%s)\n",
+               abfd, section->index, section->name));
 
   bfd_set_section_alignment (abfd, section, 0);
-
-  if (section_count > PRIV (section_count))
-    {
-      amt = section_count;
-      amt *= sizeof (asection *);
-      PRIV (sections) = bfd_realloc_or_free (PRIV (sections), amt);
-      if (PRIV (sections) == NULL)
-	return FALSE;
-      PRIV (section_count) = section_count;
-    }
-
-  vms_debug2 ((6, "section_count: %d\n", PRIV (section_count)));
-
-  PRIV (sections)[section->index] = section;
 
   vms_debug2 ((7, "%d: %s\n", section->index, section->name));
 
