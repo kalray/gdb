@@ -67,6 +67,11 @@ typedef struct
      ||^); otherwise NULL.  */
   char *spmask_addr;
 
+  /* The functional units used in the current execute packet, recorded
+     by setting the same bits as would be set in the 32-bit SPMASK
+     instruction.  */
+  unsigned int func_units_used;
+
   /* If an SPLOOP-family instruction has been seen, and a following
      SPKERNEL-family instruction has not yet been seen, the ii value
      from the SPLOOP instruction (in the range 1 to 14); otherwise
@@ -118,6 +123,10 @@ extern void tic6x_cons_align (int n);
       goto label;				\
   } while (0)
 extern bfd_boolean tic6x_do_align (int n, char *fill, int len, int max);
+
+#define CONVERT_SYMBOLIC_ATTRIBUTE(name)	\
+  tic6x_convert_symbolic_attribute (name)
+extern int tic6x_convert_symbolic_attribute (const char *);
 
 #define md_end() tic6x_end ();
 extern void tic6x_end (void);

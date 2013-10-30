@@ -1484,41 +1484,37 @@ add_insns (unsigned char *start, int len)
   current_insn_ptr = buildaddr;
 }
 
-/* A function used to trick optimizers.  */
-
-int
-always_true (void)
-{
-  return 1;
-}
-
 /* Our general strategy for emitting code is to avoid specifying raw
    bytes whenever possible, and instead copy a block of inline asm
    that is embedded in the function.  This is a little messy, because
    we need to keep the compiler from discarding what looks like dead
    code, plus suppress various warnings.  */
 
-#define EMIT_ASM(NAME,INSNS)						\
-  { extern unsigned char start_ ## NAME, end_ ## NAME;			\
-    add_insns (&start_ ## NAME, &end_ ## NAME - &start_ ## NAME);	\
-    if (always_true ())						\
-      goto skipover ## NAME;						\
-    __asm__ ("start_" #NAME ":\n\t" INSNS "\n\tend_" #NAME ":\n\t");	\
-    skipover ## NAME:							\
-    ; }
-
+#define EMIT_ASM(NAME, INSNS)						\
+  do									\
+    {									\
+      extern unsigned char start_ ## NAME, end_ ## NAME;		\
+      add_insns (&start_ ## NAME, &end_ ## NAME - &start_ ## NAME);	\
+      __asm__ ("jmp end_" #NAME "\n"				\
+	       "\t" "start_" #NAME ":"					\
+	       "\t" INSNS "\n"						\
+	       "\t" "end_" #NAME ":");					\
+    } while (0)
 
 #ifdef __x86_64__
 
 #define EMIT_ASM32(NAME,INSNS)						\
-  { extern unsigned char start_ ## NAME, end_ ## NAME;			\
-    add_insns (&start_ ## NAME, &end_ ## NAME - &start_ ## NAME);	\
-    if (always_true ())						\
-      goto skipover ## NAME;						\
-    __asm__ (".code32\n\tstart_" #NAME ":\n\t" INSNS "\n\tend_" #NAME ":\n" \
-	     "\t.code64\n\t");						\
-    skipover ## NAME:							\
-    ; }
+  do									\
+    {									\
+      extern unsigned char start_ ## NAME, end_ ## NAME;		\
+      add_insns (&start_ ## NAME, &end_ ## NAME - &start_ ## NAME);	\
+      __asm__ (".code32\n"						\
+	       "\t" "jmp end_" #NAME "\n"				\
+	       "\t" "start_" #NAME ":\n"				\
+	       "\t" INSNS "\n"						\
+	       "\t" "end_" #NAME ":\n"					\
+	       ".code64\n");						\
+    } while (0)
 
 #else
 
@@ -1764,7 +1760,7 @@ amd64_write_goto_address (CORE_ADDR from, CORE_ADDR to, int size)
 }
 
 static void
-amd64_emit_const (int64_t num)
+amd64_emit_const (LONGEST num)
 {
   unsigned char buf[16];
   int i;
@@ -1772,7 +1768,7 @@ amd64_emit_const (int64_t num)
 
   i = 0;
   buf[i++] = 0x48;  buf[i++] = 0xb8; /* mov $<n>,%rax */
-  *((int64_t *) (&buf[i])) = num;
+  *((LONGEST *) (&buf[i])) = num;
   i += 8;
   append_insns (&buildaddr, i, buf);
   current_insn_ptr = buildaddr;
@@ -1784,7 +1780,7 @@ amd64_emit_call (CORE_ADDR fn)
   unsigned char buf[16];
   int i;
   CORE_ADDR buildaddr;
-  int64_t offset64;
+  LONGEST offset64;
 
   /* The destination function being in the shared library, may be
      >31-bits away off the compiled code pad.  */
@@ -1919,7 +1915,7 @@ amd64_emit_int_call_1 (CORE_ADDR fn, int arg1)
   amd64_emit_call (fn);
 }
 
-/* FN's prototype is `void(*fn)(int,int64_t)'.  */
+/* FN's prototype is `void(*fn)(int,LONGEST)'.  */
 
 static void
 amd64_emit_void_call_2 (CORE_ADDR fn, int arg1)
@@ -2251,7 +2247,7 @@ i386_write_goto_address (CORE_ADDR from, CORE_ADDR to, int size)
 }
 
 static void
-i386_emit_const (int64_t num)
+i386_emit_const (LONGEST num)
 {
   unsigned char buf[16];
   int i, hi;
@@ -2414,7 +2410,7 @@ i386_emit_int_call_1 (CORE_ADDR fn, int arg1)
 	    "lea 0x8(%esp),%esp");
 }
 
-/* FN's prototype is `void(*fn)(int,int64_t)'.  */
+/* FN's prototype is `void(*fn)(int,LONGEST)'.  */
 
 static void
 i386_emit_void_call_2 (CORE_ADDR fn, int arg1)

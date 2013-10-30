@@ -398,7 +398,6 @@ BFD32_BACKENDS = \
 	vaxbsd.lo \
 	vaxnetbsd.lo \
 	versados.lo \
-	vms-alpha.lo \
 	vms-lib.lo \
 	vms-misc.lo \
 	xcofflink.lo \
@@ -583,7 +582,6 @@ BFD32_BACKENDS_CFILES = \
 	vaxbsd.c \
 	vaxnetbsd.c \
 	versados.c \
-	vms-alpha.c \
 	vms-lib.c \
 	vms-misc.c \
 	xcofflink.c \
@@ -627,7 +625,8 @@ BFD64_BACKENDS = \
 	pei-ia64.lo \
 	pei-x86_64.lo \
 	pepigen.lo \
-	pex64igen.lo
+	pex64igen.lo \
+	vms-alpha.lo
 
 BFD64_BACKENDS_CFILES = \
 	aix5ppc-core.c \
@@ -656,7 +655,8 @@ BFD64_BACKENDS_CFILES = \
 	nlm64.c \
 	pe-x86_64.c \
 	pei-ia64.c \
-	pei-x86_64.c
+	pei-x86_64.c \
+	vms-alpha.c
 
 OPTIONAL_BACKENDS = \
 	aix386-core.lo \

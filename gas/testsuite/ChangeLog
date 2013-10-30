@@ -1,3 +1,46 @@
+2010-06-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* gas/tic6x/resource-func-unit-1.d,
+	gas/tic6x/resource-func-unit-1.l,
+	gas/tic6x/resource-func-unit-1.s,
+	gas/tic6x/resource-func-unit-2.d,
+	gas/tic6x/resource-func-unit-2.l,
+	gas/tic6x/resource-func-unit-2.s: New.
+
+2010-06-16  Vincent Rivière  <vincent.riviere@freesbee.fr>
+
+	PR gas/11673
+	* gas/m68k/p11673.s: New test.
+	* gas/m68k/all.exp: Run the new test.
+
+2010-06-16  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/11676
+	* gas/m68k/pr11676.s: New test.
+	* gas/m68k/pr11676.d: Expected disassembly.
+	* gas/m68k/all.exp: Run the new test.
+
+2010-06-15  Joseph Myers  <joseph@codesourcery.com>
+
+	* gas/elf/elf.exp: Set target_machine for tic6x-*-*.
+	* gas/elf/section2.e-tic6x, gas/tic6x/attr-arch-directive-1.d,
+	gas/tic6x/attr-arch-directive-1.s,
+	gas/tic6x/attr-arch-directive-2.d,
+	gas/tic6x/attr-arch-directive-2.s,
+	gas/tic6x/attr-arch-directive-3.d,
+	gas/tic6x/attr-arch-directive-3.s,
+	gas/tic6x/attr-arch-directive-4.d,
+	gas/tic6x/attr-arch-directive-4.s,
+	gas/tic6x/attr-arch-directive-5.d,
+	gas/tic6x/attr-arch-directive-5.s,
+	gas/tic6x/attr-arch-opts-c62x.d, gas/tic6x/attr-arch-opts-c64x+.d,
+	gas/tic6x/attr-arch-opts-c64x.d, gas/tic6x/attr-arch-opts-c674x.d,
+	gas/tic6x/attr-arch-opts-c67x+.d, gas/tic6x/attr-arch-opts-c67x.d,
+	gas/tic6x/attr-arch-opts-none-1.d,
+	gas/tic6x/attr-arch-opts-none-2.d,
+	gas/tic6x/attr-arch-opts-override-1.d,
+	gas/tic6x/attr-arch-opts-override-2.d, gas/tic6x/empty.s: New.
+
 2010-06-14  Sebastian Andrzej Siewior  <bigeasy@linutronix.de>
 
 	* gas/ppc/e500.s: Add eieio, mbar and lwsync

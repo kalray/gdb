@@ -1,3 +1,36 @@
+2010-06-17  Tristan Gingold  <gingold@adacore.com>
+
+	* Makefile.am (BFD32_BACKENDS_CFILES): Move vms-alpha.c to ...
+	(BFD64_BACKENDS_CFILES): ... here.
+	(BFD32_BACKENDS): Move vms-alpha.lo to ...
+	(BFD64_BACKENDS): ... here.
+	* Makefile.in: Regenerate.
+
+2010-06-15  Joseph Myers  <joseph@codesourcery.com>
+
+	* elf-bfd.h (LEAST_KNOWN_OBJ_ATTRIBUTE): Decrease to 2.
+	* elf32-tic6x.c (elf32_tic6x_obj_attrs_arg_type,
+	elf32_tic6x_merge_arch_attributes, elf32_tic6x_merge_attributes,
+	elf32_tic6x_merge_private_bfd_data): New.
+	(bfd_elf32_bfd_merge_private_bfd_data,
+	elf_backend_obj_attrs_arg_type, elf_backend_obj_attrs_section,
+	elf_backend_obj_attrs_section_type, elf_backend_obj_attrs_vendor):
+	Define.
+	* elf32-tic6x.h (elf32_tic6x_merge_arch_attributes): Declare.
+
+2010-06-15  Joseph Myers  <joseph@codesourcery.com>
+
+	* elf-bfd.h (LEAST_KNOWN_OBJ_ATTRIBUTE): Define.
+	(struct elf_backend_data): Update comment on obj_attrs_order.
+	* elf-attrs.c (vendor_obj_attr_size, vendor_set_obj_attr_contents,
+	_bfd_elf_copy_obj_attributes): Use LEAST_KNOWN_OBJ_ATTRIBUTE
+	instead of hardcoded 4.
+	* elf32-arm.c (elf32_arm_obj_attrs_order): Use
+	LEAST_KNOWN_OBJ_ATTRIBUTE and LEAST_KNOWN_OBJ_ATTRIBUTE + 1
+	instead of hardcoded 4 and 5.
+	(elf32_arm_merge_eabi_attributes): Use LEAST_KNOWN_OBJ_ATTRIBUTE
+	instead of hardcoded 4.
+
 2010-06-14  Kevin Buettner  <kevinb@redhat.com>
 
 	* elf32-h8300.c (elf_symbol_leading_char): Define.
