@@ -409,6 +409,11 @@ class Symbol
   set_got_offset(unsigned int got_type, unsigned int got_offset)
   { this->got_offsets_.set_offset(got_type, got_offset); }
 
+  // Return the GOT offset list.
+  const Got_offset_list*
+  got_offset_list() const
+  { return this->got_offsets_.get_list(); }
+
   // Return whether this symbol has an entry in the PLT section.
   bool
   has_plt_offset() const
@@ -1468,6 +1473,16 @@ class Symbol_table
   compute_final_value(const Sized_symbol<size>* sym,
 		      Compute_final_value_status* pstatus) const;
 
+  // Return the index of the first global symbol.
+  unsigned int
+  first_global_index() const
+  { return this->first_global_index_; }
+
+  // Return the total number of symbols in the symbol table.
+  unsigned int
+  output_count() const
+  { return this->output_count_; }
+
   // Write out the global symbols.
   void
   write_globals(const Stringpool*, const Stringpool*,
@@ -1478,6 +1493,20 @@ class Symbol_table
   void
   write_section_symbol(const Output_section*, Output_symtab_xindex*,
 		       Output_file*, off_t) const;
+
+  // Loop over all symbols, applying the function F to each.
+  template<int size, typename F>
+  void
+  for_all_symbols(F f) const
+  {
+    for (Symbol_table_type::const_iterator p = this->table_.begin();
+         p != this->table_.end();
+         ++p)
+      {
+	Sized_symbol<size>* sym = static_cast<Sized_symbol<size>*>(p->second);
+	f(sym);
+      }
+  }
 
   // Dump statistical information to stderr.
   void

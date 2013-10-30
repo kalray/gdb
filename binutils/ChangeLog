@@ -1,3 +1,30 @@
+2010-08-13  Dan Rosenberg  <dan.j.rosenberg@gmail.com>
+
+	PR binutils/11889
+	* readelf.c (get_32bit_elf_symbols): Check for a corrupt
+	sh_entsize.
+	(get_64bit_elf_symbols): Likewise.
+	(process_symbol_table): Likewise.
+	(process_section_groups): Check for corrupt headers.
+	(process_version_sections): Check for corrupt indicies.
+	(process_corefile_note_segment): Likewise.
+
+2010-08-13  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* readelf.c (get_machine_flags): Detect CF ISA C and EMAC_B
+	variants.
+
+2010-08-13  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf.c (process_debug_info): Don't subtract section address
+	when calculating location of cu abbrev within section.
+
+2010-08-12  Michael Haubenwallner  <haubi@gentoo.org>
+
+	PR binutils/11742
+	* readelf.c (get_archive_member_name): Do not read beyond the end
+	of the ar_name field.
+
 2010-08-03  Tristan Gingold  <gingold@adacore.com>
 
 	* dwarf.c (display_debug_lines): Mark file argument unused.
@@ -51,7 +78,7 @@
 
 2010-06-29  Alan Modra  <amodra@gmail.com>
 
-   	PR binutils/3166
+	PR binutils/3166
 	* objcopy.c (is_strip_section): Revert 2006-09-05.
 	(setup_section): Make SHT_GROUP section nobits.
 
@@ -417,7 +444,7 @@
 2010-01-19  Daisuke Hatayama  <d.hatayama@jp.fujitsu.com>
 	    Alan Modra <amodra@gmail.com>
 
-        * readelf.c (process_file_header): Handle e_phnum extension.
+	* readelf.c (process_file_header): Handle e_phnum extension.
 
 2010-01-14  Tristan Gingold  <gingold@adacore.com>
 
