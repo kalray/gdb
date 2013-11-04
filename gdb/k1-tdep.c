@@ -76,7 +76,7 @@ extern int k1_pseudo_register_reggroup_p (struct gdbarch *gdbarch,
 					  int regnum, 
 					  struct reggroup *reggroup);
 
-extern void k1_pseudo_register_read (struct gdbarch *gdbarch, 
+extern enum register_status k1_pseudo_register_read (struct gdbarch *gdbarch, 
 				     struct regcache *regcache,
 				     int regnum, gdb_byte *buf);
 
@@ -1193,5 +1193,5 @@ _initialize_k1_tdep (void)
 
   observer_attach_inferior_created (k1_inferior_created);
   
-  k1_inferior_data_token = register_inferior_data_with_cleanup (k1_cleanup_inferior_data);
+  k1_inferior_data_token = register_inferior_data_with_cleanup (NULL, k1_cleanup_inferior_data);
 }

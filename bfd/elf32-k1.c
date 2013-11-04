@@ -1507,10 +1507,10 @@ k1_elf_relocate_section
           osec = sec;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	{
 	    RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section, rel,
-					     relend, howto, contents);
+					     1, relend, howto, 0, contents);
 	    continue;
 	}
 
@@ -3836,8 +3836,8 @@ elf_k1_always_size_sections(bfd *output_bfd, struct bfd_link_info *info){
     struct elf_link_hash_entry *h;
 
     /* Force a PT_GNU_STACK segment to be created.  */
-    if (! elf_tdata (output_bfd)->stack_flags)
-      elf_tdata (output_bfd)->stack_flags = PF_R | PF_W | PF_X;
+    if (! elf_stack_flags(output_bfd))
+      elf_stack_flags(output_bfd) = PF_R | PF_W | PF_X;
 
     /* Define __stacksize if it's not defined yet.
      * */
@@ -3955,7 +3955,7 @@ k1fdpic_elf_discard_info (bfd *ibfd,
 
   /* Account for relaxation of .eh_frame section.  */
   for (s = ibfd->sections; s; s = s->next)
-    if (s->sec_info_type == ELF_INFO_TYPE_EH_FRAME)
+    if (s->sec_info_type == SEC_INFO_TYPE_EH_FRAME)
       {
         if (!_k1fdpic_check_discarded_relocs (ibfd, s, info, &changed))
           return FALSE;
@@ -3995,7 +3995,7 @@ elf_k1_modify_program_headers (bfd *output_bfd,
   if (! info)
     return TRUE;
 
-  for (p = tdata->phdr, m = tdata->segment_map; m != NULL; m = m->next, p++)
+  for (p = tdata->phdr, m = elf_seg_map(output_bfd); m != NULL; m = m->next, p++)
     if (m->p_type == PT_GNU_STACK)
       break;
 

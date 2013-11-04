@@ -5202,7 +5202,7 @@ elf_lx_relocate_section (
       /* For relocs against symbols from removed linkonce sections,
 	 or sections discarded by a linker script, we just want the
 	 section contents zeroed.  Avoid any special processing.  */
-      if (sym_sec != NULL && elf_discarded_section (sym_sec))
+      if (sym_sec != NULL && discarded_section (sym_sec))
 	{
             RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section, rel,
                                              relend, howto, contents);

@@ -46,6 +46,7 @@
 #include "elf-bfd.h"
 
 #include "elf/reloc-macros.h"
+#include <stdio.h>
 
 
 typedef union {

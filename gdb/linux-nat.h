@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2012 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,20 +22,6 @@
 #include <signal.h>
 
 struct arch_lwp_info;
-
-/* Ways to "resume" a thread.  */
-
-enum resume_kind
-{
-  /* Thread should continue.  */
-  resume_continue,
-
-  /* Thread should single-step.  */
-  resume_step,
-
-  /* Thread should be stopped.  */
-  resume_stop
-};
 
 /* Structure describing an LWP.  This is public only for the purposes
    of ALL_LWPS; target-specific code should generally not access it
@@ -75,10 +61,6 @@ struct lwp_info
 
   /* Non-zero if we were stepping this LWP.  */
   int step;
-
-  /* Non-zero si_signo if this LWP stopped with a trap.  si_addr may
-     be the address of a hardware watchpoint.  */
-  siginfo_t siginfo;
 
   /* STOPPED_BY_WATCHPOINT is non-zero if this LWP stopped with a data
      watchpoint trap.  */
@@ -128,11 +110,6 @@ extern struct lwp_info *lwp_list;
        (LP) != NULL;							\
        (LP) = (LP)->next)
 
-#define GET_LWP(ptid)		ptid_get_lwp (ptid)
-#define GET_PID(ptid)		ptid_get_pid (ptid)
-#define is_lwp(ptid)		(GET_LWP (ptid) != 0)
-#define BUILD_LWP(lwp, pid)	ptid_build (pid, lwp, 0)
-
 /* Attempt to initialize libthread_db.  */
 void check_for_thread_db (void);
 
@@ -144,9 +121,6 @@ extern void lin_thread_get_thread_signals (sigset_t *mask);
 /* Find process PID's pending signal set from /proc/pid/status.  */
 void linux_proc_pending_signals (int pid, sigset_t *pending,
 				 sigset_t *blocked, sigset_t *ignored);
-
-/* linux-nat functions for handling fork events.  */
-extern void linux_enable_event_reporting (ptid_t ptid);
 
 extern int lin_lwp_attach_lwp (ptid_t ptid);
 
@@ -174,6 +148,23 @@ void linux_nat_add_target (struct target_ops *);
 /* Register a method to call whenever a new thread is attached.  */
 void linux_nat_set_new_thread (struct target_ops *, void (*) (struct lwp_info *));
 
+
+/* Register a method to call whenever a new fork is attached.  */
+typedef void (linux_nat_new_fork_ftype) (struct lwp_info *parent,
+					 pid_t child_pid);
+void linux_nat_set_new_fork (struct target_ops *ops,
+			     linux_nat_new_fork_ftype *fn);
+
+/* Register a method to call whenever a process is killed or
+   detached.  */
+typedef void (linux_nat_forget_process_ftype) (pid_t pid);
+void linux_nat_set_forget_process (struct target_ops *ops,
+				   linux_nat_forget_process_ftype *fn);
+
+/* Call the method registered with the function above.  PID is the
+   process to forget about.  */
+void linux_nat_forget_process (pid_t pid);
+
 /* Register a method that converts a siginfo object between the layout
    that ptrace returns, and the layout in the architecture of the
    inferior.  */
@@ -191,11 +182,10 @@ void linux_nat_set_prepare_to_resume (struct target_ops *,
    to another.  */
 void linux_nat_switch_fork (ptid_t new_ptid);
 
-/* Return the saved siginfo associated with PTID.  */
-siginfo_t *linux_nat_get_siginfo (ptid_t ptid);
-
-/* Compute and return the processor core of a given thread.  */
-int linux_nat_core_of_thread_1 (ptid_t ptid);
+/* Store the saved siginfo associated with PTID in *SIGINFO.
+   Return 1 if it was retrieved successfully, 0 otherwise (*SIGINFO is
+   uninitialized in such case).  */
+int linux_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
 
 /* Set alternative SIGTRAP-like events recognizer.  */
 void linux_nat_set_status_is_event (struct target_ops *t,

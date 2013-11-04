@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 
 #define N(number, print, default, next)  \
-{  32, 32, 8, bfd_arch_lx, number, "lx/st200", print, 3, default, bfd_default_compatible, bfd_default_scan, next }
+{  32, 32, 8, bfd_arch_lx, number, "lx/st200", print, 3, default, bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next }
 
 #define ST220_NEXT  &arch_info_struct[0]
 #define ST230_NEXT  &arch_info_struct[1]

@@ -8,8 +8,7 @@ fi
 rm -f e${EMULATION_NAME}.c
 (echo;echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
-/* Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright 1995-2013 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -93,7 +92,6 @@ fragment <<EOF
 
 #if defined(TARGET_IS_i386pe) \
     || defined(TARGET_IS_shpe) \
-    || defined(TARGET_IS_mipspe) \
     || defined(TARGET_IS_armpe) \
     || defined(TARGET_IS_arm_epoc_pe) \
     || defined(TARGET_IS_arm_wince_pe)
@@ -164,16 +162,19 @@ gld_${EMULATION_NAME}_before_parse (void)
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
   output_filename = "${EXECUTABLE_NAME:-a.exe}";
 #ifdef DLL_SUPPORT
-  config.dynamic_link = TRUE;
+  input_flags.dynamic = TRUE;
   config.has_shared = 1;
 EOF
 
 # Cygwin no longer wants these noisy warnings.  Other PE
 # targets might like to consider adding themselves here.
+# See also the mail thread starting here for the reason why
+# merge_rdata defaults to 0 for cygwin:
+#  http://cygwin.com/ml/cygwin-apps/2013-04/msg00187.html
 case ${target} in
   *-*-cygwin*)
     default_auto_import=1
-    default_merge_rdata=1
+    default_merge_rdata=0
     ;;
   i[3-7]86-*-mingw* | x86_64-*-mingw*)
     default_auto_import=1
@@ -240,8 +241,10 @@ fragment <<EOF
 					(OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC + 1)
 #define OPTION_LARGE_ADDRESS_AWARE \
 					(OPTION_DLL_DISABLE_RUNTIME_PSEUDO_RELOC + 1)
+#define OPTION_DISABLE_LARGE_ADDRESS_AWARE \
+ 					(OPTION_LARGE_ADDRESS_AWARE + 1)
 #define OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V1	\
-					(OPTION_LARGE_ADDRESS_AWARE + 1)
+					(OPTION_DISABLE_LARGE_ADDRESS_AWARE + 1)
 #define OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V2	\
 					(OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V1 + 1)
 #define OPTION_EXCLUDE_MODULES_FOR_IMPLIB \
@@ -260,7 +263,7 @@ fragment <<EOF
 #define OPTION_DYNAMIC_BASE		(OPTION_DISABLE_LONG_SECTION_NAMES + 1)
 #define OPTION_FORCE_INTEGRITY		(OPTION_DYNAMIC_BASE + 1)
 #define OPTION_NX_COMPAT		(OPTION_FORCE_INTEGRITY + 1)
-#define OPTION_NO_ISOLATION		(OPTION_NX_COMPAT + 1) 
+#define OPTION_NO_ISOLATION		(OPTION_NX_COMPAT + 1)
 #define OPTION_NO_SEH			(OPTION_NO_ISOLATION + 1)
 #define OPTION_NO_BIND			(OPTION_NO_SEH + 1)
 #define OPTION_WDM_DRIVER		(OPTION_NO_BIND + 1)
@@ -275,8 +278,9 @@ gld${EMULATION_NAME}_add_options
    int nrl ATTRIBUTE_UNUSED,
    struct option **really_longopts ATTRIBUTE_UNUSED)
 {
-  static const struct option xtra_long[] = {
-    /* PE options */
+  static const struct option xtra_long[] =
+  {
+    /* PE options.  */
     {"base-file", required_argument, NULL, OPTION_BASE_FILE},
     {"dll", no_argument, NULL, OPTION_DLL},
     {"file-alignment", required_argument, NULL, OPTION_FILE_ALIGNMENT},
@@ -330,6 +334,7 @@ gld${EMULATION_NAME}_add_options
     {"enable-runtime-pseudo-reloc-v2", no_argument, NULL, OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V2},
 #endif
     {"large-address-aware", no_argument, NULL, OPTION_LARGE_ADDRESS_AWARE},
+    {"disable-large-address-aware", no_argument, NULL, OPTION_DISABLE_LARGE_ADDRESS_AWARE},
     {"enable-long-section-names", no_argument, NULL, OPTION_ENABLE_LONG_SECTION_NAMES},
     {"disable-long-section-names", no_argument, NULL, OPTION_DISABLE_LONG_SECTION_NAMES},
     {"dynamicbase",no_argument, NULL, OPTION_DYNAMIC_BASE},
@@ -469,6 +474,8 @@ gld_${EMULATION_NAME}_list_options (FILE *file)
 #endif
   fprintf (file, _("  --large-address-aware              Executable supports virtual addresses\n\
                                        greater than 2 gigabytes\n"));
+  fprintf (file, _("  --disable-large-address-aware      Executable does not support virtual\n\
+                                       addresses greater than 2 gigabytes\n"));
   fprintf (file, _("  --enable-long-section-names        Use long COFF section names even in\n\
                                        executable image files\n"));
   fprintf (file, _("  --disable-long-section-names       Never use long COFF section names, even\n\
@@ -825,6 +832,9 @@ gld${EMULATION_NAME}_handle_option (int optc)
     case OPTION_LARGE_ADDRESS_AWARE:
       real_flags |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
       break;
+    case OPTION_DISABLE_LARGE_ADDRESS_AWARE:
+      real_flags &= ~ IMAGE_FILE_LARGE_ADDRESS_AWARE;
+      break;
     case OPTION_ENABLE_LONG_SECTION_NAMES:
       pe_use_coff_long_section_names = 1;
       break;
@@ -943,7 +953,7 @@ gld_${EMULATION_NAME}_set_symbols (void)
       lang_assignment_statement_type *rv;
 
       rv = lang_add_assignment (exp_assign (GET_INIT_SYMBOL_NAME (j),
-					    exp_intop (val)));
+					    exp_intop (val), FALSE));
       if (init[j].size == sizeof (short))
 	*(short *) init[j].ptr = val;
       else if (init[j].size == sizeof (int))
@@ -1203,7 +1213,7 @@ pr_sym (struct bfd_hash_entry *h, void *inf ATTRIBUTE_UNUSED)
 }
 #endif /* DLL_SUPPORT */
 
-static void 
+static void
 debug_section_p (bfd *abfd ATTRIBUTE_UNUSED, asection *sect, void *obj)
 {
   int *found = (int *) obj;
@@ -1720,8 +1730,9 @@ gld_${EMULATION_NAME}_unrecognized_file (lang_input_statement_type *entry ATTRIB
 		= pe_def_file->base_address;
 	      init[IMAGEBASEOFF].inited = 1;
 	      if (image_base_statement)
-		image_base_statement->exp = exp_assign ("__image_base__",
-							exp_intop (pe.ImageBase));
+		image_base_statement->exp
+		  = exp_assign ("__image_base__", exp_intop (pe.ImageBase),
+				FALSE);
 	    }
 
 	  if (pe_def_file->stack_reserve != -1
@@ -1754,9 +1765,6 @@ gld_${EMULATION_NAME}_recognized_file (lang_input_statement_type *entry ATTRIBUT
 #endif
 #ifdef TARGET_IS_shpe
   pe_dll_id_target ("pei-shl");
-#endif
-#ifdef TARGET_IS_mipspe
-  pe_dll_id_target ("pei-mips");
 #endif
 #ifdef TARGET_IS_armpe
   pe_dll_id_target ("pei-arm-little");
@@ -1822,7 +1830,7 @@ gld_${EMULATION_NAME}_finish (void)
 
 #ifdef DLL_SUPPORT
   if (link_info.shared
-#if !defined(TARGET_IS_shpe) && !defined(TARGET_IS_mipspe)
+#if !defined(TARGET_IS_shpe)
       || (!link_info.relocatable && pe_def_file->num_exports != 0)
 #endif
     )
@@ -1831,7 +1839,7 @@ gld_${EMULATION_NAME}_finish (void)
       if (pe_implib_filename)
 	pe_dll_generate_implib (pe_def_file, pe_implib_filename, &link_info);
     }
-#if defined(TARGET_IS_shpe) || defined(TARGET_IS_mipspe)
+#if defined(TARGET_IS_shpe)
   /* ARM doesn't need relocs.  */
   else
     {
@@ -1914,7 +1922,7 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
 	       If the section already exists but does not have any flags set,
 	       then it has been created by the linker, probably as a result of
 	       a --section-start command line switch.  */
-	    lang_add_section (&add_child, s, os);
+	    lang_add_section (&add_child, s, NULL, os);
 	    break;
 	  }
 
@@ -1928,7 +1936,7 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
      unused one and use that.  */
   if (os == NULL && match_by_name)
     {
-      lang_add_section (&match_by_name->children, s, match_by_name);
+      lang_add_section (&match_by_name->children, s, NULL, match_by_name);
       return match_by_name;
     }
 
@@ -2093,7 +2101,7 @@ gld_${EMULATION_NAME}_open_dynamic_archive
   unsigned int i;
 
 
-  if (! entry->maybe_archive)
+  if (! entry->flags.maybe_archive)
     return FALSE;
 
   filename = entry->filename;

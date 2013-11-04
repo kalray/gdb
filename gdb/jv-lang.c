@@ -1,7 +1,6 @@
 /* Java language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1997-2000, 2003-2005, 2007-2012 Free Software
-   Foundation, Inc.
+   Copyright (C) 1997-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +31,7 @@
 #include "value.h"
 #include "c-lang.h"
 #include "jv-lang.h"
+#include "varobj.h"
 #include "gdbcore.h"
 #include "block.h"
 #include "demangle.h"
@@ -40,13 +40,14 @@
 #include "gdb_assert.h"
 #include "charset.h"
 #include "valprint.h"
+#include "cp-support.h"
 
 /* Local functions */
 
 extern void _initialize_java_language (void);
 
-static int java_demangled_signature_length (char *);
-static void java_demangled_signature_copy (char *, char *);
+static int java_demangled_signature_length (const char *);
+static void java_demangled_signature_copy (char *, const char *);
 
 static struct symtab *get_java_class_symtab (struct gdbarch *gdbarch);
 static char *get_java_utf8_name (struct obstack *obstack, struct value *name);
@@ -118,8 +119,9 @@ get_dynamics_objfile (struct gdbarch *gdbarch)
 
       /* Mark it as shared so that it is cleared when the inferior is
 	 re-run.  */
-      dynamics_objfile = allocate_objfile (NULL, OBJF_SHARED);
-      dynamics_objfile->gdbarch = gdbarch;
+      dynamics_objfile = allocate_objfile (NULL, NULL,
+					   OBJF_SHARED | OBJF_NOT_FILENAME);
+      dynamics_objfile->per_bfd->gdbarch = gdbarch;
 
       data = XCNEW (struct jv_per_objfile_data);
       set_objfile_data (dynamics_objfile, jv_dynamics_objfile_data_key, data);
@@ -158,8 +160,9 @@ get_java_class_symtab (struct gdbarch *gdbarch)
       BLOCKVECTOR_BLOCK (bv, STATIC_BLOCK) = bl;
 
       /* Allocate GLOBAL_BLOCK.  */
-      bl = allocate_block (&objfile->objfile_obstack);
+      bl = allocate_global_block (&objfile->objfile_obstack);
       BLOCK_DICT (bl) = dict_create_hashed_expandable ();
+      set_block_symtab (bl, class_symtab);
       BLOCKVECTOR_BLOCK (bv, GLOBAL_BLOCK) = bl;
 
       /* Arrange to free the dict.  */
@@ -185,12 +188,10 @@ add_class_symbol (struct type *type, CORE_ADDR addr)
   struct symbol *sym;
   struct objfile *objfile = get_dynamics_objfile (get_type_arch (type));
 
-  sym = (struct symbol *)
-    obstack_alloc (&objfile->objfile_obstack, sizeof (struct symbol));
-  memset (sym, 0, sizeof (struct symbol));
-  SYMBOL_SET_LANGUAGE (sym, language_java);
+  sym = allocate_symbol (objfile);
+  SYMBOL_SET_LANGUAGE (sym, language_java, &objfile->objfile_obstack);
   SYMBOL_SET_LINKAGE_NAME (sym, TYPE_TAG_NAME (type));
-  SYMBOL_CLASS (sym) = LOC_TYPEDEF;
+  SYMBOL_ACLASS_INDEX (sym) = LOC_TYPEDEF;
   /*  SYMBOL_VALUE (sym) = valu; */
   SYMBOL_TYPE (sym) = type;
   SYMBOL_DOMAIN (sym) = STRUCT_DOMAIN;
@@ -269,7 +270,6 @@ type_from_class (struct gdbarch *gdbarch, struct value *clas)
   struct value *utf8_name;
   char *nptr;
   CORE_ADDR addr;
-  int is_array = 0;
 
   type = check_typedef (value_type (clas));
   if (TYPE_CODE (type) == TYPE_CODE_PTR)
@@ -318,7 +318,6 @@ type_from_class (struct gdbarch *gdbarch, struct value *clas)
 	name = obstack_alloc (&objfile->objfile_obstack, namelen + 1);
       java_demangled_signature_copy (name, signature);
       name[namelen] = '\0';
-      is_array = 1;
       temp = clas;
       /* Set array element type.  */
       temp = value_struct_elt (&temp, NULL, "methods", NULL, "structure");
@@ -341,8 +340,8 @@ java_link_class_type (struct gdbarch *gdbarch,
 		      struct type *type, struct value *clas)
 {
   struct value *temp;
-  char *unqualified_name;
-  char *name = TYPE_TAG_NAME (type);
+  const char *unqualified_name;
+  const char *name = TYPE_TAG_NAME (type);
   int ninterfaces, nfields, nmethods;
   int type_is_object = 0;
   struct fn_field *fn_fields;
@@ -480,7 +479,7 @@ java_link_class_type (struct gdbarch *gdbarch,
       if (accflags & 0x0008)	/* ACC_STATIC */
 	SET_FIELD_PHYSADDR (TYPE_FIELD (type, i), boffset);
       else
-	TYPE_FIELD_BITPOS (type, i) = 8 * boffset;
+	SET_FIELD_BITPOS (TYPE_FIELD (type, i), 8 * boffset);
       if (accflags & 0x8000)	/* FIELD_UNRESOLVED_FLAG */
 	{
 	  TYPE_FIELD_TYPE (type, i) = get_java_object_type ();	/* FIXME */
@@ -511,7 +510,7 @@ java_link_class_type (struct gdbarch *gdbarch,
   methods = NULL;
   for (i = 0; i < nmethods; i++)
     {
-      char *mname;
+      const char *mname;
       int k;
 
       if (methods == NULL)
@@ -617,7 +616,7 @@ is_object_type (struct type *type)
   if (TYPE_CODE (type) == TYPE_CODE_PTR)
     {
       struct type *ttype = check_typedef (TYPE_TARGET_TYPE (type));
-      char *name;
+      const char *name;
       if (TYPE_CODE (ttype) != TYPE_CODE_STRUCT)
 	return 0;
       while (TYPE_N_BASECLASSES (ttype) > 0)
@@ -667,7 +666,7 @@ java_primitive_type (struct gdbarch *gdbarch, int signature)
 
 struct type *
 java_primitive_type_from_name (struct gdbarch *gdbarch,
-			       char *name, int namelen)
+			       const char *name, int namelen)
 {
   const struct builtin_java_type *builtin = builtin_java_type (gdbarch);
 
@@ -742,7 +741,7 @@ java_primitive_type_name (int signature)
    signature string SIGNATURE.  */
 
 static int
-java_demangled_signature_length (char *signature)
+java_demangled_signature_length (const char *signature)
 {
   int array = 0;
 
@@ -762,7 +761,7 @@ java_demangled_signature_length (char *signature)
    RESULT.  */
 
 static void
-java_demangled_signature_copy (char *result, char *signature)
+java_demangled_signature_copy (char *result, const char *signature)
 {
   int array = 0;
   char *ptr;
@@ -805,7 +804,7 @@ java_demangled_signature_copy (char *result, char *signature)
    as a freshly allocated copy.  */
 
 char *
-java_demangle_type_signature (char *signature)
+java_demangle_type_signature (const char *signature)
 {
   int length = java_demangled_signature_length (signature);
   char *result = xmalloc (length + 1);
@@ -905,7 +904,7 @@ evaluate_subexp_java (struct type *expect_type, struct expression *exp,
 {
   int pc = *pos;
   int i;
-  char *name;
+  const char *name;
   enum exp_opcode op = exp->elts[*pos].opcode;
   struct value *arg1;
   struct value *arg2;
@@ -1014,7 +1013,7 @@ nosideret:
 
 static char *java_demangle (const char *mangled, int options)
 {
-  return cplus_demangle (mangled, options | DMGL_JAVA);
+  return gdb_demangle (mangled, options | DMGL_JAVA);
 }
 
 /* Find the member function name of the demangled name NAME.  NAME
@@ -1166,7 +1165,6 @@ const struct language_defn java_language_defn =
   "java",			/* Language name */
   language_java,
   range_check_off,
-  type_check_off,
   case_sensitive_on,
   array_row_major,
   macro_expansion_no,
@@ -1181,6 +1179,7 @@ const struct language_defn java_language_defn =
   default_print_typedef,	/* Print a typedef using appropriate syntax */
   java_val_print,		/* Print a value using appropriate syntax */
   java_value_print,		/* Print a top-level value */
+  default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline */
   "this",	                /* name_of_this */
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
@@ -1196,8 +1195,9 @@ const struct language_defn java_language_defn =
   default_print_array_index,
   default_pass_by_reference,
   default_get_string,
-  strcmp_iw_ordered,
+  NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
+  &java_varobj_ops,
   LANG_MAGIC
 };
 

@@ -1,6 +1,6 @@
 # Basic expect script for LD Regression Tests
 #   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2001, 2003, 2005, 2007, 2009
-#   Free Software Foundation, Inc.
+#   2011, 2012 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -139,11 +139,11 @@ proc get_target_emul {} {
 }
 
 if [isnative] {
-    foreach x {HOSTING_CRT0 HOSTING_LIBS} {
+    foreach x {HOSTING_CRT0 HOSTING_SCRT0 HOSTING_LIBS} {
 	get_link_files $x
     }
 } else {
-    foreach x {HOSTING_CRT0 HOSTING_LIBS} { set $x "" }
+    foreach x {HOSTING_CRT0 HOSTING_SCRT0 HOSTING_LIBS} { set $x "" }
 }
 if ![info exists HOSTING_EMU] { set HOSTING_EMU "-m [get_target_emul]" }
 

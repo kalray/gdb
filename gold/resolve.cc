@@ -96,7 +96,9 @@ Symbol::override_base(const elfcpp::Sym<size, big_endian>& sym,
   this->override_version(version);
   this->u_.from_object.shndx = st_shndx;
   this->is_ordinary_shndx_ = is_ordinary;
-  this->type_ = sym.get_st_type();
+  // Don't override st_type from plugin placeholder symbols.
+  if (object->pluginobj() == NULL)
+    this->type_ = sym.get_st_type();
   this->binding_ = sym.get_st_bind();
   this->override_visibility(sym.get_st_visibility());
   this->nonvis_ = sym.get_st_nonvis();
@@ -343,22 +345,33 @@ Symbol_table::resolve(Sized_symbol<size>* to,
       this->candidate_odr_violations_[to->name()].insert(toloc);
     }
 
+  // Plugins don't provide a symbol type, so adopt the existing type
+  // if the FROM symbol is from a plugin.
+  elfcpp::STT fromtype = (object->pluginobj() != NULL
+			  ? to->type()
+			  : sym.get_st_type());
   unsigned int frombits = symbol_to_bits(sym.get_st_bind(),
                                          object->is_dynamic(),
 					 st_shndx, is_ordinary,
-                                         sym.get_st_type());
+                                         fromtype);
 
   bool adjust_common_sizes;
   bool adjust_dyndef;
   typename Sized_symbol<size>::Size_type tosize = to->symsize();
-  if (Symbol_table::should_override(to, frombits, sym.get_st_type(), OBJECT,
+  if (Symbol_table::should_override(to, frombits, fromtype, OBJECT,
 				    object, &adjust_common_sizes,
 				    &adjust_dyndef))
     {
       elfcpp::STB tobinding = to->binding();
+      typename Sized_symbol<size>::Value_type tovalue = to->value();
       this->override(to, sym, st_shndx, is_ordinary, object, version);
-      if (adjust_common_sizes && tosize > to->symsize())
-        to->set_symsize(tosize);
+      if (adjust_common_sizes)
+	{
+	  if (tosize > to->symsize())
+	    to->set_symsize(tosize);
+	  if (tovalue > to->value())
+	    to->set_value(tovalue);
+	}
       if (adjust_dyndef)
 	{
 	  // We are overriding an UNDEF or WEAK UNDEF with a DYN DEF.
@@ -368,8 +381,13 @@ Symbol_table::resolve(Sized_symbol<size>* to,
     }
   else
     {
-      if (adjust_common_sizes && sym.get_st_size() > tosize)
-        to->set_symsize(sym.get_st_size());
+      if (adjust_common_sizes)
+	{
+	  if (sym.get_st_size() > tosize)
+	    to->set_symsize(sym.get_st_size());
+	  if (sym.get_st_value() > to->value())
+	    to->set_value(sym.get_st_value());
+	}
       if (adjust_dyndef)
 	{
 	  // We are keeping a DYN DEF after seeing an UNDEF or WEAK UNDEF.
@@ -434,9 +452,8 @@ Symbol_table::should_override(const Symbol* to, unsigned int frombits,
 			      to->type());
     }
 
-  if (to->type() == elfcpp::STT_TLS
-      ? fromtype != elfcpp::STT_TLS
-      : fromtype == elfcpp::STT_TLS)
+  if ((to->type() == elfcpp::STT_TLS) ^ (fromtype == elfcpp::STT_TLS)
+      && !to->is_placeholder())
     Symbol_table::report_resolve_problem(true,
 					 _("symbol '%s' used as both __thread "
 					   "and non-__thread"),

@@ -3,7 +3,9 @@
    Copyright (C) 2010, Kalray
 */
 
+#include "config.h"
 #include "defs.h"
+#include "target.h"
 
 #include <assert.h>
 #include <libgen.h>
@@ -12,7 +14,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include "elf/k1.h"
 #include "environ.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
@@ -22,8 +23,9 @@
 #include "osdata.h"
 #include "main.h"
 #include "symfile.h"
-#include "target.h"
 #include "top.h"
+#include "arch-utils.h"
+#include "elf/k1.h"
 
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
@@ -39,7 +41,7 @@ static const char *simulation_vehicle;
 static pid_t server_pid;
 static int after_first_resume;
 
-static struct inferior_data *k1_attached_inf_data;
+const static struct inferior_data *k1_attached_inf_data;
 
 struct inferior_data {
     const char *cluster;
@@ -68,7 +70,7 @@ mppa_init_inferior_data (struct inferior *inf)
                       ix_items, item);
          ix_items++) {
         unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-        char *cluster = get_osdata_column (item, "cluster");
+        const char *cluster = get_osdata_column (item, "cluster");
         
         if (pid != inf->pid) continue;
 
@@ -342,7 +344,7 @@ mppa_mark_clusters_booted (struct inferior *inf, void *data)
 
 static void
 mppa_target_resume (struct target_ops *ops,
-                    ptid_t ptid, int step, enum target_signal siggnal)
+                    ptid_t ptid, int step, enum gdb_signal siggnal)
 {
     struct target_ops *remote_target = find_target_beneath(ops);
 
@@ -383,8 +385,8 @@ k1_target_wait (struct target_ops *target,
                           ix_items, item);
              ix_items++) {
             unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-            char *file = get_osdata_column (item, "command");
-            char *cluster = get_osdata_column (item, "cluster");
+            const char *file = get_osdata_column (item, "command");
+            const char *cluster = get_osdata_column (item, "cluster");
          
             if (pid != ptid_get_pid (res))
                 continue;
@@ -510,8 +512,8 @@ attach_mppa_command (char *args, int from_tty)
          ix_items++) {
         char *endptr;
         unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-        char *file = get_osdata_column (item, "command");
-        char *running = get_osdata_column (item, "running");
+        const char *file = get_osdata_column (item, "command");
+        const char *running = get_osdata_column (item, "running");
 
         if (strcmp (running, "yes"))
             continue;
@@ -528,7 +530,7 @@ attach_mppa_command (char *args, int from_tty)
        have the architecture at hand. Having these tables initialized
        from the debug reader routines will break as objfile_arch won't
        have the register descriptions */
-    gdbarch_dwarf2_reg_to_regnum (get_current_arch (), 0);
+    gdbarch_dwarf2_reg_to_regnum (get_current_arch(), 0);
 }
 
 void
@@ -619,5 +621,5 @@ Connect to a MPPA TLM platform and start debugging it."));
 
 
     observer_attach_inferior_created (k1_push_arch_stratum);
-    k1_attached_inf_data = register_inferior_data_with_cleanup (mppa_inferior_data_cleanup);
+    k1_attached_inf_data = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
 }

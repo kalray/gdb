@@ -1,7 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-1996, 1998-2002, 2004-2012 Free Software
-   Foundation, Inc.
+   Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,7 +40,8 @@
 #ifdef PT_GET_PROCESS_STATE
 
 static int
-inf_ptrace_follow_fork (struct target_ops *ops, int follow_child)
+inf_ptrace_follow_fork (struct target_ops *ops, int follow_child,
+			int detach_fork)
 {
   pid_t pid, fpid;
   ptrace_state_t pe;
@@ -123,24 +123,20 @@ inf_ptrace_create_inferior (struct target_ops *ops,
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
   int ops_already_pushed = target_is_pushed (ops);
-  struct cleanup *back_to = NULL;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   if (! ops_already_pushed)
     {
       /* Clear possible core file with its process_stratum.  */
       push_target (ops);
-      back_to = make_cleanup_unpush_target (ops);
+      make_cleanup_unpush_target (ops);
     }
 
   pid = fork_inferior (exec_file, allargs, env, inf_ptrace_me, NULL,
 		       NULL, NULL, NULL);
 
-  if (! ops_already_pushed)
-    discard_cleanups (back_to);
+  discard_cleanups (back_to);
 
-  /* START_INFERIOR_TRAPS_EXPECTED is defined in inferior.h, and will
-     be 1 or 2 depending on whether we're starting without or with a
-     shell.  */
   startup_inferior (START_INFERIOR_TRAPS_EXPECTED);
 
   /* On some targets, there must be some explicit actions taken after
@@ -197,7 +193,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
   int ops_already_pushed = target_is_pushed (ops);
-  struct cleanup *back_to = NULL;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   pid = parse_pid_to_attach (args);
 
@@ -209,7 +205,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
       /* target_pid_to_str already uses the target.  Also clear possible core
 	 file with its process_stratum.  */
       push_target (ops);
-      back_to = make_cleanup_unpush_target (ops);
+      make_cleanup_unpush_target (ops);
     }
 
   if (from_tty)
@@ -244,13 +240,12 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
      target, it should decorate the ptid later with more info.  */
   add_thread_silent (inferior_ptid);
 
-  if (! ops_already_pushed)
-    discard_cleanups (back_to);
+  discard_cleanups (back_to);
 }
 
 #ifdef PT_GET_PROCESS_STATE
 
-void
+static void
 inf_ptrace_post_attach (int pid)
 {
   ptrace_event_t pe;
@@ -342,7 +337,7 @@ inf_ptrace_stop (ptid_t ptid)
 
 static void
 inf_ptrace_resume (struct target_ops *ops,
-		   ptid_t ptid, int step, enum target_signal signal)
+		   ptid_t ptid, int step, enum gdb_signal signal)
 {
   pid_t pid = ptid_get_pid (ptid);
   int request;
@@ -371,7 +366,7 @@ inf_ptrace_resume (struct target_ops *ops,
      where it was.  If GDB wanted it to start some other way, we have
      already written a new program counter value to the child.  */
   errno = 0;
-  ptrace (request, pid, (PTRACE_TYPE_ARG3)1, target_signal_to_host (signal));
+  ptrace (request, pid, (PTRACE_TYPE_ARG3)1, gdb_signal_to_host (signal));
   if (errno != 0)
     perror_with_name (("ptrace"));
 }
@@ -408,7 +403,7 @@ inf_ptrace_wait (struct target_ops *ops,
 
 	  /* Claim it exited with unknown signal.  */
 	  ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-	  ourstatus->value.sig = TARGET_SIGNAL_UNKNOWN;
+	  ourstatus->value.sig = GDB_SIGNAL_UNKNOWN;
 	  return inferior_ptid;
 	}
 
@@ -649,11 +644,11 @@ static int
 inf_ptrace_auxv_parse (struct target_ops *ops, gdb_byte **readptr,
 		       gdb_byte *endptr, CORE_ADDR *typep, CORE_ADDR *valp)
 {
-  struct type *int_type = builtin_type (target_gdbarch)->builtin_int;
-  struct type *ptr_type = builtin_type (target_gdbarch)->builtin_data_ptr;
+  struct type *int_type = builtin_type (target_gdbarch ())->builtin_int;
+  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
   const int sizeof_auxv_type = TYPE_LENGTH (int_type);
   const int sizeof_auxv_val = TYPE_LENGTH (ptr_type);
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   gdb_byte *ptr = *readptr;
 
   if (endptr == ptr)

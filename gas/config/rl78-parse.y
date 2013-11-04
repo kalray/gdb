@@ -1,6 +1,5 @@
 /* rl78-parse.y  Renesas RL78 parser
-   Copyright 2011
-   Free Software Foundation, Inc.
+   Copyright 2011-2013 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -166,7 +165,7 @@ reg_xbc (int reg)
 %token HALT
 %token INC INCW
 %token MACH MACHU MOV MOV1 MOVS MOVW MULH MULHU MULU
-%token NOP
+%token NOP NOT1
 %token ONEB ONEW OR OR1
 %token POP PUSH
 %token RET RETI RETB ROL ROLC ROLWC ROR RORC
@@ -513,8 +512,13 @@ statement :
 	| DIVHU
 	  { B3 (0xce, 0xfb, 0x03); }
 
+/* Note that the DIVWU encoding was changed from [0xce,0xfb,0x04] to
+   [0xce,0xfb,0x0b].  Different versions of the Software Manual exist
+   with the same version number, but varying encodings.  The version
+   here matches the hardware.  */
+
 	| DIVWU
-	  { B3 (0xce, 0xfb, 0x04); }
+	  { B3 (0xce, 0xfb, 0x0b); }
 
 	| MACHU
 	  { B3 (0xce, 0xfb, 0x05); }
@@ -883,6 +887,11 @@ statement :
 
 	| NOP
 	  { B1 (0x00); }
+
+/* ---------------------------------------------------------------------- */
+
+	| NOT1 CY
+	  { B2 (0x71, 0xc0); }
 
 /* ---------------------------------------------------------------------- */
 
@@ -1291,6 +1300,7 @@ token_table[] =
   OPC(MULHU),
   OPC(MULU),
   OPC(NOP),
+  OPC(NOT1),
   OPC(ONEB),
   OPC(ONEW),
   OPC(OR),

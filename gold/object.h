@@ -1,6 +1,7 @@
 // object.h -- support for an object file for linking in gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -47,7 +48,7 @@ class Pluginobj;
 class Dynobj;
 class Object_merge_map;
 class Relocatable_relocs;
-class Symbols_data;
+struct Symbols_data;
 
 template<typename Stringpool_char>
 class Stringpool_template;
@@ -102,7 +103,7 @@ struct Symbol_location_info
 {
   std::string source_file;
   std::string enclosing_symbol_name;
-  int line_number;
+  elfcpp::STT enclosing_symbol_type;
 };
 
 // Data about a single relocation section.  This is read in
@@ -348,7 +349,7 @@ class Object
       this->input_file_->file().remove_object();
   }
 
-  // Return the name of the object as we would report it to the tuser.
+  // Return the name of the object as we would report it to the user.
   const std::string&
   name() const
   { return this->name_; }
@@ -550,6 +551,13 @@ class Object
   output_section(unsigned int shndx) const
   { return this->do_output_section(shndx); }
 
+  // Given a section index, return its address.
+  // The return value will be -1U if the section is specially mapped,
+  // such as a merge section.
+  uint64_t
+  output_section_address(unsigned int shndx)
+  { return this->do_output_section_address(shndx); }
+
   // Given a section index, return the offset in the Output_section.
   // The return value will be -1U if the section is specially mapped,
   // such as a merge section.
@@ -725,6 +733,20 @@ class Object
 			section_size_type* uncompressed_size) const
   { return this->do_section_is_compressed(shndx, uncompressed_size); }
 
+  // Return a view of the decompressed contents of a section.  Set *PLEN
+  // to the size.  Set *IS_NEW to true if the contents need to be freed
+  // by the caller.
+  const unsigned char*
+  decompressed_section_contents(unsigned int shndx, section_size_type* plen,
+				bool* is_cached)
+  { return this->do_decompressed_section_contents(shndx, plen, is_cached); }
+
+  // Discard any buffers of decompressed sections.  This is done
+  // at the end of the Add_symbols task.
+  void
+  discard_decompressed_sections()
+  { this->do_discard_decompressed_sections(); }
+
   // Return the index of the first incremental relocation for symbol SYMNDX.
   unsigned int
   get_incremental_reloc_base(unsigned int symndx) const
@@ -791,8 +813,9 @@ class Object
 
   // Return the location of the contents of a section.  Implemented by
   // child class.
-  virtual Location
-  do_section_contents(unsigned int shndx) = 0;
+  virtual const unsigned char*
+  do_section_contents(unsigned int shndx, section_size_type* plen,
+		      bool cache) = 0;
 
   // Get the size of a section--implemented by child class.
   virtual uint64_t
@@ -836,6 +859,11 @@ class Object
   do_output_section(unsigned int) const
   { gold_unreachable(); }
 
+  // Get the address of a section--implemented by child class.
+  virtual uint64_t
+  do_output_section_address(unsigned int)
+  { gold_unreachable(); }
+
   // Get the offset of a section--implemented by child class.
   virtual uint64_t
   do_output_section_offset(unsigned int) const
@@ -865,6 +893,16 @@ class Object
   read_section_data(elfcpp::Elf_file<size, big_endian, Object>*,
 		    Read_symbols_data*);
 
+  // Find the section header with the given NAME.  If HDR is non-NULL
+  // then it is a section header returned from a previous call to this
+  // function and the next section header with the same name will be
+  // returned.
+  template<int size, bool big_endian>
+  const unsigned char*
+  find_shdr(const unsigned char* pshdrs, const char* name,
+	    const char* names, section_size_type names_size,
+	    const unsigned char* hdr) const;
+
   // Let the child class initialize the xindex object directly.
   void
   set_xindex(Xindex* xindex)
@@ -891,6 +929,27 @@ class Object
   virtual bool
   do_section_is_compressed(unsigned int, section_size_type*) const
   { return false; }
+
+  // Return a view of the decompressed contents of a section.  Set *PLEN
+  // to the size.  This default implementation simply returns the
+  // raw section contents and sets *IS_NEW to false to indicate
+  // that the contents do not need to be freed by the caller.
+  // This function must be overridden for any types of object files
+  // that might contain compressed sections.
+  virtual const unsigned char*
+  do_decompressed_section_contents(unsigned int shndx,
+				   section_size_type* plen,
+				   bool* is_new)
+  {
+    *is_new = false;
+    return this->do_section_contents(shndx, plen, false);
+  }
+
+  // Discard any buffers of decompressed sections.  This is done
+  // at the end of the Add_symbols task.
+  virtual void
+  do_discard_decompressed_sections()
+  { }
 
   // Return the index of the first incremental relocation for symbol SYMNDX--
   // implemented by child class.
@@ -1042,6 +1101,11 @@ class Relobj : public Object
 		       unsigned int got_offset)
   { this->do_set_local_got_offset(symndx, got_type, got_offset); }
 
+  // Return whether the local symbol SYMNDX is a TLS symbol.
+  bool
+  local_is_tls(unsigned int symndx) const
+  { return this->do_local_is_tls(symndx); }
+
   // The number of local symbols in the input symbol table.
   virtual unsigned int
   local_symbol_count() const
@@ -1114,7 +1178,7 @@ class Relobj : public Object
     return this->output_sections_[shndx] != NULL;
   }
 
-  // The the output section of the input section with index SHNDX.
+  // The output section of the input section with index SHNDX.
   // This is only used currently to remove a section from the link in
   // relaxation.
   void
@@ -1182,6 +1246,16 @@ class Relobj : public Object
   do_get_incremental_reloc_count(unsigned int symndx) const
   { return this->reloc_counts_[symndx]; }
 
+  // Return the word size of the object file.
+  int
+  elfsize() const
+  { return this->do_elfsize(); }
+
+  // Return TRUE if this is a big-endian object file.
+  bool
+  is_big_endian() const
+  { return this->do_is_big_endian(); }
+
  protected:
   // The output section to be used for each input section, indexed by
   // the input section number.  The output section is NULL if the
@@ -1221,6 +1295,10 @@ class Relobj : public Object
   virtual void
   do_set_local_got_offset(unsigned int symndx, unsigned int got_type,
 			  unsigned int got_offset) = 0;
+
+  // Return whether local symbol SYMNDX is a TLS symbol.
+  virtual bool
+  do_local_is_tls(unsigned int symndx) const = 0;
 
   // Return the number of local symbols--implemented by child class.
   virtual unsigned int
@@ -1339,6 +1417,16 @@ class Relobj : public Object
     unsigned int counter = this->reloc_counts_[symndx]++;
     return this->reloc_bases_[symndx] + counter;
   }
+
+  // Return the word size of the object file--
+  // implemented by child class.
+  virtual int
+  do_elfsize() const = 0;
+
+  // Return TRUE if this is a big-endian object file--
+  // implemented by child class.
+  virtual bool
+  do_is_big_endian() const = 0;
 
  private:
   // Mapping from input sections to output section.
@@ -1775,9 +1863,14 @@ class Reloc_symbol_changes
   std::vector<Symbol*> vec_;
 };
 
-// Type for mapping section index to uncompressed size.
+// Type for mapping section index to uncompressed size and contents.
 
-typedef std::map<unsigned int, section_size_type> Compressed_section_map;
+struct Compressed_section_info
+{
+  section_size_type size;
+  const unsigned char* contents;
+};
+typedef std::map<unsigned int, Compressed_section_info> Compressed_section_map;
 
 // Abstract base class for a regular object file, either a real object file
 // or an incremental (unchanged) object.  This is size and endian specific.
@@ -1848,6 +1941,10 @@ class Sized_relobj : public Relobj
   section_offsets()
   { return this->section_offsets_; }
 
+  // Get the address of an output section.
+  uint64_t
+  do_output_section_address(unsigned int shndx);
+
   // Get the offset of a section.
   uint64_t
   do_output_section_offset(unsigned int shndx) const
@@ -1911,6 +2008,16 @@ class Sized_relobj : public Relobj
         gold_assert(ins.second);
       }
   }
+
+  // Return the word size of the object file.
+  virtual int
+  do_elfsize() const
+  { return size; }
+
+  // Return TRUE if this is a big-endian object file.
+  virtual bool
+  do_is_big_endian() const
+  { return big_endian; }
 
  private:
   // The GOT offsets of local symbols. This map also stores GOT offsets
@@ -2061,6 +2168,12 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   void
   set_local_plt_offset(unsigned int symndx, unsigned int plt_offset);
 
+  // Adjust this local symbol value.  Return false if the symbol
+  // should be discarded from the output file.
+  bool
+  adjust_local_symbol(Symbol_value<size>* lv) const
+  { return this->do_adjust_local_symbol(lv); }
+
   // Return the name of the symbol that spans the given offset in the
   // specified section in this object.  This is used only for error
   // messages and is not particularly efficient.
@@ -2114,6 +2227,11 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   // this if it doesn't have one.
   unsigned int
   do_local_plt_offset(unsigned int symndx) const;
+
+  // Return whether local symbol SYMNDX is a TLS symbol.
+  bool
+  do_local_is_tls(unsigned int symndx) const
+  { return this->local_symbol(symndx)->is_tls_symbol(); }
 
   // Return the number of local symbols.
   unsigned int
@@ -2197,9 +2315,19 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   { return this->elf_file_.section_name(shndx); }
 
   // Return the location of the contents of a section.
-  Object::Location
-  do_section_contents(unsigned int shndx)
-  { return this->elf_file_.section_contents(shndx); }
+  const unsigned char*
+  do_section_contents(unsigned int shndx, section_size_type* plen,
+		      bool cache)
+  {
+    Object::Location loc(this->elf_file_.section_contents(shndx));
+    *plen = convert_to_section_size_type(loc.data_size);
+    if (*plen == 0)
+      {
+	static const unsigned char empty[1] = { '\0' };
+	return empty;
+      }
+    return this->get_view(loc.file_offset, *plen, true, cache);
+  }
 
   // Return section flags.
   uint64_t
@@ -2295,11 +2423,22 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
 
   typedef std::vector<View_size> Views;
 
+  // Stash away info for a number of special sections.
+  // Return true if any of the sections found require local symbols to be read.
+  virtual bool
+  do_find_special_sections(Read_symbols_data* sd);
+
   // This may be overriden by a child class.
   virtual void
   do_relocate_sections(const Symbol_table* symtab, const Layout* layout,
 		       const unsigned char* pshdrs, Output_file* of,
 		       Views* pviews);
+
+  // Adjust this local symbol value.  Return false if the symbol
+  // should be discarded from the output file.
+  virtual bool
+  do_adjust_local_symbol(Symbol_value<size>*) const
+  { return true; }
 
   // Allow a child to set output local symbol count.
   void
@@ -2319,11 +2458,24 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
     if (p != this->compressed_sections_->end())
       {
 	if (uncompressed_size != NULL)
-	  *uncompressed_size = p->second;
+	  *uncompressed_size = p->second.size;
 	return true;
       }
     return false;
   }
+
+  // Return a view of the uncompressed contents of a section.  Set *PLEN
+  // to the size.  Set *IS_NEW to true if the contents need to be deleted
+  // by the caller.
+  const unsigned char*
+  do_decompressed_section_contents(unsigned int shndx,
+				   section_size_type* plen,
+				   bool* is_new);
+
+  // Discard any buffers of decompressed sections.  This is done
+  // at the end of the Add_symbols task.
+  void
+  do_discard_decompressed_sections();
 
  private:
   // For convenience.
@@ -2419,27 +2571,6 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
 			   const unsigned char* plocal_syms,
 			   const Read_relocs_data::Relocs_list::iterator&,
 			   Relocatable_relocs*);
-
-  // Emit the relocs for --emit-relocs.
-  void
-  emit_relocs(const Relocate_info<size, big_endian>*, unsigned int,
-	      unsigned int sh_type, const unsigned char* prelocs,
-	      size_t reloc_count, Output_section*, Address output_offset,
-	      unsigned char* view, Address address,
-	      section_size_type view_size,
-	      unsigned char* reloc_view, section_size_type reloc_view_size);
-
-  // Emit the relocs for --emit-relocs, templatized on the type of the
-  // relocation section.
-  template<int sh_type>
-  void
-  emit_relocs_reltype(const Relocate_info<size, big_endian>*, unsigned int,
-		      const unsigned char* prelocs, size_t reloc_count,
-		      Output_section*, Address output_offset,
-		      unsigned char* view, Address address,
-		      section_size_type view_size,
-		      unsigned char* reloc_view,
-		      section_size_type reloc_view_size);
 
   // Scan the input relocations for --incremental.
   void
@@ -2609,7 +2740,8 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   std::vector<Deferred_layout> deferred_layout_;
   // The list of relocation sections whose layout was deferred.
   std::vector<Deferred_layout> deferred_layout_relocs_;
-  // For compressed debug sections, map section index to uncompressed size.
+  // For compressed debug sections, map section index to uncompressed size
+  // and contents.
   Compressed_section_map* compressed_sections_;
 };
 

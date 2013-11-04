@@ -1,5 +1,5 @@
 /* YACC parser for Pascal expressions, for GDB.
-   Copyright (C) 2000, 2006-2012 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,6 +55,7 @@
 #include "symfile.h" /* Required by objfiles.h.  */
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols.  */
 #include "block.h"
+#include "completer.h"
 
 #define parse_type builtin_type (parse_gdbarch)
 
@@ -105,6 +106,12 @@
 #define yygindex pascal_yygindex
 #define yytable	 pascal_yytable
 #define yycheck	 pascal_yycheck
+#define yyss	pascal_yyss
+#define yysslim	pascal_yysslim
+#define yyssp	pascal_yyssp
+#define yystacksize pascal_yystacksize
+#define yyvs	pascal_yyvs
+#define yyvsp	pascal_yyvsp
 
 #ifndef YYDEBUG
 #define	YYDEBUG 1		/* Default to yydebug support */
@@ -152,7 +159,7 @@ static char * uptok (char *, int);
 
 %{
 /* YYSTYPE gets defined by %union */
-static int parse_number (char *, int, int, YYSTYPE *);
+static int parse_number (const char *, int, int, YYSTYPE *);
 
 static struct type *current_type;
 static struct internalvar *intvar;
@@ -338,7 +345,7 @@ exp	:	field_exp COMPLETE
 
 exp	:	exp '['
 			/* We need to save the current_type value.  */
-			{ char *arrayname;
+			{ const char *arrayname;
 			  int arrayfieldindex;
 			  arrayfieldindex = is_pascal_string_type (
 				current_type, NULL, NULL,
@@ -346,9 +353,12 @@ exp	:	exp '['
 			  if (arrayfieldindex)
 			    {
 			      struct stoken stringsval;
-			      stringsval.ptr = alloca (strlen (arrayname) + 1);
+			      char *buf;
+
+			      buf = alloca (strlen (arrayname) + 1);
+			      stringsval.ptr = buf;
 			      stringsval.length = strlen (arrayname);
-			      strcpy (stringsval.ptr, arrayname);
+			      strcpy (buf, arrayname);
 			      current_type = TYPE_FIELD_TYPE (current_type,
 				arrayfieldindex - 1);
 			      write_exp_elt_opcode (STRUCTOP_STRUCT);
@@ -585,7 +595,8 @@ exp	:	STRING
 			     the array upper bound is the string length.
 			     There is no such thing in C as a completely empty
 			     string.  */
-			  char *sp = $1.ptr; int count = $1.length;
+			  const char *sp = $1.ptr; int count = $1.length;
+
 			  while (count-- > 0)
 			    {
 			      write_exp_elt_opcode (OP_LONG);
@@ -652,7 +663,7 @@ block	:	BLOCKNAME
 block	:	block COLONCOLON name
 			{ struct symbol *tem
 			    = lookup_symbol (copy_name ($3), $1,
-					     VAR_DOMAIN, (int *) NULL);
+					     VAR_DOMAIN, NULL);
 			  if (!tem || SYMBOL_CLASS (tem) != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
 				   copy_name ($3));
@@ -662,7 +673,7 @@ block	:	block COLONCOLON name
 variable:	block COLONCOLON name
 			{ struct symbol *sym;
 			  sym = lookup_symbol (copy_name ($3), $1,
-					       VAR_DOMAIN, (int *) NULL);
+					       VAR_DOMAIN, NULL);
 			  if (sym == 0)
 			    error (_("No symbol \"%s\" in specified context."),
 				   copy_name ($3));
@@ -694,11 +705,11 @@ variable:	qualified_name
 			{
 			  char *name = copy_name ($2);
 			  struct symbol *sym;
-			  struct minimal_symbol *msymbol;
+			  struct bound_minimal_symbol msymbol;
 
 			  sym =
 			    lookup_symbol (name, (const struct block *) NULL,
-					   VAR_DOMAIN, (int *) NULL);
+					   VAR_DOMAIN, NULL);
 			  if (sym)
 			    {
 			      write_exp_elt_opcode (OP_VAR_VALUE);
@@ -708,8 +719,8 @@ variable:	qualified_name
 			      break;
 			    }
 
-			  msymbol = lookup_minimal_symbol (name, NULL, NULL);
-			  if (msymbol != NULL)
+			  msymbol = lookup_bound_minimal_symbol (name);
+			  if (msymbol.minsym != NULL)
 			    write_exp_msymbol (msymbol);
 			  else if (!have_full_symbols ()
 				   && !have_partial_symbols ())
@@ -773,12 +784,12 @@ variable:	name_not_typename
 			    }
 			  else
 			    {
-			      struct minimal_symbol *msymbol;
+			      struct bound_minimal_symbol msymbol;
 			      char *arg = copy_name ($1.stoken);
 
 			      msymbol =
-				lookup_minimal_symbol (arg, NULL, NULL);
-			      if (msymbol != NULL)
+				lookup_bound_minimal_symbol (arg);
+			      if (msymbol.minsym != NULL)
 				write_exp_msymbol (msymbol);
 			      else if (!have_full_symbols ()
 				       && !have_partial_symbols ())
@@ -848,7 +859,7 @@ name_not_typename :	NAME
 /*** Needs some error checking for the float case ***/
 
 static int
-parse_number (char *p, int len, int parsed_float, YYSTYPE *putithere)
+parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
 {
   /* FIXME: Shouldn't these be unsigned?  We don't deal with negative values
      here, and we do kind of silly things like cast to unsigned.  */
@@ -1135,8 +1146,10 @@ yylex (void)
 
   prev_lexptr = lexptr;
 
-  tokstart = lexptr;
   explen = strlen (lexptr);
+  tokstart = alloca (explen + 1);
+  memcpy (tokstart, lexptr, explen + 1);
+
   /* See if it is a special token of length 3.  */
   if (explen > 2)
     for (i = 0; i < sizeof (tokentab3) / sizeof (tokentab3[0]); i++)
@@ -1231,7 +1244,7 @@ yylex (void)
       /* Might be a floating point number.  */
       if (lexptr[1] < '0' || lexptr[1] > '9')
 	{
-	  if (in_parse_field)
+	  if (parse_completion)
 	    last_was_structop = 1;
 	  goto symbol;		/* Nope, must be a symbol.  */
 	}
@@ -1355,13 +1368,18 @@ yylex (void)
 	    /* Do nothing, loop will terminate.  */
 	    break;
 	  case '\\':
-	    tokptr++;
-	    c = parse_escape (parse_gdbarch, &tokptr);
-	    if (c == -1)
-	      {
-		continue;
-	      }
-	    tempbuf[tempbufindex++] = c;
+	    {
+	      const char *s, *o;
+
+	      o = s = ++tokptr;
+	      c = parse_escape (parse_gdbarch, &s);
+	      *tokptr += s - o;
+	      if (c == -1)
+		{
+		  continue;
+		}
+	      tempbuf[tempbufindex++] = c;
+	    }
 	    break;
 	  default:
 	    tempbuf[tempbufindex++] = *tokptr++;
@@ -1477,7 +1495,7 @@ yylex (void)
 	  static const char this_name[] = "this";
 
 	  if (lookup_symbol (this_name, expression_context_block,
-			     VAR_DOMAIN, (int *) NULL))
+			     VAR_DOMAIN, NULL))
 	    {
 	      free (uptokstart);
 	      return THIS;
@@ -1516,20 +1534,20 @@ yylex (void)
   {
     char *tmp = copy_name (yylval.sval);
     struct symbol *sym;
-    int is_a_field_of_this = 0;
+    struct field_of_this_result is_a_field_of_this;
     int is_a_field = 0;
     int hextype;
 
 
     if (search_field && current_type)
       is_a_field = (lookup_struct_elt_type (current_type, tmp, 1) != NULL);
-    if (is_a_field || in_parse_field)
+    if (is_a_field || parse_completion)
       sym = NULL;
     else
       sym = lookup_symbol (tmp, expression_context_block,
 			   VAR_DOMAIN, &is_a_field_of_this);
     /* second chance uppercased (as Free Pascal does).  */
-    if (!sym && !is_a_field_of_this && !is_a_field)
+    if (!sym && is_a_field_of_this.type == NULL && !is_a_field)
       {
        for (i = 0; i <= namelen; i++)
          {
@@ -1538,12 +1556,12 @@ yylex (void)
          }
        if (search_field && current_type)
 	 is_a_field = (lookup_struct_elt_type (current_type, tmp, 1) != NULL);
-       if (is_a_field || in_parse_field)
+       if (is_a_field || parse_completion)
 	 sym = NULL;
        else
 	 sym = lookup_symbol (tmp, expression_context_block,
 			      VAR_DOMAIN, &is_a_field_of_this);
-       if (sym || is_a_field_of_this || is_a_field)
+       if (sym || is_a_field_of_this.type != NULL || is_a_field)
          for (i = 0; i <= namelen; i++)
            {
              if ((tokstart[i] >= 'a' && tokstart[i] <= 'z'))
@@ -1551,7 +1569,7 @@ yylex (void)
            }
       }
     /* Third chance Capitalized (as GPC does).  */
-    if (!sym && !is_a_field_of_this && !is_a_field)
+    if (!sym && is_a_field_of_this.type == NULL && !is_a_field)
       {
        for (i = 0; i <= namelen; i++)
          {
@@ -1566,12 +1584,12 @@ yylex (void)
           }
        if (search_field && current_type)
 	 is_a_field = (lookup_struct_elt_type (current_type, tmp, 1) != NULL);
-       if (is_a_field || in_parse_field)
+       if (is_a_field || parse_completion)
 	 sym = NULL;
        else
 	 sym = lookup_symbol (tmp, expression_context_block,
 			      VAR_DOMAIN, &is_a_field_of_this);
-       if (sym || is_a_field_of_this || is_a_field)
+       if (sym || is_a_field_of_this.type != NULL || is_a_field)
           for (i = 0; i <= namelen; i++)
             {
               if (i == 0)
@@ -1601,7 +1619,7 @@ yylex (void)
         || lookup_symtab (tmp))
       {
 	yylval.ssym.sym = sym;
-	yylval.ssym.is_a_field_of_this = is_a_field_of_this;
+	yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
 	free (uptokstart);
 	return BLOCKNAME;
       }
@@ -1617,8 +1635,8 @@ yylex (void)
 	     distinction) named x, then this code incorrectly thinks we
 	     are dealing with nested types rather than a member function.  */
 
-	  char *p;
-	  char *namestart;
+	  const char *p;
+	  const char *namestart;
 	  struct symbol *best_sym;
 
 	  /* Look ahead to detect nested types.  This probably should be
@@ -1667,7 +1685,7 @@ yylex (void)
 		      memcpy (tmp1, namestart, p - namestart);
 		      tmp1[p - namestart] = '\0';
 		      cur_sym = lookup_symbol (ncopy, expression_context_block,
-					       VAR_DOMAIN, (int *) NULL);
+					       VAR_DOMAIN, NULL);
 		      if (cur_sym)
 			{
 			  if (SYMBOL_CLASS (cur_sym) == LOC_TYPEDEF)
@@ -1716,7 +1734,7 @@ yylex (void)
 	if (hextype == INT)
 	  {
 	    yylval.ssym.sym = sym;
-	    yylval.ssym.is_a_field_of_this = is_a_field_of_this;
+	    yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
 	    free (uptokstart);
 	    return NAME_OR_INT;
 	  }
@@ -1725,7 +1743,7 @@ yylex (void)
     free(uptokstart);
     /* Any other kind of symbol.  */
     yylval.ssym.sym = sym;
-    yylval.ssym.is_a_field_of_this = is_a_field_of_this;
+    yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
     return NAME;
   }
 }

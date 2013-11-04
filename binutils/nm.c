@@ -435,10 +435,10 @@ filter_symbols (bfd *abfd, bfd_boolean is_dynamic, void *minisyms,
       if (undefined_only)
 	keep = bfd_is_und_section (sym->section);
       else if (external_only)
-	keep = ((sym->flags & BSF_GLOBAL) != 0
-		|| (sym->flags & BSF_WEAK) != 0
-		/* PR binutls/12753: Unique symbols are global too.  */
-		|| (sym->flags & BSF_GNU_UNIQUE) != 0
+	/* PR binutls/12753: Unique symbols are global too.  */
+	keep = ((sym->flags & (BSF_GLOBAL
+			       | BSF_WEAK
+			       | BSF_GNU_UNIQUE)) != 0
 		|| bfd_is_und_section (sym->section)
 		|| bfd_is_com_section (sym->section));
       else
@@ -951,19 +951,12 @@ print_size_symbols (bfd *abfd, bfd_boolean is_dynamic,
   for (; from < fromend; from++)
     {
       asymbol *sym;
-      bfd_vma ssize;
 
       sym = bfd_minisymbol_to_symbol (abfd, is_dynamic, from->minisym, store);
       if (sym == NULL)
 	bfd_fatal (bfd_get_filename (abfd));
 
-      /* For elf we have already computed the correct symbol size.  */
-      if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
-	ssize = from->size;
-      else
-	ssize = from->size - bfd_section_vma (abfd, bfd_get_section (sym));
-
-      print_symbol (abfd, sym, ssize, archive_bfd);
+      print_symbol (abfd, sym, from->size, archive_bfd);
     }
 }
 
@@ -1017,7 +1010,15 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
 
   symcount = bfd_read_minisymbols (abfd, dynamic, &minisyms, &size);
   if (symcount < 0)
-    bfd_fatal (bfd_get_filename (abfd));
+    {
+      if (dynamic && bfd_get_error () == bfd_error_no_symbols)
+	{
+	  non_fatal (_("%s: no symbols"), bfd_get_filename (abfd));
+	  return;
+	}
+
+      bfd_fatal (bfd_get_filename (abfd));
+    }
 
   if (symcount == 0)
     {

@@ -1,6 +1,6 @@
 /* Debug register code for the i386.
 
-   Copyright (C) 2009-2012 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,20 +20,13 @@
 #include "server.h"
 #include "target.h"
 #include "i386-low.h"
+#include "break-common.h"
 
 /* Support for 8-byte wide hw watchpoints.  */
 #ifndef TARGET_HAS_DR_LEN_8
 /* NOTE: sizeof (long) == 4 on win64.  */
 #define TARGET_HAS_DR_LEN_8 (sizeof (void *) == 8)
 #endif
-
-enum target_hw_bp_type
-  {
-    hw_write   = 0,	/* Common  HW watchpoint */
-    hw_read    = 1,	/* Read    HW watchpoint */
-    hw_access  = 2,	/* Access  HW watchpoint */
-    hw_execute = 3	/* Execute HW breakpoint */
-  };
 
 /* DR7 Debug Control register fields.  */
 
@@ -243,10 +236,10 @@ Invalid hardware breakpoint type %d in i386_length_and_rw_bits.\n",
 	return (DR_LEN_2 | rw);
       case 4:
 	return (DR_LEN_4 | rw);
-	/* ELSE FALL THROUGH */
       case 8:
         if (TARGET_HAS_DR_LEN_8)
  	  return (DR_LEN_8 | rw);
+	/* ELSE FALL THROUGH */
       default:
 	error ("\
 Invalid hardware breakpoint length %d in i386_length_and_rw_bits.\n", len);
@@ -410,6 +403,7 @@ Invalid value %d of operation in i386_handle_nonaligned_watchpoint.\n",
   return retval;
 }
 
+#define Z_PACKET_HW_BP '1'
 #define Z_PACKET_WRITE_WP '2'
 #define Z_PACKET_READ_WP '3'
 #define Z_PACKET_ACCESS_WP '4'
@@ -421,6 +415,8 @@ Z_packet_to_hw_type (char type)
 {
   switch (type)
     {
+    case Z_PACKET_HW_BP:
+      return hw_execute;
     case Z_PACKET_WRITE_WP:
       return hw_write;
     case Z_PACKET_READ_WP:
