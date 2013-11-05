@@ -122,7 +122,7 @@ k1_inferior_data (struct inferior *inf)
 }
 
 static enum K1_ARCH
-k1_arch ()
+k1_arch (void)
 {
     const struct target_desc *desc = target_current_description ();
 
@@ -170,7 +170,7 @@ static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
     ULONGEST val;
 
     regcache_raw_read_unsigned (regs,
-				gdbarch_tdep (target_gdbarch)->local_regnum, 
+				gdbarch_tdep (target_gdbarch())->local_regnum, 
 				&val);
     return val;
 }
@@ -641,7 +641,7 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
     /* Rewrite a patched reg unconditionnaly */
     if (dsc->rewrite_reg) {
         regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
-        if (debug_displaced) printf_filtered ("displaced: rewrite %i with %x\n", dsc->reg, dsc->dest);
+        if (debug_displaced) printf_filtered ("displaced: rewrite %i with %llx\n", dsc->reg, dsc->dest);
     }
 
     if (((ps >> 5)&1) /* HLE */) {
@@ -902,7 +902,7 @@ static void k1_extract_return_value (struct gdbarch *gdbarch,
 }
 
 static enum return_value_convention
-k1_return_value (struct gdbarch *gdbarch, struct type *func_type,
+k1_return_value (struct gdbarch *gdbarch, struct value *func_type,
                  struct type *type, struct regcache *regcache,
                  gdb_byte *readbuf, const gdb_byte *writebuf)
 {

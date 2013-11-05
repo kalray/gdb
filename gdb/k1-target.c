@@ -41,7 +41,7 @@ static const char *simulation_vehicle;
 static pid_t server_pid;
 static int after_first_resume;
 
-const static struct inferior_data *k1_attached_inf_data;
+static const struct inferior_data *k1_attached_inf_data;
 
 struct inferior_data {
     const char *cluster;
@@ -143,7 +143,7 @@ k1_target_open (char *name, int from_tty)
 
 }
 
-static void k1_target_close (int quitting)
+static void k1_target_close ()
 {
 
 }

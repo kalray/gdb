@@ -172,7 +172,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       break;
     default:
       /* Core not supported */
-      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
+      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%lu)",
 			    info->mach);
       return -1;
   }
@@ -257,7 +257,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               int flags = op->format[i]->flags;
               int rightshift = op->format[i]->rightshift;
               unsigned long long value = 0;
-              int ch;
               int bf_idx;
 
 
