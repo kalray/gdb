@@ -114,7 +114,7 @@ k1_inferior_data (struct inferior *inf)
 
     res = inferior_data (inf, k1_inferior_data_token);
     if (!res) {
-        res = xcalloc (0, sizeof(res));
+        res = xcalloc (1, sizeof(res));
         set_inferior_data (inf, k1_inferior_data_token, res);
     }
 
