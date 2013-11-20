@@ -7,7 +7,7 @@ if $tracelevel then {
 set link-flags "-e _start"
 set debug-flags "" 
 #"-gdwarf2"
-set asm-flags "-mcore=k1io"
+set asm-flags ""
 
 set testfile "displaced"
 set binfile ${objdir}/${subdir}/${testfile}
