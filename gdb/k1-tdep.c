@@ -510,10 +510,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
 
             dsc->scall_jump = 1;
 	    regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
-            if (k1_arch () == K1_K1DP)
-                dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
-            else
-                dsc->dest = reg_value | 0xc;
+            dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
         } else if (strcmp ("loopdo", op->as_op) == 0
                    || strcmp ("loopgtz", op->as_op) == 0
                    || strcmp ("loopnez", op->as_op) == 0) {
@@ -522,6 +519,30 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
             dsc->rewrite_LE = 1;
             dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
             patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
+        } else if (strcmp ("get", op->as_op) == 0
+                   && op->format[1]->reg_nb != 64) {
+            /* get version with immediate */
+            if (extract_mds_bitfield (op, dsc->insn_words[0], 1) != (gdbarch_pc_regnum (gdbarch) - 64))
+                break;
+
+            dsc->branchy = 0;
+            dsc->rewrite_reg = 1;
+            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
+            dsc->dest = from;
+        } else if (strcmp ("get", op->as_op) == 0) {
+            ULONGEST reg;
+
+            /* indirect get instruction */
+            reg = extract_mds_bitfield (op, dsc->insn_words[0], 1);
+	    regcache_raw_read_unsigned (regs, reg, &reg);
+
+            if (reg != (gdbarch_pc_regnum (gdbarch) - 64))
+                break;
+
+            dsc->branchy = 0;
+            dsc->rewrite_reg = 1;
+            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
+            dsc->dest = from;
         } else {
             internal_error (__FILE__, __LINE__, "Unknwon BCU insn");
         }
@@ -620,7 +641,7 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
     /* Rewrite a patched reg unconditionnaly */
     if (dsc->rewrite_reg) {
         regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
-        if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
+        if (debug_displaced) printf_filtered ("displaced: rewrite %i with %x\n", dsc->reg, dsc->dest);
     }
 
     if (((ps >> 5)&1) /* HLE */) {
@@ -1149,6 +1170,8 @@ static void k1_look_for_insns (void)
             else if (strcmp ("loopgtz", op->as_op) == 0)
                 add_op (&branch_insns[i], op);
             else if (strcmp ("loopnez", op->as_op) == 0)
+                add_op (&branch_insns[i], op);
+            else if (strcmp ("get", op->as_op) == 0)
                 add_op (&branch_insns[i], op);
             ++op;
         }
