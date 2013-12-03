@@ -15276,15 +15276,11 @@ do
                                 tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     bfd_elf32_littlearm_vec)	tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
     bfd_elf32_littlearm_nacl_vec) tb="$tb elf32-arm.lo elf32.lo elf-nacl.lo elf-vxworks.lo $elf" ;;
-    bfd_elf32_littlelx_vec)     tb="$tb elf32-lx.lo elf32.lo $elf $ipa" ;;
-    bfd_elf32_littlelx_linux_vec) tb="$tb elf32-lx-linux.lo elf32.lo $elf $ipa" ;;
     bfd_elf32_littlemips_vec) 	tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo" ;;
     bfd_elf32_littlemips_vxworks_vec)
 			 	tb="$tb elf32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo" ;;
     bfd_elf32_littlemoxie_vec)	tb="$tb elf32-moxie.lo elf32.lo $elf" ;;
     bfd_elf32_littlenios2_vec)	tb="$tb elf32-nios2.lo elf32.lo $elf" ;;
-    bfd_elf32_lx_vec)           tb="$tb elf32-lx.lo elf32.lo $elf $ipa" ;;
-    bfd_elf32_lx_linux_vec)    tb="$tb elf32-lx-linux.lo elf32.lo $elf $ipa" ;;
     bfd_elf32_m32c_vec)         tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
     bfd_elf32_m32r_vec)		tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
     bfd_elf32_m32rle_vec)       tb="$tb elf32-m32r.lo elf32.lo $elf" ;;

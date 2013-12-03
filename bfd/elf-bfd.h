@@ -197,14 +197,6 @@ struct elf_link_hash_entry
   /* Symbol is a unique global symbol.  */
   unsigned int unique_global : 1;
 
-#ifdef IPA_LINK
-  /* Symbol was marked as having their address taken.  */
-  unsigned int address_taken : 1;
-
-  /* The internal index ipa has for this symbol */
-  long ipa_indx;
-#endif
-
   /* String table index in .dynstr if this is a dynamic symbol.  */
   unsigned long dynstr_index;
 
@@ -421,7 +413,6 @@ enum elf_target_id
   IA64_ELF_DATA,
   K1_ELF_DATA,
   LM32_ELF_DATA,
-  LX_ELF_DATA,
   M32R_ELF_DATA,
   M68HC11_ELF_DATA,
   M68K_ELF_DATA,

@@ -167,8 +167,6 @@ TARGET_LIBOPCODES_CFILES = \
 	lm32-ibld.c \
 	lm32-opc.c \
 	lm32-opinst.c \
-	lx-opc.c \
-	lx-dis.c \
 	m10200-dis.c \
 	m10200-opc.c \
 	m10300-dis.c \

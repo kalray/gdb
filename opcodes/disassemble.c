@@ -51,7 +51,6 @@
 #define ARCH_iq2000
 #define ARCH_k1
 #define ARCH_lm32
-#define ARCH_lx
 #define ARCH_m32c
 #define ARCH_m32r
 #define ARCH_m68hc11
@@ -257,18 +256,6 @@ disassembler (abfd)
     case bfd_arch_lm32:
       disassemble = print_insn_lm32;
       break;
-#endif
-#ifdef ARCH_lx 
-    case bfd_arch_lx:
-      if (bfd_big_endian (abfd))
-        {
-          disassemble = print_insn_big_lx;
-        }
-      else
-        {
-          disassemble = print_insn_little_lx;
-        }
-      break; 
 #endif
 #ifdef ARCH_m32r
     case bfd_arch_m32r:

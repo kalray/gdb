@@ -77,7 +77,6 @@
 #define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
 #define ELFOSABI_ARM	     97	/* ARM */
 #define ELFOSABI_STANDALONE 255	/* Standalone (embedded) application */
-#define ELFOSABI_OS21  64       /* OS 21 */
 
 #define EI_ABIVERSION	8	/* ABI version */
 
@@ -413,9 +412,6 @@
 
 /* Kalray K1 */
 #define EM_K1                   0x1337
-
-#define EM_LX 0x64      
-#define EM_LX_OLD  0x1064
 
 /* Values for e_version.  */
 

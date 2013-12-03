@@ -125,7 +125,7 @@ am__objects_1 = archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo \
 	opncls.lo reloc.lo section.lo syms.lo targets.lo hash.lo \
 	linker.lo srec.lo binary.lo tekhex.lo ihex.lo stabs.lo \
 	stab-syms.lo merge.lo dwarf2.lo simple.lo compress.lo \
-	verilog.lo ipa_bfd.lo
+	verilog.lo
 am_libbfd_la_OBJECTS = $(am__objects_1)
 libbfd_la_OBJECTS = $(am_libbfd_la_OBJECTS)
 libbfd_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -373,7 +373,7 @@ BFD32_LIBS = \
 	format.lo init.lo libbfd.lo opncls.lo reloc.lo \
 	section.lo syms.lo targets.lo hash.lo linker.lo \
 	srec.lo binary.lo tekhex.lo ihex.lo stabs.lo stab-syms.lo \
-	merge.lo dwarf2.lo simple.lo compress.lo verilog.lo ipa_bfd.lo
+	merge.lo dwarf2.lo simple.lo compress.lo verilog.lo
 
 BFD64_LIBS = archive64.lo
 BFD32_LIBS_CFILES = \
@@ -382,7 +382,7 @@ BFD32_LIBS_CFILES = \
 	format.c init.c libbfd.c opncls.c reloc.c \
 	section.c syms.c targets.c hash.c linker.c \
 	srec.c binary.c tekhex.c ihex.c stabs.c stab-syms.c \
-	merge.c dwarf2.c simple.c compress.c verilog.c ipa_bfd.c
+	merge.c dwarf2.c simple.c compress.c verilog.c
 
 BFD64_LIBS_CFILES = archive64.c
 
@@ -419,7 +419,6 @@ ALL_MACHINES = \
 	cpu-iq2000.lo \
 	cpu-k1.lo \
 	cpu-lm32.lo \
-	cpu-lx.lo \
 	cpu-m10200.lo \
 	cpu-m10300.lo \
 	cpu-m32c.lo \
@@ -640,7 +639,6 @@ BFD32_BACKENDS = \
 	elf32-iq2000.lo \
 	elf32-k1.lo \
 	elf32-lm32.lo \
-	elf32-lx.lo \
 	elf32-m32c.lo \
 	elf32-m32r.lo \
 	elf32-m68hc11.lo \
@@ -1088,7 +1086,7 @@ SOURCE_HFILES = \
 	libnlm.h liboasys.h libpei.h libxcoff.h mach-o.h \
 	netbsd.h nlm-target.h nlmcode.h nlmswap.h ns32k.h \
 	pef.h pef-traceback.h peicode.h som.h version.h \
-	vms.h xsym.h ipa_bfd.h
+	vms.h xsym.h
 
 BUILD_HFILES = \
 	bfdver.h elf32-target.h elf64-target.h targmatch.h bfd_stdint.h
@@ -1514,7 +1512,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ieee.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ihex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/init.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipa_bfd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irix-core.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libbfd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linker.Plo@am__quote@

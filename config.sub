@@ -268,7 +268,6 @@ case $basic_machine in
 	| k1 \
 	| le32 | le64 \
 	| lm32 \
-        | lx \
 	| m32c | m32r | m32rle | m68000 | m68k | m88k \
 	| maxq | mb | microblaze | microblazeel | mcore | mep | metag \
 	| mips | mipsbe | mipseb | mipsel | mipsle \
