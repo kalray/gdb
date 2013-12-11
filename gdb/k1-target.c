@@ -175,17 +175,27 @@ mppa_threads_extra_info (struct thread_info *tp)
 
 void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
-    char tar_remote_cmd[] = "target extended-remote :        ";
+    const char tar_remote_str[] = "target extended-remote";
     int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
-    char *cmd_port;
     int print_thread_events_save = print_thread_events;
+    char *host, *port, *tar_remote_cmd;
 
-    parse_pid_to_attach (args);
+    port = strchr (args, ':');
+    if (port) {
+        *port = 0;
+        port++;
+        host = args;
+    } else {
+        port = args;
+        host = "";
+    }
+
+    tar_remote_cmd = alloca (strlen(host) + strlen(port) + strlen(tar_remote_str) + 4);
+    parse_pid_to_attach (port);
 
     print_thread_events = 0;
-    cmd_port = strchr(tar_remote_cmd, ':');
-    sprintf (cmd_port + 1, "%s", args);
+    sprintf (tar_remote_cmd, "%s %s:%s", tar_remote_str, host, port);
 
     /* Load the real debug target by issuing 'target remote'. Of
        course things aren't that simple because it's not meant to be
