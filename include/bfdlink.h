@@ -155,7 +155,6 @@ struct bfd_link_hash_entry
 	  bfd_size_type size;	/* Common symbol size.  */
 	} c;
     } u;
-
 };
 
 /* This is the link hash table.  It is a derived class of

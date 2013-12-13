@@ -4249,6 +4249,12 @@ fi
 
 
 
+cat >>confdefs.h <<_ACEOF
+#define KALRAY_VERSION "$KALRAY_VERSION"
+_ACEOF
+
+
+
 # Check whether --with-lib-path was given.
 if test "${with_lib_path+set}" = set; then :
   withval=$with_lib_path; LIB_PATH=$withval
@@ -16201,6 +16207,7 @@ do_compare="$gcc_cv_prog_cmp_skip"
 
 
 . ${srcdir}/configure.host
+
 
 
 

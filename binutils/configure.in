@@ -29,6 +29,8 @@ BFD_VERSION=`${srcdir}/../bfd/configure --version | sed -n -e '1s,.* ,,p'`
 changequote([,])dnl
 AM_INIT_AUTOMAKE(binutils, ${BFD_VERSION})
 
+AC_DEFINE_UNQUOTED(KALRAY_VERSION, "$KALRAY_VERSION", [The Kalray tools version.])
+
 AC_PROG_CC
 AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS

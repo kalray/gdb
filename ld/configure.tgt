@@ -368,6 +368,11 @@ ip2k-*-elf)		targ_emul=elf32ip2k
 			;;
 iq2000-*-elf)           targ_emul=elf32iq2000 ; targ_extra_emuls="elf32iq10"
 			;;
+k1-*-linux*)            targ_emul=elf32k1_linux
+			targ_extra_emuls="elf32k1"
+			;;
+k1-*-*)			targ_emul=elf32k1; targ_extra_emuls="elf32k1_linux"
+			;;
 lm32-*-*linux*)         targ_emul=elf32lm32fd ;;
 lm32-*-*)               targ_emul=elf32lm32 ; targ_extra_emuls="elf32lm32fd"
                         ;;
