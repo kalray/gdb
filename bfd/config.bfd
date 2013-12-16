@@ -102,6 +102,7 @@ fido*)		 targ_archs=bfd_m68k_arch ;;
 hppa*)		 targ_archs=bfd_hppa_arch ;;
 i[3-7]86)	 targ_archs=bfd_i386_arch ;;
 i370)		 targ_archs=bfd_i370_arch ;;
+k1nsim)      targ_archs=bfd_i386_arch ;;
 lm32)	         targ_archs=bfd_lm32_arch ;;
 m6811*|m68hc11*) targ_archs="bfd_m68hc11_arch bfd_m68hc12_arch bfd_m9s12x_arch bfd_m9s12xg_arch" ;;
 m6812*|m68hc12*) targ_archs="bfd_m68hc12_arch bfd_m68hc11_arch bfd_m9s12x_arch bfd_m9s12xg_arch" ;;
@@ -792,6 +793,11 @@ case "${targ}" in
   k1-*-*)
     targ_defvec=bfd_elf32_k1_vec
     targ_selvecs=bfd_elf32_k1_linux_vec
+    ;;
+
+  k1nsim-*-*)
+    targ_defvec=bfd_elf32_i386_vec
+    targ_selvecs=i386coff_vec
     ;;
 
   lm32-*-elf | lm32-*-rtems*)

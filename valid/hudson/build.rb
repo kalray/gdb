@@ -4,7 +4,7 @@ $LOAD_PATH.push('metabuild/lib')
 require 'metabuild'
 include Metabuild
 
-options = Options.new({ "target"        => "k1",
+options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "clone"         => ".",
                         "cores"          => ["none", "List of family cores."],
                         "processor"     => "processor",
@@ -95,6 +95,17 @@ when "k1"
   else
     raise "Unknown variant #{variant}"
   end
+when "k1nsim"
+  build_target = "k1nsim-#{variant}"
+  program_prefix += "#{variant}-" if variant != "elf"
+  if(variant == "linux") then
+    sysroot_option = "--with-sysroot="+options["sysroot"]
+  end
+  if(cores == "none") then
+    cores = "k1dp,k1io"
+  end
+  family_prefix = "#{processor_path}/#{arch}-family"
+  mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
 else 
   raise "Unknown Target #{arch}"
 end

@@ -438,6 +438,7 @@ changequote([,])dnl
       i386-*-aout)	emulation="i386aout" ;;
       i386-*-coff)	emulation="i386coff" ;;
       i386-*-elf)	emulation="i386elf" ;;
+      k1nsim-*-*)	emulation="i386elf" ;;
 
       # Always all formats.  The first stated emulation becomes the default.
       cris-*-*aout*)	emulation="crisaout criself" ;;
@@ -451,7 +452,7 @@ done
 # Turn on all targets if possible
 if test ${all_targets} = "yes"; then
   case ${target_cpu_type} in
-  i386)
+  i386 | k1nsim)
     case ${obj_format} in
     aout)
       emulations="$emulations i386coff i386elf"
@@ -524,6 +525,7 @@ case ${obj_format} in
   coff)
     case ${target_cpu_type} in
       i386) AC_DEFINE(I386COFF, 1, [Using i386 COFF?]) ;;
+      #k1nsim) AC_DEFINE(I386COFF, 1, [Using i386 COFF?]) ;;
       m68k) AC_DEFINE(M68KCOFF, 1, [Using m68k COFF?]) ;;
       m88k) AC_DEFINE(M88KCOFF, 1, [Using m88k COFF?]) ;;
       x86_64) AC_DEFINE(I386COFF, 1, [Using i386 COFF?]) ;;

@@ -373,6 +373,8 @@ k1-*-linux*)            targ_emul=elf32k1_linux
 			;;
 k1-*-*)			targ_emul=elf32k1; targ_extra_emuls="elf32k1_linux"
 			;;
+k1nsim-*-*)			targ_emul=elf_i386 ; 
+			;;
 lm32-*-*linux*)         targ_emul=elf32lm32fd ;;
 lm32-*-*)               targ_emul=elf32lm32 ; targ_extra_emuls="elf32lm32fd"
                         ;;

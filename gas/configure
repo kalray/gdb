@@ -11945,6 +11945,7 @@ for this_target in $target $canon_targets ; do
 
     targ=${this_target}
     . ${srcdir}/configure.tgt
+#AC_MSG_ERROR(BEGIN: obj_format=${obj_format} - fmt=${fmt} - ${cpu_type}-${vendor}-${os})
 
     case ${target_cpu} in
       crisv32)
@@ -12275,6 +12276,7 @@ _ACEOF
       i386-*-aout)	emulation="i386aout" ;;
       i386-*-coff)	emulation="i386coff" ;;
       i386-*-elf)	emulation="i386elf" ;;
+      k1nsim-*-*)	emulation="i386elf" ;;
 
       # Always all formats.  The first stated emulation becomes the default.
       cris-*-*aout*)	emulation="crisaout criself" ;;
@@ -12288,7 +12290,7 @@ done
 # Turn on all targets if possible
 if test ${all_targets} = "yes"; then
   case ${target_cpu_type} in
-  i386)
+  i386 | k1nsim)
     case ${obj_format} in
     aout)
       emulations="$emulations i386coff i386elf"
@@ -12362,6 +12364,7 @@ case ${obj_format} in
       i386)
 $as_echo "#define I386COFF 1" >>confdefs.h
  ;;
+      #k1nsim) AC_DEFINE(I386COFF, 1, [Using i386 COFF?]) ;;
       m68k)
 $as_echo "#define M68KCOFF 1" >>confdefs.h
  ;;

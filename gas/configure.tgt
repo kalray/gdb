@@ -64,6 +64,7 @@ case ${cpu} in
   ia64)			cpu_type=ia64 ;;
   ip2k)			cpu_type=ip2k endian=big ;;
   iq2000)		cpu_type=iq2000 endian=big ;;
+  k1nsim)		cpu_type=i386 arch=i386;;
   lm32)			cpu_type=lm32 ;;
   m32c)			cpu_type=m32c endian=little ;;
   m32r)			cpu_type=m32r endian=big ;;
@@ -253,6 +254,7 @@ case ${generic_target} in
   i386-*-mach*)				fmt=aout em=mach ;;
   i386-*-msdos*)			fmt=aout ;;
   i386-*-moss*)				fmt=elf ;;
+  i386-*-nodeos*)			fmt=elf ;;
   i386-*-pe)				fmt=coff em=pe ;;
   i386-*-cygwin*)
    case ${cpu} in
@@ -287,6 +289,7 @@ case ${generic_target} in
   iq2000-*-elf)				fmt=elf ;;
 
   k1-*-*)         		        fmt=elf ;;
+  k1nsim-*-*)               fmt=elf ;;
 
   lm32-*-*)				fmt=elf ;;
 
