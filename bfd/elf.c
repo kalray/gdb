@@ -1890,8 +1890,12 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	   its relocations are of the REL or RELA variety.  */
 	if (hdr->sh_size != 0)
 	  {
-	    if (hdr->sh_type == SHT_RELA)
-	      target_sect->use_rela_p = 1;
+            /* if (hdr->sh_type == SHT_RELA) */
+            /*     target_sect->use_rela_p = 1; */
+            /* We want to support both REL and RELA. The default
+               use_rela_p value will be 1 as this is the default for
+               our target. Let the reloc section type override this */
+            target_sect->use_rela_p = hdr->sh_type == SHT_RELA;
 	  }
 	abfd->flags |= HAS_RELOC;
 	return TRUE;

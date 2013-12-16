@@ -148,6 +148,7 @@ TARGET_CPU_CFILES = \
 	config/tc-i960.c \
 	config/tc-ip2k.c \
 	config/tc-iq2000.c \
+	config/tc-k1.c \
 	config/tc-lm32.c \
 	config/tc-m32c.c \
 	config/tc-m32r.c \
@@ -220,6 +221,7 @@ TARGET_CPU_HFILES = \
 	config/tc-i960.h \
 	config/tc-ip2k.h \
 	config/tc-iq2000.h \
+	config/tc-k1.h \
 	config/tc-lm32.h \
 	config/tc-m32c.h \
 	config/tc-m32r.h \
@@ -381,7 +383,7 @@ INCDIR = $(BASEDIR)/include
 # subdirectory rather than in the source directory.
 AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(srcdir)/config \
 	-I$(INCDIR) -I$(srcdir)/.. -I$(BFDDIR) @INCINTL@ \
-	-DLOCALEDIR="\"$(datadir)/locale\""
+	-DLOCALEDIR="\"$(datadir)/locale\"" -I $(FAMDIR)/BE/GBU/$(ARCH)/include
 
 # How to link with both our special library facilities
 # and the system's installed libraries.

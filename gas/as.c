@@ -40,6 +40,10 @@
 #include "dw2gencfi.h"
 #include "bfdver.h"
 
+#ifndef KALRAY_VERSION
+#define KALRAY_VERSION "Unknown"
+#endif
+
 #ifdef HAVE_ITBL_CPU
 #include "itbl-ops.h"
 #else
@@ -222,6 +226,7 @@ print_version_id (void)
 
   fprintf (stderr, _("GNU assembler version %s (%s) using BFD version %s\n"),
 	   VERSION, TARGET_ALIAS, BFD_VERSION_STRING);
+  fprintf (stderr, "Kalray assembler version %s\n", KALRAY_VERSION);
 }
 
 static void
@@ -626,6 +631,7 @@ parse_args (int * pargc, char *** pargv)
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
+	  printf ("Kalray assembler version %s\n", KALRAY_VERSION);
 	  printf (_("Copyright 2013 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\

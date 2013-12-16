@@ -46,7 +46,6 @@
 #include "elf-bfd.h"
 
 #include "elf/reloc-macros.h"
-#include <stdio.h>
 
 
 typedef union {
@@ -178,6 +177,9 @@ START_RELOC_NUMBERS (elf_k1_reloc_type)
         RELOC_NUMBER(R_K1_GOT, 28)
         RELOC_NUMBER(R_K1_10_GPREL, 29)
         RELOC_NUMBER(R_K1_16_GPREL, 30)
+        RELOC_NUMBER(R_K1_COPY, 31)
+        RELOC_NUMBER(R_K1_JMP_SLOT, 32)
+        RELOC_NUMBER(R_K1_RELATIVE, 33)
   END_RELOC_NUMBERS (R_K1_max)
 
 #endif

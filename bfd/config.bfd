@@ -784,8 +784,14 @@ case "${targ}" in
     targ_defvec=bfd_elf32_iq2000_vec
     ;;
 
+  k1-*-linux*)
+    targ_defvec=bfd_elf32_k1_linux_vec
+    targ_selvecs=bfd_elf32_k1_vec
+    ;;
+
   k1-*-*)
     targ_defvec=bfd_elf32_k1_vec
+    targ_selvecs=bfd_elf32_k1_linux_vec
     ;;
 
   lm32-*-elf | lm32-*-rtems*)
@@ -797,7 +803,7 @@ case "${targ}" in
     targ_defvec=bfd_elf32_lm32fdpic_vec
     targ_selvecs=bfd_elf32_lm32_vec
     ;;
-    
+
   m32c-*-elf | m32c-*-rtems*)
     targ_defvec=bfd_elf32_m32c_vec
     ;;

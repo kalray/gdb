@@ -114,6 +114,7 @@
 #include "elf/i960.h"
 #include "elf/ia64.h"
 #include "elf/ip2k.h"
+#include "elf/k1.h"
 #include "elf/lm32.h"
 #include "elf/iq2000.h"
 #include "elf/m32c.h"
@@ -610,6 +611,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_IP2K:
     case EM_IP2K_OLD:
     case EM_IQ2000:
+    case EM_K1:
     case EM_LATTICEMICO32:
     case EM_M32C_OLD:
     case EM_M32C:
@@ -1190,6 +1192,10 @@ dump_relocations (FILE * file,
 	  break;
 	case EM_IA_64:
 	  rtype = elf_ia64_reloc_type (type);
+	  break;
+
+	case EM_K1:
+	  rtype = elf_k1_reloc_type (type);
 	  break;
 
 	case EM_CRIS:
@@ -2017,6 +2023,7 @@ get_machine_name (unsigned e_machine)
     case EM_IP2K_OLD:
     case EM_IP2K:		return "Ubicom IP2xxx 8-bit microcontrollers";
     case EM_IQ2000:       	return "Vitesse IQ2000";
+    case EM_K1:                 return "Kalray-1 Processor";
     case EM_XTENSA_OLD:
     case EM_XTENSA:		return "Tensilica Xtensa Processor";
     case EM_VIDEOCORE:		return "Alphamosaic VideoCore processor";
@@ -2816,6 +2823,15 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	case EM_TI_C6000:
 	  if ((e_flags & EF_C6000_REL))
 	    strcat (buf, ", relocatable module");
+      break;
+
+	case EM_K1:
+            if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_DP)
+                strcat (buf, ", k1dp");
+            else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_IO)
+                strcat (buf, ", k1io");
+            else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_V1)
+                strcat (buf, ", k1v1");
 	  break;
 
 	case EM_MSP430:
@@ -10227,6 +10243,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 2; /* R_IP2K_32.  */
     case EM_IQ2000:
       return reloc_type == 2; /* R_IQ2000_32.  */
+    case EM_K1:
+      return reloc_type == 2; /* R_K1_32.  */
     case EM_LATTICEMICO32:
       return reloc_type == 3; /* R_LM32_32.  */
     case EM_M32C_OLD:
@@ -10353,6 +10371,8 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
       return reloc_type == 3;  /* R_ARM_REL32 */
     case EM_MICROBLAZE:
       return reloc_type == 2;  /* R_MICROBLAZE_32_PCREL.  */
+    case EM_K1:
+        return reloc_type == 6;  /* R_K1_32_PCREL */
     case EM_PARISC:
       return reloc_type == 9;  /* R_PARISC_PCREL32.  */
     case EM_PPC:
@@ -10570,6 +10590,7 @@ is_none_reloc (unsigned int reloc_type)
     case EM_TILEPRO: /* R_TILEPRO_NONE.  */
     case EM_XC16X:
     case EM_C166:    /* R_XC16X_NONE.  */
+    case EM_K1:      /* R_K1_NONE.  */
     case EM_ALTERA_NIOS2: /* R_NIOS2_NONE.  */
     case EM_NIOS32:  /* R_NIOS_NONE.  */
       return reloc_type == 0;

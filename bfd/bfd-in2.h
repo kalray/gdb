@@ -2229,12 +2229,6 @@ enum bfd_architecture
   bfd_arch_lm32,      /* Lattice Mico32 */
 #define bfd_mach_lm32      1
   bfd_arch_microblaze,/* Xilinx MicroBlaze. */
-  bfd_arch_lx,        /* STMicroelectronics ST200 */
-#define bfd_mach_st210                0
-#define bfd_mach_st220                1
-#define bfd_mach_st230                2
-#define bfd_mach_st231                3
-#define bfd_mach_st240                4
   bfd_arch_k1,        /* Kalray k1 */
 #define bfd_mach_k1dp                 0
 #define bfd_mach_k1io                 1
@@ -5240,6 +5234,39 @@ value in a word.  The relocation is relative offset from  */
 the dynamic object into the runtime process image.  */
   BFD_RELOC_MICROBLAZE_COPY,
 
+/* Relocations for K1 processor  */
+  BFD_RELOC_K1_17_PCREL,
+  BFD_RELOC_K1_18_PCREL,
+  BFD_RELOC_K1_27_PCREL,
+  BFD_RELOC_K1_32_PCREL,
+  BFD_RELOC_K1_LO10,
+  BFD_RELOC_K1_HI22,
+  BFD_RELOC_K1_GPREL_LO10,
+  BFD_RELOC_K1_GPREL_HI22,
+  BFD_RELOC_K1_TPREL_LO10,
+  BFD_RELOC_K1_TPREL_HI22,
+  BFD_RELOC_K1_TPREL_32,
+  BFD_RELOC_K1_GOTOFF_LO10,
+  BFD_RELOC_K1_GOTOFF_HI22,
+  BFD_RELOC_K1_GOT_LO10,
+  BFD_RELOC_K1_GOT_HI22,
+  BFD_RELOC_K1_GLOB_DAT,
+  BFD_RELOC_K1_PLT_LO10,
+  BFD_RELOC_K1_PLT_HI22,
+  BFD_RELOC_K1_FUNCDESC,
+  BFD_RELOC_K1_FUNCDESC_GOT_LO10,
+  BFD_RELOC_K1_FUNCDESC_GOT_HI22,
+  BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10,
+  BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,
+  BFD_RELOC_K1_FUNCDESC_VALUE,
+  BFD_RELOC_K1_GOTOFF,
+  BFD_RELOC_K1_GOT,
+  BFD_RELOC_K1_10_GPREL,
+  BFD_RELOC_K1_16_GPREL,
+  BFD_RELOC_K1_COPY,
+  BFD_RELOC_K1_JMP_SLOT,
+  BFD_RELOC_K1_RELATIVE,
+
 /* Unused Reloc  */
   BFD_RELOC_MICROBLAZE_64_TLS,
 
@@ -5558,36 +5585,6 @@ assembler and not (currently) written to any object files.  */
 /* AArch64 pseudo relocation code to be used internally by the AArch64
 assembler and not (currently) written to any object files.  */
   BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC,
-
-/* Relocations for K1 processor  */
-  BFD_RELOC_K1_17_PCREL,
-  BFD_RELOC_K1_18_PCREL,
-  BFD_RELOC_K1_27_PCREL,
-  BFD_RELOC_K1_32_PCREL,
-  BFD_RELOC_K1_LO10,
-  BFD_RELOC_K1_HI22,
-  BFD_RELOC_K1_GPREL_LO10,
-  BFD_RELOC_K1_GPREL_HI22,
-  BFD_RELOC_K1_TPREL_LO10,
-  BFD_RELOC_K1_TPREL_HI22,
-  BFD_RELOC_K1_TPREL_32,
-  BFD_RELOC_K1_GOTOFF_LO10,
-  BFD_RELOC_K1_GOTOFF_HI22,
-  BFD_RELOC_K1_GOT_LO10,
-  BFD_RELOC_K1_GOT_HI22,
-  BFD_RELOC_K1_GLOB_DAT,
-  BFD_RELOC_K1_PLT_LO10,
-  BFD_RELOC_K1_PLT_HI22,
-  BFD_RELOC_K1_FUNCDESC,
-  BFD_RELOC_K1_FUNCDESC_GOT_LO10,
-  BFD_RELOC_K1_FUNCDESC_GOT_HI22,
-  BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10,
-  BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,
-  BFD_RELOC_K1_FUNCDESC_VALUE,
-  BFD_RELOC_K1_GOTOFF,
-  BFD_RELOC_K1_GOT,
-  BFD_RELOC_K1_10_GPREL,
-  BFD_RELOC_K1_16_GPREL,
 
 /* Tilera TILEPro Relocations.  */
   BFD_RELOC_TILEPRO_COPY,
