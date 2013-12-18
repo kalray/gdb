@@ -140,7 +140,7 @@ b.target("#{variant}_build") do
     end
     install_prefix = prefix
   
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --without-gdb --disable-werror  --prefix=#{install_prefix} --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)
