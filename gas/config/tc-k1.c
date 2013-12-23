@@ -2524,7 +2524,6 @@ arelent *
      * condition to write.c.
      */
     if (emit_all_relocs) {
-      fprintf(stderr, "->emit_all_relocs\n");
         /* Thierry Bidault: This is done later in write.c to fix a bug */
         /*       if (!((fixp->fx_addsy->bsym->flags & BSF_SECTION_SYM) == 0 */
         /*        && (!reloc->howto->partial_inplace */
