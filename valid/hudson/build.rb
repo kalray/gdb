@@ -124,7 +124,7 @@ b.target("#{variant}_build") do
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
       b.run(:cmd => "echo #{machine_type}" )
-      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-bugurl=no --prefix=#{prefix}")
+      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{prefix}")
       b.run(:cmd => "make clean")
       b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
@@ -140,7 +140,7 @@ b.target("#{variant}_build") do
     end
     install_prefix = prefix
   
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)
