@@ -28,7 +28,7 @@ repo = Git.new(gdb_clone,workspace)
 clean = CleanTarget.new("clean", repo, [])
 build = ParallelTarget.new("#{variant}_build", repo, [], [])
 build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [])
-install = Target.new("#{variant}_install", repo, [build], [])
+install = Target.new("#{variant}_install", repo, [build_valid], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build], [])
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
 
@@ -228,7 +228,7 @@ b.target("gdb_long_valid") do
     # Validation in the valid project
     b.create_goto_dir! build_path 
     # Build native, just to create the build directories
-    b.run("../configure")
+    b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
     b.run("make")
     cd "gdb/testsuite"
     b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH LD_LIBRARY_PATH=#{options["toolroot"]}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
