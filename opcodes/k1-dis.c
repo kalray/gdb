@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 #include "elf/k1.h"
 #include "opcode/k1.h"
 #include "dis-asm.h"
@@ -32,21 +33,24 @@ struct objdump_disasm_info {
 
 typedef struct {
     unsigned int insn[K1MAXCODEWORDS];
-    int len;
+    unsigned int len;
 } bundle_t;
 
 
-static unsigned int reordered_bundle[MAXBUNDLESIZE];
-static unsigned int bundle_ops[MAXBUNDLESIZE];
-static bundle_t bundle_insn[ISSUES];
-static unsigned int opcnt = 0;
-static unsigned int opindex = 0;
+/* static unsigned int reordered_bundle[MAXBUNDLESIZE]; */
 
-int reassemble_bundle(void);
-int reassemble_bundle(void) {
-    int i;
-    int insncnt = 0;
-    int immxcnt = 0;
+static unsigned int bundle_ops[MAXBUNDLESIZE];
+
+/* FIXME: Why was it declared with ISSUES size when indexed
+   by a variable that can count up to MAXBUNDLESIZE?
+static bundle_t bundle_insn[ISSUES];
+*/
+static bundle_t bundle_insn[MAXBUNDLESIZE];
+
+static int reassemble_bundle(unsigned int *opcnt) {
+    unsigned int i;
+    unsigned int insncnt = 0;
+    unsigned int immxcnt = 0;
     int seen[4];
     int real_alu = 0;
     unsigned int bundle_immx[MAXIMMX];
@@ -59,12 +63,14 @@ int reassemble_bundle(void) {
     }
 
     // First separate instructions and immx
-    for(i=0; i < opcnt; i++){
+    for(i=0; i < *opcnt; i++){
         if((GETSTEERING(bundle_ops[i]) == BCU_STEER) && (i > 0) && (immxcnt < MAXIMMX)){ // op has BCU steering and is not in slot 0 => IMMX
             bundle_immx[immxcnt] = bundle_ops[i];
             immxcnt++;
         } else {
             if((bundle_ops[i] & opxd_mask) == opxd_opcode){
+                if (insncnt == 0) /*something is wrong, probably we're in data section */
+                  return 1;
                 has_opxd = 1;
                 bundle_insn[insncnt - 1].insn[1] = bundle_ops[i];
                 bundle_insn[insncnt - 1].len = 2;
@@ -84,7 +90,7 @@ int reassemble_bundle(void) {
     if(  (seen[BCU_STEER] > (MAXIMMX + 1))  // One BCU and MAXIMMX is the maximum BCU_STEER authorized
        ||(seen[ALU_STEER] > 4)              // 2 ALU + 2 LITE
        || (seen[MAU_STEER] > 1)             // 1 MAU
-       || (seen[LSU_STEER] > 1)){           // 1 LSU
+       || (seen[LSU_STEER] > 1)){          // 1 LSU
         return 1;
     }
 
@@ -129,22 +135,24 @@ int reassemble_bundle(void) {
         }
     }
 
-    opcnt = insncnt;
+    *opcnt = insncnt;
     return 0;
 }
 
 
 int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
-  int i;
+  static unsigned int opindex = 0;
+  static unsigned int opcnt = 0;
   k1opc_t *op = NULL;             /* operation table index */
   bundle_t *insn;           /* the instruction       */
   int status;              /* temp                  */
   char *fmtp;
-  int ch;
   k1opc_t *opc_table = NULL;
-  k1_Register  *k1_registers = NULL;
   int          *k1_regfiles = NULL;
+  k1_Register  *k1_registers = NULL;
   int          *k1_dec_registers = NULL;
+  unsigned int  k1_max_registers = 0;
+  unsigned int  k1_max_dec_registers = 0;
   int readsofar = 0;
   int opt_pretty = 0;
   int found = 0;
@@ -160,14 +168,14 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   switch (info->mach) {
     case bfd_mach_k1dp:
       opc_table = k1dp_k1optab;
-      k1_registers = k1_k1dp_registers;
       k1_regfiles = k1_k1dp_regfiles;
+      k1_registers = k1_k1dp_registers;
       k1_dec_registers = k1_k1dp_dec_registers;
       break;
     case bfd_mach_k1io:
       opc_table = k1io_k1optab;
-      k1_registers = k1_k1io_registers;
       k1_regfiles = k1_k1io_regfiles;
+      k1_registers = k1_k1io_registers;
       k1_dec_registers = k1_k1io_dec_registers;
       break;
     default:
@@ -176,6 +184,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 			    info->mach);
       return -1;
   }
+
+  k1_max_registers = k1_regfiles[K1_REGFILE_REGISTERS];
+  k1_max_dec_registers = k1_regfiles[K1_REGFILE_DEC_REGISTERS];
 
   if (opc_table == NULL) {
       fprintf(stderr, "error: uninitialized opcode table\n");
@@ -196,6 +207,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   if(opindex == 0){
       opcnt = 0;
       do{
+          assert(opcnt < MAXBUNDLESIZE);
           status = (*info->read_memory_func) (memaddr + 4*opcnt, (bfd_byte*)(bundle_ops + opcnt), 4, info);
           if (status != 0){
               (*info->memory_error_func) (status, memaddr + 4*opcnt, info);
@@ -203,9 +215,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
           }
           opcnt++;
       } while (k1_parallel_fld(bundle_ops[opcnt-1]) && opcnt < MAXBUNDLESIZE);
-      invalid_bundle = reassemble_bundle();
+      invalid_bundle = reassemble_bundle(&opcnt);
   }
-
+  assert(opindex < MAXBUNDLESIZE);
   insn = &(bundle_insn[opindex]);
   readsofar = insn->len * 4;
   opindex++;
@@ -215,6 +227,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
+      unsigned int i;
+      int ch;
 
       if(invalid_bundle){
           break;
@@ -248,7 +262,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
           (*info->fprintf_func) (info->stream, "%s ", op->as_op);
 
           for (i = 0; op->format[i]; i++){
-     
               k1_bitfield_t *bf = op->format[i]->bfield;
               int bf_nb = op->format[i]->bitfields;
               int width = op->format[i]->width;
@@ -257,7 +270,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               int flags = op->format[i]->flags;
               int rightshift = op->format[i]->rightshift;
               unsigned long long value = 0;
-              int ch;
               int bf_idx;
 
 
@@ -286,22 +298,31 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   value = (value ^ signbit) - signbit;
               }
 
-              switch (type){
+#define K1_PRINT_REG(regfile,value)					\
+ if(k1_regfiles[regfile]+value < k1_max_dec_registers) {	        \
+   (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[regfile]+value]].name); \
+ }									\
+ else {									\
+   (*info->fprintf_func) (info->stream, "$??");				\
+ }
+
+
+              switch (type) {
                   case RegClass_k1_singleReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_GRF]+value]].name);
+ 		      K1_PRINT_REG(K1_REGFILE_DEC_GRF,value)
                       break;
                   case RegClass_k1_pairedReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_PRF]+value]].name);
+ 		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
                   case RegClass_k1_systemReg:
                   case RegClass_k1_nopcpsReg:
                   case RegClass_k1_onlypsReg:
                   case RegClass_k1_onlyraReg:
                   case RegClass_k1_onlyfxReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_SRF]+value]].name);
+ 		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:
-                      (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[K1_REGFILE_DEC_NRF]+value]].name);
+ 		      K1_PRINT_REG(K1_REGFILE_DEC_NRF,value)
                       break;
 
                   case Immediate_k1_signed32:
@@ -344,7 +365,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
                       exit(-1);
               };
-     
+
+#undef K1_PRINT_REG     
           }
 
           /* Print trailing characters in the format string, if any */
@@ -357,6 +379,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
           break;
       }
   }
+
+
 
   if (found && (opindex == opcnt)){
       (*info->fprintf_func) (info->stream, ";;\n");

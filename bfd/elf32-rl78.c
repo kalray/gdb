@@ -1,6 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -425,7 +424,7 @@ rl78_elf_relocate_section
   dynobj = elf_hash_table (info)->dynobj;
   splt = NULL;
   if (dynobj != NULL)
-    splt = bfd_get_section_by_name (dynobj, ".plt");
+    splt = bfd_get_linker_section (dynobj, ".plt");
 
   for (rel = relocs; rel < relend; rel ++)
     {
@@ -471,9 +470,9 @@ rl78_elf_relocate_section
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	{
@@ -778,6 +777,8 @@ rl78_elf_relocate_section
 			       + sec->output_section->vma
 			       + sec->output_offset
 			       + rel->r_addend);
+	      else if (h->root.type == bfd_link_hash_undefweak)
+		RL78_STACK_PUSH (0);
 	      else
 		_bfd_error_handler (_("Warning: RL78_SYM reloc with an unknown symbol"));
 	    }
@@ -808,10 +809,13 @@ rl78_elf_relocate_section
 	  {
 	    int32_t tmp1, tmp2;
 
-	    RL78_STACK_POP (tmp2);
-	    RL78_STACK_POP (tmp1);
-	    tmp2 -= tmp1;
-	    RL78_STACK_PUSH (tmp2);
+	    /* For the expression "A - B", the assembler pushes A,
+	       then B, then OPSUB.  So the first op we pop is B, not
+	       A.  */
+	    RL78_STACK_POP (tmp2);	/* B */
+	    RL78_STACK_POP (tmp1);	/* A */
+	    tmp1 -= tmp2;		/* A - B */
+	    RL78_STACK_PUSH (tmp1);
 	  }
 	  break;
 
@@ -1016,15 +1020,34 @@ static bfd_boolean
 rl78_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 {
   flagword new_flags;
+  flagword old_flags;
   bfd_boolean error = FALSE;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
+  old_flags = elf_elfheader (obfd)->e_flags;
 
   if (!elf_flags_init (obfd))
     {
       /* First call, no flags set.  */
       elf_flags_init (obfd) = TRUE;
       elf_elfheader (obfd)->e_flags = new_flags;
+    }
+  else if (old_flags != new_flags)
+    {
+      flagword changed_flags = old_flags ^ new_flags;
+
+      if (changed_flags & E_FLAG_RL78_G10)
+	{
+	  (*_bfd_error_handler)
+	    (_("RL78/G10 ABI conflict: cannot link G10 and non-G10 objects together"));
+
+	  if (old_flags & E_FLAG_RL78_G10)
+	    (*_bfd_error_handler) (_("- %s is G10, %s is not"),
+				   bfd_get_filename (obfd), bfd_get_filename (ibfd));
+	  else
+	    (*_bfd_error_handler) (_("- %s is G10, %s is not"),
+				   bfd_get_filename (ibfd), bfd_get_filename (obfd));
+	}
     }
 
   return !error;
@@ -1043,6 +1066,9 @@ rl78_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 
   flags = elf_elfheader (abfd)->e_flags;
   fprintf (file, _("private flags = 0x%lx:"), (long) flags);
+
+  if (flags & E_FLAG_RL78_G10)
+    fprintf (file, _(" [G10]"));
 
   fputc ('\n', file);
   return TRUE;
@@ -1066,96 +1092,12 @@ rl78_elf_object_p (bfd * abfd)
 			     elf32_rl78_machine (abfd));
   return TRUE;
 }
- 
-#ifdef DEBUG
-void
-rl78_dump_symtab (bfd * abfd, void * internal_syms, void * external_syms)
-{
-  size_t locsymcount;
-  Elf_Internal_Sym * isymbuf;
-  Elf_Internal_Sym * isymend;
-  Elf_Internal_Sym * isym;
-  Elf_Internal_Shdr * symtab_hdr;
-  bfd_boolean free_internal = FALSE, free_external = FALSE;
-  char * st_info_str;
-  char * st_info_stb_str;
-  char * st_other_str;
-  char * st_shndx_str;
-
-  if (! internal_syms)
-    {
-      internal_syms = bfd_malloc (1000);
-      free_internal = 1;
-    }
-  if (! external_syms)
-    {
-      external_syms = bfd_malloc (1000);
-      free_external = 1;
-    }
-
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  locsymcount = symtab_hdr->sh_size / get_elf_backend_data (abfd)->s->sizeof_sym;
-  if (free_internal)
-    isymbuf = bfd_elf_get_elf_syms (abfd, symtab_hdr,
-				    symtab_hdr->sh_info, 0,
-				    internal_syms, external_syms, NULL);
-  else
-    isymbuf = internal_syms;
-  isymend = isymbuf + locsymcount;
-
-  for (isym = isymbuf ; isym < isymend ; isym++)
-    {
-      switch (ELF_ST_TYPE (isym->st_info))
-	{
-	case STT_FUNC: st_info_str = "STT_FUNC";
-	case STT_SECTION: st_info_str = "STT_SECTION";
-	case STT_FILE: st_info_str = "STT_FILE";
-	case STT_OBJECT: st_info_str = "STT_OBJECT";
-	case STT_TLS: st_info_str = "STT_TLS";
-	default: st_info_str = "";
-	}
-      switch (ELF_ST_BIND (isym->st_info))
-	{
-	case STB_LOCAL: st_info_stb_str = "STB_LOCAL";
-	case STB_GLOBAL: st_info_stb_str = "STB_GLOBAL";
-	default: st_info_stb_str = "";
-	}
-      switch (ELF_ST_VISIBILITY (isym->st_other))
-	{
-	case STV_DEFAULT: st_other_str = "STV_DEFAULT";
-	case STV_INTERNAL: st_other_str = "STV_INTERNAL";
-	case STV_PROTECTED: st_other_str = "STV_PROTECTED";
-	default: st_other_str = "";
-	}
-      switch (isym->st_shndx)
-	{
-	case SHN_ABS: st_shndx_str = "SHN_ABS";
-	case SHN_COMMON: st_shndx_str = "SHN_COMMON";
-	case SHN_UNDEF: st_shndx_str = "SHN_UNDEF";
-	default: st_shndx_str = "";
-	}
-    }
-  if (free_internal)
-    free (internal_syms);
-  if (free_external)
-    free (external_syms);
-}
-
-char *
-rl78_get_reloc (long reloc)
-{
-  if (0 <= reloc && reloc < R_RL78_max)
-    return rl78_elf_howto_table[reloc].name;
-  return "";
-}
-#endif /* DEBUG */
-
 
 /* support PLT for 16-bit references to 24-bit functions.  */
 
 /* We support 16-bit pointers to code above 64k by generating a thunk
    below 64k containing a JMP instruction to the final address.  */
- 
+
 static bfd_boolean
 rl78_elf_check_relocs
     (bfd *                     abfd,
@@ -1173,7 +1115,7 @@ rl78_elf_check_relocs
 
   if (info->relocatable)
     return TRUE;
- 
+
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
   local_plt_offsets = elf_local_got_offsets (abfd);
@@ -1186,7 +1128,7 @@ rl78_elf_check_relocs
       struct elf_link_hash_entry *h;
       unsigned long r_symndx;
       bfd_vma *offset;
- 
+
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
         h = NULL;
@@ -1196,8 +1138,12 @@ rl78_elf_check_relocs
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
- 
+
       switch (ELF32_R_TYPE (rel->r_info))
         {
 	  /* This relocation describes a 16-bit pointer to a function.
@@ -1208,13 +1154,14 @@ rl78_elf_check_relocs
 	    elf_hash_table (info)->dynobj = dynobj = abfd;
 	  if (splt == NULL)
 	    {
-	      splt = bfd_get_section_by_name (dynobj, ".plt");
+	      splt = bfd_get_linker_section (dynobj, ".plt");
 	      if (splt == NULL)
 		{
 		  flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
 				    | SEC_IN_MEMORY | SEC_LINKER_CREATED
 				    | SEC_READONLY | SEC_CODE);
-		  splt = bfd_make_section_with_flags (dynobj, ".plt", flags);
+		  splt = bfd_make_section_anyway_with_flags (dynobj, ".plt",
+							     flags);
 		  if (splt == NULL
 		      || ! bfd_set_section_alignment (dynobj, splt, 1))
 		    return FALSE;
@@ -1250,7 +1197,7 @@ rl78_elf_check_relocs
 	  break;
         }
     }
- 
+
   return TRUE;
 }
 
@@ -1263,24 +1210,28 @@ rl78_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
   bfd *dynobj;
   asection *splt;
 
+  if (!elf_hash_table (info)->dynamic_sections_created)
+    return TRUE;
+
   /* As an extra sanity check, verify that all plt entries have been
      filled in.  However, relaxing might have changed the relocs so
      that some plt entries don't get filled in, so we have to skip
      this check if we're relaxing.  Unfortunately, check_relocs is
      called before relaxation.  */
 
-  if (info->relax_trip > 0)
+  if (info->relax_trip > 0) 
+    return TRUE;
+
+  if ((dynobj = elf_hash_table (info)->dynobj) != NULL
+      && (splt = bfd_get_linker_section (dynobj, ".plt")) != NULL)
     {
-      if ((dynobj = elf_hash_table (info)->dynobj) != NULL
-	  && (splt = bfd_get_section_by_name (dynobj, ".plt")) != NULL)
+      bfd_byte *contents = splt->contents;
+      unsigned int i, size = splt->size;
+
+      for (i = 0; i < size; i += 4)
 	{
-	  bfd_byte *contents = splt->contents;
-	  unsigned int i, size = splt->size;
-	  for (i = 0; i < size; i += 4)
-	    {
-	      unsigned int x = bfd_get_32 (dynobj, contents + i);
-	      BFD_ASSERT (x != 0);
-	    }
+	  unsigned int x = bfd_get_32 (dynobj, contents + i);
+	  BFD_ASSERT (x != 0);
 	}
     }
 
@@ -1301,7 +1252,7 @@ rl78_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (dynobj == NULL)
     return TRUE;
 
-  splt = bfd_get_section_by_name (dynobj, ".plt");
+  splt = bfd_get_linker_section (dynobj, ".plt");
   BFD_ASSERT (splt != NULL);
 
   splt->contents = (bfd_byte *) bfd_zalloc (dynobj, splt->size);
@@ -1325,8 +1276,7 @@ struct relax_plt_data
 };
 
 static bfd_boolean
-rl78_relax_plt_check (struct elf_link_hash_entry *h,
-                      PTR xdata)
+rl78_relax_plt_check (struct elf_link_hash_entry *h, void * xdata)
 {
   struct relax_plt_data *data = (struct relax_plt_data *) xdata;
 
@@ -1357,8 +1307,7 @@ rl78_relax_plt_check (struct elf_link_hash_entry *h,
    previously had a plt entry, give it a new entry offset.  */
 
 static bfd_boolean
-rl78_relax_plt_realloc (struct elf_link_hash_entry *h,
-                        PTR xdata)
+rl78_relax_plt_realloc (struct elf_link_hash_entry *h, void * xdata)
 {
   bfd_vma *entry = (bfd_vma *) xdata;
 
@@ -1732,7 +1681,7 @@ rl78_offset_for_reloc (bfd *                    abfd,
 	  if (ssec)
 	    {
 	      if ((ssec->flags & SEC_MERGE)
-		  && ssec->sec_info_type == ELF_INFO_TYPE_MERGE)
+		  && ssec->sec_info_type == SEC_INFO_TYPE_MERGE)
 		symval = _bfd_merged_section_offset (abfd, & ssec,
 						     elf_section_data (ssec)->sec_info,
 						     symval);
@@ -1972,7 +1921,7 @@ struct {
   { 0x71, 0x58, 0x53, 0x5b },	/* CLR1	!addr16.0 */
   { 0x71, 0x68, 0x63, 0x6b },	/* CLR1	!addr16.0 */
   { 0x71, 0x78, 0x73, 0x7b },	/* CLR1	!addr16.0 */
-  
+
   { -1, -1, -1, -1 }
 };
 
@@ -2055,14 +2004,14 @@ rl78_elf_relax_section
       if (shndx_buf == NULL)
 	goto error_return;
       if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0
-	  || bfd_bread ((PTR) shndx_buf, amt, abfd) != amt)
+	  || bfd_bread (shndx_buf, amt, abfd) != amt)
 	goto error_return;
       shndx_hdr->contents = (bfd_byte *) shndx_buf;
     }
 
   /* Get a copy of the native relocations.  */
   internal_relocs = (_bfd_elf_link_read_relocs
-		     (abfd, sec, (PTR) NULL, (Elf_Internal_Rela *) NULL,
+		     (abfd, sec, NULL, (Elf_Internal_Rela *) NULL,
 		      link_info->keep_memory));
   if (internal_relocs == NULL)
     goto error_return;
@@ -2188,6 +2137,7 @@ rl78_elf_relax_section
 	+ srel->r_offset;
 
 #define GET_RELOC \
+      BFD_ASSERT (nrelocs > 0);			       \
       symval = OFFSET_FOR_RELOC (srel, &srel, &scale); \
       pcrel = symval - pc + srel->r_addend; \
       nrelocs --;
@@ -2228,7 +2178,13 @@ rl78_elf_relax_section
 
       if (irel->r_addend & RL78_RELAXA_BRA)
 	{
-	  GET_RELOC;
+	  /* SKIP opcodes that skip non-branches will have a relax tag
+	     but no corresponding symbol to relax against; we just
+	     skip those.  */
+	  if (irel->r_addend & RL78_RELAXA_RNUM)
+	    {
+	      GET_RELOC;
+	    }
 
 	  switch (insn[0])
 	    {
@@ -2297,6 +2253,9 @@ rl78_elf_relax_section
 	      /* For SKIP/BR, we change the BR opcode and delete the
 		 SKIP.  That way, we don't have to find and change the
 		 relocation for the BR.  */
+	      /* Note that, for the case where we're skipping some
+		 other insn, we have no "other" reloc but that's safe
+		 here anyway. */
 	      switch (insn[1])
 		{
 		case 0xc8: /* SKC */
@@ -2349,7 +2308,7 @@ rl78_elf_relax_section
 		}
 	      break;
 	    }
-	  
+
 	}
 
       if (irel->r_addend & RL78_RELAXA_ADDR16)
@@ -2415,7 +2374,7 @@ rl78_elf_relax_section
 		      insn[poff] = relax_addr16[idx].insn_for_saddr;
 		      SNIP (poff+2, 1, R_RL78_RH_SADDR);
 		    }
-		
+
 		}
 	    }
 	}

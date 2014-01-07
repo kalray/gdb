@@ -3,7 +3,7 @@ load_generic_config "unix"
 process_multilib_options ""
 
 # The default compiler for this target.
-set_board_info compiler "k1cc -DPROTOTYPES"
+set_board_info compiler "k1cc"
 
 # Can't do input (or output) in the current gdbserver.
 set_board_info gdb,noinferiorio 1

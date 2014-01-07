@@ -54,6 +54,13 @@ struct foo4
 };
 struct foo4 foo4;
 
+struct foo5
+{
+  struct { int x; } *p;
+};
+
+struct foo5 *nullptr;
+
 void marker1 ()
 {
 }
@@ -90,9 +97,10 @@ void recurser (x) int  x;
 void
 func2 ()
 {
-  int  local_a;
+  int  local_a = 0;
   static int  static_b;
 
+  /* func2 breakpoint here */
   ival5++;
   local_a = ival5;
   static_b = local_a;

@@ -1,6 +1,6 @@
 /* linker.c -- BFD linker routines
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support
 
@@ -26,16 +26,6 @@
 #include "libbfd.h"
 #include "bfdlink.h"
 #include "genlink.h"
-
-#ifdef IPA_LINK
-#pragma weak ipa_is_whirl
-
-extern bfd_boolean
-ipa_is_whirl(bfd *);
-
-#include "ipa_bfd.h" /* [CL] needed for symbol_comdat() */
-#include "elf-bfd.h" /* [CL] needed to support comdat: need to get ipa_indx */
-#endif
 
 /*
 SECTION
@@ -447,19 +437,6 @@ static bfd_boolean default_indirect_link_order
   (bfd *, struct bfd_link_info *, asection *, struct bfd_link_order *,
    bfd_boolean);
 
-#ifdef IPA_LINK
-
-/* The strong version is defined in ld. */
-#if 1
-bfd_boolean is_ipa = 0;
-#pragma weak is_ipa
-#else
-bfd_boolean __is_ipa = 0;
-#pragma weak is_ipa = __is_ipa
-#endif
-
-#endif
-
 /* The link hash table structure is defined in bfdlink.h.  It provides
    a base hash table which the backend specific hash tables are built
    upon.  */
@@ -833,6 +810,7 @@ void
 _bfd_generic_link_just_syms (asection *sec,
 			     struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
+  sec->sec_info_type = SEC_INFO_TYPE_JUST_SYMS;
   sec->output_section = bfd_abs_section_ptr;
   sec->output_offset = sec->vma;
 }
@@ -1694,28 +1672,11 @@ _bfd_generic_link_add_one_symbol (struct bfd_link_info *info,
 
 	    /* Define a symbol.  */
 	    oldtype = h->type;
-#ifdef IPA_LINK
-	    /* [CL] if we have DEFW from a non-Whirl symbol, don't
-	       propagate the weak attribute to the reference:
-	       otherwise, it makes the compiler generate a weak
-	       reference, which is not resolved by the final link
-	       stage */
-	    if (is_ipa && (action == DEFW) && !ipa_is_whirl(abfd)) {
-	      action = DEF;
-	    }
-#endif
 	    if (action == DEFW)
 	      h->type = bfd_link_hash_defweak;
 	    else
 	      h->type = bfd_link_hash_defined;
 	    h->u.def.section = section;
-#ifdef IPA_LINK
-            /* ipa_set_def_bfd(abfd,h); */
-            if (is_ipa) {
-	      /*              h->u.def.section = (asection *)abfd;*/
-	      h->ipa_bfd = abfd;
-	    }
-#endif
 	    h->u.def.value = value;
 
 	    /* If we have been asked to, we act like collect2 and
@@ -2398,6 +2359,12 @@ _bfd_generic_link_output_symbols (bfd *output_bfd,
 	  else
 	    output = FALSE;
 	}
+      else if (sym->flags == 0
+	       && (sym->section->owner->flags & BFD_PLUGIN) != 0)
+	/* LTO doesn't set symbol information.  We get here with the
+	   generic linker for a symbol that was "common" but no longer
+	   needs to be global.  */
+	output = FALSE;
       else
 	abort ();
 
@@ -2704,7 +2671,14 @@ default_data_link_order (bfd *abfd,
 
   fill = link_order->u.data.contents;
   fill_size = link_order->u.data.size;
-  if (fill_size != 0 && fill_size < size)
+  if (fill_size == 0)
+    {
+      fill = abfd->arch_info->fill (size, bfd_big_endian (abfd),
+				    (sec->flags & SEC_CODE) != 0);
+      if (fill == NULL)
+	return FALSE;
+    }
+  else if (fill_size < size)
     {
       bfd_byte *p;
       fill = (bfd_byte *) bfd_malloc (size);
@@ -2945,7 +2919,7 @@ DESCRIPTION
 /* Sections marked with the SEC_LINK_ONCE flag should only be linked
    once into the output.  This routine checks each section, and
    arrange to discard it if a section of the same name has already
-   been linked.  This code assumes that all relevant sections have the 
+   been linked.  This code assumes that all relevant sections have the
    SEC_LINK_ONCE flag set; that is, it does not depend solely upon the
    section name.  bfd_section_already_linked is called via
    bfd_map_over_sections.  */
@@ -3163,6 +3137,76 @@ _bfd_generic_section_already_linked (bfd *abfd ATTRIBUTE_UNUSED,
   return FALSE;
 }
 
+/* Choose a neighbouring section to S in OBFD that will be output, or
+   the absolute section if ADDR is out of bounds of the neighbours.  */
+
+asection *
+_bfd_nearby_section (bfd *obfd, asection *s, bfd_vma addr)
+{
+  asection *next, *prev, *best;
+
+  /* Find preceding kept section.  */
+  for (prev = s->prev; prev != NULL; prev = prev->prev)
+    if ((prev->flags & SEC_EXCLUDE) == 0
+	&& !bfd_section_removed_from_list (obfd, prev))
+      break;
+
+  /* Find following kept section.  Start at prev->next because
+     other sections may have been added after S was removed.  */
+  if (s->prev != NULL)
+    next = s->prev->next;
+  else
+    next = s->owner->sections;
+  for (; next != NULL; next = next->next)
+    if ((next->flags & SEC_EXCLUDE) == 0
+	&& !bfd_section_removed_from_list (obfd, next))
+      break;
+
+  /* Choose better of two sections, based on flags.  The idea
+     is to choose a section that will be in the same segment
+     as S would have been if it was kept.  */
+  best = next;
+  if (prev == NULL)
+    {
+      if (next == NULL)
+	best = bfd_abs_section_ptr;
+    }
+  else if (next == NULL)
+    best = prev;
+  else if (((prev->flags ^ next->flags)
+	    & (SEC_ALLOC | SEC_THREAD_LOCAL | SEC_LOAD)) != 0)
+    {
+      if (((next->flags ^ s->flags)
+	   & (SEC_ALLOC | SEC_THREAD_LOCAL)) != 0
+	  /* We prefer to choose a loaded section.  Section S
+	     doesn't have SEC_LOAD set (it being excluded, that
+	     part of the flag processing didn't happen) so we
+	     can't compare that flag to those of NEXT and PREV.  */
+	  || ((prev->flags & SEC_LOAD) != 0
+	      && (next->flags & SEC_LOAD) == 0))
+	best = prev;
+    }
+  else if (((prev->flags ^ next->flags) & SEC_READONLY) != 0)
+    {
+      if (((next->flags ^ s->flags) & SEC_READONLY) != 0)
+	best = prev;
+    }
+  else if (((prev->flags ^ next->flags) & SEC_CODE) != 0)
+    {
+      if (((next->flags ^ s->flags) & SEC_CODE) != 0)
+	best = prev;
+    }
+  else
+    {
+      /* Flags we care about are the same.  Prefer the following
+	 section if that will result in a positive valued sym.  */
+      if (addr < next->vma)
+	best = prev;
+    }
+
+  return best;
+}
+
 /* Convert symbols in excluded output sections to use a kept section.  */
 
 static bfd_boolean
@@ -3179,68 +3223,10 @@ fix_syms (struct bfd_link_hash_entry *h, void *data)
 	  && (s->output_section->flags & SEC_EXCLUDE) != 0
 	  && bfd_section_removed_from_list (obfd, s->output_section))
 	{
-	  asection *op, *op1;
+	  asection *op;
 
 	  h->u.def.value += s->output_offset + s->output_section->vma;
-
-	  /* Find preceding kept section.  */
-	  for (op1 = s->output_section->prev; op1 != NULL; op1 = op1->prev)
-	    if ((op1->flags & SEC_EXCLUDE) == 0
-		&& !bfd_section_removed_from_list (obfd, op1))
-	      break;
-
-	  /* Find following kept section.  Start at prev->next because
-	     other sections may have been added after S was removed.  */
-	  if (s->output_section->prev != NULL)
-	    op = s->output_section->prev->next;
-	  else
-	    op = s->output_section->owner->sections;
-	  for (; op != NULL; op = op->next)
-	    if ((op->flags & SEC_EXCLUDE) == 0
-		&& !bfd_section_removed_from_list (obfd, op))
-	      break;
-
-	  /* Choose better of two sections, based on flags.  The idea
-	     is to choose a section that will be in the same segment
-	     as S would have been if it was kept.  */
-	  if (op1 == NULL)
-	    {
-	      if (op == NULL)
-		op = bfd_abs_section_ptr;
-	    }
-	  else if (op == NULL)
-	    op = op1;
-	  else if (((op1->flags ^ op->flags)
-		    & (SEC_ALLOC | SEC_THREAD_LOCAL | SEC_LOAD)) != 0)
-	    {
-	      if (((op->flags ^ s->flags)
-		   & (SEC_ALLOC | SEC_THREAD_LOCAL)) != 0
-		  /* We prefer to choose a loaded section.  Section S
-		     doesn't have SEC_LOAD set (it being excluded, that
-		     part of the flag processing didn't happen) so we
-		     can't compare that flag to those of OP and OP1.  */
-		  || ((op1->flags & SEC_LOAD) != 0
-		      && (op->flags & SEC_LOAD) == 0))
-		op = op1;
-	    }
-	  else if (((op1->flags ^ op->flags) & SEC_READONLY) != 0)
-	    {
-	      if (((op->flags ^ s->flags) & SEC_READONLY) != 0)
-		op = op1;
-	    }
-	  else if (((op1->flags ^ op->flags) & SEC_CODE) != 0)
-	    {
-	      if (((op->flags ^ s->flags) & SEC_CODE) != 0)
-		op = op1;
-	    }
-	  else
-	    {
-	      /* Flags we care about are the same.  Prefer the following
-		 section if that will result in a positive valued sym.  */
-	      if (h->u.def.value < op->vma)
-		op = op1;
-	    }
-
+	  op = _bfd_nearby_section (obfd, s->output_section, h->u.def.value);
 	  h->u.def.value -= op->vma;
 	  h->u.def.section = op;
 	}
@@ -3316,7 +3302,7 @@ bfd_generic_define_common_symbol (bfd *output_bfd,
 
 /*
 FUNCTION
-	bfd_find_version_for_sym 
+	bfd_find_version_for_sym
 
 SYNOPSIS
 	struct bfd_elf_version_tree * bfd_find_version_for_sym
