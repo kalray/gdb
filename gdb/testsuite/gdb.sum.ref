@@ -679,7 +679,7 @@ Running ../../../gdb/testsuite/gdb.mi/mi-syn-frame.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-pending.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-watch-nonstop.exp ...
 PASS: gdb.mi/mi-watch-nonstop.exp: breakpoint at main
-PASS: gdb.mi/mi-watch-nonstop.exp: mi runto main
+FAIL: gdb.mi/mi-watch-nonstop.exp: mi runto main
 ERROR: Got interactive prompt.
 UNRESOLVED: gdb.mi/mi-watch-nonstop.exp: break-watch operation
 FAIL: gdb.mi/mi-watch-nonstop.exp: resume 1
@@ -1215,7 +1215,7 @@ PASS: gdb.mi/mi-stepi.exp: next-instruction at main 2
 PASS: gdb.mi/mi-stepi.exp: next-instruction at main 2 (line check)
 Running ../../../gdb/testsuite/gdb.mi/mi-ns-stale-regcache.exp ...
 PASS: gdb.mi/mi-ns-stale-regcache.exp: breakpoint at main
-PASS: gdb.mi/mi-ns-stale-regcache.exp: mi runto main
+FAIL: gdb.mi/mi-ns-stale-regcache.exp: mi runto main
 FAIL: gdb.mi/mi-ns-stale-regcache.exp: resume thread
 Running ../../../gdb/testsuite/gdb.mi/mi-watch.exp ...
 PASS: gdb.mi/mi-watch.exp: hw watchpoints toggle (1)
@@ -7153,8 +7153,8 @@ PASS: gdb.base/frame-args.exp: frame 1 with print frame-arguments set to none
 Running ../../../gdb/testsuite/gdb.base/async-shell.exp ...
 PASS: gdb.base/async-shell.exp: set target-async on
 PASS: gdb.base/async-shell.exp: set non-stop on
-PASS: gdb.base/async-shell.exp: run &
-PASS: gdb.base/async-shell.exp: shell echo foo
+FAIL: gdb.base/async-shell.exp: run &
+FAIL: gdb.base/async-shell.exp: shell echo foo
 FAIL: gdb.base/async-shell.exp: interrupt (GDB internal error)
 FAIL: gdb.base/async-shell.exp: process stopped (timeout)
 Running ../../../gdb/testsuite/gdb.base/gcore.exp ...
