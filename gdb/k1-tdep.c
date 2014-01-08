@@ -40,7 +40,9 @@
 
 struct k1_inferior_data {
     CORE_ADDR step_pad_area;
+    CORE_ADDR step_pad_area_lma;
     int has_step_pad_area_p;
+    int has_step_pad_area_lma_p;
 };
 
 static const struct k1_inferior_data *_k1_inferior_data;
@@ -114,7 +116,7 @@ k1_inferior_data (struct inferior *inf)
 
     res = inferior_data (inf, k1_inferior_data_token);
     if (!res) {
-        res = xcalloc (1, sizeof(res));
+        res = xcalloc (1, sizeof(*res));
         set_inferior_data (inf, k1_inferior_data_token, res);
     }
 
@@ -380,7 +382,10 @@ k1_inferior_created (struct target_ops *target, int from_tty)
 static CORE_ADDR
 k1_displaced_step_location (struct gdbarch *gdbarch)
 {
+    struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
     struct k1_inferior_data *data = k1_inferior_data (current_inferior());
+    struct regcache *regs = get_current_regcache ();
+    uint32_t ps;
 
     if (!data->has_step_pad_area_p) {
 	struct minimal_symbol *msym = lookup_minimal_symbol ("_debug_start", 
@@ -391,6 +396,22 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
 	    warning ("Step pad area is not 4-byte aligned.");
 	data->step_pad_area = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
         data->has_step_pad_area_p = 1;
+
+	msym = lookup_minimal_symbol ("_debug_start_lma", 
+							     NULL, NULL);
+	if (msym != NULL) {
+	    if (SYMBOL_VALUE_ADDRESS(msym) % 4)
+		warning ("Physical step pad area is not 4-byte aligned.");
+	    data->step_pad_area_lma = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+	    data->has_step_pad_area_lma_p = 1;
+	}
+    }
+
+    if (data->has_step_pad_area_lma_p) {
+	regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
+	/* MMU active ? */
+	if ((ps & (1 << 11)) == 0)
+	    return data->step_pad_area_lma;
     }
 
     return data->step_pad_area;
@@ -557,6 +578,7 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch,
 {
     struct displaced_step_closure *dsc
 	= xzalloc (sizeof (struct displaced_step_closure));
+    struct k1_inferior_data *data = k1_inferior_data (current_inferior());
 
     if (debug_displaced)
 	printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
@@ -578,6 +600,9 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch,
     if (((dsc->insn_words[0] >> 29) & 0x3) == 0)
 	patch_bcu_instruction (gdbarch, from, to, regs, dsc);
     store_unsigned_integer ((gdb_byte*)dsc->insn_words, 4, gdbarch_byte_order (gdbarch), dsc->insn_words[0]);
+
+    if (data->has_step_pad_area_lma_p && to == data->step_pad_area)
+	to = data->step_pad_area_lma;
 
     write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
     
