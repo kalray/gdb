@@ -1,4 +1,4 @@
-Test Run By xraynaud on Thu Nov 28 13:27:51 2013
+Test Run By xraynaud on Wed Jan  8 10:30:29 2014
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -803,8 +803,8 @@ UNSUPPORTED: gdb.mi/mi-pthreads.exp: Couldn't compile ../../../gdb/testsuite/gdb
 Running ../../../gdb/testsuite/gdb.mi/pr11022.exp ...
 Running ../../../gdb/testsuite/gdb.mi/gdb792.exp ...
 Running ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.exp ...
-gdb compile failed, ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.S: Assembler messages:
-../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.S:165: Fatal error: [md_apply_fix] unsupported relocation type
+gdb compile failed, /tmp/cckzuomn.s: Assembler messages:
+/tmp/cckzuomn.s: Fatal error: [md_apply_fix] unsupported relocation type
 Running ../../../gdb/testsuite/gdb.mi/mi-var-child.exp ...
 PASS: gdb.mi/mi-var-child.exp: breakpoint at do_children_tests
 PASS: gdb.mi/mi-var-child.exp: mi runto do_children_tests
@@ -7163,12 +7163,12 @@ PASS: gdb.base/gcore.exp: set breakpoint at terminal_func
 PASS: gdb.base/gcore.exp: continue to terminal_func
 UNSUPPORTED: gdb.base/gcore.exp: save a corefile
 Running ../../../gdb/testsuite/gdb.base/stack-checking.exp ...
-gdb compile failed, /tmp/cc54taaT.o: In function `medium_frame':
-/work1/xraynaud/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:35: undefined reference to `__stack_overflow_detected'
-/tmp/cc54taaT.o: In function `big_frame':
-/work1/xraynaud/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:45: undefined reference to `__stack_overflow_detected'
-/tmp/cc54taaT.o: In function `main':
-/work1/xraynaud/tools/gdb/k1_build/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:53: undefined reference to `__stack_overflow_detected'
+gdb compile failed, /tmp/ccPU61AN.o: In function `medium_frame':
+/work1/xraynaud/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:35: undefined reference to `__stack_overflow_detected'
+/tmp/ccPU61AN.o: In function `big_frame':
+/work1/xraynaud/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:45: undefined reference to `__stack_overflow_detected'
+/tmp/ccPU61AN.o: In function `main':
+/work1/xraynaud/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:53: undefined reference to `__stack_overflow_detected'
 collect2: error: ld returned 1 exit status
 UNTESTED: gdb.base/stack-checking.exp: stack-checking.exp
 Running ../../../gdb/testsuite/gdb.base/constvars.exp ...
@@ -9187,9 +9187,7 @@ FAIL: gdb.base/nodebug.exp: backtrace from inner in nodebug.exp
 PASS: gdb.base/nodebug.exp: p/c array_index("abcdef",2)
 FAIL: gdb.base/nodebug.exp: backtrace from middle in nodebug.exp
 Running ../../../gdb/testsuite/gdb.base/fullpath-expand.exp ...
-PASS: gdb.base/fullpath-expand.exp: rbreak XXX/fullpath-expand-func.c:func
-PASS: gdb.base/fullpath-expand.exp: list func
-PASS: gdb.base/fullpath-expand.exp: info source
+UNTESTED: gdb.base/fullpath-expand.exp: invalid realpath of fullpath-expand-func.c: result 1 output child process exited abnormally
 Running ../../../gdb/testsuite/gdb.base/info-macros.exp ...
 PASS: gdb.base/info-macros.exp: info macro -- -all
 PASS: gdb.base/info-macros.exp: info macro  -- -all
@@ -9356,13 +9354,13 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		8845
+# of expected passes		8842
 # of unexpected failures	35
 # of unexpected successes	1
 # of expected failures		12
 # of known failures		28
 # of unresolved testcases	1
-# of untested testcases		13
+# of untested testcases		14
 # of unsupported tests		25
-/work1/xraynaud/tools/gdb/k1_build/gdb/testsuite/../../gdb/gdb version  7.6.50.20131031-cvs -nw -nx -data-directory /work1/xraynaud/tools/gdb/k1_build/gdb/testsuite/../data-directory 
+/work1/xraynaud/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../../gdb/gdb version  7.6.50.20131031-cvs -nw -nx -data-directory /work1/xraynaud/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../data-directory 
 
