@@ -1,0 +1,56 @@
+2014-01-20  Alan Modra  <amodra@gmail.com>
+
+	* ld-scripts/pr14962-2.d,
+	* ld-scripts/pr14962-2.t: New test.
+	* ld-scripts/expr.exp: Run it.
+
+2014-01-15  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/ehdr_start-shared.d: New.
+	* ld-elf/ehdr_start-userdef.d: xfail frv.
+	* ld-elf/ehdr_start-weak.d: Likewise.
+	* ld-elf/ehdr_start.d: Likewise.
+
+2014-01-14  Vidya Praveen  <vidyapraveen@arm.com>
+
+	* lib/ld-lib.exp (default_ld_link): Remove support for ldflags.
+	(default_ld_simple_link): Likewise.
+
+2014-01-10  Alan Modra  <amodra@gmail.com>
+
+	* ld-x86-64/pr14207.d: Adjust.
+
+2014-01-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/binutils.exp (binutils_test): Check if GNU_RELRO segment
+	is generated.
+
+2014-01-09  Vidya Praveen  <vidyapraveen@arm.com>
+
+	* lib/ld-lib.exp (check_lto_shared_available): New check.
+	* ld-plugin/lto.exp: Use check_lto_shared_available.
+
+2014-01-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14207
+	PR ld/16322
+	PR binutils/16323
+	* ld-elf/pr16322.d: New file.
+	* ld-elf/pr16322.s: Likewise.
+
+	* ld-x86-64/pr14207.d: Expect PT_GNU_RELRO segment.
+
+For older changes see ChangeLog-2013
+
+Copyright (C) 2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
+version-control: never
+End:
