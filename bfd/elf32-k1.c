@@ -5365,7 +5365,7 @@ k1_bfd_elf_action_discarded (asection *sec)
 
 #undef ELF_ARCH
 #define ELF_ARCH                             bfd_arch_k1
-#define ELF_MAXPAGESIZE                         0x1000
+#define ELF_MAXPAGESIZE                         0x4000
 
 #undef	elf32_bed
 #define	elf32_bed		elf32_k1_linux_bed
