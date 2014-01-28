@@ -178,6 +178,18 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_registers = k1_k1io_registers;
       k1_dec_registers = k1_k1io_dec_registers;
       break;
+	case bfd_mach_k1bdp:
+	  opc_table = k1bdp_k1optab;
+	  k1_regfiles = k1_k1bdp_regfiles;
+	  k1_registers = k1_k1bdp_registers;
+	  k1_dec_registers = k1_k1bdp_dec_registers;
+	  break;
+	case bfd_mach_k1bio:
+	  opc_table = k1bio_k1optab;
+	  k1_regfiles = k1_k1bio_regfiles;
+	  k1_registers = k1_k1bio_registers;
+	  k1_dec_registers = k1_k1bio_dec_registers;
+	  break;
     default:
       /* Core not supported */
       (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
@@ -306,6 +318,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
    (*info->fprintf_func) (info->stream, "$??");				\
  }
 
+#define SRF_REGCLASSES(core)                           \
+			case RegClass_ ## core ## _systemReg:      \
+			case RegClass_ ## core ##_nopcpsReg:       \
+			case RegClass_ ## core ## _onlypsReg:      \
+			case RegClass_ ## core ## _onlyraReg:      \
+			case RegClass_ ## core ## _onlyfxReg:
 
               switch (type) {
                   case RegClass_k1_singleReg:
@@ -314,11 +332,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1_pairedReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
-                  case RegClass_k1_systemReg:
-                  case RegClass_k1_nopcpsReg:
-                  case RegClass_k1_onlypsReg:
-                  case RegClass_k1_onlyraReg:
-                  case RegClass_k1_onlyfxReg:
+			  SRF_REGCLASSES(k1)
+				SRF_REGCLASSES(k1bdp)
+				SRF_REGCLASSES(k1bio)
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:
@@ -367,6 +383,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               };
 
 #undef K1_PRINT_REG     
+#undef SRF_REGCLASSES
           }
 
           /* Print trailing characters in the format string, if any */

@@ -69,27 +69,27 @@ when "k1"
     program_prefix += "#{variant}-"
     sysroot_option = "--with-sysroot="+options["sysroot"]
     if(cores == "none") then
-      cores = "k1dp,k1io"
+      cores = "k1dp,k1io.k1bdp,k1bio"
     end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "elf" then
     build_target = "k1-#{variant}"
     if(cores == "none") then
-      cores = "k1dp,k1io"
+      cores = "k1dp,k1io,k1bdp,k1bio"
     end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "rtems" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
     if(cores == "none") then
-      cores = "k1dp,k1io"
+      cores = "k1dp,k1io,k1bdp,k1bio"
     end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "nodeos" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
     if(cores == "none") then
-      cores = "k1dp,k1io"
+      cores = "k1dp,k1io,k1bdp,k1bio"
     end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   else
@@ -102,7 +102,7 @@ when "k1nsim"
     sysroot_option = "--with-sysroot="+options["sysroot"]
   end
   if(cores == "none") then
-    cores = "k1dp,k1io"
+    cores = "k1dp,k1io,k1bdp,k1bio"
   end
   family_prefix = "#{processor_path}/#{arch}-family"
   mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"

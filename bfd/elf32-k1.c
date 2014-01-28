@@ -10,9 +10,9 @@ static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-#define K1DP_K1IO
+#define K1DP_K1IO_K1BDP_K1BIO
 #include "elf32-k1.def"
-#undef K1DP_K1IO
+#undef K1DP_K1IO_K1BDP_K1BIO
 
 #define DEFAULT_STACK_SIZE 0x20000
 
@@ -969,6 +969,12 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
   case bfd_mach_k1io:
     fprintf (f, "\nMachine     = k1io\n");
     break;
+  case bfd_mach_k1bdp:
+	fprintf (f, "\nMachine     = k1bdp\n");
+	break;
+  case bfd_mach_k1bio:
+	fprintf (f, "\nMachine     = k1bio\n");
+	break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
   }
@@ -997,6 +1003,8 @@ elf_k1_final_write_processing (bfd *abfd,
     {
     case bfd_mach_k1dp:
     case bfd_mach_k1io:
+    case bfd_mach_k1bdp:
+    case bfd_mach_k1bio:
       val = mach;
       break;
     default:
@@ -1017,6 +1025,8 @@ elf_k1_object_p (bfd *abfd)
   switch (mach) {
     case bfd_mach_k1dp:
     case bfd_mach_k1io:
+    case bfd_mach_k1bdp:
+    case bfd_mach_k1bio:
       break;
     default:
       return FALSE;

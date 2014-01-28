@@ -878,16 +878,21 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	  return MATCH_NOT_FOUND;
 	}
 
+#define SRF_REGCLASSES(core)                           \
+	  case RegClass_ ## core ## _systemReg:                        \
+	  case RegClass_ ## core ##_nopcpsReg:                 \
+	  case RegClass_ ## core ## _onlypsReg:                        \
+	  case RegClass_ ## core ## _onlyraReg:                        \
+	  case RegClass_ ## core ## _onlyfxReg:
+
         switch (operand_type) {
             case RegClass_k1_singleReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_GRF)
             case RegClass_k1_pairedReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
-            case RegClass_k1_systemReg:
-            case RegClass_k1_nopcpsReg:
-            case RegClass_k1_onlypsReg:
-            case RegClass_k1_onlyraReg:
-            case RegClass_k1_onlyfxReg:
+			SRF_REGCLASSES(k1)
+			SRF_REGCLASSES(k1bdp)
+			SRF_REGCLASSES(k1bio)
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
@@ -948,6 +953,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 #undef IS_K1_REGFILE_SRF
 #undef IS_K1_REGFILE_NRF
 #undef MATCH_K1_REGFILE
+#undef SRF_REGCLASSES
 }
 
 /*
@@ -1977,6 +1983,12 @@ k1_set_cpu(void) {
   case ELF_K1_CORE_IO:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
     break;
+  case ELF_K1_CORE_B_DP:
+	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+	break;
+  case ELF_K1_CORE_B_IO:
+	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+	break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
   }
@@ -2854,6 +2866,10 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "abi-k1dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+		  { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+		  { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+		  { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+		  { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },

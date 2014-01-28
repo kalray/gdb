@@ -62,6 +62,9 @@ typedef union {
 #define ELF_K1_CORE_V1          (0x0<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_DP          (0x1<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_IO          (0x2<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_B           (0x4<<_ELF_K1_CORE_BIT)
+#define ELF_K1_CORE_B_DP        (ELF_K1_CORE_B | ELF_K1_CORE_DP)
+#define ELF_K1_CORE_B_IO        (ELF_K1_CORE_B | ELF_K1_CORE_IO)
 #define ELF_K1_CORE_UNDEF       (0x7<<_ELF_K1_CORE_BIT)
 #define _ELF_K1_CHECK_CORE(m) ((m&ELF_K1_CORE_MASK)==m)
 

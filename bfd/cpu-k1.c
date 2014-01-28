@@ -41,6 +41,8 @@ processors[] =
 {
   { bfd_mach_k1dp, "k1dp"  },
   { bfd_mach_k1io, "k1io"  },
+  { bfd_mach_k1bdp, "k1bdp"  },
+  { bfd_mach_k1bio, "k1bio"  },
 };
 
 static bfd_boolean
@@ -76,7 +78,9 @@ scan (const struct bfd_arch_info *info, const char *string)
 static const bfd_arch_info_type arch_info_struct[] =
 {
   N (bfd_mach_k1dp,      "k1dp",   FALSE, & arch_info_struct[1]),
-  N (bfd_mach_k1io,      "k1io",   FALSE, NULL),
+  N (bfd_mach_k1io,      "k1io",   FALSE, & arch_info_struct[2]),
+  N (bfd_mach_k1bdp,     "k1bdp",  FALSE, & arch_info_struct[3]),
+  N (bfd_mach_k1bio,     "k1bio",  FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =
