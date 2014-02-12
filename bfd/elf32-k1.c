@@ -5308,7 +5308,7 @@ k1_bfd_elf_action_discarded (asection *sec)
 
 #define ELF_TARGET_ID                           K1_ELF_DATA
 #define ELF_MACHINE_CODE                        EM_K1
-#define ELF_MAXPAGESIZE                         0x1000
+#define ELF_MAXPAGESIZE                         0x4000
 #define bfd_elf32_bfd_reloc_type_lookup         k1_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup         k1_reloc_name_lookup
 #define elf_info_to_howto                       k1_elf_info_to_howto
