@@ -3001,6 +3001,7 @@ k1_check_relocs (bfd * abfd,
       struct elf_link_hash_entry *h;
       int r_type = ELF32_R_TYPE (rel->r_info);
       Elf_Internal_Sym *sym;
+      const char *name = NULL;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
@@ -3015,6 +3016,13 @@ k1_check_relocs (bfd * abfd,
       else {
         sym = NULL;
         h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	struct elf_link_hash_entry * h2 = h;
+
+	while (h2->root.type == bfd_link_hash_indirect
+	       || h2->root.type == bfd_link_hash_warning)
+	  h2 = (struct elf_link_hash_entry *) h2->root.u.i.link;
+
+	name = h->root.root.string;
       }
 
       switch (r_type)
@@ -3036,6 +3044,21 @@ k1_check_relocs (bfd * abfd,
             return FALSE;
           break;
 #endif
+	case R_K1_LO10:
+	case R_K1_HI22:
+	  /*
+	   * if some reloc uses special symbol named "_gp_disp" and
+	   * GOT not yet created, create it
+	   */
+	  if (htab->sgot == NULL && name != NULL && strcmp (name, "_gp_disp") == 0){
+            if (htab->elf.dynobj == NULL)
+	      htab->elf.dynobj = dynobj = abfd;
+	    if (!k1_create_got_section (dynobj, info)){
+	      return FALSE;
+	    }
+	  }
+	  break;
+
         case R_K1_GOTOFF:
         case R_K1_GOTOFF_HI22:
         case R_K1_GOTOFF_LO10:
