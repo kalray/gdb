@@ -891,8 +891,10 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1_pairedReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
+#ifdef K1B_UNMERGED
 			SRF_REGCLASSES(k1bdp)
 			SRF_REGCLASSES(k1bio)
+#endif//K1B_UNMERGED
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
@@ -912,6 +914,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 }
             case Immediate_k1_signed10:
             case Immediate_k1_signed16:
+            case Immediate_k1_signed27:
             case Immediate_k1_extension22:
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcoff17:
@@ -1088,6 +1091,12 @@ insert_operand(k1insn_t * insn,
                         break;
                     case Immediate_k1_pcrel27:
                         insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
+                        insn->fixup[0].exp = *arg;
+                        insn->fixup[0].where = 0;
+                        insn->nfixups = 1;
+                        break;
+                    case Immediate_k1_signed27:
+                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* FIXME K1B */
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
