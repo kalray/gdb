@@ -832,31 +832,20 @@ static bfd_vma elf32_k1_gp_base (bfd *output_bfd, struct bfd_link_info *info)
 
 /* The same in PIC */
 #define PLT_ENTRY_SIZE          16
-#define PLT_SMALL_ENTRY_SIZE     8
+#define PLT_SMALL_ENTRY_SIZE     16
 
 static const bfd_vma plt_small_entry[PLT_ENTRY_SIZE] =
   {
-     /* lw $r9 = 0[$r14]   ;; */      0x2424000e,
-     /* igoto $r9          ;; */      0x00114009,
-                                      0x00000000,
-                                      0x00000000,
+      /* get $r14 = $pc     ;; */      0x00700380,
+      /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
+                                       0x00000000,
+      /* igoto $r9          ;; */      0x00114009,
   };
-
-
 
 /* PLT templates for (FD)PIC ABI */
 
-// static const bfd_vma plt_min_entry[PLT_MIN_ENTRY_SIZE / 4] =
-//   {
-//     /* goto .PLT0             */ 0x31000000,
-//     /* mov $r0.9=0            */ 0x08000240,
-//     /* imml 0              ;; */ 0x95000000,
-//     /* nop                 ;; */ NOP_BUNDLE
-//   };
-
 static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
   {
-    /* add $r20 = $r14, 0 ;;  0x6250000e, */
     /* add $r14 = $r14, 0 ;; */ 0xe238000e,
                                 0x00000000,
     /* lw $r9 = 0[$r14]   ;; */ 0x2424000e,
@@ -4692,11 +4681,12 @@ k1_finish_dynamic_symbol (bfd * output_bfd,
       bfd_vma got_offset;
       Elf_Internal_Rela rel;
       bfd_byte *loc;
-      asection *plt, *gotplt, *relplt;
+      asection *plt, *gotplt, *relplt, *got;
 
       plt = htab->splt;
       gotplt = htab->sgotplt;
       relplt = htab->srelplt;
+      got = htab->sgot;
 
       /* This symbol has an entry in the procedure linkage table.  Set
          it up.  */
@@ -4720,14 +4710,22 @@ k1_finish_dynamic_symbol (bfd * output_bfd,
         {
           int i;
           const bfd_vma *template = plt_small_entry;
+          bfd_vma pcgotoffset = got->output_section->vma + gotplt->output_offset +got_offset;
+
+          pcgotoffset -= plt->output_section->vma + plt->output_offset + h->plt.offset;
+
           BFD_ASSERT(plt->contents != NULL);
           for (i = 0; i < (PLT_SMALL_ENTRY_SIZE / 4); ++i)
             bfd_put_32(output_bfd, template[i], plt->contents + h->plt.offset + (4*i));
           
           _bfd_final_link_relocate (elf32_k1_howto_table + R_K1_LO10,
                                 output_bfd, plt,
-                                plt->contents + h->plt.offset,
-                                0, got_offset, 0);
+                                plt->contents + h->plt.offset + 4,
+                                0, pcgotoffset, 0);
+          _bfd_final_link_relocate (elf32_k1_howto_table + R_K1_HI22,
+                                output_bfd, plt,
+                                plt->contents + h->plt.offset + 8,
+                                0, pcgotoffset, 0);
          }
 
       /* Fill in the entry in the global offset table.  */
