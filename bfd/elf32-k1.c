@@ -3467,6 +3467,29 @@ k1_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   return TRUE;
 }
 
+/* Return address for Ith PLT stub in section PLT, for relocation REL
+ or (bfd_vma) -1 if it should not be included. */
+
+static bfd_vma
+k1_plt_sym_val (bfd_vma i, const asection *plt,
+	 const arelent *rel ATTRIBUTE_UNUSED)
+{
+    if (rel->howto->type != R_K1_JMP_SLOT)
+        return (bfd_vma)-1;
+
+    return plt->vma + 16 + i*16;
+}
+
+static bfd_vma
+k1_fdpic_plt_sym_val (bfd_vma i, const asection *plt,
+	 const arelent *rel ATTRIBUTE_UNUSED)
+{
+    if (rel->howto->type != R_K1_FUNCDESC_VALUE)
+        return (bfd_vma)-1;
+
+    return plt->vma + plt->size - (PLT_FULL_ENTRY_SIZE * (i + 1));
+}
+
 static bfd_boolean
 k1fdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 {
@@ -5376,6 +5399,11 @@ k1_bfd_elf_action_discarded (asection *sec)
 #define elf_backend_may_use_rel_p       1
 #define elf_backend_may_use_rela_p      1
 
+#undef elf_backend_plt_sym_val
+#define elf_backend_plt_sym_val	 k1_plt_sym_val
+
+#define elf_backend_rela_plts_and_copies_p 1
+
 #include "elf32-target.h"
 
 #undef TARGET_LITTLE_SYM
@@ -5430,9 +5458,14 @@ k1_bfd_elf_action_discarded (asection *sec)
 #undef elf_backend_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol       k1fdpic_finish_dynamic_symbol
 
-
 #undef elf_backend_discard_info
 #define elf_backend_discard_info                k1fdpic_elf_discard_info
+
+#undef elf_backend_plt_sym_val
+#define elf_backend_plt_sym_val	 k1_fdpic_plt_sym_val
+
+#undef elf_backend_relplt_name
+#define elf_backend_relplt_name ".rel.dyn"
 
 #include "elf32-target.h"
 
