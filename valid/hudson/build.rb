@@ -164,7 +164,7 @@ b.target("#{variant}_install") do
   if( variant == "gdb")
     if( arch == "k1" )
       cd build_path
-      b.run(:cmd => "make install FAMDIR=#{family_prefix} ARCH=#{arch}")
+      b.run(:cmd => "make install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
     end
   else
     cd build_path
