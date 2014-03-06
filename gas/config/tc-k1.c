@@ -891,10 +891,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1_pairedReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
-#ifdef K1B_UNMERGED
 			SRF_REGCLASSES(k1bdp)
 			SRF_REGCLASSES(k1bio)
-#endif//K1B_UNMERGED
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
