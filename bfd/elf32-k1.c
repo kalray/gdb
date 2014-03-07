@@ -2614,8 +2614,7 @@ k1_gc_sweep_hook (bfd * abfd,
                     {
                       /* We don't need the .got entry any more.  */
                       sgot->size -= 4;
-                      if (info->shared)
-                        srelgot->size -= sizeof (Elf32_External_Rela);
+                      srelgot->size -= sizeof (Elf32_External_Rela);
                     }
                 }
             }
@@ -3658,8 +3657,7 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
       s = htab->sgot;
       h->got.offset = s->size;
       s->size += 4;
-      if (info->shared)
-        htab->srelgot->size += sizeof (Elf32_External_Rela);
+      htab->srelgot->size += sizeof (Elf32_External_Rela);
     }
   else
     h->got.offset = (bfd_vma) -1;
