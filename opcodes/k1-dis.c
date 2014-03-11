@@ -333,10 +333,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
 			  SRF_REGCLASSES(k1)
-#ifdef K1B_UNMERGED
 				SRF_REGCLASSES(k1bdp)
 				SRF_REGCLASSES(k1bio)
-#endif//K1B_UNMERGED
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:
