@@ -333,8 +333,10 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
 			  SRF_REGCLASSES(k1)
+#ifdef K1B_UNMERGED
 				SRF_REGCLASSES(k1bdp)
 				SRF_REGCLASSES(k1bio)
+#endif//K1B_UNMERGED
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:
@@ -351,6 +353,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1_flagmask2:
                   case Immediate_k1_signed10:
                   case Immediate_k1_signed16:
+                  case Immediate_k1_signed27:
                   case Immediate_k1_brknumber:
                   case Immediate_k1_sysnumber:
                   case Immediate_k1_unsigned5:
