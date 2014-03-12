@@ -1950,6 +1950,7 @@ k1fdpic_elf_relocate_section
 	  }
       }
 
+
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
@@ -2023,15 +2024,19 @@ k1fdpic_elf_relocate_section
 	case R_K1_GLOB_DAT:
         case R_K1_27_PCREL:
           if (!IS_FDPIC(output_bfd)) {
-            picrel = NULL;
-            if (h && ! K1FDPIC_SYM_LOCAL (info, h))
-            {
-              info->callbacks->warning
-                (info, _("relocation references symbol not defined in the module"),
-                 name, input_bfd, input_section, rel->r_offset);
-              return FALSE;
-            }
-            break;
+	    info->callbacks->warning
+	      (info, _("%H: !IS_FDPIC in fdpic specific code\n"),
+	       name, input_bfd, input_section, rel->r_offset);
+	    return FALSE;
+            /* picrel = NULL; */
+            /* if (h && ! K1FDPIC_SYM_LOCAL (info, h)) */
+            /* { */
+            /*   info->callbacks->warning */
+            /*     (info, _("relocation references symbol not defined in the module"), */
+            /*      name, input_bfd, input_section, rel->r_offset); */
+            /*   return FALSE; */
+            /* } */
+            /* break; */
 	  }
 	/* fallthrough */
 	case R_K1_GOT:
@@ -2082,8 +2087,13 @@ k1fdpic_elf_relocate_section
         {
           case R_K1_27_PCREL:
             check_segment[0] = isec_segment;
-            if (!IS_FDPIC(output_bfd))
-              check_segment[1] = isec_segment;
+            if (!IS_FDPIC(output_bfd)){
+	      info->callbacks->warning
+		(info, _("%H: !IS_FDPIC in fdpic specific code\n"),
+		 name, input_bfd, input_section, rel->r_offset);
+	      return FALSE;
+              /* check_segment[1] = isec_segment; */
+	    }
             else if (picrel->plt)
             {
               relocation = k1fdpic_plt_section (info)->output_section->vma
@@ -2268,8 +2278,13 @@ k1fdpic_elf_relocate_section
           case R_K1_GLOB_DAT:
 	  if (! IS_FDPIC (output_bfd))
 	    {
-	      check_segment[0] = check_segment[1] = -1;
-	      break;
+	      info->callbacks->warning
+		(info, _("%H: !IS_FDPIC in fdpic specific code\n"),
+		 name, input_bfd, input_section, rel->r_offset);
+	      return FALSE;
+
+	      /* check_segment[0] = check_segment[1] = -1; */
+	      /* break; */
 	    }
           case R_K1_FUNCDESC_VALUE:
              {
@@ -2468,6 +2483,9 @@ k1fdpic_elf_relocate_section
         }
 
 
+	// FIXME: frv & bfin add a switch/case for 
+	// changing relocation value (in particular: add 'addend' value for GOTOFF_HI
+
       switch (r_type)
         {
         case R_K1_27_PCREL:
@@ -2483,9 +2501,14 @@ k1fdpic_elf_relocate_section
 	case R_K1_GOT:
         case R_K1_GOT_LO10:
         case R_K1_GOT_HI22:
-	case R_K1_GOTOFF:
-        case R_K1_GOTOFF_LO10:
-        case R_K1_GOTOFF_HI22:
+
+	  // the following 3 cases were copy/pasted fro bfin.
+	  // Current code does not apply addend to GOTOFF_HI22 (contrary to bfin).
+	  // Not clear what should be done in our case :(
+	/* case R_K1_GOTOFF: */
+        /* case R_K1_GOTOFF_LO10: */
+        /* case R_K1_GOTOFF_HI22: */
+
 //         case R_K1_FUNCDESC:
 	case R_K1_FUNCDESC_GOT_LO10:
         case R_K1_FUNCDESC_GOT_HI22:
