@@ -912,6 +912,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 }
             case Immediate_k1_signed10:
             case Immediate_k1_signed16:
+            case Immediate_k1_signed27:
             case Immediate_k1_extension22:
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcoff17:
@@ -1092,6 +1093,13 @@ insert_operand(k1insn_t * insn,
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
+                    case Immediate_k1_signed27:
+                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* FIXME K1B */
+                        insn->fixup[0].exp = *arg;
+                        insn->fixup[0].where = 0;
+                        insn->nfixups = 1;
+                        break;
+
                     case Immediate_k1_signed10:
                     case Immediate_k1_extension22:
                     case Immediate_k1_signed16:
