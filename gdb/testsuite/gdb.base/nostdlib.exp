@@ -27,7 +27,7 @@ if [target_info exists use_gdb_stub] {
 # dependent on whether the system libraries are already prelinked.
 # prelink: Could not set /lib64/libm-2.11.1.so owner or mode: Operation not permitted
 set compile {
-    gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-nostdlib}
+    gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-nostdlib additional_flags=-z\ max-page-size=0x8}
 }
 set board [target_info name]
 if [board_info $board exists mathlib] {
