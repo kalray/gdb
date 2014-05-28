@@ -27,7 +27,7 @@ if {[target_link ${objdir}/${subdir}/${testfile}.o "${binfile}" ${link-flags}] !
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
-gdb_test "set kalray debug_agent_options \"--init-value=0\"" "" "init memory"
+gdb_test "set kalray debug_agent_options \"--init-value=0\" \"--no-segment-load\"" "" "init memory"
 
 gdb_test "set displaced-stepping on" "" "Force displaced stepping"
 gdb_test "rbreak test_displaced.*" ".*Breakpoint 9 at.*" "Set breakpoints"

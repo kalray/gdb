@@ -831,31 +831,20 @@ static bfd_vma elf32_k1_gp_base (bfd *output_bfd, struct bfd_link_info *info)
 
 /* The same in PIC */
 #define PLT_ENTRY_SIZE          16
-#define PLT_SMALL_ENTRY_SIZE     8
+#define PLT_SMALL_ENTRY_SIZE     16
 
 static const bfd_vma plt_small_entry[PLT_ENTRY_SIZE] =
   {
-     /* lw $r9 = 0[$r14]   ;; */      0x2424000e,
-     /* igoto $r9          ;; */      0x00114009,
-                                      0x00000000,
-                                      0x00000000,
+      /* get $r14 = $pc     ;; */      0x00700380,
+      /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
+                                       0x00000000,
+      /* igoto $r9          ;; */      0x00114009,
   };
-
-
 
 /* PLT templates for (FD)PIC ABI */
 
-// static const bfd_vma plt_min_entry[PLT_MIN_ENTRY_SIZE / 4] =
-//   {
-//     /* goto .PLT0             */ 0x31000000,
-//     /* mov $r0.9=0            */ 0x08000240,
-//     /* imml 0              ;; */ 0x95000000,
-//     /* nop                 ;; */ NOP_BUNDLE
-//   };
-
 static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
   {
-    /* add $r20 = $r14, 0 ;;  0x6250000e, */
     /* add $r14 = $r14, 0 ;; */ 0xe238000e,
                                 0x00000000,
     /* lw $r9 = 0[$r14]   ;; */ 0x2424000e,
@@ -1972,6 +1961,7 @@ k1fdpic_elf_relocate_section
 	  }
       }
 
+
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
@@ -2045,15 +2035,19 @@ k1fdpic_elf_relocate_section
 	case R_K1_GLOB_DAT:
         case R_K1_27_PCREL:
           if (!IS_FDPIC(output_bfd)) {
-            picrel = NULL;
-            if (h && ! K1FDPIC_SYM_LOCAL (info, h))
-            {
-              info->callbacks->warning
-                (info, _("relocation references symbol not defined in the module"),
-                 name, input_bfd, input_section, rel->r_offset);
-              return FALSE;
-            }
-            break;
+	    info->callbacks->warning
+	      (info, _("%H: !IS_FDPIC in fdpic specific code\n"),
+	       name, input_bfd, input_section, rel->r_offset);
+	    return FALSE;
+            /* picrel = NULL; */
+            /* if (h && ! K1FDPIC_SYM_LOCAL (info, h)) */
+            /* { */
+            /*   info->callbacks->warning */
+            /*     (info, _("relocation references symbol not defined in the module"), */
+            /*      name, input_bfd, input_section, rel->r_offset); */
+            /*   return FALSE; */
+            /* } */
+            /* break; */
 	  }
 	/* fallthrough */
 	case R_K1_GOT:
@@ -2104,8 +2098,13 @@ k1fdpic_elf_relocate_section
         {
           case R_K1_27_PCREL:
             check_segment[0] = isec_segment;
-            if (!IS_FDPIC(output_bfd))
-              check_segment[1] = isec_segment;
+            if (!IS_FDPIC(output_bfd)){
+	      info->callbacks->warning
+		(info, _("%H: !IS_FDPIC in fdpic specific code\n"),
+		 name, input_bfd, input_section, rel->r_offset);
+	      return FALSE;
+              /* check_segment[1] = isec_segment; */
+	    }
             else if (picrel->plt)
             {
               relocation = k1fdpic_plt_section (info)->output_section->vma
@@ -2290,8 +2289,13 @@ k1fdpic_elf_relocate_section
           case R_K1_GLOB_DAT:
 	  if (! IS_FDPIC (output_bfd))
 	    {
-	      check_segment[0] = check_segment[1] = -1;
-	      break;
+	      info->callbacks->warning
+		(info, _("%H: !IS_FDPIC in fdpic specific code\n"),
+		 name, input_bfd, input_section, rel->r_offset);
+	      return FALSE;
+
+	      /* check_segment[0] = check_segment[1] = -1; */
+	      /* break; */
 	    }
           case R_K1_FUNCDESC_VALUE:
              {
@@ -2490,6 +2494,9 @@ k1fdpic_elf_relocate_section
         }
 
 
+	// FIXME: frv & bfin add a switch/case for 
+	// changing relocation value (in particular: add 'addend' value for GOTOFF_HI
+
       switch (r_type)
         {
         case R_K1_27_PCREL:
@@ -2505,9 +2512,14 @@ k1fdpic_elf_relocate_section
 	case R_K1_GOT:
         case R_K1_GOT_LO10:
         case R_K1_GOT_HI22:
-	case R_K1_GOTOFF:
-        case R_K1_GOTOFF_LO10:
-        case R_K1_GOTOFF_HI22:
+
+	  // the following 3 cases were copy/pasted fro bfin.
+	  // Current code does not apply addend to GOTOFF_HI22 (contrary to bfin).
+	  // Not clear what should be done in our case :(
+	/* case R_K1_GOTOFF: */
+        /* case R_K1_GOTOFF_LO10: */
+        /* case R_K1_GOTOFF_HI22: */
+
 //         case R_K1_FUNCDESC:
 	case R_K1_FUNCDESC_GOT_LO10:
         case R_K1_FUNCDESC_GOT_HI22:
@@ -2636,8 +2648,7 @@ k1_gc_sweep_hook (bfd * abfd,
                     {
                       /* We don't need the .got entry any more.  */
                       sgot->size -= 4;
-                      if (info->shared)
-                        srelgot->size -= sizeof (Elf32_External_Rela);
+                      srelgot->size -= sizeof (Elf32_External_Rela);
                     }
                 }
             }
@@ -3489,6 +3500,29 @@ k1_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   return TRUE;
 }
 
+/* Return address for Ith PLT stub in section PLT, for relocation REL
+ or (bfd_vma) -1 if it should not be included. */
+
+static bfd_vma
+k1_plt_sym_val (bfd_vma i, const asection *plt,
+	 const arelent *rel ATTRIBUTE_UNUSED)
+{
+    if (rel->howto->type != R_K1_JMP_SLOT)
+        return (bfd_vma)-1;
+
+    return plt->vma + 16 + i*16;
+}
+
+static bfd_vma
+k1_fdpic_plt_sym_val (bfd_vma i, const asection *plt,
+	 const arelent *rel ATTRIBUTE_UNUSED)
+{
+    if (rel->howto->type != R_K1_FUNCDESC_VALUE)
+        return (bfd_vma)-1;
+
+    return plt->vma + plt->size - (PLT_FULL_ENTRY_SIZE * (i + 1));
+}
+
 static bfd_boolean
 k1fdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 {
@@ -3657,8 +3691,7 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
       s = htab->sgot;
       h->got.offset = s->size;
       s->size += 4;
-      if (info->shared)
-        htab->srelgot->size += sizeof (Elf32_External_Rela);
+      htab->srelgot->size += sizeof (Elf32_External_Rela);
     }
   else
     h->got.offset = (bfd_vma) -1;
@@ -4703,11 +4736,12 @@ k1_finish_dynamic_symbol (bfd * output_bfd,
       bfd_vma got_offset;
       Elf_Internal_Rela rel;
       bfd_byte *loc;
-      asection *plt, *gotplt, *relplt;
+      asection *plt, *gotplt, *relplt, *got;
 
       plt = htab->splt;
       gotplt = htab->sgotplt;
       relplt = htab->srelplt;
+      got = htab->sgot;
 
       /* This symbol has an entry in the procedure linkage table.  Set
          it up.  */
@@ -4731,14 +4765,22 @@ k1_finish_dynamic_symbol (bfd * output_bfd,
         {
           int i;
           const bfd_vma *template = plt_small_entry;
+          bfd_vma pcgotoffset = got->output_section->vma + gotplt->output_offset +got_offset;
+
+          pcgotoffset -= plt->output_section->vma + plt->output_offset + h->plt.offset;
+
           BFD_ASSERT(plt->contents != NULL);
           for (i = 0; i < (PLT_SMALL_ENTRY_SIZE / 4); ++i)
             bfd_put_32(output_bfd, template[i], plt->contents + h->plt.offset + (4*i));
           
           _bfd_final_link_relocate (elf32_k1_howto_table + R_K1_LO10,
                                 output_bfd, plt,
-                                plt->contents + h->plt.offset,
-                                0, got_offset, 0);
+                                plt->contents + h->plt.offset + 4,
+                                0, pcgotoffset, 0);
+          _bfd_final_link_relocate (elf32_k1_howto_table + R_K1_HI22,
+                                output_bfd, plt,
+                                plt->contents + h->plt.offset + 8,
+                                0, pcgotoffset, 0);
          }
 
       /* Fill in the entry in the global offset table.  */
@@ -5391,6 +5433,11 @@ k1_bfd_elf_action_discarded (asection *sec)
 #define elf_backend_may_use_rel_p       1
 #define elf_backend_may_use_rela_p      1
 
+#undef elf_backend_plt_sym_val
+#define elf_backend_plt_sym_val	 k1_plt_sym_val
+
+#define elf_backend_rela_plts_and_copies_p 1
+
 #include "elf32-target.h"
 
 #undef TARGET_LITTLE_SYM
@@ -5445,9 +5492,14 @@ k1_bfd_elf_action_discarded (asection *sec)
 #undef elf_backend_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol       k1fdpic_finish_dynamic_symbol
 
-
 #undef elf_backend_discard_info
 #define elf_backend_discard_info                k1fdpic_elf_discard_info
+
+#undef elf_backend_plt_sym_val
+#define elf_backend_plt_sym_val	 k1_fdpic_plt_sym_val
+
+#undef elf_backend_relplt_name
+#define elf_backend_relplt_name ".rel.dyn"
 
 #include "elf32-target.h"
 
