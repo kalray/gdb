@@ -838,7 +838,7 @@ static const bfd_vma plt_small_entry[PLT_ENTRY_SIZE] =
   {
       /* get $r14 = $pc     ;; */      0x00700380,
       /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
-                                       0x00000000,
+                                       0x18000000,
       /* igoto $r9          ;; */      0x00114009,
   };
 
