@@ -353,13 +353,18 @@ Use the \"file\" or \"exec-file\" command."));
 }
 
 static int
-mppa_mark_clusters_booted (struct inferior *inf, void *data)
+mppa_mark_clusters_booted (struct inferior *inf, void *_ptid)
 {
     struct thread_info *thread = any_live_thread_of_process (inf->pid);
-    
-    if (thread && is_stopped (thread->ptid))
+    ptid_t *ptid = _ptid;
+
+    /* Newer GDBs mark the thread as running before passing it to
+       target_resume. However, if we are resuming the thread, it must
+       have been stooped before... */
+    if ((thread && is_stopped (thread->ptid))
+	|| ptid_match (thread->ptid, *ptid)) {
         mppa_inferior_data (inf)->booted = 1;
-    
+    }
     return 0;
 }
 
@@ -371,7 +376,7 @@ mppa_target_resume (struct target_ops *ops,
 
     if (!after_first_resume) {
         after_first_resume = 1;
-        iterate_over_inferiors (mppa_mark_clusters_booted, NULL);
+        iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
     }
     
     return remote_target->to_resume (remote_target, ptid, step, siggnal);
