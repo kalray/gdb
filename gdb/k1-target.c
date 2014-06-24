@@ -212,7 +212,14 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
     execute_command (tar_remote_cmd, 0);
+    /* We need to tell the debugger to fake a synchronous
+       command. This has already been done at the upper level when the
+       main loop executes the "run" command, but the execute_command
+       call we did just above reseted to async handling when it
+       terminated. */ 
+    async_disable_stdin ();
     k1_push_arch_stratum (NULL, 0);
+
     /* Remove hacks*/
     observer_detach_new_thread (new_thread_observer);
     batch_silent = saved_batch_silent;
