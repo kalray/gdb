@@ -1910,7 +1910,7 @@ k1fdpic_elf_relocate_section
       const char                   *name = NULL;
       int                          r_type;
       asection                     *osec;
-      struct k1fdpic_relocs_info   *picrel;
+      struct k1fdpic_relocs_info   *picrel = NULL;
       
       bfd_vma orig_addend = rel->r_addend;
       

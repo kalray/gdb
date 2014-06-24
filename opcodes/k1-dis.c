@@ -151,7 +151,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int          *k1_regfiles = NULL;
   k1_Register  *k1_registers = NULL;
   int          *k1_dec_registers = NULL;
-  unsigned int  k1_max_registers = 0;
   unsigned int  k1_max_dec_registers = 0;
   int readsofar = 0;
   int opt_pretty = 0;
@@ -185,7 +184,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       return -1;
   }
 
-  k1_max_registers = k1_regfiles[K1_REGFILE_REGISTERS];
   k1_max_dec_registers = k1_regfiles[K1_REGFILE_DEC_REGISTERS];
 
   if (opc_table == NULL) {
