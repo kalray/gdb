@@ -27,6 +27,7 @@
 #include "gdbcore.h"
 #include "gdbtypes.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "objfiles.h"
 #include "observer.h"
 #include "regcache.h"
@@ -385,24 +386,24 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
     struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
     struct k1_inferior_data *data = k1_inferior_data (current_inferior());
     struct regcache *regs = get_current_regcache ();
-    uint32_t ps;
+    ULONGEST ps;
 
     if (!data->has_step_pad_area_p) {
-	struct minimal_symbol *msym = lookup_minimal_symbol ("_debug_start", 
+	struct bound_minimal_symbol msym = lookup_minimal_symbol ("_debug_start", 
 							     NULL, NULL);
-	if (msym == NULL)
+	if (msym.minsym == NULL)
 	    error ("Can not locate a suitable step pad area.");
-	if (SYMBOL_VALUE_ADDRESS(msym) % 4)
+	if (BMSYMBOL_VALUE_ADDRESS(msym) % 4)
 	    warning ("Step pad area is not 4-byte aligned.");
-	data->step_pad_area = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+	data->step_pad_area = (BMSYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
         data->has_step_pad_area_p = 1;
 
 	msym = lookup_minimal_symbol ("_debug_start_lma", 
 							     NULL, NULL);
-	if (msym != NULL) {
-	    if (SYMBOL_VALUE_ADDRESS(msym) % 4)
+	if (msym.minsym != NULL) {
+	    if (BMSYMBOL_VALUE_ADDRESS(msym) % 4)
 		warning ("Physical step pad area is not 4-byte aligned.");
-	    data->step_pad_area_lma = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+	    data->step_pad_area_lma = (BMSYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
 	    data->has_step_pad_area_lma_p = 1;
 	}
     }

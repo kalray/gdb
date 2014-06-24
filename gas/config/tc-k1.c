@@ -384,7 +384,7 @@ const pseudo_typeS md_pseudo_table[] =
      {"p2alignw", k1_align_ptwo, -2},
      {"p2alignl", k1_align_ptwo, -4},
 #ifdef OBJ_ELF
-     { "file", (void (*) PARAMS((int))) dwarf2_directive_file, 0},
+     { "file", (void (*) (int)) dwarf2_directive_file, 0},
      { "loc", dwarf2_directive_loc, 0},
 #endif
      {NULL, 0, 0}
@@ -986,14 +986,11 @@ insert_operand(k1insn_t * insn,
         const expressionS * arg)
  {
     unsigned int op = 0;
-    long long max;
-    long long min;
+    /* long long max = (1LL << (opdef->width - 1)) - 1; */
+    /* long long min = (-1LL << (opdef->width - 1)); */
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
-
-    max = (1LL << (opdef->width - 1)) - 1;
-    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
         return;			/* syntactic sugar ? */
@@ -2394,10 +2391,8 @@ k1_validate_sub_fix(fixS *fixP)
 /* This is called whenever some data item (not an instruction) needs a
  * fixup.  */
 void
-k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp)
+k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_code_real_type code)
  {
-    bfd_reloc_code_real_type code;
-
     if (exp->X_op == O_pseudo_fixup)
  {
         exp->X_op = O_symbol;

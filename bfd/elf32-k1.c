@@ -23,8 +23,8 @@ static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 #define DPRINT(X)
 #endif
 
-extern const bfd_target bfd_elf32_k1_linux_vec;
-#define IS_FDPIC(bfd) ((bfd)->xvec == &bfd_elf32_k1_linux_vec)
+extern const bfd_target k1_linux_elf32_vec;
+#define IS_FDPIC(bfd) ((bfd)->xvec == &k1_linux_elf32_vec)
 
 struct k1_reloc_map
 {
@@ -1048,7 +1048,7 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
                                         bfd_vma addend)
 
 {
-  bfd_vma fd_lazy_rel_offset = (bfd_vma)-1;
+  /* bfd_vma fd_lazy_rel_offset = (bfd_vma)-1; */
   int dynindx = -1;
 
   if (entry->done)
@@ -1229,7 +1229,7 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
     {
       int idx = dynindx;
       bfd_vma ad = addend;
-      bfd_vma ofst;
+      /* bfd_vma ofst; */
       long lowword, highword;
 
       /* If the symbol is dynamic but binds locally, use
@@ -1256,7 +1256,7 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
         {
           if (sec)
             ad += sec->output_section->vma;
-          ofst = 0;
+          /* ofst = 0; */
           if (entry->symndx != -1
               || entry->d.h->root.type != bfd_link_hash_undefweak)
             {
@@ -1280,8 +1280,8 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
         }
       else
         {
-          ofst
-            = _k1fdpic_add_dyn_reloc (output_bfd,
+          /* ofst
+            = */ _k1fdpic_add_dyn_reloc (output_bfd,
                                         entry->lazyplt
                                         ? k1fdpic_pltrel_section (info)
                                         : k1fdpic_gotrel_section (info),
@@ -1312,7 +1312,7 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
           if (ad)
             return FALSE;
 
-          fd_lazy_rel_offset = ofst;
+          /* fd_lazy_rel_offset = ofst; */
 
           /* A function descriptor used for lazy or local resolving is
              initialized such that its high word contains the output
@@ -1432,7 +1432,6 @@ k1_elf_relocate_section
      Elf_Internal_Sym *      local_syms,
      asection **             local_sections)
 {
-  bfd *dynobj;
   Elf_Internal_Shdr *           symtab_hdr;
   struct elf_link_hash_entry ** sym_hashes;
   Elf_Internal_Rela *           rel;
@@ -1443,7 +1442,6 @@ k1_elf_relocate_section
   if (htab == NULL)
     return FALSE;
 
-  dynobj = htab->elf.dynobj;
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
   relend     = relocs + input_section->reloc_count;
@@ -1575,7 +1573,7 @@ k1_elf_relocate_section
       switch (r_type)
         {
         case R_K1_32:
-          if (input_section->flags & SEC_ALLOC == 0)
+          if (((input_section->flags) & SEC_ALLOC) == 0)
             break;
           if ((info->shared
                && (h == NULL
@@ -1867,8 +1865,6 @@ k1fdpic_elf_relocate_section
   Elf_Internal_Rela *           rel;
   Elf_Internal_Rela *           relend;
   struct elf32_k1_link_hash_table *htab;
-  bfd *dynobj;
-  bfd_vma *local_got_offsets;
 
   unsigned isec_segment, got_segment, plt_segment,
     check_segment[2];
@@ -1896,9 +1892,7 @@ k1fdpic_elf_relocate_section
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
   relend     = relocs + input_section->reloc_count;
-  dynobj     = elf_hash_table (info)->dynobj;    
   
-  local_got_offsets = elf_local_got_offsets (input_bfd);
   htab = elf32_k1_hash_table (info);
 
   if (htab == NULL)
@@ -1965,12 +1959,12 @@ k1fdpic_elf_relocate_section
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
           osec = sec;
@@ -2586,7 +2580,6 @@ k1_gc_sweep_hook (bfd * abfd,
   bfd *dynobj;
   asection *sgot;
   asection *srelgot;
-  asection *splt;
   asection *srelplt;
   asection *sgotplt;
 
@@ -2600,7 +2593,6 @@ k1_gc_sweep_hook (bfd * abfd,
 
   sgot = bfd_get_section_by_name (dynobj, ".got");
   srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
-  splt = bfd_get_section_by_name (dynobj, ".plt");
   sgotplt = bfd_get_section_by_name (dynobj, ".got.plt");
   srelplt = bfd_get_section_by_name (dynobj, ".rela.plt");
 
@@ -4811,12 +4803,10 @@ k1_finish_dynamic_symbol (bfd * output_bfd,
   
   if (h->got.offset != (bfd_vma) - 1)
     {
-      bfd *dynobj;
       asection *sgot;
       asection *srela;
       Elf_Internal_Rela rela;
       bfd_byte *loc;
-      dynobj = htab->elf.dynobj;
 
       /* This symbol has an entry in the global offset table.
          Set it up.  */
@@ -5366,7 +5356,7 @@ k1_bfd_elf_action_discarded (asection *sec)
 
 
 // #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM                       bfd_elf32_k1_vec
+#define TARGET_LITTLE_SYM                       k1_elf32_vec
 #define TARGET_LITTLE_NAME                      "elf32-k1"
 #define ELF_ARCH                                bfd_arch_k1
 // #endif//ELF_ARCH
@@ -5428,7 +5418,7 @@ k1_bfd_elf_action_discarded (asection *sec)
 #include "elf32-target.h"
 
 #undef TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM                    bfd_elf32_k1_linux_vec
+#define TARGET_LITTLE_SYM                    k1_linux_elf32_vec
 
 #undef TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME                   "elf32-k1-linux"

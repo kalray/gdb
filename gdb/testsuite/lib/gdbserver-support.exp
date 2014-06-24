@@ -49,7 +49,9 @@ proc gdb_target_cmd { targetname serialport } {
 
     set serialport_re [string_to_regexp $serialport]
     for {set i 1} {$i <= 3} {incr i} {
-	send_gdb "target $targetname $serialport\n"
+    # xraynaud - not the way k1-jtag-runner works
+    send_gdb "attach-mppa $serialport\n"
+	#send_gdb "target $targetname $serialport\n"
 	gdb_expect 60 {
 	    -re "A program is being debugged already.*ill it.*y or n. $" {
 		send_gdb "y\n"
@@ -244,14 +246,17 @@ proc gdbserver_start { options arguments } {
 	if {![info exists gdbserver_reconnect_p] || !$gdbserver_reconnect_p} {
 	    # GDB client could accidentally connect to a stale server.
 	    # append gdbserver_command " --debug --once"
-	    append gdbserver_command " --once"
+        # xraynaud: it's not the way k1-jtag-runner works.
+	    # append gdbserver_command " --once"
+        append gdbserver_command " -D"
 	}
 
 	if { $options != "" } {
 	    append gdbserver_command " $options"
 	}
 	if { $portnum != "" } {
-	    append gdbserver_command " :$portnum"
+        # xraynaud: it's not the way k1-jtag-runner works.
+	    append gdbserver_command " --gdb-port=$portnum"
 	}
 	if { $arguments != "" } {
 	    append gdbserver_command " $arguments"
@@ -299,12 +304,16 @@ proc gdbserver_start { options arguments } {
 # Returns the target protocol and socket to connect to.
 
 proc gdbserver_spawn { child_args } {
-    set target_exec [gdbserver_download_current_prog]
+    # xraynaud: it's not the way k1-jtag-runner works.
+    # set target_exec [gdbserver_download_current_prog]
+    global last_loaded_file
 
     # Fire off the debug agent.  This flavour of gdbserver takes as
     # arguments the port information, the name of the executable file to
     # be debugged, and any arguments.
-    set arguments "$target_exec"
+    # xraynaud: it's not the way k1-jtag-runner works.
+    # set arguments "$target_exec"
+    set arguments "--exec-file=Cluster0:$last_loaded_file"
     if { $child_args != "" } {
 	append arguments " $child_args"
     }
@@ -375,6 +384,7 @@ proc gdbserver_start_extended { } {
     # disable stub-like techniques.
     set use_gdb_stub 0
 
+
     return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
 }
 
@@ -404,5 +414,7 @@ proc mi_gdbserver_start_multi { } {
     set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
-    return [mi_gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
+    # xraynaud : no mi command for attach-mppa. perhaps overkill to remove that. is it really used ?
+    return 1
+    #return [mi_gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
 }
