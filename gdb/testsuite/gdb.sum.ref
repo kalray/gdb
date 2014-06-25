@@ -1556,8 +1556,8 @@ PASS: gdb.base/interrupt-noterm.exp: set interactive-mode off
 PASS: gdb.base/interrupt-noterm.exp: set confirm off
 PASS: gdb.base/interrupt-noterm.exp: delete
 PASS: gdb.base/interrupt-noterm.exp: set confirm on
-PASS: gdb.base/interrupt-noterm.exp: continue &
-PASS: gdb.base/interrupt-noterm.exp: interrupt
+FAIL: gdb.base/interrupt-noterm.exp: continue &
+FAIL: gdb.base/interrupt-noterm.exp: interrupt
 FAIL: gdb.base/interrupt-noterm.exp: inferior received SIGINT (timeout)
 Running ../../../gdb/testsuite/gdb.base/psymtab.exp ...
 Running ../../../gdb/testsuite/gdb.base/charset.exp ...
@@ -4577,9 +4577,9 @@ PASS: gdb.base/gdb1090.exp: continue to breakpoint: break-here
 PASS: gdb.base/gdb1090.exp: print s24
 Running ../../../gdb/testsuite/gdb.base/signull.exp ...
 Running ../../../gdb/testsuite/gdb.base/fullpath-expand.exp ...
-PASS: gdb.base/fullpath-expand.exp: rbreak XXX/fullpath-expand-func.c:func
-PASS: gdb.base/fullpath-expand.exp: list func
-PASS: gdb.base/fullpath-expand.exp: info source
+FAIL: gdb.base/fullpath-expand.exp: rbreak XXX/fullpath-expand-func.c:func
+FAIL: gdb.base/fullpath-expand.exp: list func
+FAIL: gdb.base/fullpath-expand.exp: info source
 Running ../../../gdb/testsuite/gdb.base/assign.exp ...
 PASS: gdb.base/assign.exp: continuing after dummy()
 PASS: gdb.base/assign.exp: v_int=57
@@ -9013,7 +9013,7 @@ Running ../../../gdb/testsuite/gdb.base/argv0-symlink.exp ...
 PASS: gdb.base/argv0-symlink.exp: kept file symbolic link name
 PASS: gdb.base/argv0-symlink.exp: kept file symbolic link name for info inferiors
 FAIL: gdb.base/argv0-symlink.exp: kept directory symbolic link name
-PASS: gdb.base/argv0-symlink.exp: kept directory symbolic link name for info inferiors
+FAIL: gdb.base/argv0-symlink.exp: kept directory symbolic link name for info inferiors
 Running ../../../gdb/testsuite/gdb.base/async.exp ...
 PASS: gdb.base/async.exp: set exec-done-display on
 PASS: gdb.base/async.exp: next&
