@@ -361,8 +361,8 @@ mppa_mark_clusters_booted (struct inferior *inf, void *_ptid)
     /* Newer GDBs mark the thread as running before passing it to
        target_resume. However, if we are resuming the thread, it must
        have been stooped before... */
-    if ((thread && is_stopped (thread->ptid))
-	|| ptid_match (thread->ptid, *ptid)) {
+    if (thread && (is_stopped (thread->ptid)
+	           || ptid_match (thread->ptid, *ptid))) {
         mppa_inferior_data (inf)->booted = 1;
     }
     return 0;
