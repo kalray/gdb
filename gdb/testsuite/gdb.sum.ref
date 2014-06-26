@@ -8520,7 +8520,7 @@ PASS: gdb.base/watchpoint-cond-gone.exp: Catch the no longer valid watchpoint
 Running ../../../gdb/testsuite/gdb.base/async-shell.exp ...
 PASS: gdb.base/async-shell.exp: set non-stop on
 FAIL: gdb.base/async-shell.exp: run &
-PASS: gdb.base/async-shell.exp: shell echo foo
+FAIL: gdb.base/async-shell.exp: shell echo foo
 FAIL: gdb.base/async-shell.exp: interrupt
 FAIL: gdb.base/async-shell.exp: process stopped (GDB internal error)
 Running ../../../gdb/testsuite/gdb.base/source.exp ...
