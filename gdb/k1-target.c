@@ -514,6 +514,7 @@ attach_mppa_command (char *args, int from_tty)
         set_current_program_space (inf->pspace);
         sprintf (attach_cmd, "attach %li&", pid);
         execute_command (attach_cmd, 0);
+		inf->control.stop_soon = NO_STOP_QUIETLY;
     }
 
     for (ix_items = 0;
@@ -589,7 +590,7 @@ _initialize__k1_target (void)
     k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
     k1_target_ops.to_can_async_p = k1_target_can_async;
     k1_target_ops.to_can_run = k1_target_can_run;
-    k1_target_ops.to_attach_no_wait = 1;
+    k1_target_ops.to_attach_no_wait = 0;
     k1_target_ops.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
 
     k1_target_ops.to_pid_to_str = mppa_pid_to_str;
