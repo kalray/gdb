@@ -9103,17 +9103,17 @@ Running ../../../gdb/testsuite/gdb.base/code_elim.exp ...
 PASS: gdb.base/code_elim.exp: symbol-file code_elim1
 FAIL: gdb.base/code_elim.exp: single psymtabs: test eliminated var my_global_symbol
 FAIL: gdb.base/code_elim.exp: single psymtabs: test eliminated var my_static_symbol
-PASS: gdb.base/code_elim.exp: single psymtabs: test eliminated var my_global_func
+FAIL: gdb.base/code_elim.exp: single psymtabs: test eliminated var my_global_func
 PASS: gdb.base/code_elim.exp: single psymtabs: get address of main
 FAIL: gdb.base/code_elim.exp: single symtabs: test eliminated var my_global_symbol
 FAIL: gdb.base/code_elim.exp: single symtabs: test eliminated var my_static_symbol
-PASS: gdb.base/code_elim.exp: single symtabs: test eliminated var my_global_func
+FAIL: gdb.base/code_elim.exp: single symtabs: test eliminated var my_global_func
 PASS: gdb.base/code_elim.exp: single symtabs: get address of main
 PASS: gdb.base/code_elim.exp: order1: add-symbol-file code_elim1 0x100000
 PASS: gdb.base/code_elim.exp: order1: add-symbol-file code_elim2 0x200000
 FAIL: gdb.base/code_elim.exp: order1: get address of my_global_symbol
 FAIL: gdb.base/code_elim.exp: order1: get address of my_static_symbol
-PASS: gdb.base/code_elim.exp: order1: get address of my_global_func
+FAIL: gdb.base/code_elim.exp: order1: get address of my_global_func
 PASS: gdb.base/code_elim.exp: order1: get address of main
 PASS: gdb.base/code_elim.exp: order2: add-symbol-file code_elim2 0x200000
 PASS: gdb.base/code_elim.exp: order2: add-symbol-file code_elim1 0x100000
