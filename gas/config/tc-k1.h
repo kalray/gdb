@@ -192,6 +192,6 @@ extern int k1_regname_to_dw2regnum (const char *regname);
 
 /* All K1 instructions are multiples of 32 bits.  */
 #define DWARF2_LINE_MIN_INSN_LENGTH 1
-#define DWARF2_DEFAULT_RETURN_COLUMN 63
+#define DWARF2_DEFAULT_RETURN_COLUMN 73
 #define DWARF2_CIE_DATA_ALIGNMENT -4
 #endif
