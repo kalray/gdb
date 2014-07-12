@@ -915,7 +915,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_signed27:
             case Immediate_k1_extension22:
             case Immediate_k1_pcrel18:
-            case Immediate_k1_pcoff17:
+            case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
                 if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
@@ -1075,7 +1075,7 @@ insert_operand(k1insn_t * insn,
             {
                 switch (opdef->type)
                 {
-                  case Immediate_k1_pcoff17:
+                  case Immediate_k1_pcrel17:
                         insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
