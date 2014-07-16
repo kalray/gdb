@@ -1,5 +1,5 @@
 /* Read AIX xcoff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
    Derived from coffread.c, dbxread.c, and a lot of hacking.
    Contributed by IBM Corporation.
 
@@ -24,12 +24,12 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
-#include "gdb_stat.h"
+#include <sys/stat.h>
 
 #include "coff/internal.h"
 #include "libcoff.h"		/* FIXME, internal data from BFD */
@@ -948,7 +948,6 @@ record_minimal_symbol (const char *name, CORE_ADDR address,
   if (name[0] == '.')
     ++name;
 
-  address += ANOFFSET (objfile->section_offsets, section);
   prim_record_minimal_symbol_and_info (name, address, ms_type,
 				       secnum_to_section (n_scnum, objfile),
 				       objfile);
