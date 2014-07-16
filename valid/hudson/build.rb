@@ -22,6 +22,7 @@ gdb_clone =  options["clone"]
 gdb_path  =  File.join(workspace, gdb_clone)
 
 variant = options["variant"].to_s
+jobs = options["jobs"]
 
 repo = Git.new(gdb_clone,workspace)
 
@@ -140,14 +141,14 @@ b.target("#{variant}_build") do
     end
     install_prefix = prefix
   
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --enable-64-bit-bfd --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)
 
     additional_flags = "CFLAGS=-g"
 
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\" all",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\"  -j#{jobs} all",
         :skip=>skip_build)
 
   end

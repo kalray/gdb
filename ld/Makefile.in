@@ -816,6 +816,7 @@ ALL_64_EMULATION_SOURCES = \
 	eelf64btsmip.c \
 	eelf64btsmip_fbsd.c \
 	eelf64hppa.c \
+	eelf64k1.c \
 	eelf64lppc.c \
 	eelf64ltsmip.c \
 	eelf64ltsmip_fbsd.c \
@@ -1245,6 +1246,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64btsmip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64btsmip_fbsd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64hppa.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64k1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64lppc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64ltsmip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf64ltsmip_fbsd.Po@am__quote@
@@ -3562,6 +3564,9 @@ eelf64btsmip_fbsd.c: $(srcdir)/emulparams/elf64btsmip_fbsd.sh \
 eelf64hppa.c: $(srcdir)/emulparams/elf64hppa.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf64hppa.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64hppa "$(tdir_elf64hppa)"
+eelf64k1.c: $(srcdir)/emulparams/elf64k1.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64k1 "$(tdir_elf64k1)"
 eelf64lppc.c: $(srcdir)/emulparams/elf64lppc.sh \
   $(srcdir)/emulparams/elf64ppc.sh $(srcdir)/emultempl/ppc64elf.em \
   ldemul-list.h \

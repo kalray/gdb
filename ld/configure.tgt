@@ -371,7 +371,7 @@ iq2000-*-elf)           targ_emul=elf32iq2000 ; targ_extra_emuls="elf32iq10"
 k1-*-linux*)            targ_emul=elf32k1_linux
 			targ_extra_emuls="elf32k1"
 			;;
-k1-*-*)			targ_emul=elf32k1; targ_extra_emuls="elf32k1_linux"
+k1-*-*)			targ_emul=elf32k1; targ_extra_emuls="elf32k1_linux elf64k1"
 			;;
 k1nsim-*-*)			targ_emul=elf_i386 ; 
 			;;

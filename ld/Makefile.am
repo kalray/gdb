@@ -512,6 +512,7 @@ ALL_64_EMULATION_SOURCES = \
 	eelf64lppc.c \
 	eelf64ltsmip.c \
 	eelf64ltsmip_fbsd.c \
+	eelf64k1.c \
 	eelf64mmix.c \
 	eelf64ppc.c \
 	eelf64ppc_fbsd.c \
@@ -2078,6 +2079,9 @@ eelf64btsmip_fbsd.c: $(srcdir)/emulparams/elf64btsmip_fbsd.sh \
 eelf64hppa.c: $(srcdir)/emulparams/elf64hppa.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf64hppa.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64hppa "$(tdir_elf64hppa)"
+eelf64k1.c: $(srcdir)/emulparams/elf64k1.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64k1 "$(tdir_elf64k1)"
 eelf64lppc.c: $(srcdir)/emulparams/elf64lppc.sh \
   $(srcdir)/emulparams/elf64ppc.sh $(srcdir)/emultempl/ppc64elf.em \
   ldemul-list.h \
