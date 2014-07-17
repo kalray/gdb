@@ -31,6 +31,7 @@
 #include "objfiles.h"
 #include "observer.h"
 #include "regcache.h"
+#include "reggroups.h"
 #include "symtab.h"
 #include "target.h"
 #include "target-descriptions.h"
@@ -883,6 +884,22 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
   return sp+16;
 }
 
+static int
+k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
+			struct reggroup *group)
+{
+  if (gdbarch_register_name (gdbarch, regnum) == NULL
+      || *gdbarch_register_name (gdbarch, regnum) == '\0')
+    return 0;
+
+  if ((group == save_reggroup || group == restore_reggroup || group == all_reggroup)
+      && strncmp (gdbarch_register_name (gdbarch, regnum), "oce", 3) == 0)
+    return 0;
+
+  return default_register_reggroup_p (gdbarch, regnum, group);   
+}
+
+
 static void k1_store_return_value (struct gdbarch *gdbarch,
 				   struct type *type,
                                    struct regcache *regcache,
@@ -1072,6 +1089,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
       set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
   }
+
+  set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
 
   set_gdbarch_num_pseudo_regs (gdbarch, k1_num_pseudos (gdbarch));
 
