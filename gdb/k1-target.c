@@ -478,6 +478,9 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
+extern int remote_hw_breakpoint_limit;
+extern int remote_hw_watchpoint_limit;
+
 static void
 attach_mppa_command (char *args, int from_tty)
 {
@@ -500,6 +503,9 @@ attach_mppa_command (char *args, int from_tty)
     execute_command (set_pagination_off_cmd, 0);
 
     k1_target_attach (&current_target, args, from_tty);
+
+    remote_hw_breakpoint_limit = 0;
+    remote_hw_watchpoint_limit = 1;
 
     osdata = get_osdata (NULL);
     
