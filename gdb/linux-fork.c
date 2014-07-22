@@ -1,6 +1,6 @@
 /* GNU/Linux native-dependent code for debugging multiple forks.
 
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,13 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "regcache.h"
 #include "gdbcmd.h"
 #include "infcall.h"
 #include "objfiles.h"
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "linux-fork.h"
 #include "linux-nat.h"
 #include "gdbthread.h"
@@ -33,7 +34,7 @@
 
 #include <sys/ptrace.h>
 #include "gdb_wait.h"
-#include "gdb_dirent.h"
+#include <dirent.h>
 #include <ctype.h>
 
 struct fork_info *fork_list;
@@ -81,7 +82,7 @@ add_fork (pid_t pid)
       add_fork (ptid_get_pid (inferior_ptid));	/* safe recursion */
     }
 
-  fp = XZALLOC (struct fork_info);
+  fp = XCNEW (struct fork_info);
   fp->ptid = ptid_build (pid, pid, 0);
   fp->num = ++highest_fork_num;
   fp->next = fork_list;
@@ -387,7 +388,7 @@ linux_fork_mourn_inferior (void)
    the first available.  */
 
 void
-linux_fork_detach (char *args, int from_tty)
+linux_fork_detach (const char *args, int from_tty)
 {
   /* OK, inferior_ptid is the one we are detaching from.  We need to
      delete it from the fork_list, and switch to the next available
@@ -455,9 +456,10 @@ inferior_call_waitpid (ptid_t pptid, int pid)
   old_cleanup = make_cleanup (inferior_call_waitpid_cleanup, oldfp);
 
   /* Get the waitpid_fn.  */
-  if (lookup_minimal_symbol ("waitpid", NULL, NULL) != NULL)
+  if (lookup_minimal_symbol ("waitpid", NULL, NULL).minsym != NULL)
     waitpid_fn = find_function_in_inferior ("waitpid", &waitpid_objf);
-  if (!waitpid_fn && lookup_minimal_symbol ("_waitpid", NULL, NULL) != NULL)
+  if (!waitpid_fn
+      && lookup_minimal_symbol ("_waitpid", NULL, NULL).minsym != NULL)
     waitpid_fn = find_function_in_inferior ("_waitpid", &waitpid_objf);
   if (!waitpid_fn)
     goto out;
@@ -596,7 +598,7 @@ info_checkpoints_command (char *arg, int from_tty)
 
 	  msym = lookup_minimal_symbol_by_pc (pc);
 	  if (msym.minsym)
-	    printf_filtered (", <%s>", SYMBOL_LINKAGE_NAME (msym.minsym));
+	    printf_filtered (", <%s>", MSYMBOL_LINKAGE_NAME (msym.minsym));
 	}
 
       putchar_filtered ('\n');
@@ -668,10 +670,10 @@ checkpoint_command (char *args, int from_tty)
   
   /* Make the inferior fork, record its (and gdb's) state.  */
 
-  if (lookup_minimal_symbol ("fork", NULL, NULL) != NULL)
+  if (lookup_minimal_symbol ("fork", NULL, NULL).minsym != NULL)
     fork_fn = find_function_in_inferior ("fork", &fork_objf);
   if (!fork_fn)
-    if (lookup_minimal_symbol ("_fork", NULL, NULL) != NULL)
+    if (lookup_minimal_symbol ("_fork", NULL, NULL).minsym != NULL)
       fork_fn = find_function_in_inferior ("fork", &fork_objf);
   if (!fork_fn)
     error (_("checkpoint: can't find fork function in inferior."));

@@ -1,4 +1,4 @@
-# Copyright 2004-2013 Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -229,10 +229,6 @@ proc gdb_default_target_compile {source destfile type options} {
 	    regsub "^compiler=" $i "" tmp
 	    set compiler $tmp
 	}
-	if {[regexp "^additional_flags=" $i]} {
-	    regsub "^additional_flags=" $i "" tmp
-	    append add_flags " $tmp"
-	}
 	if {[regexp "^ldflags=" $i]} {
 	    regsub "^ldflags=" $i "" tmp
 	    append ldflags " $tmp"
@@ -424,6 +420,13 @@ proc gdb_default_target_compile {source destfile type options} {
 	}
 	if {[board_info $dest exists output_format]} {
 	    append add_flags " -Wl,-oformat,[board_info $dest output_format]"
+	}
+    }
+
+    foreach i $options {
+	if {[regexp "^additional_flags=" $i]} {
+	    regsub "^additional_flags=" $i "" tmp
+	    append add_flags " $tmp"
 	}
     }
 
