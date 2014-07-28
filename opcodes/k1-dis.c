@@ -341,21 +341,21 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
  		      K1_PRINT_REG(K1_REGFILE_DEC_NRF,value)
                       break;
 
-                  case Immediate_k1_signed32:
-                  case Immediate_k1_signed32M:
-                  case Immediate_k1_signed5M:
-                  case Immediate_k1_unsigned32L:
-                  case Immediate_k1_unsigned32:
-                  case Immediate_k1_extension22:
                   case Immediate_k1_eventmask2:
                   case Immediate_k1_flagmask2:
-                  case Immediate_k1_signed10:
-                  case Immediate_k1_signed16:
-                  case Immediate_k1_signed27:
                   case Immediate_k1_brknumber:
                   case Immediate_k1_sysnumber:
+                  case Immediate_k1_signed5:
+                  case Immediate_k1_signed10:
+                  case Immediate_k1_signed11:
+                  case Immediate_k1_signed16:
+                  case Immediate_k1_signed27:
+                  case Immediate_k1_signed32:
+                  case Immediate_k1_signed32M:
                   case Immediate_k1_unsigned5:
                   case Immediate_k1_unsigned6:
+                  case Immediate_k1_unsigned32:
+                  case Immediate_k1_unsigned32L:
                       value <<= rightshift;
                       if(flags & k1SIGNED){
                           if(width <= 32) {

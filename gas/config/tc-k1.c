@@ -900,8 +900,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_flagmask2:
             case Immediate_k1_brknumber:
             case Immediate_k1_sysnumber:
+            case Immediate_k1_signed5:
             case Immediate_k1_unsigned5:
-            case Immediate_k1_signed5M:
             case Immediate_k1_unsigned6:
             case Immediate_k1_eventmask2:
             case Immediate_k1_unsigned32:
@@ -911,9 +911,9 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 		  return MATCH_NOT_FOUND;
                 }
             case Immediate_k1_signed10:
+            case Immediate_k1_signed11:
             case Immediate_k1_signed16:
             case Immediate_k1_signed27:
-            case Immediate_k1_extension22:
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel27:
@@ -1101,7 +1101,6 @@ insert_operand(k1insn_t * insn,
                         break;
 
                     case Immediate_k1_signed10:
-                    case Immediate_k1_extension22:
                     case Immediate_k1_signed16:
 			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 			insn->fixup[0].exp = *arg;
