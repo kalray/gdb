@@ -10,9 +10,9 @@ static reloc_howto_type* k1_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_reloc_name_lookup (bfd *, const char *);
 static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
-#define K1DP_K1IO_K1BDP_K1BIO
+#define K1DP_K1IO_K1BDP_K1BIO_K1B64
 #include "elf32-k1.def"
-#undef K1DP_K1IO_K1BDP_K1BIO
+#undef K1DP_K1IO_K1BDP_K1BIO_K1B64
 
 #define DEFAULT_STACK_SIZE 0x20000
 
