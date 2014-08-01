@@ -152,6 +152,9 @@ struct k1insn_s
 
 typedef struct k1insn_s k1insn_t;
 
+typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
+static reorder_bundle_t reorder_bundle = NULL;
+
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
 /* We leave an extra slot in K1MAXINSN in case we need to emit a nop
@@ -1471,6 +1474,12 @@ static Bundling find_bundling(const k1insn_t *insn)
     return insn_bundlings;
 }
 
+static int find_reservation(const k1insn_t *insn)
+ {
+    int insn_reservation = insn->opdef->reservation;
+    return insn_reservation;
+}
+
 static int cmp_bundling(const void *a, const void *b)
  {
     const Bundling *ba = (const Bundling *)a;
@@ -1501,25 +1510,39 @@ static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
     Bundling canonical_order[K1MAXBUNDLESIZE];
 
 
-    if (*bundle_insn_cnt > K1MAXBUNDLESIZE)
+    if (*bundle_insn_cnt > K1MAXBUNDLESIZE) {
+      fprintf(stderr,"bundle_insn_cnt > K1MAXBUNDLESIZE\n");
         return -1;
+    }
 
-    for (i = 0; i < *bundle_insn_cnt; i++)
+    for (i = 0; i < *bundle_insn_cnt; i++) {
         canonical_order[i] = bundle_insn[i]->bundling;
+	fprintf(stderr,"Bundling of %d: %d\n",i,bundle_insn[i]->bundling);
+    }
     qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
 
-    for (i = 0; i < *bundle_insn_cnt; i++)
+    for (i = 0; i < *bundle_insn_cnt; i++) {
         hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
+    }
 
-    if (hash > bundlematch_table_size)
+    if (hash > bundlematch_table_size) {
+      fprintf(stderr,"hash > bundlematch_table_size\n");
         return -1;
+    }
+
+    fprintf(stderr,"hash: %d\n");
     canonical_ix = bundlematch_table[hash];
 
-    if (canonical_ix == -1)
+    if (canonical_ix == -1) {
         /* No match at all for canonical, on any alignment. */
+      fprintf(stderr,"canonical_ix == -1\n");
         return -1;
+    }
 
     match = &canonical_table[canonical_ix];
+
+    fprintf(stderr,"match entries: %d\n",match->entries);
+
     /* Try each bundle type for this canonical. */
     for (i = 0; i < match->entries; i++)
  {
@@ -1552,6 +1575,8 @@ static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
                     for (insn = entry; insn < *bundle_insn_cnt; insn++)
                         if (bundle_insn[insn]->bundling == btype->bundling[entry])
  {
+   fprintf(stderr,"Replacing 0x%x @ %d (size %d) with 0x%x @ %d (size %d)\n",bundle_insn[entry]->insn[0],bundle_insn[entry]->len,
+	   bundle_insn[entry]->insn[0],bundle_insn[entry]->len);
                             k1insn_t *t = bundle_insn[entry];
                             bundle_insn[entry] = bundle_insn[insn];
                             bundle_insn[insn] = t;
@@ -1608,7 +1633,7 @@ assemble_tokens(const char *opname,
 
 
 static int
-is_equivalent_bundle(Bundling b1, Bundling b2){
+k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     switch(b1){
         case Bundling_k1_BCU:
             if(b2 == Bundling_k1_BCU){
@@ -1648,7 +1673,7 @@ is_equivalent_bundle(Bundling b1, Bundling b2){
 
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
-reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     k1insn_t *shadow_bundle[7];
     int bundle_insncnt = *bundle_insncnt_p;
     int i, j;
@@ -1660,6 +1685,8 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     int tag = 0;
     int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
     int bundle_type;
+
+    int debug = 0;
 
     for(i=0; i<bundle_insncnt; i++){
         if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
@@ -1682,7 +1709,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     for(i=0; i < 5 ; i++){
         bundle_type = priority[i];
         for(j=0; j < bundle_insncnt; j++){
-            if(is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
+            if(k1a_is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
                 switch(bundle_type){
                     case Bundling_k1_ALU:
                     case Bundling_k1_ALU_X:
@@ -1741,7 +1768,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 // Tag EXU on IMMX
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                    fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    if(debug) fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
                 }
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
@@ -1775,7 +1802,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                if(debug) fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
             }
         }
     }
@@ -1788,6 +1815,58 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         }
     }
     *bundle_insncnt_p = j;
+}
+
+static int
+k1b_is_equivalent_bundle(Bundling b1, const k1insn_t *insn){
+  Bundling b2 = find_bundling(insn);
+
+    switch(b1){
+        case Bundling_k1_BCU:
+            if(b2 == Bundling_k1_BCU){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_ALU:
+            if(b2 == Bundling_k1_ALU || b2 == Bundling_k1_ALU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_ALUD:
+            if(b2 == Bundling_k1_ALUD || b2 == Bundling_k1_ALUD_Z || b2 == Bundling_k1_ALUD_Y ||
+	       (b2 == Bundling_k1_TINY && find_reservation(insn) == Reservation_k1_ALUD_LITE)){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_MAU:
+            if(b2 == Bundling_k1_MAU || b2 == Bundling_k1_MAU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_LSU:
+            if(b2 == Bundling_k1_LSU || b2 == Bundling_k1_LSU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        default:
+            return 0;
+    }
+    return 0;
+}
+
+/* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
+static void
+k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+
+  int error = find_bundle_type(bundle_insn, bundle_insncnt_p);
+  fprintf(stderr,"Error: %d\n",error);
+
+  as_fatal("Test");
 }
 
 
@@ -1913,7 +1992,7 @@ md_assemble(char *s)
               }
             }
 
-            //fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
+            // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
 	}
 
@@ -1987,16 +2066,20 @@ k1_set_cpu(void) {
   switch(k1_core_info->elf_core) {
   case ELF_K1_CORE_DP:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_B_DP:
-	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
-	break;
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
   case ELF_K1_CORE_B_IO:
-	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
-	break;
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+    break;
+    reorder_bundle = k1b_reorder_bundle;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
   }
