@@ -84,14 +84,16 @@ static int is_mono_double(unsigned int _opcode) {
   opcode_t opcode;
 
   opcode.value = _opcode;
-  
-  if ((opcode.bits.bit28 == 0 && opcode.bits.bit27 == 1 && opcode.bits.bit17 == 1 &&  opcode.bits.bit16 == 0 && opcode.bits.bit15 == 1) ||
+
+  if ((opcode.bits.bit28 == 0 && opcode.bits.bit27 == 1 && opcode.bits.bit17 == 1 && opcode.bits.bit16 == 0 && opcode.bits.bit15 == 1) ||
       (opcode.bits.bit28 == 1 && opcode.bits.bit16 == 0 && opcode.bits.bit15 == 1) ||
-      (opcode.bits.bit28 == 1 && opcode.bits.bit27 == 0 && opcode.bits.bit17 == 1 &&  opcode.bits.bit16 == 1 && opcode.bits.bit15 == 1) ||
-      // ADDD s10
-      (opcode.bits.bit28 == 0 && opcode.bits.bit27 == 0 && opcode.bits.bit26 == 1 && opcode.bits.bit25 == 0 && opcode.bits.bit24 == 0 && opcode.bits.bit17 == 1 &&  opcode.bits.bit16 == 1 )) {
-    return 1;
+      (opcode.bits.bit28 == 1 && opcode.bits.bit17 == 0 && opcode.bits.bit16 == 1 && opcode.bits.bit15 == 1) ||
+      (opcode.bits.bit28 == 1 && opcode.bits.bit27 == 0 && opcode.bits.bit17 == 1 && opcode.bits.bit16 == 1 && opcode.bits.bit15 == 1) ||
+      // ADDD s10 / MAKED s16
+      (opcode.bits.bit28 == 0 && opcode.bits.bit27 == 0 && opcode.bits.bit26 == 0 && opcode.bits.bit25 == 0 && opcode.bits.bit17 == 1 && opcode.bits.bit16 == 1 )) {
+       return 1;
   }
+
   return 0;
 }
 
@@ -240,7 +242,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
   int lsu_idx=4;
 
   // Debugging flag
-  int debug = 1;
+  int debug = 0;
 
   // units corresponding to the four substeering bits values : an immx whose substeering bits value is i goes to unit number immx_main_unit[i]
   int immx_main_unit[4] = {alu0_idx, alu1_idx, mau_idx, lsu_idx};
@@ -289,7 +291,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
   switch (k1b_steering(bundle_ops[0])) {
 
   case BCU_STEER:
-    if(debug) fprintf(stderr,"Syllable 0: Set valid on instr %d with 0x%x\n",bcu_idx,bundle_ops[0]);
+    if(debug) fprintf(stderr,"Syllable 0: Set valid on BCU for instr %d with 0x%x\n",bcu_idx,bundle_ops[0]);
     instr[bcu_idx].valid = 1;
     instr[bcu_idx].opcode = bundle_ops[0];
     instr[bcu_idx].nb_syllables = 1;
@@ -297,7 +299,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
     break;
 
   case MAU_STEER:
-    if(debug) fprintf(stderr,"Syllable 0: Set valid on instr %d with 0x%x\n",mau_idx,bundle_ops[0]);
+    if(debug) fprintf(stderr,"Syllable 0: Set valid on MAU for instr %d with 0x%x\n",mau_idx,bundle_ops[0]);
     instr[mau_idx].valid = 1;
     instr[mau_idx].opcode = bundle_ops[0];
     instr[mau_idx].nb_syllables = 1;
@@ -305,7 +307,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
     break;
 
   case LSU_STEER:
-    if(debug) fprintf(stderr,"Syllable 0: Set valid on instr %d with 0x%x\n",lsu_idx,bundle_ops[0]);
+    if(debug) fprintf(stderr,"Syllable 0: Set valid on LSU for instr %d with 0x%x\n",lsu_idx,bundle_ops[0]);
     instr[lsu_idx].valid = 1;
     instr[lsu_idx].opcode = bundle_ops[0];
     instr[lsu_idx].nb_syllables = 1;
@@ -317,11 +319,11 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
     instr[alu0_idx].opcode = bundle_ops[0];
     instr[alu0_idx].nb_syllables = 1;
     if (is_mono_double(bundle_ops[0])) {
-      if(debug) fprintf(stderr,"Syllable 0: Set valid on instr %d with 0x%x takes ALU0 & ALU1 (mono double)\n",alu0_idx,bundle_ops[0]);
+      if(debug) fprintf(stderr,"Syllable 0: Set valid on ALU0 & ALU1 for instr %d with 0x%x takes ALU0 & ALU1 (mono double)\n",alu0_idx,bundle_ops[0]);
       alu0_taken = 1;
       alu1_taken = 1;
     } else {
-      if(debug) fprintf(stderr,"Syllable 0: Set valid on instr %d with 0x%x takes ALU0\n",alu0_idx,bundle_ops[0]);
+      if(debug) fprintf(stderr,"Syllable 0: Set valid on ALU0 for instr %d with 0x%x takes ALU0\n",alu0_idx,bundle_ops[0]);
       alu0_taken = 1;
     }  
   }
@@ -336,26 +338,26 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
       case BCU_STEER:
 	if (instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].valid == 0) {
 	  for(j=0; j < MAX_INSTRS; j++) {
-	    fprintf(stderr,"Instr %d: valid? %d\n",j,instr[j].valid);
+	    if(debug) fprintf(stderr,"Instr %d: valid? %d\n",j,instr[j].valid);
 	    if(instr[j].valid) {
-	      fprintf(stderr,"\topcode: 0x%x -> %s\n",instr[j].opcode, get_steering_name(k1b_steering(instr[j].opcode)));
+	      if(debug) fprintf(stderr,"\topcode: 0x%x -> %s\n",instr[j].opcode, get_steering_name(k1b_steering(instr[j].opcode)));
 	      if(instr[j].opxd_valid) {
-		fprintf(stderr,"\topxd: 0x%x\n",instr[j].opxd);
+		if(debug) fprintf(stderr,"\topxd: 0x%x\n",instr[j].opxd);
 	      }
 	      if(instr[j].immx_valid[0]) {
-		fprintf(stderr,"\timmx0: 0x%x\n",instr[j].immx[0]);
+		if(debug) fprintf(stderr,"\timmx0: 0x%x\n",instr[j].immx[0]);
 	      }
 	      if(instr[j].immx_valid[1]) {
-		fprintf(stderr,"\timmx1: 0x%x\n",instr[j].immx[1]);
+		if(debug) fprintf(stderr,"\timmx1: 0x%x\n",instr[j].immx[1]);
 	      }
-	      fprintf(stderr,"\tSyllables: %d\n",instr[j].nb_syllables);
+	      if(debug) fprintf(stderr,"\tSyllables: %d\n",instr[j].nb_syllables);
 	    }
 	  }
 
-	  fprintf(stderr,"Error: bad immx syllable 0x%x @ %d (not attached to any main syllable (%d)). Substeering: %d",bundle_ops[i], i,immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]));
+	  if(debug) fprintf(stderr,"Error: bad immx syllable 0x%x @ %d (not attached to any main syllable (%d)). Substeering: %d",bundle_ops[i], i,immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]));
 	  return 1;
 	} else if (instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].nb_syllables != 1) {
-	  fprintf(stderr,"Error: Too many immx syllables of type k1b_substeering(bundle_ops[i])");
+	  if(debug) fprintf(stderr,"Error: Too many immx syllables of type k1b_substeering(bundle_ops[i])");
 	  return 1;
 	} else {
 	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].immx[0] = bundle_ops[i];
@@ -430,7 +432,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
 	  return 1;
 	} else {
 	  mau_taken = 1;
-	  if(debug) fprintf(stderr,"Set valid on instr %d with 0x%x\n",mau_idx,bundle_ops[i]);
+	  if(debug) fprintf(stderr,"Set valid on MAU for instr %d with 0x%x\n",mau_idx,bundle_ops[i]);
 	  instr[mau_idx].valid = 1;
 	  instr[mau_idx].opcode = bundle_ops[i];
 	  instr[mau_idx].nb_syllables = 1;
@@ -444,7 +446,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
 	  return 1;
 	} else {
 	  lsu_taken = 1;
-	  if(debug) fprintf(stderr,"Set valid on instr %d with 0x%x\n",lsu_idx,bundle_ops[i]);
+	  if(debug) fprintf(stderr,"Set valid on LSU for instr %d with 0x%x\n",lsu_idx,bundle_ops[i]);
 	  instr[lsu_idx].valid = 1;
 	  instr[lsu_idx].opcode = bundle_ops[i];
 	  instr[lsu_idx].nb_syllables = 1;
@@ -611,7 +613,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
   /* check for extension to right      */
   /* iff this is not the end of bundle */
-  
+
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
       unsigned int i;
@@ -627,9 +629,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
 
       for(i=0; i < op->codewords; i++) {
-          if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
-              opcode_match = 0;
-          }
+	if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
+	  opcode_match = 0;
+	}
       }
 
       if (opcode_match) {
