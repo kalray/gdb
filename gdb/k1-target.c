@@ -132,7 +132,7 @@ static void k1_target_create_inferior (struct target_ops *ops,
 				       char **env, int from_tty);
 
 static int 
-k1_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
+k1_region_ok_for_hw_watchpoint (struct target_ops *ops, CORE_ADDR addr, int len)
 {
     return 1;
 }
@@ -143,7 +143,7 @@ k1_target_open (char *name, int from_tty)
 
 }
 
-static void k1_target_close ()
+static void k1_target_close (struct target_ops *ops)
 {
 
 }
@@ -158,7 +158,7 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
     ti = find_thread_ptid (ptid);
 
     if (ti) {
-        const char *extra = remote_target->to_extra_thread_info (ti);
+        char *extra = remote_target->to_extra_thread_info (ops, ti);
         data = mppa_inferior_data (find_inferior_pid (ptid_get_pid (ptid)));
 
         if (!extra)
@@ -170,7 +170,7 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
 }
 
 static char *
-mppa_threads_extra_info (struct thread_info *tp)
+mppa_threads_extra_info (struct target_ops *ops, struct thread_info *tp)
 {
     return NULL;
 }
@@ -212,7 +212,14 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
     execute_command (tar_remote_cmd, 0);
+    /* We need to tell the debugger to fake a synchronous
+       command. This has already been done at the upper level when the
+       main loop executes the "run" command, but the execute_command
+       call we did just above reseted to async handling when it
+       terminated. */ 
+    async_disable_stdin ();
     k1_push_arch_stratum (NULL, 0);
+
     /* Remove hacks*/
     observer_detach_new_thread (new_thread_observer);
     batch_silent = saved_batch_silent;
@@ -238,13 +245,17 @@ static void k1_target_create_inferior (struct target_ops *ops,
     int port;
     int core;
     int argidx = 0;
+    struct bound_minimal_symbol pthread_create_sym;
+    struct bound_minimal_symbol rtems_task_start_sym;
 
     if (exec_file == NULL)
 	error (_("No executable file specified.\n\
 Use the \"file\" or \"exec-file\" command."));
 
-    if (lookup_minimal_symbol_text ("pthread_create", NULL)
-        || lookup_minimal_symbol_text ("rtems_task_start", NULL)) {
+    pthread_create_sym = lookup_minimal_symbol_text ("pthread_create", NULL);
+    rtems_task_start_sym = lookup_minimal_symbol_text ("rtems_task_start", NULL);
+
+    if (pthread_create_sym.minsym || rtems_task_start_sym.minsym) {
 	execute_command (set_target_async_cmd, 0);
 	execute_command (set_non_stop_cmd, 0);
 	execute_command (set_pagination_off_cmd, 0);
@@ -342,13 +353,18 @@ Use the \"file\" or \"exec-file\" command."));
 }
 
 static int
-mppa_mark_clusters_booted (struct inferior *inf, void *data)
+mppa_mark_clusters_booted (struct inferior *inf, void *_ptid)
 {
     struct thread_info *thread = any_live_thread_of_process (inf->pid);
-    
-    if (thread && is_stopped (thread->ptid))
+    ptid_t *ptid = _ptid;
+
+    /* Newer GDBs mark the thread as running before passing it to
+       target_resume. However, if we are resuming the thread, it must
+       have been stooped before... */
+    if (thread && (is_stopped (thread->ptid)
+	           || ptid_match (thread->ptid, *ptid))) {
         mppa_inferior_data (inf)->booted = 1;
-    
+    }
     return 0;
 }
 
@@ -360,7 +376,7 @@ mppa_target_resume (struct target_ops *ops,
 
     if (!after_first_resume) {
         after_first_resume = 1;
-        iterate_over_inferiors (mppa_mark_clusters_booted, NULL);
+        iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
     }
     
     return remote_target->to_resume (remote_target, ptid, step, siggnal);
@@ -420,7 +436,7 @@ k1_target_wait (struct target_ops *target,
 }
 
 static void
-mppa_attach (struct target_ops *ops, char *args, int from_tty)
+mppa_attach (struct target_ops *ops, const char *args, int from_tty)
 {
     struct target_ops *remote_target, *k1_ops = find_target_beneath(&current_target);
 
@@ -432,19 +448,19 @@ mppa_attach (struct target_ops *ops, char *args, int from_tty)
 }
 
 static int
-k1_target_can_run (void)
+k1_target_can_run (struct target_ops *ops)
 {
     return 1;
 }
 
 static int
-k1_target_supports_non_stop (void)
+k1_target_supports_non_stop (struct target_ops *ops)
 {
   return 1;
 }
 
 static int
-k1_target_can_async (void)
+k1_target_can_async (struct target_ops *ops)
 {
   return target_async_permitted;
 }
@@ -514,6 +530,7 @@ attach_mppa_command (char *args, int from_tty)
         set_current_program_space (inf->pspace);
         sprintf (attach_cmd, "attach %li&", pid);
         execute_command (attach_cmd, 0);
+		inf->control.stop_soon = NO_STOP_QUIETLY;
     }
 
     for (ix_items = 0;
@@ -589,7 +606,7 @@ _initialize__k1_target (void)
     k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
     k1_target_ops.to_can_async_p = k1_target_can_async;
     k1_target_ops.to_can_run = k1_target_can_run;
-    k1_target_ops.to_attach_no_wait = 1;
+    k1_target_ops.to_attach_no_wait = 0;
     k1_target_ops.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
 
     k1_target_ops.to_pid_to_str = mppa_pid_to_str;
