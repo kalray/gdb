@@ -23,6 +23,7 @@ if {[target_link ${objdir}/${subdir}/${testfile}.o "${binfile}" ${link-flags}] !
      return -1
 }
 
+global is_k1_server
 
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
@@ -31,7 +32,13 @@ gdb_test "set kalray debug_agent_options \"--init-value=0\" \"--no-segment-load\
 
 gdb_test "set displaced-stepping on" "" "Force displaced stepping"
 gdb_test "rbreak test_displaced.*" ".*Breakpoint 9 at.*" "Set breakpoints"
-gdb_test "run" ".*Breakpoint 1.*in test_displaced1.*" "Run"
+if  {[info exists is_k1_server] && $is_k1_server == 1}  {
+   gdb_reload
+   gdb_test "p \$pc = _start" ".*" "Setting start pc"
+   gdb_test "c" ".*Breakpoint 1.*in test_displaced1.*" "Run"
+} else {
+   gdb_test "run" ".*Breakpoint 1.*in test_displaced1.*" "Run"
+}
 gdb_test "si" ".*Breakpoint 2.*in test_displaced2.*" "stepi 1"
 gdb_test "si" ".*Breakpoint 3.*in test_displaced3.*" "stepi over loopdo"
 gdb_test "si" ".*Breakpoint 3.*in test_displaced3.*" "stepi in loopdo 1"
@@ -65,7 +72,9 @@ gdb_test "si" ".*Breakpoint 9.*in test_displaced9.*" "step over non-taken cb"
 gdb_test "si" ".*in ev .*" "stepi into scall"
 gdb_test "si" ".*Breakpoint 10.*in test_displaced10 .*" "rfe 1"
 gdb_test "si" ".*Breakpoint 11.*in test_displaced11 .*" "stepi over make"
-gdb_test "si" ".*Program received signal SIGILL.*" "stepi over undefined insn"
+if { ! [info exists is_k1_server] || $is_k1_server != 1} {
+    gdb_test "si" ".*Program received signal SIGILL.*" "stepi over undefined insn"
+}
 gdb_test "si" ".*in ev .*" "stepi to trap handler"
 gdb_test "si" ".*in ev .*" "stepi in trap handler"
 gdb_test "si" ".*Breakpoint 12.*in test_displaced12 .*" "rfe 2"

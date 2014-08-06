@@ -232,7 +232,6 @@ static void k1_target_create_inferior (struct target_ops *ops,
 				       char *exec_file, char *args,
 				       char **env, int from_tty)
 {
-    char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
     char **argv_args = gdb_buildargv (args);
@@ -256,7 +255,6 @@ Use the \"file\" or \"exec-file\" command."));
     rtems_task_start_sym = lookup_minimal_symbol_text ("rtems_task_start", NULL);
 
     if (pthread_create_sym.minsym || rtems_task_start_sym.minsym) {
-	execute_command (set_target_async_cmd, 0);
 	execute_command (set_non_stop_cmd, 0);
 	execute_command (set_pagination_off_cmd, 0);
     }
@@ -480,10 +478,12 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
+extern int remote_hw_breakpoint_limit;
+extern int remote_hw_watchpoint_limit;
+
 static void
 attach_mppa_command (char *args, int from_tty)
 {
-    char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
     struct osdata *osdata;
@@ -499,11 +499,13 @@ attach_mppa_command (char *args, int from_tty)
     after_first_resume = 0;
 
     k1_push_arch_stratum (NULL, 0);
-    execute_command (set_target_async_cmd, 0);
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
 
     k1_target_attach (&current_target, args, from_tty);
+
+    remote_hw_breakpoint_limit = 0;
+    remote_hw_watchpoint_limit = 1;
 
     osdata = get_osdata (NULL);
     
@@ -563,7 +565,6 @@ attach_mppa_command (char *args, int from_tty)
 void
 run_mppa_command (char *args, int from_tty)
 {
-    char set_target_async_cmd[] = "set target-async";
     char set_non_stop_cmd[] = "set non-stop";
     char set_pagination_off_cmd[] = "set pagination off";
     char run_cmd[] = "run";
@@ -571,7 +572,6 @@ run_mppa_command (char *args, int from_tty)
     dont_repeat ();
 
     k1_push_arch_stratum (NULL, 0);
-    execute_command (set_target_async_cmd, 0);
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
     execute_command (run_cmd, 0);
