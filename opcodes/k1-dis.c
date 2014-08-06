@@ -356,7 +356,8 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 	    }
 	  }
 
-	  if(debug) fprintf(stderr,"Error: bad immx syllable 0x%x @ %d (not attached to any main syllable (%d)). Substeering: %d",bundle_ops[i], i,immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]));
+	  if(debug) fprintf(stderr,"Error: bad immx syllable 0x%x @ %d (not attached to any main syllable (%d)). Substeering: %d",
+			    bundle_ops[i], i,immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]));
 	  return 1;
 	} else if (instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].nb_syllables != 1) {
 	  if(debug) fprintf(stderr,"Error: Too many immx syllables of type k1b_substeering(bundle_ops[i])");
@@ -365,14 +366,16 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].immx[0] = bundle_ops[i];
 	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].immx_valid[0] = 1;
 	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].nb_syllables = 2;
-	  if(debug) fprintf(stderr,"Set IMMX[0] on instr %d for substeering %d @ %d\n",immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]),i);
+	  if(debug) fprintf(stderr,"Set IMMX[0] on instr %d for substeering %d @ %d\n",
+			    immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]),i);
 	}
 	break;
 
       case ALU_STEER:
 	if (is_k1b_mono_double(bundle_ops[i])) {
 	  if (alu0_taken == 0) {
-	    if(debug) fprintf(stderr,"Mono_double: Set valid on ALU0 & ALU1 for instr %d with 0x%x\n",alu0_idx,bundle_ops[i]);
+	    if(debug) fprintf(stderr,"Mono_double: Set valid on ALU0 & ALU1 for instr %d with 0x%x\n",
+			      alu0_idx,bundle_ops[i]);
 	    instr[alu0_idx].valid = 1;
 	    instr[alu0_idx].opcode = bundle_ops[i];
 	    instr[alu0_idx].nb_syllables = 1;
@@ -393,7 +396,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 	    instr[lsu_idx].nb_syllables = 1;
 	    alu3_taken = 1;
 	  } else {
-	    error("Too many ALU instructions");
+	    if(debug) fprintf(stderr,"Too many ALU instructions");
 	    return 1;
 	  }
 	} else {
@@ -422,7 +425,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 	    instr[lsu_idx].nb_syllables = 1;
 	    alu3_taken = 1;
 	  } else {
-	    error("Too many ALU instructions");
+	    if(debug) fprintf(stderr,"Too many ALU instructions");
 	    return 1;
 	  }
 	}
@@ -430,7 +433,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 
       case MAU_STEER:
 	if (mau_taken == 1) {
-	  error("Too many MAU instructions");
+	  if(debug) fprintf(stderr,"Too many MAU instructions");
 	  return 1;
 	} else {
 	  mau_taken = 1;
@@ -444,7 +447,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 
       case LSU_STEER:
 	if (lsu_taken == 1) {
-	  error("Too many LSU instructions");
+	  if(debug) fprintf(stderr,"Too many LSU instructions");
 	  return 1;
 	} else {
 	  lsu_taken = 1;
@@ -463,7 +466,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 
     }
     if (k1b_has_parallel_bit(bundle_ops[i])) {
-      error("bundle exceeds maximum size");
+      if(debug) fprintf(stderr,"bundle exceeds maximum size");
       return 1;
     }
   }
@@ -542,31 +545,31 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
   switch (info->mach) {
     case bfd_mach_k1dp:
-      opc_table = k1dp_k1optab;
-      k1_regfiles = k1_k1dp_regfiles;
-      k1_registers = k1_k1dp_registers;
-      k1_dec_registers = k1_k1dp_dec_registers;
+      opc_table = k1a_k1optab;
+      k1_regfiles = k1_k1a_regfiles;
+      k1_registers = k1_k1a_registers;
+      k1_dec_registers = k1_k1a_dec_registers;
       reassemble_bundle = k1a_reassemble_bundle;
       break;
     case bfd_mach_k1io:
-      opc_table = k1io_k1optab;
-      k1_regfiles = k1_k1io_regfiles;
-      k1_registers = k1_k1io_registers;
-      k1_dec_registers = k1_k1io_dec_registers;
+      opc_table = k1a_k1optab;
+      k1_regfiles = k1_k1a_regfiles;
+      k1_registers = k1_k1a_registers;
+      k1_dec_registers = k1_k1a_dec_registers;
       reassemble_bundle = k1a_reassemble_bundle;
       break;
     case bfd_mach_k1bdp:
-      opc_table = k1bdp_k1optab;
-      k1_regfiles = k1_k1bdp_regfiles;
-      k1_registers = k1_k1bdp_registers;
-      k1_dec_registers = k1_k1bdp_dec_registers;
+      opc_table = k1b_k1optab;
+      k1_regfiles = k1_k1b_regfiles;
+      k1_registers = k1_k1b_registers;
+      k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
     case bfd_mach_k1bio:
-      opc_table = k1bio_k1optab;
-      k1_regfiles = k1_k1bio_regfiles;
-      k1_registers = k1_k1bio_registers;
-      k1_dec_registers = k1_k1bio_dec_registers;
+      opc_table = k1b_k1optab;
+      k1_regfiles = k1_k1b_regfiles;
+      k1_registers = k1_k1b_registers;
+      k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
     default:
@@ -712,8 +715,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
 			  SRF_REGCLASSES(k1)
-				SRF_REGCLASSES(k1bdp)
-				SRF_REGCLASSES(k1bio)
+				SRF_REGCLASSES(k1b)
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:

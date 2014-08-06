@@ -573,6 +573,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   int i;
+  int find_core = 0;
 
   switch (c) {
   case 'h':
@@ -595,23 +596,24 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_MCORE:
     mcore = strdup(arg);
     i = 0;
-    while(i < K1_NCORES) {
-      
-      if (strcasecmp(mcore, k1_core_info_table[i]->names[subcore_id]) == 0
-	  && k1_core_info_table[i]->supported){
-	k1_core_info = k1_core_info_table[i];
-	k1_registers = k1_registers_table[i];
-	k1_regfiles = k1_regfiles_table[i];
+    while(i < K1_NCORES && ! find_core) {
+      subcore_id = 0;
+      while(k1_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
+	if (strcasecmp(mcore, k1_core_info_table[i]->names[subcore_id]) == 0
+	    && k1_core_info_table[i]->supported){
+
+	  k1_core_info = k1_core_info_table[i];
+	  k1_registers = k1_registers_table[i];
+	  k1_regfiles = k1_regfiles_table[i];
 	
-	break;
+	  find_core = 1;
+	}
+	else {
+	  subcore_id++;
+	}
       }
-      if(k1_core_info_table[i]->names[subcore_id] == "\0") {
-	i++;
-	subcore_id = 0;
-      }
-      else {
-	subcore_id++;
-      }
+      if(find_core) { break; }
+      i++;
     }
     if (i == K1_NCORES){
       char buf[100];
@@ -719,20 +721,21 @@ static void supported_cores(char buf[], size_t buflen) {
   buf[0] = '\0';
   for (i = 0; i < K1_NCORES; i++) {
     j = 0;
-    while(k1_core_info_table[i]->names[j] != "\0");
-    if (k1_core_info_table[i]->supported) {
-      if (buf[0] == '\0') {
-	strcpy(buf, k1_core_info_table[i]->names[j]);
-      }
-      else {
-	int l = strlen(buf);
-	if ((l + 1 + strlen(k1_core_info_table[i]->names[j]) + 1) < buflen) {
-	  strcat(buf, "|");
-	  strcat(buf, k1_core_info_table[i]->names[j]);
+    while(k1_core_info_table[i]->elf_cores[j] != -1) {
+      if (k1_core_info_table[i]->supported) {
+	if (buf[0] == '\0') {
+	  strcpy(buf, k1_core_info_table[i]->names[j]);
+	}
+	else {
+	  int l = strlen(buf);
+	  if ((l + 1 + strlen(k1_core_info_table[i]->names[j]) + 1) < buflen) {
+	    strcat(buf, "|");
+	    strcat(buf, k1_core_info_table[i]->names[j]);
+	  }
 	}
       }
-    }
     j++;
+    }
   }
 }
 
@@ -906,8 +909,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1_pairedReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
-			SRF_REGCLASSES(k1bdp)
-			SRF_REGCLASSES(k1bio)
+			SRF_REGCLASSES(k1b)
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
@@ -2215,19 +2217,19 @@ md_assemble(char *s)
 static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
-      k1_core_info = &k1dp_core_info;
+      k1_core_info = &k1a_core_info;
       bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
   }
 
   if(!k1_registers) {
-    k1_registers = k1_k1dp_registers;
+    k1_registers = k1_k1a_registers;
   }
 
   if(!k1_regfiles) {
-    k1_regfiles = k1_k1dp_regfiles;
+    k1_regfiles = k1_k1a_regfiles;
   }
 
-  switch(k1_core_info->elf_core) {
+  switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
     reorder_bundle = k1a_reorder_bundle;
@@ -2245,7 +2247,7 @@ k1_set_cpu(void) {
     reorder_bundle = k1b_reorder_bundle;
     break;
   default:
-    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
+    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
   }
 }
 
@@ -2945,7 +2947,7 @@ k1_md_start_line_hook(void) {
                 /* For cores st231 and onward, empty bundles don't need to cause the
                  * generation of a NOP instruction. Just ignore them...
                  */
-                if ((k1_core_info->elf_core & ELF_K1_CORE_MASK) !=
+                if ((k1_core_info->elf_cores[subcore_id] & ELF_K1_CORE_MASK) !=
                         -6) {
                     /* this is an empty bundle, transform it into an
                      * empty statement */
@@ -3093,9 +3095,9 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
         /* core */
         for (i = 0; i < K1_NCORES; i++) {
 	  j=0;
-	  while(k1_core_info_table[i]->names[j] != "\0") {
+	  while(k1_core_info_table[i]->elf_cores[j] != -1) {
             if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->names[j])) {
-                set_assume_param(&k1_core, k1_core_info_table[i]->elf_core, &k1_core_set);
+                set_assume_param(&k1_core, k1_core_info_table[i]->elf_cores[subcore_id], &k1_core_set);
                 if (k1_core_info != k1_core_info_table[i])
                     as_fatal("assume machine '%s' is inconsistent with current machine '%s'",
                             k1_core_info_table[i]->names[j], target_name);
@@ -3199,7 +3201,7 @@ k1_end(void)
     Elf_Internal_Ehdr * i_ehdrp;
 
     if (! k1_core_set)
-        k1_core = k1_core_info->elf_core;
+        k1_core = k1_core_info->elf_cores[subcore_id];
 
     /* (pp) the flags must be set at once */
     newflags= k1_core | k1_cut | k1_abi | k1_pic_flags;
