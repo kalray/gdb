@@ -80,7 +80,8 @@ typedef union {
   unsigned int  value;
 } opcode_t;
 
-static int is_mono_double(unsigned int _opcode) {
+// This routine is taken from RTL (Vincent)
+static int is_k1b_mono_double(unsigned int _opcode) {
   opcode_t opcode;
 
   opcode.value = _opcode;
@@ -233,7 +234,7 @@ static int k1b_is_opxd(unsigned int x) {
   return (((x) & opxd_mask) == opxd_opcode);
 }
 
-static int k1b_reassemble_bundle(unsigned int *opcnt) {
+static int k1b_reassemble_bundle(unsigned int *_opcnt) {
   // units indexes in instr array
   int bcu_idx=0;
   int alu0_idx=1;
@@ -270,6 +271,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
   int lsu_taken = 0;
 
   int i, j;
+  int opcnt = *_opcnt;
 
   int instr_idx = 0;
 
@@ -281,9 +283,9 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
     instr[i].immx_valid[1] = 0;
   }
 
-  if(debug) fprintf(stderr,"k1b_reassemble_bundle: opcnt = %d\n",*opcnt);
+  if(debug) fprintf(stderr,"k1b_reassemble_bundle: opcnt = %d\n",opcnt);
 
-  if(*opcnt == 0) {
+  if(opcnt == 0) {
     if(debug) fprintf(stderr,"opcnt == 0\n");
     return 1;
   }
@@ -318,7 +320,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
     instr[alu0_idx].valid = 1;
     instr[alu0_idx].opcode = bundle_ops[0];
     instr[alu0_idx].nb_syllables = 1;
-    if (is_mono_double(bundle_ops[0])) {
+    if (is_k1b_mono_double(bundle_ops[0])) {
       if(debug) fprintf(stderr,"Syllable 0: Set valid on ALU0 & ALU1 for instr %d with 0x%x takes ALU0 & ALU1 (mono double)\n",alu0_idx,bundle_ops[0]);
       alu0_taken = 1;
       alu1_taken = 1;
@@ -330,8 +332,8 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
 
   if(debug) fprintf(stderr,"Test for parallel bit on 0x%x\n",bundle_ops[0]);
   if (k1b_has_parallel_bit(bundle_ops[0])) {
-    if(debug) fprintf(stderr,"Parallel bit on 0x%x (opcnt: %d)\n",bundle_ops[0], *opcnt);
-    for (i = 1; i < *opcnt ; i ++) {
+    if(debug) fprintf(stderr,"Parallel bit on 0x%x (opcnt: %d)\n",bundle_ops[0], opcnt);
+    for (i = 1; i < opcnt ; i ++) {
       switch (k1b_steering(bundle_ops[i])) {
 
         // immx syllable
@@ -368,7 +370,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
 	break;
 
       case ALU_STEER:
-	if (is_mono_double(bundle_ops[i])) {
+	if (is_k1b_mono_double(bundle_ops[i])) {
 	  if (alu0_taken == 0) {
 	    if(debug) fprintf(stderr,"Mono_double: Set valid on ALU0 & ALU1 for instr %d with 0x%x\n",alu0_idx,bundle_ops[i]);
 	    instr[alu0_idx].valid = 1;
@@ -457,7 +459,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
 	if(debug) fprintf(stderr,"Stop! stop bit is set 0x%x\n",bundle_ops[i]);
 	break;
       }
-      if(debug) fprintf(stderr,"Continue %d < %d?\n",i,*opcnt);
+      if(debug) fprintf(stderr,"Continue %d < %d?\n",i,opcnt);
 
     }
     if (k1b_has_parallel_bit(bundle_ops[i])) {
@@ -507,7 +509,7 @@ static int k1b_reassemble_bundle(unsigned int *opcnt) {
 
   if(debug) fprintf(stderr,"End => %d instructions\n",instr_idx);
 
-  *opcnt = instr_idx;
+  *_opcnt = instr_idx;
   return 0;
 }
 

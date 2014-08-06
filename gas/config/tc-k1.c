@@ -2232,8 +2232,8 @@ k1_set_cpu(void) {
     break;
   case ELF_K1_CORE_B_IO:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
-    break;
     reorder_bundle = k1b_reorder_bundle;
+    break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
   }
