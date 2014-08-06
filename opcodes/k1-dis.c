@@ -25,6 +25,79 @@
 #define MAU_EXU 2
 #define LSU_EXU 3
 
+static char *get_steering_name(int steering) {
+  switch(steering) {
+  case BCU_STEER:
+    return "BCU";
+  case LSU_STEER:
+    return "LSU";
+  case MAU_STEER:
+    return "MAU";
+  case ALU_STEER:
+    return "ALU";
+  default:
+    return "UNKNOWN STEERING";
+  }
+}
+
+typedef struct {
+  unsigned int bit0: 1;
+  unsigned int bit1: 1;
+  unsigned int bit2: 1;
+  unsigned int bit3: 1;
+  unsigned int bit4: 1;
+  unsigned int bit5: 1;
+  unsigned int bit6: 1;
+  unsigned int bit7: 1;
+  unsigned int bit8: 1;
+  unsigned int bit9: 1;
+  unsigned int bit10: 1;
+  unsigned int bit11: 1;
+  unsigned int bit12: 1;
+  unsigned int bit13: 1;
+  unsigned int bit14: 1;
+  unsigned int bit15: 1;
+  unsigned int bit16: 1;
+  unsigned int bit17: 1;
+  unsigned int bit18: 1;
+  unsigned int bit19: 1;
+  unsigned int bit20: 1;
+  unsigned int bit21: 1;
+  unsigned int bit22: 1;
+  unsigned int bit23: 1;
+  unsigned int bit24: 1;
+  unsigned int bit25: 1;
+  unsigned int bit26: 1;
+  unsigned int bit27: 1;
+  unsigned int bit28: 1;
+  unsigned int bit29: 1;
+  unsigned int bit30: 1;
+  unsigned int bit31: 1;
+} opcode_bits_t;
+
+typedef union {
+  opcode_bits_t bits;
+  unsigned int  value;
+} opcode_t;
+
+// This routine is taken from RTL (Vincent)
+static int is_k1b_mono_double(unsigned int _opcode) {
+  opcode_t opcode;
+
+  opcode.value = _opcode;
+
+  if ((opcode.bits.bit28 == 0 && opcode.bits.bit27 == 1 && opcode.bits.bit17 == 1 && opcode.bits.bit16 == 0 && opcode.bits.bit15 == 1) ||
+      (opcode.bits.bit28 == 1 && opcode.bits.bit16 == 0 && opcode.bits.bit15 == 1) ||
+      (opcode.bits.bit28 == 1 && opcode.bits.bit17 == 0 && opcode.bits.bit16 == 1 && opcode.bits.bit15 == 1) ||
+      (opcode.bits.bit28 == 1 && opcode.bits.bit27 == 0 && opcode.bits.bit17 == 1 && opcode.bits.bit16 == 1 && opcode.bits.bit15 == 1) ||
+      // ADDD s10 / MAKED s16
+      (opcode.bits.bit28 == 0 && opcode.bits.bit27 == 0 && opcode.bits.bit26 == 0 && opcode.bits.bit25 == 0 && opcode.bits.bit17 == 1 && opcode.bits.bit16 == 1 )) {
+       return 1;
+  }
+
+  return 0;
+}
+
 struct objdump_disasm_info {
     bfd *abfd;
     asection *sec;
@@ -47,7 +120,9 @@ static bundle_t bundle_insn[ISSUES];
 */
 static bundle_t bundle_insn[MAXBUNDLESIZE];
 
-static int reassemble_bundle(unsigned int *opcnt) {
+typedef int (*reassemble_bundle_t)(unsigned int *opcnt);
+
+static int k1a_reassemble_bundle(unsigned int *opcnt) {
     unsigned int i;
     unsigned int insncnt = 0;
     unsigned int immxcnt = 0;
@@ -139,6 +214,305 @@ static int reassemble_bundle(unsigned int *opcnt) {
     return 0;
 }
 
+static int k1b_steering(unsigned int x) {
+  return (((x) & 0x60000000) >> 29);
+}
+
+static int k1b_substeering(unsigned int x) {
+  return  (((x) & 0x18000000) >> 27);
+}
+
+static int k1b_has_parallel_bit(unsigned int x) {
+  return (((x) & 0x80000000) == 0x80000000);
+}
+
+
+static int k1b_is_opxd(unsigned int x) {
+  unsigned int opxd_mask=0x7803e000;
+  unsigned int opxd_opcode=0x7803e000;
+
+  return (((x) & opxd_mask) == opxd_opcode);
+}
+
+static int k1b_reassemble_bundle(unsigned int *_opcnt) {
+  // units indexes in instr array
+  int bcu_idx=0;
+  int alu0_idx=1;
+  int alu1_idx=2;
+  int mau_idx=3;
+  int lsu_idx=4;
+
+  // Debugging flag
+  int debug = 0;
+
+  // units corresponding to the four substeering bits values : an immx whose substeering bits value is i goes to unit number immx_main_unit[i]
+  int immx_main_unit[4] = {alu0_idx, alu1_idx, mau_idx, lsu_idx};
+
+  struct instr_s {
+    int valid;
+    int opcode;
+    int opxd;
+    int immx[2];
+    int opxd_valid;
+    int immx_valid[2];
+    int nb_syllables;
+  };
+
+  unsigned int MAX_INSTRS=5;
+  struct instr_s instr[MAX_INSTRS];
+
+  // available resources
+  int bcu_taken = 0;
+  int alu0_taken = 0;
+  int alu1_taken = 0;
+  int alu2_taken = 0;
+  int alu3_taken = 0;
+  int mau_taken = 0;
+  int lsu_taken = 0;
+
+  int i, j;
+  int opcnt = *_opcnt;
+
+  int instr_idx = 0;
+
+  for(i=0; i < MAX_INSTRS; i++) {
+    instr[i].valid = 0;
+    instr[i].nb_syllables = 0;
+    instr[i].opxd_valid = 0;
+    instr[i].immx_valid[0] = 0;
+    instr[i].immx_valid[1] = 0;
+  }
+
+  if(debug) fprintf(stderr,"k1b_reassemble_bundle: opcnt = %d\n",opcnt);
+
+  if(opcnt == 0) {
+    if(debug) fprintf(stderr,"opcnt == 0\n");
+    return 1;
+  }
+
+  switch (k1b_steering(bundle_ops[0])) {
+
+  case BCU_STEER:
+    if(debug) fprintf(stderr,"Syllable 0: Set valid on BCU for instr %d with 0x%x\n",bcu_idx,bundle_ops[0]);
+    instr[bcu_idx].valid = 1;
+    instr[bcu_idx].opcode = bundle_ops[0];
+    instr[bcu_idx].nb_syllables = 1;
+    bcu_taken = 1;
+    break;
+
+  case MAU_STEER:
+    if(debug) fprintf(stderr,"Syllable 0: Set valid on MAU for instr %d with 0x%x\n",mau_idx,bundle_ops[0]);
+    instr[mau_idx].valid = 1;
+    instr[mau_idx].opcode = bundle_ops[0];
+    instr[mau_idx].nb_syllables = 1;
+    mau_taken = 1;
+    break;
+
+  case LSU_STEER:
+    if(debug) fprintf(stderr,"Syllable 0: Set valid on LSU for instr %d with 0x%x\n",lsu_idx,bundle_ops[0]);
+    instr[lsu_idx].valid = 1;
+    instr[lsu_idx].opcode = bundle_ops[0];
+    instr[lsu_idx].nb_syllables = 1;
+    lsu_taken = 1;
+    break;
+
+  case ALU_STEER:
+    instr[alu0_idx].valid = 1;
+    instr[alu0_idx].opcode = bundle_ops[0];
+    instr[alu0_idx].nb_syllables = 1;
+    if (is_k1b_mono_double(bundle_ops[0])) {
+      if(debug) fprintf(stderr,"Syllable 0: Set valid on ALU0 & ALU1 for instr %d with 0x%x takes ALU0 & ALU1 (mono double)\n",alu0_idx,bundle_ops[0]);
+      alu0_taken = 1;
+      alu1_taken = 1;
+    } else {
+      if(debug) fprintf(stderr,"Syllable 0: Set valid on ALU0 for instr %d with 0x%x takes ALU0\n",alu0_idx,bundle_ops[0]);
+      alu0_taken = 1;
+    }  
+  }
+
+  if(debug) fprintf(stderr,"Test for parallel bit on 0x%x\n",bundle_ops[0]);
+  if (k1b_has_parallel_bit(bundle_ops[0])) {
+    if(debug) fprintf(stderr,"Parallel bit on 0x%x (opcnt: %d)\n",bundle_ops[0], opcnt);
+    for (i = 1; i < opcnt ; i ++) {
+      switch (k1b_steering(bundle_ops[i])) {
+
+        // immx syllable
+      case BCU_STEER:
+	if (instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].valid == 0) {
+	  for(j=0; j < MAX_INSTRS; j++) {
+	    if(debug) fprintf(stderr,"Instr %d: valid? %d\n",j,instr[j].valid);
+	    if(instr[j].valid) {
+	      if(debug) fprintf(stderr,"\topcode: 0x%x -> %s\n",instr[j].opcode, get_steering_name(k1b_steering(instr[j].opcode)));
+	      if(instr[j].opxd_valid) {
+		if(debug) fprintf(stderr,"\topxd: 0x%x\n",instr[j].opxd);
+	      }
+	      if(instr[j].immx_valid[0]) {
+		if(debug) fprintf(stderr,"\timmx0: 0x%x\n",instr[j].immx[0]);
+	      }
+	      if(instr[j].immx_valid[1]) {
+		if(debug) fprintf(stderr,"\timmx1: 0x%x\n",instr[j].immx[1]);
+	      }
+	      if(debug) fprintf(stderr,"\tSyllables: %d\n",instr[j].nb_syllables);
+	    }
+	  }
+
+	  if(debug) fprintf(stderr,"Error: bad immx syllable 0x%x @ %d (not attached to any main syllable (%d)). Substeering: %d",bundle_ops[i], i,immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]));
+	  return 1;
+	} else if (instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].nb_syllables != 1) {
+	  if(debug) fprintf(stderr,"Error: Too many immx syllables of type k1b_substeering(bundle_ops[i])");
+	  return 1;
+	} else {
+	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].immx[0] = bundle_ops[i];
+	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].immx_valid[0] = 1;
+	  instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].nb_syllables = 2;
+	  if(debug) fprintf(stderr,"Set IMMX[0] on instr %d for substeering %d @ %d\n",immx_main_unit[k1b_substeering(bundle_ops[i])],k1b_substeering(bundle_ops[i]),i);
+	}
+	break;
+
+      case ALU_STEER:
+	if (is_k1b_mono_double(bundle_ops[i])) {
+	  if (alu0_taken == 0) {
+	    if(debug) fprintf(stderr,"Mono_double: Set valid on ALU0 & ALU1 for instr %d with 0x%x\n",alu0_idx,bundle_ops[i]);
+	    instr[alu0_idx].valid = 1;
+	    instr[alu0_idx].opcode = bundle_ops[i];
+	    instr[alu0_idx].nb_syllables = 1;
+	    alu0_taken = 1;
+	    alu1_taken = 1;
+	    // go directly to alu2 as double alus cannot fit into alu1
+	  } else if (alu2_taken == 0) {
+	    if(debug) fprintf(stderr,"Mono_double: Set valid on MAU (ALU) instr %d with 0x%x\n",mau_idx,bundle_ops[i]);
+	    instr[mau_idx].valid = 1;
+	    instr[mau_idx].opcode = bundle_ops[i];
+	    instr[mau_idx].nb_syllables = 1;
+	    alu1_taken = 1; // alu1 is considered as taken
+	    alu2_taken = 1;
+	  } else if (alu3_taken == 0) {
+	    if(debug) fprintf(stderr,"Mono_double: Set valid on LSU (ALU) instr %d with 0x%x\n",lsu_idx,bundle_ops[i]);
+	    instr[lsu_idx].valid = 1;
+	    instr[lsu_idx].opcode = bundle_ops[i];
+	    instr[lsu_idx].nb_syllables = 1;
+	    alu3_taken = 1;
+	  } else {
+	    error("Too many ALU instructions");
+	    return 1;
+	  }
+	} else {
+	  if (alu0_taken == 0) {
+	    if(debug) fprintf(stderr,"Set valid on ALU0 for instr %d with 0x%x\n",alu0_idx,bundle_ops[i]);
+	    instr[alu0_idx].valid = 1;
+	    instr[alu0_idx].opcode = bundle_ops[i];
+	    instr[alu0_idx].nb_syllables = 1;
+	    alu0_taken = 1;
+	  } else if (alu1_taken == 0) {
+	    if(debug) fprintf(stderr,"Set valid on ALU1 for instr %d with 0x%x\n",alu1_idx,bundle_ops[i]);
+	    instr[alu1_idx].valid = 1;
+	    instr[alu1_idx].opcode = bundle_ops[i];
+	    instr[alu1_idx].nb_syllables = 1;
+	    alu1_taken = 1;
+	  } else if (alu2_taken == 0) {
+	    if(debug) fprintf(stderr,"Set valid on MAU (ALU) for instr %d with 0x%x\n",mau_idx,bundle_ops[i]);
+	    instr[mau_idx].valid = 1;
+	    instr[mau_idx].opcode = bundle_ops[i];
+	    instr[mau_idx].nb_syllables = 1;
+	    alu2_taken = 1;
+	  } else if (alu3_taken == 0) {
+	    if(debug) fprintf(stderr,"Set valid on LSU (ALU) for instr %d with 0x%x\n",lsu_idx,bundle_ops[i]);
+	    instr[lsu_idx].valid = 1;
+	    instr[lsu_idx].opcode = bundle_ops[i];
+	    instr[lsu_idx].nb_syllables = 1;
+	    alu3_taken = 1;
+	  } else {
+	    error("Too many ALU instructions");
+	    return 1;
+	  }
+	}
+	break;
+
+      case MAU_STEER:
+	if (mau_taken == 1) {
+	  error("Too many MAU instructions");
+	  return 1;
+	} else {
+	  mau_taken = 1;
+	  if(debug) fprintf(stderr,"Set valid on MAU for instr %d with 0x%x\n",mau_idx,bundle_ops[i]);
+	  instr[mau_idx].valid = 1;
+	  instr[mau_idx].opcode = bundle_ops[i];
+	  instr[mau_idx].nb_syllables = 1;
+	  alu2_taken = 1;
+	}
+	break;
+
+      case LSU_STEER:
+	if (lsu_taken == 1) {
+	  error("Too many LSU instructions");
+	  return 1;
+	} else {
+	  lsu_taken = 1;
+	  if(debug) fprintf(stderr,"Set valid on LSU for instr %d with 0x%x\n",lsu_idx,bundle_ops[i]);
+	  instr[lsu_idx].valid = 1;
+	  instr[lsu_idx].opcode = bundle_ops[i];
+	  instr[lsu_idx].nb_syllables = 1;
+	  alu3_taken = 1;
+	}
+      }
+      if (!(k1b_has_parallel_bit(bundle_ops[i]))) {
+	if(debug) fprintf(stderr,"Stop! stop bit is set 0x%x\n",bundle_ops[i]);
+	break;
+      }
+      if(debug) fprintf(stderr,"Continue %d < %d?\n",i,opcnt);
+
+    }
+    if (k1b_has_parallel_bit(bundle_ops[i])) {
+      error("bundle exceeds maximum size");
+      return 1;
+    }
+  }
+
+  // opxd management : recreate a big alu0 instr from the original alu0 + alu1 instructions
+  if (instr[alu1_idx].valid == 1 && k1b_is_opxd(instr[alu1_idx].opcode) == 1) {
+    instr[alu0_idx].opxd = instr[alu1_idx].opcode;
+    instr[alu0_idx].opxd_valid = 1;
+    instr[alu0_idx].immx_valid[1] = instr[alu1_idx].immx_valid[0];
+    instr[alu0_idx].immx[1] = instr[alu1_idx].immx[0];
+    if(debug) fprintf(stderr,"Set INVALID on instr %d with 0x%x\n",alu1_idx,instr[alu1_idx].opcode);
+    instr[alu1_idx].valid = 0;
+  }
+
+  // Fill bundle_insn and count read syllables
+  instr_idx = 0;
+  for (i = 0; i < MAX_INSTRS; i++) {
+    if (instr[i].valid == 1) {
+      int syllable_idx = 0;
+
+      // First copy opcode
+      bundle_insn[instr_idx].insn[syllable_idx++] = instr[i].opcode;
+      bundle_insn[instr_idx].len = 1;
+
+      if(instr[i].opxd_valid) {
+	if(debug) fprintf(stderr,"Instr %d valid opxd is valid\n",i);	
+	bundle_insn[instr_idx].insn[syllable_idx++] = instr[i].opxd;
+	bundle_insn[instr_idx].len++;
+      }
+
+      for(j=0; j < 2; j++) {
+	if(instr[i].immx_valid[j]) {
+	  if(debug) fprintf(stderr,"Instr %d valid immx[%d] is valid\n",i,j);	
+	  bundle_insn[instr_idx].insn[syllable_idx++] = instr[i].immx[j];
+	  bundle_insn[instr_idx].len++;
+	}
+      }
+
+      if(debug) fprintf(stderr,"Instr %d valid, copying in bundle_insn (%d syllables <-> %d)\n",i,bundle_insn[instr_idx].len,instr[i].nb_syllables);
+      instr_idx++;
+    }
+  }
+
+  if(debug) fprintf(stderr,"End => %d instructions\n",instr_idx);
+
+  *_opcnt = instr_idx;
+  return 0;
+}
+
 
 int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   static unsigned int opindex = 0;
@@ -157,7 +531,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int opt_pretty = 0;
   int found = 0;
   int invalid_bundle = 0;
-  
+  reassemble_bundle_t reassemble_bundle = NULL;
+
   /* check that tables are initialized */
 
   if (info->arch != bfd_arch_k1) {
@@ -171,25 +546,29 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_regfiles = k1_k1dp_regfiles;
       k1_registers = k1_k1dp_registers;
       k1_dec_registers = k1_k1dp_dec_registers;
+      reassemble_bundle = k1a_reassemble_bundle;
       break;
     case bfd_mach_k1io:
       opc_table = k1io_k1optab;
       k1_regfiles = k1_k1io_regfiles;
       k1_registers = k1_k1io_registers;
       k1_dec_registers = k1_k1io_dec_registers;
+      reassemble_bundle = k1a_reassemble_bundle;
       break;
-	case bfd_mach_k1bdp:
-	  opc_table = k1bdp_k1optab;
-	  k1_regfiles = k1_k1bdp_regfiles;
-	  k1_registers = k1_k1bdp_registers;
-	  k1_dec_registers = k1_k1bdp_dec_registers;
-	  break;
-	case bfd_mach_k1bio:
-	  opc_table = k1bio_k1optab;
-	  k1_regfiles = k1_k1bio_regfiles;
-	  k1_registers = k1_k1bio_registers;
-	  k1_dec_registers = k1_k1bio_dec_registers;
-	  break;
+    case bfd_mach_k1bdp:
+      opc_table = k1bdp_k1optab;
+      k1_regfiles = k1_k1bdp_regfiles;
+      k1_registers = k1_k1bdp_registers;
+      k1_dec_registers = k1_k1bdp_dec_registers;
+      reassemble_bundle = k1b_reassemble_bundle;
+      break;
+    case bfd_mach_k1bio:
+      opc_table = k1bio_k1optab;
+      k1_regfiles = k1_k1bio_regfiles;
+      k1_registers = k1_k1bio_registers;
+      k1_dec_registers = k1_k1bio_dec_registers;
+      reassemble_bundle = k1b_reassemble_bundle;
+      break;
     default:
       /* Core not supported */
       (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
@@ -236,7 +615,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
   /* check for extension to right      */
   /* iff this is not the end of bundle */
-  
+
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
       unsigned int i;
@@ -252,12 +631,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
 
       for(i=0; i < op->codewords; i++) {
-          if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
-              opcode_match = 0;
-          }
+	if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
+	  opcode_match = 0;
+	}
       }
 
-      if (opcode_match){
+      if (opcode_match) {
           /* print the operands using the instructions format string. */
           fmtp = op->fmtstring;
           // If the user wants "pretty printing", ie, not the usual little endian objdump output

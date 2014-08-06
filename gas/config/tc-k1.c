@@ -153,6 +153,9 @@ struct k1insn_s
 
 typedef struct k1insn_s k1insn_t;
 
+typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
+static reorder_bundle_t reorder_bundle = NULL;
+
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
 /* We leave an extra slot in K1MAXINSN in case we need to emit a nop
@@ -1005,14 +1008,14 @@ insert_operand(k1insn_t * insn,
         const expressionS * arg)
  {
     unsigned int op = 0;
-    long long max;
-    long long min;
+    //    long long max;
+    //    long long min;
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
 
-    max = (1LL << (opdef->width - 1)) - 1;
-    min = (-1LL << (opdef->width - 1));
+    //    max = (1LL << (opdef->width - 1)) - 1;
+    //    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
         return;			/* syntactic sugar ? */
@@ -1481,6 +1484,12 @@ static Bundling find_bundling(const k1insn_t *insn)
     return insn_bundlings;
 }
 
+static int find_reservation(const k1insn_t *insn)
+ {
+    int insn_reservation = insn->opdef->reservation;
+    return insn_reservation;
+}
+
 static int cmp_bundling(const void *a, const void *b)
  {
     const Bundling *ba = (const Bundling *)a;
@@ -1504,76 +1513,82 @@ static int cmp_bundling(const void *a, const void *b)
  */
 
 static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
-    int hash = 0;
-    int i;
-    int canonical_ix;
-    const BundleMatchType *match;
-    Bundling canonical_order[K1MAXBUNDLESIZE];
+  int hash = 0;
+  int i;
+  int canonical_ix;
+  const BundleMatchType *match;
+  Bundling canonical_order[K1MAXBUNDLESIZE];
+  
+  
+  if (*bundle_insn_cnt > K1MAXBUNDLESIZE) {
+    return -1;
+  }
+  
+  for (i = 0; i < *bundle_insn_cnt; i++) {
+    canonical_order[i] = bundle_insn[i]->bundling;
+  }
+  qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
+  
+  for (i = 0; i < *bundle_insn_cnt; i++) {
+    hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
+  }
+  
+  if (hash > bundlematch_table_size) {
+    return -1;
+  }
+  
+  canonical_ix = bundlematch_table[hash];
+  
+  if (canonical_ix == -1) {
+    /* No match at all for canonical, on any alignment. */
+    return -1;
+  }
+  
+  match = &canonical_table[canonical_ix];
+  
+  /* Try each bundle type for this canonical. */
+  for (i = 0; i < match->entries; i++) {
+    int bt = match->entry[i];
+    const BundleType *btype = &bundle_types[bt];
+    int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
+    /* Our known alignment is current pc modulo section align.
+     * That must satisfy the bundle requirements. */
+    int cur_align = get_byte_counter(now_seg) % sec_align;
 
-
-    if (*bundle_insn_cnt > K1MAXBUNDLESIZE)
-        return -1;
-
-    for (i = 0; i < *bundle_insn_cnt; i++)
-        canonical_order[i] = bundle_insn[i]->bundling;
-    qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
-
-    for (i = 0; i < *bundle_insn_cnt; i++)
-        hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
-
-    if (hash > bundlematch_table_size)
-        return -1;
-    canonical_ix = bundlematch_table[hash];
-
-    if (canonical_ix == -1)
-        /* No match at all for canonical, on any alignment. */
-        return -1;
-
-    match = &canonical_table[canonical_ix];
-    /* Try each bundle type for this canonical. */
-    for (i = 0; i < match->entries; i++)
- {
-        int bt = match->entry[i];
-        const BundleType *btype = &bundle_types[bt];
-        int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
-        /* Our known alignment is current pc modulo section align.
-         * That must satisfy the bundle requirements. */
-        int cur_align = get_byte_counter(now_seg) % sec_align;
-
-        if ((btype->nnops == 0 || nop_insertion_allowed)
-                && sec_align >= btype->base
-                && (cur_align % btype->base) == btype->bias)
- { /* We have a match. Reorder bundle_insn to match it. */
-            int entry, insn;
-            int next_nop = 0;
-
-            for (entry = 0; entry < *bundle_insn_cnt; entry++)
-                /* Put correct insn in bundle_insn[entry] */
-                if (entry == btype->nops[next_nop])
- {
-                    bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
-                    assemble_tokens("nop", 0, 0);
-                    insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
-                    bundle_insn[entry] = &insbuf[insncnt-1];
-                    next_nop++;
-                }
-                else
- {
-                    for (insn = entry; insn < *bundle_insn_cnt; insn++)
-                        if (bundle_insn[insn]->bundling == btype->bundling[entry])
- {
-                            k1insn_t *t = bundle_insn[entry];
-                            bundle_insn[entry] = bundle_insn[insn];
-                            bundle_insn[insn] = t;
-                            break;
-                        }
-                }
-            return canonical_ix;
-        }
+    if ((btype->nnops == 0 || nop_insertion_allowed)
+	&& sec_align >= btype->base
+	&& (cur_align % btype->base) == btype->bias) {
+      /* We have a match. Reorder bundle_insn to match it. */
+      int entry, insn;
+      int next_nop = 0;
+      
+      for (entry = 0; entry < *bundle_insn_cnt; entry++) {
+	/* Put correct insn in bundle_insn[entry] */
+	if (entry == btype->nops[next_nop]) {
+	  bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
+	  assemble_tokens("nop", 0, 0);
+	  insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
+	  bundle_insn[entry] = &insbuf[insncnt-1];
+	  next_nop++;
+	}
+	else {
+	  for (insn = entry; insn < *bundle_insn_cnt; insn++) {
+	    if (bundle_insn[insn]->bundling == btype->bundling[entry]) {
+	      k1insn_t *t = bundle_insn[entry];
+	      bundle_insn[entry] = bundle_insn[insn];
+	      bundle_insn[insn] = t;
+	      break;
+	    }
+	  }
+	}
+      }
+      return canonical_ix;
     }
-    /* Here if we matched a canonical, but the alignment was not good for
-     * any of the bundle types. */
-    return -2;
+  }
+
+  /* Here if we matched a canonical, but the alignment was not good for
+   * any of the bundle types. */
+  return -2;
 }
 
 /*
@@ -1585,40 +1600,39 @@ static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
 static void
 assemble_tokens(const char *opname,
         const expressionS * tok,
-        int ntok)
- {
-    const k1opc_t *opcode;
-    k1insn_t *insn;
+        int ntok) {
+  const k1opc_t *opcode;
+  k1insn_t *insn;
+  
+  /* make sure there is room in instruction buffer */
+  
+  if (insncnt >= K1MAXINSN) {
+    as_fatal("too many instructions in bundle ");
+  }
 
-    /* make sure there is room in instruction buffer */
+  insn = insbuf + insncnt;
 
-    if (insncnt >= K1MAXINSN)
-        as_fatal("too many instructions in bundle ");
-    insn = insbuf + insncnt;
-
-    /* find the instruction in the opcode table */
-
-    opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
-    if (opcode)
- {
-        if (!(opcode = find_format(opcode, tok, ntok)))
-            as_bad("[assemble_tokens] : couldn't find format %s \n",
-                    opname);
-        else
- {
-            assemble_insn(opcode, tok, ntok, insn);
-            insncnt++;
-        }
+  /* find the instruction in the opcode table */
+  
+  opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
+  if (opcode) {
+    if (!(opcode = find_format(opcode, tok, ntok))) {
+      as_bad("[assemble_tokens] : couldn't find format %s \n",
+	     opname);
     }
-    else
- {
-        as_bad("[assemble_tokens] : couldn't find op %s\n", opname);
+    else {
+      assemble_insn(opcode, tok, ntok, insn);
+      insncnt++;
     }
+  }
+  else {
+    as_bad("[assemble_tokens] : couldn't find op %s\n", opname);
+  }
 }
 
 
 static int
-is_equivalent_bundle(Bundling b1, Bundling b2){
+k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     switch(b1){
         case Bundling_k1_BCU:
             if(b2 == Bundling_k1_BCU){
@@ -1658,7 +1672,7 @@ is_equivalent_bundle(Bundling b1, Bundling b2){
 
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
-reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     k1insn_t *shadow_bundle[7];
     int bundle_insncnt = *bundle_insncnt_p;
     int i, j;
@@ -1670,6 +1684,8 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     int tag = 0;
     int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
     int bundle_type;
+
+    int debug = 0;
 
     for(i=0; i<bundle_insncnt; i++){
         if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
@@ -1692,7 +1708,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     for(i=0; i < 5 ; i++){
         bundle_type = priority[i];
         for(j=0; j < bundle_insncnt; j++){
-            if(is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
+            if(k1a_is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
                 switch(bundle_type){
                     case Bundling_k1_ALU:
                     case Bundling_k1_ALU_X:
@@ -1751,7 +1767,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 // Tag EXU on IMMX
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                    fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    if(debug) fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
                 }
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
@@ -1766,8 +1782,8 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
             if(num_ALU < 2){
                 shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
-                tag = Modifier_k1_exunum_ALU0 + num_ALU;
-                num_ALU++;
+		tag = Modifier_k1_exunum_ALU0 + num_ALU;
+		num_ALU++;
             } else {
                 if(num_TINY + num_MAU + num_LSU > 2){
                     as_fatal("Too many TINY ops\n");
@@ -1785,7 +1801,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                if(debug) fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
             }
         }
     }
@@ -1798,6 +1814,223 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         }
     }
     *bundle_insncnt_p = j;
+}
+
+static int
+k1b_is_equivalent_bundle(Bundling b1, const k1insn_t *insn){
+  Bundling b2 = find_bundling(insn);
+
+    switch(b1){
+        case Bundling_k1_BCU:
+            if(b2 == Bundling_k1_BCU){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_ALU:
+            if(b2 == Bundling_k1_ALU || b2 == Bundling_k1_ALU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_ALUD:
+	    if(b2 == Bundling_k1_ALUD || b2 == Bundling_k1_ALUD_Z || b2 == Bundling_k1_ALUD_Y) {
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_MAU:
+            if(b2 == Bundling_k1_MAU || b2 == Bundling_k1_MAU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_LSU:
+            if(b2 == Bundling_k1_LSU || b2 == Bundling_k1_LSU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        default:
+            return 0;
+    }
+    return 0;
+}
+
+static int is_mono_double(const k1insn_t *insn) {
+  int reservation = find_reservation(insn);
+  return (reservation == Reservation_k1_ALUD_LITE   ||
+	  reservation == Reservation_k1_ALUD_LITE_X ||
+	  reservation == Reservation_k1_ALUD_TINY   ||
+	  reservation == Reservation_k1_ALUD_TINY_X);
+}
+
+/* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
+static void
+k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+
+#if 0
+  int error = find_bundle_type(bundle_insn, bundle_insncnt_p);
+  fprintf(stderr,"Error: %d\n",error);
+
+  as_fatal("Test");
+#else
+  k1insn_t *shadow_bundle[7];
+  int bundle_insncnt = *bundle_insncnt_p;
+  int i, j;
+  int num_ALU = 0;
+  int num_BCU = 0;
+  int num_MAU = 0;
+  int num_LSU = 0;
+  int num_TINY = 0;
+  int tag = 0;
+  int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
+  int bundle_type;
+
+  int debug = 0;
+
+  for(i=0; i<bundle_insncnt; i++){
+    if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
+      if(bundle_insncnt == 1){
+	return;
+      } else {
+	as_fatal("Too many ops in a single op bundle\n");
+      }
+    }
+    if(find_bundling(bundle_insn[i]) == Bundling_k1_TINY){
+      num_TINY++;
+    }
+  }
+
+  for(i=0; i < 7; i++){
+    shadow_bundle[i] = NULL;
+  }
+
+
+  for(i=0; i < 5 ; i++){
+    bundle_type = priority[i];
+    for(j=0; j < bundle_insncnt; j++){
+      if(k1b_is_equivalent_bundle(bundle_type, bundle_insn[j]) ){
+	if(debug) fprintf(stderr,"%s:%d \tBundle_type: %s\n",__FUNCTION__,__LINE__,bundling_names(bundle_type));
+	switch(bundle_type){
+	case Bundling_k1_ALU:
+	case Bundling_k1_ALU_X:
+	  if(num_ALU > 1){
+	    as_fatal("Too many ALU op\n");
+	  }
+	  if(shadow_bundle[num_ALU + num_BCU] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  shadow_bundle[num_ALU + num_BCU] =  bundle_insn[j]; // Put in first available ALU
+	  tag = Modifier_k1_exunum_ALU0 + num_ALU;
+	  num_ALU++;
+	  break;
+	case Bundling_k1_ALUD:
+	case Bundling_k1_ALUD_Y:
+	case Bundling_k1_ALUD_Z:
+	  if(num_ALU > 0){
+	    as_fatal("Too many ALU op\n");
+	  }
+	  if(shadow_bundle[i] != NULL || shadow_bundle[i+1] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  shadow_bundle[i] = bundle_insn[j];
+	  num_ALU = 2;
+	  tag = Modifier_k1_exunum_ALU0;
+	  break;
+	case Bundling_k1_BCU:
+	  if(shadow_bundle[i] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  shadow_bundle[i] = bundle_insn[j];
+	  num_BCU++;
+	  break;
+	case Bundling_k1_MAU:
+	case Bundling_k1_MAU_X:
+	  if(shadow_bundle[i] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  shadow_bundle[i] = bundle_insn[j];
+	  tag = Modifier_k1_exunum_MAU;
+	  num_MAU++;
+	  break;
+	case Bundling_k1_LSU:
+	case Bundling_k1_LSU_X:
+	  if(shadow_bundle[i] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  shadow_bundle[i] = bundle_insn[j];
+	  tag = Modifier_k1_exunum_LSU;
+	  num_LSU++;
+	  break;
+	default:
+	  as_fatal("Wrong Bundling\n");
+	}
+
+	// Tag EXU on IMMX
+	if(bundle_insn[j]->immx != NOIMMX){
+	  immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
+	  if(debug) fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+	}
+	if(bundle_insn[j]->immx64 != NOIMMX){
+	  immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
+	}
+      }
+    }
+  }
+
+  // Now handle the "TINY" problem : quite easy : put them in ALUs, or append at the end !
+  num_TINY = 0;
+  for(j=0; j < bundle_insncnt; j++){
+    if(debug) fprintf(stderr,"%s:%d \tBundling: %s\n", __FUNCTION__, __LINE__, bundling_names(find_bundling(bundle_insn[j])));
+      
+    if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
+      if(num_ALU < 2 &&
+	 // If ALU0 is already taken, LITE cannot go to ALU1 !
+	 ! (num_ALU > 0 && is_mono_double(bundle_insn[j])) ) {
+	shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
+	tag = Modifier_k1_exunum_ALU0 + num_ALU;
+	if(debug) fprintf(stderr,"%s:%d \tALU0: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_ALU0);
+	num_ALU++;
+
+	// ALUD_LITE reserve ALU0 and ALU1
+	if(is_mono_double(bundle_insn[j])) {
+	  if(debug) fprintf(stderr,"%s:%d \tALU1: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_ALU0);
+	  num_ALU++;
+	}
+      } else {
+	if(num_TINY + num_MAU + num_LSU > 2){
+	  as_fatal("Too many TINY ops\n");
+	}
+	shadow_bundle[5 + num_TINY] = bundle_insn[j];
+	if(num_MAU == 0){
+	  tag = Modifier_k1_exunum_MAU;
+	  if(debug) fprintf(stderr,"%s:%d \tMAU: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_MAU);
+	  num_MAU++;
+	} else {
+	  tag = Modifier_k1_exunum_LSU;
+	  if(debug) fprintf(stderr,"%s:%d \tLSU: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_LSU);
+	  num_LSU++;
+	}
+	num_TINY++;
+      }
+      // Tag EXU on IMMX
+      if(bundle_insn[j]->immx != NOIMMX){
+	immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
+	if(debug) fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+      }
+    }
+  }
+
+  j = 0;
+  for(i=0; i < 7; i++){
+    if(shadow_bundle[i] != NULL){
+      bundle_insn[j] = shadow_bundle[i];
+      j++;
+    }
+  }
+  *bundle_insncnt_p = j;
+#endif
 }
 
 
@@ -1923,7 +2156,7 @@ md_assemble(char *s)
               }
             }
 
-            //fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
+            // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
 	}
 
@@ -1997,16 +2230,20 @@ k1_set_cpu(void) {
   switch(k1_core_info->elf_core) {
   case ELF_K1_CORE_DP:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_B_DP:
-	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
-	break;
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
   case ELF_K1_CORE_B_IO:
-	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
-	break;
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
   }
