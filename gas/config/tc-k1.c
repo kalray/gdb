@@ -75,6 +75,7 @@ char *error_str=NULL;
 
 /* Default values used if no assume directive is given */
 static const K1_Core_Info *k1_core_info = NULL;
+static int subcore_id = 0;
 
 /* Default k1_registers array. */
 static const k1_Register *k1_registers = NULL;
@@ -590,13 +591,23 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_MCORE:
     mcore = strdup(arg);
-    for (i = 0; i < K1_NCORES; i++){
-      if (strcasecmp(mcore, k1_core_info_table[i]->name) == 0
+    i = 0;
+    while(i < K1_NCORES) {
+      
+      if (strcasecmp(mcore, k1_core_info_table[i]->names[subcore_id]) == 0
 	  && k1_core_info_table[i]->supported){
 	k1_core_info = k1_core_info_table[i];
 	k1_registers = k1_registers_table[i];
 	k1_regfiles = k1_regfiles_table[i];
+	
 	break;
+      }
+      if(k1_core_info_table[i]->names[subcore_id] == "\0") {
+	i++;
+	subcore_id = 0;
+      }
+      else {
+	subcore_id++;
       }
     }
     if (i == K1_NCORES){
@@ -700,25 +711,26 @@ real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
         abort();
 }
 
-static void supported_cores(char buf[], size_t buflen)
- {
-    int i;
-    buf[0] = '\0';
-    for (i = 0; i < K1_NCORES; i++)
-        if (k1_core_info_table[i]->supported)
- {
-            if (buf[0] == '\0')
-                strcpy(buf, k1_core_info_table[i]->name);
-            else
- {
-                int l = strlen(buf);
-                if ((l + 1 + strlen(k1_core_info_table[i]->name) + 1) < buflen)
- {
-                    strcat(buf, "|");
-                    strcat(buf, k1_core_info_table[i]->name);
-                }
-            }
-        }
+static void supported_cores(char buf[], size_t buflen) {
+  int i, j;
+  buf[0] = '\0';
+  for (i = 0; i < K1_NCORES; i++) {
+    j = 0;
+    while(k1_core_info_table[i]->names[j] != "\0");
+    if (k1_core_info_table[i]->supported) {
+      if (buf[0] == '\0') {
+	strcpy(buf, k1_core_info_table[i]->names[j]);
+      }
+      else {
+	int l = strlen(buf);
+	if ((l + 1 + strlen(k1_core_info_table[i]->names[j]) + 1) < buflen) {
+	  strcat(buf, "|");
+	  strcat(buf, k1_core_info_table[i]->names[j]);
+	}
+      }
+    }
+    j++;
+  }
 }
 
 int get_regnum_by_name(char *name){
@@ -2831,26 +2843,30 @@ static void
 k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
  {
     char* param;
-    const char *target_name = k1_core_info->name;
+    const char *target_name = k1_core_info->names[subcore_id];
 
     param=input_line_pointer;
     while ( (input_line_pointer!=NULL)
             && ! is_end_of_line [(unsigned char) *input_line_pointer])
  {
         int found = FALSE;
-        int i;
+        int i, j;
         SKIP_WHITESPACE();
 
         /* core */
         for (i = 0; i < K1_NCORES; i++) {
-            if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->name)) {
+	  j=0;
+	  while(k1_core_info_table[i]->names[j] != "\0") {
+            if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->names[j])) {
                 set_assume_param(&k1_core, k1_core_info_table[i]->elf_core, &k1_core_set);
                 if (k1_core_info != k1_core_info_table[i])
                     as_fatal("assume machine '%s' is inconsistent with current machine '%s'",
-                            k1_core_info_table[i]->name, target_name);
+                            k1_core_info_table[i]->names[j], target_name);
                 found = TRUE;
                 break;
             }
+	    j++;
+	  }
         }
 
         if (! found) {
