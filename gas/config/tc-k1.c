@@ -916,8 +916,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_signed10:
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
-            case Immediate_k1_signed21:
-            case Immediate_k1_signed22:
             case Immediate_k1_signed27:
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel17:

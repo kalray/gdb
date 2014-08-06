@@ -727,8 +727,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1_signed5:
                   case Immediate_k1_signed10:
                   case Immediate_k1_signed11:
-                  case Immediate_k1_signed21:
-                  case Immediate_k1_signed22:
                   case Immediate_k1_signed16:
                   case Immediate_k1_signed27:
                   case Immediate_k1_signed32:
