@@ -910,6 +910,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
 			SRF_REGCLASSES(k1b)
+			SRF_REGCLASSES(k1b64)
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
@@ -2246,6 +2247,14 @@ k1_set_cpu(void) {
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
     reorder_bundle = k1b_reorder_bundle;
     break;
+  case ELF_K1_CORE_B64_DP:
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1b64dp);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
+  case ELF_K1_CORE_B64_IO:
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1b64io);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
   }
@@ -3127,10 +3136,14 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "abi-k1dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-		  { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-		  { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-		  { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-		  { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1b64dp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1b64dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1b64io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1b64io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2011-10-25 11:20+0100\n"
+"POT-Creation-Date: 2014-08-07 16:54+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -53,10 +53,10 @@ msgid ""
 "\n"
 msgstr ""
 
-#: addr2line.c:101 ar.c:304 ar.c:333 coffdump.c:471 dlltool.c:3938
-#: dllwrap.c:524 elfedit.c:653 nlmconv.c:1114 objcopy.c:576 objcopy.c:611
-#: readelf.c:3214 size.c:99 srconv.c:1743 strings.c:667 sysdump.c:653
-#: windmc.c:228 windres.c:695
+#: addr2line.c:101 ar.c:332 ar.c:369 coffdump.c:471 dlltool.c:3968
+#: dllwrap.c:516 elfedit.c:651 nlmconv.c:1113 objcopy.c:600 objcopy.c:650
+#: readelf.c:3517 size.c:99 srconv.c:1744 strings.c:653 sysdump.c:653
+#: windmc.c:228 windres.c:694
 #, c-format
 msgid "Report bugs to %s\n"
 msgstr ""
@@ -66,7 +66,7 @@ msgstr ""
 #. file name pair that is about to be printed below.  Eg:
 #.
 #. foo at 123:bar.c
-#: addr2line.c:276
+#: addr2line.c:297
 #, c-format
 msgid " at "
 msgstr ""
@@ -77,221 +77,250 @@ msgstr ""
 #. by the next iteration of the while loop.  Eg:
 #.
 #. 123:bar.c (inlined by) 456:main.c
-#: addr2line.c:308
+#: addr2line.c:338
 #, c-format
 msgid " (inlined by) "
 msgstr ""
 
-#: addr2line.c:341
+#: addr2line.c:371
 #, c-format
 msgid "%s: cannot get addresses from archive"
 msgstr ""
 
-#: addr2line.c:358
+#: addr2line.c:388
 #, c-format
 msgid "%s: cannot find section %s"
 msgstr ""
 
-#: addr2line.c:427 nm.c:1570 objdump.c:3423
+#: addr2line.c:457 nm.c:1572 objdump.c:3477
 #, c-format
 msgid "unknown demangling style `%s'"
 msgstr ""
 
-#: ar.c:238
+#: ar.c:253
 #, c-format
 msgid "no entry %s in archive\n"
 msgstr ""
 
-#: ar.c:254
+#: ar.c:267
 #, c-format
 msgid ""
 "Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV] [--plugin "
 "<name>] [member-name] [count] archive-file file...\n"
 msgstr ""
 
-#: ar.c:260
+#: ar.c:273
 #, c-format
 msgid ""
 "Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV] [member-name] "
 "[count] archive-file file...\n"
 msgstr ""
 
-#: ar.c:266
+#: ar.c:281
 #, c-format
 msgid "       %s -M [<mri-script]\n"
 msgstr ""
 
-#: ar.c:267
+#: ar.c:282
 #, c-format
 msgid " commands:\n"
 msgstr ""
 
-#: ar.c:268
+#: ar.c:283
 #, c-format
 msgid "  d            - delete file(s) from the archive\n"
 msgstr ""
 
-#: ar.c:269
+#: ar.c:284
 #, c-format
 msgid "  m[ab]        - move file(s) in the archive\n"
 msgstr ""
 
-#: ar.c:270
+#: ar.c:285
 #, c-format
 msgid "  p            - print file(s) found in the archive\n"
 msgstr ""
 
-#: ar.c:271
+#: ar.c:286
 #, c-format
 msgid "  q[f]         - quick append file(s) to the archive\n"
 msgstr ""
 
-#: ar.c:272
+#: ar.c:287
 #, c-format
 msgid ""
 "  r[ab][f][u]  - replace existing or insert new file(s) into the archive\n"
 msgstr ""
 
-#: ar.c:273
+#: ar.c:288
 #, c-format
 msgid "  s            - act as ranlib\n"
 msgstr ""
 
-#: ar.c:274
+#: ar.c:289
 #, c-format
 msgid "  t            - display contents of archive\n"
 msgstr ""
 
-#: ar.c:275
+#: ar.c:290
 #, c-format
 msgid "  x[o]         - extract file(s) from the archive\n"
 msgstr ""
 
-#: ar.c:276
+#: ar.c:291
 #, c-format
 msgid " command specific modifiers:\n"
 msgstr ""
 
-#: ar.c:277
+#: ar.c:292
 #, c-format
 msgid "  [a]          - put file(s) after [member-name]\n"
 msgstr ""
 
-#: ar.c:278
+#: ar.c:293
 #, c-format
 msgid "  [b]          - put file(s) before [member-name] (same as [i])\n"
 msgstr ""
 
-#: ar.c:279
+#: ar.c:296
+#, c-format
+msgid "  [D]          - use zero for timestamps and uids/gids (default)\n"
+msgstr ""
+
+#: ar.c:298
+#, c-format
+msgid "  [U]          - use actual timestamps and uids/gids\n"
+msgstr ""
+
+#: ar.c:303
 #, c-format
 msgid "  [D]          - use zero for timestamps and uids/gids\n"
 msgstr ""
 
-#: ar.c:280
+#: ar.c:305
+#, c-format
+msgid "  [U]          - use actual timestamps and uids/gids (default)\n"
+msgstr ""
+
+#: ar.c:308
 #, c-format
 msgid "  [N]          - use instance [count] of name\n"
 msgstr ""
 
-#: ar.c:281
+#: ar.c:309
 #, c-format
 msgid "  [f]          - truncate inserted file names\n"
 msgstr ""
 
-#: ar.c:282
+#: ar.c:310
 #, c-format
 msgid "  [P]          - use full path names when matching\n"
 msgstr ""
 
-#: ar.c:283
+#: ar.c:311
 #, c-format
 msgid "  [o]          - preserve original dates\n"
 msgstr ""
 
-#: ar.c:284
+#: ar.c:312
 #, c-format
 msgid ""
 "  [u]          - only replace files that are newer than current archive "
 "contents\n"
 msgstr ""
 
-#: ar.c:285
+#: ar.c:313
 #, c-format
 msgid " generic modifiers:\n"
 msgstr ""
 
-#: ar.c:286
+#: ar.c:314
 #, c-format
 msgid "  [c]          - do not warn if the library had to be created\n"
 msgstr ""
 
-#: ar.c:287
+#: ar.c:315
 #, c-format
 msgid "  [s]          - create an archive index (cf. ranlib)\n"
 msgstr ""
 
-#: ar.c:288
+#: ar.c:316
 #, c-format
 msgid "  [S]          - do not build a symbol table\n"
 msgstr ""
 
-#: ar.c:289
+#: ar.c:317
 #, c-format
 msgid "  [T]          - make a thin archive\n"
 msgstr ""
 
-#: ar.c:290
+#: ar.c:318
 #, c-format
 msgid "  [v]          - be verbose\n"
 msgstr ""
 
-#: ar.c:291
+#: ar.c:319
 #, c-format
 msgid "  [V]          - display the version number\n"
 msgstr ""
 
-#: ar.c:292
+#: ar.c:320
 #, c-format
 msgid "  @<file>      - read options from <file>\n"
 msgstr ""
 
-#: ar.c:293
+#: ar.c:321
 #, c-format
 msgid "  --target=BFDNAME - specify the target object format as BFDNAME\n"
 msgstr ""
 
-#: ar.c:295
+#: ar.c:323
 #, c-format
 msgid " optional:\n"
 msgstr ""
 
-#: ar.c:296
+#: ar.c:324
 #, c-format
 msgid "  --plugin <p> - load the specified plugin\n"
 msgstr ""
 
-#: ar.c:317
+#: ar.c:345
 #, c-format
 msgid "Usage: %s [options] archive\n"
 msgstr ""
 
-#: ar.c:318
+#: ar.c:346
 #, c-format
 msgid " Generate an index to speed access to archives\n"
 msgstr ""
 
-#: ar.c:319
+#: ar.c:347
 #, c-format
 msgid ""
 " The options are:\n"
 "  @<file>                      Read options from <file>\n"
 msgstr ""
 
-#: ar.c:322
+#: ar.c:350
 #, c-format
 msgid "  --plugin <name>              Load the specified plugin\n"
 msgstr ""
 
-#: ar.c:325
+#: ar.c:354
+#, c-format
+msgid ""
+"  -D                           Use zero for symbol map timestamp (default)\n"
+"  -U                           Use an actual symbol map timestamp\n"
+msgstr ""
+
+#: ar.c:358
+#, c-format
+msgid ""
+"  -D                           Use zero for symbol map timestamp\n"
+"  -U                           Use actual symbol map timestamp (default)\n"
+msgstr ""
+
+#: ar.c:361
 #, c-format
 msgid ""
 "  -t                           Update the archive's symbol map timestamp\n"
@@ -299,74 +328,88 @@ msgid ""
 "  -v --version                 Print version information\n"
 msgstr ""
 
-#: ar.c:449
+#: ar.c:485
 msgid "two different operation options specified"
 msgstr ""
 
-#: ar.c:538 nm.c:1643
+#: ar.c:577 ar.c:638 nm.c:1654
 #, c-format
 msgid "sorry - this program has been built without plugin support\n"
 msgstr ""
 
-#: ar.c:693
+#: ar.c:761
 msgid "no operation specified"
 msgstr ""
 
-#: ar.c:696
+#: ar.c:764
 msgid "`u' is only meaningful with the `r' option."
 msgstr ""
 
-#: ar.c:699
+#: ar.c:767
 msgid "`u' is not meaningful with the `D' option."
 msgstr ""
 
-#: ar.c:707
+#: ar.c:770
+msgid "`u' modifier ignored since `D' is the default (see `U')"
+msgstr ""
+
+#: ar.c:781
 msgid "`N' is only meaningful with the `x' and `d' options."
 msgstr ""
 
-#: ar.c:710
+#: ar.c:784
 msgid "Value for `N' must be positive."
 msgstr ""
 
-#: ar.c:724
+#: ar.c:798
 msgid "`x' cannot be used on thin archives."
 msgstr ""
 
-#: ar.c:771
+#: ar.c:845
 #, c-format
 msgid "internal error -- this option not implemented"
 msgstr ""
 
-#: ar.c:840
+#: ar.c:914
 #, c-format
 msgid "creating %s"
 msgstr ""
 
-#: ar.c:889 ar.c:943 ar.c:1272 objcopy.c:2080
+#: ar.c:945
+#, c-format
+msgid "Cannot convert existing library %s to thin format"
+msgstr ""
+
+#: ar.c:951
+#, c-format
+msgid "Cannot convert existing thin library %s to normal format"
+msgstr ""
+
+#: ar.c:983 ar.c:1037 ar.c:1366 objcopy.c:2235
 #, c-format
 msgid "internal stat error on %s"
 msgstr ""
 
-#: ar.c:908 ar.c:976
+#: ar.c:1002 ar.c:1070
 #, c-format
 msgid "%s is not a valid archive"
 msgstr ""
 
-#: ar.c:1034
+#: ar.c:1128
 msgid "could not create temporary file whilst writing archive"
 msgstr ""
 
-#: ar.c:1177
+#: ar.c:1271
 #, c-format
 msgid "No member named `%s'\n"
 msgstr ""
 
-#: ar.c:1227
+#: ar.c:1321
 #, c-format
 msgid "no entry %s in archive %s!"
 msgstr ""
 
-#: ar.c:1366
+#: ar.c:1460
 #, c-format
 msgid "%s: no archive map to update"
 msgstr ""
@@ -401,27 +444,27 @@ msgstr ""
 msgid "%s: no output archive specified yet\n"
 msgstr ""
 
-#: arsup.c:250 arsup.c:288 arsup.c:330 arsup.c:350 arsup.c:416
+#: arsup.c:250 arsup.c:288 arsup.c:330 arsup.c:353 arsup.c:419
 #, c-format
 msgid "%s: no open output archive\n"
 msgstr ""
 
-#: arsup.c:261 arsup.c:371 arsup.c:397
+#: arsup.c:261 arsup.c:374 arsup.c:400
 #, c-format
 msgid "%s: can't open file %s\n"
 msgstr ""
 
-#: arsup.c:315 arsup.c:393 arsup.c:474
+#: arsup.c:315 arsup.c:396 arsup.c:477
 #, c-format
 msgid "%s: can't find module file %s\n"
 msgstr ""
 
-#: arsup.c:425
+#: arsup.c:428
 #, c-format
 msgid "Current open archive is %s\n"
 msgstr ""
 
-#: arsup.c:449
+#: arsup.c:452
 #, c-format
 msgid "%s: no open archive\n"
 msgstr ""
@@ -437,81 +480,81 @@ msgstr ""
 msgid " emulation options: \n"
 msgstr ""
 
-#: bucomm.c:163
+#: bucomm.c:162
 #, c-format
 msgid "can't set BFD default target to `%s': %s"
 msgstr ""
 
-#: bucomm.c:175
+#: bucomm.c:174
 #, c-format
 msgid "%s: Matching formats:"
 msgstr ""
 
-#: bucomm.c:190
+#: bucomm.c:189
 #, c-format
 msgid "Supported targets:"
 msgstr ""
 
-#: bucomm.c:192
+#: bucomm.c:191
 #, c-format
 msgid "%s: supported targets:"
 msgstr ""
 
-#: bucomm.c:210
+#: bucomm.c:209
 #, c-format
 msgid "Supported architectures:"
 msgstr ""
 
-#: bucomm.c:212
+#: bucomm.c:211
 #, c-format
 msgid "%s: supported architectures:"
 msgstr ""
 
-#: bucomm.c:228
+#: bucomm.c:227
 msgid "big endian"
 msgstr ""
 
-#: bucomm.c:229
+#: bucomm.c:228
 msgid "little endian"
 msgstr ""
 
-#: bucomm.c:230
+#: bucomm.c:229
 msgid "endianness unknown"
 msgstr ""
 
-#: bucomm.c:251
+#: bucomm.c:250
 #, c-format
 msgid ""
 "%s\n"
 " (header %s, data %s)\n"
 msgstr ""
 
-#: bucomm.c:407
+#: bucomm.c:406
 #, c-format
 msgid "BFD header file version %s\n"
 msgstr ""
 
-#: bucomm.c:559
+#: bucomm.c:560
 #, c-format
 msgid "%s: bad number: %s"
 msgstr ""
 
-#: bucomm.c:576 strings.c:409
+#: bucomm.c:577 strings.c:408
 #, c-format
 msgid "'%s': No such file"
 msgstr ""
 
-#: bucomm.c:578 strings.c:411
+#: bucomm.c:579 strings.c:410
 #, c-format
 msgid "Warning: could not locate '%s'.  reason: %s"
 msgstr ""
 
-#: bucomm.c:582
+#: bucomm.c:583
 #, c-format
 msgid "Warning: '%s' is not an ordinary file"
 msgstr ""
 
-#: bucomm.c:584
+#: bucomm.c:585
 #, c-format
 msgid "Warning: '%s' has negative size, probably it is too large"
 msgstr ""
@@ -621,7 +664,7 @@ msgstr ""
 msgid "Symbol  %s, tag %d, number %d"
 msgstr ""
 
-#: coffdump.c:345 readelf.c:12215 readelf.c:12289
+#: coffdump.c:345 readelf.c:12908 readelf.c:12982
 #, c-format
 msgid "Type"
 msgstr ""
@@ -690,881 +733,881 @@ msgid ""
 "\n"
 msgstr ""
 
-#: coffdump.c:533 srconv.c:1833 sysdump.c:710
+#: coffdump.c:533 srconv.c:1834 sysdump.c:710
 msgid "no input file specified"
 msgstr ""
 
-#: cxxfilt.c:119 nm.c:269 objdump.c:281
+#: cxxfilt.c:119 nm.c:270 objdump.c:281
 #, c-format
 msgid "Report bugs to %s.\n"
 msgstr ""
 
-#: debug.c:648
+#: debug.c:647
 msgid "debug_add_to_current_namespace: no current file"
 msgstr ""
 
-#: debug.c:727
+#: debug.c:726
 msgid "debug_start_source: no debug_set_filename call"
 msgstr ""
 
-#: debug.c:781
+#: debug.c:780
 msgid "debug_record_function: no debug_set_filename call"
 msgstr ""
 
-#: debug.c:833
+#: debug.c:832
 msgid "debug_record_parameter: no current function"
 msgstr ""
 
-#: debug.c:865
+#: debug.c:864
 msgid "debug_end_function: no current function"
 msgstr ""
 
-#: debug.c:871
+#: debug.c:870
 msgid "debug_end_function: some blocks were not closed"
 msgstr ""
 
-#: debug.c:899
+#: debug.c:898
 msgid "debug_start_block: no current block"
 msgstr ""
 
-#: debug.c:935
+#: debug.c:934
 msgid "debug_end_block: no current block"
 msgstr ""
 
-#: debug.c:942
+#: debug.c:941
 msgid "debug_end_block: attempt to close top level block"
 msgstr ""
 
-#: debug.c:965
+#: debug.c:964
 msgid "debug_record_line: no current unit"
 msgstr ""
 
 #. FIXME
-#: debug.c:1018
+#: debug.c:1017
 msgid "debug_start_common_block: not implemented"
 msgstr ""
 
 #. FIXME
-#: debug.c:1029
+#: debug.c:1028
 msgid "debug_end_common_block: not implemented"
 msgstr ""
 
 #. FIXME.
-#: debug.c:1113
+#: debug.c:1112
 msgid "debug_record_label: not implemented"
 msgstr ""
 
-#: debug.c:1135
+#: debug.c:1134
 msgid "debug_record_variable: no current file"
 msgstr ""
 
-#: debug.c:1663
+#: debug.c:1662
 msgid "debug_make_undefined_type: unsupported kind"
 msgstr ""
 
-#: debug.c:1840
+#: debug.c:1839
 msgid "debug_name_type: no current file"
 msgstr ""
 
-#: debug.c:1885
+#: debug.c:1884
 msgid "debug_tag_type: no current file"
 msgstr ""
 
-#: debug.c:1893
+#: debug.c:1892
 msgid "debug_tag_type: extra tag attempted"
 msgstr ""
 
-#: debug.c:1930
+#: debug.c:1929
 #, c-format
 msgid "Warning: changing type size from %d to %d\n"
 msgstr ""
 
-#: debug.c:1952
+#: debug.c:1951
 msgid "debug_find_named_type: no current compilation unit"
 msgstr ""
 
-#: debug.c:2055
+#: debug.c:2054
 #, c-format
 msgid "debug_get_real_type: circular debug information for %s\n"
 msgstr ""
 
-#: debug.c:2482
+#: debug.c:2481
 msgid "debug_write_type: illegal type encountered"
 msgstr ""
 
-#: dlltool.c:902 dlltool.c:928 dlltool.c:959
+#: dlltool.c:917 dlltool.c:943 dlltool.c:974
 #, c-format
 msgid "Internal error: Unknown machine type: %d"
 msgstr ""
 
-#: dlltool.c:1000
+#: dlltool.c:1015
 #, c-format
 msgid "Can't open def file: %s"
 msgstr ""
 
-#: dlltool.c:1005
+#: dlltool.c:1020
 #, c-format
 msgid "Processing def file: %s"
 msgstr ""
 
-#: dlltool.c:1009
+#: dlltool.c:1024
 msgid "Processed def file"
 msgstr ""
 
-#: dlltool.c:1033
+#: dlltool.c:1048
 #, c-format
 msgid "Syntax error in def file %s:%d"
 msgstr ""
 
-#: dlltool.c:1070
+#: dlltool.c:1085
 #, c-format
 msgid "%s: Path components stripped from image name, '%s'."
 msgstr ""
 
-#: dlltool.c:1088
+#: dlltool.c:1103
 #, c-format
 msgid "NAME: %s base: %x"
 msgstr ""
 
-#: dlltool.c:1091 dlltool.c:1112
+#: dlltool.c:1106 dlltool.c:1127
 msgid "Can't have LIBRARY and NAME"
 msgstr ""
 
-#: dlltool.c:1109
+#: dlltool.c:1124
 #, c-format
 msgid "LIBRARY: %s base: %x"
 msgstr ""
 
-#: dlltool.c:1266
+#: dlltool.c:1281
 #, c-format
 msgid "VERSION %d.%d\n"
 msgstr ""
 
-#: dlltool.c:1314
+#: dlltool.c:1329
 #, c-format
 msgid "run: %s %s"
 msgstr ""
 
-#: dlltool.c:1354 resrc.c:293
+#: dlltool.c:1369 resrc.c:288
 #, c-format
 msgid "wait: %s"
 msgstr ""
 
-#: dlltool.c:1359 dllwrap.c:422 resrc.c:298
+#: dlltool.c:1374 dllwrap.c:414 resrc.c:293
 #, c-format
 msgid "subprocess got fatal signal %d"
 msgstr ""
 
-#: dlltool.c:1365 dllwrap.c:429 resrc.c:305
+#: dlltool.c:1380 dllwrap.c:421 resrc.c:300
 #, c-format
 msgid "%s exited with status %d"
 msgstr ""
 
-#: dlltool.c:1396
+#: dlltool.c:1411
 #, c-format
 msgid "Sucking in info from %s section in %s"
 msgstr ""
 
-#: dlltool.c:1536
+#: dlltool.c:1551
 #, c-format
 msgid "Excluding symbol: %s"
 msgstr ""
 
-#: dlltool.c:1625 dlltool.c:1636 nm.c:1012 nm.c:1023
+#: dlltool.c:1640 dlltool.c:1651 nm.c:1006 nm.c:1016 nm.c:1025
 #, c-format
 msgid "%s: no symbols"
 msgstr ""
 
 #. FIXME: we ought to read in and block out the base relocations.
-#: dlltool.c:1662
+#: dlltool.c:1677
 #, c-format
 msgid "Done reading %s"
 msgstr ""
 
-#: dlltool.c:1672
+#: dlltool.c:1687
 #, c-format
 msgid "Unable to open object file: %s: %s"
 msgstr ""
 
-#: dlltool.c:1675
+#: dlltool.c:1690
 #, c-format
 msgid "Scanning object file %s"
 msgstr ""
 
-#: dlltool.c:1690
+#: dlltool.c:1707
 #, c-format
 msgid "Cannot produce mcore-elf dll from archive file: %s"
 msgstr ""
 
-#: dlltool.c:1792
+#: dlltool.c:1809
 msgid "Adding exports to output file"
 msgstr ""
 
-#: dlltool.c:1844
+#: dlltool.c:1861
 msgid "Added exports to output file"
 msgstr ""
 
-#: dlltool.c:1986
+#: dlltool.c:2003
 #, c-format
 msgid "Generating export file: %s"
 msgstr ""
 
-#: dlltool.c:1991
+#: dlltool.c:2008
 #, c-format
 msgid "Unable to open temporary assembler file: %s"
 msgstr ""
 
-#: dlltool.c:1994
+#: dlltool.c:2011
 #, c-format
 msgid "Opened temporary file: %s"
 msgstr ""
 
-#: dlltool.c:2171
+#: dlltool.c:2188
 msgid "failed to read the number of entries from base file"
 msgstr ""
 
-#: dlltool.c:2219
+#: dlltool.c:2236
 msgid "Generated exports file"
 msgstr ""
 
-#: dlltool.c:2428
+#: dlltool.c:2446
 #, c-format
 msgid "bfd_open failed open stub file: %s: %s"
 msgstr ""
 
-#: dlltool.c:2432
+#: dlltool.c:2450
 #, c-format
 msgid "Creating stub file: %s"
 msgstr ""
 
-#: dlltool.c:2894
+#: dlltool.c:2921
 #, c-format
 msgid "bfd_open failed reopen stub file: %s: %s"
 msgstr ""
 
-#: dlltool.c:2908 dlltool.c:2984
+#: dlltool.c:2935 dlltool.c:3011
 #, c-format
 msgid "failed to open temporary head file: %s"
 msgstr ""
 
-#: dlltool.c:2970 dlltool.c:3050
+#: dlltool.c:2997 dlltool.c:3080
 #, c-format
 msgid "failed to open temporary head file: %s: %s"
 msgstr ""
 
-#: dlltool.c:3064
+#: dlltool.c:3094
 #, c-format
 msgid "failed to open temporary tail file: %s"
 msgstr ""
 
-#: dlltool.c:3121
+#: dlltool.c:3151
 #, c-format
 msgid "failed to open temporary tail file: %s: %s"
 msgstr ""
 
-#: dlltool.c:3143
+#: dlltool.c:3173
 #, c-format
 msgid "Can't create .lib file: %s: %s"
 msgstr ""
 
-#: dlltool.c:3147
+#: dlltool.c:3177
 #, c-format
 msgid "Creating library file: %s"
 msgstr ""
 
-#: dlltool.c:3239 dlltool.c:3245
+#: dlltool.c:3269 dlltool.c:3275
 #, c-format
 msgid "cannot delete %s: %s"
 msgstr ""
 
-#: dlltool.c:3250
+#: dlltool.c:3280
 msgid "Created lib file"
 msgstr ""
 
-#: dlltool.c:3462
+#: dlltool.c:3492
 #, c-format
 msgid "Can't open .lib file: %s: %s"
 msgstr ""
 
-#: dlltool.c:3470 dlltool.c:3492
+#: dlltool.c:3500 dlltool.c:3522
 #, c-format
 msgid "%s is not a library"
 msgstr ""
 
-#: dlltool.c:3510
+#: dlltool.c:3540
 #, c-format
 msgid "Import library `%s' specifies two or more dlls"
 msgstr ""
 
-#: dlltool.c:3521
+#: dlltool.c:3551
 #, c-format
 msgid "Unable to determine dll name for `%s' (not an import library?)"
 msgstr ""
 
-#: dlltool.c:3745
+#: dlltool.c:3775
 #, c-format
 msgid "Warning, ignoring duplicate EXPORT %s %d,%d"
 msgstr ""
 
-#: dlltool.c:3751
+#: dlltool.c:3781
 #, c-format
 msgid "Error, duplicate EXPORT with ordinals: %s"
 msgstr ""
 
-#: dlltool.c:3856
+#: dlltool.c:3886
 msgid "Processing definitions"
 msgstr ""
 
-#: dlltool.c:3888
+#: dlltool.c:3918
 msgid "Processed definitions"
 msgstr ""
 
 #. xgetext:c-format
-#: dlltool.c:3895 dllwrap.c:483
+#: dlltool.c:3925 dllwrap.c:475
 #, c-format
 msgid "Usage %s <option(s)> <object-file(s)>\n"
 msgstr ""
 
 #. xgetext:c-format
-#: dlltool.c:3897
+#: dlltool.c:3927
 #, c-format
 msgid ""
 "   -m --machine <machine>    Create as DLL for <machine>.  [default: %s]\n"
 msgstr ""
 
-#: dlltool.c:3898
+#: dlltool.c:3928
 #, c-format
 msgid ""
 "        possible <machine>: arm[_interwork], i386, mcore[-elf]{-le|-be}, "
 "ppc, thumb\n"
 msgstr ""
 
-#: dlltool.c:3899
+#: dlltool.c:3929
 #, c-format
 msgid "   -e --output-exp <outname> Generate an export file.\n"
 msgstr ""
 
-#: dlltool.c:3900
+#: dlltool.c:3930
 #, c-format
 msgid "   -l --output-lib <outname> Generate an interface library.\n"
 msgstr ""
 
-#: dlltool.c:3901
+#: dlltool.c:3931
 #, c-format
 msgid "   -y --output-delaylib <outname> Create a delay-import library.\n"
 msgstr ""
 
-#: dlltool.c:3902
+#: dlltool.c:3932
 #, c-format
 msgid "   -a --add-indirect         Add dll indirects to export file.\n"
 msgstr ""
 
-#: dlltool.c:3903
+#: dlltool.c:3933
 #, c-format
 msgid ""
 "   -D --dllname <name>       Name of input dll to put into interface lib.\n"
 msgstr ""
 
-#: dlltool.c:3904
+#: dlltool.c:3934
 #, c-format
 msgid "   -d --input-def <deffile>  Name of .def file to be read in.\n"
 msgstr ""
 
-#: dlltool.c:3905
+#: dlltool.c:3935
 #, c-format
 msgid "   -z --output-def <deffile> Name of .def file to be created.\n"
 msgstr ""
 
-#: dlltool.c:3906
+#: dlltool.c:3936
 #, c-format
 msgid "      --export-all-symbols   Export all symbols to .def\n"
 msgstr ""
 
-#: dlltool.c:3907
+#: dlltool.c:3937
 #, c-format
 msgid "      --no-export-all-symbols  Only export listed symbols\n"
 msgstr ""
 
-#: dlltool.c:3908
+#: dlltool.c:3938
 #, c-format
 msgid "      --exclude-symbols <list> Don't export <list>\n"
 msgstr ""
 
-#: dlltool.c:3909
+#: dlltool.c:3939
 #, c-format
 msgid "      --no-default-excludes  Clear default exclude symbols\n"
 msgstr ""
 
-#: dlltool.c:3910
+#: dlltool.c:3940
 #, c-format
 msgid "   -b --base-file <basefile> Read linker generated base file.\n"
 msgstr ""
 
-#: dlltool.c:3911
+#: dlltool.c:3941
 #, c-format
 msgid "   -x --no-idata4            Don't generate idata$4 section.\n"
 msgstr ""
 
-#: dlltool.c:3912
+#: dlltool.c:3942
 #, c-format
 msgid "   -c --no-idata5            Don't generate idata$5 section.\n"
 msgstr ""
 
-#: dlltool.c:3913
+#: dlltool.c:3943
 #, c-format
 msgid ""
 "      --use-nul-prefixed-import-tables Use zero prefixed idata$4 and idata"
 "$5.\n"
 msgstr ""
 
-#: dlltool.c:3914
+#: dlltool.c:3944
 #, c-format
 msgid ""
 "   -U --add-underscore       Add underscores to all symbols in interface "
 "library.\n"
 msgstr ""
 
-#: dlltool.c:3915
+#: dlltool.c:3945
 #, c-format
 msgid ""
 "      --add-stdcall-underscore Add underscores to stdcall symbols in "
 "interface library.\n"
 msgstr ""
 
-#: dlltool.c:3916
+#: dlltool.c:3946
 #, c-format
 msgid ""
 "      --no-leading-underscore All symbols shouldn't be prefixed by an "
 "underscore.\n"
 msgstr ""
 
-#: dlltool.c:3917
+#: dlltool.c:3947
 #, c-format
 msgid ""
 "      --leading-underscore   All symbols should be prefixed by an "
 "underscore.\n"
 msgstr ""
 
-#: dlltool.c:3918
+#: dlltool.c:3948
 #, c-format
 msgid "   -k --kill-at              Kill @<n> from exported names.\n"
 msgstr ""
 
-#: dlltool.c:3919
+#: dlltool.c:3949
 #, c-format
 msgid "   -A --add-stdcall-alias    Add aliases without @<n>.\n"
 msgstr ""
 
-#: dlltool.c:3920
+#: dlltool.c:3950
 #, c-format
 msgid "   -p --ext-prefix-alias <prefix> Add aliases with <prefix>.\n"
 msgstr ""
 
-#: dlltool.c:3921
+#: dlltool.c:3951
 #, c-format
 msgid "   -S --as <name>            Use <name> for assembler.\n"
 msgstr ""
 
-#: dlltool.c:3922
+#: dlltool.c:3952
 #, c-format
 msgid "   -f --as-flags <flags>     Pass <flags> to the assembler.\n"
 msgstr ""
 
-#: dlltool.c:3923
+#: dlltool.c:3953
 #, c-format
 msgid ""
 "   -C --compat-implib        Create backward compatible import library.\n"
 msgstr ""
 
-#: dlltool.c:3924
+#: dlltool.c:3954
 #, c-format
 msgid ""
 "   -n --no-delete            Keep temp files (repeat for extra "
 "preservation).\n"
 msgstr ""
 
-#: dlltool.c:3925
+#: dlltool.c:3955
 #, c-format
 msgid ""
 "   -t --temp-prefix <prefix> Use <prefix> to construct temp file names.\n"
 msgstr ""
 
-#: dlltool.c:3926
+#: dlltool.c:3956
 #, c-format
 msgid ""
 "   -I --identify <implib>    Report the name of the DLL associated with "
 "<implib>.\n"
 msgstr ""
 
-#: dlltool.c:3927
+#: dlltool.c:3957
 #, c-format
 msgid ""
 "      --identify-strict      Causes --identify to report error when multiple "
 "DLLs.\n"
 msgstr ""
 
-#: dlltool.c:3928
+#: dlltool.c:3958
 #, c-format
 msgid "   -v --verbose              Be verbose.\n"
 msgstr ""
 
-#: dlltool.c:3929
+#: dlltool.c:3959
 #, c-format
 msgid "   -V --version              Display the program version.\n"
 msgstr ""
 
-#: dlltool.c:3930
+#: dlltool.c:3960
 #, c-format
 msgid "   -h --help                 Display this information.\n"
 msgstr ""
 
-#: dlltool.c:3931
+#: dlltool.c:3961
 #, c-format
 msgid "   @<file>                   Read options from <file>.\n"
 msgstr ""
 
-#: dlltool.c:3933
+#: dlltool.c:3963
 #, c-format
 msgid ""
 "   -M --mcore-elf <outname>  Process mcore-elf object files into <outname>.\n"
 msgstr ""
 
-#: dlltool.c:3934
+#: dlltool.c:3964
 #, c-format
 msgid "   -L --linker <name>        Use <name> as the linker.\n"
 msgstr ""
 
-#: dlltool.c:3935
+#: dlltool.c:3965
 #, c-format
 msgid "   -F --linker-flags <flags> Pass <flags> to the linker.\n"
 msgstr ""
 
-#: dlltool.c:4082
+#: dlltool.c:4112
 #, c-format
 msgid "Path components stripped from dllname, '%s'."
 msgstr ""
 
-#: dlltool.c:4130
+#: dlltool.c:4160
 #, c-format
 msgid "Unable to open base-file: %s"
 msgstr ""
 
-#: dlltool.c:4165
+#: dlltool.c:4195
 #, c-format
 msgid "Machine '%s' not supported"
 msgstr ""
 
-#: dlltool.c:4245
+#: dlltool.c:4275
 #, c-format
 msgid "Warning, machine type (%d) not supported for delayimport."
 msgstr ""
 
-#: dlltool.c:4313 dllwrap.c:213
+#: dlltool.c:4343 dllwrap.c:205
 #, c-format
 msgid "Tried file: %s"
 msgstr ""
 
-#: dlltool.c:4320 dllwrap.c:220
+#: dlltool.c:4350 dllwrap.c:212
 #, c-format
 msgid "Using file: %s"
 msgstr ""
 
-#: dllwrap.c:303
+#: dllwrap.c:295
 #, c-format
 msgid "Keeping temporary base file %s"
 msgstr ""
 
-#: dllwrap.c:305
+#: dllwrap.c:297
 #, c-format
 msgid "Deleting temporary base file %s"
 msgstr ""
 
-#: dllwrap.c:319
+#: dllwrap.c:311
 #, c-format
 msgid "Keeping temporary exp file %s"
 msgstr ""
 
-#: dllwrap.c:321
+#: dllwrap.c:313
 #, c-format
 msgid "Deleting temporary exp file %s"
 msgstr ""
 
-#: dllwrap.c:334
+#: dllwrap.c:326
 #, c-format
 msgid "Keeping temporary def file %s"
 msgstr ""
 
-#: dllwrap.c:336
+#: dllwrap.c:328
 #, c-format
 msgid "Deleting temporary def file %s"
 msgstr ""
 
-#: dllwrap.c:417
+#: dllwrap.c:409
 #, c-format
 msgid "pwait returns: %s"
 msgstr ""
 
-#: dllwrap.c:484
+#: dllwrap.c:476
 #, c-format
 msgid "  Generic options:\n"
 msgstr ""
 
-#: dllwrap.c:485
+#: dllwrap.c:477
 #, c-format
 msgid "   @<file>                Read options from <file>\n"
 msgstr ""
 
-#: dllwrap.c:486
+#: dllwrap.c:478
 #, c-format
 msgid "   --quiet, -q            Work quietly\n"
 msgstr ""
 
-#: dllwrap.c:487
+#: dllwrap.c:479
 #, c-format
 msgid "   --verbose, -v          Verbose\n"
 msgstr ""
 
-#: dllwrap.c:488
+#: dllwrap.c:480
 #, c-format
 msgid "   --version              Print dllwrap version\n"
 msgstr ""
 
-#: dllwrap.c:489
+#: dllwrap.c:481
 #, c-format
 msgid "   --implib <outname>     Synonym for --output-lib\n"
 msgstr ""
 
-#: dllwrap.c:490
+#: dllwrap.c:482
 #, c-format
 msgid "  Options for %s:\n"
 msgstr ""
 
-#: dllwrap.c:491
+#: dllwrap.c:483
 #, c-format
 msgid "   --driver-name <driver> Defaults to \"gcc\"\n"
 msgstr ""
 
-#: dllwrap.c:492
+#: dllwrap.c:484
 #, c-format
 msgid "   --driver-flags <flags> Override default ld flags\n"
 msgstr ""
 
-#: dllwrap.c:493
+#: dllwrap.c:485
 #, c-format
 msgid "   --dlltool-name <dlltool> Defaults to \"dlltool\"\n"
 msgstr ""
 
-#: dllwrap.c:494
+#: dllwrap.c:486
 #, c-format
 msgid "   --entry <entry>        Specify alternate DLL entry point\n"
 msgstr ""
 
-#: dllwrap.c:495
+#: dllwrap.c:487
 #, c-format
 msgid "   --image-base <base>    Specify image base address\n"
 msgstr ""
 
-#: dllwrap.c:496
+#: dllwrap.c:488
 #, c-format
 msgid "   --target <machine>     i386-cygwin32 or i386-mingw32\n"
 msgstr ""
 
-#: dllwrap.c:497
+#: dllwrap.c:489
 #, c-format
 msgid "   --dry-run              Show what needs to be run\n"
 msgstr ""
 
-#: dllwrap.c:498
+#: dllwrap.c:490
 #, c-format
 msgid "   --mno-cygwin           Create Mingw DLL\n"
 msgstr ""
 
-#: dllwrap.c:499
+#: dllwrap.c:491
 #, c-format
 msgid "  Options passed to DLLTOOL:\n"
 msgstr ""
 
-#: dllwrap.c:500
+#: dllwrap.c:492
 #, c-format
 msgid "   --machine <machine>\n"
 msgstr ""
 
-#: dllwrap.c:501
+#: dllwrap.c:493
 #, c-format
 msgid "   --output-exp <outname> Generate export file.\n"
 msgstr ""
 
-#: dllwrap.c:502
+#: dllwrap.c:494
 #, c-format
 msgid "   --output-lib <outname> Generate input library.\n"
 msgstr ""
 
-#: dllwrap.c:503
+#: dllwrap.c:495
 #, c-format
 msgid "   --add-indirect         Add dll indirects to export file.\n"
 msgstr ""
 
-#: dllwrap.c:504
+#: dllwrap.c:496
 #, c-format
 msgid "   --dllname <name>       Name of input dll to put into output lib.\n"
 msgstr ""
 
-#: dllwrap.c:505
+#: dllwrap.c:497
 #, c-format
 msgid "   --def <deffile>        Name input .def file\n"
 msgstr ""
 
-#: dllwrap.c:506
+#: dllwrap.c:498
 #, c-format
 msgid "   --output-def <deffile> Name output .def file\n"
 msgstr ""
 
-#: dllwrap.c:507
+#: dllwrap.c:499
 #, c-format
 msgid "   --export-all-symbols     Export all symbols to .def\n"
 msgstr ""
 
-#: dllwrap.c:508
+#: dllwrap.c:500
 #, c-format
 msgid "   --no-export-all-symbols  Only export .drectve symbols\n"
 msgstr ""
 
-#: dllwrap.c:509
+#: dllwrap.c:501
 #, c-format
 msgid "   --exclude-symbols <list> Exclude <list> from .def\n"
 msgstr ""
 
-#: dllwrap.c:510
+#: dllwrap.c:502
 #, c-format
 msgid "   --no-default-excludes    Zap default exclude symbols\n"
 msgstr ""
 
-#: dllwrap.c:511
+#: dllwrap.c:503
 #, c-format
 msgid "   --base-file <basefile> Read linker generated base file\n"
 msgstr ""
 
-#: dllwrap.c:512
+#: dllwrap.c:504
 #, c-format
 msgid "   --no-idata4           Don't generate idata$4 section\n"
 msgstr ""
 
-#: dllwrap.c:513
+#: dllwrap.c:505
 #, c-format
 msgid "   --no-idata5           Don't generate idata$5 section\n"
 msgstr ""
 
-#: dllwrap.c:514
+#: dllwrap.c:506
 #, c-format
 msgid "   -U                     Add underscores to .lib\n"
 msgstr ""
 
-#: dllwrap.c:515
+#: dllwrap.c:507
 #, c-format
 msgid "   -k                     Kill @<n> from exported names\n"
 msgstr ""
 
-#: dllwrap.c:516
+#: dllwrap.c:508
 #, c-format
 msgid "   --add-stdcall-alias    Add aliases without @<n>\n"
 msgstr ""
 
-#: dllwrap.c:517
+#: dllwrap.c:509
 #, c-format
 msgid "   --as <name>            Use <name> for assembler\n"
 msgstr ""
 
-#: dllwrap.c:518
+#: dllwrap.c:510
 #, c-format
 msgid "   --nodelete             Keep temp files.\n"
 msgstr ""
 
-#: dllwrap.c:519
+#: dllwrap.c:511
 #, c-format
 msgid "   --no-leading-underscore  Entrypoint without underscore\n"
 msgstr ""
 
-#: dllwrap.c:520
+#: dllwrap.c:512
 #, c-format
 msgid "   --leading-underscore     Entrypoint with underscore.\n"
 msgstr ""
 
-#: dllwrap.c:521
+#: dllwrap.c:513
 #, c-format
 msgid "  Rest are passed unmodified to the language driver\n"
 msgstr ""
 
-#: dllwrap.c:805
+#: dllwrap.c:797
 msgid "Must provide at least one of -o or --dllname options"
 msgstr ""
 
-#: dllwrap.c:834
+#: dllwrap.c:826
 msgid ""
 "no export definition file provided.\n"
 "Creating one, but that may not be what you want"
 msgstr ""
 
-#: dllwrap.c:1023
+#: dllwrap.c:1015
 #, c-format
 msgid "DLLTOOL name    : %s\n"
 msgstr ""
 
-#: dllwrap.c:1024
+#: dllwrap.c:1016
 #, c-format
 msgid "DLLTOOL options : %s\n"
 msgstr ""
 
-#: dllwrap.c:1025
+#: dllwrap.c:1017
 #, c-format
 msgid "DRIVER name     : %s\n"
 msgstr ""
 
-#: dllwrap.c:1026
+#: dllwrap.c:1018
 #, c-format
 msgid "DRIVER options  : %s\n"
 msgstr ""
 
-#: dwarf.c:132
-msgid "Wrong size in print_dwarf_vma"
-msgstr ""
-
-#: dwarf.c:256 dwarf.c:3027
+#: dwarf.c:406 dwarf.c:3213
 msgid "badly formed extended line op encountered!\n"
 msgstr ""
 
-#: dwarf.c:263
+#: dwarf.c:413
 #, c-format
 msgid "  Extended opcode %d: "
 msgstr ""
 
-#: dwarf.c:268
+#: dwarf.c:418
 #, c-format
 msgid ""
 "End of Sequence\n"
 "\n"
 msgstr ""
 
-#: dwarf.c:274
+#: dwarf.c:424
 #, c-format
 msgid "set Address to 0x%s\n"
 msgstr ""
 
-#: dwarf.c:280
+#: dwarf.c:430
 #, c-format
-msgid "  define new File Table entry\n"
+msgid "define new File Table entry\n"
 msgstr ""
 
-#: dwarf.c:281 dwarf.c:2555
+#: dwarf.c:431 dwarf.c:2775
 #, c-format
 msgid "  Entry\tDir\tTime\tSize\tName\n"
 msgstr ""
 
-#: dwarf.c:295
+#: dwarf.c:445
+msgid "DW_LNE_define_file: Bad opcode length\n"
+msgstr ""
+
+#: dwarf.c:449
 #, c-format
 msgid "set Discriminator to %s\n"
 msgstr ""
 
-#: dwarf.c:370
+#: dwarf.c:524
 #, c-format
 msgid "    UNKNOWN DW_LNE_HP_SFC opcode (%u)\n"
 msgstr ""
@@ -1573,1240 +1616,1537 @@ msgstr ""
 #. the limited range of the unsigned char data type used
 #. for op_code.
 #. && op_code <= DW_LNE_hi_user
-#: dwarf.c:387
+#: dwarf.c:541
 #, c-format
 msgid "user defined: "
 msgstr ""
 
-#: dwarf.c:389
+#: dwarf.c:543
 #, c-format
 msgid "UNKNOWN: "
 msgstr ""
 
-#: dwarf.c:390
+#: dwarf.c:544
 #, c-format
 msgid "length %d ["
 msgstr ""
 
-#: dwarf.c:407
+#: dwarf.c:561 dwarf.c:603
 msgid "<no .debug_str section>"
 msgstr ""
 
-#: dwarf.c:413
+#: dwarf.c:567
 #, c-format
 msgid "DW_FORM_strp offset too big: %s\n"
 msgstr ""
 
-#: dwarf.c:415
+#: dwarf.c:569
 msgid "<offset is too big>"
 msgstr ""
 
-#: dwarf.c:655
+#: dwarf.c:587
+msgid "<no .debug_str_offsets.dwo section>"
+msgstr ""
+
+#: dwarf.c:588
+msgid "<no .debug_str_offsets section>"
+msgstr ""
+
+#: dwarf.c:596
+#, c-format
+msgid "DW_FORM_GNU_str_index offset too big: %s\n"
+msgstr ""
+
+#: dwarf.c:598
+msgid "<index offset is too big>"
+msgstr ""
+
+#: dwarf.c:602
+msgid "<no .debug_str.dwo section>"
+msgstr ""
+
+#: dwarf.c:609
+#, c-format
+msgid "DW_FORM_GNU_str_index indirect offset too big: %s\n"
+msgstr ""
+
+#: dwarf.c:611
+msgid "<indirect index offset is too big>"
+msgstr ""
+
+#: dwarf.c:623
+msgid "<no .debug_addr section>"
+msgstr ""
+
+#: dwarf.c:627
+#, c-format
+msgid "Offset into section %s too big: %s\n"
+msgstr ""
+
+#. Report the missing single zero which ends the section.
+#: dwarf.c:792
+msgid ".debug_abbrev section not zero terminated\n"
+msgstr ""
+
+#: dwarf.c:806
 #, c-format
 msgid "Unknown TAG value: %lx"
 msgstr ""
 
-#: dwarf.c:696
+#: dwarf.c:826
 #, c-format
 msgid "Unknown FORM value: %lx"
 msgstr ""
 
-#: dwarf.c:705
+#: dwarf.c:840
 #, c-format
 msgid " %s byte block: "
 msgstr ""
 
-#: dwarf.c:1050
+#: dwarf.c:1192
 #, c-format
 msgid "(DW_OP_call_ref in frame info)"
 msgstr ""
 
-#: dwarf.c:1075
+#: dwarf.c:1214
 #, c-format
 msgid "size: %s "
 msgstr ""
 
-#: dwarf.c:1078
+#: dwarf.c:1217
 #, c-format
 msgid "offset: %s "
 msgstr ""
 
-#: dwarf.c:1098
+#: dwarf.c:1237
 #, c-format
 msgid "DW_OP_GNU_push_tls_address or DW_OP_HP_unknown"
 msgstr ""
 
-#: dwarf.c:1122
+#: dwarf.c:1261
 #, c-format
 msgid "(DW_OP_GNU_implicit_pointer in frame info)"
 msgstr ""
 
-#: dwarf.c:1234
+#: dwarf.c:1381
 #, c-format
 msgid "(User defined location op)"
 msgstr ""
 
-#: dwarf.c:1236
+#: dwarf.c:1383
 #, c-format
 msgid "(Unknown location op)"
 msgstr ""
 
-#: dwarf.c:1283
+#: dwarf.c:1477
+msgid "corrupt attribute\n"
+msgstr ""
+
+#: dwarf.c:1492
 msgid "Internal error: DWARF version is not 2, 3 or 4.\n"
 msgstr ""
 
-#: dwarf.c:1389
+#: dwarf.c:1618
 msgid "DW_FORM_data8 is unsupported when sizeof (dwarf_vma) != 8\n"
 msgstr ""
 
-#: dwarf.c:1439
+#: dwarf.c:1669
 #, c-format
 msgid " (indirect string, offset: 0x%s): %s"
 msgstr ""
 
-#: dwarf.c:1464
+#: dwarf.c:1680
 #, c-format
-msgid "Unrecognized form: %lu\n"
+msgid " (indexed string: 0x%s): %s"
 msgstr ""
 
-#: dwarf.c:1557
+#: dwarf.c:1688
 #, c-format
-msgid "(not inlined)"
+msgid " (alt indirect string, offset: 0x%s)"
 msgstr ""
 
-#: dwarf.c:1560
+#: dwarf.c:1711
 #, c-format
-msgid "(inlined)"
-msgstr ""
-
-#: dwarf.c:1563
-#, c-format
-msgid "(declared as inline but ignored)"
-msgstr ""
-
-#: dwarf.c:1566
-#, c-format
-msgid "(declared as inline and inlined)"
-msgstr ""
-
-#: dwarf.c:1569
-#, c-format
-msgid "  (Unknown inline attribute value: %s)"
-msgstr ""
-
-#: dwarf.c:1608
-#, c-format
-msgid "(implementation defined: %s)"
-msgstr ""
-
-#: dwarf.c:1611
-#, c-format
-msgid "(Unknown: %s)"
-msgstr ""
-
-#: dwarf.c:1649
-#, c-format
-msgid "(user defined type)"
-msgstr ""
-
-#: dwarf.c:1651
-#, c-format
-msgid "(unknown type)"
-msgstr ""
-
-#: dwarf.c:1663
-#, c-format
-msgid "(unknown accessibility)"
-msgstr ""
-
-#: dwarf.c:1674
-#, c-format
-msgid "(unknown visibility)"
-msgstr ""
-
-#: dwarf.c:1684
-#, c-format
-msgid "(unknown virtuality)"
-msgstr ""
-
-#: dwarf.c:1695
-#, c-format
-msgid "(unknown case)"
-msgstr ""
-
-#: dwarf.c:1708
-#, c-format
-msgid "(user defined)"
-msgstr ""
-
-#: dwarf.c:1710
-#, c-format
-msgid "(unknown convention)"
+msgid " (addr_index: 0x%s): %s"
 msgstr ""
 
 #: dwarf.c:1717
 #, c-format
+msgid "Unrecognized form: %lu\n"
+msgstr ""
+
+#: dwarf.c:1820
+#, c-format
+msgid "(not inlined)"
+msgstr ""
+
+#: dwarf.c:1823
+#, c-format
+msgid "(inlined)"
+msgstr ""
+
+#: dwarf.c:1826
+#, c-format
+msgid "(declared as inline but ignored)"
+msgstr ""
+
+#: dwarf.c:1829
+#, c-format
+msgid "(declared as inline and inlined)"
+msgstr ""
+
+#: dwarf.c:1832
+#, c-format
+msgid "  (Unknown inline attribute value: %s)"
+msgstr ""
+
+#: dwarf.c:1873
+#, c-format
+msgid "(implementation defined: %s)"
+msgstr ""
+
+#: dwarf.c:1876
+#, c-format
+msgid "(Unknown: %s)"
+msgstr ""
+
+#: dwarf.c:1914
+#, c-format
+msgid "(user defined type)"
+msgstr ""
+
+#: dwarf.c:1916
+#, c-format
+msgid "(unknown type)"
+msgstr ""
+
+#: dwarf.c:1928
+#, c-format
+msgid "(unknown accessibility)"
+msgstr ""
+
+#: dwarf.c:1939
+#, c-format
+msgid "(unknown visibility)"
+msgstr ""
+
+#: dwarf.c:1949
+#, c-format
+msgid "(unknown virtuality)"
+msgstr ""
+
+#: dwarf.c:1960
+#, c-format
+msgid "(unknown case)"
+msgstr ""
+
+#: dwarf.c:1973
+#, c-format
+msgid "(user defined)"
+msgstr ""
+
+#: dwarf.c:1975
+#, c-format
+msgid "(unknown convention)"
+msgstr ""
+
+#: dwarf.c:1982
+#, c-format
 msgid "(undefined)"
 msgstr ""
 
-#: dwarf.c:1740
+#: dwarf.c:2005
 #, c-format
 msgid "(location list)"
 msgstr ""
 
-#: dwarf.c:1761 dwarf.c:4045
+#: dwarf.c:2026 dwarf.c:4150 dwarf.c:4276
 #, c-format
 msgid " [without DW_AT_frame_base]"
 msgstr ""
 
-#: dwarf.c:1777
+#: dwarf.c:2043
 #, c-format
 msgid ""
 "Offset %s used as value for DW_AT_import attribute of DIE at offset %lx is "
 "too big.\n"
 msgstr ""
 
-#: dwarf.c:1787
+#: dwarf.c:2053
 #, c-format
 msgid "[Abbrev Number: %ld"
 msgstr ""
 
-#: dwarf.c:1978
+#: dwarf.c:2095
 #, c-format
 msgid "Unknown AT value: %lx"
 msgstr ""
 
-#: dwarf.c:2049
+#: dwarf.c:2168
 #, c-format
 msgid "Reserved length value (0x%s) found in section %s\n"
 msgstr ""
 
-#: dwarf.c:2061
+#: dwarf.c:2180
 #, c-format
 msgid "Corrupt unit length (0x%s) found in section %s\n"
 msgstr ""
 
-#: dwarf.c:2069
+#: dwarf.c:2188
 #, c-format
 msgid "No comp units in %s section ?"
 msgstr ""
 
-#: dwarf.c:2078
+#: dwarf.c:2197
 #, c-format
 msgid "Not enough memory for a debug info array of %u entries"
 msgstr ""
 
-#: dwarf.c:2087 dwarf.c:3296 dwarf.c:3390 dwarf.c:3551 dwarf.c:3779
-#: dwarf.c:3911 dwarf.c:4081 dwarf.c:4150 dwarf.c:4354
+#: dwarf.c:2206 dwarf.c:3522 dwarf.c:3610 dwarf.c:3774 dwarf.c:4027
+#: dwarf.c:4386 dwarf.c:4471 dwarf.c:4540 dwarf.c:4681 dwarf.c:4828
+#: dwarf.c:6295
 #, c-format
 msgid ""
 "Contents of the %s section:\n"
 "\n"
 msgstr ""
 
-#: dwarf.c:2095
+#: dwarf.c:2218
 #, c-format
 msgid "Unable to locate %s section!\n"
 msgstr ""
 
-#: dwarf.c:2176
+#: dwarf.c:2306
 #, c-format
 msgid "  Compilation Unit @ offset 0x%s:\n"
 msgstr ""
 
-#: dwarf.c:2178
+#: dwarf.c:2308
 #, c-format
 msgid "   Length:        0x%s (%s)\n"
 msgstr ""
 
-#: dwarf.c:2181
+#: dwarf.c:2311
 #, c-format
 msgid "   Version:       %d\n"
 msgstr ""
 
-#: dwarf.c:2182
+#: dwarf.c:2312
 #, c-format
-msgid "   Abbrev Offset: %s\n"
+msgid "   Abbrev Offset: 0x%s\n"
 msgstr ""
 
-#: dwarf.c:2184
+#: dwarf.c:2314
 #, c-format
 msgid "   Pointer Size:  %d\n"
 msgstr ""
 
-#: dwarf.c:2188
+#: dwarf.c:2319
 #, c-format
-msgid "   Signature:     "
+msgid "   Signature:     0x%s\n"
 msgstr ""
 
-#: dwarf.c:2192
+#: dwarf.c:2322
 #, c-format
 msgid "   Type Offset:   0x%s\n"
 msgstr ""
 
-#: dwarf.c:2200
+#: dwarf.c:2330
+#, c-format
+msgid "   Section contributions:\n"
+msgstr ""
+
+#: dwarf.c:2331
+#, c-format
+msgid "    .debug_abbrev.dwo:       0x%s  0x%s\n"
+msgstr ""
+
+#: dwarf.c:2334
+#, c-format
+msgid "    .debug_line.dwo:         0x%s  0x%s\n"
+msgstr ""
+
+#: dwarf.c:2337
+#, c-format
+msgid "    .debug_loc.dwo:          0x%s  0x%s\n"
+msgstr ""
+
+#: dwarf.c:2340
+#, c-format
+msgid "    .debug_str_offsets.dwo:  0x%s  0x%s\n"
+msgstr ""
+
+#: dwarf.c:2349
 #, c-format
 msgid ""
 "Debug info is corrupted, length of CU at %s extends beyond end of section "
 "(length = %s)\n"
 msgstr ""
 
-#: dwarf.c:2213
+#: dwarf.c:2362
 #, c-format
 msgid "CU at offset %s contains corrupt or unsupported version number: %d.\n"
 msgstr ""
 
-#: dwarf.c:2224
+#: dwarf.c:2373
 #, c-format
 msgid ""
 "Debug info is corrupted, abbrev offset (%lx) is larger than abbrev section "
 "size (%lx)\n"
 msgstr ""
 
-#: dwarf.c:2274
+#: dwarf.c:2419
 #, c-format
-msgid ""
-"Bogus end-of-siblings marker detected at offset %lx in .debug_info section\n"
+msgid " <%d><%lx>: Abbrev Number: 0\n"
 msgstr ""
 
-#: dwarf.c:2278
+#: dwarf.c:2429
+#, c-format
+msgid "Bogus end-of-siblings marker detected at offset %lx in %s section\n"
+msgstr ""
+
+#: dwarf.c:2433
 msgid "Further warnings about bogus end-of-sibling markers suppressed\n"
 msgstr ""
 
-#: dwarf.c:2297
+#: dwarf.c:2452
 #, c-format
 msgid " <%d><%lx>: Abbrev Number: %lu"
 msgstr ""
 
-#: dwarf.c:2301
+#: dwarf.c:2456
 #, c-format
 msgid " <%d><%lx>: ...\n"
 msgstr ""
 
-#: dwarf.c:2320
+#: dwarf.c:2475
 #, c-format
 msgid ""
 "DIE at offset %lx refers to abbreviation number %lu which does not exist\n"
 msgstr ""
 
-#: dwarf.c:2422
+#: dwarf.c:2632
+msgid "The line info appears to be corrupt - the section is too small\n"
+msgstr ""
+
+#: dwarf.c:2645
+msgid "Only DWARF version 2, 3 and 4 line info is currently supported.\n"
+msgstr ""
+
+#: dwarf.c:2658
+msgid "Invalid maximum operations per insn.\n"
+msgstr ""
+
+#: dwarf.c:2685
 #, c-format
 msgid ""
 "Raw dump of debug contents of section %s:\n"
 "\n"
 msgstr ""
 
-#: dwarf.c:2460
-#, c-format
-msgid ""
-"The information in section %s appears to be corrupt - the section is too "
-"small\n"
-msgstr ""
-
-#: dwarf.c:2472 dwarf.c:2840
-msgid "Only DWARF version 2, 3 and 4 line info is currently supported.\n"
-msgstr ""
-
-#: dwarf.c:2486 dwarf.c:2855
-msgid "Invalid maximum operations per insn.\n"
-msgstr ""
-
-#: dwarf.c:2505 dwarf.c:3574
+#: dwarf.c:2725 dwarf.c:3795
 #, c-format
 msgid "  Offset:                      0x%lx\n"
 msgstr ""
 
-#: dwarf.c:2506
+#: dwarf.c:2726
 #, c-format
 msgid "  Length:                      %ld\n"
 msgstr ""
 
-#: dwarf.c:2507
+#: dwarf.c:2727
 #, c-format
 msgid "  DWARF Version:               %d\n"
 msgstr ""
 
-#: dwarf.c:2508
+#: dwarf.c:2728
 #, c-format
 msgid "  Prologue Length:             %d\n"
 msgstr ""
 
-#: dwarf.c:2509
+#: dwarf.c:2729
 #, c-format
 msgid "  Minimum Instruction Length:  %d\n"
 msgstr ""
 
-#: dwarf.c:2511
+#: dwarf.c:2731
 #, c-format
 msgid "  Maximum Ops per Instruction: %d\n"
 msgstr ""
 
-#: dwarf.c:2512
+#: dwarf.c:2732
 #, c-format
 msgid "  Initial value of 'is_stmt':  %d\n"
 msgstr ""
 
-#: dwarf.c:2513
+#: dwarf.c:2733
 #, c-format
 msgid "  Line Base:                   %d\n"
 msgstr ""
 
-#: dwarf.c:2514
+#: dwarf.c:2734
 #, c-format
 msgid "  Line Range:                  %d\n"
 msgstr ""
 
-#: dwarf.c:2515
+#: dwarf.c:2735
 #, c-format
 msgid "  Opcode Base:                 %d\n"
 msgstr ""
 
-#: dwarf.c:2524
+#: dwarf.c:2742
 #, c-format
 msgid ""
 "\n"
 " Opcodes:\n"
 msgstr ""
 
-#: dwarf.c:2527
+#: dwarf.c:2745
 #, c-format
 msgid "  Opcode %d has %d args\n"
 msgstr ""
 
-#: dwarf.c:2533
+#: dwarf.c:2751
 #, c-format
 msgid ""
 "\n"
 " The Directory Table is empty.\n"
 msgstr ""
 
-#: dwarf.c:2536
+#: dwarf.c:2754
 #, c-format
 msgid ""
 "\n"
-" The Directory Table:\n"
+" The Directory Table (offset 0x%lx):\n"
 msgstr ""
 
-#: dwarf.c:2551
+#: dwarf.c:2770
 #, c-format
 msgid ""
 "\n"
 " The File Name Table is empty.\n"
 msgstr ""
 
-#: dwarf.c:2554
+#: dwarf.c:2773
 #, c-format
 msgid ""
 "\n"
-" The File Name Table:\n"
+" The File Name Table (offset 0x%lx):\n"
 msgstr ""
 
-#. Now display the statements.
-#: dwarf.c:2584
+#: dwarf.c:2799
+msgid "Corrupt file name table entry\n"
+msgstr ""
+
+#: dwarf.c:2813
 #, c-format
-msgid ""
-"\n"
-" Line Number Statements:\n"
+msgid " No Line Number Statements.\n"
 msgstr ""
 
-#: dwarf.c:2603
+#: dwarf.c:2816
+#, c-format
+msgid " Line Number Statements:\n"
+msgstr ""
+
+#: dwarf.c:2837
 #, c-format
 msgid "  Special opcode %d: advance Address by %s to 0x%s"
 msgstr ""
 
-#: dwarf.c:2617
+#: dwarf.c:2851
 #, c-format
 msgid "  Special opcode %d: advance Address by %s to 0x%s[%d]"
 msgstr ""
 
-#: dwarf.c:2625
+#: dwarf.c:2859
 #, c-format
 msgid " and Line by %s to %d\n"
 msgstr ""
 
-#: dwarf.c:2635
+#: dwarf.c:2869
 #, c-format
 msgid "  Copy\n"
 msgstr ""
 
-#: dwarf.c:2645
+#: dwarf.c:2879
 #, c-format
 msgid "  Advance PC by %s to 0x%s\n"
 msgstr ""
 
-#: dwarf.c:2658
+#: dwarf.c:2892
 #, c-format
 msgid "  Advance PC by %s to 0x%s[%d]\n"
 msgstr ""
 
-#: dwarf.c:2669
+#: dwarf.c:2903
 #, c-format
 msgid "  Advance Line by %s to %d\n"
 msgstr ""
 
-#: dwarf.c:2677
+#: dwarf.c:2911
 #, c-format
 msgid "  Set File Name to entry %s in the File Name Table\n"
 msgstr ""
 
-#: dwarf.c:2685
+#: dwarf.c:2919
 #, c-format
 msgid "  Set column to %s\n"
 msgstr ""
 
-#: dwarf.c:2693
+#: dwarf.c:2927
 #, c-format
 msgid "  Set is_stmt to %s\n"
 msgstr ""
 
-#: dwarf.c:2698
+#: dwarf.c:2932
 #, c-format
 msgid "  Set basic block\n"
 msgstr ""
 
-#: dwarf.c:2708
+#: dwarf.c:2942
 #, c-format
 msgid "  Advance PC by constant %s to 0x%s\n"
 msgstr ""
 
-#: dwarf.c:2721
+#: dwarf.c:2955
 #, c-format
 msgid "  Advance PC by constant %s to 0x%s[%d]\n"
 msgstr ""
 
-#: dwarf.c:2733
+#: dwarf.c:2966
 #, c-format
 msgid "  Advance PC by fixed size amount %s to 0x%s\n"
 msgstr ""
 
-#: dwarf.c:2739
+#: dwarf.c:2972
 #, c-format
 msgid "  Set prologue_end to true\n"
 msgstr ""
 
-#: dwarf.c:2743
+#: dwarf.c:2976
 #, c-format
 msgid "  Set epilogue_begin to true\n"
 msgstr ""
 
-#: dwarf.c:2749
+#: dwarf.c:2982
 #, c-format
 msgid "  Set ISA to %s\n"
 msgstr ""
 
-#: dwarf.c:2753 dwarf.c:3168
+#: dwarf.c:2986 dwarf.c:3375
 #, c-format
 msgid "  Unknown opcode %d with operands: "
 msgstr ""
 
-#: dwarf.c:2787
+#: dwarf.c:3024
 #, c-format
 msgid ""
 "Decoded dump of debug contents of section %s:\n"
 "\n"
 msgstr ""
 
-#: dwarf.c:2828
-msgid "The line info appears to be corrupt - the section is too small\n"
-msgstr ""
-
-#: dwarf.c:2960
+#: dwarf.c:3141
 #, c-format
 msgid "CU: %s:\n"
 msgstr ""
 
-#: dwarf.c:2961 dwarf.c:2972
+#: dwarf.c:3142 dwarf.c:3154
 #, c-format
 msgid "File name                            Line number    Starting address\n"
 msgstr ""
 
-#: dwarf.c:2968
+#: dwarf.c:3150
 #, c-format
 msgid "CU: %s/%s:\n"
 msgstr ""
 
-#: dwarf.c:3059
+#: dwarf.c:3264
 #, c-format
-msgid "UNKNOWN: length %d\n"
+msgid "UNKNOWN (%u): length %d\n"
 msgstr ""
 
-#: dwarf.c:3164
+#: dwarf.c:3306
+#, c-format
+msgid ""
+"\n"
+" [Use file table entry %d]\n"
+msgstr ""
+
+#: dwarf.c:3312
+#, c-format
+msgid ""
+"\n"
+" [Use directory table entry %d]\n"
+msgstr ""
+
+#: dwarf.c:3371
 #, c-format
 msgid "  Set ISA to %lu\n"
 msgstr ""
 
-#: dwarf.c:3330 dwarf.c:4195
+#: dwarf.c:3551 dwarf.c:4579
 #, c-format
 msgid ""
 ".debug_info offset of 0x%lx in %s section does not point to a CU header.\n"
 msgstr ""
 
-#: dwarf.c:3344
+#: dwarf.c:3564
 msgid "Only DWARF 2 and 3 pubnames are currently supported\n"
 msgstr ""
 
-#: dwarf.c:3351
+#: dwarf.c:3571
 #, c-format
 msgid "  Length:                              %ld\n"
 msgstr ""
 
-#: dwarf.c:3353
+#: dwarf.c:3573
 #, c-format
 msgid "  Version:                             %d\n"
 msgstr ""
 
-#: dwarf.c:3355
+#: dwarf.c:3575
 #, c-format
 msgid "  Offset into .debug_info section:     0x%lx\n"
 msgstr ""
 
-#: dwarf.c:3357
+#: dwarf.c:3577
 #, c-format
 msgid "  Size of area in .debug_info section: %ld\n"
 msgstr ""
 
-#: dwarf.c:3360
+#: dwarf.c:3580
 #, c-format
 msgid ""
 "\n"
 "    Offset\tName\n"
 msgstr ""
 
-#: dwarf.c:3411
+#: dwarf.c:3631
 #, c-format
 msgid " DW_MACINFO_start_file - lineno: %d filenum: %d\n"
 msgstr ""
 
-#: dwarf.c:3417
+#: dwarf.c:3637
 #, c-format
 msgid " DW_MACINFO_end_file\n"
 msgstr ""
 
-#: dwarf.c:3425
+#: dwarf.c:3645
 #, c-format
 msgid " DW_MACINFO_define - lineno : %d macro : %s\n"
 msgstr ""
 
-#: dwarf.c:3434
+#: dwarf.c:3654
 #, c-format
 msgid " DW_MACINFO_undef - lineno : %d macro : %s\n"
 msgstr ""
 
-#: dwarf.c:3446
+#: dwarf.c:3666
 #, c-format
 msgid " DW_MACINFO_vendor_ext - constant : %d string : %s\n"
 msgstr ""
 
-#: dwarf.c:3566
+#: dwarf.c:3787
 #, c-format
 msgid "Only GNU extension to DWARF 4 of %s is currently supported.\n"
 msgstr ""
 
-#: dwarf.c:3576
+#: dwarf.c:3797
 #, c-format
 msgid "  Version:                     %d\n"
 msgstr ""
 
-#: dwarf.c:3577
+#: dwarf.c:3798
 #, c-format
 msgid "  Offset size:                 %d\n"
 msgstr ""
 
-#: dwarf.c:3582
+#: dwarf.c:3802
 #, c-format
 msgid "  Offset into .debug_line:     0x%lx\n"
 msgstr ""
 
-#: dwarf.c:3593
+#: dwarf.c:3816
 #, c-format
 msgid "  Extension opcode arguments:\n"
 msgstr ""
 
-#: dwarf.c:3601
+#: dwarf.c:3824
 #, c-format
 msgid "    DW_MACRO_GNU_%02x has no arguments\n"
 msgstr ""
 
-#: dwarf.c:3604
+#: dwarf.c:3827
 #, c-format
 msgid "    DW_MACRO_GNU_%02x arguments: "
 msgstr ""
 
-#: dwarf.c:3628
+#: dwarf.c:3853
 #, c-format
 msgid "Invalid extension opcode form %s\n"
 msgstr ""
 
-#: dwarf.c:3645
+#: dwarf.c:3870
 msgid ".debug_macro section not zero terminated\n"
 msgstr ""
 
-#: dwarf.c:3666
+#: dwarf.c:3891
 msgid "DW_MACRO_GNU_start_file used, but no .debug_line offset provided.\n"
 msgstr ""
 
-#: dwarf.c:3672
+#: dwarf.c:3897
 #, c-format
 msgid " DW_MACRO_GNU_start_file - lineno: %d filenum: %d\n"
 msgstr ""
 
-#: dwarf.c:3675
+#: dwarf.c:3900
 #, c-format
 msgid " DW_MACRO_GNU_start_file - lineno: %d filenum: %d filename: %s%s%s\n"
 msgstr ""
 
-#: dwarf.c:3683
+#: dwarf.c:3908
 #, c-format
 msgid " DW_MACRO_GNU_end_file\n"
 msgstr ""
 
-#: dwarf.c:3691
+#: dwarf.c:3916
 #, c-format
 msgid " DW_MACRO_GNU_define - lineno : %d macro : %s\n"
 msgstr ""
 
-#: dwarf.c:3700
+#: dwarf.c:3925
 #, c-format
 msgid " DW_MACRO_GNU_undef - lineno : %d macro : %s\n"
 msgstr ""
 
-#: dwarf.c:3710
+#: dwarf.c:3934
 #, c-format
 msgid " DW_MACRO_GNU_define_indirect - lineno : %d macro : %s\n"
 msgstr ""
 
-#: dwarf.c:3720
+#: dwarf.c:3943
 #, c-format
 msgid " DW_MACRO_GNU_undef_indirect - lineno : %d macro : %s\n"
 msgstr ""
 
-#: dwarf.c:3727
+#: dwarf.c:3949
 #, c-format
 msgid " DW_MACRO_GNU_transparent_include - offset : 0x%lx\n"
 msgstr ""
 
-#: dwarf.c:3734
+#: dwarf.c:3957
+#, c-format
+msgid " DW_MACRO_GNU_define_indirect_alt - lineno : %d macro offset : 0x%lx\n"
+msgstr ""
+
+#: dwarf.c:3965
+#, c-format
+msgid " DW_MACRO_GNU_undef_indirect_alt - lineno : %d macro offset : 0x%lx\n"
+msgstr ""
+
+#: dwarf.c:3971
+#, c-format
+msgid " DW_MACRO_GNU_transparent_include_alt - offset : 0x%lx\n"
+msgstr ""
+
+#: dwarf.c:3978
 #, c-format
 msgid " Unknown macro opcode %02x seen\n"
 msgstr ""
 
-#: dwarf.c:3746
+#: dwarf.c:3990
 #, c-format
 msgid " DW_MACRO_GNU_%02x\n"
 msgstr ""
 
-#: dwarf.c:3749
+#: dwarf.c:3993
 #, c-format
 msgid " DW_MACRO_GNU_%02x -"
 msgstr ""
 
-#: dwarf.c:3790
+#: dwarf.c:4041
 #, c-format
-msgid "  Number TAG\n"
+msgid "  Number TAG (0x%lx)\n"
 msgstr ""
 
-#: dwarf.c:3799
+#: dwarf.c:4050
 msgid "has children"
 msgstr ""
 
-#: dwarf.c:3799
+#: dwarf.c:4050
 msgid "no children"
 msgstr ""
 
-#: dwarf.c:3850 dwarf.c:4077 dwarf.c:4311
+#: dwarf.c:4091 dwarf.c:4123 dwarf.c:4132 dwarf.c:4205 dwarf.c:4253
+#: dwarf.c:4261
+#, c-format
+msgid "Location list starting at offset 0x%lx is not terminated.\n"
+msgstr ""
+
+#: dwarf.c:4107 dwarf.c:4215 dwarf.c:4884
+#, c-format
+msgid "<End of list>\n"
+msgstr ""
+
+#: dwarf.c:4117
+#, c-format
+msgid "(base address)\n"
+msgstr ""
+
+#: dwarf.c:4153
+msgid " (start == end)"
+msgstr ""
+
+#: dwarf.c:4155
+msgid " (start > end)"
+msgstr ""
+
+#: dwarf.c:4222
+#, c-format
+msgid "(base address selection entry)\n"
+msgstr ""
+
+#: dwarf.c:4246
+#, c-format
+msgid "Unknown location list entry type 0x%x.\n"
+msgstr ""
+
+#: dwarf.c:4325 dwarf.c:4467 dwarf.c:4670 dwarf.c:4733 dwarf.c:4780
 #, c-format
 msgid ""
 "\n"
 "The %s section is empty.\n"
 msgstr ""
 
-#: dwarf.c:3856 dwarf.c:4317
+#: dwarf.c:4331 dwarf.c:4676 dwarf.c:4786
 #, c-format
 msgid ""
 "Unable to load/parse the .debug_info section, so cannot interpret the %s "
 "section.\n"
 msgstr ""
 
-#: dwarf.c:3900
+#: dwarf.c:4375
 msgid "No location lists in .debug_info section!\n"
 msgstr ""
 
-#: dwarf.c:3905
+#: dwarf.c:4380
 #, c-format
 msgid "Location lists in %s section start at 0x%s\n"
 msgstr ""
 
-#: dwarf.c:3912
+#: dwarf.c:4387
 #, c-format
 msgid "    Offset   Begin    End      Expression\n"
 msgstr ""
 
-#: dwarf.c:3961
+#: dwarf.c:4424
 #, c-format
 msgid "There is a hole [0x%lx - 0x%lx] in .debug_loc section.\n"
 msgstr ""
 
-#: dwarf.c:3965
+#: dwarf.c:4428
 #, c-format
 msgid "There is an overlap [0x%lx - 0x%lx] in .debug_loc section.\n"
 msgstr ""
 
-#: dwarf.c:3973
+#: dwarf.c:4436
 #, c-format
 msgid "Offset 0x%lx is bigger than .debug_loc section size.\n"
 msgstr ""
 
-#: dwarf.c:3982 dwarf.c:4017 dwarf.c:4027
-#, c-format
-msgid "Location list starting at offset 0x%lx is not terminated.\n"
-msgstr ""
-
-#: dwarf.c:4001 dwarf.c:4405
-#, c-format
-msgid "<End of list>\n"
-msgstr ""
-
-#: dwarf.c:4011
-#, c-format
-msgid "(base address)\n"
-msgstr ""
-
-#: dwarf.c:4048
-msgid " (start == end)"
-msgstr ""
-
-#: dwarf.c:4050
-msgid " (start > end)"
-msgstr ""
-
-#: dwarf.c:4060
+#: dwarf.c:4450
 #, c-format
 msgid "There are %ld unused bytes at the end of section %s\n"
 msgstr ""
 
-#: dwarf.c:4206
+#: dwarf.c:4587
 msgid "Only DWARF 2 and 3 aranges are currently supported.\n"
 msgstr ""
 
-#: dwarf.c:4210
+#: dwarf.c:4591
 #, c-format
 msgid "  Length:                   %ld\n"
 msgstr ""
 
-#: dwarf.c:4212
+#: dwarf.c:4593
 #, c-format
 msgid "  Version:                  %d\n"
 msgstr ""
 
-#: dwarf.c:4213
+#: dwarf.c:4594
 #, c-format
 msgid "  Offset into .debug_info:  0x%lx\n"
 msgstr ""
 
-#: dwarf.c:4215
+#: dwarf.c:4596
 #, c-format
 msgid "  Pointer Size:             %d\n"
 msgstr ""
 
-#: dwarf.c:4216
+#: dwarf.c:4597
 #, c-format
 msgid "  Segment Size:             %d\n"
 msgstr ""
 
-#: dwarf.c:4222
+#: dwarf.c:4603
 #, c-format
 msgid "Invalid address size in %s section!\n"
 msgstr ""
 
-#: dwarf.c:4232
+#: dwarf.c:4613
 msgid "Pointer size + Segment size is not a power of two.\n"
 msgstr ""
 
-#: dwarf.c:4237
+#: dwarf.c:4618
 #, c-format
 msgid ""
 "\n"
 "    Address            Length\n"
 msgstr ""
 
-#: dwarf.c:4239
+#: dwarf.c:4620
 #, c-format
 msgid ""
 "\n"
 "    Address    Length\n"
 msgstr ""
 
-#: dwarf.c:4327
-msgid "No range lists in .debug_info section!\n"
+#: dwarf.c:4703
+#, c-format
+msgid "  For compilation unit at offset 0x%s:\n"
 msgstr ""
 
-#: dwarf.c:4351
+#: dwarf.c:4706
+#, c-format
+msgid "\tIndex\tAddress\n"
+msgstr ""
+
+#: dwarf.c:4713
+#, c-format
+msgid "\t%d:\t"
+msgstr ""
+
+#. This can happen when the file was compiled with -gsplit-debug
+#. which removes references to range lists from the primary .o file.
+#: dwarf.c:4799
+#, c-format
+msgid "No range lists in .debug_info section.\n"
+msgstr ""
+
+#: dwarf.c:4825
 #, c-format
 msgid "Range lists in %s section start at 0x%lx\n"
 msgstr ""
 
-#: dwarf.c:4355
+#: dwarf.c:4829
 #, c-format
 msgid "    Offset   Begin    End\n"
 msgstr ""
 
-#: dwarf.c:4376
+#: dwarf.c:4850
 #, c-format
 msgid "There is a hole [0x%lx - 0x%lx] in %s section.\n"
 msgstr ""
 
-#: dwarf.c:4380
+#: dwarf.c:4857
 #, c-format
 msgid "There is an overlap [0x%lx - 0x%lx] in %s section.\n"
 msgstr ""
 
-#: dwarf.c:4423
+#: dwarf.c:4902
 msgid "(start == end)"
 msgstr ""
 
-#: dwarf.c:4425
+#: dwarf.c:4904
 msgid "(start > end)"
 msgstr ""
 
-#: dwarf.c:4678
+#: dwarf.c:5174
 msgid "bad register: "
 msgstr ""
 
 #. The documentation for the format of this file is in gdb/dwarf2read.c.
-#: dwarf.c:4681 dwarf.c:5490
+#: dwarf.c:5177 dwarf.c:6017
 #, c-format
 msgid "Contents of the %s section:\n"
 msgstr ""
 
-#: dwarf.c:5451
+#: dwarf.c:5978
 #, c-format
 msgid "  DW_CFA_??? (User defined call frame op: %#x)\n"
 msgstr ""
 
-#: dwarf.c:5453
+#: dwarf.c:5980
 #, c-format
 msgid "unsupported or unknown Dwarf Call Frame Instruction number: %#x\n"
 msgstr ""
 
-#: dwarf.c:5494
+#: dwarf.c:6021
 #, c-format
 msgid "Truncated header in the %s section.\n"
 msgstr ""
 
-#: dwarf.c:5499
+#: dwarf.c:6026
 #, c-format
 msgid "Version %ld\n"
 msgstr ""
 
-#: dwarf.c:5506
-msgid "The address table data in version 3 may be wrong.\n"
-msgstr ""
-
-#: dwarf.c:5509
-msgid "Version 4 does not support case insensitive lookups.\n"
-msgstr ""
-
-#: dwarf.c:5514
+#: dwarf.c:6032
 #, c-format
 msgid "Unsupported version %lu.\n"
 msgstr ""
 
-#: dwarf.c:5530
+#: dwarf.c:6036
+msgid "The address table data in version 3 may be wrong.\n"
+msgstr ""
+
+#: dwarf.c:6038
+msgid "Version 4 does not support case insensitive lookups.\n"
+msgstr ""
+
+#: dwarf.c:6040
+msgid "Version 5 does not include inlined functions.\n"
+msgstr ""
+
+#: dwarf.c:6042
+msgid "Version 6 does not include symbol attributes.\n"
+msgstr ""
+
+#: dwarf.c:6060
 #, c-format
 msgid "Corrupt header in the %s section.\n"
 msgstr ""
 
-#: dwarf.c:5545
+#: dwarf.c:6075
 #, c-format
 msgid ""
 "\n"
 "CU table:\n"
 msgstr ""
 
-#: dwarf.c:5551
+#: dwarf.c:6081
 #, c-format
 msgid "[%3u] 0x%lx - 0x%lx\n"
 msgstr ""
 
-#: dwarf.c:5556
+#: dwarf.c:6086
 #, c-format
 msgid ""
 "\n"
 "TU table:\n"
 msgstr ""
 
-#: dwarf.c:5563
+#: dwarf.c:6093
 #, c-format
 msgid "[%3u] 0x%lx 0x%lx "
 msgstr ""
 
-#: dwarf.c:5570
+#: dwarf.c:6100
 #, c-format
 msgid ""
 "\n"
 "Address table:\n"
 msgstr ""
 
-#: dwarf.c:5579
+#: dwarf.c:6109
 #, c-format
 msgid "%lu\n"
 msgstr ""
 
-#: dwarf.c:5582
+#: dwarf.c:6112
 #, c-format
 msgid ""
 "\n"
 "Symbol table:\n"
 msgstr ""
 
-#: dwarf.c:5616
+#: dwarf.c:6147
+#, c-format
+msgid " [no symbol information]"
+msgstr ""
+
+#: dwarf.c:6151
+#, c-format
+msgid " [static type]"
+msgstr ""
+
+#: dwarf.c:6152
+#, c-format
+msgid " [global type]"
+msgstr ""
+
+#: dwarf.c:6156
+#, c-format
+msgid " [static variable]"
+msgstr ""
+
+#: dwarf.c:6157
+#, c-format
+msgid " [global variable]"
+msgstr ""
+
+#: dwarf.c:6161
+#, c-format
+msgid " [static function]"
+msgstr ""
+
+#: dwarf.c:6162
+#, c-format
+msgid " [global function]"
+msgstr ""
+
+#: dwarf.c:6166
+#, c-format
+msgid " [static other]"
+msgstr ""
+
+#: dwarf.c:6167
+#, c-format
+msgid " [global other]"
+msgstr ""
+
+#: dwarf.c:6171
+#, c-format
+msgid " [static unknown: %d]"
+msgstr ""
+
+#: dwarf.c:6172
+#, c-format
+msgid " [global unknown: %d]"
+msgstr ""
+
+#: dwarf.c:6212 dwarf.c:6223
+msgid "Internal error: out of space in the shndx pool.\n"
+msgstr ""
+
+#: dwarf.c:6296
+#, c-format
+msgid "  Version:                 %d\n"
+msgstr ""
+
+#: dwarf.c:6298
+#, c-format
+msgid "  Number of columns:       %d\n"
+msgstr ""
+
+#: dwarf.c:6299
+#, c-format
+msgid "  Number of used entries:  %d\n"
+msgstr ""
+
+#: dwarf.c:6300
+#, c-format
+msgid ""
+"  Number of slots:         %d\n"
+"\n"
+msgstr ""
+
+#: dwarf.c:6305
+#, c-format
+msgid "Section %s too small for %d hash table entries\n"
+msgstr ""
+
+#: dwarf.c:6325
+#, c-format
+msgid "  [%3d] Signature:  0x%s  Sections: "
+msgstr ""
+
+#: dwarf.c:6332
+#, c-format
+msgid "Section %s too small for shndx pool\n"
+msgstr ""
+
+#: dwarf.c:6372
+#, c-format
+msgid "Section %s too small for offset and size tables\n"
+msgstr ""
+
+#: dwarf.c:6379
+#, c-format
+msgid "  Offset table\n"
+msgstr ""
+
+#: dwarf.c:6381 dwarf.c:6445
+msgid "signature"
+msgstr ""
+
+#: dwarf.c:6381 dwarf.c:6445
+msgid "dwo_id"
+msgstr ""
+
+#: dwarf.c:6417 dwarf.c:6463
+#, c-format
+msgid "  [%3d] 0x%s"
+msgstr ""
+
+#: dwarf.c:6443
+#, c-format
+msgid "  Size table\n"
+msgstr ""
+
+#: dwarf.c:6485
+#, c-format
+msgid "  Unsupported version\n"
+msgstr ""
+
+#: dwarf.c:6550
 #, c-format
 msgid "Displaying the debug contents of section %s is not yet supported.\n"
 msgstr ""
 
-#: dwarf.c:5752 dwarf.c:5822
+#: dwarf.c:6688 dwarf.c:6758
 #, c-format
 msgid "Unrecognized debug option '%s'\n"
 msgstr ""
 
-#: elfcomm.c:39
+#: elfcomm.c:42
 #, c-format
 msgid "%s: Error: "
 msgstr ""
 
-#: elfcomm.c:50
+#: elfcomm.c:56
 #, c-format
 msgid "%s: Warning: "
 msgstr ""
 
-#: elfcomm.c:82 elfcomm.c:117 elfcomm.c:167 elfcomm.c:216
+#: elfcomm.c:88 elfcomm.c:123 elfcomm.c:224 elfcomm.c:330
 #, c-format
 msgid "Unhandled data length: %d\n"
 msgstr ""
 
-#: elfcomm.c:263 elfcomm.c:277 elfcomm.c:645 readelf.c:3683 readelf.c:3991
-#: readelf.c:4034 readelf.c:4108 readelf.c:4187 readelf.c:4965 readelf.c:4989
-#: readelf.c:7397 readelf.c:7443 readelf.c:7642 readelf.c:8863 readelf.c:8877
-#: readelf.c:9423 readelf.c:9439 readelf.c:9482 readelf.c:9507 readelf.c:11904
-#: readelf.c:12096 readelf.c:12929
+#: elfcomm.c:405 elfcomm.c:419 elfcomm.c:833 readelf.c:3989 readelf.c:4297
+#: readelf.c:4340 readelf.c:4414 readelf.c:4493 readelf.c:5278 readelf.c:5302
+#: readelf.c:7789 readelf.c:7835 readelf.c:8034 readelf.c:9335 readelf.c:9349
+#: readelf.c:9895 readelf.c:9912 readelf.c:9955 readelf.c:9981 readelf.c:12597
+#: readelf.c:12789 readelf.c:13738
 msgid "Out of memory\n"
 msgstr ""
 
-#: elfcomm.c:312
-#, c-format
-msgid "%s: failed to seek to first archive header\n"
-msgstr ""
-
-#: elfcomm.c:321 elfcomm.c:611 elfedit.c:340 readelf.c:13418
-#, c-format
-msgid "%s: failed to read archive header\n"
-msgstr ""
-
-#: elfcomm.c:347
-#, c-format
-msgid "%s: the archive index is empty\n"
-msgstr ""
-
-#: elfcomm.c:355 elfcomm.c:381
-#, c-format
-msgid "%s: failed to read archive index\n"
-msgstr ""
-
-#: elfcomm.c:365
-#, c-format
-msgid ""
-"%s: the archive index is supposed to have %ld entries, but the size in the "
-"header is too small\n"
-msgstr ""
-
-#: elfcomm.c:373
-msgid "Out of memory whilst trying to read archive symbol index\n"
-msgstr ""
-
-#: elfcomm.c:392
-msgid "Out of memory whilst trying to convert the archive symbol index\n"
-msgstr ""
-
-#: elfcomm.c:405
-#, c-format
-msgid "%s: the archive has an index but no symbols\n"
-msgstr ""
-
-#: elfcomm.c:413
-msgid "Out of memory whilst trying to read archive index symbol table\n"
-msgstr ""
-
-#: elfcomm.c:419
-#, c-format
-msgid "%s: failed to read archive index symbol table\n"
-msgstr ""
-
-#: elfcomm.c:428
+#: elfcomm.c:456
 #, c-format
 msgid "%s: failed to skip archive symbol table\n"
 msgstr ""
 
-#: elfcomm.c:440
+#: elfcomm.c:475
+#, c-format
+msgid "%s: the archive index is empty\n"
+msgstr ""
+
+#: elfcomm.c:483 elfcomm.c:510
+#, c-format
+msgid "%s: failed to read archive index\n"
+msgstr ""
+
+#: elfcomm.c:492
+#, c-format
+msgid ""
+"%s: the archive index is supposed to have %ld entries of %d bytes, but the "
+"size is only %ld\n"
+msgstr ""
+
+#: elfcomm.c:502
+msgid "Out of memory whilst trying to read archive symbol index\n"
+msgstr ""
+
+#: elfcomm.c:522
+msgid "Out of memory whilst trying to convert the archive symbol index\n"
+msgstr ""
+
+#: elfcomm.c:535
+#, c-format
+msgid "%s: the archive has an index but no symbols\n"
+msgstr ""
+
+#: elfcomm.c:543
+msgid "Out of memory whilst trying to read archive index symbol table\n"
+msgstr ""
+
+#: elfcomm.c:551
+#, c-format
+msgid "%s: failed to read archive index symbol table\n"
+msgstr ""
+
+#: elfcomm.c:561
 #, c-format
 msgid "%s: failed to read archive header following archive index\n"
 msgstr ""
 
-#: elfcomm.c:446
+#: elfcomm.c:594
+#, c-format
+msgid "%s: failed to seek to first archive header\n"
+msgstr ""
+
+#: elfcomm.c:603 elfcomm.c:791 elfedit.c:338 readelf.c:14234
+#, c-format
+msgid "%s: failed to read archive header\n"
+msgstr ""
+
+#: elfcomm.c:620
 #, c-format
 msgid "%s has no archive index\n"
 msgstr ""
 
-#: elfcomm.c:457
+#: elfcomm.c:631
 msgid "Out of memory reading long symbol names in archive\n"
 msgstr ""
 
-#: elfcomm.c:465
+#: elfcomm.c:639
 #, c-format
 msgid "%s: failed to read long symbol name string table\n"
 msgstr ""
 
-#: elfcomm.c:605
+#: elfcomm.c:713
+msgid "Archive member uses long names, but no longname table found\n"
+msgstr ""
+
+#: elfcomm.c:785
 #, c-format
 msgid "%s: failed to seek to next file name\n"
 msgstr ""
 
-#: elfcomm.c:616 elfedit.c:347 readelf.c:13424
+#: elfcomm.c:796 elfedit.c:345 readelf.c:14240
 #, c-format
 msgid "%s: did not find a valid archive header\n"
 msgstr ""
 
-#: elfedit.c:73
+#: elfcomm.c:815 readelf.c:279 readelf.c:5396 readelf.c:5908 readelf.c:8584
+#: readelf.c:8700 readelf.c:9705 readelf.c:9799 readelf.c:9860 readelf.c:13084
+#: readelf.c:13087
+msgid "<corrupt>"
+msgstr ""
+
+#: elfedit.c:71
 #, c-format
 msgid "%s: Not an ELF file - wrong magic bytes at the start\n"
 msgstr ""
 
-#: elfedit.c:81
+#: elfedit.c:79
 #, c-format
 msgid "%s: Unsupported EI_VERSION: %d is not %d\n"
 msgstr ""
 
-#: elfedit.c:97
+#: elfedit.c:95
 #, c-format
 msgid "%s: Unmatched EI_CLASS: %d is not %d\n"
 msgstr ""
 
-#: elfedit.c:108
+#: elfedit.c:106
 #, c-format
 msgid "%s: Unmatched e_machine: %d is not %d\n"
 msgstr ""
 
-#: elfedit.c:119
+#: elfedit.c:117
 #, c-format
 msgid "%s: Unmatched e_type: %d is not %d\n"
 msgstr ""
 
-#: elfedit.c:130
+#: elfedit.c:128
 #, c-format
 msgid "%s: Unmatched EI_OSABI: %d is not %d\n"
 msgstr ""
 
-#: elfedit.c:163
+#: elfedit.c:161
 #, c-format
 msgid "%s: Failed to update ELF header: %s\n"
 msgstr ""
 
-#: elfedit.c:196
+#: elfedit.c:194
 #, c-format
 msgid "Unsupported EI_CLASS: %d\n"
 msgstr ""
 
-#: elfedit.c:229
+#: elfedit.c:227
 msgid ""
 "This executable has been built without support for a\n"
 "64 bit data type and so it cannot process 64 bit ELF files.\n"
 msgstr ""
 
-#: elfedit.c:270
+#: elfedit.c:268
 #, c-format
 msgid "%s: Failed to read ELF header\n"
 msgstr ""
 
-#: elfedit.c:277
+#: elfedit.c:275
 #, c-format
 msgid "%s: Failed to seek to ELF header\n"
 msgstr ""
 
-#: elfedit.c:331 readelf.c:13410
+#: elfedit.c:329 readelf.c:14226
 #, c-format
 msgid "%s: failed to seek to next archive header\n"
 msgstr ""
 
-#: elfedit.c:362 elfedit.c:371 readelf.c:13438 readelf.c:13447
+#: elfedit.c:360 elfedit.c:369 readelf.c:14254 readelf.c:14263
 #, c-format
 msgid "%s: bad archive file name\n"
 msgstr ""
 
-#: elfedit.c:391 elfedit.c:483
+#: elfedit.c:389 elfedit.c:481
 #, c-format
 msgid "Input file '%s' is not readable\n"
 msgstr ""
 
-#: elfedit.c:415
+#: elfedit.c:413
 #, c-format
 msgid "%s: failed to seek to archive member\n"
 msgstr ""
 
-#: elfedit.c:454 readelf.c:13533
+#: elfedit.c:452 readelf.c:14358
 #, c-format
 msgid "'%s': No such file\n"
 msgstr ""
 
-#: elfedit.c:456 readelf.c:13535
+#: elfedit.c:454 readelf.c:14360
 #, c-format
 msgid "Could not locate '%s'.  System error message: %s\n"
 msgstr ""
 
-#: elfedit.c:463 readelf.c:13542
+#: elfedit.c:461 readelf.c:14367
 #, c-format
 msgid "'%s' is not an ordinary file\n"
 msgstr ""
 
-#: elfedit.c:489 readelf.c:13555
+#: elfedit.c:487 readelf.c:14380
 #, c-format
 msgid "%s: Failed to read file's magic number\n"
 msgstr ""
 
-#: elfedit.c:547
+#: elfedit.c:545
 #, c-format
 msgid "Unknown OSABI: %s\n"
 msgstr ""
 
-#: elfedit.c:568
+#: elfedit.c:566
 #, c-format
 msgid "Unknown machine type: %s\n"
 msgstr ""
 
-#: elfedit.c:587
+#: elfedit.c:585
 #, c-format
 msgid "Unknown machine type: %d\n"
 msgstr ""
 
-#: elfedit.c:606
+#: elfedit.c:604
 #, c-format
 msgid "Unknown type: %s\n"
 msgstr ""
 
-#: elfedit.c:637
+#: elfedit.c:635
 #, c-format
 msgid "Usage: %s <option(s)> elffile(s)\n"
 msgstr ""
 
-#: elfedit.c:639
+#: elfedit.c:637
 #, c-format
 msgid " Update the ELF header of ELF files\n"
 msgstr ""
 
-#: elfedit.c:640 objcopy.c:475 objcopy.c:585
+#: elfedit.c:638 objcopy.c:484 objcopy.c:609
 #, c-format
 msgid " The options are:\n"
 msgstr ""
 
-#: elfedit.c:641
+#: elfedit.c:639
 #, c-format
 msgid ""
 "  --input-mach <machine>      Set input machine type to <machine>\n"
@@ -3079,120 +3419,120 @@ msgstr ""
 msgid "Duplicate symbol entered into keyword list."
 msgstr ""
 
-#: nlmconv.c:274 srconv.c:1824
+#: nlmconv.c:273 srconv.c:1825
 msgid "input and output files must be different"
 msgstr ""
 
-#: nlmconv.c:321
+#: nlmconv.c:320
 msgid "input file named both on command line and with INPUT"
 msgstr ""
 
-#: nlmconv.c:330
+#: nlmconv.c:329
 msgid "no input file"
 msgstr ""
 
-#: nlmconv.c:360
+#: nlmconv.c:359
 msgid "no name for output file"
 msgstr ""
 
-#: nlmconv.c:374
+#: nlmconv.c:373
 msgid "warning: input and output formats are not compatible"
 msgstr ""
 
-#: nlmconv.c:404
+#: nlmconv.c:403
 msgid "make .bss section"
 msgstr ""
 
-#: nlmconv.c:414
+#: nlmconv.c:413
 msgid "make .nlmsections section"
 msgstr ""
 
-#: nlmconv.c:442
+#: nlmconv.c:441
 msgid "set .bss vma"
 msgstr ""
 
-#: nlmconv.c:449
+#: nlmconv.c:448
 msgid "set .data size"
 msgstr ""
 
-#: nlmconv.c:629
+#: nlmconv.c:628
 #, c-format
 msgid "warning: symbol %s imported but not in import list"
 msgstr ""
 
-#: nlmconv.c:649
+#: nlmconv.c:648
 msgid "set start address"
 msgstr ""
 
-#: nlmconv.c:698
+#: nlmconv.c:697
 #, c-format
 msgid "warning: START procedure %s not defined"
 msgstr ""
 
-#: nlmconv.c:700
+#: nlmconv.c:699
 #, c-format
 msgid "warning: EXIT procedure %s not defined"
 msgstr ""
 
-#: nlmconv.c:702
+#: nlmconv.c:701
 #, c-format
 msgid "warning: CHECK procedure %s not defined"
 msgstr ""
 
-#: nlmconv.c:722 nlmconv.c:908
+#: nlmconv.c:721 nlmconv.c:907
 msgid "custom section"
 msgstr ""
 
-#: nlmconv.c:742 nlmconv.c:937
+#: nlmconv.c:741 nlmconv.c:936
 msgid "help section"
 msgstr ""
 
-#: nlmconv.c:764 nlmconv.c:955
+#: nlmconv.c:763 nlmconv.c:954
 msgid "message section"
 msgstr ""
 
-#: nlmconv.c:779 nlmconv.c:988
+#: nlmconv.c:778 nlmconv.c:987
 msgid "module section"
 msgstr ""
 
-#: nlmconv.c:798 nlmconv.c:1004
+#: nlmconv.c:797 nlmconv.c:1003
 msgid "rpc section"
 msgstr ""
 
 #. There is no place to record this information.
-#: nlmconv.c:834
+#: nlmconv.c:833
 #, c-format
 msgid "%s: warning: shared libraries can not have uninitialized data"
 msgstr ""
 
-#: nlmconv.c:855 nlmconv.c:1023
+#: nlmconv.c:854 nlmconv.c:1022
 msgid "shared section"
 msgstr ""
 
-#: nlmconv.c:863
+#: nlmconv.c:862
 msgid "warning: No version number given"
 msgstr ""
 
-#: nlmconv.c:903 nlmconv.c:932 nlmconv.c:950 nlmconv.c:999 nlmconv.c:1018
+#: nlmconv.c:902 nlmconv.c:931 nlmconv.c:949 nlmconv.c:998 nlmconv.c:1017
 #, c-format
 msgid "%s: read: %s"
 msgstr ""
 
-#: nlmconv.c:925
+#: nlmconv.c:924
 msgid "warning: FULLMAP is not supported; try ld -M"
 msgstr ""
 
-#: nlmconv.c:1101
+#: nlmconv.c:1100
 #, c-format
 msgid "Usage: %s [option(s)] [in-file [out-file]]\n"
 msgstr ""
 
-#: nlmconv.c:1102
+#: nlmconv.c:1101
 #, c-format
 msgid " Convert an object file into a NetWare Loadable Module\n"
 msgstr ""
 
-#: nlmconv.c:1103
+#: nlmconv.c:1102
 #, c-format
 msgid ""
 " The options are:\n"
@@ -3206,74 +3546,74 @@ msgid ""
 "  -v --version                  Display the program's version\n"
 msgstr ""
 
-#: nlmconv.c:1144
+#: nlmconv.c:1143
 #, c-format
 msgid "support not compiled in for %s"
 msgstr ""
 
-#: nlmconv.c:1181
+#: nlmconv.c:1180
 msgid "make section"
 msgstr ""
 
-#: nlmconv.c:1195
+#: nlmconv.c:1194
 msgid "set section size"
 msgstr ""
 
-#: nlmconv.c:1201
+#: nlmconv.c:1200
 msgid "set section alignment"
 msgstr ""
 
-#: nlmconv.c:1205
+#: nlmconv.c:1204
 msgid "set section flags"
 msgstr ""
 
-#: nlmconv.c:1216
+#: nlmconv.c:1215
 msgid "set .nlmsections size"
 msgstr ""
 
-#: nlmconv.c:1297 nlmconv.c:1305 nlmconv.c:1314 nlmconv.c:1319
+#: nlmconv.c:1296 nlmconv.c:1304 nlmconv.c:1313 nlmconv.c:1318
 msgid "set .nlmsection contents"
 msgstr ""
 
-#: nlmconv.c:1796
+#: nlmconv.c:1795
 msgid "stub section sizes"
 msgstr ""
 
-#: nlmconv.c:1843
+#: nlmconv.c:1842
 msgid "writing stub"
 msgstr ""
 
-#: nlmconv.c:1927
+#: nlmconv.c:1926
 #, c-format
 msgid "unresolved PC relative reloc against %s"
 msgstr ""
 
-#: nlmconv.c:1991
+#: nlmconv.c:1990
 #, c-format
 msgid "overflow when adjusting relocation against %s"
 msgstr ""
 
-#: nlmconv.c:2118
+#: nlmconv.c:2117
 #, c-format
 msgid "%s: execution of %s failed: "
 msgstr ""
 
-#: nlmconv.c:2133
+#: nlmconv.c:2132
 #, c-format
 msgid "Execution of %s failed"
 msgstr ""
 
-#: nm.c:225 size.c:78 strings.c:650
+#: nm.c:226 size.c:78 strings.c:636
 #, c-format
 msgid "Usage: %s [option(s)] [file(s)]\n"
 msgstr ""
 
-#: nm.c:226
+#: nm.c:227
 #, c-format
 msgid " List symbols in [file(s)] (a.out by default).\n"
 msgstr ""
 
-#: nm.c:227
+#: nm.c:228
 #, c-format
 msgid ""
 " The options are:\n"
@@ -3304,12 +3644,12 @@ msgid ""
 "  -r, --reverse-sort     Reverse the sense of the sort\n"
 msgstr ""
 
-#: nm.c:250
+#: nm.c:251
 #, c-format
 msgid "      --plugin NAME      Load the specified plugin\n"
 msgstr ""
 
-#: nm.c:253
+#: nm.c:254
 #, c-format
 msgid ""
 "  -S, --print-size       Print size of defined symbols\n"
@@ -3327,39 +3667,39 @@ msgid ""
 "\n"
 msgstr ""
 
-#: nm.c:301
+#: nm.c:302
 #, c-format
 msgid "%s: invalid radix"
 msgstr ""
 
-#: nm.c:325
+#: nm.c:326
 #, c-format
 msgid "%s: invalid output format"
 msgstr ""
 
-#: nm.c:346 readelf.c:8616 readelf.c:8661
+#: nm.c:347 readelf.c:9064 readelf.c:9114
 #, c-format
 msgid "<processor specific>: %d"
 msgstr ""
 
-#: nm.c:348 readelf.c:8625 readelf.c:8679
+#: nm.c:349 readelf.c:9073 readelf.c:9133
 #, c-format
 msgid "<OS specific>: %d"
 msgstr ""
 
-#: nm.c:350 readelf.c:8628 readelf.c:8682
+#: nm.c:351 readelf.c:9076 readelf.c:9136
 #, c-format
 msgid "<unknown>: %d"
 msgstr ""
 
-#: nm.c:390
+#: nm.c:391
 #, c-format
 msgid ""
 "\n"
 "Archive index:\n"
 msgstr ""
 
-#: nm.c:1258
+#: nm.c:1260
 #, c-format
 msgid ""
 "\n"
@@ -3368,7 +3708,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: nm.c:1260
+#: nm.c:1262
 #, c-format
 msgid ""
 "\n"
@@ -3377,7 +3717,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: nm.c:1262 nm.c:1313
+#: nm.c:1264 nm.c:1315
 #, c-format
 msgid ""
 "Name                  Value   Class        Type         Size     Line  "
@@ -3385,20 +3725,11 @@ msgid ""
 "\n"
 msgstr ""
 
-#: nm.c:1265 nm.c:1316
+#: nm.c:1267 nm.c:1318
 #, c-format
 msgid ""
 "Name                  Value           Class        Type         "
 "Size             Line  Section\n"
-"\n"
-msgstr ""
-
-#: nm.c:1309
-#, c-format
-msgid ""
-"\n"
-"\n"
-"Undefined symbols from %s[%s]:\n"
 "\n"
 msgstr ""
 
@@ -3407,43 +3738,52 @@ msgstr ""
 msgid ""
 "\n"
 "\n"
+"Undefined symbols from %s[%s]:\n"
+"\n"
+msgstr ""
+
+#: nm.c:1313
+#, c-format
+msgid ""
+"\n"
+"\n"
 "Symbols from %s[%s]:\n"
 "\n"
 msgstr ""
 
-#: nm.c:1403
+#: nm.c:1405
 #, c-format
 msgid "Print width has not been initialized (%d)"
 msgstr ""
 
-#: nm.c:1631
+#: nm.c:1642
 msgid "Only -X 32_64 is supported"
 msgstr ""
 
-#: nm.c:1660
+#: nm.c:1671
 msgid "Using the --size-sort and --undefined-only options together"
 msgstr ""
 
-#: nm.c:1661
+#: nm.c:1672
 msgid "will produce no output, since undefined symbols have no size."
 msgstr ""
 
-#: nm.c:1689
+#: nm.c:1700
 #, c-format
 msgid "data size %ld"
 msgstr ""
 
-#: objcopy.c:473 srconv.c:1732
+#: objcopy.c:482 srconv.c:1733
 #, c-format
 msgid "Usage: %s [option(s)] in-file [out-file]\n"
 msgstr ""
 
-#: objcopy.c:474
+#: objcopy.c:483
 #, c-format
 msgid " Copies a binary file, possibly transforming it in the process\n"
 msgstr ""
 
-#: objcopy.c:476
+#: objcopy.c:485
 #, c-format
 msgid ""
 "  -I --input-target <bfdname>      Assume input file is in format <bfdname>\n"
@@ -3456,6 +3796,31 @@ msgid ""
 "possible\n"
 "  -p --preserve-dates              Copy modified/access timestamps to the "
 "output\n"
+msgstr ""
+
+#: objcopy.c:493 objcopy.c:617
+#, c-format
+msgid ""
+"  -D --enable-deterministic-archives\n"
+"                                   Produce deterministic output when "
+"stripping archives (default)\n"
+"  -U --disable-deterministic-archives\n"
+"                                   Disable -D behavior\n"
+msgstr ""
+
+#: objcopy.c:499 objcopy.c:623
+#, c-format
+msgid ""
+"  -D --enable-deterministic-archives\n"
+"                                   Produce deterministic output when "
+"stripping archives\n"
+"  -U --disable-deterministic-archives\n"
+"                                   Disable -D behavior (default)\n"
+msgstr ""
+
+#: objcopy.c:504
+#, c-format
+msgid ""
 "  -j --only-section <name>         Only copy section <name> into the output\n"
 "     --add-gnu-debuglink=<file>    Add section .gnu_debuglink linking to "
 "<file>\n"
@@ -3463,6 +3828,7 @@ msgid ""
 "  -S --strip-all                   Remove all symbol and relocation "
 "information\n"
 "  -g --strip-debug                 Remove all debugging symbols & sections\n"
+"     --strip-dwo                   Remove all DWO sections\n"
 "     --strip-unneeded              Remove all symbols not needed by "
 "relocations\n"
 "  -N --strip-symbol <name>         Do not copy symbol <name>\n"
@@ -3472,6 +3838,7 @@ msgid ""
 "                                     relocations\n"
 "     --only-keep-debug             Strip everything but the debug "
 "information\n"
+"     --extract-dwo                 Copy only DWO sections\n"
 "     --extract-symbol              Remove section contents but keep symbols\n"
 "  -K --keep-symbol <name>          Do not strip symbol <name>\n"
 "     --keep-file-symbols           Do not strip file symbol(s)\n"
@@ -3579,17 +3946,17 @@ msgid ""
 "supported\n"
 msgstr ""
 
-#: objcopy.c:583
+#: objcopy.c:607
 #, c-format
 msgid "Usage: %s <option(s)> in-file(s)\n"
 msgstr ""
 
-#: objcopy.c:584
+#: objcopy.c:608
 #, c-format
 msgid " Removes symbols and sections from files\n"
 msgstr ""
 
-#: objcopy.c:586
+#: objcopy.c:610
 #, c-format
 msgid ""
 "  -I --input-target=<bfdname>      Assume input file is in format <bfdname>\n"
@@ -3599,10 +3966,16 @@ msgid ""
 "<bfdname>\n"
 "  -p --preserve-dates              Copy modified/access timestamps to the "
 "output\n"
+msgstr ""
+
+#: objcopy.c:628
+#, c-format
+msgid ""
 "  -R --remove-section=<name>       Remove section <name> from the output\n"
 "  -s --strip-all                   Remove all symbol and relocation "
 "information\n"
 "  -g -S -d --strip-debug           Remove all debugging symbols & sections\n"
+"     --strip-dwo                   Remove all DWO sections\n"
 "     --strip-unneeded              Remove all symbols not needed by "
 "relocations\n"
 "     --only-keep-debug             Strip everything but the debug "
@@ -3621,361 +3994,381 @@ msgid ""
 "  -o <file>                        Place stripped output into <file>\n"
 msgstr ""
 
-#: objcopy.c:659
+#: objcopy.c:700
 #, c-format
 msgid "unrecognized section flag `%s'"
 msgstr ""
 
-#: objcopy.c:660
+#: objcopy.c:701
 #, c-format
 msgid "supported flags: %s"
 msgstr ""
 
-#: objcopy.c:761
+#: objcopy.c:757
+#, c-format
+msgid "error: %s both copied and removed"
+msgstr ""
+
+#: objcopy.c:763
+#, c-format
+msgid "error: %s both sets and alters VMA"
+msgstr ""
+
+#: objcopy.c:769
+#, c-format
+msgid "error: %s both sets and alters LMA"
+msgstr ""
+
+#: objcopy.c:863
 #, c-format
 msgid "cannot open '%s': %s"
 msgstr ""
 
-#: objcopy.c:764 objcopy.c:3417
+#: objcopy.c:866 objcopy.c:3642
 #, c-format
 msgid "%s: fread failed"
 msgstr ""
 
-#: objcopy.c:837
+#: objcopy.c:939
 #, c-format
 msgid "%s:%d: Ignoring rubbish found on this line"
 msgstr ""
 
-#: objcopy.c:1153
+#: objcopy.c:1057
+#, c-format
+msgid "error: section %s matches both remove and copy options"
+msgstr ""
+
+#: objcopy.c:1286
 #, c-format
 msgid "not stripping symbol `%s' because it is named in a relocation"
 msgstr ""
 
-#: objcopy.c:1236
+#: objcopy.c:1369
 #, c-format
 msgid "%s: Multiple redefinition of symbol \"%s\""
 msgstr ""
 
-#: objcopy.c:1240
+#: objcopy.c:1373
 #, c-format
 msgid "%s: Symbol \"%s\" is target of more than one redefinition"
 msgstr ""
 
-#: objcopy.c:1268
+#: objcopy.c:1401
 #, c-format
 msgid "couldn't open symbol redefinition file %s (error: %s)"
 msgstr ""
 
-#: objcopy.c:1346
+#: objcopy.c:1479
 #, c-format
 msgid "%s:%d: garbage found at end of line"
 msgstr ""
 
-#: objcopy.c:1349
+#: objcopy.c:1482
 #, c-format
 msgid "%s:%d: missing new symbol name"
 msgstr ""
 
-#: objcopy.c:1359
+#: objcopy.c:1492
 #, c-format
 msgid "%s:%d: premature end of file"
 msgstr ""
 
-#: objcopy.c:1385
+#: objcopy.c:1518
 #, c-format
 msgid "stat returns negative size for `%s'"
 msgstr ""
 
-#: objcopy.c:1397
+#: objcopy.c:1530
 #, c-format
 msgid "copy from `%s' [unknown] to `%s' [unknown]\n"
 msgstr ""
 
-#: objcopy.c:1454
+#: objcopy.c:1587
 msgid "Unable to change endianness of input file(s)"
 msgstr ""
 
-#: objcopy.c:1463
+#: objcopy.c:1596
 #, c-format
 msgid "copy from `%s' [%s] to `%s' [%s]\n"
 msgstr ""
 
-#: objcopy.c:1512
+#: objcopy.c:1645
 #, c-format
 msgid "Input file `%s' ignores binary architecture parameter."
 msgstr ""
 
-#: objcopy.c:1520
+#: objcopy.c:1653
 #, c-format
 msgid "Unable to recognise the format of the input file `%s'"
 msgstr ""
 
-#: objcopy.c:1523
+#: objcopy.c:1656
 #, c-format
 msgid "Output file cannot represent architecture `%s'"
 msgstr ""
 
-#: objcopy.c:1586
+#: objcopy.c:1719
 #, c-format
 msgid "warning: file alignment (0x%s) > section alignment (0x%s)"
 msgstr ""
 
-#: objcopy.c:1645
+#: objcopy.c:1777
 #, c-format
 msgid "can't add section '%s'"
 msgstr ""
 
-#: objcopy.c:1659
+#: objcopy.c:1791
 #, c-format
 msgid "can't create section `%s'"
 msgstr ""
 
-#: objcopy.c:1705
+#: objcopy.c:1836
+#, c-format
+msgid "%s: debuglink section already exists"
+msgstr ""
+
+#: objcopy.c:1848
 #, c-format
 msgid "cannot create debug link section `%s'"
 msgstr ""
 
-#: objcopy.c:1798
+#: objcopy.c:1942
 msgid "Can't fill gap after section"
 msgstr ""
 
-#: objcopy.c:1822
+#: objcopy.c:1966
 msgid "can't add padding"
 msgstr ""
 
-#: objcopy.c:1913
+#: objcopy.c:2062
 #, c-format
 msgid "cannot fill debug link section `%s'"
 msgstr ""
 
-#: objcopy.c:1976
+#: objcopy.c:2125
 msgid "error copying private BFD data"
 msgstr ""
 
-#: objcopy.c:1987
+#: objcopy.c:2136
 #, c-format
 msgid "this target does not support %lu alternative machine codes"
 msgstr ""
 
-#: objcopy.c:1991
+#: objcopy.c:2140
 msgid "treating that number as an absolute e_machine value instead"
 msgstr ""
 
-#: objcopy.c:1995
+#: objcopy.c:2144
 msgid "ignoring the alternative value"
 msgstr ""
 
-#: objcopy.c:2027 objcopy.c:2063
+#: objcopy.c:2176 objcopy.c:2218
 #, c-format
 msgid "cannot create tempdir for archive copying (error: %s)"
 msgstr ""
 
-#: objcopy.c:2093
+#: objcopy.c:2248
 msgid "Unable to recognise the format of file"
 msgstr ""
 
-#: objcopy.c:2220
+#: objcopy.c:2375
 #, c-format
 msgid "error: the input file '%s' is empty"
 msgstr ""
 
-#: objcopy.c:2364
+#: objcopy.c:2519
 #, c-format
 msgid "Multiple renames of section %s"
 msgstr ""
 
-#: objcopy.c:2415
+#: objcopy.c:2570
 msgid "error in private header data"
 msgstr ""
 
-#: objcopy.c:2493
+#: objcopy.c:2647
 msgid "failed to create output section"
 msgstr ""
 
-#: objcopy.c:2507
+#: objcopy.c:2661
 msgid "failed to set size"
 msgstr ""
 
-#: objcopy.c:2521
+#: objcopy.c:2680
 msgid "failed to set vma"
 msgstr ""
 
-#: objcopy.c:2546
+#: objcopy.c:2705
 msgid "failed to set alignment"
 msgstr ""
 
-#: objcopy.c:2580
+#: objcopy.c:2739
 msgid "failed to copy private data"
 msgstr ""
 
-#: objcopy.c:2662
+#: objcopy.c:2836
 msgid "relocation count is negative"
 msgstr ""
 
 #. User must pad the section up in order to do this.
-#: objcopy.c:2723
+#: objcopy.c:2918
 #, c-format
 msgid ""
 "cannot reverse bytes: length of section %s must be evenly divisible by %d"
 msgstr ""
 
-#: objcopy.c:2909
+#: objcopy.c:3110
 msgid "can't create debugging section"
 msgstr ""
 
-#: objcopy.c:2922
+#: objcopy.c:3123
 msgid "can't set debugging section contents"
 msgstr ""
 
-#: objcopy.c:2930
+#: objcopy.c:3131
 #, c-format
 msgid "don't know how to write debugging information for %s"
 msgstr ""
 
-#: objcopy.c:3073
+#: objcopy.c:3292
 msgid "could not create temporary file to hold stripped copy"
 msgstr ""
 
-#: objcopy.c:3145
+#: objcopy.c:3364
 #, c-format
 msgid "%s: bad version in PE subsystem"
 msgstr ""
 
-#: objcopy.c:3175
+#: objcopy.c:3394
 #, c-format
 msgid "unknown PE subsystem: %s"
 msgstr ""
 
-#: objcopy.c:3237
+#: objcopy.c:3455
 msgid "byte number must be non-negative"
 msgstr ""
 
-#: objcopy.c:3243
+#: objcopy.c:3461
 #, c-format
 msgid "architecture %s unknown"
 msgstr ""
 
-#: objcopy.c:3251
+#: objcopy.c:3469
 msgid "interleave must be positive"
 msgstr ""
 
-#: objcopy.c:3260
+#: objcopy.c:3478
 msgid "interleave width must be positive"
 msgstr ""
 
-#: objcopy.c:3280 objcopy.c:3288
-#, c-format
-msgid "%s both copied and removed"
-msgstr ""
-
-#: objcopy.c:3387 objcopy.c:3467 objcopy.c:3575 objcopy.c:3606 objcopy.c:3630
-#: objcopy.c:3634 objcopy.c:3654
+#: objcopy.c:3612 objcopy.c:3696 objcopy.c:3812 objcopy.c:3844 objcopy.c:3867
+#: objcopy.c:3871 objcopy.c:3891
 #, c-format
 msgid "bad format for %s"
 msgstr ""
 
-#: objcopy.c:3399
+#: objcopy.c:3624
 #, c-format
 msgid "cannot open: %s: %s"
 msgstr ""
 
-#: objcopy.c:3544
+#: objcopy.c:3781
 #, c-format
 msgid "Warning: truncating gap-fill from 0x%s to 0x%x"
 msgstr ""
 
-#: objcopy.c:3705
+#: objcopy.c:3942
 #, c-format
 msgid "unknown long section names option '%s'"
 msgstr ""
 
-#: objcopy.c:3723
+#: objcopy.c:3960
 msgid "unable to parse alternative machine code"
 msgstr ""
 
-#: objcopy.c:3768
+#: objcopy.c:4009
 msgid "number of bytes to reverse must be positive and even"
 msgstr ""
 
-#: objcopy.c:3771
+#: objcopy.c:4012
 #, c-format
 msgid "Warning: ignoring previous --reverse-bytes value of %d"
 msgstr ""
 
-#: objcopy.c:3786
+#: objcopy.c:4027
 #, c-format
 msgid "%s: invalid reserve value for --heap"
 msgstr ""
 
-#: objcopy.c:3792
+#: objcopy.c:4033
 #, c-format
 msgid "%s: invalid commit value for --heap"
 msgstr ""
 
-#: objcopy.c:3817
+#: objcopy.c:4058
 #, c-format
 msgid "%s: invalid reserve value for --stack"
 msgstr ""
 
-#: objcopy.c:3823
+#: objcopy.c:4064
 #, c-format
 msgid "%s: invalid commit value for --stack"
 msgstr ""
 
-#: objcopy.c:3852
+#: objcopy.c:4093
 msgid "interleave start byte must be set with --byte"
 msgstr ""
 
-#: objcopy.c:3855
+#: objcopy.c:4096
 msgid "byte number must be less than interleave"
 msgstr ""
 
-#: objcopy.c:3858
+#: objcopy.c:4099
 msgid "interleave width must be less than or equal to interleave - byte`"
 msgstr ""
 
-#: objcopy.c:3885
+#: objcopy.c:4128
 #, c-format
 msgid "unknown input EFI target: %s"
 msgstr ""
 
-#: objcopy.c:3916
+#: objcopy.c:4159
 #, c-format
 msgid "unknown output EFI target: %s"
 msgstr ""
 
-#: objcopy.c:3929
+#: objcopy.c:4172
 #, c-format
 msgid "warning: could not locate '%s'.  System error message: %s"
 msgstr ""
 
-#: objcopy.c:3941
+#: objcopy.c:4184
 #, c-format
 msgid ""
 "warning: could not create temporary file whilst copying '%s', (error: %s)"
 msgstr ""
 
-#: objcopy.c:3969 objcopy.c:3983
+#: objcopy.c:4214 objcopy.c:4228
 #, c-format
 msgid "%s %s%c0x%s never used"
 msgstr ""
 
-#: objdump.c:201
+#: objdump.c:198
 #, c-format
 msgid "Usage: %s <option(s)> <file(s)>\n"
 msgstr ""
 
-#: objdump.c:202
+#: objdump.c:199
 #, c-format
 msgid " Display information from object <file(s)>.\n"
 msgstr ""
 
-#: objdump.c:203
+#: objdump.c:200
 #, c-format
 msgid " At least one of the following switches must be given:\n"
 msgstr ""
 
-#: objdump.c:204
+#: objdump.c:201
 #, c-format
 msgid ""
 "  -a, --archive-headers    Display archive header information\n"
@@ -3998,7 +4391,8 @@ msgid ""
 "  --dwarf[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,"
 "=frames,\n"
 "          =frames-interp,=str,=loc,=Ranges,=pubtypes,\n"
-"          =gdb_index,=trace_info,=trace_abbrev,=trace_aranges]\n"
+"          =gdb_index,=trace_info,=trace_abbrev,=trace_aranges,\n"
+"          =addr,=cu_index]\n"
 "                           Display DWARF info in the file\n"
 "  -t, --syms               Display the contents of the symbol table(s)\n"
 "  -T, --dynamic-syms       Display the contents of the dynamic symbol table\n"
@@ -4011,14 +4405,14 @@ msgid ""
 "  -H, --help               Display this information\n"
 msgstr ""
 
-#: objdump.c:236
+#: objdump.c:234
 #, c-format
 msgid ""
 "\n"
 " The following switches are optional:\n"
 msgstr ""
 
-#: objdump.c:237
+#: objdump.c:235
 #, c-format
 msgid ""
 "  -b, --target=BFDNAME           Specify the target object format as "
@@ -4060,13 +4454,15 @@ msgid ""
 "      --prefix-strip=LEVEL       Strip initial directory names for -S\n"
 msgstr ""
 
-#: objdump.c:263
+#: objdump.c:261
 #, c-format
 msgid ""
 "      --dwarf-depth=N        Do not display DIEs at depth N or greater\n"
 "      --dwarf-start=N        Display DIEs starting with N, at the same "
 "depth\n"
 "                             or deeper\n"
+"      --dwarf-check          Make additional dwarf internal consistency "
+"checks.      \n"
 "\n"
 msgstr ""
 
@@ -4077,189 +4473,395 @@ msgid ""
 "Options supported for -P/--private switch:\n"
 msgstr ""
 
-#: objdump.c:426
+#: objdump.c:428
 #, c-format
 msgid "section '%s' mentioned in a -j option, but not found in any input file"
 msgstr ""
 
-#: objdump.c:530
+#: objdump.c:532
 #, c-format
 msgid "Sections:\n"
 msgstr ""
 
-#: objdump.c:533 objdump.c:537
+#: objdump.c:535 objdump.c:539
 #, c-format
 msgid "Idx Name          Size      VMA       LMA       File off  Algn"
 msgstr ""
 
-#: objdump.c:539
+#: objdump.c:541
 #, c-format
 msgid ""
 "Idx Name          Size      VMA               LMA               File off  "
 "Algn"
 msgstr ""
 
-#: objdump.c:543
+#: objdump.c:545
 #, c-format
 msgid "  Flags"
 msgstr ""
 
-#: objdump.c:586
+#: objdump.c:588
 #, c-format
 msgid "%s: not a dynamic object"
 msgstr ""
 
-#: objdump.c:1012 objdump.c:1036
+#: objdump.c:1014 objdump.c:1038
 #, c-format
 msgid " (File Offset: 0x%lx)"
 msgstr ""
 
-#: objdump.c:1662
+#: objdump.c:1680
 #, c-format
 msgid "disassemble_fn returned length %d"
 msgstr ""
 
-#: objdump.c:1967
+#: objdump.c:1994
 #, c-format
 msgid ""
 "\n"
 "Disassembly of section %s:\n"
 msgstr ""
 
-#: objdump.c:2143
+#: objdump.c:2171
 #, c-format
 msgid "can't use supplied machine %s"
 msgstr ""
 
-#: objdump.c:2162
+#: objdump.c:2190
 #, c-format
 msgid "can't disassemble for architecture %s\n"
 msgstr ""
 
-#: objdump.c:2242 objdump.c:2265
+#: objdump.c:2270 objdump.c:2287
 #, c-format
 msgid ""
 "\n"
 "Can't get contents for section '%s'.\n"
 msgstr ""
 
-#: objdump.c:2406
+#: objdump.c:2430
 #, c-format
 msgid ""
 "No %s section present\n"
 "\n"
 msgstr ""
 
-#: objdump.c:2415
+#: objdump.c:2439
 #, c-format
 msgid "reading %s section of %s failed: %s"
 msgstr ""
 
-#: objdump.c:2459
+#: objdump.c:2483
 #, c-format
 msgid ""
 "Contents of %s section:\n"
 "\n"
 msgstr ""
 
-#: objdump.c:2590
+#: objdump.c:2614
 #, c-format
 msgid "architecture: %s, "
 msgstr ""
 
-#: objdump.c:2593
+#: objdump.c:2617
 #, c-format
 msgid "flags 0x%08x:\n"
 msgstr ""
 
-#: objdump.c:2607
+#: objdump.c:2631
 #, c-format
 msgid ""
 "\n"
 "start address 0x"
 msgstr ""
 
-#: objdump.c:2633
+#: objdump.c:2657
 msgid "option -P/--private not supported by this file"
 msgstr ""
 
-#: objdump.c:2657
+#: objdump.c:2681
 #, c-format
 msgid "target specific dump '%s' not supported"
 msgstr ""
 
-#: objdump.c:2721
+#: objdump.c:2745
 #, c-format
 msgid "Contents of section %s:"
 msgstr ""
 
-#: objdump.c:2723
+#: objdump.c:2747
 #, c-format
 msgid "  (Starting at file offset: 0x%lx)"
 msgstr ""
 
-#: objdump.c:2729
+#: objdump.c:2753
 msgid "Reading section failed"
 msgstr ""
 
-#: objdump.c:2832
+#: objdump.c:2856
 #, c-format
 msgid "no symbols\n"
 msgstr ""
 
-#: objdump.c:2839
+#: objdump.c:2863
 #, c-format
 msgid "no information for symbol number %ld\n"
 msgstr ""
 
-#: objdump.c:2842
+#: objdump.c:2866
 #, c-format
 msgid "could not determine the type of symbol number %ld\n"
 msgstr ""
 
-#: objdump.c:3163
+#: objdump.c:3204
 #, c-format
 msgid ""
 "\n"
 "%s:     file format %s\n"
 msgstr ""
 
-#: objdump.c:3223
+#: objdump.c:3266
 #, c-format
 msgid "%s: printing debugging information failed"
 msgstr ""
 
-#: objdump.c:3327
+#: objdump.c:3357
 #, c-format
 msgid "In archive %s:\n"
 msgstr ""
 
-#: objdump.c:3438
+#: objdump.c:3359
+#, c-format
+msgid "In nested archive %s:\n"
+msgstr ""
+
+#: objdump.c:3492
 msgid "error: the start address should be before the end address"
 msgstr ""
 
-#: objdump.c:3443
+#: objdump.c:3497
 msgid "error: the stop address should be after the start address"
 msgstr ""
 
-#: objdump.c:3455
+#: objdump.c:3509
 msgid "error: prefix strip must be non-negative"
 msgstr ""
 
-#: objdump.c:3460
+#: objdump.c:3514
 msgid "error: instruction width must be positive"
 msgstr ""
 
-#: objdump.c:3469
+#: objdump.c:3523
 msgid "unrecognized -E option"
 msgstr ""
 
-#: objdump.c:3480
+#: objdump.c:3534
 #, c-format
 msgid "unrecognized --endian type `%s'"
 msgstr ""
 
-#: od-xcoff.c:75
+#: od-macho.c:62
+#, c-format
+msgid ""
+"For Mach-O files:\n"
+"  header         Display the file header\n"
+"  section        Display the segments and sections commands\n"
+"  map            Display the section map\n"
+"  load           Display the load commands\n"
+"  dysymtab       Display the dynamic symbol table\n"
+"  codesign       Display code signature\n"
+"  seg_split_info Display segment split info\n"
+msgstr ""
+
+#: od-macho.c:265
+msgid "Mach-O header:\n"
+msgstr ""
+
+#: od-macho.c:266
+#, c-format
+msgid " magic     : %08lx\n"
+msgstr ""
+
+#: od-macho.c:267
+#, c-format
+msgid " cputype   : %08lx (%s)\n"
+msgstr ""
+
+#: od-macho.c:269
+#, c-format
+msgid " cpusubtype: %08lx\n"
+msgstr ""
+
+#: od-macho.c:270
+#, c-format
+msgid " filetype  : %08lx (%s)\n"
+msgstr ""
+
+#: od-macho.c:273
+#, c-format
+msgid " ncmds     : %08lx (%lu)\n"
+msgstr ""
+
+#: od-macho.c:274
+#, c-format
+msgid " sizeofcmds: %08lx\n"
+msgstr ""
+
+#: od-macho.c:275
+#, c-format
+msgid " flags     : %08lx ("
+msgstr ""
+
+#: od-macho.c:277
+msgid ")\n"
+msgstr ""
+
+#: od-macho.c:278
+#, c-format
+msgid " reserved  : %08x\n"
+msgstr ""
+
+#: od-macho.c:288
+msgid "Segments and Sections:\n"
+msgstr ""
+
+#: od-macho.c:289
+msgid " #: Segment name     Section name     Address\n"
+msgstr ""
+
+#: od-macho.c:684 od-macho.c:691 od-macho.c:765 od-macho.c:817
+#, c-format
+msgid "  [bad block length]\n"
+msgstr ""
+
+#: od-macho.c:688
+#, c-format
+msgid "  %u index entries:\n"
+msgstr ""
+
+#: od-macho.c:701
+#, c-format
+msgid "  index entry %u: type: %08x, offset: %08x\n"
+msgstr ""
+
+#: od-macho.c:772
+#, c-format
+msgid "  version:           %08x\n"
+msgstr ""
+
+#: od-macho.c:773
+#, c-format
+msgid "  flags:             %08x\n"
+msgstr ""
+
+#: od-macho.c:774
+#, c-format
+msgid "  hash offset:       %08x\n"
+msgstr ""
+
+#: od-macho.c:776
+#, c-format
+msgid "  ident offset:      %08x (- %08x)\n"
+msgstr ""
+
+#: od-macho.c:778
+#, c-format
+msgid "   identity: %s\n"
+msgstr ""
+
+#: od-macho.c:779
+#, c-format
+msgid "  nbr special slots: %08x (at offset %08x)\n"
+msgstr ""
+
+#: od-macho.c:782
+#, c-format
+msgid "  nbr code slots:    %08x\n"
+msgstr ""
+
+#: od-macho.c:783
+#, c-format
+msgid "  code limit:        %08x\n"
+msgstr ""
+
+#: od-macho.c:784
+#, c-format
+msgid "  hash size:         %02x\n"
+msgstr ""
+
+#: od-macho.c:785
+#, c-format
+msgid "  hash type:         %02x (%s)\n"
+msgstr ""
+
+#: od-macho.c:788
+#, c-format
+msgid "  spare1:            %02x\n"
+msgstr ""
+
+#: od-macho.c:789
+#, c-format
+msgid "  page size:         %02x\n"
+msgstr ""
+
+#: od-macho.c:790
+#, c-format
+msgid "  spare2:            %08x\n"
+msgstr ""
+
+#: od-macho.c:792
+#, c-format
+msgid "  scatter offset:    %08x\n"
+msgstr ""
+
+#: od-macho.c:804
+#, c-format
+msgid "  [truncated block]\n"
+msgstr ""
+
+#: od-macho.c:812
+#, c-format
+msgid " magic : %08x (%s)\n"
+msgstr ""
+
+#: od-macho.c:814
+#, c-format
+msgid " length: %08x\n"
+msgstr ""
+
+#: od-macho.c:845
+msgid "cannot read code signature data"
+msgstr ""
+
+#: od-macho.c:873
+msgid "cannot read segment split info"
+msgstr ""
+
+#: od-macho.c:879
+msgid "segment split info is not nul terminated"
+msgstr ""
+
+#: od-macho.c:887
+#, c-format
+msgid "  32 bit pointers:\n"
+msgstr ""
+
+#: od-macho.c:890
+#, c-format
+msgid "  64 bit pointers:\n"
+msgstr ""
+
+#: od-macho.c:893
+#, c-format
+msgid "  PPC hi-16:\n"
+msgstr ""
+
+#: od-macho.c:896
+#, c-format
+msgid "  Unhandled location type %u\n"
+msgstr ""
+
+#: od-xcoff.c:77
 #, c-format
 msgid ""
 "For XCOFF files:\n"
@@ -4274,385 +4876,426 @@ msgid ""
 "  typchk      Display type-check section\n"
 "  traceback   Display traceback tags\n"
 "  toc         Display toc symbols\n"
-msgstr ""
-
-#: od-xcoff.c:416
-#, c-format
-msgid "  nbr sections:  %d\n"
-msgstr ""
-
-#: od-xcoff.c:417
-#, c-format
-msgid "  time and date: 0x%08x  - "
+"  ldinfo      Display loader info in core files\n"
 msgstr ""
 
 #: od-xcoff.c:419
 #, c-format
+msgid "  nbr sections:  %d\n"
+msgstr ""
+
+#: od-xcoff.c:420
+#, c-format
+msgid "  time and date: 0x%08x  - "
+msgstr ""
+
+#: od-xcoff.c:422
+#, c-format
 msgid "not set\n"
-msgstr ""
-
-#: od-xcoff.c:426
-#, c-format
-msgid "  symbols off:   0x%08x\n"
-msgstr ""
-
-#: od-xcoff.c:427
-#, c-format
-msgid "  nbr symbols:   %d\n"
-msgstr ""
-
-#: od-xcoff.c:428
-#, c-format
-msgid "  opt hdr sz:    %d\n"
 msgstr ""
 
 #: od-xcoff.c:429
 #, c-format
-msgid "  flags:         0x%04x "
+msgid "  symbols off:   0x%08x\n"
 msgstr ""
 
-#: od-xcoff.c:443
+#: od-xcoff.c:430
 #, c-format
-msgid "Auxiliary header:\n"
+msgid "  nbr symbols:   %d\n"
+msgstr ""
+
+#: od-xcoff.c:431
+#, c-format
+msgid "  opt hdr sz:    %d\n"
+msgstr ""
+
+#: od-xcoff.c:432
+#, c-format
+msgid "  flags:         0x%04x "
 msgstr ""
 
 #: od-xcoff.c:446
 #, c-format
+msgid "Auxiliary header:\n"
+msgstr ""
+
+#: od-xcoff.c:449
+#, c-format
 msgid "  No aux header\n"
 msgstr ""
 
-#: od-xcoff.c:451
+#: od-xcoff.c:454
 #, c-format
-msgid "warning: optionnal header size too large (> %d)\n"
+msgid "warning: optional header size too large (> %d)\n"
 msgstr ""
 
-#: od-xcoff.c:457
+#: od-xcoff.c:460
 msgid "cannot read auxhdr"
 msgstr ""
 
-#: od-xcoff.c:522
+#: od-xcoff.c:525
 #, c-format
 msgid "Section headers (at %u+%u=0x%08x to 0x%08x):\n"
 msgstr ""
 
-#: od-xcoff.c:527
+#: od-xcoff.c:530
 #, c-format
 msgid "  No section header\n"
 msgstr ""
 
-#: od-xcoff.c:532 od-xcoff.c:544 od-xcoff.c:599
+#: od-xcoff.c:535 od-xcoff.c:547 od-xcoff.c:602
 msgid "cannot read section header"
 msgstr ""
 
-#: od-xcoff.c:558
+#: od-xcoff.c:561
 #, c-format
 msgid "            Flags: %08x "
 msgstr ""
 
-#: od-xcoff.c:566
+#: od-xcoff.c:569
 #, c-format
 msgid "overflow - nreloc: %u, nlnno: %u\n"
 msgstr ""
 
-#: od-xcoff.c:587 od-xcoff.c:922 od-xcoff.c:978
+#: od-xcoff.c:590 od-xcoff.c:925 od-xcoff.c:981
 msgid "cannot read section headers"
 msgstr ""
 
-#: od-xcoff.c:646
+#: od-xcoff.c:649
 msgid "cannot read strings table length"
 msgstr ""
 
-#: od-xcoff.c:662
+#: od-xcoff.c:665
 msgid "cannot read strings table"
 msgstr ""
 
-#: od-xcoff.c:670
+#: od-xcoff.c:673
 msgid "cannot read symbol table"
 msgstr ""
 
-#: od-xcoff.c:685
+#: od-xcoff.c:688
 msgid "cannot read symbol entry"
 msgstr ""
 
-#: od-xcoff.c:720
+#: od-xcoff.c:723
 msgid "cannot read symbol aux entry"
 msgstr ""
 
-#: od-xcoff.c:742
+#: od-xcoff.c:745
 #, c-format
 msgid "Symbols table (strtable at 0x%08x)"
 msgstr ""
 
-#: od-xcoff.c:747
+#: od-xcoff.c:750
 #, c-format
 msgid ""
 ":\n"
 "  No symbols\n"
 msgstr ""
 
-#: od-xcoff.c:753
+#: od-xcoff.c:756
 #, c-format
 msgid " (no strings):\n"
 msgstr ""
 
-#: od-xcoff.c:755
+#: od-xcoff.c:758
 #, c-format
 msgid " (strings size: %08x):\n"
 msgstr ""
 
 #. Translators: 'sc' is for storage class, 'off' for offset.
-#: od-xcoff.c:769
+#: od-xcoff.c:772
 #, c-format
 msgid "  # sc         value    section  type aux name/off\n"
 msgstr ""
 
 #. Section length, number of relocs and line number.
-#: od-xcoff.c:821
+#: od-xcoff.c:824
 #, c-format
 msgid "  scnlen: %08x  nreloc: %-6u  nlinno: %-6u\n"
 msgstr ""
 
 #. Section length and number of relocs.
-#: od-xcoff.c:828
+#: od-xcoff.c:831
 #, c-format
 msgid "  scnlen: %08x  nreloc: %-6u\n"
 msgstr ""
 
-#: od-xcoff.c:891
+#: od-xcoff.c:894
 #, c-format
 msgid "offset: %08x"
 msgstr ""
 
-#: od-xcoff.c:934
+#: od-xcoff.c:937
 #, c-format
 msgid "Relocations for %s (%u)\n"
 msgstr ""
 
-#: od-xcoff.c:937
+#: od-xcoff.c:940
 msgid "cannot read relocations"
 msgstr ""
 
-#: od-xcoff.c:950
+#: od-xcoff.c:953
 msgid "cannot read relocation entry"
 msgstr ""
 
-#: od-xcoff.c:990
+#: od-xcoff.c:993
 #, c-format
 msgid "Line numbers for %s (%u)\n"
 msgstr ""
 
-#: od-xcoff.c:993
+#: od-xcoff.c:996
 msgid "cannot read line numbers"
 msgstr ""
 
 #. Line number, symbol index and physical address.
-#: od-xcoff.c:997
+#: od-xcoff.c:1000
 #, c-format
 msgid "lineno  symndx/paddr\n"
 msgstr ""
 
-#: od-xcoff.c:1005
+#: od-xcoff.c:1008
 msgid "cannot read line number entry"
 msgstr ""
 
-#: od-xcoff.c:1048
+#: od-xcoff.c:1051
 #, c-format
 msgid "no .loader section in file\n"
 msgstr ""
 
-#: od-xcoff.c:1054
+#: od-xcoff.c:1057
 #, c-format
 msgid "section .loader is too short\n"
 msgstr ""
 
-#: od-xcoff.c:1061
+#: od-xcoff.c:1064
 #, c-format
 msgid "Loader header:\n"
 msgstr ""
 
-#: od-xcoff.c:1063
+#: od-xcoff.c:1066
 #, c-format
 msgid "  version:           %u\n"
 msgstr ""
 
-#: od-xcoff.c:1066
+#: od-xcoff.c:1069
 #, c-format
 msgid " Unhandled version\n"
 msgstr ""
 
-#: od-xcoff.c:1071
+#: od-xcoff.c:1074
 #, c-format
 msgid "  nbr symbols:       %u\n"
 msgstr ""
 
-#: od-xcoff.c:1073
+#: od-xcoff.c:1076
 #, c-format
 msgid "  nbr relocs:        %u\n"
 msgstr ""
 
 #. Import string table length.
-#: od-xcoff.c:1075
+#: od-xcoff.c:1078
 #, c-format
 msgid "  import strtab len: %u\n"
 msgstr ""
 
-#: od-xcoff.c:1078
+#: od-xcoff.c:1081
 #, c-format
 msgid "  nbr import files:  %u\n"
 msgstr ""
 
-#: od-xcoff.c:1080
+#: od-xcoff.c:1083
 #, c-format
 msgid "  import file off:   %u\n"
 msgstr ""
 
-#: od-xcoff.c:1082
+#: od-xcoff.c:1085
 #, c-format
 msgid "  string table len:  %u\n"
 msgstr ""
 
-#: od-xcoff.c:1084
+#: od-xcoff.c:1087
 #, c-format
 msgid "  string table off:  %u\n"
 msgstr ""
 
-#: od-xcoff.c:1087
+#: od-xcoff.c:1090
 #, c-format
 msgid "Dynamic symbols:\n"
 msgstr ""
 
-#: od-xcoff.c:1094
+#: od-xcoff.c:1097
 #, c-format
 msgid "  %4u %08x %3u "
 msgstr ""
 
-#: od-xcoff.c:1107
+#: od-xcoff.c:1110
 #, c-format
 msgid " %3u %3u "
 msgstr ""
 
-#: od-xcoff.c:1116
+#: od-xcoff.c:1119
 #, c-format
 msgid "(bad offset: %u)"
 msgstr ""
 
-#: od-xcoff.c:1123
+#: od-xcoff.c:1126
 #, c-format
 msgid "Dynamic relocs:\n"
 msgstr ""
 
-#: od-xcoff.c:1163
+#: od-xcoff.c:1166
 #, c-format
 msgid "Import files:\n"
 msgstr ""
 
-#: od-xcoff.c:1195
+#: od-xcoff.c:1198
 #, c-format
 msgid "no .except section in file\n"
 msgstr ""
 
-#: od-xcoff.c:1203
+#: od-xcoff.c:1206
 #, c-format
 msgid "Exception table:\n"
 msgstr ""
 
-#: od-xcoff.c:1238
+#: od-xcoff.c:1241
 #, c-format
 msgid "no .typchk section in file\n"
 msgstr ""
 
-#: od-xcoff.c:1245
+#: od-xcoff.c:1248
 #, c-format
 msgid "Type-check section:\n"
 msgstr ""
 
-#: od-xcoff.c:1292
+#: od-xcoff.c:1295
 #, c-format
 msgid " address beyond section size\n"
 msgstr ""
 
-#: od-xcoff.c:1302
+#: od-xcoff.c:1305
 #, c-format
 msgid " tags at %08x\n"
 msgstr ""
 
-#: od-xcoff.c:1380
+#: od-xcoff.c:1383
 #, c-format
 msgid " number of CTL anchors: %u\n"
 msgstr ""
 
-#: od-xcoff.c:1399
+#: od-xcoff.c:1402
 #, c-format
 msgid " Name (len: %u): "
 msgstr ""
 
-#: od-xcoff.c:1402
+#: od-xcoff.c:1405
 #, c-format
 msgid "[truncated]\n"
 msgstr ""
 
-#: od-xcoff.c:1421
+#: od-xcoff.c:1424
 #, c-format
 msgid " (end of tags at %08x)\n"
 msgstr ""
 
-#: od-xcoff.c:1424
+#: od-xcoff.c:1427
 #, c-format
 msgid " no tags found\n"
 msgstr ""
 
-#: od-xcoff.c:1428
+#: od-xcoff.c:1431
 #, c-format
 msgid " Truncated .text section\n"
 msgstr ""
 
-#: od-xcoff.c:1513
+#: od-xcoff.c:1516
 #, c-format
 msgid "TOC:\n"
 msgstr ""
 
-#: od-xcoff.c:1556
+#: od-xcoff.c:1559
 #, c-format
 msgid "Nbr entries: %-8u Size: %08x (%u)\n"
 msgstr ""
 
-#: od-xcoff.c:1640
+#: od-xcoff.c:1643
 msgid "cannot read header"
 msgstr ""
 
-#: od-xcoff.c:1648
+#: od-xcoff.c:1651
 #, c-format
 msgid "File header:\n"
 msgstr ""
 
-#: od-xcoff.c:1649
+#: od-xcoff.c:1652
 #, c-format
 msgid "  magic:         0x%04x (0%04o)  "
 msgstr ""
 
-#: od-xcoff.c:1653
+#: od-xcoff.c:1656
 #, c-format
 msgid "(WRMAGIC: writable text segments)"
 msgstr ""
 
-#: od-xcoff.c:1656
+#: od-xcoff.c:1659
 #, c-format
 msgid "(ROMAGIC: readonly sharablee text segments)"
 msgstr ""
 
-#: od-xcoff.c:1659
+#: od-xcoff.c:1662
 #, c-format
 msgid "(TOCMAGIC: readonly text segments and TOC)"
 msgstr ""
 
-#: od-xcoff.c:1662
+#: od-xcoff.c:1665
 #, c-format
 msgid "unknown magic"
 msgstr ""
 
-#: od-xcoff.c:1669
+#: od-xcoff.c:1673 od-xcoff.c:1813
 #, c-format
 msgid "  Unhandled magic\n"
+msgstr ""
+
+#: od-xcoff.c:1737
+msgid "cannot read loader info table"
+msgstr ""
+
+#: od-xcoff.c:1769
+#, c-format
+msgid ""
+"\n"
+"ldinfo dump not supported in 32 bits environments\n"
+msgstr ""
+
+#: od-xcoff.c:1787
+msgid "cannot core read header"
+msgstr ""
+
+#: od-xcoff.c:1794
+#, c-format
+msgid "Core header:\n"
+msgstr ""
+
+#: od-xcoff.c:1795
+#, c-format
+msgid "  version:    0x%08x  "
+msgstr ""
+
+#: od-xcoff.c:1799
+#, c-format
+msgid "(dumpx format - aix4.3 / 32 bits)"
+msgstr ""
+
+#: od-xcoff.c:1802
+#, c-format
+msgid "(dumpxx format - aix5.0 / 64 bits)"
+msgstr ""
+
+#: od-xcoff.c:1805
+#, c-format
+msgid "unknown format"
 msgstr ""
 
 #: rclex.c:197
@@ -4694,250 +5337,256 @@ msgstr ""
 msgid "Last stabs entries before error:\n"
 msgstr ""
 
-#: readelf.c:268
+#: readelf.c:277
 msgid "<none>"
 msgstr ""
 
-#: readelf.c:269
+#: readelf.c:278
 msgid "<no-name>"
 msgstr ""
 
-#: readelf.c:270 readelf.c:5083 readelf.c:5594 readelf.c:8132 readelf.c:8250
-#: readelf.c:9233 readelf.c:9327 readelf.c:9388 readelf.c:12391
-#: readelf.c:12394
-msgid "<corrupt>"
-msgstr ""
-
-#: readelf.c:309
+#: readelf.c:318
 #, c-format
 msgid "Unable to seek to 0x%lx for %s\n"
 msgstr ""
 
-#: readelf.c:324
+#: readelf.c:333
 #, c-format
 msgid "Out of memory allocating 0x%lx bytes for %s\n"
 msgstr ""
 
-#: readelf.c:334
+#: readelf.c:343
 #, c-format
 msgid "Unable to read in 0x%lx bytes of %s\n"
 msgstr ""
 
-#: readelf.c:638
+#: readelf.c:678
 msgid "Don't know about relocations on this machine architecture\n"
 msgstr ""
 
-#: readelf.c:659 readelf.c:757
+#: readelf.c:699 readelf.c:797
 msgid "32-bit relocation data"
 msgstr ""
 
-#: readelf.c:671 readelf.c:701 readelf.c:768 readelf.c:797
+#: readelf.c:711 readelf.c:741 readelf.c:808 readelf.c:837
 msgid "out of memory parsing relocs\n"
 msgstr ""
 
-#: readelf.c:689 readelf.c:786
+#: readelf.c:729 readelf.c:826
 msgid "64-bit relocation data"
 msgstr ""
 
-#: readelf.c:902
+#: readelf.c:953
 #, c-format
 msgid ""
 " Offset     Info    Type                Sym. Value  Symbol's Name + Addend\n"
 msgstr ""
 
-#: readelf.c:904
+#: readelf.c:955
 #, c-format
 msgid " Offset     Info    Type            Sym.Value  Sym. Name + Addend\n"
 msgstr ""
 
-#: readelf.c:909
+#: readelf.c:960
 #, c-format
 msgid " Offset     Info    Type                Sym. Value  Symbol's Name\n"
 msgstr ""
 
-#: readelf.c:911
+#: readelf.c:962
 #, c-format
 msgid " Offset     Info    Type            Sym.Value  Sym. Name\n"
 msgstr ""
 
-#: readelf.c:919
+#: readelf.c:970
 #, c-format
 msgid ""
 "    Offset             Info             Type               Symbol's Value  "
 "Symbol's Name + Addend\n"
 msgstr ""
 
-#: readelf.c:921
+#: readelf.c:972
 #, c-format
 msgid ""
 "  Offset          Info           Type           Sym. Value    Sym. Name + "
 "Addend\n"
 msgstr ""
 
-#: readelf.c:926
+#: readelf.c:977
 #, c-format
 msgid ""
 "    Offset             Info             Type               Symbol's Value  "
 "Symbol's Name\n"
 msgstr ""
 
-#: readelf.c:928
+#: readelf.c:979
 #, c-format
 msgid ""
 "  Offset          Info           Type           Sym. Value    Sym. Name\n"
 msgstr ""
 
-#: readelf.c:1245 readelf.c:1405 readelf.c:1413
+#: readelf.c:1327 readelf.c:1491 readelf.c:1499
 #, c-format
 msgid "unrecognized: %-7lx"
 msgstr ""
 
-#: readelf.c:1270
+#: readelf.c:1352
 #, c-format
 msgid "<unknown addend: %lx>"
 msgstr ""
 
-#: readelf.c:1277
+#: readelf.c:1359
 #, c-format
 msgid " bad symbol index: %08lx"
 msgstr ""
 
-#: readelf.c:1363
+#: readelf.c:1445
 #, c-format
 msgid "<string table index: %3ld>"
 msgstr ""
 
-#: readelf.c:1365
+#: readelf.c:1447
 #, c-format
 msgid "<corrupt string table index: %3ld>"
 msgstr ""
 
-#: readelf.c:1758
+#: readelf.c:1858
 #, c-format
 msgid "Processor Specific: %lx"
 msgstr ""
 
-#: readelf.c:1782
+#: readelf.c:1882
 #, c-format
 msgid "Operating System specific: %lx"
 msgstr ""
 
-#: readelf.c:1786 readelf.c:2858
+#: readelf.c:1886 readelf.c:3127
 #, c-format
 msgid "<unknown>: %lx"
 msgstr ""
 
-#: readelf.c:1799
+#: readelf.c:1899
 msgid "NONE (None)"
 msgstr ""
 
-#: readelf.c:1800
+#: readelf.c:1900
 msgid "REL (Relocatable file)"
 msgstr ""
 
-#: readelf.c:1801
+#: readelf.c:1901
 msgid "EXEC (Executable file)"
 msgstr ""
 
-#: readelf.c:1802
+#: readelf.c:1902
 msgid "DYN (Shared object file)"
 msgstr ""
 
-#: readelf.c:1803
+#: readelf.c:1903
 msgid "CORE (Core file)"
 msgstr ""
 
-#: readelf.c:1807
+#: readelf.c:1907
 #, c-format
 msgid "Processor Specific: (%x)"
 msgstr ""
 
-#: readelf.c:1809
+#: readelf.c:1909
 #, c-format
 msgid "OS Specific: (%x)"
 msgstr ""
 
-#: readelf.c:1811
+#: readelf.c:1911
 #, c-format
 msgid "<unknown>: %x"
 msgstr ""
 
-#: readelf.c:1823
+#: readelf.c:1923
 msgid "None"
 msgstr ""
 
-#: readelf.c:1994
+#: readelf.c:2097
 #, c-format
 msgid "<unknown>: 0x%x"
 msgstr ""
 
-#: readelf.c:2180
+#: readelf.c:2314
 msgid ", <unknown>"
 msgstr ""
 
-#: readelf.c:2266 readelf.c:7485
+#: readelf.c:2400 readelf.c:7877
 msgid "unknown"
 msgstr ""
 
-#: readelf.c:2267
+#: readelf.c:2401
 msgid "unknown mac"
 msgstr ""
 
-#: readelf.c:2331
+#: readelf.c:2465
 msgid ", relocatable"
 msgstr ""
 
-#: readelf.c:2334
+#: readelf.c:2468
 msgid ", relocatable-lib"
 msgstr ""
 
-#: readelf.c:2357
+#: readelf.c:2554
 msgid ", unknown v850 architecture variant"
 msgstr ""
 
-#: readelf.c:2414
+#: readelf.c:2617
 msgid ", unknown CPU"
 msgstr ""
 
-#: readelf.c:2429
+#: readelf.c:2632
 msgid ", unknown ABI"
 msgstr ""
 
-#: readelf.c:2452 readelf.c:2486
+#: readelf.c:2655 readelf.c:2683
 msgid ", unknown ISA"
 msgstr ""
 
-#: readelf.c:2663
+#: readelf.c:2846
+msgid ": architecture variant: "
+msgstr ""
+
+#: readelf.c:2865
+msgid ": unknown"
+msgstr ""
+
+#: readelf.c:2869
+msgid ": unknown extra flag bits also present"
+msgstr ""
+
+#: readelf.c:2915
 msgid "Standalone App"
 msgstr ""
 
-#: readelf.c:2672
+#: readelf.c:2924
 msgid "Bare-metal C6000"
 msgstr ""
 
-#: readelf.c:2682 readelf.c:3471 readelf.c:3487
+#: readelf.c:2934 readelf.c:3777 readelf.c:3793
 #, c-format
 msgid "<unknown: %x>"
 msgstr ""
 
 #. This message is probably going to be displayed in a 15
 #. character wide field, so put the hex value first.
-#: readelf.c:3108
+#: readelf.c:3408
 #, c-format
 msgid "%08x: <unknown>"
 msgstr ""
 
-#: readelf.c:3163
+#: readelf.c:3465
 #, c-format
 msgid "Usage: readelf <option(s)> elf-file(s)\n"
 msgstr ""
 
-#: readelf.c:3164
+#: readelf.c:3466
 #, c-format
 msgid " Display information about the contents of ELF format files\n"
 msgstr ""
 
-#: readelf.c:3165
+#: readelf.c:3467
 #, c-format
 msgid ""
 " Options are:\n"
@@ -4958,8 +5607,7 @@ msgid ""
 "  -u --unwind            Display the unwind info (if present)\n"
 "  -d --dynamic           Display the dynamic section (if present)\n"
 "  -V --version-info      Display the version sections (if present)\n"
-"  -A --arch-specific     Display architecture specific information (if "
-"any).\n"
+"  -A --arch-specific     Display architecture specific information (if any)\n"
 "  -c --archive-index     Display the symbol/file index in an archive\n"
 "  -D --use-dynamic       Use the dynamic section info when displaying "
 "symbols\n"
@@ -4976,11 +5624,12 @@ msgid ""
 "  --debug-dump[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,"
 "=frames,\n"
 "               =frames-interp,=str,=loc,=Ranges,=pubtypes,\n"
-"               =gdb_index,=trace_info,=trace_abbrev,=trace_aranges]\n"
+"               =gdb_index,=trace_info,=trace_abbrev,=trace_aranges,\n"
+"               =addr,=cu_index]\n"
 "                         Display the contents of DWARF2 debug sections\n"
 msgstr ""
 
-#: readelf.c:3197
+#: readelf.c:3500
 #, c-format
 msgid ""
 "  --dwarf-depth=N        Do not display DIEs at depth N or greater\n"
@@ -4988,14 +5637,14 @@ msgid ""
 "                         or deeper\n"
 msgstr ""
 
-#: readelf.c:3202
+#: readelf.c:3505
 #, c-format
 msgid ""
 "  -i --instruction-dump=<number|name>\n"
 "                         Disassemble the contents of section <number|name>\n"
 msgstr ""
 
-#: readelf.c:3206
+#: readelf.c:3509
 #, c-format
 msgid ""
 "  -I --histogram         Display histogram of bucket list lengths\n"
@@ -5005,421 +5654,425 @@ msgid ""
 "  -v --version           Display the version number of readelf\n"
 msgstr ""
 
-#: readelf.c:3235 readelf.c:3264 readelf.c:3268 readelf.c:13623
+#: readelf.c:3538 readelf.c:3567 readelf.c:3571 readelf.c:14448
 msgid "Out of memory allocating dump request table.\n"
 msgstr ""
 
-#: readelf.c:3440
+#: readelf.c:3746
 #, c-format
 msgid "Invalid option '-%c'\n"
 msgstr ""
 
-#: readelf.c:3455
+#: readelf.c:3761
 msgid "Nothing to do.\n"
 msgstr ""
 
-#: readelf.c:3467 readelf.c:3483 readelf.c:8068
+#: readelf.c:3773 readelf.c:3789 readelf.c:8520
 msgid "none"
 msgstr ""
 
-#: readelf.c:3484
+#: readelf.c:3790
 msgid "2's complement, little endian"
 msgstr ""
 
-#: readelf.c:3485
+#: readelf.c:3791
 msgid "2's complement, big endian"
 msgstr ""
 
-#: readelf.c:3503
+#: readelf.c:3809
 msgid "Not an ELF file - it has the wrong magic bytes at the start\n"
 msgstr ""
 
-#: readelf.c:3513
+#: readelf.c:3819
 #, c-format
 msgid "ELF Header:\n"
 msgstr ""
 
-#: readelf.c:3514
+#: readelf.c:3820
 #, c-format
 msgid "  Magic:   "
 msgstr ""
 
-#: readelf.c:3518
+#: readelf.c:3824
 #, c-format
 msgid "  Class:                             %s\n"
 msgstr ""
 
-#: readelf.c:3520
+#: readelf.c:3826
 #, c-format
 msgid "  Data:                              %s\n"
 msgstr ""
 
-#: readelf.c:3522
+#: readelf.c:3828
 #, c-format
 msgid "  Version:                           %d %s\n"
 msgstr ""
 
-#: readelf.c:3527
+#: readelf.c:3833
 #, c-format
 msgid "<unknown: %lx>"
 msgstr ""
 
-#: readelf.c:3529
+#: readelf.c:3835
 #, c-format
 msgid "  OS/ABI:                            %s\n"
 msgstr ""
 
-#: readelf.c:3531
+#: readelf.c:3837
 #, c-format
 msgid "  ABI Version:                       %d\n"
 msgstr ""
 
-#: readelf.c:3533
+#: readelf.c:3839
 #, c-format
 msgid "  Type:                              %s\n"
 msgstr ""
 
-#: readelf.c:3535
+#: readelf.c:3841
 #, c-format
 msgid "  Machine:                           %s\n"
 msgstr ""
 
-#: readelf.c:3537
+#: readelf.c:3843
 #, c-format
 msgid "  Version:                           0x%lx\n"
 msgstr ""
 
-#: readelf.c:3540
+#: readelf.c:3846
 #, c-format
 msgid "  Entry point address:               "
 msgstr ""
 
-#: readelf.c:3542
+#: readelf.c:3848
 #, c-format
 msgid ""
 "\n"
 "  Start of program headers:          "
 msgstr ""
 
-#: readelf.c:3544
+#: readelf.c:3850
 #, c-format
 msgid ""
 " (bytes into file)\n"
 "  Start of section headers:          "
 msgstr ""
 
-#: readelf.c:3546
+#: readelf.c:3852
 #, c-format
 msgid " (bytes into file)\n"
 msgstr ""
 
-#: readelf.c:3548
+#: readelf.c:3854
 #, c-format
 msgid "  Flags:                             0x%lx%s\n"
 msgstr ""
 
-#: readelf.c:3551
+#: readelf.c:3857
 #, c-format
 msgid "  Size of this header:               %ld (bytes)\n"
 msgstr ""
 
-#: readelf.c:3553
+#: readelf.c:3859
 #, c-format
 msgid "  Size of program headers:           %ld (bytes)\n"
 msgstr ""
 
-#: readelf.c:3555
+#: readelf.c:3861
 #, c-format
 msgid "  Number of program headers:         %ld"
 msgstr ""
 
-#: readelf.c:3562
+#: readelf.c:3868
 #, c-format
 msgid "  Size of section headers:           %ld (bytes)\n"
 msgstr ""
 
-#: readelf.c:3564
+#: readelf.c:3870
 #, c-format
 msgid "  Number of section headers:         %ld"
 msgstr ""
 
-#: readelf.c:3569
+#: readelf.c:3875
 #, c-format
 msgid "  Section header string table index: %ld"
 msgstr ""
 
-#: readelf.c:3576
+#: readelf.c:3882
 #, c-format
 msgid " <corrupt: out of range>"
 msgstr ""
 
-#: readelf.c:3610 readelf.c:3644
+#: readelf.c:3916 readelf.c:3950
 msgid "program headers"
 msgstr ""
 
-#: readelf.c:3711
+#: readelf.c:4017
 msgid ""
 "possibly corrupt ELF header - it has a non-zero program header offset, but "
 "no program headers"
 msgstr ""
 
-#: readelf.c:3714
+#: readelf.c:4020
 #, c-format
 msgid ""
 "\n"
 "There are no program headers in this file.\n"
 msgstr ""
 
-#: readelf.c:3720
+#: readelf.c:4026
 #, c-format
 msgid ""
 "\n"
 "Elf file type is %s\n"
 msgstr ""
 
-#: readelf.c:3721
+#: readelf.c:4027
 #, c-format
 msgid "Entry point "
 msgstr ""
 
-#: readelf.c:3723
+#: readelf.c:4029
 #, c-format
 msgid ""
 "\n"
 "There are %d program headers, starting at offset "
 msgstr ""
 
-#: readelf.c:3735 readelf.c:3737
+#: readelf.c:4041 readelf.c:4043
 #, c-format
 msgid ""
 "\n"
 "Program Headers:\n"
 msgstr ""
 
-#: readelf.c:3741
+#: readelf.c:4047
 #, c-format
 msgid ""
 "  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align\n"
 msgstr ""
 
-#: readelf.c:3744
+#: readelf.c:4050
 #, c-format
 msgid ""
 "  Type           Offset   VirtAddr           PhysAddr           FileSiz  "
 "MemSiz   Flg Align\n"
 msgstr ""
 
-#: readelf.c:3748
+#: readelf.c:4054
 #, c-format
 msgid "  Type           Offset             VirtAddr           PhysAddr\n"
 msgstr ""
 
-#: readelf.c:3750
+#: readelf.c:4056
 #, c-format
 msgid "                 FileSiz            MemSiz              Flags  Align\n"
 msgstr ""
 
-#: readelf.c:3843
+#: readelf.c:4149
 msgid "more than one dynamic segment\n"
 msgstr ""
 
-#: readelf.c:3862
+#: readelf.c:4168
 msgid "no .dynamic section in the dynamic segment\n"
 msgstr ""
 
-#: readelf.c:3877
+#: readelf.c:4183
 msgid "the .dynamic section is not contained within the dynamic segment\n"
 msgstr ""
 
-#: readelf.c:3880
+#: readelf.c:4186
 msgid "the .dynamic section is not the first section in the dynamic segment.\n"
 msgstr ""
 
-#: readelf.c:3888
+#: readelf.c:4194
 msgid "Unable to find program interpreter name\n"
 msgstr ""
 
-#: readelf.c:3895
+#: readelf.c:4201
 msgid ""
 "Internal error: failed to create format string to display program "
 "interpreter\n"
 msgstr ""
 
-#: readelf.c:3899
+#: readelf.c:4205
 msgid "Unable to read program interpreter name\n"
 msgstr ""
 
-#: readelf.c:3902
+#: readelf.c:4208
 #, c-format
 msgid ""
 "\n"
 "      [Requesting program interpreter: %s]"
 msgstr ""
 
-#: readelf.c:3914
+#: readelf.c:4220
 #, c-format
 msgid ""
 "\n"
 " Section to Segment mapping:\n"
 msgstr ""
 
-#: readelf.c:3915
+#: readelf.c:4221
 #, c-format
 msgid "  Segment Sections...\n"
 msgstr ""
 
-#: readelf.c:3951
+#: readelf.c:4257
 msgid "Cannot interpret virtual addresses without program headers.\n"
 msgstr ""
 
-#: readelf.c:3967
+#: readelf.c:4273
 #, c-format
 msgid "Virtual address 0x%lx not located in any PT_LOAD segment.\n"
 msgstr ""
 
-#: readelf.c:3982 readelf.c:4025
+#: readelf.c:4288 readelf.c:4331
 msgid "section headers"
 msgstr ""
 
-#: readelf.c:4074 readelf.c:4154
+#: readelf.c:4380 readelf.c:4460
 msgid "sh_entsize is zero\n"
 msgstr ""
 
-#: readelf.c:4082 readelf.c:4162
+#: readelf.c:4388 readelf.c:4468
 msgid "Invalid sh_entsize\n"
 msgstr ""
 
-#: readelf.c:4087 readelf.c:4167
+#: readelf.c:4393 readelf.c:4473
 msgid "symbols"
 msgstr ""
 
-#: readelf.c:4099 readelf.c:4178
+#: readelf.c:4405 readelf.c:4484
 msgid "symbol table section indicies"
 msgstr ""
 
-#: readelf.c:4439
+#: readelf.c:4745
 #, c-format
 msgid "UNKNOWN (%*.*lx)"
 msgstr ""
 
-#: readelf.c:4461
+#: readelf.c:4767
 msgid ""
 "possibly corrupt ELF file header - it has a non-zero section header offset, "
 "but no section headers\n"
 msgstr ""
 
-#: readelf.c:4464
+#: readelf.c:4770
 #, c-format
 msgid ""
 "\n"
 "There are no sections in this file.\n"
 msgstr ""
 
-#: readelf.c:4470
+#: readelf.c:4776
 #, c-format
 msgid "There are %d section headers, starting at offset 0x%lx:\n"
 msgstr ""
 
-#: readelf.c:4491 readelf.c:5079 readelf.c:5491 readelf.c:5797 readelf.c:6210
-#: readelf.c:7093 readelf.c:9213
+#: readelf.c:4797 readelf.c:5392 readelf.c:5804 readelf.c:6112 readelf.c:6523
+#: readelf.c:7484 readelf.c:9685
 msgid "string table"
 msgstr ""
 
-#: readelf.c:4558
-#, c-format
-msgid "Section %d has invalid sh_entsize %lx (expected %lx)\n"
+#: readelf.c:4864
+msgid "Section %d has invalid sh_entsize of %"
 msgstr ""
 
-#: readelf.c:4578
+#: readelf.c:4866
+#, c-format
+msgid "(Using the expected size of %d for the rest of this dump)\n"
+msgstr ""
+
+#: readelf.c:4887
 msgid "File contains multiple dynamic symbol tables\n"
 msgstr ""
 
-#: readelf.c:4590
+#: readelf.c:4899
 msgid "File contains multiple dynamic string tables\n"
 msgstr ""
 
-#: readelf.c:4596
+#: readelf.c:4905
 msgid "dynamic strings"
 msgstr ""
 
-#: readelf.c:4603
+#: readelf.c:4912
 msgid "File contains multiple symtab shndx tables\n"
 msgstr ""
 
-#: readelf.c:4674
+#: readelf.c:4988
 #, c-format
 msgid ""
 "\n"
 "Section Headers:\n"
 msgstr ""
 
-#: readelf.c:4676
+#: readelf.c:4990
 #, c-format
 msgid ""
 "\n"
 "Section Header:\n"
 msgstr ""
 
-#: readelf.c:4682 readelf.c:4693 readelf.c:4704
+#: readelf.c:4996 readelf.c:5007 readelf.c:5018
 #, c-format
 msgid "  [Nr] Name\n"
 msgstr ""
 
-#: readelf.c:4683
+#: readelf.c:4997
 #, c-format
 msgid "       Type            Addr     Off    Size   ES   Lk Inf Al\n"
 msgstr ""
 
-#: readelf.c:4687
+#: readelf.c:5001
 #, c-format
 msgid ""
 "  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk "
 "Inf Al\n"
 msgstr ""
 
-#: readelf.c:4694
+#: readelf.c:5008
 #, c-format
 msgid "       Type            Address          Off    Size   ES   Lk Inf Al\n"
 msgstr ""
 
-#: readelf.c:4698
+#: readelf.c:5012
 #, c-format
 msgid ""
 "  [Nr] Name              Type            Address          Off    Size   ES "
 "Flg Lk Inf Al\n"
 msgstr ""
 
-#: readelf.c:4705
+#: readelf.c:5019
 #, c-format
 msgid "       Type              Address          Offset            Link\n"
 msgstr ""
 
-#: readelf.c:4706
+#: readelf.c:5020
 #, c-format
 msgid "       Size              EntSize          Info              Align\n"
 msgstr ""
 
-#: readelf.c:4710
+#: readelf.c:5024
 #, c-format
 msgid "  [Nr] Name              Type             Address           Offset\n"
 msgstr ""
 
-#: readelf.c:4711
+#: readelf.c:5025
 #, c-format
 msgid "       Size              EntSize          Flags  Link  Info  Align\n"
 msgstr ""
 
-#: readelf.c:4716
+#: readelf.c:5030
 #, c-format
 msgid "       Flags\n"
 msgstr ""
 
-#: readelf.c:4796
+#: readelf.c:5108
 #, c-format
 msgid "section %u: sh_link value of %u is larger than the number of sections\n"
 msgstr ""
 
-#: readelf.c:4896
+#: readelf.c:5208
 #, c-format
 msgid ""
 "Key to Flags:\n"
@@ -5428,7 +6081,7 @@ msgid ""
 "  O (extra OS processing required) o (OS specific), p (processor specific)\n"
 msgstr ""
 
-#: readelf.c:4901
+#: readelf.c:5213
 #, c-format
 msgid ""
 "Key to Flags:\n"
@@ -5437,830 +6090,881 @@ msgid ""
 "  O (extra OS processing required) o (OS specific), p (processor specific)\n"
 msgstr ""
 
-#: readelf.c:4923
+#: readelf.c:5235
 #, c-format
 msgid "[<unknown>: 0x%x] "
 msgstr ""
 
-#: readelf.c:4949
+#: readelf.c:5261
 #, c-format
 msgid ""
 "\n"
 "There are no sections to group in this file.\n"
 msgstr ""
 
-#: readelf.c:4956
+#: readelf.c:5268
 msgid "Section headers are not available!\n"
 msgstr ""
 
-#: readelf.c:4980
+#: readelf.c:5293
 #, c-format
 msgid ""
 "\n"
 "There are no section groups in this file.\n"
 msgstr ""
 
-#: readelf.c:5018
+#: readelf.c:5331
 #, c-format
 msgid "Bad sh_link in group section `%s'\n"
 msgstr ""
 
-#: readelf.c:5032
+#: readelf.c:5345
 #, c-format
 msgid "Corrupt header in group section `%s'\n"
 msgstr ""
 
-#: readelf.c:5038 readelf.c:5049
+#: readelf.c:5351 readelf.c:5362
 #, c-format
 msgid "Bad sh_info in group section `%s'\n"
 msgstr ""
 
-#: readelf.c:5088
+#: readelf.c:5401
 msgid "section data"
 msgstr ""
 
-#: readelf.c:5099
+#: readelf.c:5412
 #, c-format
 msgid ""
 "\n"
 "%sgroup section [%5u] `%s' [%s] contains %u sections:\n"
 msgstr ""
 
-#: readelf.c:5102
+#: readelf.c:5415
 #, c-format
 msgid "   [Index]    Name\n"
 msgstr ""
 
-#: readelf.c:5116
+#: readelf.c:5429
 #, c-format
 msgid "section [%5u] in group section [%5u] > maximum section [%5u]\n"
 msgstr ""
 
-#: readelf.c:5125
+#: readelf.c:5438
 #, c-format
 msgid "section [%5u] in group section [%5u] already in group section [%5u]\n"
 msgstr ""
 
-#: readelf.c:5138
+#: readelf.c:5451
 #, c-format
 msgid "section 0 in group section [%5u]\n"
 msgstr ""
 
-#: readelf.c:5205
+#: readelf.c:5518
 msgid "dynamic section image fixups"
 msgstr ""
 
-#: readelf.c:5217
+#: readelf.c:5530
 #, c-format
 msgid ""
 "\n"
 "Image fixups for needed library #%d: %s - ident: %lx\n"
 msgstr ""
 
-#: readelf.c:5220
+#: readelf.c:5533
 #, c-format
 msgid "Seg Offset           Type                             SymVec DataType\n"
 msgstr ""
 
-#: readelf.c:5252
+#: readelf.c:5565
 msgid "dynamic section image relocations"
 msgstr ""
 
-#: readelf.c:5256
+#: readelf.c:5569
 #, c-format
 msgid ""
 "\n"
 "Image relocs\n"
 msgstr ""
 
-#: readelf.c:5258
+#: readelf.c:5571
 #, c-format
 msgid ""
 "Seg Offset   Type                            Addend            Seg Sym Off\n"
 msgstr ""
 
-#: readelf.c:5313
+#: readelf.c:5626
 msgid "dynamic string section"
 msgstr ""
 
-#: readelf.c:5414
+#: readelf.c:5727
 #, c-format
 msgid ""
 "\n"
 "'%s' relocation section at offset 0x%lx contains %ld bytes:\n"
 msgstr ""
 
-#: readelf.c:5429
+#: readelf.c:5742
 #, c-format
 msgid ""
 "\n"
 "There are no dynamic relocations in this file.\n"
 msgstr ""
 
-#: readelf.c:5453
+#: readelf.c:5766
 #, c-format
 msgid ""
 "\n"
 "Relocation section "
 msgstr ""
 
-#: readelf.c:5460 readelf.c:5890 readelf.c:6227
+#: readelf.c:5773 readelf.c:6205 readelf.c:6540
 #, c-format
 msgid " at offset 0x%lx contains %lu entries:\n"
 msgstr ""
 
-#: readelf.c:5510
+#: readelf.c:5823
 #, c-format
 msgid ""
 "\n"
 "There are no relocations in this file.\n"
 msgstr ""
 
-#: readelf.c:5648
+#: readelf.c:5963
 #, c-format
 msgid "\tUnknown version.\n"
 msgstr ""
 
-#: readelf.c:5701 readelf.c:6074
+#: readelf.c:6016 readelf.c:6387
 msgid "unwind table"
 msgstr ""
 
-#: readelf.c:5743 readelf.c:6156 readelf.c:6415
+#: readelf.c:6058 readelf.c:6469 readelf.c:6752 readelf.c:6765
 #, c-format
 msgid "Skipping unexpected relocation type %s\n"
 msgstr ""
 
-#: readelf.c:5805 readelf.c:6218 readelf.c:7101 readelf.c:7148
+#: readelf.c:6120 readelf.c:6531 readelf.c:7492
 #, c-format
 msgid ""
 "\n"
 "There are no unwind sections in this file.\n"
 msgstr ""
 
-#: readelf.c:5868
+#: readelf.c:6183
 #, c-format
 msgid ""
 "\n"
 "Could not find unwind info section for "
 msgstr ""
 
-#: readelf.c:5873 readelf.c:5888 readelf.c:6225
+#: readelf.c:6188 readelf.c:6203 readelf.c:6538
 #, c-format
 msgid "'%s'"
 msgstr ""
 
-#: readelf.c:5880
+#: readelf.c:6195
 msgid "unwind info"
 msgstr ""
 
-#: readelf.c:5883 readelf.c:6224
+#: readelf.c:6198 readelf.c:6537
 #, c-format
 msgid ""
 "\n"
 "Unwind section "
 msgstr ""
 
-#: readelf.c:6333
+#: readelf.c:6659
 msgid "unwind data"
 msgstr ""
 
-#: readelf.c:6386
+#: readelf.c:6718
 #, c-format
 msgid "Skipping unexpected relocation at offset 0x%lx\n"
 msgstr ""
 
-#: readelf.c:6490
+#: readelf.c:6833
 #, c-format
 msgid "[Truncated opcode]\n"
 msgstr ""
 
-#: readelf.c:6534 readelf.c:6734
+#: readelf.c:6877 readelf.c:7077
 #, c-format
 msgid "Refuse to unwind"
 msgstr ""
 
-#: readelf.c:6557
+#: readelf.c:6900
 #, c-format
 msgid "     [Reserved]"
 msgstr ""
 
-#: readelf.c:6585
+#: readelf.c:6928
 #, c-format
 msgid "     finish"
 msgstr ""
 
-#: readelf.c:6590 readelf.c:6676
+#: readelf.c:6933 readelf.c:7019
 #, c-format
 msgid "[Spare]"
 msgstr ""
 
-#: readelf.c:6697 readelf.c:6831
+#: readelf.c:7040 readelf.c:7176
 #, c-format
 msgid "     [unsupported opcode]"
 msgstr ""
 
-#: readelf.c:6781
+#: readelf.c:7125
 #, c-format
 msgid "pop frame {"
 msgstr ""
 
-#: readelf.c:6792
+#: readelf.c:7136
 msgid "[pad]"
 msgstr ""
 
-#: readelf.c:6820
+#: readelf.c:7165
 #, c-format
 msgid "sp = sp + %ld"
 msgstr ""
 
-#: readelf.c:6878
+#: readelf.c:7231
 #, c-format
 msgid "  Personality routine: "
 msgstr ""
 
-#: readelf.c:6896
+#: readelf.c:7263
 #, c-format
 msgid "  [Truncated data]\n"
 msgstr ""
 
-#: readelf.c:6911
+#: readelf.c:7286
 #, c-format
-msgid "  Compact model %d\n"
+msgid "Corrupt ARM compact model table entry: %x \n"
 msgstr ""
 
-#: readelf.c:6947
+#: readelf.c:7289
+#, c-format
+msgid "  Compact model index: %d\n"
+msgstr ""
+
+#: readelf.c:7314
+msgid "Unknown ARM compact model index encountered\n"
+msgstr ""
+
+#: readelf.c:7315
+#, c-format
+msgid "  [reserved]\n"
+msgstr ""
+
+#: readelf.c:7328
 #, c-format
 msgid "  Restore stack from frame pointer\n"
 msgstr ""
 
-#: readelf.c:6949
+#: readelf.c:7330
 #, c-format
 msgid "  Stack increment %d\n"
 msgstr ""
 
-#: readelf.c:6950
+#: readelf.c:7331
 #, c-format
 msgid "  Registers restored: "
 msgstr ""
 
-#: readelf.c:6955
+#: readelf.c:7336
 #, c-format
 msgid "  Return register: %s\n"
 msgstr ""
 
-#: readelf.c:7038
+#: readelf.c:7340
+#, c-format
+msgid "  [reserved (%d)]\n"
+msgstr ""
+
+#: readelf.c:7344
+#, c-format
+msgid "Unsupported architecture type %d encountered when decoding unwind table"
+msgstr ""
+
+#: readelf.c:7383
+#, c-format
+msgid "corrupt index table entry: %x\n"
+msgstr ""
+
+#: readelf.c:7426
 #, c-format
 msgid "Could not locate .ARM.extab section containing 0x%lx.\n"
 msgstr ""
 
-#: readelf.c:7107
+#: readelf.c:7464
+#, c-format
+msgid ""
+"Unsupported architecture type %d encountered when processing unwind table"
+msgstr ""
+
+#: readelf.c:7498
 #, c-format
 msgid ""
 "\n"
 "Unwind table index '%s' at offset 0x%lx contains %lu entries:\n"
 msgstr ""
 
-#: readelf.c:7159
+#: readelf.c:7540
 #, c-format
-msgid "NONE\n"
+msgid ""
+"\n"
+"The decoding of unwind sections for machine type %s is not currently "
+"supported.\n"
 msgstr ""
 
-#: readelf.c:7185
+#: readelf.c:7551
 #, c-format
-msgid "Interface Version: %s\n"
+msgid "NONE"
 msgstr ""
 
-#: readelf.c:7187
+#: readelf.c:7576
 #, c-format
-msgid "<corrupt: %ld>\n"
+msgid "Interface Version: %s"
 msgstr ""
 
-#: readelf.c:7200
-#, c-format
-msgid "Time Stamp: %s\n"
+#: readelf.c:7578
+msgid "<corrupt: %"
 msgstr ""
 
-#: readelf.c:7377 readelf.c:7423
+#: readelf.c:7591
+#, c-format
+msgid "Time Stamp: %s"
+msgstr ""
+
+#: readelf.c:7769 readelf.c:7815
 msgid "dynamic section"
 msgstr ""
 
-#: readelf.c:7501
+#: readelf.c:7893
 #, c-format
 msgid ""
 "\n"
 "There is no dynamic section in this file.\n"
 msgstr ""
 
-#: readelf.c:7539
+#: readelf.c:7931
 msgid "Unable to seek to end of file!\n"
 msgstr ""
 
-#: readelf.c:7552
+#: readelf.c:7944
 msgid "Unable to determine the number of symbols to load\n"
 msgstr ""
 
-#: readelf.c:7585
+#: readelf.c:7977
 msgid "Unable to seek to end of file\n"
 msgstr ""
 
-#: readelf.c:7592
+#: readelf.c:7984
 msgid "Unable to determine the length of the dynamic string table\n"
 msgstr ""
 
-#: readelf.c:7598
+#: readelf.c:7990
 msgid "dynamic string table"
 msgstr ""
 
-#: readelf.c:7635
+#: readelf.c:8027
 msgid "symbol information"
 msgstr ""
 
-#: readelf.c:7660
+#: readelf.c:8052
 #, c-format
 msgid ""
 "\n"
 "Dynamic section at offset 0x%lx contains %u entries:\n"
 msgstr ""
 
-#: readelf.c:7663
+#: readelf.c:8055
 #, c-format
 msgid "  Tag        Type                         Name/Value\n"
 msgstr ""
 
-#: readelf.c:7699
+#: readelf.c:8091
 #, c-format
 msgid "Auxiliary library"
 msgstr ""
 
-#: readelf.c:7703
+#: readelf.c:8095
 #, c-format
 msgid "Filter library"
 msgstr ""
 
-#: readelf.c:7707
+#: readelf.c:8099
 #, c-format
 msgid "Configuration file"
 msgstr ""
 
-#: readelf.c:7711
+#: readelf.c:8103
 #, c-format
 msgid "Dependency audit library"
 msgstr ""
 
-#: readelf.c:7715
+#: readelf.c:8107
 #, c-format
 msgid "Audit library"
 msgstr ""
 
-#: readelf.c:7733 readelf.c:7761 readelf.c:7789
+#: readelf.c:8125 readelf.c:8153 readelf.c:8181
 #, c-format
 msgid "Flags:"
 msgstr ""
 
-#: readelf.c:7736 readelf.c:7764 readelf.c:7791
+#: readelf.c:8128 readelf.c:8156 readelf.c:8183
 #, c-format
 msgid " None\n"
 msgstr ""
 
-#: readelf.c:7912
+#: readelf.c:8364
 #, c-format
 msgid "Shared library: [%s]"
 msgstr ""
 
-#: readelf.c:7915
+#: readelf.c:8367
 #, c-format
 msgid " program interpreter"
 msgstr ""
 
-#: readelf.c:7919
+#: readelf.c:8371
 #, c-format
 msgid "Library soname: [%s]"
 msgstr ""
 
-#: readelf.c:7923
+#: readelf.c:8375
 #, c-format
 msgid "Library rpath: [%s]"
 msgstr ""
 
-#: readelf.c:7927
+#: readelf.c:8379
 #, c-format
 msgid "Library runpath: [%s]"
 msgstr ""
 
-#: readelf.c:7960
+#: readelf.c:8412
 #, c-format
 msgid " (bytes)\n"
 msgstr ""
 
-#: readelf.c:7990
+#: readelf.c:8442
 #, c-format
 msgid "Not needed object: [%s]\n"
 msgstr ""
 
-#: readelf.c:8090
+#: readelf.c:8542
 msgid "| <unknown>"
 msgstr ""
 
-#: readelf.c:8123
+#: readelf.c:8575
 #, c-format
 msgid ""
 "\n"
 "Version definition section '%s' contains %u entries:\n"
 msgstr ""
 
-#: readelf.c:8126
+#: readelf.c:8578
 #, c-format
 msgid "  Addr: 0x"
 msgstr ""
 
-#: readelf.c:8128 readelf.c:8246 readelf.c:8390
+#: readelf.c:8580 readelf.c:8696 readelf.c:8838
 #, c-format
 msgid "  Offset: %#08lx  Link: %u (%s)\n"
 msgstr ""
 
-#: readelf.c:8136
+#: readelf.c:8588
 msgid "version definition section"
 msgstr ""
 
-#: readelf.c:8169
+#: readelf.c:8621
 #, c-format
 msgid "  %#06x: Rev: %d  Flags: %s"
 msgstr ""
 
-#: readelf.c:8172
+#: readelf.c:8624
 #, c-format
 msgid "  Index: %d  Cnt: %d  "
 msgstr ""
 
-#: readelf.c:8188
+#: readelf.c:8639
 #, c-format
 msgid "Name: %s\n"
 msgstr ""
 
-#: readelf.c:8190
+#: readelf.c:8641
 #, c-format
 msgid "Name index: %ld\n"
 msgstr ""
 
-#: readelf.c:8212
+#: readelf.c:8662
 #, c-format
 msgid "  %#06x: Parent %d: %s\n"
 msgstr ""
 
-#: readelf.c:8215
+#: readelf.c:8665
 #, c-format
 msgid "  %#06x: Parent %d, name index: %ld\n"
 msgstr ""
 
-#: readelf.c:8220
+#: readelf.c:8670
 #, c-format
 msgid "  Version def aux past end of section\n"
 msgstr ""
 
-#: readelf.c:8226
+#: readelf.c:8676
 #, c-format
 msgid "  Version definition past end of section\n"
 msgstr ""
 
-#: readelf.c:8241
+#: readelf.c:8691
 #, c-format
 msgid ""
 "\n"
 "Version needs section '%s' contains %u entries:\n"
 msgstr ""
 
-#: readelf.c:8244
+#: readelf.c:8694
 #, c-format
 msgid " Addr: 0x"
 msgstr ""
 
-#: readelf.c:8255
+#: readelf.c:8705
 msgid "Version Needs section"
 msgstr ""
 
-#: readelf.c:8283
+#: readelf.c:8733
 #, c-format
 msgid "  %#06x: Version: %d"
 msgstr ""
 
-#: readelf.c:8286
+#: readelf.c:8736
 #, c-format
 msgid "  File: %s"
 msgstr ""
 
-#: readelf.c:8288
+#: readelf.c:8738
 #, c-format
 msgid "  File: %lx"
 msgstr ""
 
-#: readelf.c:8290
+#: readelf.c:8740
 #, c-format
 msgid "  Cnt: %d\n"
 msgstr ""
 
-#: readelf.c:8315
+#: readelf.c:8764
 #, c-format
 msgid "  %#06x:   Name: %s"
 msgstr ""
 
-#: readelf.c:8318
+#: readelf.c:8767
 #, c-format
 msgid "  %#06x:   Name index: %lx"
 msgstr ""
 
-#: readelf.c:8321
+#: readelf.c:8770
 #, c-format
 msgid "  Flags: %s  Version: %d\n"
 msgstr ""
 
-#: readelf.c:8334
+#: readelf.c:8782
 msgid "Missing Version Needs auxillary information\n"
 msgstr ""
 
-#: readelf.c:8340
+#: readelf.c:8788
 msgid "Missing Version Needs information\n"
 msgstr ""
 
-#: readelf.c:8378
+#: readelf.c:8826
 msgid "version string table"
 msgstr ""
 
-#: readelf.c:8385
+#: readelf.c:8833
 #, c-format
 msgid ""
 "\n"
 "Version symbols section '%s' contains %d entries:\n"
 msgstr ""
 
-#: readelf.c:8388
+#: readelf.c:8836
 #, c-format
 msgid " Addr: "
 msgstr ""
 
-#: readelf.c:8399
+#: readelf.c:8847
 msgid "version symbol data"
 msgstr ""
 
-#: readelf.c:8427
+#: readelf.c:8875
 msgid "   0 (*local*)    "
 msgstr ""
 
-#: readelf.c:8431
+#: readelf.c:8879
 msgid "   1 (*global*)   "
 msgstr ""
 
-#: readelf.c:8442
+#: readelf.c:8890
 msgid "invalid index into symbol array\n"
 msgstr ""
 
-#: readelf.c:8476 readelf.c:9279
+#: readelf.c:8924 readelf.c:9751
 msgid "version need"
 msgstr ""
 
-#: readelf.c:8487
+#: readelf.c:8935
 msgid "version need aux (2)"
 msgstr ""
 
-#: readelf.c:8508 readelf.c:8570
+#: readelf.c:8956 readelf.c:9018
 msgid "*invalid*"
 msgstr ""
 
-#: readelf.c:8538 readelf.c:9357
+#: readelf.c:8986 readelf.c:9829
 msgid "version def"
 msgstr ""
 
-#: readelf.c:8564 readelf.c:9379
+#: readelf.c:9012 readelf.c:9851
 msgid "version def aux"
 msgstr ""
 
-#: readelf.c:8599
+#: readelf.c:9047
 #, c-format
 msgid ""
 "\n"
 "No version information found in this file.\n"
 msgstr ""
 
-#: readelf.c:8807
+#: readelf.c:9243
+#, c-format
+msgid "<localentry>: %d"
+msgstr ""
+
+#: readelf.c:9277
 #, c-format
 msgid "<other>: %x"
 msgstr ""
 
-#: readelf.c:8869
+#: readelf.c:9341
 msgid "Unable to read in dynamic data\n"
 msgstr ""
 
-#: readelf.c:8919
+#: readelf.c:9391
 #, c-format
 msgid " <corrupt: %14ld>"
 msgstr ""
 
-#: readelf.c:8962 readelf.c:9014 readelf.c:9038 readelf.c:9068 readelf.c:9092
+#: readelf.c:9434 readelf.c:9486 readelf.c:9510 readelf.c:9540 readelf.c:9564
 msgid "Unable to seek to start of dynamic information\n"
 msgstr ""
 
-#: readelf.c:8968 readelf.c:9020
+#: readelf.c:9440 readelf.c:9492
 msgid "Failed to read in number of buckets\n"
 msgstr ""
 
-#: readelf.c:8974
+#: readelf.c:9446
 msgid "Failed to read in number of chains\n"
 msgstr ""
 
-#: readelf.c:9076
+#: readelf.c:9548
 msgid "Failed to determine last chain length\n"
 msgstr ""
 
-#: readelf.c:9120
+#: readelf.c:9592
 #, c-format
 msgid ""
 "\n"
 "Symbol table for image:\n"
 msgstr ""
 
-#: readelf.c:9122 readelf.c:9140
+#: readelf.c:9594 readelf.c:9612
 #, c-format
 msgid "  Num Buc:    Value  Size   Type   Bind Vis      Ndx Name\n"
 msgstr ""
 
-#: readelf.c:9124 readelf.c:9142
+#: readelf.c:9596 readelf.c:9614
 #, c-format
 msgid "  Num Buc:    Value          Size   Type   Bind Vis      Ndx Name\n"
 msgstr ""
 
-#: readelf.c:9138
+#: readelf.c:9610
 #, c-format
 msgid ""
 "\n"
 "Symbol table of `.gnu.hash' for image:\n"
 msgstr ""
 
-#: readelf.c:9182
+#: readelf.c:9654
 #, c-format
 msgid ""
 "\n"
 "Symbol table '%s' has a sh_entsize of zero!\n"
 msgstr ""
 
-#: readelf.c:9187
+#: readelf.c:9659
 #, c-format
 msgid ""
 "\n"
 "Symbol table '%s' contains %lu entries:\n"
 msgstr ""
 
-#: readelf.c:9192
+#: readelf.c:9664
 #, c-format
 msgid "   Num:    Value  Size Type    Bind   Vis      Ndx Name\n"
 msgstr ""
 
-#: readelf.c:9194
+#: readelf.c:9666
 #, c-format
 msgid "   Num:    Value          Size Type    Bind   Vis      Ndx Name\n"
 msgstr ""
 
-#: readelf.c:9249
+#: readelf.c:9721
 msgid "version data"
 msgstr ""
 
-#: readelf.c:9298
+#: readelf.c:9770
 msgid "version need aux (3)"
 msgstr ""
 
-#: readelf.c:9332
+#: readelf.c:9804
 msgid "bad dynamic symbol\n"
 msgstr ""
 
-#: readelf.c:9404
+#: readelf.c:9876
 #, c-format
 msgid ""
 "\n"
 "Dynamic symbol information is not available for displaying symbols.\n"
 msgstr ""
 
-#: readelf.c:9416
+#: readelf.c:9888
 #, c-format
 msgid ""
 "\n"
 "Histogram for bucket list length (total of %lu buckets):\n"
 msgstr ""
 
-#: readelf.c:9418 readelf.c:9488
+#: readelf.c:9890 readelf.c:9961
 #, c-format
 msgid " Length  Number     %% of total  Coverage\n"
 msgstr ""
 
-#: readelf.c:9486
+#: readelf.c:9959
 #, c-format
 msgid ""
 "\n"
 "Histogram for `.gnu.hash' bucket list length (total of %lu buckets):\n"
 msgstr ""
 
-#: readelf.c:9552
+#: readelf.c:10026
 #, c-format
 msgid ""
 "\n"
 "Dynamic info segment at offset 0x%lx contains %d entries:\n"
 msgstr ""
 
-#: readelf.c:9555
+#: readelf.c:10029
 #, c-format
 msgid " Num: Name                           BoundTo     Flags\n"
 msgstr ""
 
-#: readelf.c:9564
+#: readelf.c:10038
 #, c-format
 msgid "<corrupt: %19ld>"
 msgstr ""
 
-#: readelf.c:9646
+#: readelf.c:10138
+msgid "Unhandled MSP430 reloc type found after SYM_DIFF reloc"
+msgstr ""
+
+#: readelf.c:10174
 msgid "Unhandled MN10300 reloc type found after SYM_DIFF reloc"
 msgstr ""
 
-#: readelf.c:9813
+#: readelf.c:10353
 #, c-format
 msgid ""
 "Missing knowledge of 32-bit reloc types used in DWARF sections of machine "
 "number %d\n"
 msgstr ""
 
-#: readelf.c:10138
+#: readelf.c:10704
 #, c-format
 msgid "unable to apply unsupported reloc type %d to section %s\n"
 msgstr ""
 
-#: readelf.c:10146
+#: readelf.c:10712
 #, c-format
 msgid "skipping invalid relocation offset 0x%lx in section %s\n"
 msgstr ""
 
-#: readelf.c:10155
+#: readelf.c:10721
 #, c-format
 msgid "skipping invalid relocation symbol index 0x%lx in section %s\n"
 msgstr ""
 
-#: readelf.c:10177
+#: readelf.c:10743
 #, c-format
 msgid "skipping unexpected symbol type %s in %ld'th relocation in section %s\n"
 msgstr ""
 
-#: readelf.c:10223
+#: readelf.c:10789
 #, c-format
 msgid ""
 "\n"
 "Assembly dump of section %s\n"
 msgstr ""
 
-#: readelf.c:10244
+#: readelf.c:10810
 #, c-format
 msgid ""
 "\n"
 "Section '%s' has no data to dump.\n"
 msgstr ""
 
-#: readelf.c:10250
+#: readelf.c:10816
 msgid "section contents"
 msgstr ""
 
-#: readelf.c:10269
+#: readelf.c:10835
 #, c-format
 msgid ""
 "\n"
 "String dump of section '%s':\n"
 msgstr ""
 
-#: readelf.c:10287
+#: readelf.c:10853
 #, c-format
 msgid ""
 "  Note: This section has relocations against it, but these have NOT been "
 "applied to this dump.\n"
 msgstr ""
 
-#: readelf.c:10318
+#: readelf.c:10884
 #, c-format
 msgid "  No strings found in this section."
 msgstr ""
 
-#: readelf.c:10340
+#: readelf.c:10906
 #, c-format
 msgid ""
 "\n"
 "Hex dump of section '%s':\n"
 msgstr ""
 
-#: readelf.c:10364
+#: readelf.c:10930
 #, c-format
 msgid ""
 " NOTE: This section has relocations against it, but these have NOT been "
 "applied to this dump.\n"
 msgstr ""
 
-#: readelf.c:10498
+#: readelf.c:11064
 #, c-format
 msgid "%s section data"
 msgstr ""
 
-#: readelf.c:10568
+#: readelf.c:11144
 #, c-format
 msgid ""
 "\n"
@@ -6271,836 +6975,990 @@ msgstr ""
 #. which has the NOBITS type - the bits in the file will be random.
 #. This can happen when a file containing a .eh_frame section is
 #. stripped with the --only-keep-debug command line option.
-#: readelf.c:10577
+#: readelf.c:11153
 #, c-format
 msgid "section '%s' has the NOBITS type - its contents are unreliable.\n"
 msgstr ""
 
-#: readelf.c:10613
+#: readelf.c:11198
 #, c-format
 msgid "Unrecognized debug section: %s\n"
 msgstr ""
 
-#: readelf.c:10641
+#: readelf.c:11226
 #, c-format
 msgid "Section '%s' was not dumped because it does not exist!\n"
 msgstr ""
 
-#: readelf.c:10682
+#: readelf.c:11267
 #, c-format
 msgid "Section %d was not dumped because it does not exist!\n"
 msgstr ""
 
-#: readelf.c:10860 readelf.c:10874 readelf.c:10893 readelf.c:11293
+#: readelf.c:11317
+msgid "corrupt tag\n"
+msgstr ""
+
+#: readelf.c:11493 readelf.c:11507 readelf.c:11526 readelf.c:11875
+#: readelf.c:12138 readelf.c:12151 readelf.c:12164
 #, c-format
 msgid "None\n"
 msgstr ""
 
-#: readelf.c:10861
+#: readelf.c:11494
 #, c-format
 msgid "Application\n"
 msgstr ""
 
-#: readelf.c:10862
+#: readelf.c:11495
 #, c-format
 msgid "Realtime\n"
 msgstr ""
 
-#: readelf.c:10863
+#: readelf.c:11496
 #, c-format
 msgid "Microcontroller\n"
 msgstr ""
 
-#: readelf.c:10864
+#: readelf.c:11497
 #, c-format
 msgid "Application or Realtime\n"
 msgstr ""
 
-#: readelf.c:10875 readelf.c:10895 readelf.c:11347 readelf.c:11365
-#: readelf.c:11440 readelf.c:11461
+#: readelf.c:11508 readelf.c:11528 readelf.c:11929 readelf.c:11947
+#: readelf.c:12022 readelf.c:12043
 #, c-format
 msgid "8-byte\n"
 msgstr ""
 
-#: readelf.c:10876 readelf.c:11443 readelf.c:11464
+#: readelf.c:11509 readelf.c:12025 readelf.c:12046
 #, c-format
 msgid "4-byte\n"
 msgstr ""
 
-#: readelf.c:10880 readelf.c:10899
+#: readelf.c:11513 readelf.c:11532
 #, c-format
 msgid "8-byte and up to %d-byte extended\n"
 msgstr ""
 
-#: readelf.c:10894
+#: readelf.c:11527
 #, c-format
 msgid "8-byte, except leaf SP\n"
 msgstr ""
 
-#: readelf.c:10910 readelf.c:11000 readelf.c:11479
+#: readelf.c:11543 readelf.c:11620 readelf.c:12061
 #, c-format
 msgid "flag = %d, vendor = %s\n"
 msgstr ""
 
-#: readelf.c:10916
+#: readelf.c:11549
 #, c-format
 msgid "True\n"
 msgstr ""
 
-#: readelf.c:11045 readelf.c:11231
+#: readelf.c:11615
+#, c-format
+msgid "flag = %d, vendor = <corrupt>\n"
+msgstr ""
+
+#: readelf.c:11616
+msgid "corrupt vendor attribute\n"
+msgstr ""
+
+#: readelf.c:11649 readelf.c:11806
 #, c-format
 msgid "Hard or soft float\n"
 msgstr ""
 
-#: readelf.c:11048
+#: readelf.c:11652
 #, c-format
 msgid "Hard float\n"
 msgstr ""
 
-#: readelf.c:11051 readelf.c:11240
+#: readelf.c:11655 readelf.c:11815
 #, c-format
 msgid "Soft float\n"
 msgstr ""
 
-#: readelf.c:11054
+#: readelf.c:11658
 #, c-format
 msgid "Single-precision hard float\n"
 msgstr ""
 
-#: readelf.c:11071 readelf.c:11097
+#: readelf.c:11675 readelf.c:11707
 #, c-format
 msgid "Any\n"
 msgstr ""
 
-#: readelf.c:11074
+#: readelf.c:11678
 #, c-format
 msgid "Generic\n"
 msgstr ""
 
-#: readelf.c:11103
+#: readelf.c:11697
+msgid "corrupt Tag_GNU_Power_ABI_Struct_Return"
+msgstr ""
+
+#: readelf.c:11713
 #, c-format
 msgid "Memory\n"
 msgstr ""
 
-#: readelf.c:11234
+#: readelf.c:11809
 #, c-format
 msgid "Hard float (double precision)\n"
 msgstr ""
 
-#: readelf.c:11237
+#: readelf.c:11812
 #, c-format
 msgid "Hard float (single precision)\n"
 msgstr ""
 
-#: readelf.c:11243
+#: readelf.c:11818
 #, c-format
 msgid "Hard float (MIPS32r2 64-bit FPU)\n"
 msgstr ""
 
-#: readelf.c:11326
+#: readelf.c:11839
+#, c-format
+msgid "Any MSA or not\n"
+msgstr ""
+
+#: readelf.c:11842
+#, c-format
+msgid "128-bit MSA\n"
+msgstr ""
+
+#: readelf.c:11908
 #, c-format
 msgid "Not used\n"
 msgstr ""
 
-#: readelf.c:11329
+#: readelf.c:11911
 #, c-format
 msgid "2 bytes\n"
 msgstr ""
 
-#: readelf.c:11332
+#: readelf.c:11914
 #, c-format
 msgid "4 bytes\n"
 msgstr ""
 
-#: readelf.c:11350 readelf.c:11368 readelf.c:11446 readelf.c:11467
+#: readelf.c:11932 readelf.c:11950 readelf.c:12028 readelf.c:12049
 #, c-format
 msgid "16-byte\n"
 msgstr ""
 
-#: readelf.c:11383
+#: readelf.c:11965
 #, c-format
 msgid "DSBT addressing not used\n"
 msgstr ""
 
-#: readelf.c:11386
+#: readelf.c:11968
 #, c-format
 msgid "DSBT addressing used\n"
 msgstr ""
 
-#: readelf.c:11401
+#: readelf.c:11983
 #, c-format
 msgid "Data addressing position-dependent\n"
 msgstr ""
 
-#: readelf.c:11404
+#: readelf.c:11986
 #, c-format
 msgid "Data addressing position-independent, GOT near DP\n"
 msgstr ""
 
-#: readelf.c:11407
+#: readelf.c:11989
 #, c-format
 msgid "Data addressing position-independent, GOT far from DP\n"
 msgstr ""
 
-#: readelf.c:11422
+#: readelf.c:12004
 #, c-format
 msgid "Code addressing position-dependent\n"
 msgstr ""
 
-#: readelf.c:11425
+#: readelf.c:12007
 #, c-format
 msgid "Code addressing position-independent\n"
 msgstr ""
 
-#: readelf.c:11531
+#: readelf.c:12139
+#, c-format
+msgid "MSP430\n"
+msgstr ""
+
+#: readelf.c:12140
+#, c-format
+msgid "MSP430X\n"
+msgstr ""
+
+#: readelf.c:12152 readelf.c:12165
+#, c-format
+msgid "Small\n"
+msgstr ""
+
+#: readelf.c:12153 readelf.c:12166
+#, c-format
+msgid "Large\n"
+msgstr ""
+
+#: readelf.c:12167
+#, c-format
+msgid "Restricted Large\n"
+msgstr ""
+
+#: readelf.c:12173
+#, c-format
+msgid "  <unknown tag %d>: "
+msgstr ""
+
+#: readelf.c:12216
 msgid "attributes"
 msgstr ""
 
-#: readelf.c:11552
+#: readelf.c:12237
 #, c-format
 msgid "ERROR: Bad section length (%d > %d)\n"
 msgstr ""
 
-#: readelf.c:11558
+#: readelf.c:12243
 #, c-format
 msgid "Attribute Section: %s\n"
 msgstr ""
 
-#: readelf.c:11583
+#: readelf.c:12268
 #, c-format
 msgid "ERROR: Bad subsection length (%d > %d)\n"
 msgstr ""
 
-#: readelf.c:11595
+#: readelf.c:12280
 #, c-format
 msgid "File Attributes\n"
 msgstr ""
 
-#: readelf.c:11598
+#: readelf.c:12283
 #, c-format
 msgid "Section Attributes:"
 msgstr ""
 
-#: readelf.c:11601
+#: readelf.c:12286
 #, c-format
 msgid "Symbol Attributes:"
 msgstr ""
 
-#: readelf.c:11616
+#: readelf.c:12301
 #, c-format
 msgid "Unknown tag: %d\n"
 msgstr ""
 
-#. ??? Do something sensible, like dump hex.
-#: readelf.c:11635
+#: readelf.c:12320
 #, c-format
 msgid "  Unknown section contexts\n"
 msgstr ""
 
-#: readelf.c:11642
+#: readelf.c:12328
 #, c-format
 msgid "Unknown format '%c'\n"
 msgstr ""
 
-#: readelf.c:11693 readelf.c:11715
+#: readelf.c:12386 readelf.c:12408
 msgid "<unknown>"
 msgstr ""
 
-#: readelf.c:11810 readelf.c:12344
+#: readelf.c:12503 readelf.c:13037
 msgid "liblist section data"
 msgstr ""
 
-#: readelf.c:11813
+#: readelf.c:12506
 #, c-format
 msgid ""
 "\n"
 "Section '.liblist' contains %lu entries:\n"
 msgstr ""
 
-#: readelf.c:11815
+#: readelf.c:12508
 msgid ""
 "     Library              Time Stamp          Checksum   Version Flags\n"
 msgstr ""
 
-#: readelf.c:11841
+#: readelf.c:12534
 #, c-format
 msgid "<corrupt: %9ld>"
 msgstr ""
 
-#: readelf.c:11846
+#: readelf.c:12539
 msgid " NONE"
 msgstr ""
 
-#: readelf.c:11897
+#: readelf.c:12590
 msgid "options"
 msgstr ""
 
-#: readelf.c:11928
+#: readelf.c:12621
 #, c-format
 msgid ""
 "\n"
 "Section '%s' contains %d entries:\n"
 msgstr ""
 
-#: readelf.c:12089
+#: readelf.c:12782
 msgid "conflict list found without a dynamic symbol table\n"
 msgstr ""
 
-#: readelf.c:12106 readelf.c:12121
+#: readelf.c:12799 readelf.c:12814
 msgid "conflict"
 msgstr ""
 
-#: readelf.c:12131
+#: readelf.c:12824
 #, c-format
 msgid ""
 "\n"
 "Section '.conflict' contains %lu entries:\n"
 msgstr ""
 
-#: readelf.c:12133
+#: readelf.c:12826
 msgid "  Num:    Index       Value  Name"
 msgstr ""
 
-#: readelf.c:12145 readelf.c:12234 readelf.c:12305
+#: readelf.c:12838 readelf.c:12927 readelf.c:12998
 #, c-format
 msgid "<corrupt: %14ld>"
 msgstr ""
 
-#: readelf.c:12167
+#: readelf.c:12860
 msgid "Global Offset Table data"
 msgstr ""
 
-#: readelf.c:12171
+#: readelf.c:12864
 #, c-format
 msgid ""
 "\n"
 "Primary GOT:\n"
 msgstr ""
 
-#: readelf.c:12172
+#: readelf.c:12865
 #, c-format
 msgid " Canonical gp value: "
 msgstr ""
 
-#: readelf.c:12176 readelf.c:12276
+#: readelf.c:12869 readelf.c:12969
 #, c-format
 msgid " Reserved entries:\n"
 msgstr ""
 
-#: readelf.c:12177
+#: readelf.c:12870
 #, c-format
 msgid "  %*s %10s %*s Purpose\n"
 msgstr ""
 
-#: readelf.c:12178 readelf.c:12195 readelf.c:12211 readelf.c:12278
-#: readelf.c:12287
+#: readelf.c:12871 readelf.c:12888 readelf.c:12904 readelf.c:12971
+#: readelf.c:12980
 msgid "Address"
 msgstr ""
 
-#: readelf.c:12178 readelf.c:12195 readelf.c:12212
+#: readelf.c:12871 readelf.c:12888 readelf.c:12905
 msgid "Access"
 msgstr ""
 
-#: readelf.c:12179 readelf.c:12196 readelf.c:12213 readelf.c:12278
-#: readelf.c:12288
+#: readelf.c:12872 readelf.c:12889 readelf.c:12906 readelf.c:12971
+#: readelf.c:12981
 msgid "Initial"
 msgstr ""
 
-#: readelf.c:12181
+#: readelf.c:12874
 #, c-format
 msgid " Lazy resolver\n"
 msgstr ""
 
-#: readelf.c:12187
+#: readelf.c:12880
 #, c-format
 msgid " Module pointer (GNU extension)\n"
 msgstr ""
 
-#: readelf.c:12193
+#: readelf.c:12886
 #, c-format
 msgid " Local entries:\n"
 msgstr ""
 
-#: readelf.c:12209
+#: readelf.c:12902
 #, c-format
 msgid " Global entries:\n"
 msgstr ""
 
-#: readelf.c:12214 readelf.c:12289
+#: readelf.c:12907 readelf.c:12982
 msgid "Sym.Val."
 msgstr ""
 
 #. Note for translators: "Ndx" = abbreviated form of "Index".
-#: readelf.c:12217 readelf.c:12289
+#: readelf.c:12910 readelf.c:12982
 msgid "Ndx"
 msgstr ""
 
-#: readelf.c:12217 readelf.c:12289
+#: readelf.c:12910 readelf.c:12982
 msgid "Name"
 msgstr ""
 
-#: readelf.c:12271
+#: readelf.c:12964
 msgid "Procedure Linkage Table data"
 msgstr ""
 
-#: readelf.c:12277
+#: readelf.c:12970
 #, c-format
 msgid "  %*s %*s Purpose\n"
 msgstr ""
 
-#: readelf.c:12280
+#: readelf.c:12973
 #, c-format
 msgid " PLT lazy resolver\n"
 msgstr ""
 
-#: readelf.c:12282
+#: readelf.c:12975
 #, c-format
 msgid " Module pointer\n"
 msgstr ""
 
-#: readelf.c:12285
+#: readelf.c:12978
 #, c-format
 msgid " Entries:\n"
 msgstr ""
 
-#: readelf.c:12352
+#: readelf.c:13045
 msgid "liblist string table"
 msgstr ""
 
-#: readelf.c:12362
+#: readelf.c:13055
 #, c-format
 msgid ""
 "\n"
 "Library list section '%s' contains %lu entries:\n"
 msgstr ""
 
-#: readelf.c:12366
+#: readelf.c:13059
 msgid "     Library              Time Stamp          Checksum   Version Flags"
 msgstr ""
 
-#: readelf.c:12416
+#: readelf.c:13109
 msgid "NT_AUXV (auxiliary vector)"
 msgstr ""
 
-#: readelf.c:12418
+#: readelf.c:13111
 msgid "NT_PRSTATUS (prstatus structure)"
 msgstr ""
 
-#: readelf.c:12420
+#: readelf.c:13113
 msgid "NT_FPREGSET (floating point registers)"
 msgstr ""
 
-#: readelf.c:12422
+#: readelf.c:13115
 msgid "NT_PRPSINFO (prpsinfo structure)"
 msgstr ""
 
-#: readelf.c:12424
+#: readelf.c:13117
 msgid "NT_TASKSTRUCT (task structure)"
 msgstr ""
 
-#: readelf.c:12426
+#: readelf.c:13119
 msgid "NT_PRXFPREG (user_xfpregs structure)"
 msgstr ""
 
-#: readelf.c:12428
+#: readelf.c:13121
 msgid "NT_PPC_VMX (ppc Altivec registers)"
 msgstr ""
 
-#: readelf.c:12430
+#: readelf.c:13123
 msgid "NT_PPC_VSX (ppc VSX registers)"
 msgstr ""
 
-#: readelf.c:12432
+#: readelf.c:13125
+msgid "NT_386_TLS (x86 TLS information)"
+msgstr ""
+
+#: readelf.c:13127
+msgid "NT_386_IOPERM (x86 I/O permissions)"
+msgstr ""
+
+#: readelf.c:13129
 msgid "NT_X86_XSTATE (x86 XSAVE extended state)"
 msgstr ""
 
-#: readelf.c:12434
+#: readelf.c:13131
 msgid "NT_S390_HIGH_GPRS (s390 upper register halves)"
 msgstr ""
 
-#: readelf.c:12436
+#: readelf.c:13133
 msgid "NT_S390_TIMER (s390 timer register)"
 msgstr ""
 
-#: readelf.c:12438
+#: readelf.c:13135
 msgid "NT_S390_TODCMP (s390 TOD comparator register)"
 msgstr ""
 
-#: readelf.c:12440
+#: readelf.c:13137
 msgid "NT_S390_TODPREG (s390 TOD programmable register)"
 msgstr ""
 
-#: readelf.c:12442
+#: readelf.c:13139
 msgid "NT_S390_CTRS (s390 control registers)"
 msgstr ""
 
-#: readelf.c:12444
+#: readelf.c:13141
 msgid "NT_S390_PREFIX (s390 prefix register)"
 msgstr ""
 
-#: readelf.c:12446
+#: readelf.c:13143
+msgid "NT_S390_LAST_BREAK (s390 last breaking event address)"
+msgstr ""
+
+#: readelf.c:13145
+msgid "NT_S390_SYSTEM_CALL (s390 system call restart data)"
+msgstr ""
+
+#: readelf.c:13147
+msgid "NT_S390_TDB (s390 transaction diagnostic block)"
+msgstr ""
+
+#: readelf.c:13149
 msgid "NT_ARM_VFP (arm VFP registers)"
 msgstr ""
 
-#: readelf.c:12448
+#: readelf.c:13151
+msgid "NT_ARM_TLS (AArch TLS registers)"
+msgstr ""
+
+#: readelf.c:13153
+msgid "NT_ARM_HW_BREAK (AArch hardware breakpoint registers)"
+msgstr ""
+
+#: readelf.c:13155
+msgid "NT_ARM_HW_WATCH (AArch hardware watchpoint registers)"
+msgstr ""
+
+#: readelf.c:13157
 msgid "NT_PSTATUS (pstatus structure)"
 msgstr ""
 
-#: readelf.c:12450
+#: readelf.c:13159
 msgid "NT_FPREGS (floating point registers)"
 msgstr ""
 
-#: readelf.c:12452
+#: readelf.c:13161
 msgid "NT_PSINFO (psinfo structure)"
 msgstr ""
 
-#: readelf.c:12454
+#: readelf.c:13163
 msgid "NT_LWPSTATUS (lwpstatus_t structure)"
 msgstr ""
 
-#: readelf.c:12456
+#: readelf.c:13165
 msgid "NT_LWPSINFO (lwpsinfo_t structure)"
 msgstr ""
 
-#: readelf.c:12458
+#: readelf.c:13167
 msgid "NT_WIN32PSTATUS (win32_pstatus structure)"
 msgstr ""
 
-#: readelf.c:12466
+#: readelf.c:13169
+msgid "NT_SIGINFO (siginfo_t data)"
+msgstr ""
+
+#: readelf.c:13171
+msgid "NT_FILE (mapped files)"
+msgstr ""
+
+#: readelf.c:13179
 msgid "NT_VERSION (version)"
 msgstr ""
 
-#: readelf.c:12468
+#: readelf.c:13181
 msgid "NT_ARCH (architecture)"
 msgstr ""
 
-#: readelf.c:12473 readelf.c:12496 readelf.c:12575 readelf.c:12633
-#: readelf.c:12710
+#: readelf.c:13186 readelf.c:13295 readelf.c:13374 readelf.c:13432
+#: readelf.c:13509
 #, c-format
 msgid "Unknown note type: (0x%08x)"
 msgstr ""
 
-#: readelf.c:12485
+#: readelf.c:13203
+#, c-format
+msgid "    Cannot decode 64-bit note in 32-bit build\n"
+msgstr ""
+
+#: readelf.c:13211
+#, c-format
+msgid "    Malformed note - too short for header\n"
+msgstr ""
+
+#: readelf.c:13220
+#, c-format
+msgid "    Malformed note - does not end with \\0\n"
+msgstr ""
+
+#: readelf.c:13232
+#, c-format
+msgid "    Malformed note - too short for supplied file count\n"
+msgstr ""
+
+#: readelf.c:13236
+#, c-format
+msgid "    Page size: "
+msgstr ""
+
+#: readelf.c:13240
+#, c-format
+msgid "    %*s%*s%*s\n"
+msgstr ""
+
+#: readelf.c:13241
+msgid "Start"
+msgstr ""
+
+#: readelf.c:13242
+msgid "End"
+msgstr ""
+
+#: readelf.c:13243
+msgid "Page Offset"
+msgstr ""
+
+#: readelf.c:13251
+#, c-format
+msgid "    Malformed note - filenames end too early\n"
+msgstr ""
+
+#: readelf.c:13284
 msgid "NT_GNU_ABI_TAG (ABI version tag)"
 msgstr ""
 
-#: readelf.c:12487
+#: readelf.c:13286
 msgid "NT_GNU_HWCAP (DSO-supplied software HWCAP info)"
 msgstr ""
 
-#: readelf.c:12489
+#: readelf.c:13288
 msgid "NT_GNU_BUILD_ID (unique build ID bitstring)"
 msgstr ""
 
-#: readelf.c:12491
+#: readelf.c:13290
 msgid "NT_GNU_GOLD_VERSION (gold version)"
 msgstr ""
 
-#: readelf.c:12509
+#: readelf.c:13308
 #, c-format
 msgid "    Build ID: "
 msgstr ""
 
-#: readelf.c:12548
+#: readelf.c:13347
 #, c-format
 msgid "    OS: %s, ABI: %ld.%ld.%ld\n"
 msgstr ""
 
 #. NetBSD core "procinfo" structure.
-#: readelf.c:12565
+#: readelf.c:13364
 msgid "NetBSD procinfo structure"
 msgstr ""
 
-#: readelf.c:12592 readelf.c:12606
+#: readelf.c:13391 readelf.c:13405
 msgid "PT_GETREGS (reg structure)"
 msgstr ""
 
-#: readelf.c:12594 readelf.c:12608
+#: readelf.c:13393 readelf.c:13407
 msgid "PT_GETFPREGS (fpreg structure)"
 msgstr ""
 
-#: readelf.c:12627
+#: readelf.c:13426
 msgid "NT_STAPSDT (SystemTap probe descriptors)"
 msgstr ""
 
-#: readelf.c:12660
+#: readelf.c:13459
 #, c-format
 msgid "    Provider: %s\n"
 msgstr ""
 
-#: readelf.c:12661
+#: readelf.c:13460
 #, c-format
 msgid "    Name: %s\n"
 msgstr ""
 
-#: readelf.c:12662
+#: readelf.c:13461
 #, c-format
 msgid "    Location: "
 msgstr ""
 
-#: readelf.c:12664
+#: readelf.c:13463
 #, c-format
 msgid ", Base: "
 msgstr ""
 
-#: readelf.c:12666
+#: readelf.c:13465
 #, c-format
 msgid ", Semaphore: "
 msgstr ""
 
-#: readelf.c:12669
+#: readelf.c:13468
 #, c-format
 msgid "    Arguments: %s\n"
 msgstr ""
 
-#: readelf.c:12682
+#: readelf.c:13481
 msgid "NT_VMS_MHD (module header)"
 msgstr ""
 
-#: readelf.c:12684
+#: readelf.c:13483
 msgid "NT_VMS_LNM (language name)"
 msgstr ""
 
-#: readelf.c:12686
+#: readelf.c:13485
 msgid "NT_VMS_SRC (source files)"
 msgstr ""
 
-#: readelf.c:12690
+#: readelf.c:13489
 msgid "NT_VMS_EIDC (consistency check)"
 msgstr ""
 
-#: readelf.c:12692
+#: readelf.c:13491
 msgid "NT_VMS_FPMODE (FP mode)"
 msgstr ""
 
-#: readelf.c:12696
+#: readelf.c:13495
 msgid "NT_VMS_IMGNAM (image name)"
 msgstr ""
 
-#: readelf.c:12698
+#: readelf.c:13497
 msgid "NT_VMS_IMGID (image id)"
 msgstr ""
 
-#: readelf.c:12700
+#: readelf.c:13499
 msgid "NT_VMS_LINKID (link id)"
 msgstr ""
 
-#: readelf.c:12702
+#: readelf.c:13501
 msgid "NT_VMS_IMGBID (build id)"
 msgstr ""
 
-#: readelf.c:12704
+#: readelf.c:13503
 msgid "NT_VMS_GSTNAM (sym table name)"
 msgstr ""
 
-#: readelf.c:12724
+#: readelf.c:13523
 #, c-format
 msgid "    Creation date  : %.17s\n"
 msgstr ""
 
-#: readelf.c:12725
+#: readelf.c:13524
 #, c-format
 msgid "    Last patch date: %.17s\n"
 msgstr ""
 
-#: readelf.c:12726
+#: readelf.c:13525
 #, c-format
 msgid "    Module name    : %s\n"
 msgstr ""
 
-#: readelf.c:12727
+#: readelf.c:13526
 #, c-format
 msgid "    Module version : %s\n"
 msgstr ""
 
-#: readelf.c:12730
+#: readelf.c:13529
 #, c-format
 msgid "    Invalid size\n"
 msgstr ""
 
-#: readelf.c:12733
+#: readelf.c:13532
 #, c-format
 msgid "   Language: %s\n"
 msgstr ""
 
-#: readelf.c:12737
+#: readelf.c:13536
 #, c-format
 msgid "   Floating Point mode: "
 msgstr ""
 
-#: readelf.c:12742
+#: readelf.c:13541
 #, c-format
 msgid "   Link time: "
 msgstr ""
 
-#: readelf.c:12748
+#: readelf.c:13547
 #, c-format
 msgid "   Patch time: "
 msgstr ""
 
-#: readelf.c:12754
+#: readelf.c:13553
 #, c-format
 msgid "   Major id: %u,  minor id: %u\n"
 msgstr ""
 
-#: readelf.c:12757
+#: readelf.c:13556
 #, c-format
 msgid "   Last modified  : "
 msgstr ""
 
-#: readelf.c:12760
+#: readelf.c:13559
 #, c-format
 msgid ""
 "\n"
 "   Link flags  : "
 msgstr ""
 
-#: readelf.c:12763
+#: readelf.c:13562
 #, c-format
 msgid "   Header flags: 0x%08x\n"
 msgstr ""
 
-#: readelf.c:12765
+#: readelf.c:13564
 #, c-format
 msgid "   Image id    : %s\n"
 msgstr ""
 
-#: readelf.c:12769
+#: readelf.c:13568
 #, c-format
 msgid "    Image name: %s\n"
 msgstr ""
 
-#: readelf.c:12772
+#: readelf.c:13571
 #, c-format
 msgid "    Global symbol table name: %s\n"
 msgstr ""
 
-#: readelf.c:12775
+#: readelf.c:13574
 #, c-format
 msgid "    Image id: %s\n"
 msgstr ""
 
-#: readelf.c:12778
+#: readelf.c:13577
 #, c-format
 msgid "    Linker id: %s\n"
 msgstr ""
 
-#: readelf.c:12853
+#: readelf.c:13654
 msgid "notes"
 msgstr ""
 
-#: readelf.c:12859
+#: readelf.c:13660
 #, c-format
 msgid ""
 "\n"
-"Notes at offset 0x%08lx with length 0x%08lx:\n"
+"Displaying notes found at file offset 0x%08lx with length 0x%08lx:\n"
 msgstr ""
 
-#: readelf.c:12861
+#: readelf.c:13662
 #, c-format
 msgid "  %-20s %10s\tDescription\n"
 msgstr ""
 
-#: readelf.c:12861
+#: readelf.c:13662
 msgid "Owner"
 msgstr ""
 
-#: readelf.c:12861
+#: readelf.c:13662
 msgid "Data size"
 msgstr ""
 
-#: readelf.c:12899 readelf.c:12912
+#: readelf.c:13679 readelf.c:13700
 #, c-format
-msgid "corrupt note found at offset %lx into core notes\n"
+msgid "Corrupt note: only %d bytes remain, not enough for a full note\n"
 msgstr ""
 
-#: readelf.c:12901 readelf.c:12914
+#: readelf.c:13719
 #, c-format
-msgid " type: %lx, namesize: %08lx, descsize: %08lx\n"
+msgid "note with invalid namesz and/or descsz found at offset 0x%lx\n"
 msgstr ""
 
-#: readelf.c:13010
+#: readelf.c:13721
+#, c-format
+msgid " type: 0x%lx, namesize: 0x%08lx, descsize: 0x%08lx\n"
+msgstr ""
+
+#: readelf.c:13819
 #, c-format
 msgid "No note segments present in the core file.\n"
 msgstr ""
 
-#: readelf.c:13102
+#: readelf.c:13913
 msgid ""
 "This instance of readelf has been built without support for a\n"
 "64 bit data type and so it cannot read 64 bit ELF files.\n"
 msgstr ""
 
-#: readelf.c:13149
+#: readelf.c:13960
 #, c-format
 msgid "%s: Failed to read file header\n"
 msgstr ""
 
-#: readelf.c:13163
+#: readelf.c:13974
 #, c-format
 msgid ""
 "\n"
 "File: %s\n"
 msgstr ""
 
-#: readelf.c:13335
+#: readelf.c:14146
 #, c-format
 msgid "%s: unable to dump the index as none was found\n"
 msgstr ""
 
-#: readelf.c:13341
+#: readelf.c:14152
 #, c-format
 msgid "Index of archive %s: (%ld entries, 0x%lx bytes in the symbol table)\n"
 msgstr ""
 
-#: readelf.c:13359
+#: readelf.c:14170
 #, c-format
-msgid "Binary %s contains:\n"
+msgid "Contents of binary %s at offset "
 msgstr ""
 
-#: readelf.c:13367
+#: readelf.c:14180
 #, c-format
 msgid "%s: end of the symbol table reached before the end of the index\n"
 msgstr ""
 
-#: readelf.c:13378
+#: readelf.c:14194
 #, c-format
 msgid ""
-"%s: symbols remain in the index symbol table, but without corresponding "
-"entries in the index table\n"
+"%s: %ld bytes remain in the symbol table, but without corresponding entries "
+"in the index table\n"
 msgstr ""
 
-#: readelf.c:13383
+#: readelf.c:14199
 #, c-format
 msgid "%s: failed to seek back to start of object files in the archive\n"
 msgstr ""
 
-#: readelf.c:13466 readelf.c:13549
+#: readelf.c:14282 readelf.c:14374
 #, c-format
 msgid "Input file '%s' is not readable.\n"
 msgstr ""
 
-#: readelf.c:13488
+#: readelf.c:14300
+#, c-format
+msgid "%s: contains corrupt thin archive: %s\n"
+msgstr ""
+
+#: readelf.c:14313
 #, c-format
 msgid "%s: failed to seek to archive member.\n"
 msgstr ""
 
-#: readelf.c:13567
+#: readelf.c:14392
 #, c-format
 msgid "File %s is not an archive so its index cannot be displayed.\n"
 msgstr ""
 
-#: rename.c:124
+#: rename.c:122
 #, c-format
 msgid "%s: cannot set time: %s"
 msgstr ""
 
 #. We have to clean up here.
-#: rename.c:159 rename.c:197
+#: rename.c:157 rename.c:195
 #, c-format
 msgid "unable to rename '%s'; reason: %s"
 msgstr ""
 
-#: rename.c:205
+#: rename.c:203
 #, c-format
 msgid "unable to copy file '%s'; reason: %s"
 msgstr ""
@@ -7212,7 +8070,7 @@ msgstr ""
 msgid "group cursor header"
 msgstr ""
 
-#: resbin.c:801 resrc.c:1355
+#: resbin.c:801 resrc.c:1350
 #, c-format
 msgid "unexpected group cursor type %d"
 msgstr ""
@@ -7225,7 +8083,7 @@ msgstr ""
 msgid "group icon header"
 msgstr ""
 
-#: resbin.c:856 resrc.c:1302
+#: resbin.c:856 resrc.c:1297
 #, c-format
 msgid "unexpected group icon type %d"
 msgstr ""
@@ -7234,7 +8092,7 @@ msgstr ""
 msgid "group icon"
 msgstr ""
 
-#: resbin.c:935 resbin.c:1173
+#: resbin.c:935 resbin.c:1169
 msgid "unexpected version string"
 msgstr ""
 
@@ -7276,39 +8134,39 @@ msgstr ""
 msgid "unexpected stringfileinfo value length %ld"
 msgstr ""
 
-#: resbin.c:1059
+#: resbin.c:1056
 msgid "version stringtable"
 msgstr ""
 
-#: resbin.c:1067
+#: resbin.c:1064
 #, c-format
 msgid "unexpected version stringtable value length %ld"
 msgstr ""
 
-#: resbin.c:1084
+#: resbin.c:1081
 msgid "version string"
 msgstr ""
 
-#: resbin.c:1101
+#: resbin.c:1096
 #, c-format
 msgid "unexpected version string length %ld != %ld + %ld"
 msgstr ""
 
-#: resbin.c:1108
+#: resbin.c:1103
 #, c-format
 msgid "unexpected version string length %ld < %ld"
 msgstr ""
 
-#: resbin.c:1133
+#: resbin.c:1129
 #, c-format
 msgid "unexpected varfileinfo value length %ld"
 msgstr ""
 
-#: resbin.c:1152
+#: resbin.c:1148
 msgid "version varfileinfo"
 msgstr ""
 
-#: resbin.c:1167
+#: resbin.c:1163
 #, c-format
 msgid "unexpected version value length %ld"
 msgstr ""
@@ -7383,99 +8241,99 @@ msgstr ""
 msgid "can't get BFD_RELOC_RVA relocation type"
 msgstr ""
 
-#: resrc.c:262 resrc.c:333
+#: resrc.c:257 resrc.c:328
 #, c-format
 msgid "can't open temporary file `%s': %s"
 msgstr ""
 
-#: resrc.c:268
+#: resrc.c:263
 #, c-format
 msgid "can't redirect stdout: `%s': %s"
 msgstr ""
 
-#: resrc.c:329
+#: resrc.c:324
 #, c-format
 msgid "can't execute `%s': %s"
 msgstr ""
 
-#: resrc.c:338
+#: resrc.c:333
 #, c-format
 msgid "Using temporary file `%s' to read preprocessor output\n"
 msgstr ""
 
-#: resrc.c:345
+#: resrc.c:340
 #, c-format
 msgid "can't popen `%s': %s"
 msgstr ""
 
-#: resrc.c:347
+#: resrc.c:342
 #, c-format
 msgid "Using popen to read preprocessor output\n"
 msgstr ""
 
-#: resrc.c:413
+#: resrc.c:408
 #, c-format
 msgid "Tried `%s'\n"
 msgstr ""
 
-#: resrc.c:424
+#: resrc.c:419
 #, c-format
 msgid "Using `%s'\n"
 msgstr ""
 
-#: resrc.c:608
+#: resrc.c:603
 msgid "preprocessing failed."
 msgstr ""
 
-#: resrc.c:639
+#: resrc.c:634
 #, c-format
 msgid "%s: unexpected EOF"
 msgstr ""
 
-#: resrc.c:688
+#: resrc.c:683
 #, c-format
 msgid "%s: read of %lu returned %lu"
 msgstr ""
 
-#: resrc.c:727 resrc.c:1502
+#: resrc.c:722 resrc.c:1497
 #, c-format
 msgid "stat failed on bitmap file `%s': %s"
 msgstr ""
 
-#: resrc.c:778
+#: resrc.c:773
 #, c-format
 msgid "cursor file `%s' does not contain cursor data"
 msgstr ""
 
-#: resrc.c:810 resrc.c:1210
+#: resrc.c:805 resrc.c:1205
 #, c-format
 msgid "%s: fseek to %lu failed: %s"
 msgstr ""
 
-#: resrc.c:936
+#: resrc.c:931
 msgid "help ID requires DIALOGEX"
 msgstr ""
 
-#: resrc.c:938
+#: resrc.c:933
 msgid "control data requires DIALOGEX"
 msgstr ""
 
-#: resrc.c:966
+#: resrc.c:961
 #, c-format
 msgid "stat failed on font file `%s': %s"
 msgstr ""
 
-#: resrc.c:1179
+#: resrc.c:1174
 #, c-format
 msgid "icon file `%s' does not contain icon data"
 msgstr ""
 
-#: resrc.c:1724 resrc.c:1759
+#: resrc.c:1723 resrc.c:1758
 #, c-format
 msgid "stat failed on file `%s': %s"
 msgstr ""
 
-#: resrc.c:1958
+#: resrc.c:1957
 #, c-format
 msgid "can't open `%s' for output: %s"
 msgstr ""
@@ -7517,12 +8375,12 @@ msgstr ""
 msgid "Invalid radix: %s\n"
 msgstr ""
 
-#: srconv.c:1733
+#: srconv.c:1734
 #, c-format
 msgid "Convert a COFF object file into a SYSROFF object file\n"
 msgstr ""
 
-#: srconv.c:1734
+#: srconv.c:1735
 #, c-format
 msgid ""
 " The options are:\n"
@@ -7534,7 +8392,7 @@ msgid ""
 "  -v --version     Print the program's version number\n"
 msgstr ""
 
-#: srconv.c:1880
+#: srconv.c:1881
 #, c-format
 msgid "unable to open output file %s"
 msgstr ""
@@ -7603,91 +8461,91 @@ msgstr ""
 msgid "const/volatile indicator missing"
 msgstr ""
 
-#: stabs.c:2924
+#: stabs.c:2921
 #, c-format
 msgid "No mangling for \"%s\"\n"
 msgstr ""
 
-#: stabs.c:3224
+#: stabs.c:3221
 msgid "Undefined N_EXCL"
 msgstr ""
 
-#: stabs.c:3304
+#: stabs.c:3301
 #, c-format
 msgid "Type file number %d out of range\n"
 msgstr ""
 
-#: stabs.c:3309
+#: stabs.c:3306
 #, c-format
 msgid "Type index number %d out of range\n"
 msgstr ""
 
-#: stabs.c:3388
+#: stabs.c:3385
 #, c-format
 msgid "Unrecognized XCOFF type %d\n"
 msgstr ""
 
-#: stabs.c:3680
+#: stabs.c:3677
 #, c-format
 msgid "bad mangled name `%s'\n"
 msgstr ""
 
-#: stabs.c:3775
+#: stabs.c:3772
 #, c-format
 msgid "no argument types in mangled string\n"
 msgstr ""
 
-#: stabs.c:5125
+#: stabs.c:5122
 #, c-format
 msgid "Demangled name is not a function\n"
 msgstr ""
 
-#: stabs.c:5167
+#: stabs.c:5164
 #, c-format
 msgid "Unexpected type in v3 arglist demangling\n"
 msgstr ""
 
-#: stabs.c:5234
+#: stabs.c:5236
 #, c-format
 msgid "Unrecognized demangle component %d\n"
 msgstr ""
 
-#: stabs.c:5286
+#: stabs.c:5288
 #, c-format
 msgid "Failed to print demangled template\n"
 msgstr ""
 
-#: stabs.c:5366
+#: stabs.c:5368
 #, c-format
 msgid "Couldn't get demangled builtin type\n"
 msgstr ""
 
-#: stabs.c:5415
+#: stabs.c:5417
 #, c-format
 msgid "Unexpected demangled varargs\n"
 msgstr ""
 
-#: stabs.c:5422
+#: stabs.c:5424
 #, c-format
 msgid "Unrecognized demangled builtin type\n"
 msgstr ""
 
-#: strings.c:186 strings.c:245
+#: strings.c:185 strings.c:244
 #, c-format
 msgid "invalid integer argument %s"
 msgstr ""
 
-#: strings.c:248
+#: strings.c:247
 #, c-format
 msgid "invalid minimum string length %d"
 msgstr ""
 
-#: strings.c:651
+#: strings.c:637
 #, c-format
 msgid " Display printable strings in [file(s)] (stdin by default)\n"
 msgstr ""
 
-#: strings.c:652
+#: strings.c:638
 #, c-format
 msgid ""
 " The options are:\n"
@@ -7757,12 +8615,12 @@ msgstr ""
 msgid "cannot open input file %s"
 msgstr ""
 
-#: version.c:36
+#: version.c:37
 #, c-format
-msgid "Copyright 2011 Free Software Foundation, Inc.\n"
+msgid "Copyright 2013 Free Software Foundation, Inc.\n"
 msgstr ""
 
-#: version.c:37
+#: version.c:38
 #, c-format
 msgid ""
 "This program is free software; you may redistribute it under the terms of\n"
@@ -7817,7 +8675,7 @@ msgid ""
 "  -V --version                 Print version information\n"
 msgstr ""
 
-#: windmc.c:261 windres.c:411
+#: windmc.c:261 windres.c:410
 #, c-format
 msgid "%s: warning: "
 msgstr ""
@@ -7850,48 +8708,48 @@ msgstr ""
 msgid "input file does not seems to be UFT16.\n"
 msgstr ""
 
-#: windres.c:216
+#: windres.c:215
 #, c-format
 msgid "can't open %s `%s': %s"
 msgstr ""
 
-#: windres.c:390
+#: windres.c:389
 #, c-format
 msgid ": expected to be a directory\n"
 msgstr ""
 
-#: windres.c:402
+#: windres.c:401
 #, c-format
 msgid ": expected to be a leaf\n"
 msgstr ""
 
-#: windres.c:413
+#: windres.c:412
 #, c-format
 msgid ": duplicate value\n"
 msgstr ""
 
-#: windres.c:563
+#: windres.c:562
 #, c-format
 msgid "unknown format type `%s'"
 msgstr ""
 
-#: windres.c:564
+#: windres.c:563
 #, c-format
 msgid "%s: supported formats:"
 msgstr ""
 
 #. Otherwise, we give up.
-#: windres.c:647
+#: windres.c:646
 #, c-format
 msgid "can not determine type of file `%s'; use the -J option"
 msgstr ""
 
-#: windres.c:659
+#: windres.c:658
 #, c-format
 msgid "Usage: %s [option(s)] [input-file] [output-file]\n"
 msgstr ""
 
-#: windres.c:661
+#: windres.c:660
 #, c-format
 msgid ""
 " The options are:\n"
@@ -7914,12 +8772,12 @@ msgid ""
 "     --no-use-temp-file        Use popen (default)\n"
 msgstr ""
 
-#: windres.c:679
+#: windres.c:678
 #, c-format
 msgid "     --yydebug                 Turn on parser debugging\n"
 msgstr ""
 
-#: windres.c:682
+#: windres.c:681
 #, c-format
 msgid ""
 "  -r                           Ignored for compatibility with rc\n"
@@ -7928,7 +8786,7 @@ msgid ""
 "  -V --version                 Print version information\n"
 msgstr ""
 
-#: windres.c:687
+#: windres.c:686
 #, c-format
 msgid ""
 "FORMAT is one of rc, res, or coff, and is deduced from the file name\n"
@@ -7936,26 +8794,26 @@ msgid ""
 "No input-file is stdin, default rc.  No output-file is stdout, default rc.\n"
 msgstr ""
 
-#: windres.c:850
+#: windres.c:849
 msgid "invalid codepage specified.\n"
 msgstr ""
 
-#: windres.c:865
+#: windres.c:864
 msgid "invalid option -f\n"
 msgstr ""
 
-#: windres.c:870
+#: windres.c:869
 msgid "No filename following the -fo option.\n"
 msgstr ""
 
-#: windres.c:959
+#: windres.c:958
 #, c-format
 msgid ""
 "Option -I is deprecated for setting the input format, please use -J "
 "instead.\n"
 msgstr ""
 
-#: windres.c:1072
+#: windres.c:1071
 msgid "no resources"
 msgstr ""
 

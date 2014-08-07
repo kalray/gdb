@@ -139,8 +139,9 @@ b.target("#{variant}_build") do
       build_host = "--host=k1-linux"
     end
     install_prefix = prefix
-  
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "echo \"PATH: ${PATH}\"; which autoconf;")
+    # --enable-maintainer-mode: Regenerates all files (bfd-in2.h, ... from archures.c)
+    b.run(:cmd => "PATH=${PATH}:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)

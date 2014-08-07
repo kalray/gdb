@@ -2234,6 +2234,15 @@ enum bfd_architecture
 #define bfd_mach_k1io                 1
 #define bfd_mach_k1bdp                2
 #define bfd_mach_k1bio                3
+#define bfd_mach_k1b64dp              4
+#define bfd_mach_k1b64io              5
+  bfd_arch_k1nsim,        /* Kalray k1 native simulation - compilation for i386 */
+#define bfd_mach_k1dp                 0
+#define bfd_mach_k1io                 1
+#define bfd_mach_k1bdp                2
+#define bfd_mach_k1bio                3
+#define bfd_mach_k1b64dp              4
+#define bfd_mach_k1b64io              5
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -5236,6 +5245,37 @@ value in a word.  The relocation is relative offset from  */
 the dynamic object into the runtime process image.  */
   BFD_RELOC_MICROBLAZE_COPY,
 
+/* Unused Reloc  */
+  BFD_RELOC_MICROBLAZE_64_TLS,
+
+/* This is a 64 bit reloc that stores the 32 bit GOT relative value
+of the GOT TLS GD info entry in two words (with an imm instruction). The
+relocation is GOT offset.  */
+  BFD_RELOC_MICROBLAZE_64_TLSGD,
+
+/* This is a 64 bit reloc that stores the 32 bit GOT relative value
+of the GOT TLS LD info entry in two words (with an imm instruction). The
+relocation is GOT offset.  */
+  BFD_RELOC_MICROBLAZE_64_TLSLD,
+
+/* This is a 32 bit reloc that stores the Module ID to GOT(n).  */
+  BFD_RELOC_MICROBLAZE_32_TLSDTPMOD,
+
+/* This is a 32 bit reloc that stores TLS offset to GOT(n+1).  */
+  BFD_RELOC_MICROBLAZE_32_TLSDTPREL,
+
+/* This is a 32 bit reloc for storing TLS offset to two words (uses imm
+instruction)  */
+  BFD_RELOC_MICROBLAZE_64_TLSDTPREL,
+
+/* This is a 64 bit reloc that stores 32-bit thread pointer relative offset
+to two words (uses imm instruction).  */
+  BFD_RELOC_MICROBLAZE_64_TLSGOTTPREL,
+
+/* This is a 64 bit reloc that stores 32-bit thread pointer relative offset
+to two words (uses imm instruction).  */
+  BFD_RELOC_MICROBLAZE_64_TLSTPREL,
+
 /* Relocations for K1 processor  */
   BFD_RELOC_K1_17_PCREL,
   BFD_RELOC_K1_18_PCREL,
@@ -5268,37 +5308,6 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_K1_COPY,
   BFD_RELOC_K1_JMP_SLOT,
   BFD_RELOC_K1_RELATIVE,
-
-/* Unused Reloc  */
-  BFD_RELOC_MICROBLAZE_64_TLS,
-
-/* This is a 64 bit reloc that stores the 32 bit GOT relative value
-of the GOT TLS GD info entry in two words (with an imm instruction). The
-relocation is GOT offset.  */
-  BFD_RELOC_MICROBLAZE_64_TLSGD,
-
-/* This is a 64 bit reloc that stores the 32 bit GOT relative value
-of the GOT TLS LD info entry in two words (with an imm instruction). The
-relocation is GOT offset.  */
-  BFD_RELOC_MICROBLAZE_64_TLSLD,
-
-/* This is a 32 bit reloc that stores the Module ID to GOT(n).  */
-  BFD_RELOC_MICROBLAZE_32_TLSDTPMOD,
-
-/* This is a 32 bit reloc that stores TLS offset to GOT(n+1).  */
-  BFD_RELOC_MICROBLAZE_32_TLSDTPREL,
-
-/* This is a 32 bit reloc for storing TLS offset to two words (uses imm
-instruction)  */
-  BFD_RELOC_MICROBLAZE_64_TLSDTPREL,
-
-/* This is a 64 bit reloc that stores 32-bit thread pointer relative offset
-to two words (uses imm instruction).  */
-  BFD_RELOC_MICROBLAZE_64_TLSGOTTPREL,
-
-/* This is a 64 bit reloc that stores 32-bit thread pointer relative offset
-to two words (uses imm instruction).  */
-  BFD_RELOC_MICROBLAZE_64_TLSTPREL,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is
