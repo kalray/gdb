@@ -1150,10 +1150,10 @@ static void k1_look_for_insns (void)
         k1opc_t *op;
         
         switch (i) {
-        case K1_K1DP: op = k1dp_k1optab; break;
-        case K1_K1IO: op = k1io_k1optab; break;
-        case K1_K1BDP: op = k1bdp_k1optab; break;
-        case K1_K1BIO: op = k1bio_k1optab; break;
+        case K1_K1DP: op = k1a_k1optab; break;
+        case K1_K1IO: op = k1a_k1optab; break;
+        case K1_K1BDP: op = k1b_k1optab; break;
+        case K1_K1BIO: op = k1b_k1optab; break;
         default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
         }
         
