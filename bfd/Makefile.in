@@ -708,6 +708,7 @@ BFD32_BACKENDS = \
 	elflink.lo \
 	elfxx-sparc.lo \
 	elfxx-tilegx.lo \
+	elfxx-k1.lo \
 	epoc-pe-arm.lo \
 	epoc-pei-arm.lo \
 	hp300bsd.lo \
@@ -854,6 +855,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-i960.c \
 	elf32-ip2k.c \
 	elf32-iq2000.c \
+	elf32-k1.c \
 	elf32-lm32.c \
 	elf32-m32c.c \
 	elf32-m32r.c \
@@ -894,6 +896,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-xtensa.c \
 	elf32.c \
 	elflink.c \
+	elfxx-k1.c \
 	elfxx-sparc.c \
 	elfxx-tilegx.c \
 	epoc-pe-arm.c \
@@ -989,6 +992,7 @@ BFD64_BACKENDS = \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
 	elf64-ia64-vms.lo \
+	elf64-k1.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \

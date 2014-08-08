@@ -789,10 +789,10 @@ case "${targ}" in
     targ_defvec=bfd_elf32_k1_linux_vec
     targ_selvecs=bfd_elf32_k1_vec
     ;;
-
   k1-*-*)
     targ_defvec=bfd_elf32_k1_vec
-    targ_selvecs=bfd_elf32_k1_linux_vec
+    targ_selvecs=bfd_elf32_k1_linux_vec bfd_elf32_k1_vec
+    targ64_selvecs=bfd_elf64_k1_vec
     ;;
 
   k1nsim-*-*)
