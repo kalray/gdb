@@ -2,6 +2,7 @@
 
 $LOAD_PATH.push('metabuild/lib')
 require 'metabuild'
+require 'copyrightCheck'
 include Metabuild
 
 options = Options.new({ "target"        => ["k1", "k1nsim"],
@@ -33,10 +34,11 @@ build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [
 install = Target.new("#{variant}_install", repo, [build_valid], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build], [])
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
+copyright_check = Target.new("copyright_check", repo, [], [])
 
 install.write_prefix()
 
-b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid])
+b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, copyright_check])
 
 arch = options["target"]
 b.logsession = arch
@@ -247,6 +249,10 @@ b.target("gdb_long_valid") do
     b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH LD_LIBRARY_PATH=#{options["toolroot"]}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
+end
+
+b.target("copyright_check") do
+    #do nothing here
 end
 
 b.launch
