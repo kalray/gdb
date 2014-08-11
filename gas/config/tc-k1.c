@@ -46,6 +46,8 @@
 #include "dw2gencfi.h"
 #endif
 
+#define D(args...) do { if(debug) fprintf(args); }while(0)
+
 static void supported_cores(char buf[], size_t buflen);
 
 #define O_pseudo_fixup (O_max + 1)
@@ -788,7 +790,8 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     char *old_input_line_pointer;
     int saw_comma = 0, saw_arg = 0;
     int tokcnt = 0;
-
+    int debug = 0;
+    
     memset(tok, 0, sizeof (*tok) * ntok);
 
     /* Save and restore input_line_pointer around this function */
@@ -829,7 +832,7 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
 		break;
 	      }
 	      else {
-		fprintf(stderr, "tok type == %d\n", tok->X_op);
+		D(stderr, "tok type == %d\n", tok->X_op);
 		as_warn("expected a register");
 		break;
 	      }
@@ -1793,7 +1796,7 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 // Tag EXU on IMMX
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-                    if(debug) fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
                 }
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
@@ -1827,7 +1830,7 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-                if(debug) fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
             }
         }
     }
@@ -1891,13 +1894,71 @@ static int is_mono_double(const k1insn_t *insn) {
 	  reservation == Reservation_k1_ALUD_TINY_X);
 }
 
+
+static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
+			       int num_MAU, int num_LSU,
+			       int total_TINY, int total_MONODOUBLE) {
+  int mono_double = is_mono_double(insn);
+  int debug = 0;
+  
+  /* How to fill ALU0/ALU1:
+     ALU0  | ALU1 | MAU | LSU
+     ========================
+      T0   |
+      T0   | T1   |
+      ALU0 | T0   | MD0
+      T0   | T1   | MD0 |
+      T0   | T1   | MD0 | MD1
+      T0   | T1   | MD0 | MD1
+      MD0  | MD0  |
+      MD0  | MD0  | T0  |      -> Need always 3 Tiny slots (if T0 goes on ALU0, MD0 cannot use ALU1)
+      ...
+   */
+
+  D(stderr,"%s:%d OP %s\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+
+  /* First 2 lines: no mono double always say yes! */
+  if(total_MONODOUBLE == 0) {
+    D(stderr,"%s:%d OP %s no mono double -> say yes\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 1;
+  }
+
+  /* There is some mono double.*/
+
+  /* If ALU0 is already taken, mono double cannot go to ALU1 ! */
+  if(mono_double && num_ALU > 0) {
+    D(stderr,"%s:%d OP %s is mono double and ALU0 taken -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  if(total_TINY < 2) {
+    if(mono_double) {
+      /* Less than 2 TINY: put one mono double on ALU0/ALU1 */
+      D(stderr,"%s:%d OP %s is mono double and there is less than 2 TINY -> say yes\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+      return 1;
+    }
+    /* Put this TINY on MAU/LSU. */
+    D(stderr,"%s:%d OP %s is not mono double and there is less than 2 TINY -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  /* More than 2 TINY: put mono double on MAU/LSU */
+  if(mono_double) {
+    D(stderr,"%s:%d OP %s is mono double and there is more than 2 TINY wait for tiny -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  D(stderr,"%s:%d OP %s is not mono double and there is more than 2 TINY -> say yes\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+  return 1;
+}
+
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
 k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 
 #if 0
   int error = find_bundle_type(bundle_insn, bundle_insncnt_p);
-  fprintf(stderr,"Error: %d\n",error);
+  D(stderr,"Error: %d\n",error);
 
   as_fatal("Test");
 #else
@@ -1909,6 +1970,12 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   int num_MAU = 0;
   int num_LSU = 0;
   int num_TINY = 0;
+
+  /* Number of true TINYs (no mono double) */
+  int total_TINY = 0;
+
+  int total_MONODOUBLE = 0;
+
   int tag = 0;
   int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
   int bundle_type;
@@ -1937,7 +2004,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     bundle_type = priority[i];
     for(j=0; j < bundle_insncnt; j++){
       if(k1b_is_equivalent_bundle(bundle_type, bundle_insn[j]) ){
-	if(debug) fprintf(stderr,"%s:%d \tBundle_type: %s\n",__FUNCTION__,__LINE__,bundling_names(bundle_type));
+	D(stderr,"%s:%d \tBundle_type: %s\n",__FUNCTION__,__LINE__,bundling_names(bundle_type));
 	switch(bundle_type){
 	case Bundling_k1_ALU:
 	case Bundling_k1_ALU_X:
@@ -1996,10 +2063,21 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	// Tag EXU on IMMX
 	if(bundle_insn[j]->immx != NOIMMX){
 	  immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-	  if(debug) fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+	  D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
 	}
 	if(bundle_insn[j]->immx64 != NOIMMX){
 	  immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
+	}
+      }
+
+      // [JV] Counter total number of TINYs. It includes mono double!
+      // It is used to decide where to insert mono double: On ALU0 + ALU1 or MAU/LSU.
+      if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X) {
+	if(is_mono_double(bundle_insn[j]) ) {
+	  total_MONODOUBLE++;
+	}
+	else {
+	  total_TINY++;
 	}
       }
     }
@@ -2008,20 +2086,19 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   // Now handle the "TINY" problem : quite easy : put them in ALUs, or append at the end !
   num_TINY = 0;
   for(j=0; j < bundle_insncnt; j++){
-    if(debug) fprintf(stderr,"%s:%d \tBundling: %s\n", __FUNCTION__, __LINE__, bundling_names(find_bundling(bundle_insn[j])));
+    D(stderr,"%s:%d \tBundling: %s\n", __FUNCTION__, __LINE__, bundling_names(find_bundling(bundle_insn[j])));
       
     if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
-      if(num_ALU < 2 &&
-	 // If ALU0 is already taken, LITE cannot go to ALU1 !
-	 ! (num_ALU > 0 && is_mono_double(bundle_insn[j])) ) {
+      if(num_ALU < 2 && can_go_on_ALU0_ALU1(bundle_insn[j],num_ALU,num_MAU,num_LSU,total_TINY,total_MONODOUBLE) ) {
+
 	shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
 	tag = Modifier_k1_exunum_ALU0 + num_ALU;
-	if(debug) fprintf(stderr,"%s:%d \tALU0: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_ALU0);
+	D(stderr,"%s:%d \tALU0: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_ALU0);
 	num_ALU++;
 
 	// ALUD_LITE reserve ALU0 and ALU1
 	if(is_mono_double(bundle_insn[j])) {
-	  if(debug) fprintf(stderr,"%s:%d \tALU1: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_ALU0);
+	  D(stderr,"%s:%d \tALU1: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_ALU0);
 	  num_ALU++;
 	}
       } else {
@@ -2031,11 +2108,11 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	shadow_bundle[5 + num_TINY] = bundle_insn[j];
 	if(num_MAU == 0){
 	  tag = Modifier_k1_exunum_MAU;
-	  if(debug) fprintf(stderr,"%s:%d \tMAU: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_MAU);
+	  D(stderr,"%s:%d \tMAU: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_MAU);
 	  num_MAU++;
 	} else {
 	  tag = Modifier_k1_exunum_LSU;
-	  if(debug) fprintf(stderr,"%s:%d \tLSU: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_LSU);
+	  D(stderr,"%s:%d \tLSU: Tag: 0x%x, Modifier: 0x%x\n", __FUNCTION__, __LINE__, tag, Modifier_k1_exunum_LSU);
 	  num_LSU++;
 	}
 	num_TINY++;
@@ -2043,7 +2120,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
       // Tag EXU on IMMX
       if(bundle_insn[j]->immx != NOIMMX){
 	immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-	if(debug) fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+	D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
       }
     }
   }
