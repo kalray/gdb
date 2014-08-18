@@ -614,6 +614,9 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_MCORE:
     mcore = strdup(arg);
     i = 0;
+    if (!strncasecmp(mcore, "k1b64", 5)){
+      k1_arch_size = 64;
+    }
     while(i < K1_NCORES && ! find_core) {
       subcore_id = 0;
       while(k1_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
@@ -663,13 +666,13 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_NOPIC:
     k1_pic_flags &= ~(ELF_K1_FDPIC);
     break;
-    case OPTION_32:
-      k1_arch_size = 32;
-      break;
+  case OPTION_32:
+    k1_arch_size = 32;
+    break;
 
-    case OPTION_64:
-      k1_arch_size = 64;
-      break;
+  case OPTION_64:
+    k1_arch_size = 64;
+    break;
   default:
     return 0;
   }
@@ -2319,7 +2322,9 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1a_core_info;
-      bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp)){
+	as_warn(_("could not set architecture and machine"));
+      }
   }
 
   if(!k1_registers) {
@@ -2332,27 +2337,33 @@ k1_set_cpu(void) {
 
   switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_B_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1b_reorder_bundle;
     break;
   case ELF_K1_CORE_B_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1b_reorder_bundle;
     break;
   case ELF_K1_CORE_B64_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1b64dp);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1b64dp))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1b_reorder_bundle;
     break;
   case ELF_K1_CORE_B64_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1b64io);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1b64io))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1b_reorder_bundle;
     break;
   default:

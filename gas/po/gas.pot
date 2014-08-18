@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2014-08-07 16:54+0200\n"
+"POT-Creation-Date: 2014-08-18 11:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -928,7 +928,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1883 config/tc-k1.c:3533
+#: config/obj-elf.c:1883 config/tc-k1.c:3644
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -2372,9 +2372,11 @@ msgstr ""
 #: config/tc-h8300.c:104 config/tc-h8300.c:114 config/tc-h8300.c:125
 #: config/tc-h8300.c:242 config/tc-hppa.c:6898 config/tc-hppa.c:6904
 #: config/tc-hppa.c:6910 config/tc-hppa.c:6916 config/tc-hppa.c:8323
-#: config/tc-lm32.c:197 config/tc-mips.c:3335 config/tc-mn10300.c:939
-#: config/tc-mn10300.c:944 config/tc-mn10300.c:2441 config/tc-xc16x.c:79
-#: config/tc-xc16x.c:86 config/tc-xc16x.c:93
+#: config/tc-k1.c:2326 config/tc-k1.c:2341 config/tc-k1.c:2346
+#: config/tc-k1.c:2351 config/tc-k1.c:2356 config/tc-k1.c:2361
+#: config/tc-k1.c:2366 config/tc-lm32.c:197 config/tc-mips.c:3335
+#: config/tc-mn10300.c:939 config/tc-mn10300.c:944 config/tc-mn10300.c:2441
+#: config/tc-xc16x.c:79 config/tc-xc16x.c:86 config/tc-xc16x.c:93
 msgid "could not set architecture and machine"
 msgstr ""
 
@@ -4625,7 +4627,7 @@ msgid "illegal %srelocation size: %d"
 msgstr ""
 
 #: config/tc-bfin.c:96 config/tc-frv.c:1605 config/tc-frv.c:1615
-#: config/tc-k1.c:3061
+#: config/tc-k1.c:3172
 msgid "missing ')'"
 msgstr ""
 
@@ -8672,11 +8674,11 @@ msgid "missing `.end'"
 msgstr ""
 
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:2864
+#: config/tc-k1.c:2975
 msgid "floating-point literals are not supported"
 msgstr ""
 
-#: config/tc-k1.c:3348
+#: config/tc-k1.c:3459
 msgid "alignments greater than 32 bytes not supported in .text sections."
 msgstr ""
 

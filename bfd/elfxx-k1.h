@@ -1,7 +1,5 @@
-
 #include "elf/common.h"
 #include "elf/internal.h"
-
 
 #if 0
 #define DPRINT(X) fprintf(stderr, "==> " X "\n")
@@ -9,13 +7,41 @@
 #define DPRINT(X)
 #endif
 
-
-
 /* The name of the dynamic interpreter.  This is put in the .interp
    section.  */
 #define ELF_DYNAMIC_INTERPRETER "/lib/ld.so"
 
 #define K1_MACH_MASK 0x0000000f
+
+/* The same in PIC */
+#define PLT_ENTRY_SIZE          16
+#define PLT_SMALL_ENTRY_SIZE     16
+
+#ifdef BFD64
+#define ELF_R_SYM(bfd, i)					\
+  (ABI_64_P (bfd) ? ELF64_R_SYM (i) : ELF32_R_SYM (i))
+#define ELF_R_TYPE(bfd, i)					\
+  (ABI_64_P (bfd) ? ELF64_R_TYPE (i) : ELF32_R_TYPE (i))
+#define ELF_R_INFO(bfd, s, t)					\
+  (ABI_64_P (bfd) ? ELF64_R_INFO (s, t) : ELF32_R_INFO (s, t))
+#else
+#define ELF_R_SYM(bfd, i)					\
+  (ELF32_R_SYM (i))
+#define ELF_R_TYPE(bfd, i)					\
+  (ELF32_R_TYPE (i))
+#define ELF_R_INFO(bfd, s, t)					\
+  (ELF32_R_INFO (s, t))
+#endif
+
+bfd_boolean k1_merge_private_bfd_data (bfd *ibfd, bfd *obfd);
+
+bfd_boolean k1_adjust_dynamic_symbol (struct bfd_link_info *info,
+				      struct elf_link_hash_entry *h);
+
+bfd_boolean k1_gc_sweep_hook (bfd * abfd,
+			      struct bfd_link_info *info,
+			      asection * sec,
+			      const Elf_Internal_Rela * relocs);
 
 
 int
@@ -32,6 +58,19 @@ elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym);
 
 extern struct bfd_link_hash_table *
 k1_elf_link_hash_table_create (bfd *abfd);
+
+bfd_boolean
+k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat);
+
+bfd_boolean
+k1_size_dynamic_sections (bfd * output_bfd,
+			  struct bfd_link_info *info);
+
+bfd_boolean
+k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info);
+
+extern const bfd_target bfd_elf32_k1_linux_vec;
+#define IS_FDPIC(bfd) ((bfd)->xvec == &bfd_elf32_k1_linux_vec)
 
 bfd_boolean
 k1_elf_relocate_section
@@ -300,6 +339,8 @@ struct k1_elf_link_hash_table
   /* Summary reloc information collected by
      _k1fdpic_count_got_plt_entries.  */
   struct _k1fdpic_dynamic_got_info *g;
+
+  int bytes_per_rela;
 };
 
 /* Get the ELF linker hash table from a link_info structure.  */
@@ -307,6 +348,10 @@ struct k1_elf_link_hash_table
 #define k1_elf_hash_table(p)                          \
   (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
   == K1_ELF_DATA ? ((struct k1_elf_link_hash_table *) ((p)->hash)) : NULL)
+
+/* The size of an external RELA relocation.  */
+#define k1_elf_rela_bytes(htab) \
+  ((htab)->bytes_per_rela)
 
 #define k1fdpic_relocs_info(info) \
   (k1_elf_hash_table (info)->relocs_info)
@@ -488,3 +533,40 @@ struct k1_reloc_map
 
 extern const struct k1_reloc_map k1_reloc_map[];
 extern const int k1_reloc_map_len;
+
+
+#define K1_RELOC_NAME_LOOKUP_DEF(size) \
+static reloc_howto_type* k1_elf ## size ## _reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name){ \
+  unsigned int i; \
+  for (i = 0; i < k1_reloc_map_len; i++){ \
+    if (elf ## size ## _k1_howto_table[i].name != NULL \
+        && strcasecmp (elf ## size ## _k1_howto_table[i].name, r_name) == 0){ \
+      return &elf ## size ## _k1_howto_table[i]; \
+    } \
+  } \
+  return NULL; \
+}
+
+#define K1_RELOC_TYPE_LOOKUP_DEF(size) \
+  static reloc_howto_type* k1_elf ## size ##_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED, \
+                 bfd_reloc_code_real_type code){ \
+  unsigned int i; \
+  for (i = 0; i < k1_reloc_map_len; i++){ \
+    if (k1_reloc_map[i].bfd_reloc_val == code){ \
+      return & elf ## size ##_k1_howto_table[k1_reloc_map[i].k1_reloc_val]; \
+    } \
+  } \
+  return NULL; \
+}
+
+#define K1_INFO_TO_HOWTO_DEF(size) \
+static void k1_elf ## size ## _info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, \
+                                  arelent *cache_ptr,  \
+                                  Elf_Internal_Rela *dst){ \
+  unsigned int r; \
+  r = ELF## size ##_R_TYPE (dst->r_info); \
+  BFD_ASSERT (r < (unsigned int) R_K1_max); \
+  cache_ptr->howto = &elf ## size ##_k1_howto_table[r]; \
+}
+
+bfd_vma k1_gp_base (bfd *output_bfd, struct bfd_link_info *info);
