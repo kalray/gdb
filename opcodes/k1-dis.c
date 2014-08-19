@@ -733,6 +733,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1_signed27:
                   case Immediate_k1_signed32:
                   case Immediate_k1_signed32M:
+                  case Immediate_k1_signed37:
+                  case Immediate_k1_signed43:
                   case Immediate_k1_unsigned5:
                   case Immediate_k1_unsigned6:
                   case Immediate_k1_unsigned32:
@@ -754,8 +756,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                           }
                       }
                       break;
-                  case Immediate_k1_pcrel18:
                   case Immediate_k1_pcrel17:
+                  case Immediate_k1_pcrel18:
                   case Immediate_k1_pcrel27:
                       (*info->print_address_func)((value << rightshift) + memaddr, info);
                       break;

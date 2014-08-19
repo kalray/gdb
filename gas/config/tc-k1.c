@@ -938,6 +938,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
+            case Immediate_k1_signed37:
+            case Immediate_k1_signed43:
                 if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
                     break;
                 }
