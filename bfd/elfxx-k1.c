@@ -1381,6 +1381,13 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
   case bfd_mach_k1bio:
 	fprintf (f, "\nMachine     = k1bio\n");
 	break;
+  case bfd_mach_k1b64dp:
+	fprintf (f, "\nMachine     = k1b64dp\n");
+	break;
+  case bfd_mach_k1b64io:
+	fprintf (f, "\nMachine     = k1b64io\n");
+	break;
+
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
   }
@@ -1412,6 +1419,8 @@ elf_k1_final_write_processing (bfd *abfd,
     case bfd_mach_k1io:
     case bfd_mach_k1bdp:
     case bfd_mach_k1bio:
+    case bfd_mach_k1b64dp:
+    case bfd_mach_k1b64io:
       val = mach;
       break;
     default:
@@ -1434,6 +1443,8 @@ elf_k1_object_p (bfd *abfd)
     case bfd_mach_k1io:
     case bfd_mach_k1bdp:
     case bfd_mach_k1bio:
+    case bfd_mach_k1b64dp:
+    case bfd_mach_k1b64io:
       break;
     default:
       return FALSE;

@@ -572,6 +572,21 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
+    case bfd_mach_k1b64dp:
+      opc_table = k1b64_k1optab;
+      k1_regfiles = k1_k1b64_regfiles;
+      k1_registers = k1_k1b64_registers;
+      k1_dec_registers = k1_k1b64_dec_registers;
+      reassemble_bundle = k1b_reassemble_bundle;
+      break;
+    case bfd_mach_k1b64io:
+      opc_table = k1b64_k1optab;
+      k1_regfiles = k1_k1b64_regfiles;
+      k1_registers = k1_k1b64_registers;
+      k1_dec_registers = k1_k1b64_dec_registers;
+      reassemble_bundle = k1b_reassemble_bundle;
+      break;
+
     default:
       /* Core not supported */
       (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
@@ -714,8 +729,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1_pairedReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
-			  SRF_REGCLASSES(k1)
-				SRF_REGCLASSES(k1b)
+		        SRF_REGCLASSES(k1)
+			SRF_REGCLASSES(k1b)
+			SRF_REGCLASSES(k1b64)
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:
