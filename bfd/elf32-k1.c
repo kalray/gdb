@@ -12,7 +12,7 @@ static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
 #define K1A_K1B
 #include "elf32-k1.def"
-#undef K1A_KB
+#undef K1A_K1B
 
 #define DEFAULT_STACK_SIZE 0x20000
 
