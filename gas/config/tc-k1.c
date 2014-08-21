@@ -64,7 +64,7 @@ int size_type_function = 1;
 static int nop_insertion_allowed = 1;
 /* Resource usage checking is disabled by default, because it
  * can produce false positives. */
-static int check_resource_usage = 0;
+static int check_resource_usage = 1;
 /* Generate illegal code : only use for debugging !*/
 static int generate_illegal_code = 0;
 /* Dump asm tables : for debugging */
@@ -1983,7 +1983,7 @@ static char *k1b_insn_slot_type(const k1insn_t *insn) {
   return slot_type;
 }
 
-static int can_go_on_MAU(const k1insn_t *insn, int total_single_LITE, int total_LITE_MONODOUBLE) {
+static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_LSU, int total_single_LITE, int total_LITE_MONODOUBLE) {
 
   /* We have to decide for LITE instruction. It should be placed on MAU before LSU because 
      LSU cannot execute LITE. */
@@ -1991,10 +1991,12 @@ static int can_go_on_MAU(const k1insn_t *insn, int total_single_LITE, int total_
   int mono_double = is_mono_double(insn);
   int debug = 0;
   
-  D(stderr,"%s:%d OP %s (%s)\n",__FUNCTION__,__LINE__,insn->opdef->as_op,k1_type_name(insn));
+  D(stderr,"%s:%d OP %s (%s), num_ALU = %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,k1_type_name(insn), num_ALU);
   
-  if((insn->type == K1_TINY || insn->type == K1_TMD) && (total_single_LITE + total_LITE_MONODOUBLE) > 0) {
-    D(stderr,"%s:%d OP %s: is TINY and need LITE slot -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+  if((insn->type == K1_TINY || insn->type == K1_TMD) &&
+     (total_single_LITE + total_LITE_MONODOUBLE) > 0 &&
+     (k1b_resources[Resource_k1_LSU] - num_LSU) > 0) {
+    D(stderr,"%s:%d OP %s: is TINY and need LITE slot if LSU slot is available -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
     return 0;
   }
 
@@ -2063,30 +2065,48 @@ static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
     return 0;
   }
 
+
+  k1b_free_resources[Resource_k1_TINY] = k1b_resources[Resource_k1_TINY] - (num_ALU + num_MAU + num_LSU);
+  k1b_free_resources[Resource_k1_LITE] = k1b_resources[Resource_k1_LITE] - (num_ALU + num_MAU);
+
   /* Constraint 4: If there is 2 free ALU slots and at least 1 mono double and
      1 single TINY or LITE and
-     current instruction is this single:
+     there is room for LITE if current instruction is a LITE:
      -> mono double can go on ALU0/ALU1 */
 
   if(!mono_double &&
      k1b_free_resources[Resource_k1_ALU] == 2 &&
      (total_LITE_MONODOUBLE + total_TINY_MONODOUBLE) >= 1 &&
-     (total_single_TINY + total_single_LITE) == 1) {
+     (total_single_TINY + total_single_LITE) == 1 &&
+     /* Special case where MAU and so LITE is taken */
+     ! (insn->type == K1_LITE && k1b_free_resources[Resource_k1_LITE] == 2 && total_TINY_MONODOUBLE > 0)) {
     D(stderr,"%s:%d OP %s is a TINY or LITE and there is at least one mono double to schedule and there is 2 free ALU slots -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
     return 0;
   }
 
-  k1b_free_resources[Resource_k1_TINY] = k1b_resources[Resource_k1_TINY] - (num_ALU + num_MAU + num_LSU);
-  k1b_free_resources[Resource_k1_LITE] = k1b_resources[Resource_k1_LITE] - (num_ALU + num_MAU);
-
   /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
   needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
-  if(total_LITE_MONODOUBLE >= 1) {
-    if((total_single_LITE + total_single_TINY) == 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
+  if((total_LITE_MONODOUBLE + total_single_LITE) >= 1) {
+
+    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
+
+    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
       /* LITE MONO DOUBLE may go on ALU0/ALU1 */
       needed_LITE++;
     }
+
+    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
+      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
+
+    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
+      needed_LITE++;
+    }
   }
+
+  D(stderr,"%s:%d OP %s needed_LITE: %d, free LITE: %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,needed_LITE, k1b_free_resources[Resource_k1_LITE]);
 
   /* Constraint 5: TINY (Single or Mono double) should be placed on LSU if all LITE slots are taken. */
   if((insn->type == K1_TINY || insn->type == K1_TMD) && ((k1b_free_resources[Resource_k1_LITE] - needed_LITE) <= 0)) {
@@ -2318,7 +2338,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  }
 	}
       } else {
-	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j],total_single_LITE, total_LITE_MONODOUBLE)){
+	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_LSU,total_single_LITE, total_LITE_MONODOUBLE)){
 	  // 5 is reserved for MAU. LSU and all others goes after.
 	  shadow_bundle[5] = bundle_insn[j];
 	  tag = Modifier_k1_exunum_MAU;
@@ -2380,10 +2400,11 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     as_fatal(_("total_single_LITE should be equal to zero, is equal to %d"),total_single_LITE);
   }
 
-  if(! check_resource_usage) {
+  /* Doing some checks on TINY/LITE (always enabled) */
+  {
     if(num_TINY > k1_core_info->resources[Resource_k1_TINY]) {
       char string_buffer[1024];
-
+      
       bundle_resources(string_buffer,1024,Resource_k1_TINY,shadow_bundle,shadow_bundle_size);
       as_fatal(_("Too many TINY ops (used %d, available: %d):\n%s"),
 	       num_TINY,
@@ -2393,7 +2414,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     
     if(num_LITE > k1_core_info->resources[Resource_k1_LITE]) {
       char string_buffer[1024];
-
+      
       bundle_resources(string_buffer,1024,Resource_k1_LITE,shadow_bundle,shadow_bundle_size);
       as_fatal(_("Too many LITE ops (used %d, available: %d):\n%s"),
 	       num_LITE,
@@ -2401,7 +2422,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	       string_buffer);
     }
   }
-
+  
   D(stderr,"\nFinal bundle:\n");
   j = 0;
   for(i=0; i < 7; i++){
@@ -2414,7 +2435,12 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	bundling_names(find_bundling(bundle_insn[j])), slot_type);
 
       if(bundle_insn[j]->slots == K1_LSU && (bundle_insn[j]->type == K1_LITE || bundle_insn[j]->type == K1_LMD)) {
-	as_fatal(_("LITE instruction '%s' on LSU slot."),bundle_insn[j]->opdef->as_op);
+	char string_buffer[1024];
+      
+	bundle_resources(string_buffer,1024,Resource_k1_LITE,shadow_bundle,shadow_bundle_size);
+	as_fatal(_("LITE instruction '%s' on LSU slot:\n%s\n"),
+		 bundle_insn[j]->opdef->as_op,
+		 string_buffer);
       }
       
       j++;
