@@ -968,6 +968,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_unsigned32:
             case Immediate_k1_unsigned32L:
             case Immediate_k1_signed32M:
+            case Immediate_k1_signed37:
+
                 if(tok[i].X_op == O_symbol) {
 		  return MATCH_NOT_FOUND;
                 }
