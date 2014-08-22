@@ -11207,7 +11207,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11204 "configure"
+#line 11210 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11313,7 +11313,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11310 "configure"
+#line 11316 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11945,7 +11945,6 @@ for this_target in $target $canon_targets ; do
 
     targ=${this_target}
     . ${srcdir}/configure.tgt
-#AC_MSG_ERROR(BEGIN: obj_format=${obj_format} - fmt=${fmt} - ${cpu_type}-${vendor}-${os})
 
     case ${target_cpu} in
       crisv32)

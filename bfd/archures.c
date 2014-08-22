@@ -477,11 +477,6 @@ DESCRIPTION
 .#define bfd_mach_k1io                 1
 .#define bfd_mach_k1bdp                2
 .#define bfd_mach_k1bio                3
-.  bfd_arch_k1nsim,        {* Kalray k1 native simulation - compilation for i386 *}
-.#define bfd_mach_k1dp                 0
-.#define bfd_mach_k1io                 1
-.#define bfd_mach_k1bdp                2
-.#define bfd_mach_k1bio                3
 .  bfd_arch_tilepro,   {* Tilera TILEPro *}
 .  bfd_arch_tilegx, {* Tilera TILE-Gx *}
 .#define bfd_mach_tilepro   1
@@ -654,7 +649,6 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_ip2k_arch,
     &bfd_iq2000_arch,
     &bfd_k1_arch,
-    &bfd_k1nsim_arch,
     &bfd_k1om_arch,
     &bfd_l1om_arch,
     &bfd_lm32_arch,
