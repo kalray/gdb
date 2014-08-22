@@ -390,7 +390,7 @@ const pseudo_typeS md_pseudo_table[] =
      {"p2alignw", k1_align_ptwo, -2},
      {"p2alignl", k1_align_ptwo, -4},
 #ifdef OBJ_ELF
-     { "file", (void (*) PARAMS((int))) dwarf2_directive_file, 0},
+     { "file", (void (*) (int)) dwarf2_directive_file, 0},
      { "loc", dwarf2_directive_loc, 0},
 #endif
      {NULL, 0, 0}
@@ -1010,14 +1010,11 @@ insert_operand(k1insn_t * insn,
         const expressionS * arg)
  {
     unsigned int op = 0;
-    //    long long max;
-    //    long long min;
+    /* long long max = (1LL << (opdef->width - 1)) - 1; */
+    /* long long min = (-1LL << (opdef->width - 1)); */
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
-
-    //    max = (1LL << (opdef->width - 1)) - 1;
-    //    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
         return;			/* syntactic sugar ? */
@@ -1261,12 +1258,11 @@ emit_insn(k1insn_t * insn, int stopflag){
 
     for (i = 0; i < insn->nfixups; i++) {
       int size, pcrel;
-      fixS *fixP;
       reloc_howto_type *reloc_howto = bfd_reloc_type_lookup(stdoutput, insn->fixup[i].reloc);
       assert(reloc_howto);
       size = bfd_get_reloc_size(reloc_howto);
       pcrel = reloc_howto->pc_relative;
-      fixP = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where, size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+      fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where, size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
     }
 }
 
@@ -1825,7 +1821,6 @@ md_assemble(char *s)
     expressionS tok[K1MAXOPERANDS];
     char *tok_begins[2*K1MAXOPERANDS];
     int ntok;
-    int start_bundle;
 
     if (get_byte_counter(now_seg) & 3)
         as_fatal("code segment not word aligned in md_assemble\n");
@@ -1857,12 +1852,8 @@ md_assemble(char *s)
             int bundle_insn_cnt = 0;
             int syllables = 0;
             int entry;
-            int bundle_err_done = 0;
             int align_warn_done = 0; /* Alignment contraint warning already
              * raised for this bundle or not */
-
-            /* retain bundle start adress for error messages */
-            start_bundle = get_byte_counter(now_seg);
 
 #ifdef OBJ_ELF
             /* Emit Dwarf debug line information */
@@ -1907,7 +1898,6 @@ md_assemble(char *s)
                     for (j = 0; j < k1_resource_max; j++)
                         if (resources_used[(i * k1_resource_max) + j] > resources[j]) {
                             as_bad("Resource %s over-used in bundle: %d used, %d available", k1_resource_names[j], resources_used[(i * k1_resource_max) + j], resources[j]);
-                            bundle_err_done = TRUE;
                         }
                 }
             }
@@ -2432,10 +2422,8 @@ k1_validate_sub_fix(fixS *fixP)
 /* This is called whenever some data item (not an instruction) needs a
  * fixup.  */
 void
-k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp)
+k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_code_real_type code)
  {
-    bfd_reloc_code_real_type code;
-
     if (exp->X_op == O_pseudo_fixup)
  {
         exp->X_op = O_symbol;
@@ -2850,10 +2838,8 @@ k1_pic_ptr (int nbytes)
 static void
 k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
  {
-    char* param;
     const char *target_name = k1_core_info->names[subcore_id];
 
-    param=input_line_pointer;
     while ( (input_line_pointer!=NULL)
             && ! is_end_of_line [(unsigned char) *input_line_pointer])
  {
