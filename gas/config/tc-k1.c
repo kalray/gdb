@@ -986,6 +986,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     break;
                 }
                 if (tok[i].X_op == O_constant){
+  		    int match_signed = 0;
+		    int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
                     if( !(opdef->flags & k1SIGNED) && (tok[i].X_unsigned == 0)){
@@ -995,10 +997,12 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
-                    if (((!(opdef->flags & k1SIGNED)) &&
-			 ((((unsigned long long)(unsigned int)tok[i].X_add_number >> opdef->rightshift)& mask) != ((unsigned long long)(unsigned int)tok[i].X_add_number >> opdef->rightshift))) ||
-			((opdef->flags & k1SIGNED) &&
-			 (((((signed long long)(signed int)tok[i].X_add_number) >> opdef->rightshift) < min) || ((((signed long long)(signed int)tok[i].X_add_number) >> opdef->rightshift) > max)))){
+
+		    match_signed = (((((signed long long)tok[i].X_add_number) >> opdef->rightshift) >= min) && ((((signed long long)tok[i].X_add_number) >> opdef->rightshift) <= max));
+		    match_unsigned = ((((unsigned long long)tok[i].X_add_number >> opdef->rightshift) & mask) == ((unsigned long long)tok[i].X_add_number >> opdef->rightshift));
+
+                    if ( ( (!(opdef->flags & k1SIGNED)) && !match_unsigned ) ||
+			 ( (opdef->flags & k1SIGNED)    && !match_signed ) ) {
 		      return MATCH_NOT_FOUND;
                     }
 
@@ -1056,9 +1060,7 @@ insert_operand(k1insn_t * insn,
         k1bfield * opdef,
         const expressionS * arg)
  {
-    unsigned int op = 0;
-    //    long long max;
-    //    long long min;
+    unsigned long long op = 0;
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
@@ -1125,9 +1127,9 @@ insert_operand(k1insn_t * insn,
             if (!(arg->X_add_symbol))
             {
                 if(opdef->flags & k1SIGNED){
-                  op = (int)((int)arg->X_add_number >> opdef->rightshift);
+                  op = (long long)arg->X_add_number >> opdef->rightshift;
                 }else{
-                  op = ((unsigned int)arg->X_add_number >> opdef->rightshift);
+                  op = (unsigned long long)arg->X_add_number >> opdef->rightshift;
                 }
                 break;
             }
@@ -1192,26 +1194,8 @@ insert_operand(k1insn_t * insn,
         }
     }
 
-    /*
-    if ( ((!(opdef->flags & k1SIGNED)) && ((op & mask) != op)) ||
-	 ((opdef->flags & k1SIGNED) && ((((signed long long) op) < min) || (((signed long long) op) > max))) )
-      {
-        // Generate immx. FIXME HACK : On K1, we always extend 10 bits bfields, even for make that uses 16 bits
-            mask = ~(-1LL << 10);
-            insn->len = 1;
-            insn->immx = immxcnt;
-
-            immxbuf[immxcnt].insn[0] = (unsigned int)op >> 10; // Good news, IMMX is now 0x00000000, don't bother with macro.
-//            fprintf(stderr, "INSN %#llx gets immx %d (%#llx)\n", insn->insn[0], immxcnt, immxbuf[immxcnt].insn[0]);
-            immxbuf[immxcnt].nfixups = 0;
-            immxbuf[immxcnt].len = 1;
-            immxcnt++;
-
-    }
-     */
-
     for(bf_idx=0;bf_idx < bf_nb; bf_idx++) {
-      unsigned int value = ((unsigned int)op >> bfields[bf_idx].from_offset);
+      unsigned long long value = ((unsigned long long)op >> bfields[bf_idx].from_offset);
       int j = 0;
       int to_offset = bfields[bf_idx].to_offset;
       value &= (1LL << bfields[bf_idx].size) - 1;
