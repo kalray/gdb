@@ -102,8 +102,6 @@ struct op_list {
 static enum K1_ARCH {
     K1_K1DP,
     K1_K1IO,
-    K1_K1BDP,
-    K1_K1BIO,
     K1_NUM_ARCHES
 } k1_current_arch = K1_NUM_ARCHES;
 
@@ -141,10 +139,6 @@ k1_arch (void)
             k1_current_arch = K1_K1DP; break;
         case ELF_K1_CORE_IO:
             k1_current_arch = K1_K1IO; break;
-        case ELF_K1_CORE_B_DP:
-            k1_current_arch = K1_K1BDP; break;
-        case ELF_K1_CORE_B_IO:
-            k1_current_arch = K1_K1BIO; break;
         default:
             error (_("The K1 binary is compiled for an unknown core."));
         }  
@@ -153,11 +147,6 @@ k1_arch (void)
             k1_current_arch = K1_K1DP;
         else if (tdesc_find_feature (desc, "eu.kalray.core.k1io"))
             k1_current_arch = K1_K1IO;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1bdp"))
-            k1_current_arch = K1_K1BDP;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1bio"))
-            k1_current_arch = K1_K1BIO;
-
         else
             error ("unable to find the current k1 architecture.");
     }
@@ -256,16 +245,6 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	{ sp_store_insns[K1_K1IO], 1 /* Base register */},
 	{ prologue_helper_insns[K1_K1IO], -1 /* unused */},
         },
-        [K1_K1BIO] = {
-	{ sp_adjust_insns[K1_K1BIO], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1BIO], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1BIO], -1 /* unused */},
-        },
-        [K1_K1BDP] = {
-	{ sp_adjust_insns[K1_K1BDP], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1BDP], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1BDP], -1 /* unused */},
-        }
     };
 
     prologue_ops *prologue_insns = &prologue_insns_full [k1_arch ()];
@@ -1170,10 +1149,8 @@ static void k1_look_for_insns (void)
         k1opc_t *op;
         
         switch (i) {
-        case K1_K1DP: op = k1a_k1optab; break;
-        case K1_K1IO: op = k1a_k1optab; break;
-        case K1_K1BDP: op = k1b_k1optab; break;
-        case K1_K1BIO: op = k1b_k1optab; break;
+        case K1_K1DP: op = k1dp_k1optab; break;
+        case K1_K1IO: op = k1io_k1optab; break;
         default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
         }
         
