@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -219,6 +219,15 @@ ada_varobj_adjust_for_child_access (struct value **value,
       && !ada_is_array_descriptor_type (TYPE_TARGET_TYPE (*type))
       && !ada_is_constrained_packed_array_type (TYPE_TARGET_TYPE (*type)))
     ada_varobj_ind (*value, *type, value, type);
+
+  /* If this is a tagged type, we need to transform it a bit in order
+     to be able to fetch its full view.  As always with tagged types,
+     we can only do that if we have a value.  */
+  if (*value != NULL && ada_is_tagged_type (*type, 1))
+    {
+      *value = ada_tag_value_at_base_address (*value);
+      *type = value_type (*value);
+    }
 }
 
 /* Assuming that the (PARENT_VALUE, PARENT_TYPE) pair is an array
@@ -570,18 +579,12 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 					struct type **child_type,
 					char **child_path_expr)
 {
-  struct type *index_desc_type;
   struct type *index_type;
   int real_index;
 
   gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_ARRAY);
 
-  index_desc_type = ada_find_parallel_type (parent_type, "___XA");
-  ada_fixup_array_indexes_type (index_desc_type);
-  if (index_desc_type)
-    index_type = TYPE_FIELD_TYPE (index_desc_type, 0);
-  else
-    index_type = TYPE_INDEX_TYPE (parent_type);
+  index_type = TYPE_INDEX_TYPE (parent_type);
   real_index = child_index + ada_discrete_type_low_bound (index_type);
 
   if (child_name)
