@@ -8,7 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2014-08-26 17:27+0200\n"
+=======
+"POT-Creation-Date: 2014-08-22 15:07+0200\n"
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -121,7 +125,11 @@ msgid ""
 "\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: cg_print.c:79 hist.c:470
+=======
+#: cg_print.c:80 hist.c:471
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 "\n"
@@ -171,7 +179,11 @@ msgstr ""
 msgid "descendants"
 msgstr ""
 
+<<<<<<< HEAD
 #: cg_print.c:102 hist.c:496
+=======
+#: cg_print.c:103 hist.c:497
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 msgid "name"
 msgstr ""
 
@@ -393,38 +405,67 @@ msgstr ""
 
 #: gprof.c:424
 #, c-format
+msgid "Kalray gprof version %s\n"
+msgstr ""
+
+#: gprof.c:421
+#, c-format
 msgid ""
 "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: gprof.c:425
+=======
+#: gprof.c:422
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 "This program is free software.  This program has absolutely no warranty.\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: gprof.c:466
+=======
+#: gprof.c:463
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: gprof.c:489
+=======
+#: gprof.c:483
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: gprof.c:541
+=======
+#: gprof.c:535
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: gprof.c:595
+=======
+#: gprof.c:589
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: gprof.c:602
+=======
+#: gprof.c:596
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr ""
@@ -460,32 +501,49 @@ msgstr ""
 msgid "%s: %s: unexpected EOF after reading %u of %u samples\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:466
+=======
+#: hist.c:467
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "%c%c/call"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:474
+=======
+#: hist.c:475
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 " for %.2f%% of %.2f %s\n"
 "\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:480
+=======
+#: hist.c:481
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 "\n"
 "Each sample counts as %g %s.\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:485
+=======
+#: hist.c:486
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 " no time accumulated\n"
 "\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:492
 msgid "cumulative"
 msgstr ""
@@ -507,6 +565,29 @@ msgid "calls"
 msgstr ""
 
 #: hist.c:584
+=======
+#: hist.c:493
+msgid "cumulative"
+msgstr ""
+
+#: hist.c:493
+msgid "self  "
+msgstr ""
+
+#: hist.c:493
+msgid "total "
+msgstr ""
+
+#: hist.c:496
+msgid "time"
+msgstr ""
+
+#: hist.c:496
+msgid "calls"
+msgstr ""
+
+#: hist.c:585
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid ""
 "\n"
@@ -515,12 +596,20 @@ msgid ""
 "flat profile:\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:590
+=======
+#: hist.c:591
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "Flat profile:\n"
 msgstr ""
 
+<<<<<<< HEAD
 #: hist.c:711
+=======
+#: hist.c:712
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #, c-format
 msgid "%s: found a symbol that covers several histogram records"
 msgstr ""

@@ -660,7 +660,6 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_ip2k_arch,
     &bfd_iq2000_arch,
     &bfd_k1_arch,
-    &bfd_k1nsim_arch,
     &bfd_k1om_arch,
     &bfd_l1om_arch,
     &bfd_lm32_arch,

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2014-08-26 17:27+0200\n"
+"POT-Creation-Date: 2014-08-27 08:46+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -933,7 +933,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1938 config/tc-k1.c:3252
+#: config/obj-elf.c:1938 config/tc-k1.c:3927
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -4688,7 +4688,7 @@ msgid "illegal %srelocation size: %d"
 msgstr ""
 
 #: config/tc-bfin.c:95 config/tc-frv.c:1604 config/tc-frv.c:1614
-#: config/tc-k1.c:2790
+#: config/tc-k1.c:3460
 msgid "missing ')'"
 msgstr ""
 
@@ -8742,12 +8742,58 @@ msgstr ""
 msgid "missing `.end'"
 msgstr ""
 
+#: config/tc-k1.c:2268
+#, c-format
+msgid "%s is mono double but not LITE nor TINY"
+msgstr ""
+
+#: config/tc-k1.c:2274
+#, c-format
+msgid "%s: is LITE and not TINY!"
+msgstr ""
+
+#: config/tc-k1.c:2311 config/tc-k1.c:2362
+#, c-format
+msgid "%s is mono double but not TINY nor LITE"
+msgstr ""
+
+#: config/tc-k1.c:2395
+#, c-format
+msgid "total_single_TINY should be equal to zero, is equal to %d"
+msgstr ""
+
+#: config/tc-k1.c:2399
+#, c-format
+msgid "total_single_LITE should be equal to zero, is equal to %d"
+msgstr ""
+
+#: config/tc-k1.c:2408
+#, c-format
+msgid ""
+"Too many TINY ops (used %d, available: %d):\n"
+"%s"
+msgstr ""
+
+#: config/tc-k1.c:2418
+#, c-format
+msgid ""
+"Too many LITE ops (used %d, available: %d):\n"
+"%s"
+msgstr ""
+
+#: config/tc-k1.c:2440
+#, c-format
+msgid ""
+"LITE instruction '%s' on LSU slot:\n"
+"%s\n"
+msgstr ""
+
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:2593
+#: config/tc-k1.c:3263
 msgid "floating-point literals are not supported"
 msgstr ""
 
-#: config/tc-k1.c:3067
+#: config/tc-k1.c:3742
 msgid "alignments greater than 32 bytes not supported in .text sections."
 msgstr ""
 
