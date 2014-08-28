@@ -46,6 +46,8 @@
 #include "dw2gencfi.h"
 #endif
 
+#define D(args...) do { if(debug) fprintf(args); }while(0)
+
 static void supported_cores(char buf[], size_t buflen);
 
 #define O_pseudo_fixup (O_max + 1)
@@ -54,6 +56,9 @@ static void supported_cores(char buf[], size_t buflen);
 
 #define STREQ(x,y) !strcmp(((x) ? (x) : ""), ((y) ? (y) : ""))
 #define STRNEQ(x,y,n) !strncmp(((x) ? (x) : ""), ((y) ? (y) : ""),(n))
+
+/* Global flag to activate debuging */
+static int debug = 0;
 
 int emit_all_relocs = 0;
 /*TB begin*/
@@ -75,6 +80,7 @@ char *error_str=NULL;
 
 /* Default values used if no assume directive is given */
 static const K1_Core_Info *k1_core_info = NULL;
+static int subcore_id = 0;
 
 /* Default k1_registers array. */
 static const k1_Register *k1_registers = NULL;
@@ -134,23 +140,44 @@ struct k1_fixup_s
 
 typedef struct k1_fixup_s k1_fixup_t;
 
+typedef enum {
+  K1_UNDEF = 0,
+  K1_BCU = 1,
+  K1_ALU0= 2,
+  K1_ALU1= 4,
+  K1_MAU = 8,
+  K1_LSU = 16,
+} k1_slots_t;
+
+typedef enum {
+  K1_OTHER,  /* Not defined type */
+  K1_LITE,   /* LITE */
+  K1_TINY,   /* TINY */
+  K1_LMD,    /* LITE MONO DOUBLE */
+  K1_TMD,    /* TINY MONO DOUBLE */
+} k1_insn_type_t;
+
 /* a single assembled instruction record */
 /* may include immediate extension word  */
 
-struct k1insn_s
- {
-    int written;		/* written out ?                           */
-    const k1opc_t *opdef;	/* Opcode table entry for this insn        */
-    unsigned len;		/* length of instruction in words (1 or 2) */
-    int immx;                   /* insn is extended */
-    int immx64;                 /* only used for 64 immx */
-    unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
-    int nfixups;		/* the number of fixups 0, 1               */
-    k1_fixup_t fixup[1];	/* the actual fixups                       */
-    Bundling bundling;          /* the bundling type                       */
+struct k1insn_s {
+  int written;		                /* written out ?                           */
+  const k1opc_t *opdef;	                /* Opcode table entry for this insn        */
+  unsigned len;		                /* length of instruction in words (1 or 2) */
+  int immx;                             /* insn is extended */
+  int immx64;                           /* only used for 64 immx */
+  unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
+  int nfixups;		                /* the number of fixups 0, 1               */
+  k1_fixup_t fixup[1];	                /* the actual fixups                       */
+  Bundling bundling;                    /* the bundling type                       */
+  k1_slots_t slots;                     /* Used slots (one slot per bit).          */
+  k1_insn_type_t type;                  /* Type of instruction.                    */
 };
 
 typedef struct k1insn_s k1insn_t;
+
+typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
+static reorder_bundle_t reorder_bundle = NULL;
 
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
@@ -198,6 +225,29 @@ static int is_code_section(asection *sec);
 int is_code_section(asection *sec)
  {
     return ((bfd_get_section_flags(NULL, sec) & (SEC_CODE))) ;
+}
+
+static char *k1_slots_name(const k1insn_t *insn) {
+  switch(insn->slots) {
+  case K1_BCU: return "BCU";
+  case K1_ALU0: return "ALU0";
+  case K1_ALU1: return "ALU1";
+  case K1_ALU0 | K1_ALU1: return "ALU0 + ALU1";
+  case K1_MAU: return "MAU";
+  case K1_LSU: return "LSU";
+  default: return "UNKNOWN";
+  }
+}
+
+static char *k1_type_name(const k1insn_t *insn) {
+  switch(insn->type) {
+  case K1_OTHER: return "OTHER";
+  case K1_LITE:  return "LITE";
+  case K1_TINY:  return "TINY";
+  case K1_TMD:   return "TINY MONO DOUBLE";
+  case K1_LMD:   return "LITE MONO DOUBLE";
+  default: return "UNKNOWN";
+  }
 }
 
 /****************************************************/
@@ -569,6 +619,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   int i;
+  int find_core = 0;
 
   switch (c) {
   case 'h':
@@ -590,14 +641,25 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_MCORE:
     mcore = strdup(arg);
-    for (i = 0; i < K1_NCORES; i++){
-      if (strcasecmp(mcore, k1_core_info_table[i]->name) == 0
-	  && k1_core_info_table[i]->supported){
-	k1_core_info = k1_core_info_table[i];
-	k1_registers = k1_registers_table[i];
-	k1_regfiles = k1_regfiles_table[i];
-	break;
+    i = 0;
+    while(i < K1_NCORES && ! find_core) {
+      subcore_id = 0;
+      while(k1_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
+	if (strcasecmp(mcore, k1_core_info_table[i]->names[subcore_id]) == 0
+	    && k1_core_info_table[i]->supported){
+
+	  k1_core_info = k1_core_info_table[i];
+	  k1_registers = k1_registers_table[i];
+	  k1_regfiles = k1_regfiles_table[i];
+	
+	  find_core = 1;
+	}
+	else {
+	  subcore_id++;
+	}
       }
+      if(find_core) { break; }
+      i++;
     }
     if (i == K1_NCORES){
       char buf[100];
@@ -700,25 +762,27 @@ real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
         abort();
 }
 
-static void supported_cores(char buf[], size_t buflen)
- {
-    int i;
-    buf[0] = '\0';
-    for (i = 0; i < K1_NCORES; i++)
-        if (k1_core_info_table[i]->supported)
- {
-            if (buf[0] == '\0')
-                strcpy(buf, k1_core_info_table[i]->name);
-            else
- {
-                int l = strlen(buf);
-                if ((l + 1 + strlen(k1_core_info_table[i]->name) + 1) < buflen)
- {
-                    strcat(buf, "|");
-                    strcat(buf, k1_core_info_table[i]->name);
-                }
-            }
-        }
+static void supported_cores(char buf[], size_t buflen) {
+  int i, j;
+  buf[0] = '\0';
+  for (i = 0; i < K1_NCORES; i++) {
+    j = 0;
+    while(k1_core_info_table[i]->elf_cores[j] != -1) {
+      if (k1_core_info_table[i]->supported) {
+	if (buf[0] == '\0') {
+	  strcpy(buf, k1_core_info_table[i]->names[j]);
+	}
+	else {
+	  int l = strlen(buf);
+	  if ((l + 1 + strlen(k1_core_info_table[i]->names[j]) + 1) < buflen) {
+	    strcat(buf, "|");
+	    strcat(buf, k1_core_info_table[i]->names[j]);
+	  }
+	}
+      }
+    j++;
+    }
+  }
 }
 
 int get_regnum_by_name(char *name){
@@ -747,7 +811,7 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     char *old_input_line_pointer;
     int saw_comma = 0, saw_arg = 0;
     int tokcnt = 0;
-
+    
     memset(tok, 0, sizeof (*tok) * ntok);
 
     /* Save and restore input_line_pointer around this function */
@@ -788,7 +852,7 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
 		break;
 	      }
 	      else {
-		fprintf(stderr, "tok type == %d\n", tok->X_op);
+		D(stderr, "tok type == %d\n", tok->X_op);
 		as_warn("expected a register");
 		break;
 	      }
@@ -891,8 +955,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1_pairedReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
-			SRF_REGCLASSES(k1bdp)
-			SRF_REGCLASSES(k1bio)
+			SRF_REGCLASSES(k1b)
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
@@ -900,41 +963,53 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_flagmask2:
             case Immediate_k1_brknumber:
             case Immediate_k1_sysnumber:
+            case Immediate_k1_signed5:
             case Immediate_k1_unsigned5:
-            case Immediate_k1_signed5M:
             case Immediate_k1_unsigned6:
             case Immediate_k1_eventmask2:
             case Immediate_k1_unsigned32:
             case Immediate_k1_unsigned32L:
             case Immediate_k1_signed32M:
+            case Immediate_k1_signed37:
+            case Immediate_k1_signed43:
+
                 if(tok[i].X_op == O_symbol) {
 		  return MATCH_NOT_FOUND;
                 }
             case Immediate_k1_signed10:
+            case Immediate_k1_signed11:
             case Immediate_k1_signed16:
             case Immediate_k1_signed27:
-            case Immediate_k1_extension22:
             case Immediate_k1_pcrel18:
-            case Immediate_k1_pcoff17:
+            case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
                 if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
                     break;
                 }
                 if (tok[i].X_op == O_constant){
+  		    long long value = tok[i].X_add_number;
+  		    int match_signed = 0;
+		    int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
                     if( !(opdef->flags & k1SIGNED) && (tok[i].X_unsigned == 0)){
 		      return MATCH_NOT_FOUND;
                     }
 
+		    if(opdef->flags & k1SIGNED && opdef->width <= 32) {
+		      value = (signed int) value;
+		    }
+
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
-                    if (((!(opdef->flags & k1SIGNED)) &&
-			 ((((unsigned long long)(unsigned int)tok[i].X_add_number >> opdef->rightshift)& mask) != ((unsigned long long)(unsigned int)tok[i].X_add_number >> opdef->rightshift))) ||
-			((opdef->flags & k1SIGNED) &&
-			 (((((signed long long)(signed int)tok[i].X_add_number) >> opdef->rightshift) < min) || ((((signed long long)(signed int)tok[i].X_add_number) >> opdef->rightshift) > max)))){
+
+		    match_signed = (((((signed long long)value) >> opdef->rightshift) >= min) && ((((signed long long)value) >> opdef->rightshift) <= max));
+		    match_unsigned = ((((unsigned long long)value >> opdef->rightshift) & mask) == ((unsigned long long)value >> opdef->rightshift));
+
+                    if ( ( (!(opdef->flags & k1SIGNED)) && !match_unsigned ) ||
+			 ( (opdef->flags & k1SIGNED)    && !match_signed ) ) {
 		      return MATCH_NOT_FOUND;
                     }
 
@@ -992,12 +1067,13 @@ insert_operand(k1insn_t * insn,
         k1bfield * opdef,
         const expressionS * arg)
  {
-    unsigned int op = 0;
-    /* long long max = (1LL << (opdef->width - 1)) - 1; */
-    /* long long min = (-1LL << (opdef->width - 1)); */
+    unsigned long long op = 0;
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
+
+    //    max = (1LL << (opdef->width - 1)) - 1;
+    //    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
         return;			/* syntactic sugar ? */
@@ -1058,9 +1134,9 @@ insert_operand(k1insn_t * insn,
             if (!(arg->X_add_symbol))
             {
                 if(opdef->flags & k1SIGNED){
-                  op = (int)((int)arg->X_add_number >> opdef->rightshift);
+                  op = (long long)arg->X_add_number >> opdef->rightshift;
                 }else{
-                  op = ((unsigned int)arg->X_add_number >> opdef->rightshift);
+                  op = (unsigned long long)arg->X_add_number >> opdef->rightshift;
                 }
                 break;
             }
@@ -1072,7 +1148,7 @@ insert_operand(k1insn_t * insn,
             {
                 switch (opdef->type)
                 {
-                  case Immediate_k1_pcoff17:
+                  case Immediate_k1_pcrel17:
                         insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
@@ -1098,7 +1174,6 @@ insert_operand(k1insn_t * insn,
                         break;
 
                     case Immediate_k1_signed10:
-                    case Immediate_k1_extension22:
                     case Immediate_k1_signed16:
 			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 			insn->fixup[0].exp = *arg;
@@ -1126,26 +1201,8 @@ insert_operand(k1insn_t * insn,
         }
     }
 
-    /*
-    if ( ((!(opdef->flags & k1SIGNED)) && ((op & mask) != op)) ||
-	 ((opdef->flags & k1SIGNED) && ((((signed long long) op) < min) || (((signed long long) op) > max))) )
-      {
-        // Generate immx. FIXME HACK : On K1, we always extend 10 bits bfields, even for make that uses 16 bits
-            mask = ~(-1LL << 10);
-            insn->len = 1;
-            insn->immx = immxcnt;
-
-            immxbuf[immxcnt].insn[0] = (unsigned int)op >> 10; // Good news, IMMX is now 0x00000000, don't bother with macro.
-//            fprintf(stderr, "INSN %#llx gets immx %d (%#llx)\n", insn->insn[0], immxcnt, immxbuf[immxcnt].insn[0]);
-            immxbuf[immxcnt].nfixups = 0;
-            immxbuf[immxcnt].len = 1;
-            immxcnt++;
-
-    }
-     */
-
     for(bf_idx=0;bf_idx < bf_nb; bf_idx++) {
-      unsigned int value = ((unsigned int)op >> bfields[bf_idx].from_offset);
+      unsigned long long value = ((unsigned long long)op >> bfields[bf_idx].from_offset);
       int j = 0;
       int to_offset = bfields[bf_idx].to_offset;
       value &= (1LL << bfields[bf_idx].size) - 1;
@@ -1466,6 +1523,12 @@ static Bundling find_bundling(const k1insn_t *insn)
     return insn_bundlings;
 }
 
+static int find_reservation(const k1insn_t *insn)
+ {
+    int insn_reservation = insn->opdef->reservation;
+    return insn_reservation;
+}
+
 static int cmp_bundling(const void *a, const void *b)
  {
     const Bundling *ba = (const Bundling *)a;
@@ -1489,76 +1552,82 @@ static int cmp_bundling(const void *a, const void *b)
  */
 
 static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
-    int hash = 0;
-    int i;
-    int canonical_ix;
-    const BundleMatchType *match;
-    Bundling canonical_order[K1MAXBUNDLESIZE];
+  int hash = 0;
+  int i;
+  int canonical_ix;
+  const BundleMatchType *match;
+  Bundling canonical_order[K1MAXBUNDLESIZE];
+  
+  
+  if (*bundle_insn_cnt > K1MAXBUNDLESIZE) {
+    return -1;
+  }
+  
+  for (i = 0; i < *bundle_insn_cnt; i++) {
+    canonical_order[i] = bundle_insn[i]->bundling;
+  }
+  qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
+  
+  for (i = 0; i < *bundle_insn_cnt; i++) {
+    hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
+  }
+  
+  if (hash > bundlematch_table_size) {
+    return -1;
+  }
+  
+  canonical_ix = bundlematch_table[hash];
+  
+  if (canonical_ix == -1) {
+    /* No match at all for canonical, on any alignment. */
+    return -1;
+  }
+  
+  match = &canonical_table[canonical_ix];
+  
+  /* Try each bundle type for this canonical. */
+  for (i = 0; i < match->entries; i++) {
+    int bt = match->entry[i];
+    const BundleType *btype = &bundle_types[bt];
+    int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
+    /* Our known alignment is current pc modulo section align.
+     * That must satisfy the bundle requirements. */
+    int cur_align = get_byte_counter(now_seg) % sec_align;
 
-
-    if (*bundle_insn_cnt > K1MAXBUNDLESIZE)
-        return -1;
-
-    for (i = 0; i < *bundle_insn_cnt; i++)
-        canonical_order[i] = bundle_insn[i]->bundling;
-    qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
-
-    for (i = 0; i < *bundle_insn_cnt; i++)
-        hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
-
-    if (hash > bundlematch_table_size)
-        return -1;
-    canonical_ix = bundlematch_table[hash];
-
-    if (canonical_ix == -1)
-        /* No match at all for canonical, on any alignment. */
-        return -1;
-
-    match = &canonical_table[canonical_ix];
-    /* Try each bundle type for this canonical. */
-    for (i = 0; i < match->entries; i++)
- {
-        int bt = match->entry[i];
-        const BundleType *btype = &bundle_types[bt];
-        int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
-        /* Our known alignment is current pc modulo section align.
-         * That must satisfy the bundle requirements. */
-        int cur_align = get_byte_counter(now_seg) % sec_align;
-
-        if ((btype->nnops == 0 || nop_insertion_allowed)
-                && sec_align >= btype->base
-                && (cur_align % btype->base) == btype->bias)
- { /* We have a match. Reorder bundle_insn to match it. */
-            int entry, insn;
-            int next_nop = 0;
-
-            for (entry = 0; entry < *bundle_insn_cnt; entry++)
-                /* Put correct insn in bundle_insn[entry] */
-                if (entry == btype->nops[next_nop])
- {
-                    bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
-                    assemble_tokens("nop", 0, 0);
-                    insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
-                    bundle_insn[entry] = &insbuf[insncnt-1];
-                    next_nop++;
-                }
-                else
- {
-                    for (insn = entry; insn < *bundle_insn_cnt; insn++)
-                        if (bundle_insn[insn]->bundling == btype->bundling[entry])
- {
-                            k1insn_t *t = bundle_insn[entry];
-                            bundle_insn[entry] = bundle_insn[insn];
-                            bundle_insn[insn] = t;
-                            break;
-                        }
-                }
-            return canonical_ix;
-        }
+    if ((btype->nnops == 0 || nop_insertion_allowed)
+	&& sec_align >= btype->base
+	&& (cur_align % btype->base) == btype->bias) {
+      /* We have a match. Reorder bundle_insn to match it. */
+      int entry, insn;
+      int next_nop = 0;
+      
+      for (entry = 0; entry < *bundle_insn_cnt; entry++) {
+	/* Put correct insn in bundle_insn[entry] */
+	if (entry == btype->nops[next_nop]) {
+	  bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
+	  assemble_tokens("nop", 0, 0);
+	  insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
+	  bundle_insn[entry] = &insbuf[insncnt-1];
+	  next_nop++;
+	}
+	else {
+	  for (insn = entry; insn < *bundle_insn_cnt; insn++) {
+	    if (bundle_insn[insn]->bundling == btype->bundling[entry]) {
+	      k1insn_t *t = bundle_insn[entry];
+	      bundle_insn[entry] = bundle_insn[insn];
+	      bundle_insn[insn] = t;
+	      break;
+	    }
+	  }
+	}
+      }
+      return canonical_ix;
     }
-    /* Here if we matched a canonical, but the alignment was not good for
-     * any of the bundle types. */
-    return -2;
+  }
+
+  /* Here if we matched a canonical, but the alignment was not good for
+   * any of the bundle types. */
+  return -2;
 }
 
 /*
@@ -1570,40 +1639,39 @@ static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
 static void
 assemble_tokens(const char *opname,
         const expressionS * tok,
-        int ntok)
- {
-    const k1opc_t *opcode;
-    k1insn_t *insn;
+        int ntok) {
+  const k1opc_t *opcode;
+  k1insn_t *insn;
+  
+  /* make sure there is room in instruction buffer */
+  
+  if (insncnt >= K1MAXINSN) {
+    as_fatal("too many instructions in bundle ");
+  }
 
-    /* make sure there is room in instruction buffer */
+  insn = insbuf + insncnt;
 
-    if (insncnt >= K1MAXINSN)
-        as_fatal("too many instructions in bundle ");
-    insn = insbuf + insncnt;
-
-    /* find the instruction in the opcode table */
-
-    opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
-    if (opcode)
- {
-        if (!(opcode = find_format(opcode, tok, ntok)))
-            as_bad("[assemble_tokens] : couldn't find format %s \n",
-                    opname);
-        else
- {
-            assemble_insn(opcode, tok, ntok, insn);
-            insncnt++;
-        }
+  /* find the instruction in the opcode table */
+  
+  opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
+  if (opcode) {
+    if (!(opcode = find_format(opcode, tok, ntok))) {
+      as_bad("[assemble_tokens] : couldn't find format %s \n",
+	     opname);
     }
-    else
- {
-        as_bad("[assemble_tokens] : couldn't find op %s\n", opname);
+    else {
+      assemble_insn(opcode, tok, ntok, insn);
+      insncnt++;
     }
+  }
+  else {
+    as_bad("[assemble_tokens] : couldn't find op %s\n", opname);
+  }
 }
 
 
 static int
-is_equivalent_bundle(Bundling b1, Bundling b2){
+k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     switch(b1){
         case Bundling_k1_BCU:
             if(b2 == Bundling_k1_BCU){
@@ -1643,7 +1711,7 @@ is_equivalent_bundle(Bundling b1, Bundling b2){
 
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
-reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     k1insn_t *shadow_bundle[7];
     int bundle_insncnt = *bundle_insncnt_p;
     int i, j;
@@ -1677,7 +1745,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     for(i=0; i < 5 ; i++){
         bundle_type = priority[i];
         for(j=0; j < bundle_insncnt; j++){
-            if(is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
+            if(k1a_is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
                 switch(bundle_type){
                     case Bundling_k1_ALU:
                     case Bundling_k1_ALU_X:
@@ -1736,7 +1804,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 // Tag EXU on IMMX
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                    fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
                 }
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
@@ -1751,8 +1819,8 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
             if(num_ALU < 2){
                 shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
-                tag = Modifier_k1_exunum_ALU0 + num_ALU;
-                num_ALU++;
+		tag = Modifier_k1_exunum_ALU0 + num_ALU;
+		num_ALU++;
             } else {
                 if(num_TINY + num_MAU + num_LSU > 2){
                     as_fatal("Too many TINY ops\n");
@@ -1770,7 +1838,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
             }
         }
     }
@@ -1783,6 +1851,604 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         }
     }
     *bundle_insncnt_p = j;
+}
+
+static int
+k1b_is_equivalent_bundle(Bundling b1, const k1insn_t *insn){
+  Bundling b2 = find_bundling(insn);
+
+    switch(b1){
+        case Bundling_k1_BCU:
+            if(b2 == Bundling_k1_BCU){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_ALU:
+            if(b2 == Bundling_k1_ALU || b2 == Bundling_k1_ALU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_ALUD:
+	    if(b2 == Bundling_k1_ALUD || b2 == Bundling_k1_ALUD_Z || b2 == Bundling_k1_ALUD_Y) {
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_MAU:
+            if(b2 == Bundling_k1_MAU || b2 == Bundling_k1_MAU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        case Bundling_k1_LSU:
+            if(b2 == Bundling_k1_LSU || b2 == Bundling_k1_LSU_X){
+                return 1;
+            } else {
+                return 0;
+            }
+        default:
+            return 0;
+    }
+    return 0;
+}
+
+static int is_mono_double(const k1insn_t *insn) {
+  int reservation = find_reservation(insn);
+  return (reservation == Reservation_k1_ALUD_LITE   ||
+	  reservation == Reservation_k1_ALUD_LITE_X ||
+	  reservation == Reservation_k1_ALUD_TINY   ||
+	  reservation == Reservation_k1_ALUD_TINY_X);
+}
+
+
+static int used_resources(const k1insn_t *insn, int resource) {
+  int insn_reservations = insn->opdef->reservation;
+  int reservation = insn_reservations  & 0xff;
+  const int *reservation_table = k1_reservation_table_table[reservation];
+
+  if(resource < 0 || resource > RESOURCE_MAX) {
+    as_fatal("Unknown resource ID");
+  }
+  return reservation_table[resource];
+}
+
+static int is_tiny(const k1insn_t *insn) {
+  return used_resources(insn,Resource_k1_TINY);
+}
+
+static int is_lite(const k1insn_t *insn) {
+  return used_resources(insn,Resource_k1_LITE);
+}
+
+static int is_alud(const k1insn_t *insn) {
+  return used_resources(insn,Resource_k1_ALUD);
+}
+
+static void bundle_resources(char string_buffer[], int buffer_size, int resource, const k1insn_t *shadow_bundle[], int bundle_size) {
+  int i;
+
+  if(buffer_size == 0) { return; }
+
+  string_buffer[0] = '\0';
+
+  for(i=0; i < bundle_size; i++){
+    if(shadow_bundle[i] != NULL){
+      char tmp_str[256];
+      int used_resources_val = used_resources(shadow_bundle[i],resource);
+      if(resource == Resource_k1_TINY || resource == Resource_k1_LITE) {
+	if(shadow_bundle[i]->slots == (K1_ALU0 | K1_ALU1)) {
+	  used_resources_val++;
+	}
+      }
+      snprintf(tmp_str,256,"\t%s: %s slot(s) %d %s(s)\n",
+	       shadow_bundle[i]->opdef->as_op,
+	       k1_slots_name(shadow_bundle[i]),
+	       used_resources_val,
+	       k1_resource_names[resource]);
+      strncat(string_buffer,tmp_str,buffer_size);
+    }
+  }
+}
+
+static char *k1b_insn_slot_type(const k1insn_t *insn) {
+  char *slot_type=k1_slots_name(insn);
+  
+  if(is_tiny(insn)) {
+    slot_type = "TINY";
+  }
+  if(is_lite(insn)) {
+    slot_type = "LITE";
+  }
+  if(is_mono_double(insn)) {
+    slot_type = "MONODOUBLE";
+    if(is_tiny(insn)) {
+      slot_type = "TINY MONODOUBLE";
+    }
+    if(is_lite(insn)) {
+      slot_type = "LITE MONODOUBLE";
+    }
+  }
+  
+  return slot_type;
+}
+
+static int get_needed_LITE(const k1insn_t *insn, int k1b_free_resources[RESOURCE_MAX], int total_LITE_MONODOUBLE, int total_TINY_MONODOUBLE, int total_single_LITE, int total_single_TINY) {
+
+  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
+  int needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
+  if((total_LITE_MONODOUBLE + total_single_LITE) > 0) {
+
+    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
+
+    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
+      needed_LITE++;
+    }
+
+    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
+      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
+
+    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
+      needed_LITE++;
+    }
+  }
+
+  return needed_LITE;
+}
+
+static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_MAU, int num_LSU, int total_LITE_MONODOUBLE,
+			 int total_TINY_MONODOUBLE, int total_single_LITE, int total_single_TINY) {
+
+  /* We have to decide for LITE instruction. It should be placed on MAU before LSU because 
+     LSU cannot execute LITE. */
+
+  int mono_double = is_mono_double(insn);
+  int free_ALU = k1b_resources[Resource_k1_ALU] - num_ALU;
+
+  D(stderr,"%s:%d OP %s (%s), num_ALU = %d, free_ALU: %d\n",__FUNCTION__,__LINE__,
+    insn->opdef->as_op,k1_type_name(insn), num_ALU, free_ALU );
+  
+  if((insn->type == K1_TINY || insn->type == K1_TMD) &&
+     (total_single_LITE + total_LITE_MONODOUBLE) > 0 &&
+     (k1b_resources[Resource_k1_LSU] - num_LSU) > 0 &&
+     !(free_ALU == 2 && (total_single_LITE + total_single_TINY) == 1 && (total_TINY_MONODOUBLE + total_LITE_MONODOUBLE) == 1) ) {
+    D(stderr,"%s:%d OP %s: is TINY and need LITE slot if LSU slot is available -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  D(stderr,"%s:%d OP %s -> say yes\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+  return 1;
+}
+
+static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
+			       int num_MAU, int num_LSU,
+			       int total_single_TINY,
+			       int total_single_LITE,
+			       int total_TINY_MONODOUBLE,
+			       int total_LITE_MONODOUBLE) {
+  int mono_double = is_mono_double(insn);
+
+  int k1b_free_resources[RESOURCE_MAX];
+  int needed_LITE = 0;
+
+  /* How to fill ALU0/ALU1:
+     ALU0  | ALU1  | MAU  | LSU
+     ==========================
+      T0   |       |      |
+      T0   | T1    |      |
+      ALU0 | T0    | LMD0 |
+      T0   | T1    | TMD0 |
+      T0   | L0    | LMD0 | TMD1
+      T0   | T1    | TMD0 | TMD1
+      L0   | L1    | TMD0 | TMD1
+      L0   | L1    | LMD0 | TMD1
+      LMD0 | LMD0  | LMD1 | TMD1
+      LMD0 | TMD0  |      |
+      LMD0 | LMD1  | T0   |      -> Need always 3 Tiny slots (if T0 goes on ALU0, MD0 cannot use ALU1)
+      ...
+
+      Tx: TINY x
+      Lx: LITE x
+      TMDx: TINY MONO DOUBLE x
+      LMDx: LITE MONO DOUBLE x
+   */
+
+  D(stderr,"%s:%d %s (%s)\n",
+    __FUNCTION__, __LINE__, insn->opdef->as_op,k1b_insn_slot_type(insn));
+
+  D(stderr,"\ttotal_single_TINY: %d\n\ttotal_single_LITE: %d\n\ttotal_TINY_MONODOUBLE: %d\n\ttotal_LITE_MONODOUBLE: %d\n\n",
+    total_single_TINY,total_single_LITE, total_TINY_MONODOUBLE, total_LITE_MONODOUBLE);
+
+  /* Constraint 1: still have free ALU slot */
+  if(num_ALU > k1b_resources[Resource_k1_ALU]) {
+    D(stderr,"%s:%d OP %s no free ALU slot -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  k1b_free_resources[Resource_k1_ALU]  = k1b_resources[Resource_k1_ALU] - num_ALU; 
+
+  /* Constraint 2: if mono double still have 2 free ALU slots */
+  if(mono_double && k1b_free_resources[Resource_k1_ALU] < 2) {
+    D(stderr,"%s:%d OP %s Need ALU0/ALU1 for mono double: not engouh rooms -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  /* Constraint 3: Do not use ALU0/ALU1 for mono double if there is enough single TINY/LITE to fill them: avoid lack of TINY/LITE slots */
+  if(mono_double && (total_single_LITE + total_single_TINY) >= 2) {
+    D(stderr,"%s:%d OP %s is mono double and there is more than 2 LITE/TINY, place TINY/LITE first -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+
+  k1b_free_resources[Resource_k1_TINY] = k1b_resources[Resource_k1_TINY] - (num_ALU + num_MAU + num_LSU);
+  k1b_free_resources[Resource_k1_LITE] = k1b_resources[Resource_k1_LITE] - (num_ALU + num_MAU);
+
+  /* Constraint 4: If there is 2 free ALU slots and at least 1 mono double and
+     1 single TINY or LITE and
+     there is room for LITE if current instruction is a LITE:
+     -> mono double can go on ALU0/ALU1 */
+
+  if(!mono_double &&
+     k1b_free_resources[Resource_k1_ALU] == 2 &&
+     (total_LITE_MONODOUBLE + total_TINY_MONODOUBLE) >= 1 &&
+     (total_single_TINY + total_single_LITE) == 1 &&
+     /* Special case where MAU and so LITE is taken */
+     ! (insn->type == K1_LITE && k1b_free_resources[Resource_k1_LITE] == 2 && total_TINY_MONODOUBLE > 0)) {
+    D(stderr,"%s:%d OP %s is a TINY or LITE and there is at least one mono double to schedule and there is 2 free ALU slots -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+    return 0;
+  }
+
+  needed_LITE = get_needed_LITE(insn, k1b_free_resources, total_LITE_MONODOUBLE, total_TINY_MONODOUBLE, total_single_LITE, total_single_TINY);
+
+
+  D(stderr,"%s:%d OP %s needed_LITE: %d, free LITE: %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,needed_LITE, k1b_free_resources[Resource_k1_LITE]);
+
+  /* Constraint 5: TINY (Single or Mono double) should be placed on LSU if all LITE slots are taken. */
+  if((insn->type == K1_TINY || insn->type == K1_TMD) && ((k1b_free_resources[Resource_k1_LITE] - needed_LITE) <= 0)) {
+    D(stderr,"%s:%d OP %s is tiny and must go on LSU as there is no more LITE available (need %d LITE(s)) -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op,needed_LITE);
+    return 0;
+  }
+
+  D(stderr,"%s:%d OP %s default -> say yes\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
+  return 1;
+}
+
+/* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
+static void
+k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+
+  int shadow_bundle_size = 8;
+  k1insn_t *shadow_bundle[shadow_bundle_size];
+  int bundle_insncnt = *bundle_insncnt_p;
+  int i, j;
+  int num_ALU = 0;
+  int num_BCU = 0;
+  int num_MAU = 0;
+  int num_LSU = 0;
+  int num_TINY = 0;
+  int num_LITE = 0;
+  int shadow_idx = 0;
+
+  /* Number of true TINYs (no mono double) */
+  int total_single_TINY = 0;
+  int total_single_LITE = 0;
+
+  int total_LITE_MONODOUBLE = 0;
+  int total_TINY_MONODOUBLE = 0;
+
+  int tag = 0;
+  int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
+  int bundle_type;
+
+  for(i=0; i<bundle_insncnt; i++){
+    if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
+      if(bundle_insncnt == 1){
+	return;
+      } else {
+	as_fatal("Too many ops in a single op bundle\n");
+      }
+    }
+  }
+
+  for(i=0; i < shadow_bundle_size; i++){
+    shadow_bundle[i] = NULL;
+  }
+
+
+  for(i=0; i < 5 ; i++){
+    bundle_type = priority[i];
+    for(j=0; j < bundle_insncnt; j++){
+      if(k1b_is_equivalent_bundle(bundle_type, bundle_insn[j]) ){
+	switch(bundle_type){
+	case Bundling_k1_ALU:
+	case Bundling_k1_ALU_X:
+	  if(num_ALU > 1){
+	    as_fatal("Too many ALU op\n");
+	  }
+	  if(shadow_bundle[num_ALU + num_BCU] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+
+	  bundle_insn[j]->slots = ((num_ALU == 0) ? K1_ALU0 : K1_ALU1);
+	  D(stderr,"%s:%d \t%s:\t%s\n", __FUNCTION__, __LINE__, bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]));
+
+	  shadow_bundle[num_ALU + num_BCU] =  bundle_insn[j]; // Put in first available ALU
+	  tag = Modifier_k1_exunum_ALU0 + num_ALU;
+	  num_ALU++;
+	  
+	  break;
+	case Bundling_k1_ALUD:
+	case Bundling_k1_ALUD_Y:
+	case Bundling_k1_ALUD_Z:
+	  if(num_ALU > 0){
+	    as_fatal("Too many ALU op\n");
+	  }
+	  if(shadow_bundle[i] != NULL || shadow_bundle[i+1] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+
+	  bundle_insn[j]->slots = (K1_ALU0 | K1_ALU1);
+	  D(stderr,"%s: %d \t%s:\t%s\n", __FUNCTION__, __LINE__, bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]));
+
+	  shadow_bundle[i] = bundle_insn[j];
+	  num_ALU = 2;
+	  tag = Modifier_k1_exunum_ALU0;
+	  break;
+	case Bundling_k1_BCU:
+	  if(shadow_bundle[i] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  bundle_insn[j]->slots = K1_BCU;
+	  D(stderr,"%s: %d \t%s:\t%s\n", __FUNCTION__, __LINE__, bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]));
+
+	  shadow_bundle[i] = bundle_insn[j];
+	  num_BCU++;
+	  break;
+	case Bundling_k1_MAU:
+	case Bundling_k1_MAU_X:
+	  if(shadow_bundle[i] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  bundle_insn[j]->slots = K1_MAU;
+	  D(stderr,"%s: %d \t%s:\t%s\n", __FUNCTION__, __LINE__, bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]));
+
+	  shadow_bundle[i] = bundle_insn[j];
+	  tag = Modifier_k1_exunum_MAU;
+	  num_MAU++;
+	  break;
+	case Bundling_k1_LSU:
+	case Bundling_k1_LSU_X:
+	  if(shadow_bundle[i] != NULL){
+	    as_fatal("Wrong bundle\n");
+	  }
+	  bundle_insn[j]->slots = K1_LSU;
+	  D(stderr,"%s: %d \t%s:\t%s\n", __FUNCTION__, __LINE__, bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]));
+
+	  shadow_bundle[i] = bundle_insn[j];
+	  tag = Modifier_k1_exunum_LSU;
+	  num_LSU++;
+	  break;
+	default:
+	  as_fatal("Wrong Bundling\n");
+	}
+
+	// Tag EXU on IMMX
+	if(bundle_insn[j]->immx != NOIMMX){
+	  immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
+	  D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+	}
+	if(bundle_insn[j]->immx64 != NOIMMX){
+	  immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
+	}
+      }
+    }
+  }
+
+  // Count TINYs en LITEs...
+  for(j=0; j < bundle_insncnt; j++){
+    int bundling = find_bundling(bundle_insn[j]);
+    if(bundling == Bundling_k1_TINY || bundling == Bundling_k1_TINY_X){
+      // [JV] Counter total number of TINYs. It includes mono double!
+      // It is used to decide where to insert mono double and LITE: On ALU0 + ALU1 or MAU/LSU.
+      if(is_mono_double(bundle_insn[j]) ) {
+	if(is_lite(bundle_insn[j])) {
+	  bundle_insn[j]->type = K1_LMD;
+	  total_LITE_MONODOUBLE++;
+	}
+	else if(is_tiny(bundle_insn[j])) {
+	  bundle_insn[j]->type = K1_TMD;
+	  total_TINY_MONODOUBLE++;
+	}
+	else {
+	  as_fatal(_("%s is mono double but not LITE nor TINY"),bundle_insn[j]->opdef->as_op);
+	}
+      }
+      else {
+	if(is_lite(bundle_insn[j])) {
+	  if(!is_tiny(bundle_insn[j])) {
+	    as_fatal(_("%s: is LITE and not TINY!"),bundle_insn[j]->opdef->as_op);
+	  }
+	  bundle_insn[j]->type = K1_LITE;
+	  total_single_LITE++;
+	}
+	else if(is_tiny(bundle_insn[j])) {
+	  bundle_insn[j]->type = K1_TINY;
+	  total_single_TINY++;
+	}
+      }
+    }
+  }
+
+  // Now handle the "TINY" problem : quite easy : put them in ALUs, or append at the end !
+  num_TINY = num_ALU;
+  num_LITE = num_ALU;
+  shadow_idx = 0;
+  for(j=0; j < bundle_insncnt; j++){
+    if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
+      if(num_ALU < 2 && can_go_on_ALU0_ALU1(bundle_insn[j],num_ALU,num_MAU,num_LSU,
+					    total_single_TINY,total_single_LITE,total_TINY_MONODOUBLE,total_LITE_MONODOUBLE) ) {
+
+	shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
+	tag = Modifier_k1_exunum_ALU0 + num_ALU;
+
+	// Mono double reserves ALU0 and ALU1
+	// if is ALUD => mono double because all FULL ALUD have already a slot (previous for loop).
+	if(is_alud(bundle_insn[j])) {
+	  num_ALU++;
+  	  bundle_insn[j]->slots = (K1_ALU0 | K1_ALU1);
+	  if(is_lite(bundle_insn[j])) {
+	    total_LITE_MONODOUBLE--;
+	  }
+	  else if(is_tiny(bundle_insn[j])) {
+	    total_TINY_MONODOUBLE--;
+	  }
+	  else {
+	    as_fatal(_("%s is mono double but not TINY nor LITE"),bundle_insn[j]->opdef->as_op);
+	  }
+	}
+	else {
+  	  bundle_insn[j]->slots = ((num_ALU == 0) ? K1_ALU0 : K1_ALU1);
+	  total_single_TINY--;
+	}
+
+	num_ALU++;
+
+	if(is_tiny(bundle_insn[j])) {
+	  num_TINY++;
+	  D(stderr,"%s:%d %s: num_TINY: %d\n", __FUNCTION__, __LINE__,bundle_insn[j]->opdef->as_op, num_TINY);
+	  if(is_alud(bundle_insn[j])) {
+	    num_TINY++;
+	    D(stderr,"%s:%d %s: num_TINY: %d\n", __FUNCTION__, __LINE__,bundle_insn[j]->opdef->as_op, num_TINY);
+	  }
+	}
+	if(is_lite(bundle_insn[j])) {
+	  num_LITE++;
+	  if(is_alud(bundle_insn[j])) {
+	    num_LITE++;
+	  }
+	  else {
+	    total_single_LITE--;
+	  }
+	}
+      } else {
+	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_MAU, num_LSU,
+					 total_LITE_MONODOUBLE, total_TINY_MONODOUBLE, total_single_LITE, total_single_TINY)){
+	  // 5 is reserved for MAU. LSU and all others goes after.
+	  shadow_bundle[5] = bundle_insn[j];
+	  tag = Modifier_k1_exunum_MAU;
+	  num_MAU++;
+  	  bundle_insn[j]->slots = K1_MAU;
+	} else {
+	  shadow_bundle[6 + shadow_idx++] = bundle_insn[j];
+	  tag = Modifier_k1_exunum_LSU;
+	  num_LSU++;
+  	  bundle_insn[j]->slots = K1_LSU;
+	}
+
+	// Updating number of TINY/LITE used.
+	if(is_alud(bundle_insn[j])) {
+	  if(is_lite(bundle_insn[j])) {
+	    total_LITE_MONODOUBLE--;
+	  }
+	  else if(is_tiny(bundle_insn[j])) {
+	    total_TINY_MONODOUBLE--;
+	  }
+	  else {
+	    as_fatal(_("%s is mono double but not TINY nor LITE"),bundle_insn[j]->opdef->as_op);
+	  }
+	}
+
+	if(!is_alud(bundle_insn[j])) {
+	  total_single_TINY--;
+	}
+
+	if(is_tiny(bundle_insn[j])) {
+	  num_TINY++;
+	  D(stderr,"%s:%d %s: num_TINY: %d\n", __FUNCTION__, __LINE__,bundle_insn[j]->opdef->as_op, num_TINY);
+	}
+	if(is_lite(bundle_insn[j])) {
+	  num_LITE++;
+	  if(!is_alud(bundle_insn[j])) {
+	    total_single_LITE--;
+	  }
+	}
+      }
+
+      D(stderr,"%s:%d \t%s:\t%s\tTag: 0x%x\t(%s)\n", __FUNCTION__, __LINE__,
+	bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]), tag,
+	k1b_insn_slot_type(bundle_insn[j]));
+      
+      // Tag EXU on IMMX
+      if(bundle_insn[j]->immx != NOIMMX){
+	immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
+	D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+      }
+    }
+  }
+
+  if(total_single_TINY > 0) {
+    as_fatal(_("total_single_TINY should be equal to zero, is equal to %d"),total_single_TINY);
+  }
+
+  if(total_single_LITE > 0) {
+    as_fatal(_("total_single_LITE should be equal to zero, is equal to %d"),total_single_LITE);
+  }
+
+  /* Doing some checks on TINY/LITE (always enabled) */
+  {
+    if(num_TINY > k1_core_info->resources[Resource_k1_TINY]) {
+      char string_buffer[1024];
+      
+      bundle_resources(string_buffer,1024,Resource_k1_TINY,shadow_bundle,shadow_bundle_size);
+      as_fatal(_("Too many TINY ops (used %d, available: %d):\n%s"),
+	       num_TINY,
+	       k1_core_info->resources[Resource_k1_TINY],
+	       string_buffer);
+    }
+    
+    if(num_LITE > k1_core_info->resources[Resource_k1_LITE]) {
+      char string_buffer[1024];
+      
+      bundle_resources(string_buffer,1024,Resource_k1_LITE,shadow_bundle,shadow_bundle_size);
+      as_fatal(_("Too many LITE ops (used %d, available: %d):\n%s"),
+	       num_LITE,
+	       k1_core_info->resources[Resource_k1_LITE],
+	       string_buffer);
+    }
+  }
+  
+  D(stderr,"\nFinal bundle:\n");
+  j = 0;
+  for(i=0; i < 7; i++){
+    if(shadow_bundle[i] != NULL){
+      char *slot_type = k1b_insn_slot_type(shadow_bundle[i]);
+      bundle_insn[j] = shadow_bundle[i];
+      
+      D(stderr,"%s:%d \t%s:\t%s\tTag: 0x%x\t(%s: %s)\n", __FUNCTION__, __LINE__,
+	bundle_insn[j]->opdef->as_op, k1_slots_name(bundle_insn[j]), tag,
+	bundling_names(find_bundling(bundle_insn[j])), slot_type);
+
+      if(bundle_insn[j]->slots == K1_LSU && (bundle_insn[j]->type == K1_LITE || bundle_insn[j]->type == K1_LMD)) {
+	char string_buffer[1024];
+      
+	bundle_resources(string_buffer,1024,Resource_k1_LITE,shadow_bundle,shadow_bundle_size);
+	as_fatal(_("LITE instruction '%s' on LSU slot:\n%s\n"),
+		 bundle_insn[j]->opdef->as_op,
+		 string_buffer);
+      }
+      
+      j++;
+    }
+  }
+
+  D(stderr,";;\n\n");
+  
+  *bundle_insncnt_p = j;
 }
 
 
@@ -1902,7 +2568,7 @@ md_assemble(char *s)
               }
             }
 
-            //fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
+            // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
 	}
 
@@ -1961,33 +2627,37 @@ md_assemble(char *s)
 static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
-      k1_core_info = &k1dp_core_info;
+      k1_core_info = &k1a_core_info;
       bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
   }
 
   if(!k1_registers) {
-    k1_registers = k1_k1dp_registers;
+    k1_registers = k1_k1a_registers;
   }
 
   if(!k1_regfiles) {
-    k1_regfiles = k1_k1dp_regfiles;
+    k1_regfiles = k1_k1a_regfiles;
   }
 
-  switch(k1_core_info->elf_core) {
+  switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_B_DP:
-	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
-	break;
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
   case ELF_K1_CORE_B_IO:
-	bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
-	break;
+    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+    reorder_bundle = k1b_reorder_bundle;
+    break;
   default:
-    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
+    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
   }
 }
 
@@ -2685,7 +3355,7 @@ k1_md_start_line_hook(void) {
                 /* For cores st231 and onward, empty bundles don't need to cause the
                  * generation of a NOP instruction. Just ignore them...
                  */
-                if ((k1_core_info->elf_core & ELF_K1_CORE_MASK) !=
+                if ((k1_core_info->elf_cores[subcore_id] & ELF_K1_CORE_MASK) !=
                         -6) {
                     /* this is an empty bundle, transform it into an
                      * empty statement */
@@ -2819,25 +3489,30 @@ k1_pic_ptr (int nbytes)
 static void
 k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
  {
-    const char *target_name = k1_core_info->name;
+    char* param;
+    const char *target_name = k1_core_info->names[subcore_id];
 
     while ( (input_line_pointer!=NULL)
             && ! is_end_of_line [(unsigned char) *input_line_pointer])
  {
         int found = FALSE;
-        int i;
+        int i, j;
         SKIP_WHITESPACE();
 
         /* core */
         for (i = 0; i < K1_NCORES; i++) {
-            if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->name)) {
-                set_assume_param(&k1_core, k1_core_info_table[i]->elf_core, &k1_core_set);
+	  j=0;
+	  while(k1_core_info_table[i]->elf_cores[j] != -1) {
+            if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->names[j])) {
+                set_assume_param(&k1_core, k1_core_info_table[i]->elf_cores[subcore_id], &k1_core_set);
                 if (k1_core_info != k1_core_info_table[i])
                     as_fatal("assume machine '%s' is inconsistent with current machine '%s'",
-                            k1_core_info_table[i]->name, target_name);
+                            k1_core_info_table[i]->names[j], target_name);
                 found = TRUE;
                 break;
             }
+	    j++;
+	  }
         }
 
         if (! found) {
@@ -2933,7 +3608,7 @@ k1_end(void)
     Elf_Internal_Ehdr * i_ehdrp;
 
     if (! k1_core_set)
-        k1_core = k1_core_info->elf_core;
+        k1_core = k1_core_info->elf_cores[subcore_id];
 
     /* (pp) the flags must be set at once */
     newflags= k1_core | k1_cut | k1_abi | k1_pic_flags;

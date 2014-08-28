@@ -12202,7 +12202,11 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12199 "configure"
+<<<<<<< HEAD
+#line 12205 "configure"
+=======
+#line 12201 "configure"
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12308,7 +12312,11 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12305 "configure"
+<<<<<<< HEAD
+#line 12311 "configure"
+=======
+#line 12307 "configure"
+>>>>>>> 09fe4da6d91916e23658890f191e7c280477f7cc
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -16211,7 +16219,6 @@ do_compare="$gcc_cv_prog_cmp_skip"
 
 
 . ${srcdir}/configure.host
-
 
 
 
