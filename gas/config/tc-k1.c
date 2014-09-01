@@ -247,6 +247,16 @@ static char *k1_type_name(const k1insn_t *insn) {
   }
 }
 
+/* Either 32 or 64.  */
+static int k1_arch_size = 32;
+
+const char *
+k1_target_format (void)
+{
+  return k1_arch_size == 64 ? "elf64-k1" : "elf32-k1";
+}
+
+
 /****************************************************/
 /*             Local Variables                      */
 /****************************************************/
@@ -592,6 +602,8 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_BIGPIC	(OPTION_MD_BASE + 13)
 #define OPTION_FDPIC	(OPTION_MD_BASE + 14)
 #define OPTION_NOPIC    (OPTION_MD_BASE + 15)
+#define OPTION_32 (OPTION_MD_BASE + 16)
+#define OPTION_64 (OPTION_MD_BASE + 17)
 
 struct option md_longopts[] =
  {
@@ -609,6 +621,8 @@ struct option md_longopts[] =
      {"mfdpic",	no_argument,	NULL, OPTION_FDPIC},
      {"mnopic", no_argument,    NULL, OPTION_NOPIC},
      {"mno-fdpic", no_argument,    NULL, OPTION_NOPIC},
+     {"m32", no_argument,    NULL, OPTION_32},
+     {"m64", no_argument,    NULL, OPTION_64},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -687,6 +701,13 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_NOPIC:
     k1_pic_flags &= ~(ELF_K1_FDPIC);
+    break;
+  case OPTION_32:
+    k1_arch_size = 32;
+    break;
+
+  case OPTION_64:
+    k1_arch_size = 64;
     break;
   default:
     return 0;
@@ -2640,7 +2661,9 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1a_core_info;
-      bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp)){
+	as_warn(_("could not set architecture and machine"));
+      }
   }
 
   if(!k1_registers) {
@@ -2653,19 +2676,33 @@ k1_set_cpu(void) {
 
   switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_B_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+    if (k1_arch_size == 32) {
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp))
+	as_warn(_("could not set architecture and machine"));
+    } else if (k1_arch_size == 64) {
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp_64))
+	as_warn(_("could not set architecture and machine"));
+    }
     reorder_bundle = k1b_reorder_bundle;
     break;
   case ELF_K1_CORE_B_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+    if (k1_arch_size == 32){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio))
+	as_warn(_("could not set architecture and machine"));
+    } else if ( k1_arch_size == 64){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio_64))
+	as_warn(_("could not set architecture and machine"));
+    }
     reorder_bundle = k1b_reorder_bundle;
     break;
   default:
@@ -3549,10 +3586,10 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "abi-k1dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-		  { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-		  { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-		  { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-		  { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },

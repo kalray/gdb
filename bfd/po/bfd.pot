@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2014-08-22 16:37+0200\n"
+"POT-Creation-Date: 2014-09-01 14:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -689,10 +689,11 @@ msgstr ""
 #: elf32-cr16.c:1484 elf32-cr16c.c:780 elf32-cris.c:2016 elf32-crx.c:922
 #: elf32-d10v.c:513 elf32-epiphany.c:556 elf32-fr30.c:589 elf32-frv.c:4039
 #: elf32-h8300.c:525 elf32-i860.c:1212 elf32-ip2k.c:1468 elf32-iq2000.c:688
-#: elf32-lm32.c:1160 elf32-m32c.c:553 elf32-m32r.c:3066 elf32-m68hc1x.c:1283
-#: elf32-mep.c:535 elf32-metag.c:1992 elf32-microblaze.c:1559
-#: elf32-moxie.c:282 elf32-mt.c:395 elf32-openrisc.c:404 elf32-score.c:2729
-#: elf32-score7.c:2537 elf32-spu.c:5041 elf32-tilepro.c:3665 elf32-v850.c:2281
+#: elf32-k1.c:818 elf32-k1.c:2028 elf32-lm32.c:1160 elf32-m32c.c:553
+#: elf32-m32r.c:3066 elf32-m68hc1x.c:1283 elf32-mep.c:535 elf32-metag.c:1992
+#: elf32-microblaze.c:1559 elf32-moxie.c:282 elf32-mt.c:395
+#: elf32-openrisc.c:404 elf32-score.c:2729 elf32-score7.c:2537
+#: elf32-spu.c:5041 elf32-tilepro.c:3665 elf32-v850.c:2281
 #: elf32-xstormy16.c:936 elf64-mmix.c:1537 elfxx-tilegx.c:4050
 msgid "internal error: out of range error"
 msgstr ""
@@ -721,12 +722,12 @@ msgstr ""
 #: elf32-cr16.c:1496 elf32-cr16c.c:792 elf32-cris.c:2028 elf32-crx.c:934
 #: elf32-d10v.c:525 elf32-epiphany.c:571 elf32-fr30.c:601 elf32-frv.c:4051
 #: elf32-h8300.c:537 elf32-i860.c:1224 elf32-ip2k.c:1483 elf32-iq2000.c:700
-#: elf32-lm32.c:1172 elf32-m32c.c:565 elf32-m32r.c:3078 elf32-m68hc1x.c:1295
-#: elf32-mep.c:547 elf32-metag.c:2004 elf32-microblaze.c:1571
-#: elf32-moxie.c:294 elf32-msp430.c:1329 elf32-mt.c:403 elf32-openrisc.c:416
-#: elf32-score.c:2746 elf32-score7.c:2549 elf32-spu.c:5053
-#: elf32-tilepro.c:3677 elf32-v850.c:2305 elf32-xstormy16.c:948
-#: elf64-mmix.c:1549 elfxx-tilegx.c:4062
+#: elf32-k1.c:826 elf32-k1.c:2036 elf32-lm32.c:1172 elf32-m32c.c:565
+#: elf32-m32r.c:3078 elf32-m68hc1x.c:1295 elf32-mep.c:547 elf32-metag.c:2004
+#: elf32-microblaze.c:1571 elf32-moxie.c:294 elf32-msp430.c:1329
+#: elf32-mt.c:403 elf32-openrisc.c:416 elf32-score.c:2746 elf32-score7.c:2549
+#: elf32-spu.c:5053 elf32-tilepro.c:3677 elf32-v850.c:2305
+#: elf32-xstormy16.c:948 elf64-mmix.c:1549 elfxx-tilegx.c:4062
 msgid "internal error: unknown error"
 msgstr ""
 
@@ -1305,10 +1306,10 @@ msgstr ""
 
 #: elf32-avr.c:1264 elf32-bfin.c:3228 elf32-cris.c:2024 elf32-epiphany.c:567
 #: elf32-fr30.c:597 elf32-frv.c:4047 elf32-i860.c:1220 elf32-ip2k.c:1479
-#: elf32-iq2000.c:696 elf32-m32c.c:561 elf32-mep.c:543 elf32-metag.c:2000
-#: elf32-moxie.c:290 elf32-msp430.c:1325 elf32-mt.c:399 elf32-openrisc.c:412
-#: elf32-tilepro.c:3673 elf32-v850.c:2289 elf32-xstormy16.c:944
-#: elf64-mmix.c:1545 elfxx-tilegx.c:4058
+#: elf32-iq2000.c:696 elf32-k1.c:822 elf32-k1.c:2032 elf32-m32c.c:561
+#: elf32-mep.c:543 elf32-metag.c:2000 elf32-moxie.c:290 elf32-msp430.c:1325
+#: elf32-mt.c:399 elf32-openrisc.c:412 elf32-tilepro.c:3673 elf32-v850.c:2289
+#: elf32-xstormy16.c:944 elf64-mmix.c:1545 elfxx-tilegx.c:4058
 msgid "internal error: dangerous relocation"
 msgstr ""
 
@@ -1329,7 +1330,7 @@ msgstr ""
 msgid "%B(%A+0x%lx): reloc against `%s': error %d"
 msgstr ""
 
-#: elf32-bfin.c:2732
+#: elf32-bfin.c:2732 elf32-k1.c:343
 msgid "%B: relocation at `%A+0x%x' references symbol `%s' with nonzero addend"
 msgstr ""
 
@@ -1341,11 +1342,12 @@ msgstr ""
 msgid "R_BFIN_FUNCDESC references dynamic symbol with nonzero addend"
 msgstr ""
 
-#: elf32-bfin.c:2886 elf32-bfin.c:3009
+#: elf32-bfin.c:2886 elf32-bfin.c:3009 elf32-k1.c:487 elf32-k1.c:614
 msgid "cannot emit fixups in read-only section"
 msgstr ""
 
-#: elf32-bfin.c:2917 elf32-bfin.c:3047 elf32-lm32.c:1095 elf32-sh.c:4913
+#: elf32-bfin.c:2917 elf32-bfin.c:3047 elf32-k1.c:519 elf32-k1.c:653
+#: elf32-lm32.c:1095 elf32-sh.c:4913
 msgid "cannot emit dynamic relocations in read-only section"
 msgstr ""
 
@@ -1361,16 +1363,16 @@ msgstr ""
 msgid "warning: relocation references a different segment"
 msgstr ""
 
-#: elf32-bfin.c:4907
+#: elf32-bfin.c:4907 elf32-k1.c:1615
 msgid "%B: unsupported relocation type %i"
 msgstr ""
 
-#: elf32-bfin.c:5034 elf32-frv.c:6638
+#: elf32-bfin.c:5034 elf32-frv.c:6638 elfxx-k1.c:294
 #, c-format
 msgid "%s: cannot link non-fdpic object file into fdpic executable"
 msgstr ""
 
-#: elf32-bfin.c:5038 elf32-frv.c:6642
+#: elf32-bfin.c:5038 elf32-frv.c:6642 elfxx-k1.c:298
 #, c-format
 msgid "%s: cannot link fdpic object file into non-fdpic executable"
 msgstr ""
@@ -1748,6 +1750,32 @@ msgstr ""
 #: elf32-iq2000.c:862 elf32-m32c.c:824
 #, c-format
 msgid "%s: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"
+msgstr ""
+
+#: elf32-k1.c:278 elf64-ia64-vms.c:3942 elf32-ia64.c:4468 elf64-ia64.c:4468
+msgid ""
+"%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `"
+"%A'."
+msgstr ""
+
+#: elf32-k1.c:296 elf32-k1.c:360 elf32-k1.c:550
+msgid "%H: !IS_FDPIC in fdpic specific code\n"
+msgstr ""
+
+#: elf32-k1.c:446
+msgid "R_K1_FUNCDESC references dynamic symbol with nonzero addend"
+msgstr ""
+
+#: elf32-k1.c:572
+msgid "R_K1_FUNCDESC_VALUE references dynamic symbol with nonzero addend"
+msgstr ""
+
+#: elf32-k1.c:739
+msgid "%B(%A+0x%lx): reloc against `%s': %s"
+msgstr ""
+
+#: elf32-k1.c:741 elf32-k1.c:745
+msgid "relocation references a different segment"
 msgstr ""
 
 #: elf32-lm32.c:698 elf32-nios2.c:1117
@@ -2784,7 +2812,7 @@ msgstr ""
 msgid "internal inconsistency in size of .got.loc section"
 msgstr ""
 
-#: elf32-xtensa.c:3480
+#: elf32-xtensa.c:3480 elfxx-k1.c:284
 msgid "%B: incompatible machine type. Output is 0x%x. Input is 0x%x"
 msgstr ""
 
@@ -2914,12 +2942,6 @@ msgstr ""
 
 #: elf64-ia64-vms.c:3905 elf32-ia64.c:4430 elf64-ia64.c:4430
 msgid "unsupported reloc"
-msgstr ""
-
-#: elf64-ia64-vms.c:3942 elf32-ia64.c:4468 elf64-ia64.c:4468
-msgid ""
-"%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `"
-"%A'."
 msgstr ""
 
 #: elf64-ia64-vms.c:3957 elf32-ia64.c:4483 elf64-ia64.c:4483

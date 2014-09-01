@@ -477,6 +477,8 @@ DESCRIPTION
 .#define bfd_mach_k1io                 1
 .#define bfd_mach_k1bdp                2
 .#define bfd_mach_k1bio                3
+.#define bfd_mach_k1bdp_64             4
+.#define bfd_mach_k1bio_64             5
 .  bfd_arch_tilepro,   {* Tilera TILEPro *}
 .  bfd_arch_tilegx, {* Tilera TILE-Gx *}
 .#define bfd_mach_tilepro   1
