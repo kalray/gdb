@@ -988,7 +988,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     break;
                 }
                 if (tok[i].X_op == O_constant){
-  		    long long value = tok[i].X_add_number;
+  		    long long signed_value = tok[i].X_add_number;
+  		    unsigned long long unsigned_value = tok[i].X_add_number;
   		    int match_signed = 0;
 		    int match_unsigned = 0;
 
@@ -997,22 +998,30 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 		      return MATCH_NOT_FOUND;
                     }
 
-		    if(opdef->flags & k1SIGNED && opdef->width <= 32) {
-		      value = (signed int) value;
+		    // [JV] Special case of both signed and unsigned 
+		    if(opdef->width == 32 || opdef->width == 43) {
+		      signed long long high_mask = 0x8000000000000000LL;
+		      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
+
+		      high_mask = high_mask >> shift;
+
+		      // If high bits set to zero, can perform sign extension.
+		      if((signed_value & high_mask) == 0) {
+			signed_value = (signed_value << (64 - opdef->width)) >> (64 - opdef->width);
+		      }
 		    }
 
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
 
-		    match_signed = (((((signed long long)value) >> opdef->rightshift) >= min) && ((((signed long long)value) >> opdef->rightshift) <= max));
-		    match_unsigned = ((((unsigned long long)value >> opdef->rightshift) & mask) == ((unsigned long long)value >> opdef->rightshift));
+		    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
+		    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
 
                     if ( ( (!(opdef->flags & k1SIGNED)) && !match_unsigned ) ||
 			 ( (opdef->flags & k1SIGNED)    && !match_signed ) ) {
 		      return MATCH_NOT_FOUND;
                     }
-
                     break;
                 }
 
