@@ -999,7 +999,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     }
 
 		    // [JV] Special case of both signed and unsigned 
-		    if(opdef->width == 32 || opdef->width == 43) {
+		    if(opdef->width == 32) {
 		      signed long long high_mask = 0x8000000000000000LL;
 		      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
 
