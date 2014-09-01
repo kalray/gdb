@@ -57,9 +57,6 @@ static void supported_cores(char buf[], size_t buflen);
 #define STREQ(x,y) !strcmp(((x) ? (x) : ""), ((y) ? (y) : ""))
 #define STRNEQ(x,y,n) !strncmp(((x) ? (x) : ""), ((y) ? (y) : ""),(n))
 
-/* Global flag to activate debuging */
-static int debug = 0;
-
 int emit_all_relocs = 0;
 /*TB begin*/
 int size_type_function = 1;
@@ -811,6 +808,7 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     char *old_input_line_pointer;
     int saw_comma = 0, saw_arg = 0;
     int tokcnt = 0;
+    int debug = 0;
     
     memset(tok, 0, sizeof (*tok) * ntok);
 
@@ -967,6 +965,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_unsigned5:
             case Immediate_k1_unsigned6:
             case Immediate_k1_eventmask2:
+            case Immediate_k1_unsigned16:
             case Immediate_k1_unsigned32:
             case Immediate_k1_unsigned32L:
             case Immediate_k1_signed32M:
@@ -976,12 +975,13 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 if(tok[i].X_op == O_symbol) {
 		  return MATCH_NOT_FOUND;
                 }
+            case Immediate_k1_signed8:
             case Immediate_k1_signed10:
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
             case Immediate_k1_signed27:
-            case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel17:
+            case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
                 if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
@@ -1076,7 +1076,9 @@ insert_operand(k1insn_t * insn,
         k1bfield * opdef,
         const expressionS * arg)
  {
-    unsigned long long op = 0;
+    unsigned int op = 0;
+    //    long long max;
+    //    long long min;
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
@@ -1143,9 +1145,9 @@ insert_operand(k1insn_t * insn,
             if (!(arg->X_add_symbol))
             {
                 if(opdef->flags & k1SIGNED){
-                  op = (long long)arg->X_add_number >> opdef->rightshift;
+                  op = (int)((int)arg->X_add_number >> opdef->rightshift);
                 }else{
-                  op = (unsigned long long)arg->X_add_number >> opdef->rightshift;
+                  op = ((unsigned int)arg->X_add_number >> opdef->rightshift);
                 }
                 break;
             }
@@ -1169,21 +1171,21 @@ insert_operand(k1insn_t * insn,
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
-                    case Immediate_k1_pcrel27:
+                  case Immediate_k1_pcrel27:
                         insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
-                    case Immediate_k1_signed27:
-                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* FIXME K1B */
+                  case Immediate_k1_signed27:
+                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1B */
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
 
-                    case Immediate_k1_signed10:
-                    case Immediate_k1_signed16:
+                  case Immediate_k1_signed10:
+                  case Immediate_k1_signed16:
 			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 			insn->fixup[0].exp = *arg;
 			insn->fixup[0].where = 0;
@@ -1198,7 +1200,7 @@ insert_operand(k1insn_t * insn,
 			immxcnt++;
 			break;
 
-                    default:
+                  default:
                         as_fatal("don't know how to generate a fixup record");
                 }
                 return;
@@ -1210,8 +1212,26 @@ insert_operand(k1insn_t * insn,
         }
     }
 
+    /*
+    if ( ((!(opdef->flags & k1SIGNED)) && ((op & mask) != op)) ||
+	 ((opdef->flags & k1SIGNED) && ((((signed long long) op) < min) || (((signed long long) op) > max))) )
+      {
+        // Generate immx. FIXME HACK : On K1, we always extend 10 bits bfields, even for make that uses 16 bits
+            mask = ~(-1LL << 10);
+            insn->len = 1;
+            insn->immx = immxcnt;
+
+            immxbuf[immxcnt].insn[0] = (unsigned int)op >> 10; // Good news, IMMX is now 0x00000000, don't bother with macro.
+//            fprintf(stderr, "INSN %#llx gets immx %d (%#llx)\n", insn->insn[0], immxcnt, immxbuf[immxcnt].insn[0]);
+            immxbuf[immxcnt].nfixups = 0;
+            immxbuf[immxcnt].len = 1;
+            immxcnt++;
+
+    }
+     */
+
     for(bf_idx=0;bf_idx < bf_nb; bf_idx++) {
-      unsigned long long value = ((unsigned long long)op >> bfields[bf_idx].from_offset);
+      unsigned int value = ((unsigned int)op >> bfields[bf_idx].from_offset);
       int j = 0;
       int to_offset = bfields[bf_idx].to_offset;
       value &= (1LL << bfields[bf_idx].size) - 1;
@@ -1734,6 +1754,8 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
     int bundle_type;
 
+    int debug = 0;
+
     for(i=0; i<bundle_insncnt; i++){
         if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
             if(bundle_insncnt == 1){
@@ -1984,49 +2006,19 @@ static char *k1b_insn_slot_type(const k1insn_t *insn) {
   return slot_type;
 }
 
-static int get_needed_LITE(const k1insn_t *insn, int k1b_free_resources[RESOURCE_MAX], int total_LITE_MONODOUBLE, int total_TINY_MONODOUBLE, int total_single_LITE, int total_single_TINY) {
-
-  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
-  int needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
-  if((total_LITE_MONODOUBLE + total_single_LITE) > 0) {
-
-    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
-      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
-
-    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
-      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
-      needed_LITE++;
-    }
-
-    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
-      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
-      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
-
-    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
-      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
-      needed_LITE++;
-    }
-  }
-
-  return needed_LITE;
-}
-
-static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_MAU, int num_LSU, int total_LITE_MONODOUBLE,
-			 int total_TINY_MONODOUBLE, int total_single_LITE, int total_single_TINY) {
+static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_LSU, int total_single_LITE, int total_LITE_MONODOUBLE) {
 
   /* We have to decide for LITE instruction. It should be placed on MAU before LSU because 
      LSU cannot execute LITE. */
 
   int mono_double = is_mono_double(insn);
-  int free_ALU = k1b_resources[Resource_k1_ALU] - num_ALU;
-
-  D(stderr,"%s:%d OP %s (%s), num_ALU = %d, free_ALU: %d\n",__FUNCTION__,__LINE__,
-    insn->opdef->as_op,k1_type_name(insn), num_ALU, free_ALU );
+  int debug = 0;
+  
+  D(stderr,"%s:%d OP %s (%s), num_ALU = %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,k1_type_name(insn), num_ALU);
   
   if((insn->type == K1_TINY || insn->type == K1_TMD) &&
      (total_single_LITE + total_LITE_MONODOUBLE) > 0 &&
-     (k1b_resources[Resource_k1_LSU] - num_LSU) > 0 &&
-     !(free_ALU == 2 && (total_single_LITE + total_single_TINY) == 1 && (total_TINY_MONODOUBLE + total_LITE_MONODOUBLE) == 1) ) {
+     (k1b_resources[Resource_k1_LSU] - num_LSU) > 0) {
     D(stderr,"%s:%d OP %s: is TINY and need LITE slot if LSU slot is available -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
     return 0;
   }
@@ -2042,6 +2034,8 @@ static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
 			       int total_TINY_MONODOUBLE,
 			       int total_LITE_MONODOUBLE) {
   int mono_double = is_mono_double(insn);
+
+  int debug = 0;
 
   int k1b_free_resources[RESOURCE_MAX];
   int needed_LITE = 0;
@@ -2113,8 +2107,27 @@ static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
     return 0;
   }
 
-  needed_LITE = get_needed_LITE(insn, k1b_free_resources, total_LITE_MONODOUBLE, total_TINY_MONODOUBLE, total_single_LITE, total_single_TINY);
+  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
+  needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
+  if((total_LITE_MONODOUBLE + total_single_LITE) >= 1) {
 
+    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
+
+    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
+      needed_LITE++;
+    }
+
+    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
+      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
+
+    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
+      needed_LITE++;
+    }
+  }
 
   D(stderr,"%s:%d OP %s needed_LITE: %d, free LITE: %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,needed_LITE, k1b_free_resources[Resource_k1_LITE]);
 
@@ -2154,6 +2167,8 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   int tag = 0;
   int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
   int bundle_type;
+
+  int debug = 0;
 
   for(i=0; i<bundle_insncnt; i++){
     if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
@@ -2346,8 +2361,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  }
 	}
       } else {
-	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_MAU, num_LSU,
-					 total_LITE_MONODOUBLE, total_TINY_MONODOUBLE, total_single_LITE, total_single_TINY)){
+	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_LSU,total_single_LITE, total_LITE_MONODOUBLE)){
 	  // 5 is reserved for MAU. LSU and all others goes after.
 	  shadow_bundle[5] = bundle_insn[j];
 	  tag = Modifier_k1_exunum_MAU;
