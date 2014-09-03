@@ -16,7 +16,6 @@ static void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
 
 #define DEFAULT_STACK_SIZE 0x20000
 
-
 #if 0
 #define DPRINT(X) fprintf(stderr, "==> " X "\n")
 #else
@@ -958,6 +957,12 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
   case bfd_mach_k1io:
     fprintf (f, "\nMachine     = k1io\n");
     break;
+  case bfd_mach_k1bdp:
+	fprintf (f, "\nMachine     = k1bdp\n");
+	break;
+  case bfd_mach_k1bio:
+	fprintf (f, "\nMachine     = k1bio\n");
+	break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
   }
@@ -970,6 +975,7 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
 
   return _bfd_elf_print_private_bfd_data (abfd, farg);
 }
+
 
 /* The final processing done just before writing out an K1 ELF object
    file.  This gets the K1 architecture right based on the machine
@@ -986,6 +992,8 @@ elf_k1_final_write_processing (bfd *abfd,
     {
     case bfd_mach_k1dp:
     case bfd_mach_k1io:
+    case bfd_mach_k1bdp:
+    case bfd_mach_k1bio:
       val = mach;
       break;
     default:
@@ -1006,6 +1014,8 @@ elf_k1_object_p (bfd *abfd)
   switch (mach) {
     case bfd_mach_k1dp:
     case bfd_mach_k1io:
+    case bfd_mach_k1bdp:
+    case bfd_mach_k1bio:
       break;
     default:
       return FALSE;
@@ -1180,6 +1190,7 @@ _k1fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
                                       ->output_section)->dynindx;
               ad = k1fdpic_got_section (info)->output_offset
                 + k1fdpic_got_initial_offset (info) + entry->fd_entry;
+
             }
 
           /* If there is room for dynamic symbol resolution, emit the
@@ -1677,7 +1688,7 @@ k1_elf_relocate_section
 	case R_K1_16_GPREL:
 	case R_K1_GPREL_LO10:
 	case R_K1_GPREL_HI22:
-	    relocation -=  elf32_k1_gp_base (output_bfd, info);
+            relocation -=  elf32_k1_gp_base (output_bfd, info);
 	    break;
     case R_K1_GOTOFF:
     case R_K1_GOTOFF_HI22:
@@ -5282,6 +5293,7 @@ elf_k1_modify_program_headers (bfd *output_bfd,
   return TRUE;
 }
 
+
 /* Copy backend specific data from one object module to another.  */
 
 static bfd_boolean
@@ -5302,6 +5314,7 @@ k1_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 
   return TRUE;
 }
+
 
 static bfd_boolean
 elf_k1_copy_private_bfd_data(bfd *ibfd, bfd *obfd)

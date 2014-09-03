@@ -46,6 +46,8 @@
 #include "dw2gencfi.h"
 #endif
 
+#define D(args...) do { if(debug) fprintf(args); }while(0)
+
 static void supported_cores(char buf[], size_t buflen);
 
 #define O_pseudo_fixup (O_max + 1)
@@ -75,6 +77,7 @@ char *error_str=NULL;
 
 /* Default values used if no assume directive is given */
 static const K1_Core_Info *k1_core_info = NULL;
+static int subcore_id = 0;
 
 /* Default k1_registers array. */
 static const k1_Register *k1_registers = NULL;
@@ -151,6 +154,9 @@ struct k1insn_s
 };
 
 typedef struct k1insn_s k1insn_t;
+
+typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
+static reorder_bundle_t reorder_bundle = NULL;
 
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
@@ -569,6 +575,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 
 int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   int i;
+  int find_core = 0;
 
   switch (c) {
   case 'h':
@@ -590,14 +597,25 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_MCORE:
     mcore = strdup(arg);
-    for (i = 0; i < K1_NCORES; i++){
-      if (strcasecmp(mcore, k1_core_info_table[i]->name) == 0
-	  && k1_core_info_table[i]->supported){
-	k1_core_info = k1_core_info_table[i];
-	k1_registers = k1_registers_table[i];
-	k1_regfiles = k1_regfiles_table[i];
-	break;
+    i = 0;
+    while(i < K1_NCORES && ! find_core) {
+      subcore_id = 0;
+      while(k1_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
+	if (strcasecmp(mcore, k1_core_info_table[i]->names[subcore_id]) == 0
+	    && k1_core_info_table[i]->supported){
+
+	  k1_core_info = k1_core_info_table[i];
+	  k1_registers = k1_registers_table[i];
+	  k1_regfiles = k1_regfiles_table[i];
+	
+	  find_core = 1;
+	}
+	else {
+	  subcore_id++;
+	}
       }
+      if(find_core) { break; }
+      i++;
     }
     if (i == K1_NCORES){
       char buf[100];
@@ -700,25 +718,27 @@ real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
         abort();
 }
 
-static void supported_cores(char buf[], size_t buflen)
- {
-    int i;
-    buf[0] = '\0';
-    for (i = 0; i < K1_NCORES; i++)
-        if (k1_core_info_table[i]->supported)
- {
-            if (buf[0] == '\0')
-                strcpy(buf, k1_core_info_table[i]->name);
-            else
- {
-                int l = strlen(buf);
-                if ((l + 1 + strlen(k1_core_info_table[i]->name) + 1) < buflen)
- {
-                    strcat(buf, "|");
-                    strcat(buf, k1_core_info_table[i]->name);
-                }
-            }
-        }
+static void supported_cores(char buf[], size_t buflen) {
+  int i, j;
+  buf[0] = '\0';
+  for (i = 0; i < K1_NCORES; i++) {
+    j = 0;
+    while(k1_core_info_table[i]->elf_cores[j] != -1) {
+      if (k1_core_info_table[i]->supported) {
+	if (buf[0] == '\0') {
+	  strcpy(buf, k1_core_info_table[i]->names[j]);
+	}
+	else {
+	  int l = strlen(buf);
+	  if ((l + 1 + strlen(k1_core_info_table[i]->names[j]) + 1) < buflen) {
+	    strcat(buf, "|");
+	    strcat(buf, k1_core_info_table[i]->names[j]);
+	  }
+	}
+      }
+    j++;
+    }
+  }
 }
 
 int get_regnum_by_name(char *name){
@@ -747,7 +767,8 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     char *old_input_line_pointer;
     int saw_comma = 0, saw_arg = 0;
     int tokcnt = 0;
-
+    int debug = 0;
+    
     memset(tok, 0, sizeof (*tok) * ntok);
 
     /* Save and restore input_line_pointer around this function */
@@ -788,7 +809,7 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
 		break;
 	      }
 	      else {
-		fprintf(stderr, "tok type == %d\n", tok->X_op);
+		D(stderr, "tok type == %d\n", tok->X_op);
 		as_warn("expected a register");
 		break;
 	      }
@@ -878,16 +899,19 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	  return MATCH_NOT_FOUND;
 	}
 
+#define SRF_REGCLASSES(core)                           \
+	  case RegClass_ ## core ## _systemReg:                        \
+	  case RegClass_ ## core ##_nopcpsReg:                 \
+	  case RegClass_ ## core ## _onlypsReg:                        \
+	  case RegClass_ ## core ## _onlyraReg:                        \
+	  case RegClass_ ## core ## _onlyfxReg:
+
         switch (operand_type) {
             case RegClass_k1_singleReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_GRF)
             case RegClass_k1_pairedReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
-            case RegClass_k1_systemReg:
-            case RegClass_k1_nopcpsReg:
-            case RegClass_k1_onlypsReg:
-            case RegClass_k1_onlyraReg:
-            case RegClass_k1_onlyfxReg:
+			SRF_REGCLASSES(k1)
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
 	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
@@ -895,8 +919,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_flagmask2:
             case Immediate_k1_brknumber:
             case Immediate_k1_sysnumber:
+            case Immediate_k1_signed5:
             case Immediate_k1_unsigned5:
-            case Immediate_k1_signed5M:
             case Immediate_k1_unsigned6:
             case Immediate_k1_eventmask2:
             case Immediate_k1_unsigned32:
@@ -907,9 +931,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 }
             case Immediate_k1_signed10:
             case Immediate_k1_signed16:
-            case Immediate_k1_extension22:
             case Immediate_k1_pcrel18:
-            case Immediate_k1_pcoff17:
+            case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
                 if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
@@ -948,6 +971,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 #undef IS_K1_REGFILE_SRF
 #undef IS_K1_REGFILE_NRF
 #undef MATCH_K1_REGFILE
+#undef SRF_REGCLASSES
 }
 
 /*
@@ -1065,7 +1089,7 @@ insert_operand(k1insn_t * insn,
             {
                 switch (opdef->type)
                 {
-                  case Immediate_k1_pcoff17:
+                  case Immediate_k1_pcrel17:
                         insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
@@ -1085,7 +1109,6 @@ insert_operand(k1insn_t * insn,
                         break;
 
                     case Immediate_k1_signed10:
-                    case Immediate_k1_extension22:
                     case Immediate_k1_signed16:
 			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 			insn->fixup[0].exp = *arg;
@@ -1453,6 +1476,12 @@ static Bundling find_bundling(const k1insn_t *insn)
     return insn_bundlings;
 }
 
+static int find_reservation(const k1insn_t *insn)
+ {
+    int insn_reservation = insn->opdef->reservation;
+    return insn_reservation;
+}
+
 static int cmp_bundling(const void *a, const void *b)
  {
     const Bundling *ba = (const Bundling *)a;
@@ -1476,76 +1505,82 @@ static int cmp_bundling(const void *a, const void *b)
  */
 
 static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
-    int hash = 0;
-    int i;
-    int canonical_ix;
-    const BundleMatchType *match;
-    Bundling canonical_order[K1MAXBUNDLESIZE];
+  int hash = 0;
+  int i;
+  int canonical_ix;
+  const BundleMatchType *match;
+  Bundling canonical_order[K1MAXBUNDLESIZE];
+  
+  
+  if (*bundle_insn_cnt > K1MAXBUNDLESIZE) {
+    return -1;
+  }
+  
+  for (i = 0; i < *bundle_insn_cnt; i++) {
+    canonical_order[i] = bundle_insn[i]->bundling;
+  }
+  qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
+  
+  for (i = 0; i < *bundle_insn_cnt; i++) {
+    hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
+  }
+  
+  if (hash > bundlematch_table_size) {
+    return -1;
+  }
+  
+  canonical_ix = bundlematch_table[hash];
+  
+  if (canonical_ix == -1) {
+    /* No match at all for canonical, on any alignment. */
+    return -1;
+  }
+  
+  match = &canonical_table[canonical_ix];
+  
+  /* Try each bundle type for this canonical. */
+  for (i = 0; i < match->entries; i++) {
+    int bt = match->entry[i];
+    const BundleType *btype = &bundle_types[bt];
+    int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
+    /* Our known alignment is current pc modulo section align.
+     * That must satisfy the bundle requirements. */
+    int cur_align = get_byte_counter(now_seg) % sec_align;
 
-
-    if (*bundle_insn_cnt > K1MAXBUNDLESIZE)
-        return -1;
-
-    for (i = 0; i < *bundle_insn_cnt; i++)
-        canonical_order[i] = bundle_insn[i]->bundling;
-    qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
-
-    for (i = 0; i < *bundle_insn_cnt; i++)
-        hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
-
-    if (hash > bundlematch_table_size)
-        return -1;
-    canonical_ix = bundlematch_table[hash];
-
-    if (canonical_ix == -1)
-        /* No match at all for canonical, on any alignment. */
-        return -1;
-
-    match = &canonical_table[canonical_ix];
-    /* Try each bundle type for this canonical. */
-    for (i = 0; i < match->entries; i++)
- {
-        int bt = match->entry[i];
-        const BundleType *btype = &bundle_types[bt];
-        int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
-        /* Our known alignment is current pc modulo section align.
-         * That must satisfy the bundle requirements. */
-        int cur_align = get_byte_counter(now_seg) % sec_align;
-
-        if ((btype->nnops == 0 || nop_insertion_allowed)
-                && sec_align >= btype->base
-                && (cur_align % btype->base) == btype->bias)
- { /* We have a match. Reorder bundle_insn to match it. */
-            int entry, insn;
-            int next_nop = 0;
-
-            for (entry = 0; entry < *bundle_insn_cnt; entry++)
-                /* Put correct insn in bundle_insn[entry] */
-                if (entry == btype->nops[next_nop])
- {
-                    bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
-                    assemble_tokens("nop", 0, 0);
-                    insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
-                    bundle_insn[entry] = &insbuf[insncnt-1];
-                    next_nop++;
-                }
-                else
- {
-                    for (insn = entry; insn < *bundle_insn_cnt; insn++)
-                        if (bundle_insn[insn]->bundling == btype->bundling[entry])
- {
-                            k1insn_t *t = bundle_insn[entry];
-                            bundle_insn[entry] = bundle_insn[insn];
-                            bundle_insn[insn] = t;
-                            break;
-                        }
-                }
-            return canonical_ix;
-        }
+    if ((btype->nnops == 0 || nop_insertion_allowed)
+	&& sec_align >= btype->base
+	&& (cur_align % btype->base) == btype->bias) {
+      /* We have a match. Reorder bundle_insn to match it. */
+      int entry, insn;
+      int next_nop = 0;
+      
+      for (entry = 0; entry < *bundle_insn_cnt; entry++) {
+	/* Put correct insn in bundle_insn[entry] */
+	if (entry == btype->nops[next_nop]) {
+	  bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
+	  assemble_tokens("nop", 0, 0);
+	  insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
+	  bundle_insn[entry] = &insbuf[insncnt-1];
+	  next_nop++;
+	}
+	else {
+	  for (insn = entry; insn < *bundle_insn_cnt; insn++) {
+	    if (bundle_insn[insn]->bundling == btype->bundling[entry]) {
+	      k1insn_t *t = bundle_insn[entry];
+	      bundle_insn[entry] = bundle_insn[insn];
+	      bundle_insn[insn] = t;
+	      break;
+	    }
+	  }
+	}
+      }
+      return canonical_ix;
     }
-    /* Here if we matched a canonical, but the alignment was not good for
-     * any of the bundle types. */
-    return -2;
+  }
+
+  /* Here if we matched a canonical, but the alignment was not good for
+   * any of the bundle types. */
+  return -2;
 }
 
 /*
@@ -1557,40 +1592,39 @@ static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
 static void
 assemble_tokens(const char *opname,
         const expressionS * tok,
-        int ntok)
- {
-    const k1opc_t *opcode;
-    k1insn_t *insn;
+        int ntok) {
+  const k1opc_t *opcode;
+  k1insn_t *insn;
+  
+  /* make sure there is room in instruction buffer */
+  
+  if (insncnt >= K1MAXINSN) {
+    as_fatal("too many instructions in bundle ");
+  }
 
-    /* make sure there is room in instruction buffer */
+  insn = insbuf + insncnt;
 
-    if (insncnt >= K1MAXINSN)
-        as_fatal("too many instructions in bundle ");
-    insn = insbuf + insncnt;
-
-    /* find the instruction in the opcode table */
-
-    opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
-    if (opcode)
- {
-        if (!(opcode = find_format(opcode, tok, ntok)))
-            as_bad("[assemble_tokens] : couldn't find format %s \n",
-                    opname);
-        else
- {
-            assemble_insn(opcode, tok, ntok, insn);
-            insncnt++;
-        }
+  /* find the instruction in the opcode table */
+  
+  opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
+  if (opcode) {
+    if (!(opcode = find_format(opcode, tok, ntok))) {
+      as_bad("[assemble_tokens] : couldn't find format %s \n",
+	     opname);
     }
-    else
- {
-        as_bad("[assemble_tokens] : couldn't find op %s\n", opname);
+    else {
+      assemble_insn(opcode, tok, ntok, insn);
+      insncnt++;
     }
+  }
+  else {
+    as_bad("[assemble_tokens] : couldn't find op %s\n", opname);
+  }
 }
 
 
 static int
-is_equivalent_bundle(Bundling b1, Bundling b2){
+k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     switch(b1){
         case Bundling_k1_BCU:
             if(b2 == Bundling_k1_BCU){
@@ -1630,7 +1664,7 @@ is_equivalent_bundle(Bundling b1, Bundling b2){
 
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
-reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     k1insn_t *shadow_bundle[7];
     int bundle_insncnt = *bundle_insncnt_p;
     int i, j;
@@ -1642,6 +1676,8 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     int tag = 0;
     int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
     int bundle_type;
+
+    int debug = 0;
 
     for(i=0; i<bundle_insncnt; i++){
         if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
@@ -1664,7 +1700,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     for(i=0; i < 5 ; i++){
         bundle_type = priority[i];
         for(j=0; j < bundle_insncnt; j++){
-            if(is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
+            if(k1a_is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
                 switch(bundle_type){
                     case Bundling_k1_ALU:
                     case Bundling_k1_ALU_X:
@@ -1723,7 +1759,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 // Tag EXU on IMMX
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                    fprintf(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
                 }
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
@@ -1738,8 +1774,8 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
             if(num_ALU < 2){
                 shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
-                tag = Modifier_k1_exunum_ALU0 + num_ALU;
-                num_ALU++;
+		tag = Modifier_k1_exunum_ALU0 + num_ALU;
+		num_ALU++;
             } else {
                 if(num_TINY + num_MAU + num_LSU > 2){
                     as_fatal("Too many TINY ops\n");
@@ -1757,7 +1793,7 @@ reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-//                fprintf(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
             }
         }
     }
@@ -1889,7 +1925,7 @@ md_assemble(char *s)
               }
             }
 
-            //fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
+            // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
 	}
 
@@ -1960,15 +1996,17 @@ k1_set_cpu(void) {
     k1_regfiles = k1_k1dp_regfiles;
   }
 
-  switch(k1_core_info->elf_core) {
+  switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
     bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    reorder_bundle = k1a_reorder_bundle;
     break;
   default:
-    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_core);
+    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
   }
 }
 
@@ -2666,7 +2704,7 @@ k1_md_start_line_hook(void) {
                 /* For cores st231 and onward, empty bundles don't need to cause the
                  * generation of a NOP instruction. Just ignore them...
                  */
-                if ((k1_core_info->elf_core & ELF_K1_CORE_MASK) !=
+                if ((k1_core_info->elf_cores[subcore_id] & ELF_K1_CORE_MASK) !=
                         -6) {
                     /* this is an empty bundle, transform it into an
                      * empty statement */
@@ -2800,25 +2838,29 @@ k1_pic_ptr (int nbytes)
 static void
 k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
  {
-    const char *target_name = k1_core_info->name;
+    const char *target_name = k1_core_info->names[subcore_id];
 
     while ( (input_line_pointer!=NULL)
             && ! is_end_of_line [(unsigned char) *input_line_pointer])
  {
         int found = FALSE;
-        int i;
+        int i, j;
         SKIP_WHITESPACE();
 
         /* core */
         for (i = 0; i < K1_NCORES; i++) {
-            if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->name)) {
-                set_assume_param(&k1_core, k1_core_info_table[i]->elf_core, &k1_core_set);
+	  j=0;
+	  while(k1_core_info_table[i]->elf_cores[j] != -1) {
+            if (is_assume_param(&input_line_pointer, k1_core_info_table[i]->names[j])) {
+                set_assume_param(&k1_core, k1_core_info_table[i]->elf_cores[subcore_id], &k1_core_set);
                 if (k1_core_info != k1_core_info_table[i])
                     as_fatal("assume machine '%s' is inconsistent with current machine '%s'",
-                            k1_core_info_table[i]->name, target_name);
+                            k1_core_info_table[i]->names[j], target_name);
                 found = TRUE;
                 break;
             }
+	    j++;
+	  }
         }
 
         if (! found) {
@@ -2910,7 +2952,7 @@ k1_end(void)
     Elf_Internal_Ehdr * i_ehdrp;
 
     if (! k1_core_set)
-        k1_core = k1_core_info->elf_core;
+        k1_core = k1_core_info->elf_cores[subcore_id];
 
     /* (pp) the flags must be set at once */
     newflags= k1_core | k1_cut | k1_abi | k1_pic_flags;

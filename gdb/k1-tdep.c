@@ -183,15 +183,10 @@ static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
 static const gdb_byte *
 k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-    static const gdb_byte BREAK_DP[] = { 0xFF, 0xFF, 0x1, 0 };
-    static const gdb_byte BREAK_IO[] = { 0xFF, 0xFF, 0x1, 0 };
+    static const gdb_byte BREAK[] = { 0xFF, 0xFF, 0x1, 0 };
     *len = 4;
 
-    switch (k1_arch ()) {
-    case K1_K1DP: return BREAK_DP;
-    case K1_K1IO: return BREAK_IO;
-    default: internal_error (__FILE__, __LINE__, "Unknown K1 arch !\n");
-    }
+    return BREAK;
 }
 
 static CORE_ADDR
@@ -249,7 +244,8 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	{ sp_adjust_insns[K1_K1IO], 0 /* Dest register */},
 	{ sp_store_insns[K1_K1IO], 1 /* Base register */},
 	{ prologue_helper_insns[K1_K1IO], -1 /* unused */},
-        } };
+        },
+    };
 
     prologue_ops *prologue_insns = &prologue_insns_full [k1_arch ()];
 

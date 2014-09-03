@@ -25,6 +25,61 @@
 #define MAU_EXU 2
 #define LSU_EXU 3
 
+static char *get_steering_name(int steering) {
+  switch(steering) {
+  case BCU_STEER:
+    return "BCU";
+  case LSU_STEER:
+    return "LSU";
+  case MAU_STEER:
+    return "MAU";
+  case ALU_STEER:
+    return "ALU";
+  default:
+    return "UNKNOWN STEERING";
+  }
+}
+
+typedef struct {
+  unsigned int bit0: 1;
+  unsigned int bit1: 1;
+  unsigned int bit2: 1;
+  unsigned int bit3: 1;
+  unsigned int bit4: 1;
+  unsigned int bit5: 1;
+  unsigned int bit6: 1;
+  unsigned int bit7: 1;
+  unsigned int bit8: 1;
+  unsigned int bit9: 1;
+  unsigned int bit10: 1;
+  unsigned int bit11: 1;
+  unsigned int bit12: 1;
+  unsigned int bit13: 1;
+  unsigned int bit14: 1;
+  unsigned int bit15: 1;
+  unsigned int bit16: 1;
+  unsigned int bit17: 1;
+  unsigned int bit18: 1;
+  unsigned int bit19: 1;
+  unsigned int bit20: 1;
+  unsigned int bit21: 1;
+  unsigned int bit22: 1;
+  unsigned int bit23: 1;
+  unsigned int bit24: 1;
+  unsigned int bit25: 1;
+  unsigned int bit26: 1;
+  unsigned int bit27: 1;
+  unsigned int bit28: 1;
+  unsigned int bit29: 1;
+  unsigned int bit30: 1;
+  unsigned int bit31: 1;
+} opcode_bits_t;
+
+typedef union {
+  opcode_bits_t bits;
+  unsigned int  value;
+} opcode_t;
+
 struct objdump_disasm_info {
     bfd *abfd;
     asection *sec;
@@ -47,7 +102,9 @@ static bundle_t bundle_insn[ISSUES];
 */
 static bundle_t bundle_insn[MAXBUNDLESIZE];
 
-static int reassemble_bundle(unsigned int *opcnt) {
+typedef int (*reassemble_bundle_t)(unsigned int *opcnt);
+
+static int k1a_reassemble_bundle(unsigned int *opcnt) {
     unsigned int i;
     unsigned int insncnt = 0;
     unsigned int immxcnt = 0;
@@ -156,7 +213,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int opt_pretty = 0;
   int found = 0;
   int invalid_bundle = 0;
-  
+  reassemble_bundle_t reassemble_bundle = NULL;
+
   /* check that tables are initialized */
 
   if (info->arch != bfd_arch_k1) {
@@ -170,12 +228,14 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_regfiles = k1_k1dp_regfiles;
       k1_registers = k1_k1dp_registers;
       k1_dec_registers = k1_k1dp_dec_registers;
+      reassemble_bundle = k1a_reassemble_bundle;
       break;
     case bfd_mach_k1io:
       opc_table = k1io_k1optab;
       k1_regfiles = k1_k1io_regfiles;
       k1_registers = k1_k1io_registers;
       k1_dec_registers = k1_k1io_dec_registers;
+      reassemble_bundle = k1a_reassemble_bundle;
       break;
     default:
       /* Core not supported */
@@ -222,7 +282,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
   /* check for extension to right      */
   /* iff this is not the end of bundle */
-  
+
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
       unsigned int i;
@@ -238,12 +298,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
 
       for(i=0; i < op->codewords; i++) {
-          if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
-              opcode_match = 0;
-          }
+	if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
+	  opcode_match = 0;
+	}
       }
 
-      if (opcode_match){
+      if (opcode_match) {
           /* print the operands using the instructions format string. */
           fmtp = op->fmtstring;
           // If the user wants "pretty printing", ie, not the usual little endian objdump output
@@ -304,6 +364,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
    (*info->fprintf_func) (info->stream, "$??");				\
  }
 
+#define SRF_REGCLASSES(core)                           \
+			case RegClass_ ## core ## _systemReg:      \
+			case RegClass_ ## core ##_nopcpsReg:       \
+			case RegClass_ ## core ## _onlypsReg:      \
+			case RegClass_ ## core ## _onlyraReg:      \
+			case RegClass_ ## core ## _onlyfxReg:
 
               switch (type) {
                   case RegClass_k1_singleReg:
@@ -312,31 +378,26 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1_pairedReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
-                  case RegClass_k1_systemReg:
-                  case RegClass_k1_nopcpsReg:
-                  case RegClass_k1_onlypsReg:
-                  case RegClass_k1_onlyraReg:
-                  case RegClass_k1_onlyfxReg:
+			  SRF_REGCLASSES(k1)
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_NRF,value)
                       break;
 
-                  case Immediate_k1_signed32:
-                  case Immediate_k1_signed32M:
-                  case Immediate_k1_signed5M:
-                  case Immediate_k1_unsigned32L:
-                  case Immediate_k1_unsigned32:
-                  case Immediate_k1_extension22:
                   case Immediate_k1_eventmask2:
                   case Immediate_k1_flagmask2:
-                  case Immediate_k1_signed10:
-                  case Immediate_k1_signed16:
                   case Immediate_k1_brknumber:
                   case Immediate_k1_sysnumber:
+                  case Immediate_k1_signed5:
+                  case Immediate_k1_signed10:
+                  case Immediate_k1_signed16:
+                  case Immediate_k1_signed32:
+                  case Immediate_k1_signed32M:
                   case Immediate_k1_unsigned5:
                   case Immediate_k1_unsigned6:
+                  case Immediate_k1_unsigned32:
+                  case Immediate_k1_unsigned32L:
                       value <<= rightshift;
                       if(flags & k1SIGNED){
                           if(width <= 32) {
@@ -354,8 +415,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                           }
                       }
                       break;
+                  case Immediate_k1_pcrel17:
                   case Immediate_k1_pcrel18:
-                  case Immediate_k1_pcoff17:
                   case Immediate_k1_pcrel27:
                       (*info->print_address_func)((value << rightshift) + memaddr, info);
                       break;
@@ -365,6 +426,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               };
 
 #undef K1_PRINT_REG     
+#undef SRF_REGCLASSES
           }
 
           /* Print trailing characters in the format string, if any */
