@@ -931,6 +931,14 @@ match_operands(const k1opc_t * op, const expressionS * tok,
       return MATCH_NOT_FOUND;
     }
 
+    /* Check enconding space */
+    int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
+
+    for(i=0; i < op->codewords; i++) {
+      if (! (op->codeword[i].flags & encoding_space_flags))
+	return MATCH_NOT_FOUND;
+    }
+
 #define IS_K1_REGFILE_GRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_GRF]) \
 				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GRF]))
 #define IS_K1_REGFILE_PRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_PRF]) \

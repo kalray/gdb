@@ -530,6 +530,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int          *k1_dec_registers = NULL;
   unsigned int  k1_max_registers = 0;
   unsigned int  k1_max_dec_registers = 0;
+  int k1_arch_size = 32;
   int readsofar = 0;
   int opt_pretty = 0;
   int found = 0;
@@ -551,6 +552,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1a_dec_registers;
       reassemble_bundle = k1a_reassemble_bundle;
       break;
+
     case bfd_mach_k1io:
       opc_table = k1a_k1optab;
       k1_regfiles = k1_k1a_regfiles;
@@ -558,38 +560,26 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1a_dec_registers;
       reassemble_bundle = k1a_reassemble_bundle;
       break;
-    case bfd_mach_k1bdp:
-      // FIXME : 64 bits variant should not share everthing.
+
     case bfd_mach_k1bdp_64:
+      k1_arch_size = 64;
+    case bfd_mach_k1bdp:
       opc_table = k1b_k1optab;
       k1_regfiles = k1_k1b_regfiles;
       k1_registers = k1_k1b_registers;
       k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
-    case bfd_mach_k1bio:
-      // FIXME : 64 bits variant should not share everthing.
+
     case bfd_mach_k1bio_64:
+      k1_arch_size = 64;
+    case bfd_mach_k1bio:
       opc_table = k1b_k1optab;
       k1_regfiles = k1_k1b_regfiles;
       k1_registers = k1_k1b_registers;
       k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
-    /* case bfd_mach_k1bdp_64: */
-    /*   opc_table = k1b64_k1optab; */
-    /*   k1_regfiles = k1_k1b64_regfiles; */
-    /*   k1_registers = k1_k1b64_registers; */
-    /*   k1_dec_registers = k1_k1b64_dec_registers; */
-    /*   reassemble_bundle = k1b_reassemble_bundle; */
-    /*   break; */
-    /* case bfd_mach_k1bio_64: */
-    /*   opc_table = k1b64_k1optab; */
-    /*   k1_regfiles = k1_k1b64_regfiles; */
-    /*   k1_registers = k1_k1b64_registers; */
-    /*   k1_dec_registers = k1_k1b64_dec_registers; */
-    /*   reassemble_bundle = k1b_reassemble_bundle; */
-    /*   break; */
 
     default:
       /* Core not supported */
@@ -656,6 +646,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 	if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
 	  opcode_match = 0;
 	}
+      }
+      int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
+
+      for(i=0; i < op->codewords; i++) {
+	if (! (op->codeword[i].flags & encoding_space_flags))
+	  opcode_match = 0;
       }
 
       if (opcode_match) {
