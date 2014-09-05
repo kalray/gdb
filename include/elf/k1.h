@@ -1,17 +1,17 @@
 /**
- * *** (c) Copyright Hewlett-Packard Company 1999-2003 
+ * *** (c) Copyright Hewlett-Packard Company 1999-2003
  * ***
  * *** This program is free software; you can redistribute it and/or
  * *** modify it under the terms of the GNU General Public License
  * *** as published by the Free Software Foundation; either version
  * *** 2 of the License, or (at your option) any later version.
- * *** 
+ * ***
  * *** This program is distributed in the hope that it will be useful,
  * *** but WITHOUT ANY WARRANTY; without even the implied warranty of
  * *** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * *** General Public License for more details.
  * ***
- * *** You should have received a copy of the GNU General Public License 
+ * *** You should have received a copy of the GNU General Public License
  * *** along with this program; if not, write to the Free Software
  * *** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  * **/
@@ -50,29 +50,44 @@
 
 typedef union {
     struct {
-          unsigned rta : 4;  
+          unsigned rta : 4;
             } obj_compat;
       unsigned int f;
 } k1_bfd_flags;
 
+/* 
+ * Machine private data :
+ * - byte 0 = ABI specific (PIC, OS, ...)
+ * - byte 1 = Core info :
+ *   - bits 0..2 = V1/DP/IO
+ *   - bit  3    = arch version (a/b)
+ *   - bit  7    = 32/64 bits addressing
+ * - byte 2 = Cut info
+ */
+
 /* (pp) core */
-#define _ELF_K1_CORE_BIT        (8)                      /* 1st bit position in 
+#define _ELF_K1_CORE_BIT        (8)                      /* 1st bit position in
                                                             byte */
-#define ELF_K1_CORE_MASK        (0xff<<_ELF_K1_CORE_BIT)           /* mask */
+#define ELF_K1_CORE_MASK        (0x7f<<_ELF_K1_CORE_BIT)           /* mask */
 #define ELF_K1_CORE_V1          (0x0<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_DP          (0x1<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_IO          (0x2<<_ELF_K1_CORE_BIT)
+
 #define ELF_K1_CORE_B           (0x4<<_ELF_K1_CORE_BIT)
-#define ELF_K1_CORE_B64         (0x8<<_ELF_K1_CORE_BIT)
+
 #define ELF_K1_CORE_B_DP        (ELF_K1_CORE_B | ELF_K1_CORE_DP)
 #define ELF_K1_CORE_B_IO        (ELF_K1_CORE_B | ELF_K1_CORE_IO)
-#define ELF_K1_CORE_B64_DP      (ELF_K1_CORE_B64 | ELF_K1_CORE_DP)
-#define ELF_K1_CORE_B64_IO      (ELF_K1_CORE_B64 | ELF_K1_CORE_IO)
+
+/* Last bit in byte used for 64bits addressing */
+#define ELF_K1_CORE_ADDR64_MASK (0x80<<_ELF_K1_CORE_BIT)
+
 #define ELF_K1_CORE_UNDEF       (0x7<<_ELF_K1_CORE_BIT)
 #define _ELF_K1_CHECK_CORE(flags,m) (((flags) & ELF_K1_CORE_MASK)==(m))
 
+#define _ELF_K1_CHECK_ADDR64(flags) (((flags) & ELF_K1_CORE_ADDR64_MASK))
+
 /* (pp) cut */
-#define _ELF_K1_CUT_BIT (16)                             /* 1st bit position in 
+#define _ELF_K1_CUT_BIT (16)                             /* 1st bit position in
                                                             byte */
 #define ELF_K1_CUT_MASK         (0xf<<_ELF_K1_CUT_BIT)           /* mask */
 #define ELF_K1_CUT_0            (0x0<<_ELF_K1_CUT_BIT)
@@ -114,11 +129,11 @@ typedef union {
 
 /* compatibility with rta directive on solaris : rta bits where writen in the bi
  * ts 28:31 on Solaris */
-#define _ELF_K1_RTA_BIT (28)                             /* 1st bit position in 
+#define _ELF_K1_RTA_BIT (28)                             /* 1st bit position in
                                                             byte */
 
 /* (pp) code generation mode */
-#define _ELF_K1_MODE_BIT (7)                             /* 1st bit position in 
+#define _ELF_K1_MODE_BIT (7)                             /* 1st bit position in
                                                             byte */
 #define ELF_K1_MODE_MASK        (0x1<<_ELF_K1_MODE_BIT)           /* mask */
 #define ELF_K1_MODE_USER        (0x0<<_ELF_K1_MODE_BIT)
@@ -189,4 +204,3 @@ START_RELOC_NUMBERS (elf_k1_reloc_type)
   END_RELOC_NUMBERS (R_K1_max)
 
 #endif
-  

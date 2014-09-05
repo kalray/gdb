@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2014-09-01 16:03+0200\n"
+"POT-Creation-Date: 2014-09-02 17:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -928,7 +928,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1883 config/tc-k1.c:3979
+#: config/obj-elf.c:1883 config/tc-k1.c:4002
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -2372,9 +2372,9 @@ msgstr ""
 #: config/tc-h8300.c:104 config/tc-h8300.c:114 config/tc-h8300.c:125
 #: config/tc-h8300.c:242 config/tc-hppa.c:6898 config/tc-hppa.c:6904
 #: config/tc-hppa.c:6910 config/tc-hppa.c:6916 config/tc-hppa.c:8323
-#: config/tc-k1.c:2665 config/tc-k1.c:2680 config/tc-k1.c:2685
-#: config/tc-k1.c:2691 config/tc-k1.c:2694 config/tc-k1.c:2701
-#: config/tc-k1.c:2704 config/tc-lm32.c:197 config/tc-mips.c:3335
+#: config/tc-k1.c:2683 config/tc-k1.c:2698 config/tc-k1.c:2703
+#: config/tc-k1.c:2709 config/tc-k1.c:2712 config/tc-k1.c:2719
+#: config/tc-k1.c:2722 config/tc-lm32.c:197 config/tc-mips.c:3335
 #: config/tc-mn10300.c:939 config/tc-mn10300.c:944 config/tc-mn10300.c:2441
 #: config/tc-xc16x.c:79 config/tc-xc16x.c:86 config/tc-xc16x.c:93
 msgid "could not set architecture and machine"
@@ -4627,7 +4627,7 @@ msgid "illegal %srelocation size: %d"
 msgstr ""
 
 #: config/tc-bfin.c:96 config/tc-frv.c:1605 config/tc-frv.c:1615
-#: config/tc-k1.c:3511
+#: config/tc-k1.c:3529
 msgid "missing ')'"
 msgstr ""
 
@@ -8673,46 +8673,46 @@ msgstr ""
 msgid "missing `.end'"
 msgstr ""
 
-#: config/tc-k1.c:2296
+#: config/tc-k1.c:2314
 #, c-format
 msgid "%s is mono double but not LITE nor TINY"
 msgstr ""
 
-#: config/tc-k1.c:2302
+#: config/tc-k1.c:2320
 #, c-format
 msgid "%s: is LITE and not TINY!"
 msgstr ""
 
-#: config/tc-k1.c:2339 config/tc-k1.c:2389
+#: config/tc-k1.c:2357 config/tc-k1.c:2407
 #, c-format
 msgid "%s is mono double but not TINY nor LITE"
 msgstr ""
 
-#: config/tc-k1.c:2422
+#: config/tc-k1.c:2440
 #, c-format
 msgid "total_single_TINY should be equal to zero, is equal to %d"
 msgstr ""
 
-#: config/tc-k1.c:2426
+#: config/tc-k1.c:2444
 #, c-format
 msgid "total_single_LITE should be equal to zero, is equal to %d"
 msgstr ""
 
-#: config/tc-k1.c:2435
+#: config/tc-k1.c:2453
 #, c-format
 msgid ""
 "Too many TINY ops (used %d, available: %d):\n"
 "%s"
 msgstr ""
 
-#: config/tc-k1.c:2445
+#: config/tc-k1.c:2463
 #, c-format
 msgid ""
 "Too many LITE ops (used %d, available: %d):\n"
 "%s"
 msgstr ""
 
-#: config/tc-k1.c:2467
+#: config/tc-k1.c:2485
 #, c-format
 msgid ""
 "LITE instruction '%s' on LSU slot:\n"
@@ -8720,11 +8720,11 @@ msgid ""
 msgstr ""
 
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:3314
+#: config/tc-k1.c:3332
 msgid "floating-point literals are not supported"
 msgstr ""
 
-#: config/tc-k1.c:3794
+#: config/tc-k1.c:3817
 msgid "alignments greater than 32 bytes not supported in .text sections."
 msgstr ""
 

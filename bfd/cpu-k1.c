@@ -32,44 +32,44 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   return NULL;
 }
 
-static struct
-{
-  unsigned int mach;
-  char *       name;
-}
-processors[] =
-{
-  { bfd_mach_k1dp, "k1dp"  },
-  { bfd_mach_k1io, "k1io"  },
-  { bfd_mach_k1bdp, "k1bdp"  },
-  { bfd_mach_k1bio, "k1bio"  },
-};
+/* static struct */
+/* { */
+/*   unsigned int mach; */
+/*   char *       name; */
+/* } */
+/* processors[] = */
+/* { */
+/*   { bfd_mach_k1dp, "k1dp"  }, */
+/*   { bfd_mach_k1io, "k1io"  }, */
+/*   { bfd_mach_k1bdp, "k1bdp"  }, */
+/*   { bfd_mach_k1bio, "k1bio"  }, */
+/* }; */
 
-static bfd_boolean
-scan (const struct bfd_arch_info *info, const char *string)
-{
-  int  i;
+/* static bfd_boolean */
+/* scan (const struct bfd_arch_info *info, const char *string) */
+/* { */
+/*   int  i; */
 
-  /* First test for an exact match.  */
-  if (strcasecmp (string, info->printable_name) == 0)
-    return TRUE;
+/*   /\* First test for an exact match.  *\/ */
+/*   if (strcasecmp (string, info->printable_name) == 0) */
+/*     return TRUE; */
 
-  /* Next check for a processor name instead of an Architecture name.  */
-  for (i = sizeof (processors) / sizeof (processors[0]); i--;)
-    {
-      if (strcasecmp (string, processors [i].name) == 0)
-	break;
-    }
+/*   /\* Next check for a processor name instead of an Architecture name.  *\/ */
+/*   for (i = sizeof (processors) / sizeof (processors[0]); i--;) */
+/*     { */
+/*       if (strcasecmp (string, processors [i].name) == 0) */
+/* 	break; */
+/*     } */
 
-  if (i != -1 && info->mach == processors [i].mach)
-    return TRUE;
+/*   if (i != -1 && info->mach == processors [i].mach) */
+/*     return TRUE; */
 
-  /* Finally check for the default architecture.  */
-  if (strcasecmp (string, "k1") == 0)
-    return info->the_default;
+/*   /\* Finally check for the default architecture.  *\/ */
+/*   if (strcasecmp (string, "k1") == 0) */
+/*     return info->the_default; */
 
-  return FALSE;
-}
+/*   return FALSE; */
+/* } */
 
 
 #define N(addr_bits, machine, print, default, next)		\
@@ -84,19 +84,19 @@ scan (const struct bfd_arch_info *info, const char *string)
   4,				/* Section align power.  */	\
   default,			/* Is this the default ?  */	\
   compatible,							\
-  bfd_default_scan,								\
+  bfd_default_scan,						\
   bfd_arch_default_fill,					\
   next								\
 }
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (32, bfd_mach_k1dp,      "k1dp",       FALSE, & arch_info_struct[1]),
-  N (32, bfd_mach_k1io,      "k1io",       FALSE, & arch_info_struct[2]),
-  N (32, bfd_mach_k1bdp,     "k1bdp",      FALSE, & arch_info_struct[3]),
-  N (32, bfd_mach_k1bio,     "k1bio",      FALSE, & arch_info_struct[4]),
-  N (64, bfd_mach_k1bdp_64,   "k1bdp:64",  FALSE, & arch_info_struct[5]),
-  N (64, bfd_mach_k1bio_64,   "k1bio:64",  FALSE, NULL),
+  N (32, bfd_mach_k1dp,       "k1:k1dp",      FALSE, & arch_info_struct[1]),
+  N (32, bfd_mach_k1io,       "k1:k1io",      FALSE, & arch_info_struct[2]),
+  N (32, bfd_mach_k1bdp,      "k1:k1bdp",     FALSE, & arch_info_struct[3]),
+  N (32, bfd_mach_k1bio,      "k1:k1bio",     FALSE, & arch_info_struct[4]),
+  N (64, bfd_mach_k1bdp_64,   "k1:k1bdp:64",  FALSE, & arch_info_struct[5]),
+  N (64, bfd_mach_k1bio_64,   "k1:k1bio:64",  FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =
