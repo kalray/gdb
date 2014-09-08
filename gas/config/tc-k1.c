@@ -164,8 +164,8 @@ struct k1insn_s {
   int immx;                             /* insn is extended */
   int immx64;                           /* only used for 64 immx */
   unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
-  int nfixups;		                /* the number of fixups 0, 1               */
-  k1_fixup_t fixup[1];	                /* the actual fixups                       */
+  int nfixups;		                /* the number of fixups [0,2]              */
+  k1_fixup_t fixup[2];	                /* the actual fixups                       */
   Bundling bundling;                    /* the bundling type                       */
   k1_slots_t slots;                     /* Used slots (one slot per bit).          */
   k1_insn_type_t type;                  /* Type of instruction.                    */
@@ -1213,10 +1213,20 @@ insert_operand(k1insn_t * insn,
 
                   case Immediate_k1_signed10:
                   case Immediate_k1_signed16:
-		        insn->fixup[0].reloc = k1_arch_size == 32 ? BFD_RELOC_K1_LO10 :BFD_RELOC_K1_LO16;
+		    if (k1_arch_size == 32){
+		        insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 			insn->fixup[0].exp = *arg;
 			insn->fixup[0].where = 0;
 			insn->nfixups = 1;
+		    } else {
+		        insn->fixup[0].reloc = BFD_RELOC_K1_ELO10;
+			insn->fixup[0].exp = *arg;
+			insn->fixup[0].where = 0;
+		        insn->fixup[1].reloc = BFD_RELOC_K1_EXTEND6;
+			insn->fixup[1].exp = *arg;
+			insn->fixup[1].where = 0;
+			insn->nfixups = 2;
+		    }
 			insn->immx = immxcnt;
 			immxbuf[immxcnt].insn[0] = 0;
 			immxbuf[immxcnt].fixup[0].reloc = k1_arch_size == 32 ? BFD_RELOC_K1_HI22 : BFD_RELOC_K1_HI27;
@@ -3033,7 +3043,8 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             //md_number_to_chars(fixpos2, image2, fixP->fx_size);
             break;
         case BFD_RELOC_K1_LO10:
-        case BFD_RELOC_K1_LO16:
+        case BFD_RELOC_K1_ELO10:
+        case BFD_RELOC_K1_EXTEND6:
         case BFD_RELOC_K1_TPREL_LO10:
 //         case BFD_RELOC_K1_PCREL_LO10:
         case BFD_RELOC_K1_GPREL_LO10:
