@@ -23,6 +23,7 @@
 /*   unsigned int k1_reloc_val; */
 /* }; */
 
+
 const struct k1_reloc_map k1_reloc_map[]=
 {
   { BFD_RELOC_NONE,          R_K1_NONE },
@@ -59,11 +60,15 @@ const struct k1_reloc_map k1_reloc_map[]=
   { BFD_RELOC_K1_COPY,       R_K1_COPY },
   { BFD_RELOC_K1_JMP_SLOT,   R_K1_JMP_SLOT },
   { BFD_RELOC_K1_RELATIVE,   R_K1_RELATIVE },
+  { BFD_RELOC_K1_LO16,       R_K1_LO16 },
+  { BFD_RELOC_K1_HI27,       R_K1_HI27 },
+
 /*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
   { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
 };
 
 const int k1_reloc_map_len = sizeof(k1_reloc_map) / sizeof (struct k1_reloc_map);
+
 
 static struct bfd_hash_entry *
 link_hash_newfunc (struct bfd_hash_entry *entry,

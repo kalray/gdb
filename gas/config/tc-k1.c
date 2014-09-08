@@ -1213,13 +1213,13 @@ insert_operand(k1insn_t * insn,
 
                   case Immediate_k1_signed10:
                   case Immediate_k1_signed16:
-			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
+		        insn->fixup[0].reloc = k1_arch_size == 32 ? BFD_RELOC_K1_LO10 :BFD_RELOC_K1_LO16;
 			insn->fixup[0].exp = *arg;
 			insn->fixup[0].where = 0;
 			insn->nfixups = 1;
 			insn->immx = immxcnt;
 			immxbuf[immxcnt].insn[0] = 0;
-			immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
+			immxbuf[immxcnt].fixup[0].reloc = k1_arch_size == 32 ? BFD_RELOC_K1_HI22 : BFD_RELOC_K1_HI27;
 			immxbuf[immxcnt].fixup[0].exp = *arg;
 			immxbuf[immxcnt].fixup[0].where = 0;
 			immxbuf[immxcnt].nfixups = 1;
@@ -2927,7 +2927,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
     //char *const fixpos2 = fixP->fx_frag->fr_literal + fixP->fx_where - 4;
     valueT value = *valueP;
     //valueT value2 = *valueP;
-    unsigned image;
+    valueT image;
     arelent *rel;
 
     rel = (arelent *)xmalloc(sizeof(arelent));
@@ -2993,6 +2993,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             md_number_to_chars(fixpos, image, fixP->fx_size);
             break;
         case BFD_RELOC_K1_HI22:
+        case BFD_RELOC_K1_HI27:
         case BFD_RELOC_K1_TPREL_HI22:
 //         case BFD_RELOC_K1_PCREL_HI22:
         case BFD_RELOC_K1_GPREL_HI22:
@@ -3032,6 +3033,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             //md_number_to_chars(fixpos2, image2, fixP->fx_size);
             break;
         case BFD_RELOC_K1_LO10:
+        case BFD_RELOC_K1_LO16:
         case BFD_RELOC_K1_TPREL_LO10:
 //         case BFD_RELOC_K1_PCREL_LO10:
         case BFD_RELOC_K1_GPREL_LO10:
