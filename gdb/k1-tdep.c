@@ -102,8 +102,6 @@ static enum K1_ARCH {
     K1_K1IO,
     K1_K1BDP,
     K1_K1BIO,
-    K1_K1B64DP,
-    K1_K1B64IO,
     K1_NUM_ARCHES
 } k1_current_arch = K1_NUM_ARCHES;
 
@@ -145,10 +143,6 @@ k1_arch (void)
             k1_current_arch = K1_K1BDP; break;
         case ELF_K1_CORE_B_IO:
             k1_current_arch = K1_K1BIO; break;
-        case ELF_K1_CORE_B64_DP:
-            k1_current_arch = K1_K1B64DP; break;
-        case ELF_K1_CORE_B64_IO:
-            k1_current_arch = K1_K1B64IO; break;
         default:
             error (_("The K1 binary is compiled for an unknown core."));
         }  
@@ -161,11 +155,6 @@ k1_arch (void)
             k1_current_arch = K1_K1BDP;
         else if (tdesc_find_feature (desc, "eu.kalray.core.k1bio"))
             k1_current_arch = K1_K1BIO;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1b64dp"))
-            k1_current_arch = K1_K1B64DP;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1b64io"))
-            k1_current_arch = K1_K1B64IO;
-
         else
             error ("unable to find the current k1 architecture.");
     }
@@ -274,16 +263,6 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	{ sp_store_insns[K1_K1BDP], 1 /* Base register */},
 	{ prologue_helper_insns[K1_K1BDP], -1 /* unused */},
         },
-        [K1_K1B64IO] = {
-	{ sp_adjust_insns[K1_K1B64IO], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1B64IO], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1B64IO], -1 /* unused */},
-        },
-        [K1_K1B64DP] = {
-	{ sp_adjust_insns[K1_K1B64DP], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1B64DP], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1B64DP], -1 /* unused */},
-        }
     };
 
     prologue_ops *prologue_insns = &prologue_insns_full [k1_arch ()];
@@ -1174,8 +1153,6 @@ static void k1_look_for_insns (void)
         case K1_K1IO: op = k1a_k1optab; break;
         case K1_K1BDP: op = k1b_k1optab; break;
         case K1_K1BIO: op = k1b_k1optab; break;
-        case K1_K1B64DP: op = k1b64_k1optab; break;
-        case K1_K1B64IO: op = k1b64_k1optab; break;
         default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
         }
         
