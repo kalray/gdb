@@ -3042,16 +3042,20 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
       break;
 
 	case EM_K1:
-            if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_DP)
+            if (_ELF_K1_CHECK_CORE(e_flags, ELF_K1_CORE_DP))
                 strcat (buf, ", k1dp");
-            else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_IO)
+            else if (_ELF_K1_CHECK_CORE(e_flags, ELF_K1_CORE_IO))
                 strcat (buf, ", k1io");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_DP)
-			      strcat (buf, ", k1bdp");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_IO)
-			      strcat (buf, ", k1bio");
+	    else if (_ELF_K1_CHECK_CORE(e_flags, ELF_K1_CORE_B_DP))
+	      strcat (buf, ", k1bdp");
+	    else if (_ELF_K1_CHECK_CORE(e_flags, ELF_K1_CORE_B_IO))
+	      strcat (buf, ", k1bio");
             else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_V1)
                 strcat (buf, ", k1v1");
+
+	    if (_ELF_K1_CHECK_ADDR64(e_flags))
+	      strcat (buf, ", @64bits");
+	    
 	  break;
 
 	case EM_MSP430:

@@ -157,7 +157,6 @@ k1_arch (void)
             k1_current_arch = K1_K1BDP;
         else if (tdesc_find_feature (desc, "eu.kalray.core.k1bio"))
             k1_current_arch = K1_K1BIO;
-
         else
             error ("unable to find the current k1 architecture.");
     }
@@ -265,7 +264,7 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	{ sp_adjust_insns[K1_K1BDP], 0 /* Dest register */},
 	{ sp_store_insns[K1_K1BDP], 1 /* Base register */},
 	{ prologue_helper_insns[K1_K1BDP], -1 /* unused */},
-        }
+        },
     };
 
     prologue_ops *prologue_insns = &prologue_insns_full [k1_arch ()];

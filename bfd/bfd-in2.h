@@ -2273,6 +2273,8 @@ enum bfd_architecture
 #define bfd_mach_k1io                 1
 #define bfd_mach_k1bdp                2
 #define bfd_mach_k1bio                3
+#define bfd_mach_k1bdp_64             4
+#define bfd_mach_k1bio_64             5
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -5550,6 +5552,9 @@ to two words (uses imm instruction).  */
   BFD_RELOC_K1_COPY,
   BFD_RELOC_K1_JMP_SLOT,
   BFD_RELOC_K1_RELATIVE,
+  BFD_RELOC_K1_EXTEND6,
+  BFD_RELOC_K1_ELO10,
+  BFD_RELOC_K1_HI27,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is

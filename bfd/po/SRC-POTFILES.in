@@ -185,6 +185,7 @@ elf32-i860.c
 elf32-i960.c
 elf32-ip2k.c
 elf32-iq2000.c
+elf32-k1.c
 elf32-lm32.c
 elf32-m32c.c
 elf32-m32r.c
@@ -247,6 +248,7 @@ elflink.c
 elfn32-mips.c
 elfxx-aarch64.c
 elfxx-ia64.c
+elfxx-k1.c
 elfxx-mips.c
 elfxx-sparc.c
 elfxx-tilegx.c

@@ -57,9 +57,6 @@ static void supported_cores(char buf[], size_t buflen);
 #define STREQ(x,y) !strcmp(((x) ? (x) : ""), ((y) ? (y) : ""))
 #define STRNEQ(x,y,n) !strncmp(((x) ? (x) : ""), ((y) ? (y) : ""),(n))
 
-/* Global flag to activate debuging */
-static int debug = 0;
-
 int emit_all_relocs = 0;
 /*TB begin*/
 int size_type_function = 1;
@@ -167,8 +164,8 @@ struct k1insn_s {
   int immx;                             /* insn is extended */
   int immx64;                           /* only used for 64 immx */
   unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
-  int nfixups;		                /* the number of fixups 0, 1               */
-  k1_fixup_t fixup[1];	                /* the actual fixups                       */
+  int nfixups;		                /* the number of fixups [0,2]              */
+  k1_fixup_t fixup[2];	                /* the actual fixups                       */
   Bundling bundling;                    /* the bundling type                       */
   k1_slots_t slots;                     /* Used slots (one slot per bit).          */
   k1_insn_type_t type;                  /* Type of instruction.                    */
@@ -249,6 +246,16 @@ static char *k1_type_name(const k1insn_t *insn) {
   default: return "UNKNOWN";
   }
 }
+
+/* Either 32 or 64.  */
+static int k1_arch_size = 32;
+
+const char *
+k1_target_format (void)
+{
+  return k1_arch_size == 64 ? "elf64-k1" : "elf32-k1";
+}
+
 
 /****************************************************/
 /*             Local Variables                      */
@@ -595,6 +602,8 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_BIGPIC	(OPTION_MD_BASE + 13)
 #define OPTION_FDPIC	(OPTION_MD_BASE + 14)
 #define OPTION_NOPIC    (OPTION_MD_BASE + 15)
+#define OPTION_32 (OPTION_MD_BASE + 16)
+#define OPTION_64 (OPTION_MD_BASE + 17)
 
 struct option md_longopts[] =
  {
@@ -612,6 +621,8 @@ struct option md_longopts[] =
      {"mfdpic",	no_argument,	NULL, OPTION_FDPIC},
      {"mnopic", no_argument,    NULL, OPTION_NOPIC},
      {"mno-fdpic", no_argument,    NULL, OPTION_NOPIC},
+     {"m32", no_argument,    NULL, OPTION_32},
+     {"m64", no_argument,    NULL, OPTION_64},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -690,6 +701,13 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_NOPIC:
     k1_pic_flags &= ~(ELF_K1_FDPIC);
+    break;
+  case OPTION_32:
+    k1_arch_size = 32;
+    break;
+
+  case OPTION_64:
+    k1_arch_size = 64;
     break;
   default:
     return 0;
@@ -811,6 +829,7 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     char *old_input_line_pointer;
     int saw_comma = 0, saw_arg = 0;
     int tokcnt = 0;
+    int debug = 0;
     
     memset(tok, 0, sizeof (*tok) * ntok);
 
@@ -912,6 +931,14 @@ match_operands(const k1opc_t * op, const expressionS * tok,
       return MATCH_NOT_FOUND;
     }
 
+    /* Check enconding space */
+    int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
+
+    for(i=0; i < op->codewords; i++) {
+      if (! (op->codeword[i].flags & encoding_space_flags))
+	return MATCH_NOT_FOUND;
+    }
+
 #define IS_K1_REGFILE_GRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_GRF]) \
 				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GRF]))
 #define IS_K1_REGFILE_PRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_PRF]) \
@@ -967,6 +994,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_unsigned5:
             case Immediate_k1_unsigned6:
             case Immediate_k1_eventmask2:
+            case Immediate_k1_unsigned16:
             case Immediate_k1_unsigned32:
             case Immediate_k1_unsigned32L:
             case Immediate_k1_signed32M:
@@ -976,19 +1004,21 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 if(tok[i].X_op == O_symbol) {
 		  return MATCH_NOT_FOUND;
                 }
+            case Immediate_k1_signed8:
             case Immediate_k1_signed10:
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
             case Immediate_k1_signed27:
-            case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel17:
+            case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
                 if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
                     break;
                 }
                 if (tok[i].X_op == O_constant){
-  		    long long value = tok[i].X_add_number;
+  		    long long signed_value = tok[i].X_add_number;
+  		    unsigned long long unsigned_value = tok[i].X_add_number;
   		    int match_signed = 0;
 		    int match_unsigned = 0;
 
@@ -997,22 +1027,30 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 		      return MATCH_NOT_FOUND;
                     }
 
-		    if(opdef->flags & k1SIGNED && opdef->width <= 32) {
-		      value = (signed int) value;
+		    // [JV] Special case of both signed and unsigned 
+		    if(opdef->width == 32) {
+		      signed long long high_mask = 0x8000000000000000LL;
+		      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
+
+		      high_mask = high_mask >> shift;
+
+		      // If high bits set to zero, can perform sign extension.
+		      if((signed_value & high_mask) == 0) {
+			signed_value = (signed_value << (64 - opdef->width)) >> (64 - opdef->width);
+		      }
 		    }
 
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
 
-		    match_signed = (((((signed long long)value) >> opdef->rightshift) >= min) && ((((signed long long)value) >> opdef->rightshift) <= max));
-		    match_unsigned = ((((unsigned long long)value >> opdef->rightshift) & mask) == ((unsigned long long)value >> opdef->rightshift));
+		    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
+		    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
 
                     if ( ( (!(opdef->flags & k1SIGNED)) && !match_unsigned ) ||
 			 ( (opdef->flags & k1SIGNED)    && !match_signed ) ) {
 		      return MATCH_NOT_FOUND;
                     }
-
                     break;
                 }
 
@@ -1134,9 +1172,9 @@ insert_operand(k1insn_t * insn,
             if (!(arg->X_add_symbol))
             {
                 if(opdef->flags & k1SIGNED){
-                  op = (long long)arg->X_add_number >> opdef->rightshift;
+                  op = ((signed long long)arg->X_add_number >> opdef->rightshift);
                 }else{
-                  op = (unsigned long long)arg->X_add_number >> opdef->rightshift;
+                  op = ((unsigned long long)arg->X_add_number >> opdef->rightshift);
                 }
                 break;
             }
@@ -1160,28 +1198,38 @@ insert_operand(k1insn_t * insn,
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
-                    case Immediate_k1_pcrel27:
+                  case Immediate_k1_pcrel27:
                         insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
-                    case Immediate_k1_signed27:
-                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* FIXME K1B */
+                  case Immediate_k1_signed27:
+                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1B */
                         insn->fixup[0].exp = *arg;
                         insn->fixup[0].where = 0;
                         insn->nfixups = 1;
                         break;
 
-                    case Immediate_k1_signed10:
-                    case Immediate_k1_signed16:
-			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
+                  case Immediate_k1_signed10:
+                  case Immediate_k1_signed16:
+		    if (k1_arch_size == 32){
+		        insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 			insn->fixup[0].exp = *arg;
 			insn->fixup[0].where = 0;
 			insn->nfixups = 1;
+		    } else {
+		        insn->fixup[0].reloc = BFD_RELOC_K1_ELO10;
+			insn->fixup[0].exp = *arg;
+			insn->fixup[0].where = 0;
+		        insn->fixup[1].reloc = BFD_RELOC_K1_EXTEND6;
+			insn->fixup[1].exp = *arg;
+			insn->fixup[1].where = 0;
+			insn->nfixups = 2;
+		    }
 			insn->immx = immxcnt;
 			immxbuf[immxcnt].insn[0] = 0;
-			immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
+			immxbuf[immxcnt].fixup[0].reloc = k1_arch_size == 32 ? BFD_RELOC_K1_HI22 : BFD_RELOC_K1_HI27;
 			immxbuf[immxcnt].fixup[0].exp = *arg;
 			immxbuf[immxcnt].fixup[0].where = 0;
 			immxbuf[immxcnt].nfixups = 1;
@@ -1189,7 +1237,7 @@ insert_operand(k1insn_t * insn,
 			immxcnt++;
 			break;
 
-                    default:
+                  default:
                         as_fatal("don't know how to generate a fixup record");
                 }
                 return;
@@ -1208,7 +1256,7 @@ insert_operand(k1insn_t * insn,
       value &= (1LL << bfields[bf_idx].size) - 1;
       j = to_offset / 32;
       to_offset = to_offset % 32;
-      insn->insn[j] |= value << to_offset;
+      insn->insn[j] |= (value << to_offset) & 0xffffffff;
     }
     return;
 }
@@ -1724,6 +1772,8 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
     int bundle_type;
 
+    int debug = 0;
+
     for(i=0; i<bundle_insncnt; i++){
         if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
             if(bundle_insncnt == 1){
@@ -1974,49 +2024,19 @@ static char *k1b_insn_slot_type(const k1insn_t *insn) {
   return slot_type;
 }
 
-static int get_needed_LITE(const k1insn_t *insn, int k1b_free_resources[RESOURCE_MAX], int total_LITE_MONODOUBLE, int total_TINY_MONODOUBLE, int total_single_LITE, int total_single_TINY) {
-
-  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
-  int needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
-  if((total_LITE_MONODOUBLE + total_single_LITE) > 0) {
-
-    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
-      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
-
-    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
-      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
-      needed_LITE++;
-    }
-
-    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
-      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
-      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
-
-    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
-      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
-      needed_LITE++;
-    }
-  }
-
-  return needed_LITE;
-}
-
-static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_MAU, int num_LSU, int total_LITE_MONODOUBLE,
-			 int total_TINY_MONODOUBLE, int total_single_LITE, int total_single_TINY) {
+static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_LSU, int total_single_LITE, int total_LITE_MONODOUBLE) {
 
   /* We have to decide for LITE instruction. It should be placed on MAU before LSU because 
      LSU cannot execute LITE. */
 
   int mono_double = is_mono_double(insn);
-  int free_ALU = k1b_resources[Resource_k1_ALU] - num_ALU;
-
-  D(stderr,"%s:%d OP %s (%s), num_ALU = %d, free_ALU: %d\n",__FUNCTION__,__LINE__,
-    insn->opdef->as_op,k1_type_name(insn), num_ALU, free_ALU );
+  int debug = 0;
+  
+  D(stderr,"%s:%d OP %s (%s), num_ALU = %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,k1_type_name(insn), num_ALU);
   
   if((insn->type == K1_TINY || insn->type == K1_TMD) &&
      (total_single_LITE + total_LITE_MONODOUBLE) > 0 &&
-     (k1b_resources[Resource_k1_LSU] - num_LSU) > 0 &&
-     !(free_ALU == 2 && (total_single_LITE + total_single_TINY) == 1 && (total_TINY_MONODOUBLE + total_LITE_MONODOUBLE) == 1) ) {
+     (k1b_resources[Resource_k1_LSU] - num_LSU) > 0) {
     D(stderr,"%s:%d OP %s: is TINY and need LITE slot if LSU slot is available -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
     return 0;
   }
@@ -2032,6 +2052,8 @@ static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
 			       int total_TINY_MONODOUBLE,
 			       int total_LITE_MONODOUBLE) {
   int mono_double = is_mono_double(insn);
+
+  int debug = 0;
 
   int k1b_free_resources[RESOURCE_MAX];
   int needed_LITE = 0;
@@ -2103,8 +2125,27 @@ static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
     return 0;
   }
 
-  needed_LITE = get_needed_LITE(insn, k1b_free_resources, total_LITE_MONODOUBLE, total_TINY_MONODOUBLE, total_single_LITE, total_single_TINY);
+  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
+  needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
+  if((total_LITE_MONODOUBLE + total_single_LITE) >= 1) {
 
+    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
+
+    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
+      needed_LITE++;
+    }
+
+    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
+      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
+
+    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
+      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
+      needed_LITE++;
+    }
+  }
 
   D(stderr,"%s:%d OP %s needed_LITE: %d, free LITE: %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,needed_LITE, k1b_free_resources[Resource_k1_LITE]);
 
@@ -2144,6 +2185,8 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   int tag = 0;
   int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
   int bundle_type;
+
+  int debug = 0;
 
   for(i=0; i<bundle_insncnt; i++){
     if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
@@ -2336,8 +2379,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  }
 	}
       } else {
-	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_MAU, num_LSU,
-					 total_LITE_MONODOUBLE, total_TINY_MONODOUBLE, total_single_LITE, total_single_TINY)){
+	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_LSU,total_single_LITE, total_LITE_MONODOUBLE)){
 	  // 5 is reserved for MAU. LSU and all others goes after.
 	  shadow_bundle[5] = bundle_insn[j];
 	  tag = Modifier_k1_exunum_MAU;
@@ -2628,7 +2670,9 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1a_core_info;
-      bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp)){
+	as_warn(_("could not set architecture and machine"));
+      }
   }
 
   if(!k1_registers) {
@@ -2641,19 +2685,33 @@ k1_set_cpu(void) {
 
   switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
     break;
   case ELF_K1_CORE_B_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp);
+    if (k1_arch_size == 32) {
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp))
+	as_warn(_("could not set architecture and machine"));
+    } else if (k1_arch_size == 64) {
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp_64))
+	as_warn(_("could not set architecture and machine"));
+    }
     reorder_bundle = k1b_reorder_bundle;
     break;
   case ELF_K1_CORE_B_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio);
+    if (k1_arch_size == 32){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio))
+	as_warn(_("could not set architecture and machine"));
+    } else if ( k1_arch_size == 64){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio_64))
+	as_warn(_("could not set architecture and machine"));
+    }
     reorder_bundle = k1b_reorder_bundle;
     break;
   default:
@@ -2872,7 +2930,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
     //char *const fixpos2 = fixP->fx_frag->fr_literal + fixP->fx_where - 4;
     valueT value = *valueP;
     //valueT value2 = *valueP;
-    unsigned image;
+    valueT image;
     arelent *rel;
 
     rel = (arelent *)xmalloc(sizeof(arelent));
@@ -2938,6 +2996,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             md_number_to_chars(fixpos, image, fixP->fx_size);
             break;
         case BFD_RELOC_K1_HI22:
+        case BFD_RELOC_K1_HI27:
         case BFD_RELOC_K1_TPREL_HI22:
 //         case BFD_RELOC_K1_PCREL_HI22:
         case BFD_RELOC_K1_GPREL_HI22:
@@ -2977,6 +3036,8 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             //md_number_to_chars(fixpos2, image2, fixP->fx_size);
             break;
         case BFD_RELOC_K1_LO10:
+        case BFD_RELOC_K1_ELO10:
+        case BFD_RELOC_K1_EXTEND6:
         case BFD_RELOC_K1_TPREL_LO10:
 //         case BFD_RELOC_K1_PCREL_LO10:
         case BFD_RELOC_K1_GPREL_LO10:
@@ -3534,10 +3595,10 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "abi-k1dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-		  { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-		  { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-		  { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-		  { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },
@@ -3611,7 +3672,12 @@ k1_end(void)
         k1_core = k1_core_info->elf_cores[subcore_id];
 
     /* (pp) the flags must be set at once */
-    newflags= k1_core | k1_cut | k1_abi | k1_pic_flags;
+    newflags = k1_core | k1_cut | k1_abi | k1_pic_flags;
+
+    if (k1_arch_size == 64) {
+      newflags |= ELF_K1_CORE_ADDR64_MASK;
+    }
+
     bfd_set_private_flags(stdoutput, newflags);
 
     i_ehdrp = elf_elfheader(stdoutput);

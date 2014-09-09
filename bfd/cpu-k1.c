@@ -71,17 +71,33 @@ scan (const struct bfd_arch_info *info, const char *string)
   return FALSE;
 }
 
-#define N(number, print, default, next)  \
-{  32, 32, 8, bfd_arch_k1, number, "k1", print, 4, default, \
-  compatible, scan, bfd_arch_default_fill, next }
+
+#define N(addr_bits, machine, print, default, next)		\
+{								\
+  32,				/* 32 bits in a word.  */	\
+  addr_bits,			/* bits in an address.  */	\
+  8,				/* 8 bits in a byte.  */	\
+  bfd_arch_k1,							\
+  machine,			/* Machine number.  */		\
+  "k1",  			/* Architecture name.   */	\
+  print,			/* Printable name.  */		\
+  4,				/* Section align power.  */	\
+  default,			/* Is this the default ?  */	\
+  compatible,							\
+  scan,						\
+  bfd_arch_default_fill,					\
+  next								\
+}
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (bfd_mach_k1dp,      "k1dp",   FALSE, & arch_info_struct[1]),
-  N (bfd_mach_k1io,      "k1io",   FALSE, & arch_info_struct[2]),
-  N (bfd_mach_k1bdp,     "k1bdp",  FALSE, & arch_info_struct[3]),
-  N (bfd_mach_k1bio,     "k1bio",  FALSE, NULL),
+  N (32, bfd_mach_k1dp,       "k1:k1dp",      FALSE, & arch_info_struct[1]),
+  N (32, bfd_mach_k1io,       "k1:k1io",      FALSE, & arch_info_struct[2]),
+  N (32, bfd_mach_k1bdp,      "k1:k1bdp",     FALSE, & arch_info_struct[3]),
+  N (32, bfd_mach_k1bio,      "k1:k1bio",     FALSE, & arch_info_struct[4]),
+  N (64, bfd_mach_k1bdp_64,   "k1:k1bdp:64",  FALSE, & arch_info_struct[5]),
+  N (64, bfd_mach_k1bio_64,   "k1:k1bio:64",  FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =
-  N (bfd_mach_k1dp, "k1", TRUE, & arch_info_struct[0]);
+  N (32, bfd_mach_k1dp, "k1", TRUE, & arch_info_struct[0]);
