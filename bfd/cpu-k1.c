@@ -32,44 +32,44 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   return NULL;
 }
 
-/* static struct */
-/* { */
-/*   unsigned int mach; */
-/*   char *       name; */
-/* } */
-/* processors[] = */
-/* { */
-/*   { bfd_mach_k1dp, "k1dp"  }, */
-/*   { bfd_mach_k1io, "k1io"  }, */
-/*   { bfd_mach_k1bdp, "k1bdp"  }, */
-/*   { bfd_mach_k1bio, "k1bio"  }, */
-/* }; */
+static struct
+{
+  unsigned int mach;
+  char *       name;
+}
+processors[] =
+{
+  { bfd_mach_k1dp, "k1dp"  },
+  { bfd_mach_k1io, "k1io"  },
+  { bfd_mach_k1bdp, "k1bdp"  },
+  { bfd_mach_k1bio, "k1bio"  },
+};
 
-/* static bfd_boolean */
-/* scan (const struct bfd_arch_info *info, const char *string) */
-/* { */
-/*   int  i; */
+static bfd_boolean
+scan (const struct bfd_arch_info *info, const char *string)
+{
+  int  i;
 
-/*   /\* First test for an exact match.  *\/ */
-/*   if (strcasecmp (string, info->printable_name) == 0) */
-/*     return TRUE; */
+  /* First test for an exact match.  */
+  if (strcasecmp (string, info->printable_name) == 0)
+    return TRUE;
 
-/*   /\* Next check for a processor name instead of an Architecture name.  *\/ */
-/*   for (i = sizeof (processors) / sizeof (processors[0]); i--;) */
-/*     { */
-/*       if (strcasecmp (string, processors [i].name) == 0) */
-/* 	break; */
-/*     } */
+  /* Next check for a processor name instead of an Architecture name.  */
+  for (i = sizeof (processors) / sizeof (processors[0]); i--;)
+    {
+      if (strcasecmp (string, processors [i].name) == 0)
+	break;
+    }
 
-/*   if (i != -1 && info->mach == processors [i].mach) */
-/*     return TRUE; */
+  if (i != -1 && info->mach == processors [i].mach)
+    return TRUE;
 
-/*   /\* Finally check for the default architecture.  *\/ */
-/*   if (strcasecmp (string, "k1") == 0) */
-/*     return info->the_default; */
+  /* Finally check for the default architecture.  */
+  if (strcasecmp (string, "k1") == 0)
+    return info->the_default;
 
-/*   return FALSE; */
-/* } */
+  return FALSE;
+}
 
 
 #define N(addr_bits, machine, print, default, next)		\
@@ -84,7 +84,7 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   4,				/* Section align power.  */	\
   default,			/* Is this the default ?  */	\
   compatible,							\
-  bfd_default_scan,						\
+  scan,						\
   bfd_arch_default_fill,					\
   next								\
 }
