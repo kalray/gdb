@@ -1,6 +1,6 @@
 /* Symbol table lookup for the GNU debugger, GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,8 +50,8 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
-#include <sys/stat.h>
+#include "gdb_string.h"
+#include "gdb_stat.h"
 #include <ctype.h>
 #include "cp-abi.h"
 #include "cp-support.h"
@@ -61,6 +61,7 @@
 #include "macrotab.h"
 #include "macroscope.h"
 
+#include "psymtab.h"
 #include "parser-defs.h"
 
 /* Prototypes for local functions */
@@ -104,25 +105,8 @@ void _initialize_symtab (void);
 
 /* */
 
-/* Program space key for finding name and language of "main".  */
-
-static const struct program_space_data *main_progspace_key;
-
-/* Type of the data stored on the program space.  */
-
-struct main_info
-{
-  /* Name of "main".  */
-
-  char *name_of_main;
-
-  /* Language of "main".  */
-
-  enum language language_of_main;
-};
-
 /* When non-zero, print debugging messages related to symtab creation.  */
-unsigned int symtab_create_debug = 0;
+int symtab_create_debug = 0;
 
 /* Non-zero if a file may be known by two different basenames.
    This is the uncommon case, and significantly slows down gdb.
@@ -187,22 +171,6 @@ search_domain_name (enum search_domain e)
     case TYPES_DOMAIN: return "TYPES_DOMAIN";
     case ALL_DOMAIN: return "ALL_DOMAIN";
     default: gdb_assert_not_reached ("bad search_domain");
-    }
-}
-
-/* Set the primary field in SYMTAB.  */
-
-void
-set_symtab_primary (struct symtab *symtab, int primary)
-{
-  symtab->primary = primary;
-
-  if (symtab_create_debug && primary)
-    {
-      fprintf_unfiltered (gdb_stdlog,
-			  "Created primary symtab %s for %s.\n",
-			  host_address_to_string (symtab),
-			  symtab_to_filename_for_display (symtab));
     }
 }
 
@@ -708,42 +676,6 @@ symbol_find_demangled_name (struct general_symbol_info *gsymbol,
      symbols).  Just the mangling standard is not standardized across compilers
      and there is no DW_AT_producer available for inferiors with only the ELF
      symbols to check the mangling kind.  */
-
-  /* Check for Ada symbols last.  See comment below explaining why.  */
-
-  if (gsymbol->language == language_auto)
-   {
-     const char *demangled = ada_decode (mangled);
-
-     if (demangled != mangled && demangled != NULL && demangled[0] != '<')
-       {
-	 /* Set the gsymbol language to Ada, but still return NULL.
-	    Two reasons for that:
-
-	      1. For Ada, we prefer computing the symbol's decoded name
-		 on the fly rather than pre-compute it, in order to save
-		 memory (Ada projects are typically very large).
-
-	      2. There are some areas in the definition of the GNAT
-		 encoding where, with a bit of bad luck, we might be able
-		 to decode a non-Ada symbol, generating an incorrect
-		 demangled name (Eg: names ending with "TB" for instance
-		 are identified as task bodies and so stripped from
-		 the decoded name returned).
-
-		 Returning NULL, here, helps us get a little bit of
-		 the best of both worlds.  Because we're last, we should
-		 not affect any of the other languages that were able to
-		 demangle the symbol before us; we get to correctly tag
-		 Ada symbols as such; and even if we incorrectly tagged
-		 a non-Ada symbol, which should be rare, any routing
-		 through the Ada language should be transparent (Ada
-		 tries to behave much like C/C++ with non-Ada symbols).  */
-	 gsymbol->language = language_ada;
-	 return NULL;
-       }
-   }
-
   return NULL;
 }
 
@@ -993,7 +925,15 @@ symbol_search_name (const struct general_symbol_info *gsymbol)
 void
 init_sal (struct symtab_and_line *sal)
 {
-  memset (sal, 0, sizeof (*sal));
+  sal->pspace = NULL;
+  sal->symtab = 0;
+  sal->section = 0;
+  sal->line = 0;
+  sal->pc = 0;
+  sal->end = 0;
+  sal->explicit_pc = 0;
+  sal->explicit_line = 0;
+  sal->probe = NULL;
 }
 
 
@@ -1066,18 +1006,18 @@ struct symtab *
 find_pc_sect_symtab_via_partial (CORE_ADDR pc, struct obj_section *section)
 {
   struct objfile *objfile;
-  struct bound_minimal_symbol msymbol;
+  struct minimal_symbol *msymbol;
 
   /* If we know that this is not a text address, return failure.  This is
      necessary because we loop based on texthigh and textlow, which do
      not include the data ranges.  */
-  msymbol = lookup_minimal_symbol_by_pc_section (pc, section);
-  if (msymbol.minsym
-      && (MSYMBOL_TYPE (msymbol.minsym) == mst_data
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_bss
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_abs
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_file_data
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_file_bss))
+  msymbol = lookup_minimal_symbol_by_pc_section (pc, section).minsym;
+  if (msymbol
+      && (MSYMBOL_TYPE (msymbol) == mst_data
+	  || MSYMBOL_TYPE (msymbol) == mst_bss
+	  || MSYMBOL_TYPE (msymbol) == mst_abs
+	  || MSYMBOL_TYPE (msymbol) == mst_file_data
+	  || MSYMBOL_TYPE (msymbol) == mst_file_bss))
     return NULL;
 
   ALL_OBJFILES (objfile)
@@ -1110,7 +1050,7 @@ fixup_section (struct general_symbol_info *ginfo,
      point to the actual function code.  */
   msym = lookup_minimal_symbol_by_pc_name (addr, ginfo->name, objfile);
   if (msym)
-    ginfo->section = MSYMBOL_SECTION (msym);
+    ginfo->section = SYMBOL_SECTION (msym);
   else
     {
       /* Static, function-local variables do appear in the linker
@@ -2141,20 +2081,20 @@ find_pc_sect_symtab (CORE_ADDR pc, struct obj_section *section)
   struct symtab *best_s = NULL;
   struct objfile *objfile;
   CORE_ADDR distance = 0;
-  struct bound_minimal_symbol msymbol;
+  struct minimal_symbol *msymbol;
 
   /* If we know that this is not a text address, return failure.  This is
      necessary because we loop based on the block's high and low code
      addresses, which do not include the data ranges, and because
      we call find_pc_sect_psymtab which has a similar restriction based
      on the partial_symtab's texthigh and textlow.  */
-  msymbol = lookup_minimal_symbol_by_pc_section (pc, section);
-  if (msymbol.minsym
-      && (MSYMBOL_TYPE (msymbol.minsym) == mst_data
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_bss
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_abs
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_file_data
-	  || MSYMBOL_TYPE (msymbol.minsym) == mst_file_bss))
+  msymbol = lookup_minimal_symbol_by_pc_section (pc, section).minsym;
+  if (msymbol
+      && (MSYMBOL_TYPE (msymbol) == mst_data
+	  || MSYMBOL_TYPE (msymbol) == mst_bss
+	  || MSYMBOL_TYPE (msymbol) == mst_abs
+	  || MSYMBOL_TYPE (msymbol) == mst_file_data
+	  || MSYMBOL_TYPE (msymbol) == mst_file_bss))
     return NULL;
 
   /* Search all symtabs for the one whose file contains our address, and which
@@ -2281,6 +2221,7 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
   struct symtab_and_line val;
   struct blockvector *bv;
   struct bound_minimal_symbol msymbol;
+  struct minimal_symbol *mfunsym;
   struct objfile *objfile;
 
   /* Info on best line seen so far, and where it starts, and its file.  */
@@ -2368,11 +2309,10 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
   if (msymbol.minsym != NULL)
     if (MSYMBOL_TYPE (msymbol.minsym) == mst_solib_trampoline)
       {
-	struct bound_minimal_symbol mfunsym
-	  = lookup_minimal_symbol_text (MSYMBOL_LINKAGE_NAME (msymbol.minsym),
+	mfunsym
+	  = lookup_minimal_symbol_text (SYMBOL_LINKAGE_NAME (msymbol.minsym),
 					NULL);
-
-	if (mfunsym.minsym == NULL)
+	if (mfunsym == NULL)
 	  /* I eliminated this warning since it is coming out
 	   * in the following situation:
 	   * gdb shmain // test program with shared libraries
@@ -2386,8 +2326,8 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
 	     SYMBOL_LINKAGE_NAME (msymbol)); */
 	  ;
 	/* fall through */
-	else if (BMSYMBOL_VALUE_ADDRESS (mfunsym)
-		 == BMSYMBOL_VALUE_ADDRESS (msymbol))
+	else if (SYMBOL_VALUE_ADDRESS (mfunsym)
+		 == SYMBOL_VALUE_ADDRESS (msymbol.minsym))
 	  /* Avoid infinite recursion */
 	  /* See above comment about why warning is commented out.  */
 	  /* warning ("In stub for %s; unable to find real function/line info",
@@ -2395,7 +2335,7 @@ find_pc_sect_line (CORE_ADDR pc, struct obj_section *section, int notcurrent)
 	  ;
 	/* fall through */
 	else
-	  return find_pc_line (BMSYMBOL_VALUE_ADDRESS (mfunsym), 0);
+	  return find_pc_line (SYMBOL_VALUE_ADDRESS (mfunsym), 0);
       }
 
 
@@ -2909,9 +2849,9 @@ skip_prologue_sal (struct symtab_and_line *sal)
 	}
 
       objfile = msymbol.objfile;
-      pc = BMSYMBOL_VALUE_ADDRESS (msymbol);
-      section = MSYMBOL_OBJ_SECTION (objfile, msymbol.minsym);
-      name = MSYMBOL_LINKAGE_NAME (msymbol.minsym);
+      pc = SYMBOL_VALUE_ADDRESS (msymbol.minsym);
+      section = SYMBOL_OBJ_SECTION (objfile, msymbol.minsym);
+      name = SYMBOL_LINKAGE_NAME (msymbol.minsym);
     }
 
   gdbarch = get_objfile_arch (objfile);
@@ -2942,8 +2882,6 @@ skip_prologue_sal (struct symtab_and_line *sal)
 
       /* Skip "first line" of function (which is actually its prologue).  */
       pc += gdbarch_deprecated_function_start_offset (gdbarch);
-      if (gdbarch_skip_entrypoint_p (gdbarch))
-        pc = gdbarch_skip_entrypoint (gdbarch, pc);
       if (skip)
 	pc = gdbarch_skip_prologue (gdbarch, pc);
 
@@ -3330,8 +3268,8 @@ sources_info (char *ignore, int from_tty)
 
   clear_filename_seen_cache (data.filename_seen_cache);
   data.first = 1;
-  map_symbol_filenames (output_partial_symbol_filename, &data,
-			1 /*need_fullname*/);
+  map_partial_symbol_filenames (output_partial_symbol_filename, &data,
+				1 /*need_fullname*/);
   printf_filtered ("\n");
 
   do_cleanups (cleanups);
@@ -3613,11 +3551,17 @@ search_symbols (char *regexp, enum search_domain kind,
 
   datum.nfiles = nfiles;
   datum.files = files;
-  expand_symtabs_matching ((nfiles == 0
-			    ? NULL
-			    : search_symbols_file_matches),
-			   search_symbols_name_matches,
-			   kind, &datum);
+  ALL_OBJFILES (objfile)
+  {
+    if (objfile->sf)
+      objfile->sf->qf->expand_symtabs_matching (objfile,
+						(nfiles == 0
+						 ? NULL
+						 : search_symbols_file_matches),
+						search_symbols_name_matches,
+						kind,
+						&datum);
+  }
 
   /* Here, we search through the minimal symbol tables for functions
      and variables that match, and force their symbols to be read.
@@ -3650,17 +3594,16 @@ search_symbols (char *regexp, enum search_domain kind,
 	    || MSYMBOL_TYPE (msymbol) == ourtype4)
 	  {
 	    if (!datum.preg_p
-		|| regexec (&datum.preg, MSYMBOL_NATURAL_NAME (msymbol), 0,
+		|| regexec (&datum.preg, SYMBOL_NATURAL_NAME (msymbol), 0,
 			    NULL, 0) == 0)
 	      {
 		/* Note: An important side-effect of these lookup functions
 		   is to expand the symbol table if msymbol is found, for the
 		   benefit of the next loop on ALL_PRIMARY_SYMTABS.  */
 		if (kind == FUNCTIONS_DOMAIN
-		    ? find_pc_symtab (MSYMBOL_VALUE_ADDRESS (objfile,
-							     msymbol)) == NULL
+		    ? find_pc_symtab (SYMBOL_VALUE_ADDRESS (msymbol)) == NULL
 		    : (lookup_symbol_in_objfile_from_linkage_name
-		       (objfile, MSYMBOL_LINKAGE_NAME (msymbol), VAR_DOMAIN)
+		       (objfile, SYMBOL_LINKAGE_NAME (msymbol), VAR_DOMAIN)
 		       == NULL))
 		  found_misc = 1;
 	      }
@@ -3754,17 +3697,16 @@ search_symbols (char *regexp, enum search_domain kind,
 	    || MSYMBOL_TYPE (msymbol) == ourtype4)
 	  {
 	    if (!datum.preg_p
-		|| regexec (&datum.preg, MSYMBOL_NATURAL_NAME (msymbol), 0,
+		|| regexec (&datum.preg, SYMBOL_NATURAL_NAME (msymbol), 0,
 			    NULL, 0) == 0)
 	      {
 		/* For functions we can do a quick check of whether the
 		   symbol might be found via find_pc_symtab.  */
 		if (kind != FUNCTIONS_DOMAIN
-		    || find_pc_symtab (MSYMBOL_VALUE_ADDRESS (objfile,
-							      msymbol)) == NULL)
+		    || find_pc_symtab (SYMBOL_VALUE_ADDRESS (msymbol)) == NULL)
 		  {
 		    if (lookup_symbol_in_objfile_from_linkage_name
-			(objfile, MSYMBOL_LINKAGE_NAME (msymbol), VAR_DOMAIN)
+			(objfile, SYMBOL_LINKAGE_NAME (msymbol), VAR_DOMAIN)
 			== NULL)
 		      {
 			/* match */
@@ -3842,14 +3784,14 @@ print_msymbol_info (struct bound_minimal_symbol msymbol)
   char *tmp;
 
   if (gdbarch_addr_bit (gdbarch) <= 32)
-    tmp = hex_string_custom (BMSYMBOL_VALUE_ADDRESS (msymbol)
+    tmp = hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol.minsym)
 			     & (CORE_ADDR) 0xffffffff,
 			     8);
   else
-    tmp = hex_string_custom (BMSYMBOL_VALUE_ADDRESS (msymbol),
+    tmp = hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol.minsym),
 			     16);
   printf_filtered ("%s  %s\n",
-		   tmp, MSYMBOL_PRINT_NAME (msymbol.minsym));
+		   tmp, SYMBOL_PRINT_NAME (msymbol.minsym));
 }
 
 /* This is the guts of the commands "info functions", "info types", and
@@ -4007,7 +3949,7 @@ rbreak_command (char *regexp, int from_tty)
 	}
       else
 	{
-	  int newlen = (strlen (MSYMBOL_LINKAGE_NAME (p->msymbol.minsym)) + 3);
+	  int newlen = (strlen (SYMBOL_LINKAGE_NAME (p->msymbol.minsym)) + 3);
 
 	  if (newlen > len)
 	    {
@@ -4015,12 +3957,12 @@ rbreak_command (char *regexp, int from_tty)
 	      len = newlen;
 	    }
 	  strcpy (string, "'");
-	  strcat (string, MSYMBOL_LINKAGE_NAME (p->msymbol.minsym));
+	  strcat (string, SYMBOL_LINKAGE_NAME (p->msymbol.minsym));
 	  strcat (string, "'");
 
 	  break_command (string, from_tty);
 	  printf_filtered ("<function, no debug info> %s;\n",
-			   MSYMBOL_PRINT_NAME (p->msymbol.minsym));
+			   SYMBOL_PRINT_NAME (p->msymbol.minsym));
 	}
     }
 
@@ -4091,10 +4033,6 @@ static VEC (char_ptr) *return_val;
       completion_list_add_name \
 	(SYMBOL_NATURAL_NAME (symbol), (sym_text), (len), (text), (word))
 
-#define MCOMPLETION_LIST_ADD_SYMBOL(symbol, sym_text, len, text, word) \
-      completion_list_add_name \
-	(MSYMBOL_NATURAL_NAME (symbol), (sym_text), (len), (text), (word))
-
 /*  Test to see if the symbol specified by SYMNAME (which is already
    demangled for C++ symbols) matches SYM_TEXT in the first SYM_TEXT_LEN
    characters.  If so, add it to the current completion list.  */
@@ -4152,7 +4090,7 @@ completion_list_objc_symbol (struct minimal_symbol *msymbol,
   const char *method, *category, *selector;
   char *tmp2 = NULL;
 
-  method = MSYMBOL_NATURAL_NAME (msymbol);
+  method = SYMBOL_NATURAL_NAME (msymbol);
 
   /* Is it a method?  */
   if ((method[0] != '-') && (method[0] != '+'))
@@ -4264,7 +4202,7 @@ completion_list_add_fields (struct symbol *sym, const char *sym_text,
 }
 
 /* Type of the user_data argument passed to add_macro_name or
-   symbol_completion_matcher.  The contents are simply whatever is
+   expand_partial_symbol_name.  The contents are simply whatever is
    needed by completion_list_add_name.  */
 struct add_name_data
 {
@@ -4289,10 +4227,10 @@ add_macro_name (const char *name, const struct macro_definition *ignore,
 			    datum->text, datum->word);
 }
 
-/* A callback for expand_symtabs_matching.  */
+/* A callback for expand_partial_symbol_names.  */
 
 static int
-symbol_completion_matcher (const char *name, void *user_data)
+expand_partial_symbol_name (const char *name, void *user_data)
 {
   struct add_name_data *datum = (struct add_name_data *) user_data;
 
@@ -4403,8 +4341,7 @@ default_make_symbol_completion_list_break_on (const char *text,
   /* Look through the partial symtabs for all symbols which begin
      by matching SYM_TEXT.  Expand all CUs that you find to the list.
      The real names will get added by COMPLETION_LIST_ADD_SYMBOL below.  */
-  expand_symtabs_matching (NULL, symbol_completion_matcher, ALL_DOMAIN,
-			   &datum);
+  expand_partial_symbol_names (expand_partial_symbol_name, &datum);
 
   /* At this point scan through the misc symbol vectors and add each
      symbol you find to the list.  Eventually we want to ignore
@@ -4416,8 +4353,8 @@ default_make_symbol_completion_list_break_on (const char *text,
       ALL_MSYMBOLS (objfile, msymbol)
 	{
 	  QUIT;
-	  MCOMPLETION_LIST_ADD_SYMBOL (msymbol, sym_text, sym_text_len, text,
-				       word);
+	  COMPLETION_LIST_ADD_SYMBOL (msymbol, sym_text, sym_text_len, text,
+				      word);
 
 	  completion_list_objc_symbol (msymbol, sym_text, sym_text_len, text,
 				       word);
@@ -4818,8 +4755,8 @@ make_source_files_completion_list (const char *text, const char *word)
   datum.word = word;
   datum.text_len = text_len;
   datum.list = &list;
-  map_symbol_filenames (maybe_add_partial_symtab_filename, &datum,
-			0 /*need_fullname*/);
+  map_partial_symbol_filenames (maybe_add_partial_symtab_filename, &datum,
+				0 /*need_fullname*/);
 
   do_cleanups (cache_cleanup);
   discard_cleanups (back_to);
@@ -5015,62 +4952,22 @@ skip_prologue_using_sal (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 }
 
 /* Track MAIN */
+static char *name_of_main;
+enum language language_of_main = language_unknown;
 
-/* Return the "main_info" object for the current program space.  If
-   the object has not yet been created, create it and fill in some
-   default values.  */
-
-static struct main_info *
-get_main_info (void)
+void
+set_main_name (const char *name)
 {
-  struct main_info *info = program_space_data (current_program_space,
-					       main_progspace_key);
-
-  if (info == NULL)
+  if (name_of_main != NULL)
     {
-      /* It may seem strange to store the main name in the progspace
-	 and also in whatever objfile happens to see a main name in
-	 its debug info.  The reason for this is mainly historical:
-	 gdb returned "main" as the name even if no function named
-	 "main" was defined the program; and this approach lets us
-	 keep compatibility.  */
-      info = XCNEW (struct main_info);
-      info->language_of_main = language_unknown;
-      set_program_space_data (current_program_space, main_progspace_key,
-			      info);
-    }
-
-  return info;
-}
-
-/* A cleanup to destroy a struct main_info when a progspace is
-   destroyed.  */
-
-static void
-main_info_cleanup (struct program_space *pspace, void *data)
-{
-  struct main_info *info = data;
-
-  if (info != NULL)
-    xfree (info->name_of_main);
-  xfree (info);
-}
-
-static void
-set_main_name (const char *name, enum language lang)
-{
-  struct main_info *info = get_main_info ();
-
-  if (info->name_of_main != NULL)
-    {
-      xfree (info->name_of_main);
-      info->name_of_main = NULL;
-      info->language_of_main = language_unknown;
+      xfree (name_of_main);
+      name_of_main = NULL;
+      language_of_main = language_unknown;
     }
   if (name != NULL)
     {
-      info->name_of_main = xstrdup (name);
-      info->language_of_main = lang;
+      name_of_main = xstrdup (name);
+      language_of_main = language_unknown;
     }
 }
 
@@ -5081,23 +4978,6 @@ static void
 find_main_name (void)
 {
   const char *new_main_name;
-  struct objfile *objfile;
-
-  /* First check the objfiles to see whether a debuginfo reader has
-     picked up the appropriate main name.  Historically the main name
-     was found in a more or less random way; this approach instead
-     relies on the order of objfile creation -- which still isn't
-     guaranteed to get the correct answer, but is just probably more
-     accurate.  */
-  ALL_OBJFILES (objfile)
-  {
-    if (objfile->per_bfd->name_of_main != NULL)
-      {
-	set_main_name (objfile->per_bfd->name_of_main,
-		       objfile->per_bfd->language_of_main);
-	return;
-      }
-  }
 
   /* Try to see if the main procedure is in Ada.  */
   /* FIXME: brobecker/2005-03-07: Another way of doing this would
@@ -5118,59 +4998,36 @@ find_main_name (void)
   new_main_name = ada_main_name ();
   if (new_main_name != NULL)
     {
-      set_main_name (new_main_name, language_ada);
-      return;
-    }
-
-  new_main_name = d_main_name ();
-  if (new_main_name != NULL)
-    {
-      set_main_name (new_main_name, language_d);
+      set_main_name (new_main_name);
       return;
     }
 
   new_main_name = go_main_name ();
   if (new_main_name != NULL)
     {
-      set_main_name (new_main_name, language_go);
+      set_main_name (new_main_name);
       return;
     }
 
   new_main_name = pascal_main_name ();
   if (new_main_name != NULL)
     {
-      set_main_name (new_main_name, language_pascal);
+      set_main_name (new_main_name);
       return;
     }
 
   /* The languages above didn't identify the name of the main procedure.
      Fallback to "main".  */
-  set_main_name ("main", language_unknown);
+  set_main_name ("main");
 }
 
 char *
 main_name (void)
 {
-  struct main_info *info = get_main_info ();
-
-  if (info->name_of_main == NULL)
+  if (name_of_main == NULL)
     find_main_name ();
 
-  return info->name_of_main;
-}
-
-/* Return the language of the main function.  If it is not known,
-   return language_unknown.  */
-
-enum language
-main_language (void)
-{
-  struct main_info *info = get_main_info ();
-
-  if (info->name_of_main == NULL)
-    find_main_name ();
-
-  return info->language_of_main;
+  return name_of_main;
 }
 
 /* Handle ``executable_changed'' events for the symtab module.  */
@@ -5179,7 +5036,7 @@ static void
 symtab_observer_executable_changed (void)
 {
   /* NAME_OF_MAIN may no longer be the same, so reset it for now.  */
-  set_main_name (NULL, language_unknown);
+  set_main_name (NULL);
 }
 
 /* Return 1 if the supplied producer string matches the ARM RealView
@@ -5359,9 +5216,6 @@ _initialize_symtab (void)
 {
   initialize_ordinary_address_classes ();
 
-  main_progspace_key
-    = register_program_space_data_with_cleanup (NULL, main_info_cleanup);
-
   add_info ("variables", variables_info, _("\
 All global and static variable names, or those matching REGEXP."));
   if (dbx_commands)
@@ -5419,15 +5273,13 @@ one base name, and gdb will do file name comparisons more efficiently."),
 			   NULL, NULL,
 			   &setlist, &showlist);
 
-  add_setshow_zuinteger_cmd ("symtab-create", no_class, &symtab_create_debug,
-			     _("Set debugging of symbol table creation."),
-			     _("Show debugging of symbol table creation."), _("\
-When enabled (non-zero), debugging messages are printed when building\n\
-symbol tables.  A value of 1 (one) normally provides enough information.\n\
-A value greater than 1 provides more verbose information."),
-			     NULL,
-			     NULL,
-			     &setdebuglist, &showdebuglist);
+  add_setshow_boolean_cmd ("symtab-create", no_class, &symtab_create_debug,
+			   _("Set debugging of symbol table creation."),
+			   _("Show debugging of symbol table creation."), _("\
+When enabled, debugging messages are printed when building symbol tables."),
+			    NULL,
+			    NULL,
+			    &setdebuglist, &showdebuglist);
 
   observer_attach_executable_changed (symtab_observer_executable_changed);
 }

@@ -1,5 +1,6 @@
 /* Xstormy16-specific support for 32-bit ELF.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2010, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -817,12 +818,12 @@ xstormy16_elf_relocate_section (bfd *                   output_bfd ATTRIBUTE_UNU
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bfd_boolean unresolved_reloc, warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -1014,7 +1015,7 @@ xstormy16_elf_gc_mark_hook (asection *sec,
 #define ELF_MACHINE_CODE	EM_XSTORMY16
 #define ELF_MAXPAGESIZE		0x100
 
-#define TARGET_LITTLE_SYM       xstormy16_elf32_vec
+#define TARGET_LITTLE_SYM       bfd_elf32_xstormy16_vec
 #define TARGET_LITTLE_NAME	"elf32-xstormy16"
 
 #define elf_info_to_howto_rel			NULL

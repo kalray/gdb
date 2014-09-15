@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,7 @@
 #else
 #include "defs.h"
 #include "target.h"
-#include "infrun.h"
-#include "objfiles.h"
+#include "inferior.h" /* for non_stop */
 #endif
 
 #include <string.h>
@@ -99,12 +98,12 @@ agent_look_up_symbols (void *arg)
 
       if (look_up_one_symbol (symbol_list[i].name, addrp, 1) == 0)
 #else
-      struct bound_minimal_symbol sym =
+      struct minimal_symbol *sym =
 	lookup_minimal_symbol (symbol_list[i].name, NULL,
 			       (struct objfile *) arg);
 
-      if (sym.minsym != NULL)
-	*addrp = BMSYMBOL_VALUE_ADDRESS (sym);
+      if (sym != NULL)
+	*addrp = SYMBOL_VALUE_ADDRESS (sym);
       else
 #endif
 	{

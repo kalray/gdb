@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "solib-svr4.h"
 #include "osabi.h"
 #include "mips-tdep.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "gdb_assert.h"
 #include "frame.h"
 #include "regcache.h"
@@ -32,6 +32,7 @@
 #include "gdbtypes.h"
 #include "objfiles.h"
 #include "solib.h"
+#include "solib-svr4.h"
 #include "solist.h"
 #include "symtab.h"
 #include "target-descriptions.h"
@@ -618,30 +619,11 @@ mips64_fill_fpregset_wrapper (const struct regset *regset,
   mips64_fill_fpregset (regcache, (mips64_elf_fpregset_t *)gregs, regnum);
 }
 
-static const struct regset mips_linux_gregset =
-  {
-    NULL, mips_supply_gregset_wrapper, mips_fill_gregset_wrapper
-  };
-
-static const struct regset mips64_linux_gregset =
-  {
-    NULL, mips64_supply_gregset_wrapper, mips64_fill_gregset_wrapper
-  };
-
-static const struct regset mips_linux_fpregset =
-  {
-    NULL, mips_supply_fpregset_wrapper, mips_fill_fpregset_wrapper
-  };
-
-static const struct regset mips64_linux_fpregset =
-  {
-    NULL, mips64_supply_fpregset_wrapper, mips64_fill_fpregset_wrapper
-  };
-
 static const struct regset *
 mips_linux_regset_from_core_section (struct gdbarch *gdbarch,
 				     const char *sect_name, size_t sect_size)
 {
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   mips_elf_gregset_t gregset;
   mips_elf_fpregset_t fpregset;
   mips64_elf_gregset_t gregset64;
@@ -650,9 +632,21 @@ mips_linux_regset_from_core_section (struct gdbarch *gdbarch,
   if (strcmp (sect_name, ".reg") == 0)
     {
       if (sect_size == sizeof (gregset))
-	return &mips_linux_gregset;
+	{
+	  if (tdep->gregset == NULL)
+	    tdep->gregset = regset_alloc (gdbarch,
+					  mips_supply_gregset_wrapper,
+					  mips_fill_gregset_wrapper);
+	  return tdep->gregset;
+	}
       else if (sect_size == sizeof (gregset64))
-	return &mips64_linux_gregset;
+	{
+	  if (tdep->gregset64 == NULL)
+	    tdep->gregset64 = regset_alloc (gdbarch,
+					    mips64_supply_gregset_wrapper,
+					    mips64_fill_gregset_wrapper);
+	  return tdep->gregset64;
+	}
       else
 	{
 	  warning (_("wrong size gregset struct in core file"));
@@ -661,9 +655,21 @@ mips_linux_regset_from_core_section (struct gdbarch *gdbarch,
   else if (strcmp (sect_name, ".reg2") == 0)
     {
       if (sect_size == sizeof (fpregset))
-	return &mips_linux_fpregset;
+	{
+	  if (tdep->fpregset == NULL)
+	    tdep->fpregset = regset_alloc (gdbarch,
+					   mips_supply_fpregset_wrapper,
+					   mips_fill_fpregset_wrapper);
+	  return tdep->fpregset;
+	}
       else if (sect_size == sizeof (fpregset64))
-	return &mips64_linux_fpregset;
+	{
+	  if (tdep->fpregset64 == NULL)
+	    tdep->fpregset64 = regset_alloc (gdbarch,
+					     mips64_supply_fpregset_wrapper,
+					     mips64_fill_fpregset_wrapper);
+	  return tdep->fpregset64;
+	}
       else
 	{
 	  warning (_("wrong size fpregset struct in core file"));
@@ -817,11 +823,11 @@ mips_linux_in_dynsym_resolve_code (CORE_ADDR pc)
 static CORE_ADDR
 mips_linux_skip_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol resolver;
+  struct minimal_symbol *resolver;
 
   resolver = lookup_minimal_symbol ("__dl_runtime_resolve", NULL, NULL);
 
-  if (resolver.minsym && BMSYMBOL_VALUE_ADDRESS (resolver) == pc)
+  if (resolver && SYMBOL_VALUE_ADDRESS (resolver) == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 
   return glibc_skip_solib_resolver (gdbarch, pc);

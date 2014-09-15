@@ -1,6 +1,6 @@
 /* Remote notification in GDB protocol
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,6 @@
 #include "event-loop.h"
 #include "target.h"
 #include "inferior.h"
-#include "infrun.h"
 #include "gdbcmd.h"
 
 #include <string.h>
@@ -128,24 +127,21 @@ remote_async_get_pending_events_handler (gdb_client_data data)
 void
 handle_notification (struct remote_notif_state *state, char *buf)
 {
-  struct notif_client *nc;
-  size_t i;
+  struct notif_client *nc = NULL;
+  int i;
 
   for (i = 0; i < ARRAY_SIZE (notifs); i++)
     {
-      const char *name = notifs[i]->name;
-
-      if (strncmp (buf, name, strlen (name)) == 0
-	  && buf[strlen (name)] == ':')
+      nc = notifs[i];
+      if (strncmp (buf, nc->name, strlen (nc->name)) == 0
+	  && buf[strlen (nc->name)] == ':')
 	break;
     }
 
   /* We ignore notifications we don't recognize, for compatibility
      with newer stubs.  */
-  if (i == ARRAY_SIZE (notifs))
+  if (nc == NULL)
     return;
-
-  nc =  notifs[i];
 
   if (state->pending_event[nc->id] != NULL)
     {

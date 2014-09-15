@@ -1,6 +1,6 @@
 /* Native-dependent code for the i386.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -589,8 +589,7 @@ i386_update_inferior_debug_regs (struct i386_debug_reg_state *new_state)
    of the type TYPE.  Return 0 on success, -1 on failure.  */
 
 static int
-i386_insert_watchpoint (struct target_ops *self,
-			CORE_ADDR addr, int len, int type,
+i386_insert_watchpoint (CORE_ADDR addr, int len, int type,
 			struct expression *cond)
 {
   struct i386_debug_reg_state *state
@@ -628,8 +627,7 @@ i386_insert_watchpoint (struct target_ops *self,
    address ADDR, whose length is LEN bytes, and for accesses of the
    type TYPE.  Return 0 on success, -1 on failure.  */
 static int
-i386_remove_watchpoint (struct target_ops *self,
-			CORE_ADDR addr, int len, int type,
+i386_remove_watchpoint (CORE_ADDR addr, int len, int type,
 			struct expression *cond)
 {
   struct i386_debug_reg_state *state
@@ -664,8 +662,7 @@ i386_remove_watchpoint (struct target_ops *self,
    address ADDR and whose length is LEN bytes.  */
 
 static int
-i386_region_ok_for_watchpoint (struct target_ops *self,
-			       CORE_ADDR addr, int len)
+i386_region_ok_for_watchpoint (CORE_ADDR addr, int len)
 {
   struct i386_debug_reg_state *state
     = i386_debug_reg_state (ptid_get_pid (inferior_ptid));
@@ -759,16 +756,16 @@ i386_stopped_data_address (struct target_ops *ops, CORE_ADDR *addr_p)
 }
 
 static int
-i386_stopped_by_watchpoint (struct target_ops *ops)
+i386_stopped_by_watchpoint (void)
 {
   CORE_ADDR addr = 0;
-  return i386_stopped_data_address (ops, &addr);
+  return i386_stopped_data_address (&current_target, &addr);
 }
 
 /* Insert a hardware-assisted breakpoint at BP_TGT->placed_address.
    Return 0 on success, EBUSY on failure.  */
 static int
-i386_insert_hw_breakpoint (struct target_ops *self, struct gdbarch *gdbarch,
+i386_insert_hw_breakpoint (struct gdbarch *gdbarch,
 			   struct bp_target_info *bp_tgt)
 {
   struct i386_debug_reg_state *state
@@ -794,7 +791,7 @@ i386_insert_hw_breakpoint (struct target_ops *self, struct gdbarch *gdbarch,
    Return 0 on success, -1 on failure.  */
 
 static int
-i386_remove_hw_breakpoint (struct target_ops *self, struct gdbarch *gdbarch,
+i386_remove_hw_breakpoint (struct gdbarch *gdbarch,
 			   struct bp_target_info *bp_tgt)
 {
   struct i386_debug_reg_state *state
@@ -834,8 +831,7 @@ i386_remove_hw_breakpoint (struct target_ops *self, struct gdbarch *gdbarch,
    sharing implemented via reference counts in i386-nat.c.  */
 
 static int
-i386_can_use_hw_breakpoint (struct target_ops *self,
-			    int type, int cnt, int othertype)
+i386_can_use_hw_breakpoint (int type, int cnt, int othertype)
 {
   return 1;
 }

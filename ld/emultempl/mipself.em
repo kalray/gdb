@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+#   Copyright 2004, 2006, 2007, 2008 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -136,6 +136,7 @@ mips_add_stub_section (const char *stub_sec_name, asection *input_section,
 {
   asection *stub_sec;
   flagword flags;
+  const char *secname;
   lang_output_section_statement_type *os;
   struct hook_stub_info info;
 
@@ -175,7 +176,9 @@ mips_add_stub_section (const char *stub_sec_name, asection *input_section,
   if (!bfd_set_section_flags (stub_bfd, stub_sec, flags))
     goto err_ret;
 
-  os = lang_output_section_get (output_section);
+  /* Create an output section statement.  */
+  secname = bfd_get_section_name (output_section->owner, output_section);
+  os = lang_output_section_find (secname);
 
   /* Initialize a statement list that contains only the new statement.  */
   lang_list_init (&info.add);

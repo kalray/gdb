@@ -1,5 +1,6 @@
 /* tc-crx.c -- Assembler code for the CRX CPU core.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2012
+   Free Software Foundation, Inc.
 
    Contributed by Tomer Levi, NSC, Israel.
    Originally written for GAS 2.12 by Tomer Levi, NSC, Israel.

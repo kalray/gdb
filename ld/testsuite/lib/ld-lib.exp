@@ -1,5 +1,5 @@
 # Support routines for LD testsuite.
-#   Copyright (C) 1994-2014 Free Software Foundation, Inc.
+#   Copyright 1994-2013 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -179,7 +179,6 @@ proc default_ld_link { ld target objects } {
     global HOSTING_CRT0
     global HOSTING_SCRT0
     global HOSTING_LIBS
-    global HOSTING_SLIBS
     global LIBS
     global host_triplet
     global link_output
@@ -187,11 +186,10 @@ proc default_ld_link { ld target objects } {
 
     if { [ string match "* -pie *" $objects ] } {
 	set objs "$HOSTING_SCRT0 $objects"
-	set libs "$LIBS $HOSTING_SLIBS"
     } else {
 	set objs "$HOSTING_CRT0 $objects"
-	set libs "$LIBS $HOSTING_LIBS"
     }
+    set libs "$LIBS $HOSTING_LIBS"
 
     if [is_endian_output_format $objects] then {
 	set flags [big_or_little_endian]
@@ -293,10 +291,6 @@ proc default_ld_compile { cc source object } {
 	set flags "$flags $CXXFLAGS"
     } else {
 	set flags "$flags $CFLAGS"
-    }
-
-    if [board_info [target_info name] exists cflags] {
-        append flags " [board_info [target_info name] cflags]"
     }
 
     if [board_info [target_info name] exists multilib_flags] {
@@ -497,11 +491,6 @@ proc ld_simple_link_defsyms {} {
 #   ld_after_inputfiles: FLAGS
 #       Similar to "ld", but put after all input files.
 #
-#   objcopy_objects: FLAGS
-#	Run objcopy with the specified flags after assembling any source
-#	that has the special marker RUN_OBJCOPY in the source specific
-#	flags.
-#
 #   objcopy_linked_file: FLAGS
 #	Run objcopy on the linked file with the specified flags.
 #	This lets you transform the linked file using objcopy, before the
@@ -610,7 +599,6 @@ proc run_dump_test { name {extra_options {}} } {
     set opts(error) {}
     set opts(warning) {}
     set opts(objcopy_linked_file) {}
-    set opts(objcopy_objects) {}
 
     foreach i $opt_array {
 	set opt_name [lindex $i 0]
@@ -790,12 +778,6 @@ proc run_dump_test { name {extra_options {}} } {
     for { set i 0 } { $i < [llength $sourcefiles] } { incr i } {
 	set sourcefile [lindex $sourcefiles $i]
 	set sourceasflags [lindex $asflags $i]
-	set run_objcopy_objects 0
-
-	if { [string match "*RUN_OBJCOPY*" $sourceasflags] } {
-	    set run_objcopy_objects 1
-	}
-	regsub "RUN_OBJCOPY" $sourceasflags "" sourceasflags
 
 	set objfile "tmpdir/dump$i.o"
 	catch "exec rm -f $objfile" exec_output
@@ -818,30 +800,6 @@ proc run_dump_test { name {extra_options {}} } {
 	    verbose -log "$exitstat with: <$comp_output>"
 	    fail $testname
 	    return
-	}
-
-	if { $run_objcopy_objects } {
-	    set cmd "$OBJCOPY $opts(objcopy_objects) $objfile"
-
-	    send_log "$cmd\n"
-	    set cmdret [remote_exec host [concat sh -c [list "$cmd 2>&1"]] \
-			"" "/dev/null" "objcopy.tmp"]
-	    remote_upload host "objcopy.tmp"
-	    set comp_output [prune_warnings [file_contents "objcopy.tmp"]]
-	    remote_file host delete "objcopy.tmp"
-	    remote_file build delete "objcopy.tmp"
-
-	    if { [lindex $cmdret 0] != 0 \
-		  || ![string match "" $comp_output] } {
-		send_log "$comp_output\n"
-		verbose "$comp_output" 3
-
-		set exitstat "succeeded"
-		if { $cmdret != 0 } { set exitstat "failed" }
-		verbose -log "$exitstat with: <$comp_output>"
-		fail $testname
-		return
-	    }
 	}
     }
 
@@ -1564,6 +1522,7 @@ proc check_gc_sections_available { } {
 	    || [istarget d30v-*-*]
 	    || [istarget dlx-*-*]
 	    || [istarget i960-*-*]
+	    || [istarget or32-*-*]
 	    || [istarget pj*-*-*]
 	    || [istarget alpha-*-*]
 	    || [istarget hppa*64-*-*]
@@ -1635,8 +1594,8 @@ proc check_shared_lib_support { } {
 	 && ![istarget moxie-*-*]
 	 && ![istarget msp430-*-*]
 	 && ![istarget mt-*-*]
-	 && ![istarget nds32*-*-*]
-	 && ![istarget or1k*-*-*]
+	 && ![istarget openrisc-*-*]
+	 && ![istarget or32-*-*]
 	 && ![istarget pj-*-*]
 	 && ![istarget rl78-*-*]
 	 && ![istarget rx-*-*]
@@ -1670,17 +1629,6 @@ proc check_plugin_api_available { } {
 proc check_lto_available { } {
     global lto_available_saved
     global CC
-
-    set flags ""
-
-    if [board_info [target_info name] exists cflags] {
-        append flags " [board_info [target_info name] cflags]"
-    }
-
-    if [board_info [target_info name] exists ldflags] {
-        append flags " [board_info [target_info name] ldflags]"
-    }
-
     if {![info exists lto_available_saved]} {
 	# Check if gcc supports -flto -fuse-linker-plugin
 	if { [which $CC] == 0 } {
@@ -1689,11 +1637,11 @@ proc check_lto_available { } {
 	}
 	set basename "lto"
 	set src ${basename}[pid].c
-	set output ${basename}[pid].out
+	set output ${basename}[pid].so
 	set f [open $src "w"]
-	puts $f "int main() { return 0; }"
+	puts $f ""
 	close $f
-	set status [remote_exec host $CC "$flags -B[pwd]/tmpdir/ld/ -flto -ffat-lto-objects -fuse-linker-plugin $src -o $output"]
+	set status [remote_exec host $CC "-shared -B[pwd]/tmpdir/ld/ -flto -fuse-linker-plugin $src -o $output"]
 	if { [lindex $status 0] == 0 } {
 	    set lto_available_saved 1
 	} else {
@@ -1703,45 +1651,6 @@ proc check_lto_available { } {
 	file delete $output
     }
     return $lto_available_saved
-}
-
-# Returns true if the target compiler supports LTO and -shared
-proc check_lto_shared_available { } {
-    global lto_shared_available_saved
-    global CC
-
-    set flags ""
-
-    if [board_info [target_info name] exists cflags] {
-        append flags " [board_info [target_info name] cflags]"
-    }
-
-    if [board_info [target_info name] exists ldflags] {
-        append flags " [board_info [target_info name] ldflags]"
-    }
-
-    if {![info exists lto_shared_available_saved]} {
-	# Check if gcc supports -flto -fuse-linker-plugin -shared
-	if { [which $CC] == 0 } {
-	    set lto_shared_available_saved 0
-	    return 0
-	}
-	set basename "lto_shared"
-	set src ${basename}[pid].c
-	set output ${basename}[pid].so
-	set f [open $src "w"]
-	puts $f ""
-	close $f
-	set status [remote_exec host $CC "$flags -shared -fPIC -B[pwd]/tmpdir/ld/ -flto -fuse-linker-plugin $src -o $output"]
-	if { [lindex $status 0] == 0 } {
-	    set lto_shared_available_saved 1
-	} else {
-	    set lto_shared_available_saved 0
-	}
-	file delete $src
-	file delete $output
-    }
-    return $lto_shared_available_saved
 }
 
 # Check if the assembler supports CFI statements.

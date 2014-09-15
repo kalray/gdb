@@ -1,6 +1,6 @@
 /* Support for printing Pascal values for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,6 @@
 #include "cp-abi.h"
 #include "cp-support.h"
 #include "exceptions.h"
-#include "objfiles.h"
 
 
 /* Decorations for Pascal.  */
@@ -228,12 +227,12 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 	  /* If 'symbol_print' is set, we did the work above.  */
 	  if (!options->symbol_print
 	      && (msymbol.minsym != NULL)
-	      && (vt_address == BMSYMBOL_VALUE_ADDRESS (msymbol)))
+	      && (vt_address == SYMBOL_VALUE_ADDRESS (msymbol.minsym)))
 	    {
 	      if (want_space)
 		fputs_filtered (" ", stream);
 	      fputs_filtered ("<", stream);
-	      fputs_filtered (MSYMBOL_PRINT_NAME (msymbol.minsym), stream);
+	      fputs_filtered (SYMBOL_PRINT_NAME (msymbol.minsym), stream);
 	      fputs_filtered (">", stream);
 	      want_space = 1;
 	    }
@@ -249,7 +248,7 @@ pascal_val_print (struct type *type, const gdb_byte *valaddr,
 		fputs_filtered (" ", stream);
 
 	      if (msymbol.minsym != NULL)
-		wsym = lookup_symbol (MSYMBOL_LINKAGE_NAME (msymbol.minsym),
+		wsym = lookup_symbol (SYMBOL_LINKAGE_NAME (msymbol.minsym),
 				      block,
 				      VAR_DOMAIN, &is_this_fld);
 

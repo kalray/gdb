@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
    
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,11 +42,9 @@
 #include "xml-utils.h"
 #include "buffer.h"
 #include "gdb_assert.h"
-#include <dirent.h>
-#include <sys/stat.h>
+#include "gdb_dirent.h"
+#include "gdb_stat.h"
 #include "filestuff.h"
-
-#define NAMELEN(dirent) strlen ((dirent)->d_name)
 
 /* Define PID_T to be a fixed size that is at least as large as pid_t,
    so that reading pid values embedded in /proc works
@@ -96,8 +94,11 @@ linux_common_core_of_thread (ptid_t ptid)
 	}
     }
 
-  /* ps command also relies on no trailing fields ever contain ')'.  */
-  p = strrchr (content, ')');
+  p = strchr (content, '(');
+
+  /* Skip ")".  */
+  if (p != NULL)
+    p = strchr (p, ')');
   if (p != NULL)
     p++;
 
@@ -255,10 +256,11 @@ get_process_owner (uid_t *owner, PID_T pid)
 }
 
 /* Find the CPU cores used by process PID and return them in CORES.
-   CORES points to an array of NUM_CORES elements.  */
+   CORES points to an array of at least sysconf(_SC_NPROCESSOR_ONLN)
+   elements.  */
 
 static int
-get_cores_used_by_process (PID_T pid, int *cores, const int num_cores)
+get_cores_used_by_process (PID_T pid, int *cores)
 {
   char taskdir[sizeof ("/proc/") + MAX_PID_T_STRLEN + sizeof ("/task") - 1];
   DIR *dir;
@@ -282,7 +284,7 @@ get_cores_used_by_process (PID_T pid, int *cores, const int num_cores)
 	  core = linux_common_core_of_thread (ptid_build ((pid_t) pid,
 							  (pid_t) tid, 0));
 
-	  if (core >= 0 && core < num_cores)
+	  if (core >= 0)
 	    {
 	      ++cores[core];
 	      ++task_count;
@@ -297,7 +299,7 @@ get_cores_used_by_process (PID_T pid, int *cores, const int num_cores)
 
 static LONGEST
 linux_xfer_osdata_processes (gdb_byte *readbuf,
-			     ULONGEST offset, ULONGEST len)
+			     ULONGEST offset, LONGEST len)
 {
   /* We make the process list snapshot when the object starts to be read.  */
   static const char *buf;
@@ -346,7 +348,7 @@ linux_xfer_osdata_processes (gdb_byte *readbuf,
 
 	      /* Find CPU cores used by the process.  */
 	      cores = (int *) xcalloc (num_cores, sizeof (int));
-	      task_count = get_cores_used_by_process (pid, cores, num_cores);
+	      task_count = get_cores_used_by_process (pid, cores);
 	      cores_str = (char *) xcalloc (task_count, sizeof ("4294967295") + 1);
 
 	      for (i = 0; i < num_cores && task_count > 0; ++i)
@@ -445,7 +447,7 @@ compare_processes (const void *process1, const void *process2)
 
 static LONGEST
 linux_xfer_osdata_processgroups (gdb_byte *readbuf,
-				 ULONGEST offset, ULONGEST len)
+				 ULONGEST offset, LONGEST len)
 {
   /* We make the process list snapshot when the object starts to be read.  */
   static const char *buf;
@@ -561,7 +563,7 @@ linux_xfer_osdata_processgroups (gdb_byte *readbuf,
 
 static LONGEST
 linux_xfer_osdata_threads (gdb_byte *readbuf,
-			   ULONGEST offset, ULONGEST len)
+			   ULONGEST offset, LONGEST len)
 {
   /* We make the process list snapshot when the object starts to be read.  */
   static const char *buf;
@@ -675,7 +677,7 @@ linux_xfer_osdata_threads (gdb_byte *readbuf,
 
 static LONGEST
 linux_xfer_osdata_fds (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+		       ULONGEST offset, LONGEST len)
 {
   /* We make the process list snapshot when the object starts to be read.  */
   static const char *buf;
@@ -982,7 +984,7 @@ print_sockets (unsigned short family, int tcp, struct buffer *buffer)
 
 static LONGEST
 linux_xfer_osdata_isockets (gdb_byte *readbuf,
-			    ULONGEST offset, ULONGEST len)
+			    ULONGEST offset, LONGEST len)
 {
   static const char *buf;
   static LONGEST len_avail = -1;
@@ -1063,7 +1065,7 @@ group_from_gid (char *group, int maxlen, gid_t gid)
 
 static LONGEST
 linux_xfer_osdata_shm (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+		       ULONGEST offset, LONGEST len)
 {
   static const char *buf;
   static LONGEST len_avail = -1;
@@ -1191,7 +1193,7 @@ linux_xfer_osdata_shm (gdb_byte *readbuf,
 
 static LONGEST
 linux_xfer_osdata_sem (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+		       ULONGEST offset, LONGEST len)
 {
   static const char *buf;
   static LONGEST len_avail = -1;
@@ -1303,7 +1305,7 @@ linux_xfer_osdata_sem (gdb_byte *readbuf,
 
 static LONGEST
 linux_xfer_osdata_msg (gdb_byte *readbuf,
-		       ULONGEST offset, ULONGEST len)
+		       ULONGEST offset, LONGEST len)
 {
   static const char *buf;
   static LONGEST len_avail = -1;
@@ -1429,7 +1431,7 @@ linux_xfer_osdata_msg (gdb_byte *readbuf,
 
 static LONGEST
 linux_xfer_osdata_modules (gdb_byte *readbuf,
-			   ULONGEST offset, ULONGEST len)
+			   ULONGEST offset, LONGEST len)
 {
   static const char *buf;
   static LONGEST len_avail = -1;
@@ -1538,7 +1540,7 @@ struct osdata_type {
   char *type;
   char *title;
   char *description;
-  LONGEST (*getter) (gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+  LONGEST (*getter) (gdb_byte *readbuf, ULONGEST offset, LONGEST len);
 } osdata_table[] = {
   { "processes", "Processes", "Listing of all processes",
     linux_xfer_osdata_processes },
@@ -1563,7 +1565,7 @@ struct osdata_type {
 
 LONGEST
 linux_common_xfer_osdata (const char *annex, gdb_byte *readbuf,
-			  ULONGEST offset, ULONGEST len)
+			  ULONGEST offset, LONGEST len)
 {
   if (!annex || *annex == '\0')
     {

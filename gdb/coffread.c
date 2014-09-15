@@ -1,5 +1,5 @@
 /* Read coff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1987-2014 Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
    Contributed by David D. Johnson, Brown University (ddj@cs.brown.edu).
 
    This file is part of GDB.
@@ -26,7 +26,7 @@
 #include "bfd.h"
 #include "gdb_obstack.h"
 
-#include <string.h>
+#include "gdb_string.h"
 #include <ctype.h>
 
 #include "coff/internal.h"	/* Internal format of COFF symbols in BFD */
@@ -669,7 +669,7 @@ coff_symfile_read (struct objfile *objfile, int symfile_flags)
 
       ALL_OBJFILE_MSYMBOLS (objfile, msym)
 	{
-	  const char *name = MSYMBOL_LINKAGE_NAME (msym);
+	  const char *name = SYMBOL_LINKAGE_NAME (msym);
 
 	  /* If the minimal symbols whose name are prefixed by "__imp_"
 	     or "_imp_", get rid of the prefix, and search the minimal
@@ -680,15 +680,14 @@ coff_symfile_read (struct objfile *objfile, int symfile_flags)
 		  || strncmp (name, "_imp_", 5) == 0))
 	    {
 	      const char *name1 = (name[1] == '_' ? &name[7] : &name[6]);
-	      struct bound_minimal_symbol found;
+	      struct minimal_symbol *found;
 
 	      found = lookup_minimal_symbol (name1, NULL, objfile);
 	      /* If found, there are symbols named "_imp_foo" and "foo"
 		 respectively in OBJFILE.  Set the type of symbol "foo"
 		 as 'mst_solib_trampoline'.  */
-	      if (found.minsym != NULL
-		  && MSYMBOL_TYPE (found.minsym) == mst_text)
-		MSYMBOL_TYPE (found.minsym) = mst_solib_trampoline;
+	      if (found != NULL && MSYMBOL_TYPE (found) == mst_text)
+		MSYMBOL_TYPE (found) = mst_solib_trampoline;
 	    }
 	}
     }
@@ -873,7 +872,8 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 	     minsyms.  */
 	  int section = cs_to_section (cs, objfile);
 
-	  tmpaddr = cs->c_value;
+	  tmpaddr = cs->c_value + ANOFFSET (objfile->section_offsets,
+					    SECT_OFF_TEXT (objfile));
 	  record_minimal_symbol (cs, tmpaddr, mst_text,
 				 section, objfile);
 
@@ -975,7 +975,6 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 
 	    enum minimal_symbol_type ms_type;
 	    int sec;
-	    CORE_ADDR offset = 0;
 
 	    if (cs->c_secnum == N_UNDEF)
 	      {
@@ -1007,7 +1006,7 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
  		    || cs->c_sclass == C_THUMBEXTFUNC
  		    || cs->c_sclass == C_THUMBEXT
  		    || (pe_file && (cs->c_sclass == C_STAT)))
-		  offset = ANOFFSET (objfile->section_offsets, sec);
+		  tmpaddr += ANOFFSET (objfile->section_offsets, sec);
 
 		if (bfd_section->flags & SEC_CODE)
 		  {
@@ -1046,7 +1045,7 @@ coff_symtab_read (long symtab_offset, unsigned int nsyms,
 
 		sym = process_coff_symbol
 		  (cs, &main_aux, objfile);
-		SYMBOL_VALUE (sym) = tmpaddr + offset;
+		SYMBOL_VALUE (sym) = tmpaddr;
 		SYMBOL_SECTION (sym) = sec;
 	      }
 	  }
@@ -1842,9 +1841,9 @@ decode_type (struct coff_symbol *cs, unsigned int c_type,
 
 	  base_type = decode_type (cs, new_c_type, aux, objfile);
 	  index_type = objfile_type (objfile)->builtin_int;
-	  range_type
-	    = create_static_range_type ((struct type *) NULL,
-					index_type, 0, n - 1);
+	  range_type =
+	    create_range_type ((struct type *) NULL, 
+			       index_type, 0, n - 1);
 	  type =
 	    create_array_type ((struct type *) NULL, 
 			       base_type, range_type);

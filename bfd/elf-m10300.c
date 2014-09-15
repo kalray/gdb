@@ -1,5 +1,6 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
+   2006, 2007, 2008, 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2010,7 +2011,7 @@ mn10300_elf_relocate_section (bfd *output_bfd,
       bfd_reloc_status_type r;
       int tls_r_type;
       bfd_boolean unresolved_reloc = FALSE;
-      bfd_boolean warned, ignored;
+      bfd_boolean warned;
       struct elf_link_hash_entry * hh;
 
       relocation = 0;
@@ -2033,7 +2034,7 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   hh, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	}
       h = elf_mn10300_hash_entry (hh);
 
@@ -5560,7 +5561,7 @@ mn10300_elf_mkobject (bfd *abfd)
 #define bfd_elf32_mkobject	mn10300_elf_mkobject
 
 #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM	mn10300_elf32_vec
+#define TARGET_LITTLE_SYM	bfd_elf32_mn10300_vec
 #define TARGET_LITTLE_NAME	"elf32-mn10300"
 #define ELF_ARCH		bfd_arch_mn10300
 #define ELF_TARGET_ID		MN10300_ELF_DATA

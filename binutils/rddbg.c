@@ -1,5 +1,6 @@
 /* rddbg.c -- Read debugging information into a generic form.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 2000, 2002, 2003, 2005, 2007, 2008,
+   2010  Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.

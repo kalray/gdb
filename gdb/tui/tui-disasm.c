@@ -1,6 +1,6 @@
 /* Disassembly display.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -27,7 +27,7 @@
 #include "value.h"
 #include "source.h"
 #include "disasm.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-win.h"
@@ -37,7 +37,6 @@
 #include "tui/tui-file.h"
 #include "tui/tui-disasm.h"
 #include "progspace.h"
-#include "objfiles.h"
 
 #include "gdb_curses.h"
 
@@ -114,7 +113,7 @@ tui_find_disassembly_address (struct gdbarch *gdbarch, CORE_ADDR pc, int from)
     {
       CORE_ADDR last_addr;
       int pos;
-      struct bound_minimal_symbol msymbol;
+      struct minimal_symbol *msymbol;
               
       /* Find backward an address which is a symbol and for which
          disassembling from that address will fill completely the
@@ -122,16 +121,16 @@ tui_find_disassembly_address (struct gdbarch *gdbarch, CORE_ADDR pc, int from)
       pos = max_lines - 1;
       do {
          new_low -= 1 * max_lines;
-         msymbol = lookup_minimal_symbol_by_pc_section (new_low, 0);
+         msymbol = lookup_minimal_symbol_by_pc_section (new_low, 0).minsym;
 
-         if (msymbol.minsym)
-            new_low = BMSYMBOL_VALUE_ADDRESS (msymbol);
+         if (msymbol)
+            new_low = SYMBOL_VALUE_ADDRESS (msymbol);
          else
             new_low += 1 * max_lines;
 
          tui_disassemble (gdbarch, asm_lines, new_low, max_lines);
          last_addr = asm_lines[pos].addr;
-      } while (last_addr > pc && msymbol.minsym);
+      } while (last_addr > pc && msymbol);
 
       /* Scan forward disassembling one instruction at a time until
          the last visible instruction of the window matches the pc.
@@ -340,17 +339,17 @@ tui_get_begin_asm_address (struct gdbarch **gdbarch_p, CORE_ADDR *addr_p)
 
   if (element->addr == 0)
     {
-      struct bound_minimal_symbol main_symbol;
+      struct minimal_symbol *main_symbol;
 
       /* Find address of the start of program.
          Note: this should be language specific.  */
       main_symbol = lookup_minimal_symbol ("main", NULL, NULL);
-      if (main_symbol.minsym == 0)
+      if (main_symbol == 0)
         main_symbol = lookup_minimal_symbol ("MAIN", NULL, NULL);
-      if (main_symbol.minsym == 0)
+      if (main_symbol == 0)
         main_symbol = lookup_minimal_symbol ("_start", NULL, NULL);
-      if (main_symbol.minsym)
-        addr = BMSYMBOL_VALUE_ADDRESS (main_symbol);
+      if (main_symbol)
+        addr = SYMBOL_VALUE_ADDRESS (main_symbol);
       else
         addr = 0;
     }

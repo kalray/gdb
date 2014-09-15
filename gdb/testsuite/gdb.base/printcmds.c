@@ -218,11 +218,10 @@ char invalid_RRR[] = "aaaaaaaaaaaaaaaaaaaa"
 
 int main ()
 {
-  void *p = malloc (1);
+  malloc(1);
 
   /* Prevent AIX linker from removing variables.  */
   return ctable1[0] + ctable2[0] + int1dim[0] + int2dim[0][0]
     + int3dim[0][0][0] + int4dim[0][0][0][0] + teststring[0] +
       *parrays -> array1 + a1[0] + a2[0];
-  free (p);
 }

@@ -1,5 +1,5 @@
 #as: -Av8
-#objdump: -dr -m sparc
+#objdump: -dr
 #name: sparc LDD/STD
 
 .*: +file format .*sparc.*

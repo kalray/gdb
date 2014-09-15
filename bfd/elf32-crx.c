@@ -1,5 +1,6 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2006, 2007, 2009, 2010, 2012
+   Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -864,12 +865,12 @@ elf32_crx_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bfd_boolean unresolved_reloc, warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -1308,7 +1309,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 }
 
 /* Definitions for setting CRX target vector.  */
-#define TARGET_LITTLE_SYM		crx_elf32_vec
+#define TARGET_LITTLE_SYM		bfd_elf32_crx_vec
 #define TARGET_LITTLE_NAME		"elf32-crx"
 #define ELF_ARCH			bfd_arch_crx
 #define ELF_MACHINE_CODE		EM_CRX

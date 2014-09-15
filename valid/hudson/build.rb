@@ -15,8 +15,6 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "prefix"         => ["devimage", "Install prefix"],
                         "host"           => ["x86", "Host for the build"],
                         "sysroot"        => ["sysroot", "Sysroot directory"],
-                        "execution_platform" => {"type" => "keywords",
- "keywords" => [:hw, :sim], "default" => "sim", "help" => "Execution platform: can be hardware (jtag) or simulation (k1-mppa, k1-cluster)." },
                       })
 
 workspace = options["workspace"]
@@ -184,24 +182,13 @@ b.target("#{variant}_install") do
   end
 end
 
-
-execution_platform = options['execution_platform'].to_s
-
-$execution_board = "k1-iss"
-$execution_ref = "gdb.sum.ref"
-
-if ( execution_platform == "hw" )
-  $execution_board = "k1-jtag-runner" 
-  $execution_ref = "gdb.sum.hw.ref"
-end
-
 b.target("#{variant}_post_build_valid") do
   b.logtitle = "Report for GDB  #{variant}_post_build_valid, arch = #{arch}"
   if (variant == "gdb")
     if( arch == "k1" )
       Dir.chdir build_path + "/gdb/testsuite"
-      b.valid(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
-      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
+      b.valid(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
     end
   end
 end

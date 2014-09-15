@@ -8,10 +8,9 @@ int
 foo ()
 #endif
 {
- int y;
- volatile int x;
+ int x, y;
 
- x = 5; x = 5; x = 5;
+ x = 5;
  y = 3;
 
  return x + y;
@@ -31,9 +30,9 @@ main ()
  z = 9;
  y = foo ();
  z = y;
- y = y + 2; /* jump here */
+ y = y + 2;
  y = baz ();
- return 0; /* until here */
+ return 0;
 }
 
 

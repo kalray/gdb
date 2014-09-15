@@ -1,5 +1,5 @@
 /* read.c - read a source file -
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -263,11 +263,8 @@ read_begin (void)
   obstack_begin (&notes, chunksize);
   obstack_begin (&cond_obstack, chunksize);
 
-#ifndef tc_line_separator_chars
-#define tc_line_separator_chars line_separator_chars
-#endif
   /* Use machine dependent syntax.  */
-  for (p = tc_line_separator_chars; *p; p++)
+  for (p = line_separator_chars; *p; p++)
     is_end_of_line[(unsigned char) *p] = 2;
   /* Use more.  FIXME-SOMEDAY.  */
 
@@ -3851,22 +3848,19 @@ parse_mri_cons (expressionS *exp, unsigned int nbytes);
 
 #ifndef TC_PARSE_CONS_EXPRESSION
 #ifdef BITFIELD_CONS_EXPRESSIONS
-#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) \
-  (parse_bitfield_cons (EXP, NBYTES), TC_PARSE_CONS_RETURN_NONE)
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) parse_bitfield_cons (EXP, NBYTES)
 static void
 parse_bitfield_cons (expressionS *exp, unsigned int nbytes);
 #endif
 #ifdef REPEAT_CONS_EXPRESSIONS
-#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) \
-  (parse_repeat_cons (EXP, NBYTES), TC_PARSE_CONS_RETURN_NONE)
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) parse_repeat_cons (EXP, NBYTES)
 static void
 parse_repeat_cons (expressionS *exp, unsigned int nbytes);
 #endif
 
 /* If we haven't gotten one yet, just call expression.  */
 #ifndef TC_PARSE_CONS_EXPRESSION
-#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) \
-  (expression (EXP), TC_PARSE_CONS_RETURN_NONE)
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) expression (EXP)
 #endif
 #endif
 
@@ -3874,7 +3868,7 @@ void
 do_parse_cons_expression (expressionS *exp,
 			  int nbytes ATTRIBUTE_UNUSED)
 {
-  (void) TC_PARSE_CONS_EXPRESSION (exp, nbytes);
+  TC_PARSE_CONS_EXPRESSION (exp, nbytes);
 }
 
 
@@ -3917,14 +3911,6 @@ cons_worker (int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
   c = 0;
   do
     {
-      TC_PARSE_CONS_RETURN_TYPE ret = TC_PARSE_CONS_RETURN_NONE;
-#ifdef TC_CONS_FIX_CHECK
-      fixS **cur_fix = &frchain_now->fix_tail;
-
-      if (*cur_fix != NULL)
-	cur_fix = &(*cur_fix)->fx_next;
-#endif
-
 #ifdef TC_M68K
       if (flag_m68k_mri)
 	parse_mri_cons (&exp, (unsigned int) nbytes);
@@ -3937,7 +3923,7 @@ cons_worker (int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
 	      ignore_rest_of_line ();
 	      return;
 	    }
-	  ret = TC_PARSE_CONS_EXPRESSION (&exp, (unsigned int) nbytes);
+	  TC_PARSE_CONS_EXPRESSION (&exp, (unsigned int) nbytes);
 	}
 
       if (rva)
@@ -3947,10 +3933,7 @@ cons_worker (int nbytes,	/* 1=.byte, 2=.word, 4=.long.  */
 	  else
 	    as_fatal (_("rva without symbol"));
 	}
-      emit_expr_with_reloc (&exp, (unsigned int) nbytes, ret);
-#ifdef TC_CONS_FIX_CHECK
-      TC_CONS_FIX_CHECK (&exp, nbytes, *cur_fix);
-#endif
+      emit_expr (&exp, (unsigned int) nbytes);
       ++c;
     }
   while (*input_line_pointer++ == ',');
@@ -4094,14 +4077,6 @@ s_reloc (int ignore ATTRIBUTE_UNUSED)
 void
 emit_expr (expressionS *exp, unsigned int nbytes)
 {
-  emit_expr_with_reloc (exp, nbytes, TC_PARSE_CONS_RETURN_NONE);
-}
-
-void
-emit_expr_with_reloc (expressionS *exp,
-		      unsigned int nbytes,
-		      TC_PARSE_CONS_RETURN_TYPE reloc)
-{
   operatorT op;
   char *p;
   valueT extra_digit = 0;
@@ -4242,12 +4217,6 @@ emit_expr_with_reloc (expressionS *exp,
     }
 
   p = frag_more ((int) nbytes);
-
-  if (reloc != TC_PARSE_CONS_RETURN_NONE)
-    {
-      emit_expr_fix (exp, nbytes, frag_now, p, reloc);
-      return;
-    }
 
 #ifndef WORKING_DOT_WORD
   /* If we have the difference of two symbols in a word, save it on
@@ -4407,41 +4376,23 @@ emit_expr_with_reloc (expressionS *exp,
 	}
     }
   else
-    emit_expr_fix (exp, nbytes, frag_now, p, TC_PARSE_CONS_RETURN_NONE);
+    emit_expr_fix (exp, nbytes, frag_now, p);
 }
 
 void
-emit_expr_fix (expressionS *exp, unsigned int nbytes, fragS *frag, char *p,
-	       TC_PARSE_CONS_RETURN_TYPE r ATTRIBUTE_UNUSED)
+emit_expr_fix (expressionS *exp, unsigned int nbytes, fragS *frag, char *p)
 {
-  int offset = 0;
-  unsigned int size = nbytes;
-
-  memset (p, 0, size);
+  memset (p, 0, nbytes);
 
   /* Generate a fixS to record the symbol value.  */
 
 #ifdef TC_CONS_FIX_NEW
-  TC_CONS_FIX_NEW (frag, p - frag->fr_literal + offset, size, exp, r);
+  TC_CONS_FIX_NEW (frag, p - frag->fr_literal, nbytes, exp);
 #else
-  if (r != TC_PARSE_CONS_RETURN_NONE)
-    {
-      reloc_howto_type *reloc_howto;
+  {
+    bfd_reloc_code_real_type r;
 
-      reloc_howto = bfd_reloc_type_lookup (stdoutput, r);
-      size = bfd_get_reloc_size (reloc_howto);
-
-      if (size > nbytes)
-	{
-	  as_bad (_("%s relocations do not fit in %u bytes\n"),
-		  reloc_howto->name, nbytes);
-	  return;
-	}
-      else if (target_big_endian)
-	offset = nbytes - size;
-    }
-  else
-    switch (size)
+    switch (nbytes)
       {
       case 1:
 	r = BFD_RELOC_8;
@@ -4459,11 +4410,13 @@ emit_expr_fix (expressionS *exp, unsigned int nbytes, fragS *frag, char *p,
 	r = BFD_RELOC_64;
 	break;
       default:
-	as_bad (_("unsupported BFD relocation size %u"), size);
-	return;
+	as_bad (_("unsupported BFD relocation size %u"), nbytes);
+	r = BFD_RELOC_32;
+	break;
       }
-  fix_new_exp (frag, p - frag->fr_literal + offset, size,
-	       exp, 0, r);
+    fix_new_exp (frag, p - frag->fr_literal, (int) nbytes, exp,
+		 0, r);
+  }
 #endif
 }
 
@@ -4599,7 +4552,9 @@ parse_bitfield_cons (exp, nbytes)
 
 #ifdef TC_M68K
 static void
-parse_mri_cons (expressionS *exp, unsigned int nbytes)
+parse_mri_cons (exp, nbytes)
+     expressionS *exp;
+     unsigned int nbytes;
 {
   if (*input_line_pointer != '\''
       && (input_line_pointer[1] != '\''

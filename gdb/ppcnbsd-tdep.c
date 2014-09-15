@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -28,7 +28,7 @@
 #include "tramp-frame.h"
 
 #include "gdb_assert.h"
-#include <string.h>
+#include "gdb_string.h"
 
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"
@@ -42,13 +42,13 @@ struct ppc_reg_offsets ppcnbsd_reg_offsets;
 
 /* NetBSD/powerpc register sets.  */
 
-const struct regset ppcnbsd_gregset =
+struct regset ppcnbsd_gregset =
 {
   &ppcnbsd_reg_offsets,
   ppc_supply_gregset
 };
 
-const struct regset ppcnbsd_fpregset =
+struct regset ppcnbsd_fpregset =
 {
   &ppcnbsd_reg_offsets,
   ppc_supply_fpregset

@@ -1,6 +1,7 @@
 // elfcpp.h -- main header file for elfcpp    -*- C++ -*-
 
-// Copyright (C) 2006-2014 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -246,7 +247,7 @@ enum EM
   EM_MN10300 = 89,
   EM_MN10200 = 90,
   EM_PJ = 91,
-  EM_OR1K = 92,
+  EM_OPENRISC = 92,
   EM_ARC_A5 = 93,
   EM_XTENSA = 94,
   EM_VIDEOCORE = 95,
@@ -288,7 +289,7 @@ enum EM
   // Old AVR objects used 0x1057 (EM_AVR is correct).
   // Old MSP430 objects used 0x1059 (EM_MSP430 is correct).
   // Old FR30 objects used 0x3330 (EM_FR30 is correct).
-  // Old OpenRISC objects used 0x3426 and 0x8472 (EM_OR1K is correct).
+  // Old OpenRISC objects used 0x3426 and 0x8472 (EM_OPENRISC is correct).
   // Old D10V objects used 0x7650 (EM_D10V is correct).
   // Old D30V objects used 0x7676 (EM_D30V is correct).
   // Old IP2X objects used 0x8217 (EM_IP2K is correct).
@@ -400,11 +401,9 @@ enum SHT
   // x86_64 unwind information.
   SHT_X86_64_UNWIND = 0x70000001,
 
-  // MIPS-specific section types.
-  // Section contains register usage information.
+  //MIPS-specific section types.
+  // Register info section
   SHT_MIPS_REGINFO = 0x70000006,
-  // Section contains miscellaneous options.
-  SHT_MIPS_OPTIONS = 0x7000000d,
 
   // Link editor is to sort the entries in this section based on the
   // address specified in the associated symbol table entry.

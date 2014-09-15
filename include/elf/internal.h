@@ -1,5 +1,6 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002,
+   2003, 2006, 2007, 2008, 2010, 2011 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -330,6 +331,8 @@ struct elf_segment_map
    /* SHF_ALLOC sections must have VMAs within the segment.  */		\
    && (!(check_vma)							\
        || ((sec_hdr)->sh_flags & SHF_ALLOC) == 0			\
+       || (((sec_hdr)->sh_flags & SHF_TLS) != 0				\
+           && (segment)->p_type != PT_TLS)				\
        || ((sec_hdr)->sh_addr >= (segment)->p_vaddr			\
 	   && (!(strict)						\
 	       || ((sec_hdr)->sh_addr - (segment)->p_vaddr		\

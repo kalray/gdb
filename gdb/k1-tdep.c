@@ -27,11 +27,9 @@
 #include "gdbcore.h"
 #include "gdbtypes.h"
 #include "inferior.h"
-#include "infrun.h"
 #include "objfiles.h"
 #include "observer.h"
 #include "regcache.h"
-#include "reggroups.h"
 #include "symtab.h"
 #include "target.h"
 #include "target-descriptions.h"
@@ -403,24 +401,24 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
     struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
     struct k1_inferior_data *data = k1_inferior_data (current_inferior());
     struct regcache *regs = get_current_regcache ();
-    ULONGEST ps;
+    uint32_t ps;
 
     if (!data->has_step_pad_area_p) {
-	struct bound_minimal_symbol msym = lookup_minimal_symbol ("_debug_start", 
+	struct minimal_symbol *msym = lookup_minimal_symbol ("_debug_start", 
 							     NULL, NULL);
-	if (msym.minsym == NULL)
+	if (msym == NULL)
 	    error ("Can not locate a suitable step pad area.");
-	if (BMSYMBOL_VALUE_ADDRESS(msym) % 4)
+	if (SYMBOL_VALUE_ADDRESS(msym) % 4)
 	    warning ("Step pad area is not 4-byte aligned.");
-	data->step_pad_area = (BMSYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+	data->step_pad_area = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
         data->has_step_pad_area_p = 1;
 
 	msym = lookup_minimal_symbol ("_debug_start_lma", 
 							     NULL, NULL);
-	if (msym.minsym != NULL) {
-	    if (BMSYMBOL_VALUE_ADDRESS(msym) % 4)
+	if (msym != NULL) {
+	    if (SYMBOL_VALUE_ADDRESS(msym) % 4)
 		warning ("Physical step pad area is not 4-byte aligned.");
-	    data->step_pad_area_lma = (BMSYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
+	    data->step_pad_area_lma = (SYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
 	    data->has_step_pad_area_lma_p = 1;
 	}
     }
@@ -900,22 +898,6 @@ k1_push_dummy_call (struct gdbarch *gdbarch,
   return sp+16;
 }
 
-static int
-k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-			struct reggroup *group)
-{
-  if (gdbarch_register_name (gdbarch, regnum) == NULL
-      || *gdbarch_register_name (gdbarch, regnum) == '\0')
-    return 0;
-
-  if ((group == save_reggroup || group == restore_reggroup || group == all_reggroup)
-      && strncmp (gdbarch_register_name (gdbarch, regnum), "oce", 3) == 0)
-    return 0;
-
-  return default_register_reggroup_p (gdbarch, regnum, group);   
-}
-
-
 static void k1_store_return_value (struct gdbarch *gdbarch,
 				   struct type *type,
                                    struct regcache *regcache,
@@ -1105,8 +1087,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
       set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
   }
-
-  set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
 
   set_gdbarch_num_pseudo_regs (gdbarch, k1_num_pseudos (gdbarch));
 

@@ -1,6 +1,6 @@
 /* Low-level child interface to ttrace.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@
 #include "target.h"
 
 #include "gdb_assert.h"
-#include <string.h>
+#include "gdb_string.h"
 #include <sys/mman.h>
 #include <sys/ttrace.h>
 #include <signal.h>
@@ -195,7 +195,7 @@ inf_ttrace_add_page (pid_t pid, CORE_ADDR addr)
 		  addr, 0, (uintptr_t)&prot) == -1)
 	perror_with_name (("ttrace"));
       
-      page = XNEW (struct inf_ttrace_page);
+      page = XMALLOC (struct inf_ttrace_page);
       page->addr = addr;
       page->prot = prot;
       page->refcount = 0;
@@ -314,8 +314,7 @@ inf_ttrace_disable_page_protections (pid_t pid)
    type TYPE.  */
 
 static int
-inf_ttrace_insert_watchpoint (struct target_ops *self,
-			      CORE_ADDR addr, int len, int type,
+inf_ttrace_insert_watchpoint (CORE_ADDR addr, int len, int type,
 			      struct expression *cond)
 {
   const int pagesize = inf_ttrace_page_dict.pagesize;
@@ -339,8 +338,7 @@ inf_ttrace_insert_watchpoint (struct target_ops *self,
    type TYPE.  */
 
 static int
-inf_ttrace_remove_watchpoint (struct target_ops *self,
-			      CORE_ADDR addr, int len, int type,
+inf_ttrace_remove_watchpoint (CORE_ADDR addr, int len, int type,
 			      struct expression *cond)
 {
   const int pagesize = inf_ttrace_page_dict.pagesize;
@@ -361,15 +359,13 @@ inf_ttrace_remove_watchpoint (struct target_ops *self,
 }
 
 static int
-inf_ttrace_can_use_hw_breakpoint (struct target_ops *self,
-				  int type, int len, int ot)
+inf_ttrace_can_use_hw_breakpoint (int type, int len, int ot)
 {
   return (type == bp_hardware_watchpoint);
 }
 
 static int
-inf_ttrace_region_ok_for_hw_watchpoint (struct target_ops *self,
-					CORE_ADDR addr, int len)
+inf_ttrace_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
   return 1;
 }
@@ -378,7 +374,7 @@ inf_ttrace_region_ok_for_hw_watchpoint (struct target_ops *self,
    by hitting a "hardware" watchpoint.  */
 
 static int
-inf_ttrace_stopped_by_watchpoint (struct target_ops *ops)
+inf_ttrace_stopped_by_watchpoint (void)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   lwpid_t lwpid = ptid_get_lwp (inferior_ptid);
@@ -644,8 +640,7 @@ inf_ttrace_him (struct target_ops *ops, int pid)
 
   do_cleanups (old_chain);
 
-  if (!target_is_pushed (ops))
-    push_target (ops);
+  push_target (ops);
 
   startup_inferior (START_INFERIOR_TRAPS_EXPECTED);
 
@@ -696,7 +691,8 @@ inf_ttrace_mourn_inferior (struct target_ops *ops)
     }
   inf_ttrace_page_dict.count = 0;
 
-  inf_child_mourn_inferior (ops);
+  unpush_target (ops);
+  generic_mourn_inferior ();
 }
 
 /* Assuming we just attached the debugger to a new inferior, create
@@ -747,7 +743,7 @@ inf_ttrace_create_threads_after_attach (int pid)
 }
 
 static void
-inf_ttrace_attach (struct target_ops *ops, const char *args, int from_tty)
+inf_ttrace_attach (struct target_ops *ops, char *args, int from_tty)
 {
   char *exec_file;
   pid_t pid;
@@ -796,14 +792,13 @@ inf_ttrace_attach (struct target_ops *ops, const char *args, int from_tty)
 	      (uintptr_t)&tte, sizeof tte, 0) == -1)
     perror_with_name (("ttrace"));
 
-  if (!target_is_pushed (ops))
-    push_target (ops);
+  push_target (ops);
 
   inf_ttrace_create_threads_after_attach (pid);
 }
 
 static void
-inf_ttrace_detach (struct target_ops *ops, const char *args, int from_tty)
+inf_ttrace_detach (struct target_ops *ops, char *args, int from_tty)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   int sig = 0;
@@ -838,7 +833,7 @@ inf_ttrace_detach (struct target_ops *ops, const char *args, int from_tty)
   inferior_ptid = null_ptid;
   detach_inferior (pid);
 
-  inf_child_maybe_unpush_target (ops);
+  unpush_target (ops);
 }
 
 static void
@@ -1227,38 +1222,28 @@ inf_ttrace_xfer_memory (CORE_ADDR addr, ULONGEST len,
   return len;
 }
 
-static enum target_xfer_status
+static LONGEST
 inf_ttrace_xfer_partial (struct target_ops *ops, enum target_object object,
 			 const char *annex, gdb_byte *readbuf,
 			 const gdb_byte *writebuf,
-			 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+			 ULONGEST offset, LONGEST len)
 {
   switch (object)
     {
     case TARGET_OBJECT_MEMORY:
-      {
-	LONGEST val = inf_ttrace_xfer_memory (offset, len, readbuf, writebuf);
-
-	if (val == 0)
-	  return TARGET_XFER_EOF;
-	else
-	  {
-	    *xfered_len = (ULONGEST) val;
-	    return TARGET_XFER_OK;
-	  }
-      }
+      return inf_ttrace_xfer_memory (offset, len, readbuf, writebuf);
 
     case TARGET_OBJECT_UNWIND_TABLE:
-      return TARGET_XFER_E_IO;
+      return -1;
 
     case TARGET_OBJECT_AUXV:
-      return TARGET_XFER_E_IO;
+      return -1;
 
     case TARGET_OBJECT_WCOOKIE:
-      return TARGET_XFER_E_IO;
+      return -1;
 
     default:
-      return TARGET_XFER_E_IO;
+      return -1;
     }
 }
 
@@ -1283,8 +1268,7 @@ inf_ttrace_thread_alive (struct target_ops *ops, ptid_t ptid)
    INFO.  */
 
 static char *
-inf_ttrace_extra_thread_info (struct target_ops *self,
-			      struct thread_info *info)
+inf_ttrace_extra_thread_info (struct thread_info *info)
 {
   struct inf_ttrace_private_thread_info* private =
     (struct inf_ttrace_private_thread_info *) info->private;
@@ -1315,7 +1299,7 @@ inf_ttrace_pid_to_str (struct target_ops *ops, ptid_t ptid)
 /* Implement the get_ada_task_ptid target_ops method.  */
 
 static ptid_t
-inf_ttrace_get_ada_task_ptid (struct target_ops *self, long lwp, long thread)
+inf_ttrace_get_ada_task_ptid (long lwp, long thread)
 {
   return ptid_build (ptid_get_pid (inferior_ptid), lwp, 0);
 }

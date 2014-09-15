@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -193,6 +193,9 @@ struct gdbarch_tdep
   /* Convention for returning structures.  */
   enum struct_return struct_return;
 
+  /* Cached core file helpers.  */
+  struct regset *gregset, *fpregset, *vfpregset;
+
   /* ISA-specific data types.  */
   struct type *arm_ext_type;
   struct type *neon_double_type;
@@ -202,8 +205,8 @@ struct gdbarch_tdep
      instruction.  */
   CORE_ADDR (*syscall_next_pc) (struct frame_info *frame);
 
-   /* syscall record.  */
-  int (*arm_syscall_record) (struct regcache *regcache, unsigned long svc_number);
+   /* Parse swi insn args, sycall record.  */
+  int (*arm_swi_record) (struct regcache *regcache);
 };
 
 /* Structures used for displaced stepping.  */

@@ -1,5 +1,6 @@
 /* Disassemble moxie instructions.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright 2009, 2012
+   Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

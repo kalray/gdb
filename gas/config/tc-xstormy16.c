@@ -1,5 +1,6 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -193,9 +194,10 @@ void
 xstormy16_cons_fix_new (fragS *f,
 			int where,
 			int nbytes,
-			expressionS *exp,
-			bfd_reloc_code_real_type code)
+			expressionS *exp)
 {
+  bfd_reloc_code_real_type code;
+
   if (exp->X_op == O_fptr_symbol)
     {
       switch (nbytes)

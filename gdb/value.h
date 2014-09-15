@@ -1,6 +1,6 @@
 /* Definitions for values of C expressions, for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,6 @@ struct type;
 struct ui_file;
 struct language_defn;
 struct value_print_options;
-struct xmethod_worker;
 
 /* The structure which defines the type of a value.  It should never
    be possible for a program lval value to survive over a call to the
@@ -437,14 +436,6 @@ extern int value_bits_synthetic_pointer (const struct value *value,
 extern int value_bytes_available (const struct value *value,
 				  int offset, int length);
 
-/* Given a value, determine whether the contents bits starting at
-   OFFSET and extending for LENGTH bits are available.  This returns
-   nonzero if all bits in the given range are available, zero if any
-   bit is unavailable.  */
-
-extern int value_bits_available (const struct value *value,
-				 int offset, int length);
-
 /* Like value_bytes_available, but return false if any byte in the
    whole object is unavailable.  */
 extern int value_entirely_available (struct value *value);
@@ -458,12 +449,6 @@ extern int value_entirely_unavailable (struct value *value);
 
 extern void mark_value_bytes_unavailable (struct value *value,
 					  int offset, int length);
-
-/* Mark VALUE's content bits starting at OFFSET and extending for
-   LENGTH bits as unavailable.  */
-
-extern void mark_value_bits_unavailable (struct value *value,
-					 int offset, int length);
 
 /* Compare LENGTH bytes of VAL1's contents starting at OFFSET1 with
    LENGTH bytes of VAL2's contents starting at OFFSET2.
@@ -575,17 +560,14 @@ extern struct value *value_from_history_ref (char *, char **);
 extern struct value *value_at (struct type *type, CORE_ADDR addr);
 extern struct value *value_at_lazy (struct type *type, CORE_ADDR addr);
 
-extern struct value *value_from_contents_and_address_unresolved
-     (struct type *, const gdb_byte *, CORE_ADDR);
 extern struct value *value_from_contents_and_address (struct type *,
 						      const gdb_byte *,
 						      CORE_ADDR);
 extern struct value *value_from_contents (struct type *, const gdb_byte *);
 
-extern struct value *default_value_from_register (struct gdbarch *gdbarch,
-						  struct type *type,
+extern struct value *default_value_from_register (struct type *type,
 						  int regnum,
-						  struct frame_id frame_id);
+						  struct frame_info *frame);
 
 extern void read_frame_register_value (struct value *value,
 				       struct frame_info *frame);
@@ -593,7 +575,7 @@ extern void read_frame_register_value (struct value *value,
 extern struct value *value_from_register (struct type *type, int regnum,
 					  struct frame_info *frame);
 
-extern CORE_ADDR address_from_register (int regnum,
+extern CORE_ADDR address_from_register (struct type *type, int regnum,
 					struct frame_info *frame);
 
 extern struct value *value_of_variable (struct symbol *var,
@@ -674,13 +656,8 @@ extern struct value *value_struct_elt (struct value **argp,
 				       const char *name, int *static_memfuncp,
 				       const char *err);
 
-extern struct value *value_struct_elt_bitpos (struct value **argp,
-					      int bitpos,
-					      struct type *field_type,
-					      const char *err);
-
 extern struct value *value_aggregate_elt (struct type *curtype,
-					  const char *name,
+					  char *name,
 					  struct type *expect_type,
 					  int want_address,
 					  enum noside noside);
@@ -1013,10 +990,5 @@ struct value *call_internal_function (struct gdbarch *gdbarch,
 				      int argc, struct value **argv);
 
 char *value_internal_function_name (struct value *);
-
-extern struct value *value_of_xmethod (struct xmethod_worker *);
-
-struct value *call_xmethod (struct value *function,
-			    int argc, struct value **argv);
 
 #endif /* !defined (VALUE_H) */

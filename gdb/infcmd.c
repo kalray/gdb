@@ -1,6 +1,6 @@
 /* Memory-access and commands for "inferior" process, for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,11 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include <signal.h>
-#include <string.h>
+#include "gdb_string.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "frame.h"
 #include "inferior.h"
-#include "infrun.h"
 #include "environ.h"
 #include "value.h"
 #include "gdbcmd.h"
@@ -33,6 +32,7 @@
 #include "gdbcore.h"
 #include "target.h"
 #include "language.h"
+#include "symfile.h"
 #include "objfiles.h"
 #include "completer.h"
 #include "ui-out.h"
@@ -233,7 +233,6 @@ set_inferior_args_vector (int argc, char **argv)
 }
 
 /* Notice when `set args' is run.  */
-
 static void
 set_args_command (char *args, int from_tty, struct cmd_list_element *c)
 {
@@ -243,7 +242,6 @@ set_args_command (char *args, int from_tty, struct cmd_list_element *c)
 }
 
 /* Notice when `show args' is run.  */
-
 static void
 show_args_command (struct ui_file *file, int from_tty,
 		   struct cmd_list_element *c, const char *value)
@@ -256,7 +254,6 @@ show_args_command (struct ui_file *file, int from_tty,
 
 /* Compute command-line string given argument vector.  This does the
    same shell processing as fork_inferior.  */
-
 char *
 construct_inferior_arguments (int argc, char **argv)
 {
@@ -377,7 +374,6 @@ construct_inferior_arguments (int argc, char **argv)
    background execution) has been added as *the last* of the arguments ARGS
    of a command.  If it has, it removes it and returns 1.  Otherwise it
    does nothing and returns 0.  */
-
 static int
 strip_bg_char (char **args)
 {
@@ -497,27 +493,6 @@ Start it from the beginning? ")))
     }
 }
 
-/* See inferior.h.  */
-
-void
-prepare_execution_command (struct target_ops *target, int background)
-{
-  /* If we get a request for running in the bg but the target
-     doesn't support it, error out.  */
-  if (background && !target->to_can_async_p (target))
-    error (_("Asynchronous execution not supported on this target."));
-
-  /* If we don't get a request of running in the bg, then we need
-     to simulate synchronous (fg) execution.  */
-  if (!background && target->to_can_async_p (target))
-    {
-      /* Simulate synchronous execution.  Note no cleanup is necessary
-	 for this.  stdin is re-enabled whenever an error reaches the
-	 top level.  */
-      async_disable_stdin ();
-    }
-}
-
 /* Implement the "run" command.  If TBREAK_AT_MAIN is set, then insert
    a temporary breakpoint at the begining of the main program before
    running the program.  */
@@ -529,8 +504,6 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
   struct cleanup *old_chain;
   ptid_t ptid;
   struct ui_out *uiout = current_uiout;
-  struct target_ops *run_target;
-  int async_exec = 0;
 
   dont_repeat ();
 
@@ -553,26 +526,14 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
   reopen_exec_file ();
   reread_symbols ();
 
-  if (args != NULL)
-    async_exec = strip_bg_char (&args);
-
-  /* Do validation and preparation before possibly changing anything
-     in the inferior.  */
-
-  run_target = find_run_target ();
-
-  prepare_execution_command (run_target, async_exec);
-
-  if (non_stop && !run_target->to_supports_non_stop (run_target))
-    error (_("The target does not support running in non-stop mode."));
-
-  /* Done.  Can now set breakpoints, change inferior args, etc.  */
-
   /* Insert the temporary breakpoint if a location was specified.  */
   if (tbreak_at_main)
     tbreak_command (main_name (), 0);
 
   exec_file = (char *) get_exec_file (0);
+
+  if (non_stop && !target_supports_non_stop ())
+    error (_("The target does not support running in non-stop mode."));
 
   /* We keep symbols from add-symbol-file, on the grounds that the
      user might want to add some symbols before running the program
@@ -582,9 +543,32 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
      the user has to manually nuke all symbols between runs if they
      want them to go away (PR 2207).  This is probably reasonable.  */
 
-  /* If there were other args, beside '&', process them.  */
-  if (args != NULL)
-    set_inferior_args (args);
+  if (!args)
+    {
+      if (target_can_async_p ())
+	async_disable_stdin ();
+    }
+  else
+    {
+      int async_exec = strip_bg_char (&args);
+
+      /* If we get a request for running in the bg but the target
+         doesn't support it, error out.  */
+      if (async_exec && !target_can_async_p ())
+	error (_("Asynchronous execution not supported on this target."));
+
+      /* If we don't get a request of running in the bg, then we need
+         to simulate synchronous (fg) execution.  */
+      if (!async_exec && target_can_async_p ())
+	{
+	  /* Simulate synchronous execution.  */
+	  async_disable_stdin ();
+	}
+
+      /* If there were other args, beside '&', process them.  */
+      if (args)
+	set_inferior_args (args);
+    }
 
   if (from_tty)
     {
@@ -602,12 +586,9 @@ run_command_1 (char *args, int from_tty, int tbreak_at_main)
 
   /* We call get_inferior_args() because we might need to compute
      the value now.  */
-  run_target->to_create_inferior (run_target, exec_file, get_inferior_args (),
-				  environ_vector (current_inferior ()->environment),
-				  from_tty);
-  /* to_create_inferior should push the target, so after this point we
-     shouldn't refer to run_target again.  */
-  run_target = NULL;
+  target_create_inferior (exec_file, get_inferior_args (),
+			  environ_vector (current_inferior ()->environment),
+			  from_tty);
 
   /* We're starting off a new process.  When we get out of here, in
      non-stop mode, finish the state of all threads of that process,
@@ -751,7 +732,6 @@ continue_1 (int all_threads)
 }
 
 /* continue [-a] [proceed-count] [&]  */
-
 static void
 continue_command (char *args, int from_tty)
 {
@@ -763,7 +743,18 @@ continue_command (char *args, int from_tty)
   if (args != NULL)
     async_exec = strip_bg_char (&args);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   if (args != NULL)
     {
@@ -895,7 +886,18 @@ step_1 (int skip_subroutines, int single_inst, char *count_string)
   if (count_string)
     async_exec = strip_bg_char (&count_string);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we get a request for running in the bg but the target
+     doesn't support it, error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
+
+  /* If we don't get a request of running in the bg, then we need
+     to simulate synchronous (fg) execution.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   count = count_string ? parse_and_eval_long (count_string) : 1;
 
@@ -964,7 +966,6 @@ struct step_1_continuation_args
    to the user.  If count is > 1, we will need to do one more call to
    proceed(), via step_once().  Basically it is like step_once and
    step_1_continuation are co-recursive.  */
-
 static void
 step_1_continuation (void *args, int err)
 {
@@ -1130,7 +1131,10 @@ jump_command (char *arg, int from_tty)
   if (arg != NULL)
     async_exec = strip_bg_char (&arg);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
 
   if (!arg)
     error_no_arg (_("starting address"));
@@ -1186,13 +1190,20 @@ jump_command (char *arg, int from_tty)
       printf_filtered (".\n");
     }
 
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
+
   clear_proceed_status ();
   proceed (addr, GDB_SIGNAL_0, 0);
 }
 
 
 /* Go to line or address in current procedure.  */
-
 static void
 go_command (char *line_no, int from_tty)
 {
@@ -1224,7 +1235,18 @@ signal_command (char *signum_exp, int from_tty)
   if (signum_exp != NULL)
     async_exec = strip_bg_char (&signum_exp);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   if (!signum_exp)
     error_no_arg (_("signal number"));
@@ -1314,7 +1336,7 @@ until_next_command (int from_tty)
       if (msymbol.minsym == NULL)
 	error (_("Execution is not within a known function."));
 
-      tp->control.step_range_start = BMSYMBOL_VALUE_ADDRESS (msymbol);
+      tp->control.step_range_start = SYMBOL_VALUE_ADDRESS (msymbol.minsym);
       tp->control.step_range_end = pc;
     }
   else
@@ -1363,7 +1385,18 @@ until_command (char *arg, int from_tty)
   if (arg != NULL)
     async_exec = strip_bg_char (&arg);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   if (arg)
     until_break_command (arg, from_tty, 0);
@@ -1388,7 +1421,18 @@ advance_command (char *arg, int from_tty)
   if (arg != NULL)
     async_exec = strip_bg_char (&arg);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   until_break_command (arg, from_tty, 1);
 }
@@ -1678,7 +1722,18 @@ finish_command (char *arg, int from_tty)
   if (arg != NULL)
     async_exec = strip_bg_char (&arg);
 
-  prepare_execution_command (&current_target, async_exec);
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (async_exec && !target_can_async_p ())
+    error (_("Asynchronous execution not supported on this target."));
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   if (arg)
     error (_("The \"finish\" command does not take any arguments."));
@@ -2460,7 +2515,7 @@ void
 attach_command (char *args, int from_tty)
 {
   int async_exec = 0;
-  struct target_ops *attach_target;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   dont_repeat ();		/* Not for the faint of heart */
 
@@ -2480,20 +2535,29 @@ attach_command (char *args, int from_tty)
      this function should probably be moved into target_pre_inferior.  */
   target_pre_inferior (from_tty);
 
-  if (args != NULL)
-    async_exec = strip_bg_char (&args);
-
-  attach_target = find_attach_target ();
-
-  prepare_execution_command (attach_target, async_exec);
-
-  if (non_stop && !attach_target->to_supports_non_stop (attach_target))
+  if (non_stop && !target_supports_non_stop ())
     error (_("Cannot attach to this target in non-stop mode"));
 
-  attach_target->to_attach (attach_target, args, from_tty);
-  /* to_attach should push the target, so after this point we
-     shouldn't refer to attach_target again.  */
-  attach_target = NULL;
+  if (args)
+    {
+      async_exec = strip_bg_char (&args);
+
+      /* If we get a request for running in the bg but the target
+         doesn't support it, error out.  */
+      if (async_exec && !target_can_async_p ())
+	error (_("Asynchronous execution not supported on this target."));
+    }
+
+  /* If we don't get a request of running in the bg, then we need
+     to simulate synchronous (fg) execution.  */
+  if (!async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+      make_cleanup ((make_cleanup_ftype *)async_enable_stdin, NULL);
+    }
+
+  target_attach (args, from_tty);
 
   /* Set up the "saved terminal modes" of the inferior
      based on what modes we are starting it with.  */
@@ -2543,6 +2607,7 @@ attach_command (char *args, int from_tty)
 	  a->async_exec = async_exec;
 	  add_inferior_continuation (attach_command_continuation, a,
 				     attach_command_continuation_free_args);
+	  discard_cleanups (back_to);
 	  return;
 	}
 
@@ -2550,6 +2615,7 @@ attach_command (char *args, int from_tty)
     }
 
   attach_command_post_wait (args, from_tty, async_exec);
+  discard_cleanups (back_to);
 }
 
 /* We had just found out that the target was already attached to an
@@ -2699,14 +2765,14 @@ interrupt_target_1 (int all_threads)
     set_stop_requested (ptid, 1);
 }
 
-/* interrupt [-a]
-   Stop the execution of the target while running in async mode, in
+/* Stop the execution of the target while running in async mode, in
    the backgound.  In all-stop, stop the whole process.  In non-stop
    mode, stop the current thread only by default, or stop all threads
    if the `-a' switch is used.  */
 
+/* interrupt [-a]  */
 static void
-interrupt_command (char *args, int from_tty)
+interrupt_target_command (char *args, int from_tty)
 {
   if (target_can_async_p ())
     {
@@ -3073,7 +3139,7 @@ You may specify arguments to give to your program, just as with the\n\
 \"run\" command."));
   set_cmd_completer (c, filename_completer);
 
-  add_com ("interrupt", class_run, interrupt_command,
+  add_com ("interrupt", class_run, interrupt_target_command,
 	   _("Interrupt the execution of the debugged program.\n\
 If non-stop mode is enabled, interrupt only the current thread,\n\
 otherwise all the threads in the program are stopped.  To \n\

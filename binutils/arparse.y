@@ -1,7 +1,8 @@
 %{
 /* arparse.y - Stange script language parser */
 
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright 1992, 1993, 1995, 1997, 1999, 2002, 2003, 2005, 2007
+   Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

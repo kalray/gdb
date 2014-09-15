@@ -1,6 +1,6 @@
 /* ELF executable support for BFD.
 
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright 1993-2013 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1117,17 +1117,13 @@ _bfd_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
     return TRUE;
 
-  if (!elf_flags_init (obfd))
-    {
-      elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-      elf_flags_init (obfd) = TRUE;
-    }
+  BFD_ASSERT (!elf_flags_init (obfd)
+	      || (elf_elfheader (obfd)->e_flags
+		  == elf_elfheader (ibfd)->e_flags));
 
   elf_gp (obfd) = elf_gp (ibfd);
-
-  /* Also copy the EI_OSABI field.  */
-  elf_elfheader (obfd)->e_ident[EI_OSABI] =
-    elf_elfheader (ibfd)->e_ident[EI_OSABI];
+  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
+  elf_flags_init (obfd) = TRUE;
 
   /* Copy object attributes.  */
   _bfd_elf_copy_obj_attributes (ibfd, obfd);
@@ -3079,13 +3075,11 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	{
 	  d->rel.hdr->sh_link = elf_onesymtab (abfd);
 	  d->rel.hdr->sh_info = d->this_idx;
-	  d->rel.hdr->sh_flags |= SHF_INFO_LINK;
 	}
       if (d->rela.idx != 0)
 	{
 	  d->rela.hdr->sh_link = elf_onesymtab (abfd);
 	  d->rela.hdr->sh_info = d->this_idx;
-	  d->rela.hdr->sh_flags |= SHF_INFO_LINK;
 	}
 
       /* We need to set up sh_link for SHF_LINK_ORDER.  */
@@ -3172,10 +3166,7 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	    name += 5;
 	  s = bfd_get_section_by_name (abfd, name);
 	  if (s != NULL)
-	    {
-	      d->this_hdr.sh_info = elf_section_data (s)->this_idx;
-	      d->this_hdr.sh_flags |= SHF_INFO_LINK;
-	    }
+	    d->this_hdr.sh_info = elf_section_data (s)->this_idx;
 	  break;
 
 	case SHT_STRTAB:
@@ -3466,7 +3457,8 @@ _bfd_elf_compute_section_file_positions (bfd *abfd,
     return FALSE;
 
   /* Post process the headers if necessary.  */
-  (*bed->elf_backend_post_process_headers) (abfd, link_info);
+  if (bed->elf_backend_post_process_headers)
+    (*bed->elf_backend_post_process_headers) (abfd, link_info);
 
   fsargs.failed = FALSE;
   fsargs.link_info = link_info;
@@ -4121,31 +4113,11 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 	  /* Mandated PF_R.  */
 	  m->p_flags = PF_R;
 	  m->p_flags_valid = 1;
-	  s = first_tls;
 	  for (i = 0; i < (unsigned int) tls_count; ++i)
 	    {
-	      if ((s->flags & SEC_THREAD_LOCAL) == 0)
-		{
-		  _bfd_error_handler
-		    (_("%B: TLS sections are not adjacent:"), abfd);
-		  s = first_tls;
-		  i = 0;
-		  while (i < (unsigned int) tls_count)
-		    {
-		      if ((s->flags & SEC_THREAD_LOCAL) != 0)
-			{
-			  _bfd_error_handler (_("	    TLS: %A"), s);
-			  i++;
-			}
-		      else
-			_bfd_error_handler (_("	non-TLS: %A"), s);
-		      s = s->next;
-		    }
-		  bfd_set_error (bfd_error_bad_value);
-		  goto error_return;
-		}
-	      m->sections[i] = s;
-	      s = s->next;
+	      BFD_ASSERT (first_tls->flags & SEC_THREAD_LOCAL);
+	      m->sections[i] = first_tls;
+	      first_tls = first_tls->next;
 	    }
 
 	  *pm = m;
@@ -4208,7 +4180,11 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 			== (SEC_LOAD | SEC_HAS_CONTENTS))
 		      break;
 
-		  if (i != (unsigned) -1)
+		  if (i == (unsigned) -1)
+		    continue;
+
+		  if (m->sections[i]->vma + m->sections[i]->size
+		      >= info->relro_end)
 		    break;
 		}
 	    }
@@ -4333,9 +4309,6 @@ elf_sort_sections (const void *arg1, const void *arg2)
 static file_ptr
 vma_page_aligned_bias (bfd_vma vma, ufile_ptr off, bfd_vma maxpagesize)
 {
-  /* PR binutils/16199: Handle an alignment of zero.  */
-  if (maxpagesize == 0)
-    maxpagesize = 1;
   return ((vma - off) % maxpagesize);
 }
 
@@ -4812,7 +4785,6 @@ assign_file_positions_for_load_sections (bfd *abfd,
 		p->p_flags |= PF_W;
 	    }
 	}
-
       off -= off_adjust;
 
       /* Check that all sections are in a PT_LOAD segment.
@@ -5014,11 +4986,14 @@ assign_file_positions_for_non_load_sections (bfd *abfd,
 		{
 		  if (lp->p_type == PT_LOAD
 		      && lp->p_vaddr < link_info->relro_end
+		      && lp->p_vaddr + lp->p_filesz >= link_info->relro_end
 		      && lm->count != 0
 		      && lm->sections[0]->vma >= link_info->relro_start)
 		    break;
 		}
 
+	      /* PR ld/14207.  If the RELRO segment doesn't fit in the
+		 LOAD segment, it should be removed.  */
 	      BFD_ASSERT (lm != NULL);
 	    }
 	  else
@@ -5179,27 +5154,6 @@ assign_file_positions_except_relocs (bfd *abfd,
 	{
 	  if (!(*bed->elf_backend_modify_program_headers) (abfd, link_info))
 	    return FALSE;
-	}
-
-      /* Set e_type in ELF header to ET_EXEC for -pie -Ttext-segment=.  */
-      if (link_info != NULL
-	  && link_info->executable
-	  && link_info->shared)
-	{
-	  unsigned int num_segments = elf_elfheader (abfd)->e_phnum;
-	  Elf_Internal_Phdr *segment = elf_tdata (abfd)->phdr;
-	  Elf_Internal_Phdr *end_segment = &segment[num_segments];
-
-	  /* Find the lowest p_vaddr in PT_LOAD segments.  */
-	  bfd_vma p_vaddr = (bfd_vma) -1;
-	  for (; segment < end_segment; segment++)
-	    if (segment->p_type == PT_LOAD && p_vaddr > segment->p_vaddr)
-	      p_vaddr = segment->p_vaddr;
-
-	  /* Set e_type to ET_EXEC if the lowest p_vaddr in PT_LOAD
-	     segments is non-zero.  */
-	  if (p_vaddr)
-	    i_ehdrp->e_type = ET_EXEC;
 	}
 
       /* Write out the program headers.  */
@@ -6263,7 +6217,7 @@ copy_elf_program_header (bfd *ibfd, bfd *obfd)
 	    phdr_included = TRUE;
 	}
 
-      lowest_section = NULL;
+      lowest_section = first_section;
       if (section_count != 0)
 	{
 	  unsigned int isec = 0;
@@ -6280,8 +6234,7 @@ copy_elf_program_header (bfd *ibfd, bfd *obfd)
 		    {
 		      bfd_vma seg_off;
 
-		      if (lowest_section == NULL
-			  || section->lma < lowest_section->lma)
+		      if (section->lma < lowest_section->lma)
 			lowest_section = section;
 
 		      /* Section lmas are set up from PT_LOAD header
@@ -7804,7 +7757,7 @@ _bfd_elf_set_section_contents (bfd *abfd,
 			       bfd_size_type count)
 {
   Elf_Internal_Shdr *hdr;
-  file_ptr pos;
+  bfd_signed_vma pos;
 
   if (! abfd->output_has_begun
       && ! _bfd_elf_compute_section_file_positions (abfd, NULL))
@@ -9912,12 +9865,11 @@ bfd *
 bfd_elf_bfd_from_remote_memory
   (bfd *templ,
    bfd_vma ehdr_vma,
-   bfd_size_type size,
    bfd_vma *loadbasep,
    int (*target_read_memory) (bfd_vma, bfd_byte *, bfd_size_type))
 {
   return (*get_elf_backend_data (templ)->elf_backend_bfd_from_remote_memory)
-    (templ, ehdr_vma, size, loadbasep, target_read_memory);
+    (templ, ehdr_vma, loadbasep, target_read_memory);
 }
 
 long
@@ -10043,8 +9995,8 @@ asection _bfd_elf_large_com_section
 		      SEC_IS_COMMON, NULL, "LARGE_COMMON", 0);
 
 void
-_bfd_elf_post_process_headers (bfd * abfd,
-			       struct bfd_link_info * link_info ATTRIBUTE_UNUSED)
+_bfd_elf_set_osabi (bfd * abfd,
+		    struct bfd_link_info * link_info ATTRIBUTE_UNUSED)
 {
   Elf_Internal_Ehdr * i_ehdrp;	/* ELF file header, internal form.  */
 

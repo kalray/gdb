@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+#   Copyright 2012 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,13 +76,10 @@ MKDOC = chew$(EXEEXT_FOR_BUILD)
 AM_CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir)/../../include \
 	-I$(srcdir)/../../intl -I../../intl
 
-$(MKDOC): chew.stamp ; @true
-chew.stamp: $(srcdir)/chew.c
+$(MKDOC): $(srcdir)/chew.c
 	$(CC_FOR_BUILD) -o chw$$$$$(EXEEXT_FOR_BUILD) $(CFLAGS_FOR_BUILD) \
 	  $(LDFLAGS_FOR_BUILD) $(H_CFLAGS) $(AM_CPPFLAGS) $(srcdir)/chew.c; \
-	$(SHELL) $(srcdir)/../../move-if-change \
-	  chw$$$$$(EXEEXT_FOR_BUILD) $(MKDOC); \
-	touch $@
+	$(SHELL) $(srcdir)/../../move-if-change chw$$$$$(EXEEXT_FOR_BUILD) $(MKDOC)
 
 protos: libbfd.h libcoff.h bfd.h
 
@@ -94,139 +91,117 @@ protos: libbfd.h libcoff.h bfd.h
 # program.  If somebody tries to rebuild info, but none of the .texi files
 # have changed, then nothing will be rebuilt.
 
-aoutx.texi: aoutx.stamp ; @true
-aoutx.stamp: $(srcdir)/../aoutx.h $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >aoutx.tmp
+aoutx.texi: chew.c $(srcdir)/../aoutx.h $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../aoutx.h >aoutx.tmp
 	$(SHELL) $(srcdir)/../../move-if-change aoutx.tmp aoutx.texi
-	touch $@
 
-archive.texi: archive.stamp ; @true
-archive.stamp: $(srcdir)/../archive.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >archive.tmp
+archive.texi: chew.c $(srcdir)/../archive.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../archive.c >archive.tmp
 	$(SHELL) $(srcdir)/../../move-if-change archive.tmp archive.texi
-	touch $@
 
-archures.texi: archures.stamp ; @true
-archures.stamp: $(srcdir)/../archures.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >archures.tmp
+archures.texi: chew.c $(srcdir)/../archures.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../archures.c >archures.tmp
 	$(SHELL) $(srcdir)/../../move-if-change archures.tmp archures.texi
-	touch $@
 
 # We use bfdt.texi, rather than bfd.texi, to avoid conflicting with
 # bfd.texinfo on an 8.3 filesystem.
-bfdt.texi: bfdt.stamp ; @true
-bfdt.stamp: $(srcdir)/../bfd.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >bfd.tmp
+bfdt.texi: chew.c $(srcdir)/../bfd.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../bfd.c >bfd.tmp
 	$(SHELL) $(srcdir)/../../move-if-change bfd.tmp bfdt.texi
-	touch $@
 
-cache.texi: cache.stamp ; @true
-cache.stamp: $(srcdir)/../cache.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >cache.tmp
+cache.texi: chew.c $(srcdir)/../cache.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../cache.c >cache.tmp
 	$(SHELL) $(srcdir)/../../move-if-change cache.tmp cache.texi
-	touch $@
 
-coffcode.texi: coffcode.stamp ; @true
-coffcode.stamp: $(srcdir)/../coffcode.h $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >coffcode.tmp
+coffcode.texi: chew.c $(srcdir)/../coffcode.h $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../coffcode.h >coffcode.tmp
 	$(SHELL) $(srcdir)/../../move-if-change coffcode.tmp coffcode.texi
-	touch $@
 
-core.texi: core.stamp ; @true
-core.stamp: $(srcdir)/../corefile.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >core.tmp
+core.texi: chew.c $(srcdir)/../corefile.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../corefile.c >core.tmp
 	$(SHELL) $(srcdir)/../../move-if-change core.tmp core.texi
-	touch $@
 
-elf.texi: elf.stamp ; @true
-elf.stamp: $(srcdir)/../elf.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >elf.tmp
+elf.texi: chew.c $(srcdir)/../elf.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../elf.c >elf.tmp
 	$(SHELL) $(srcdir)/../../move-if-change elf.tmp elf.texi
-	touch $@
 
-elfcode.texi: elfcode.stamp ; @true
-elfcode.stamp: $(srcdir)/../elfcode.h $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >elfcode.tmp
+elfcode.texi: chew.c $(srcdir)/../elfcode.h $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../elfcode.h >elfcode.tmp
 	$(SHELL) $(srcdir)/../../move-if-change elfcode.tmp elfcode.texi
-	touch $@
 
-mmo.texi: mmo.stamp ; @true
-mmo.stamp: $(srcdir)/../mmo.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >mmo.tmp
+mmo.texi: chew.c $(srcdir)/../mmo.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../mmo.c >mmo.tmp
 	$(SHELL) $(srcdir)/../../move-if-change mmo.tmp mmo.texi
-	touch $@
 
-format.texi: format.stamp ; @true
-format.stamp: $(srcdir)/../format.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >format.tmp
+format.texi: chew.c $(srcdir)/../format.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../format.c >format.tmp
 	$(SHELL) $(srcdir)/../../move-if-change format.tmp format.texi
-	touch $@
 
-libbfd.texi: libbfd.stamp ; @true
-libbfd.stamp: $(srcdir)/../libbfd.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >libbfd.tmp
+libbfd.texi: chew.c $(srcdir)/../libbfd.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../libbfd.c >libbfd.tmp
 	$(SHELL) $(srcdir)/../../move-if-change libbfd.tmp libbfd.texi
-	touch $@
 
-bfdio.texi: bfdio.stamp ; @true
-bfdio.stamp: $(srcdir)/../bfdio.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >bfdio.tmp
+bfdio.texi: chew.c $(srcdir)/../bfdio.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../bfdio.c >bfdio.tmp
 	$(SHELL) $(srcdir)/../../move-if-change bfdio.tmp bfdio.texi
-	touch $@
 
-bfdwin.texi: bfdwin.stamp ; @true
-bfdwin.stamp: $(srcdir)/../bfdwin.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >bfdwin.tmp
+bfdwin.texi: chew.c $(srcdir)/../bfdwin.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str < $(srcdir)/../bfdwin.c >bfdwin.tmp
 	$(SHELL) $(srcdir)/../../move-if-change bfdwin.tmp bfdwin.texi
-	touch $@
 
-opncls.texi: opncls.stamp ; @true
-opncls.stamp: $(srcdir)/../opncls.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >opncls.tmp
+opncls.texi: chew.c $(srcdir)/../opncls.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str  <$(srcdir)/../opncls.c >opncls.tmp
 	$(SHELL) $(srcdir)/../../move-if-change opncls.tmp opncls.texi
-	touch $@
 
-reloc.texi: reloc.stamp ; @true
-reloc.stamp: $(srcdir)/../reloc.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >reloc.tmp
+reloc.texi: chew.c $(srcdir)/../reloc.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../reloc.c >reloc.tmp
 	$(SHELL) $(srcdir)/../../move-if-change reloc.tmp reloc.texi
-	touch $@
 
-section.texi: section.stamp ; @true
-section.stamp: $(srcdir)/../section.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >section.tmp
+section.texi: chew.c $(srcdir)/../section.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../section.c >section.tmp
 	$(SHELL) $(srcdir)/../../move-if-change section.tmp section.texi
-	touch $@
 
-syms.texi: syms.stamp ; @true
-syms.stamp: $(srcdir)/../syms.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >syms.tmp
+syms.texi: chew.c $(srcdir)/../syms.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../syms.c >syms.tmp
 	$(SHELL) $(srcdir)/../../move-if-change syms.tmp syms.texi
-	touch $@
 
-targets.texi: targets.stamp ; @true
-targets.stamp: $(srcdir)/../targets.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >targets.tmp
+targets.texi: chew.c $(srcdir)/../targets.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../targets.c >targets.tmp
 	$(SHELL) $(srcdir)/../../move-if-change targets.tmp targets.texi
-	touch $@
 
-init.texi: init.stamp ; @true
-init.stamp: $(srcdir)/../init.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >init.tmp
+init.texi: chew.c $(srcdir)/../init.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../init.c >init.tmp
 	$(SHELL) $(srcdir)/../../move-if-change init.tmp init.texi
-	touch $@
 
-hash.texi: hash.stamp ; @true
-hash.stamp: $(srcdir)/../hash.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >hash.tmp
+hash.texi: chew.c $(srcdir)/../hash.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../hash.c >hash.tmp
 	$(SHELL) $(srcdir)/../../move-if-change hash.tmp hash.texi
-	touch $@
 
-linker.texi: linker.stamp ; @true
-linker.stamp: $(srcdir)/../linker.c $(srcdir)/doc.str $(MKDOC)
-	./$(MKDOC) -f $(srcdir)/doc.str < $< >linker.tmp
+linker.texi: chew.c $(srcdir)/../linker.c $(srcdir)/doc.str
+	$(MAKE) $(MKDOC)
+	./$(MKDOC) -f $(srcdir)/doc.str <$(srcdir)/../linker.c >linker.tmp
 	$(SHELL) $(srcdir)/../../move-if-change linker.tmp linker.texi
-	touch $@
 
 LIBBFD_H_DEP = \
 	$(srcdir)/../libbfd-in.h	\
@@ -326,7 +301,7 @@ bfdver.texi: $(srcdir)/Makefile.in
 
 noinst_TEXINFOS = bfdint.texi
 
-MOSTLYCLEANFILES = $(MKDOC) *.o *.stamp
+MOSTLYCLEANFILES = $(MKDOC) *.o
 
 CLEANFILES = *.p *.ip
 

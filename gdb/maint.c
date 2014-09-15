@@ -1,6 +1,6 @@
 /* Support for GDB maintenance commands.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -490,11 +490,11 @@ maintenance_translate_address (char *arg, int from_tty)
 
   if (sym.minsym)
     {
-      const char *symbol_name = MSYMBOL_PRINT_NAME (sym.minsym);
+      const char *symbol_name = SYMBOL_PRINT_NAME (sym.minsym);
       const char *symbol_offset
-	= pulongest (address - BMSYMBOL_VALUE_ADDRESS (sym));
+	= pulongest (address - SYMBOL_VALUE_ADDRESS (sym.minsym));
 
-      sect = MSYMBOL_OBJ_SECTION(sym.objfile, sym.minsym);
+      sect = SYMBOL_OBJ_SECTION(sym.objfile, sym.minsym);
       if (sect != NULL)
 	{
 	  const char *section_name;
@@ -615,40 +615,28 @@ maintenance_do_deprecate (char *text, int deprecate)
      memory.  */
   if (alias)
     {
-      if (alias->malloced_replacement)
+      if (alias->flags & MALLOCED_REPLACEMENT)
 	xfree (alias->replacement);
 
       if (deprecate)
-	{
-	  alias->deprecated_warn_user = 1;
-	  alias->cmd_deprecated = 1;
-	}
+	alias->flags |= (DEPRECATED_WARN_USER | CMD_DEPRECATED);
       else
-	{
-	  alias->deprecated_warn_user = 0;
-	  alias->cmd_deprecated = 0;
-	}
+	alias->flags &= ~(DEPRECATED_WARN_USER | CMD_DEPRECATED);
       alias->replacement = replacement;
-      alias->malloced_replacement = 1;
+      alias->flags |= MALLOCED_REPLACEMENT;
       return;
     }
   else if (cmd)
     {
-      if (cmd->malloced_replacement)
+      if (cmd->flags & MALLOCED_REPLACEMENT)
 	xfree (cmd->replacement);
 
       if (deprecate)
-	{
-	  cmd->deprecated_warn_user = 1;
-	  cmd->cmd_deprecated = 1;
-	}
+	cmd->flags |= (DEPRECATED_WARN_USER | CMD_DEPRECATED);
       else
-	{
-	  cmd->deprecated_warn_user = 0;
-	  cmd->cmd_deprecated = 0;
-	}
+	cmd->flags &= ~(DEPRECATED_WARN_USER | CMD_DEPRECATED);
       cmd->replacement = replacement;
-      cmd->malloced_replacement = 1;
+      cmd->flags |= MALLOCED_REPLACEMENT;
       return;
     }
   xfree (replacement);
@@ -914,7 +902,7 @@ make_command_stats_cleanup (int msg_type)
       && !per_command_symtab)
     return make_cleanup (null_cleanup, 0);
 
-  new_stat = XCNEW (struct cmd_stats);
+  new_stat = XZALLOC (struct cmd_stats);
 
   new_stat->msg_type = msg_type;
 

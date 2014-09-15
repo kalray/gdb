@@ -2,7 +2,8 @@
 # It does some substitutions.
 fragment <<EOF
 /* intel coff loader emulation specific stuff
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2003,
+   2005, 2007, 2008 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -267,7 +268,7 @@ static char *
 lnk960_get_script (int *isfile)
 EOF
 
-if test x"$COMPILE_IN" = xyes
+if test -n "$COMPILE_IN"
 then
 # Scripts compiled in.
 
@@ -342,7 +343,6 @@ struct ld_emulation_xfer_struct ld_lnk960_emulation =
   NULL,	/* list options */
   NULL,	/* recognized file */
   NULL,	/* find_potential_libraries */
-  NULL,	/* new_vers_pattern */
-  NULL	/* extra_map_file_text */
+  NULL	/* new_vers_pattern */
 };
 EOF

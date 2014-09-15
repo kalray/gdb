@@ -65,8 +65,12 @@ code on the hardware.
 #include "gdb/callback.h"   /* GDB simulator callback interface */
 #include "gdb/remote-sim.h" /* GDB simulator interface */
 
-char* pr_addr (SIM_ADDR addr);
-char* pr_uword64 (uword64 addr);
+#ifndef PARAMS
+#define PARAMS(x) 
+#endif
+
+char* pr_addr PARAMS ((SIM_ADDR addr));
+char* pr_uword64 PARAMS ((uword64 addr));
 
 
 /* Within interp.c we refer to the sim_state and sim_cpu directly. */
@@ -94,7 +98,7 @@ char* pr_uword64 (uword64 addr);
 /*-- GDB simulator interface ------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 
-static void ColdReset (SIM_DESC sd);
+static void ColdReset PARAMS((SIM_DESC sd));
 
 /*---------------------------------------------------------------------------*/
 
@@ -160,7 +164,7 @@ static SIM_RC sim_firmware_command (SIM_DESC sd, char* arg);
 #if defined(TRACE)
 static char *tracefile = "trace.din"; /* default filename for trace log */
 FILE *tracefh = NULL;
-static void open_trace (SIM_DESC sd);
+static void open_trace PARAMS((SIM_DESC sd));
 #endif /* TRACE */
 
 static const char * get_insn_name (sim_cpu *, int);

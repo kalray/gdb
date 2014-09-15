@@ -1,5 +1,5 @@
 /* tc-sparc.c -- Assemble for the SPARC
-   Copyright (C) 1989-2014 Free Software Foundation, Inc.
+   Copyright 1989-2013 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -787,8 +787,6 @@ struct priv_reg_entry hpriv_reg_table[] =
   {"hintp", 3},
   {"htba", 5},
   {"hver", 6},
-  {"hstick_offset", 28},
-  {"hstick_enable", 29},
   {"hstick_cmpr", 31},
   {"", -1},			/* End marker.  */
 };
@@ -4268,6 +4266,11 @@ s_proc (int ignore ATTRIBUTE_UNUSED)
 
 static int sparc_no_align_cons = 0;
 
+/* This static variable is set by sparc_cons to emit requested types
+   of relocations in cons_fix_new_sparc.  */
+
+static const char *sparc_cons_special_reloc;
+
 /* This handles the unaligned space allocation pseudo-ops, such as
    .uaword.  .uaword is just like .word, but the value does not need
    to be aligned.  */
@@ -4535,13 +4538,13 @@ sparc_elf_final_processing (void)
     elf_elfheader (stdoutput)->e_flags |= EF_SPARC_SUN_US1|EF_SPARC_SUN_US3;
 }
 
-const char *
+void
 sparc_cons (expressionS *exp, int size)
 {
   char *save;
-  const char *sparc_cons_special_reloc = NULL;
 
   SKIP_WHITESPACE ();
+  sparc_cons_special_reloc = NULL;
   save = input_line_pointer;
   if (input_line_pointer[0] == '%'
       && input_line_pointer[1] == 'r'
@@ -4668,7 +4671,6 @@ sparc_cons (expressionS *exp, int size)
     }
   if (sparc_cons_special_reloc == NULL)
     expression (exp);
-  return sparc_cons_special_reloc;
 }
 
 #endif
@@ -4681,8 +4683,7 @@ void
 cons_fix_new_sparc (fragS *frag,
 		    int where,
 		    unsigned int nbytes,
-		    expressionS *exp,
-		    const char *sparc_cons_special_reloc)
+		    expressionS *exp)
 {
   bfd_reloc_code_real_type r;
 
@@ -4731,6 +4732,7 @@ cons_fix_new_sparc (fragS *frag,
    }
 
   fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
+  sparc_cons_special_reloc = NULL;
 }
 
 void
@@ -4784,7 +4786,9 @@ sparc_regname_to_dw2regnum (char *regname)
 void
 sparc_cfi_emit_pcrel_expr (expressionS *exp, unsigned int nbytes)
 {
+  sparc_cons_special_reloc = "disp";
   sparc_no_align_cons = 1;
-  emit_expr_with_reloc (exp, nbytes, "disp");
+  emit_expr (exp, nbytes);
   sparc_no_align_cons = 0;
+  sparc_cons_special_reloc = NULL;
 }

@@ -1,5 +1,6 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+#   Copyright 1991, 1993, 1994, 1997, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
+#   2008, 2009 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -249,6 +250,7 @@ m68hc11elf_add_stub_section (const char *stub_sec_name,
   asection *stub_sec;
   flagword flags;
   asection *output_section;
+  const char *secname;
   lang_output_section_statement_type *os;
   struct hook_stub_info info;
 
@@ -260,7 +262,8 @@ m68hc11elf_add_stub_section (const char *stub_sec_name,
     goto err_ret;
 
   output_section = tramp_section->output_section;
-  os = lang_output_section_get (output_section);
+  secname = bfd_get_section_name (output_section->owner, output_section);
+  os = lang_output_section_find (secname);
 
   /* Try to put the new section at the same place as an existing
      .tramp section.  Such .tramp section exists in most cases and

@@ -1,6 +1,6 @@
 /* Motorola m68k native support for GNU/Linux.
 
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "inferior.h"
 #include "language.h"
 #include "gdbcore.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "regcache.h"
 #include "target.h"
 #include "linux-nat.h"
@@ -42,9 +42,11 @@
 #endif
 
 #include <sys/file.h>
-#include <sys/stat.h>
+#include "gdb_stat.h"
 
 #include "floatformat.h"
+
+#include "target.h"
 
 /* Prototypes for supply_gregset etc.  */
 #include "gregset.h"
