@@ -2025,18 +2025,21 @@ static char *k1b_insn_slot_type(const k1insn_t *insn) {
   return slot_type;
 }
 
-static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_LSU, int total_single_LITE, int total_LITE_MONODOUBLE) {
+static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_LSU, int total_single_LITE, int total_LITE_MONODOUBLE, int total_single_TINY, int total_TINY_MONODOUBLE) {
 
   /* We have to decide for LITE instruction. It should be placed on MAU before LSU because 
      LSU cannot execute LITE. */
 
   int mono_double = is_mono_double(insn);
   int debug = 0;
-  
-  D(stderr,"%s:%d OP %s (%s), num_ALU = %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,k1_type_name(insn), num_ALU);
+  int free_ALU = k1b_resources[Resource_k1_ALU] - num_ALU;
+  int needed_LITE = get_needed_LITE(insn,num_ALU,0,total_single_LITE,total_LITE_MONODOUBLE,total_single_TINY,total_TINY_MONODOUBLE);
+
+  D(stderr,"%s:%d OP %s (%s), num_ALU = %d, nedeed LITE: %d\n",__FUNCTION__,__LINE__,
+    insn->opdef->as_op,k1_type_name(insn), num_ALU, needed_LITE);
   
   if((insn->type == K1_TINY || insn->type == K1_TMD) &&
-     (total_single_LITE + total_LITE_MONODOUBLE) > 0 &&
+     (needed_LITE) > free_ALU &&
      (k1b_resources[Resource_k1_LSU] - num_LSU) > 0) {
     D(stderr,"%s:%d OP %s: is TINY and need LITE slot if LSU slot is available -> say no\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
     return 0;
@@ -2044,6 +2047,36 @@ static int can_go_on_MAU(const k1insn_t *insn, int num_ALU, int num_LSU, int tot
 
   D(stderr,"%s:%d OP %s -> say yes\n",__FUNCTION__,__LINE__,insn->opdef->as_op);
   return 1;
+}
+
+int get_needed_LITE(const k1insn_t *insn, int num_ALU, int num_MAU, int total_single_LITE, int total_LITE_MONODOUBLE, int total_single_TINY, int total_TINY_MONODOUBLE) {
+  int needed_LITE;
+
+  int debug = 0;
+  int free_ALU = k1b_resources[Resource_k1_ALU] - num_ALU;
+  int free_LITE = k1b_resources[Resource_k1_LITE] - (num_ALU + num_MAU);
+
+  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
+  needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
+  if((total_LITE_MONODOUBLE + total_single_LITE) >= 1) {
+
+    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), free_ALU);
+
+    if((total_single_LITE + total_single_TINY) <= 1 && free_ALU == 2) {
+      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
+      needed_LITE++;
+    }
+
+    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
+      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE, free_LITE, free_ALU);
+
+    if(total_LITE_MONODOUBLE > 0 && free_LITE == 2 && free_ALU == 2) {
+      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
+      needed_LITE++;
+    }
+  }
+  return needed_LITE;
 }
 
 static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
@@ -2126,27 +2159,7 @@ static int can_go_on_ALU0_ALU1(const k1insn_t *insn, int num_ALU,
     return 0;
   }
 
-  /* If more than one LMD: 1 goes on MAU and the other on ALU0/ALU1 */
-  needed_LITE = total_LITE_MONODOUBLE + total_single_LITE;
-  if((total_LITE_MONODOUBLE + total_single_LITE) >= 1) {
-
-    D(stderr,"%s:%d OP %s: total_single_LITE + total_single_TINY) = %d, k1b_free_resources[Resource_k1_ALU] = %d\n",
-      __FUNCTION__,__LINE__,insn->opdef->as_op,(total_single_LITE + total_single_TINY), k1b_free_resources[Resource_k1_ALU]);
-
-    if((total_single_LITE + total_single_TINY) <= 1 && k1b_free_resources[Resource_k1_ALU] == 2) {
-      /* LITE MONO DOUBLE may go on ALU0/ALU1 */
-      needed_LITE++;
-    }
-
-    D(stderr,"%s:%d OP %s: total_LITE_MONODOUBLE = %d, free LITEs = %d, free ALUs = %d\n",
-      __FUNCTION__,__LINE__,insn->opdef->as_op,total_LITE_MONODOUBLE,
-      k1b_free_resources[Resource_k1_LITE],k1b_free_resources[Resource_k1_ALU]);
-
-    if(total_LITE_MONODOUBLE > 0 && k1b_free_resources[Resource_k1_LITE] == 2 && k1b_free_resources[Resource_k1_ALU] == 2) {
-      /* LITE MONO DOUBLE and no more MAU to place this instr. It must go on ALU0/ALU1 and so use one more LITE */
-      needed_LITE++;
-    }
-  }
+  needed_LITE = get_needed_LITE(insn,num_ALU,num_MAU,total_single_LITE,total_LITE_MONODOUBLE,total_single_TINY,total_TINY_MONODOUBLE);
 
   D(stderr,"%s:%d OP %s needed_LITE: %d, free LITE: %d\n",__FUNCTION__,__LINE__,insn->opdef->as_op,needed_LITE, k1b_free_resources[Resource_k1_LITE]);
 
@@ -2380,7 +2393,9 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  }
 	}
       } else {
-	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_LSU,total_single_LITE, total_LITE_MONODOUBLE)){
+	if(num_MAU == 0 && can_go_on_MAU(bundle_insn[j], num_ALU, num_LSU,
+					 total_single_LITE, total_LITE_MONODOUBLE,
+					 total_single_TINY,total_TINY_MONODOUBLE)){
 	  // 5 is reserved for MAU. LSU and all others goes after.
 	  shadow_bundle[5] = bundle_insn[j];
 	  tag = Modifier_k1_exunum_MAU;
