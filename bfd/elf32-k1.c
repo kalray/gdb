@@ -18,12 +18,20 @@
 #define PLT_MIN_ENTRY_SIZE      16
 #define PLT_FULL_ENTRY_SIZE     20
 
-static const bfd_vma plt_small_entry[PLT_ENTRY_SIZE] =
+static const bfd_vma plt_small_entry_k1a[PLT_ENTRY_SIZE] =
   {
-      /* get $r14 = $pc     ;; */      0x00700380,
-      /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
-                                       0x18000000,
-      /* igoto $r9          ;; */      0x00114009,
+    /* get $r14 = $pc     ;; */      0x00700380,
+    /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
+                                     0x18000000,
+    /* igoto $r9          ;; */      0x00114009,
+  };
+
+static const bfd_vma plt_small_entry_k1b32[PLT_ENTRY_SIZE] =
+  {
+    /* get $r14 = $pc     ;; */      0x01000380,
+    /* lw $r9 = 0[$r14]   ;; */      0xac24000e,
+                                     0x18000000,
+    /* igoto $r9          ;; */      0x00114009,
   };
 
 /* PLT templates for (FD)PIC ABI */
@@ -2237,7 +2245,21 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
       /* Fill in the entry in the procedure linkage table.  */
         {
           int i;
-          const bfd_vma *template = plt_small_entry;
+          const bfd_vma *template;
+	  switch(output_bfd->arch_info->mach){
+	  case bfd_mach_k1dp:
+	  case bfd_mach_k1io:
+	    template = plt_small_entry_k1a;
+	    break;
+	  case bfd_mach_k1bdp:
+	  case bfd_mach_k1bio:
+	    template = plt_small_entry_k1b32;
+	    break;
+	  default:
+	    (*_bfd_error_handler)
+	      ("can't make a plt entry for unknown mach: %d", output_bfd->arch_info->mach);
+	    return FALSE;
+	  }
           bfd_vma pcgotoffset = got->output_section->vma + gotplt->output_offset +got_offset;
 
           pcgotoffset -= plt->output_section->vma + plt->output_offset + h->plt.offset;

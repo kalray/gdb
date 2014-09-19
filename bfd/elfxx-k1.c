@@ -124,7 +124,7 @@ k1_elf_link_hash_table_create (bfd *abfd)
   else
 #endif
     {
-      ret->bytes_per_rela = sizeof (Elf64_External_Rela);
+      ret->bytes_per_rela = sizeof (Elf32_External_Rela);
     }
   
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
