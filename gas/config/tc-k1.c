@@ -3183,6 +3183,9 @@ k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp)
             case 4:
                 code = BFD_RELOC_32;
                 break;
+            case 8:
+                code = BFD_RELOC_64;
+		break;
             default:
                 as_bad("unsupported BFD relocation size %u", nbytes);
                 code = BFD_RELOC_32;
