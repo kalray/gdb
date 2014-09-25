@@ -317,7 +317,7 @@ Use the \"file\" or \"exec-file\" command."));
 	char *dir;
 
 	close (pipefds[0]);
-	dup2(pipefds[1], 100);
+	dup2(pipefds[1], 500);
 	close (pipefds[1]);
 
 	setsid ();
