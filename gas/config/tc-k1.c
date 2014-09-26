@@ -2999,6 +2999,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_8:
         case BFD_RELOC_16:
         case BFD_RELOC_32:
+        case BFD_RELOC_64:
         case BFD_RELOC_K1_TPREL_32:
         case BFD_RELOC_K1_FUNCDESC:
         case BFD_RELOC_K1_GLOB_DAT:
