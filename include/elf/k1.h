@@ -205,7 +205,14 @@ START_RELOC_NUMBERS (elf_k1_reloc_type)
         RELOC_NUMBER(R_K1_ELO10, 34)
         RELOC_NUMBER(R_K1_HI27, 35)
         RELOC_NUMBER(R_K1_EXTEND6, 36)
-       RELOC_NUMBER (R_K1_64,                   37)
+ 
+        RELOC_NUMBER (R_K1_64,                   37)
+
+        RELOC_NUMBER(R_K1_TPREL64_EXTEND6, 38)
+        RELOC_NUMBER(R_K1_TPREL64_HI27, 39)
+        RELOC_NUMBER(R_K1_TPREL64_ELO10, 40)
+        RELOC_NUMBER(R_K1_TPREL64_64, 41)
+
   END_RELOC_NUMBERS (R_K1_max)
 
 #endif

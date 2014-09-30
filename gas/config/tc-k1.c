@@ -333,6 +333,7 @@ const pseudo_typeS md_pseudo_table[] =
      {"single", k1_float_cons, 'f'},
      {"string", k1_stringer, 9},
      {"word", k1_cons, 4},
+     {"dword", k1_cons, 8},
 
      /* override ones defined in obj-elf.c */
 
@@ -492,7 +493,7 @@ static struct
         symbolS *sym;
     }
     u;
-    bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_32;
+   bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_extend, reloc_32;
 }
 pseudo_func[] =
  {
@@ -532,6 +533,8 @@ pseudo_func[] =
     /* BFD_RELOC_K1_NEG_GPREL_HI23,   BFD_RELOC_UNUSED }, */
     { "tprel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL_LO10,
     BFD_RELOC_K1_TPREL_HI22,       BFD_RELOC_K1_TPREL_32 },
+     { "tprel64",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL64_ELO10,
+       BFD_RELOC_K1_TPREL64_HI27,  BFD_RELOC_K1_TPREL64_EXTEND6,  BFD_RELOC_K1_TPREL64_64 },
 //     { "pcrel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_PCREL_LO10,
 //     BFD_RELOC_K1_PCREL_HI22,       BFD_RELOC_UNUSED },
     /* { "dtprel",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_DTPREL_LO9, */
@@ -761,6 +764,7 @@ valueT md_chars_to_number(char *buf, int n){
 static void
 real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
         bfd_reloc_code_real_type *reloc_hi,
+        bfd_reloc_code_real_type *reloc_extend,
         bfd_reloc_code_real_type *reloc_32)
  {
     int i;
@@ -772,6 +776,8 @@ real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
                 *reloc_lo = pseudo_func[i].reloc_lo;
             if (reloc_hi)
                 *reloc_hi = pseudo_func[i].reloc_hi;
+            if (reloc_extend)
+                *reloc_extend = pseudo_func[i].reloc_extend;
             if (reloc_32)
                 *reloc_32 = pseudo_func[i].reloc_32;
             break;
@@ -1126,10 +1132,10 @@ insert_operand(k1insn_t * insn,
         case O_pseudo_fixup:
 	    if (insn->nfixups == 0)
 		{
-		    bfd_reloc_code_real_type reloc_lo, reloc_hi;
+		  bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_extend;
 		    expressionS reloc_arg;
 		    
-		    real_k1_reloc_type(arg->X_op_symbol, &reloc_lo, &reloc_hi, 0);
+		    real_k1_reloc_type(arg->X_op_symbol, &reloc_lo, &reloc_hi, &reloc_extend, 0);
 		    reloc_arg = *arg;
 		    reloc_arg.X_op = O_symbol;
 
@@ -1147,12 +1153,19 @@ insert_operand(k1insn_t * insn,
 			insn->nfixups = 1;
 		    } else if (reloc_hi != BFD_RELOC_UNUSED 
 			       && reloc_lo != BFD_RELOC_UNUSED) {
-			if (insn->len > 1)
+			if (insn->len > 1 && reloc_extend == BFD_RELOC_UNUSED)
 			    as_fatal("only one immediate extension allowed !");
 			insn->fixup[0].reloc = reloc_lo;
 			insn->fixup[0].exp = reloc_arg;
 			insn->fixup[0].where = 0;
 			insn->nfixups = 1;
+			if (reloc_extend != BFD_RELOC_UNUSED) {
+			  insn->fixup[1].reloc = reloc_extend;
+			  insn->fixup[1].exp = reloc_arg;
+			  insn->fixup[1].where = 0;
+			  insn->nfixups = 2;
+			}
+			
 			insn->immx = immxcnt;
 			immxbuf[immxcnt].insn[0] = 0;
 			immxbuf[immxcnt].fixup[0].reloc = reloc_hi;
@@ -2976,6 +2989,12 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             case BFD_RELOC_K1_TPREL_HI22:
             case BFD_RELOC_K1_TPREL_LO10:
             case BFD_RELOC_K1_TPREL_32:
+	      
+	  case BFD_RELOC_K1_TPREL64_EXTEND6 :
+	  case BFD_RELOC_K1_TPREL64_HI27 :
+	  case BFD_RELOC_K1_TPREL64_ELO10:
+	  case BFD_RELOC_K1_TPREL64_64:
+
 //             case BFD_RELOC_K1_GOTOFF_HI22:
 //             case BFD_RELOC_K1_GOTOFF_LO10:
                 S_SET_THREAD_LOCAL (fixP->fx_addsy);
@@ -2999,7 +3018,8 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_8:
         case BFD_RELOC_16:
         case BFD_RELOC_32:
-        case BFD_RELOC_64:
+        case BFD_RELOC_K1_TPREL64_64:
+	case BFD_RELOC_64:
         case BFD_RELOC_K1_TPREL_32:
         case BFD_RELOC_K1_FUNCDESC:
         case BFD_RELOC_K1_GLOB_DAT:
@@ -3020,6 +3040,8 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             break;
         case BFD_RELOC_K1_HI22:
         case BFD_RELOC_K1_HI27:
+        case BFD_RELOC_K1_TPREL64_HI27:
+        case BFD_RELOC_K1_TPREL64_EXTEND6:
         case BFD_RELOC_K1_TPREL_HI22:
 //         case BFD_RELOC_K1_PCREL_HI22:
         case BFD_RELOC_K1_GPREL_HI22:
@@ -3061,6 +3083,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_LO10:
         case BFD_RELOC_K1_ELO10:
         case BFD_RELOC_K1_EXTEND6:
+        case BFD_RELOC_K1_TPREL64_ELO10:
         case BFD_RELOC_K1_TPREL_LO10:
 //         case BFD_RELOC_K1_PCREL_LO10:
         case BFD_RELOC_K1_GPREL_LO10:
@@ -3164,7 +3187,7 @@ k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp)
     if (exp->X_op == O_pseudo_fixup)
  {
         exp->X_op = O_symbol;
-        real_k1_reloc_type(exp->X_op_symbol, 0, 0, &code);
+        real_k1_reloc_type(exp->X_op_symbol, 0, 0, 0, &code);
         if (code == BFD_RELOC_UNUSED)
             as_bad("Unsupported relocation");
     }
