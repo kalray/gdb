@@ -1,5 +1,5 @@
 /* MI Command Set - varobj commands.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -24,10 +24,9 @@
 #include "ui-out.h"
 #include "mi-out.h"
 #include "varobj.h"
-#include "language.h"
 #include "value.h"
 #include <ctype.h>
-#include <string.h>
+#include "gdb_string.h"
 #include "mi-getopt.h"
 #include "gdbthread.h"
 #include "mi-parse.h"
@@ -480,7 +479,7 @@ void
 mi_cmd_var_info_expression (char *command, char **argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
-  const struct language_defn *lang;
+  enum varobj_languages lang;
   struct varobj *var;
 
   if (argc != 1)
@@ -491,7 +490,7 @@ mi_cmd_var_info_expression (char *command, char **argv, int argc)
 
   lang = varobj_get_language (var);
 
-  ui_out_field_string (uiout, "lang", lang->la_natural_name);
+  ui_out_field_string (uiout, "lang", varobj_language_string[(int) lang]);
   ui_out_field_string (uiout, "exp", varobj_get_expression (var));
 }
 

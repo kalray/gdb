@@ -1,6 +1,6 @@
 /* Find a variable's value in memory, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,7 @@
 #include "gdbcore.h"
 #include "inferior.h"
 #include "target.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "gdb_assert.h"
 #include "floatformat.h"
 #include "symfile.h"		/* for overlay functions */
@@ -390,7 +390,10 @@ struct minsym_lookup_data
   /* The field where the callback should store the minimal symbol
      if found.  It should be initialized to NULL before the search
      is started.  */
-  struct bound_minimal_symbol result;
+  struct minimal_symbol *result;
+
+  /* The objfile in which the symbol was found.  */
+  struct objfile *objfile;
 };
 
 /* A callback function for gdbarch_iterate_over_objfiles_in_search_order.
@@ -403,12 +406,13 @@ minsym_lookup_iterator_cb (struct objfile *objfile, void *cb_data)
 {
   struct minsym_lookup_data *data = (struct minsym_lookup_data *) cb_data;
 
-  gdb_assert (data->result.minsym == NULL);
+  gdb_assert (data->result == NULL);
 
   data->result = lookup_minimal_symbol (data->name, NULL, objfile);
+  data->objfile = objfile;
 
   /* The iterator should stop iff a match was found.  */
-  return (data->result.minsym != NULL);
+  return (data->result != NULL);
 }
 
 /* A default implementation for the "la_read_var_value" hook in
@@ -437,12 +441,7 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
   switch (SYMBOL_CLASS (var))
     {
     case LOC_CONST:
-      if (is_dynamic_type (type))
-	{
-	  /* Value is a constant byte-sequence and needs no memory access.  */
-	  type = resolve_dynamic_type (type, /* Unused address.  */ 0);
-	}
-      /* Put the constant back in target format. */
+      /* Put the constant back in target format.  */
       v = allocate_value (type);
       store_signed_integer (value_contents_raw (v), TYPE_LENGTH (type),
 			    gdbarch_byte_order (get_type_arch (type)),
@@ -469,11 +468,6 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
       return v;
 
     case LOC_CONST_BYTES:
-      if (is_dynamic_type (type))
-	{
-	  /* Value is a constant byte-sequence and needs no memory access.  */
-	  type = resolve_dynamic_type (type, /* Unused address.  */ 0);
-	}
       v = allocate_value (type);
       memcpy (value_contents_raw (v), SYMBOL_VALUE_BYTES (var),
 	      TYPE_LENGTH (type));
@@ -578,18 +572,18 @@ default_read_var_value (struct symbol *var, struct frame_info *frame)
 	  (get_objfile_arch (SYMBOL_SYMTAB (var)->objfile),
 	   minsym_lookup_iterator_cb, &lookup_data,
 	   SYMBOL_SYMTAB (var)->objfile);
-	msym = lookup_data.result.minsym;
+	msym = lookup_data.result;
 
 	if (msym == NULL)
 	  error (_("No global symbol \"%s\"."), SYMBOL_LINKAGE_NAME (var));
 	if (overlay_debugging)
-	  addr = symbol_overlayed_address (BMSYMBOL_VALUE_ADDRESS (lookup_data.result),
-					   MSYMBOL_OBJ_SECTION (lookup_data.result.objfile,
-								msym));
+	  addr = symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (msym),
+					   SYMBOL_OBJ_SECTION (lookup_data.objfile,
+							       msym));
 	else
-	  addr = BMSYMBOL_VALUE_ADDRESS (lookup_data.result);
+	  addr = SYMBOL_VALUE_ADDRESS (msym);
 
-	obj_section = MSYMBOL_OBJ_SECTION (lookup_data.result.objfile, msym);
+	obj_section = SYMBOL_OBJ_SECTION (lookup_data.objfile, msym);
 	if (obj_section
 	    && (obj_section->the_bfd_section->flags & SEC_THREAD_LOCAL) != 0)
 	  addr = target_translate_tls_address (obj_section->objfile, addr);
@@ -625,14 +619,15 @@ read_var_value (struct symbol *var, struct frame_info *frame)
 /* Install default attributes for register values.  */
 
 struct value *
-default_value_from_register (struct gdbarch *gdbarch, struct type *type,
-                             int regnum, struct frame_id frame_id)
+default_value_from_register (struct type *type, int regnum,
+			     struct frame_info *frame)
 {
+  struct gdbarch *gdbarch = get_frame_arch (frame);
   int len = TYPE_LENGTH (type);
   struct value *value = allocate_value (type);
 
   VALUE_LVAL (value) = lval_register;
-  VALUE_FRAME_ID (value) = frame_id;
+  VALUE_FRAME_ID (value) = get_frame_id (frame);
   VALUE_REGNUM (value) = regnum;
 
   /* Any structure stored in more than one register will always be
@@ -740,8 +735,7 @@ value_from_register (struct type *type, int regnum, struct frame_info *frame)
   else
     {
       /* Construct the value.  */
-      v = gdbarch_value_from_register (gdbarch, type,
-				       regnum, get_frame_id (frame));
+      v = gdbarch_value_from_register (gdbarch, type, regnum, frame);
 
       /* Get the data.  */
       read_frame_register_value (v, frame);
@@ -750,30 +744,18 @@ value_from_register (struct type *type, int regnum, struct frame_info *frame)
   return v;
 }
 
-/* Return contents of register REGNUM in frame FRAME as address.
-   Will abort if register value is not available.  */
+/* Return contents of register REGNUM in frame FRAME as address,
+   interpreted as value of type TYPE.   Will abort if register
+   value is not available.  */
 
 CORE_ADDR
-address_from_register (int regnum, struct frame_info *frame)
+address_from_register (struct type *type, int regnum, struct frame_info *frame)
 {
-  struct gdbarch *gdbarch = get_frame_arch (frame);
-  struct type *type = builtin_type (gdbarch)->builtin_data_ptr;
   struct value *value;
   CORE_ADDR result;
 
-  /* This routine may be called during early unwinding, at a time
-     where the ID of FRAME is not yet known.  Calling value_from_register
-     would therefore abort in get_frame_id.  However, since we only need
-     a temporary value that is never used as lvalue, we actually do not
-     really need to set its VALUE_FRAME_ID.  Therefore, we re-implement
-     the core of value_from_register, but use the null_frame_id.
-
-     This works only if we do not require a special conversion routine,
-     which is true for plain pointer types for all current targets.  */
-  gdb_assert (!gdbarch_convert_register_p (gdbarch, regnum, type));
-
-  value = gdbarch_value_from_register (gdbarch, type, regnum, null_frame_id);
-  read_frame_register_value (value, frame);
+  value = value_from_register (type, regnum, frame);
+  gdb_assert (value);
 
   if (value_optimized_out (value))
     {

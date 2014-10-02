@@ -183,7 +183,7 @@ SECTIONS
     ${RELOCATING+*(.bss.*)}
     ${RELOCATING+*(.gnu.linkonce.b.*)}
     ${RELOCATING+*(COMMON)}
-    ${RELOCATING+. = ALIGN(. != 0 ? 4 : 1);}
+    ${RELOCATING+. = ALIGN(4);}  
     
     ${RELOCATING+PROVIDE (__bss_end = .);}
 
@@ -203,7 +203,7 @@ SECTIONS
   .stack : {
     ${RELOCATING+ _stack_end = .;}
     ${RELOCATING+ . += _STACK_SIZE;}
-    ${RELOCATING+ . = ALIGN(. != 0 ? 8 : 1);}
+    ${RELOCATING+ . = ALIGN(8);}
     ${RELOCATING+ _stack = .;}
     ${RELOCATING+ _end = .;}
   }

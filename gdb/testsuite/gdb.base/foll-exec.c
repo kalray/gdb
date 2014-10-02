@@ -17,27 +17,27 @@ main ()
 
   printf ("foll-exec is about to execlp(execd-prog)...\n");
 
-  execlp (BASEDIR "/execd-prog",
-          BASEDIR "/execd-prog",
+  execlp ("gdb.base/execd-prog",
+          "gdb.base/execd-prog",
           "execlp arg1 from foll-exec",
           (char *)0);
 
   printf ("foll-exec is about to execl(execd-prog)...\n");
 
-  execl (BASEDIR "/execd-prog",
-         BASEDIR "/execd-prog",
+  execl ("gdb.base/execd-prog",
+         "gdb.base/execd-prog",
          "execl arg1 from foll-exec",
          "execl arg2 from foll-exec",
          (char *)0);
 
   {
     static char * argv[] = {
-      (char *)BASEDIR "/execd-prog",
+      (char *)"gdb.base/execd-prog",
       (char *)"execv arg1 from foll-exec",
       (char *)0};
 
     printf ("foll-exec is about to execv(execd-prog)...\n");
 
-    execv (BASEDIR "/execd-prog", argv);
+    execv ("gdb.base/execd-prog", argv);
   }
 }

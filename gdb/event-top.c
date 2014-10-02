@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -22,7 +22,6 @@
 #include "defs.h"
 #include "top.h"
 #include "inferior.h"
-#include "infrun.h"
 #include "target.h"
 #include "terminal.h"		/* for job_control */
 #include "event-loop.h"
@@ -73,7 +72,6 @@ static void async_float_handler (gdb_client_data);
 #ifdef STOP_SIGNAL
 static void async_stop_sig (gdb_client_data);
 #endif
-static void async_sigterm_handler (gdb_client_data arg);
 
 /* Readline offers an alternate interface, via callback
    functions.  These are all included in the file callback.c in the
@@ -137,7 +135,6 @@ static struct async_signal_handler *sigfpe_token;
 #ifdef STOP_SIGNAL
 static struct async_signal_handler *sigtstp_token;
 #endif
-static struct async_signal_handler *async_sigterm_token;
 
 /* Structure to save a partially entered command.  This is used when
    the user types '\' at the end of a command line.  This is necessary
@@ -242,6 +239,11 @@ display_gdb_prompt (char *new_prompt)
 
   /* Reset the nesting depth used when trace-commands is set.  */
   reset_command_nest_depth ();
+
+  /* Each interpreter has its own rules on displaying the command
+     prompt.  */
+  if (!current_interp_display_prompt_p ())
+    return;
 
   old_chain = make_cleanup (free_current_contents, &actual_gdb_prompt);
 
@@ -604,7 +606,8 @@ command_line_handler (char *rl)
   *p = 0;
 
   /* Add line to history if appropriate.  */
-  if (*linebuffer && input_from_terminal_p ())
+  if (instream == stdin
+      && ISATTY (stdin) && *linebuffer)
     add_history (linebuffer);
 
   /* Note: lines consisting solely of comments are added to the command
@@ -731,8 +734,6 @@ async_init_signals (void)
   sigint_token =
     create_async_signal_handler (async_request_quit, NULL);
   signal (SIGTERM, handle_sigterm);
-  async_sigterm_token
-    = create_async_signal_handler (async_sigterm_handler, NULL);
 
   /* If SIGTRAP was set to SIG_IGN, then the SIG_IGN will get passed
      to the inferior and breakpoints will be ignored.  */
@@ -769,6 +770,7 @@ async_init_signals (void)
   sigtstp_token =
     create_async_signal_handler (async_stop_sig, NULL);
 #endif
+
 }
 
 /* Tell the event loop what to do if SIGINT is received.
@@ -796,33 +798,13 @@ handle_sigint (int sig)
   gdb_call_async_signal_handler (sigint_token, immediate_quit);
 }
 
-/* Handle GDB exit upon receiving SIGTERM if target_can_async_p ().  */
-
-static void
-async_sigterm_handler (gdb_client_data arg)
-{
-  quit_force (NULL, stdin == instream);
-}
-
-/* See defs.h.  */
-volatile int sync_quit_force_run;
-
 /* Quit GDB if SIGTERM is received.
    GDB would quit anyway, but this way it will clean up properly.  */
 void
 handle_sigterm (int sig)
 {
   signal (sig, handle_sigterm);
-
-  /* Call quit_force in a signal safe way.
-     quit_force itself is not signal safe.  */
-  if (target_can_async_p ())
-    mark_async_signal_handler (async_sigterm_token);
-  else
-    {
-      sync_quit_force_run = 1;
-      set_quit_flag ();
-    }
+  quit_force ((char *) 0, stdin == instream);
 }
 
 /* Do the quit.  All the checks have been done by the caller.  */

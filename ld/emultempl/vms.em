@@ -1,5 +1,6 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+#   Copyright 2010, 2012
+#   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -57,7 +58,7 @@ gld${EMULATION_NAME}_open_dynamic_archive (const char *arch ATTRIBUTE_UNUSED,
 {
   char *string;
 
-  if (! entry->flags.maybe_archive || entry->flags.full_name_provided)
+  if (! entry->flags.maybe_archive)
     return FALSE;
 
   string = (char *) xmalloc (strlen (search->name)

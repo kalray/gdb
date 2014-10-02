@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -95,36 +95,18 @@ i386_dr_low_get_status (void)
   return debug_reg_state.dr_status_mirror;
 }
 
-/* Breakpoint/watchpoint support.  */
+/* Watchpoint support.  */
 
 static int
-i386_supports_z_point_type (char z_type)
-{
-  switch (z_type)
-    {
-    case Z_PACKET_WRITE_WP:
-    case Z_PACKET_ACCESS_WP:
-      return 1;
-    default:
-      return 0;
-    }
-}
-
-static int
-i386_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
-		   int size, struct raw_breakpoint *bp)
+i386_insert_point (char type, CORE_ADDR addr, int len)
 {
   switch (type)
     {
-    case raw_bkpt_type_write_wp:
-    case raw_bkpt_type_access_wp:
-      {
-	enum target_hw_bp_type hw_type
-	  = raw_bkpt_type_to_target_hw_bp_type (type);
-
-	return i386_low_insert_watchpoint (&debug_reg_state,
-					   hw_type, addr, size);
-      }
+    case '2':
+    case '3':
+    case '4':
+      return i386_low_insert_watchpoint (&debug_reg_state,
+					 type, addr, len);
     default:
       /* Unsupported.  */
       return 1;
@@ -132,20 +114,15 @@ i386_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
 }
 
 static int
-i386_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
-		   int size, struct raw_breakpoint *bp)
+i386_remove_point (char type, CORE_ADDR addr, int len)
 {
   switch (type)
     {
-    case raw_bkpt_type_write_wp:
-    case raw_bkpt_type_access_wp:
-      {
-	enum target_hw_bp_type hw_type
-	  = raw_bkpt_type_to_target_hw_bp_type (type);
-
-	return i386_low_remove_watchpoint (&debug_reg_state,
-					   hw_type, addr, size);
-      }
+    case '2':
+    case '3':
+    case '4':
+      return i386_low_remove_watchpoint (&debug_reg_state,
+					 type, addr, len);
     default:
       /* Unsupported.  */
       return 1;
@@ -447,7 +424,6 @@ struct win32_target_ops the_low_target = {
   i386_single_step,
   &i386_win32_breakpoint,
   i386_win32_breakpoint_len,
-  i386_supports_z_point_type,
   i386_insert_point,
   i386_remove_point,
   i386_stopped_by_watchpoint,

@@ -7299,9 +7299,9 @@ static int cons_sign = -1;
 
 void
 x86_cons_fix_new (fragS *frag, unsigned int off, unsigned int len,
-		  expressionS *exp, bfd_reloc_code_real_type r)
+		  expressionS *exp)
 {
-  r = reloc (len, 0, cons_sign, got_reloc);
+  enum bfd_reloc_code_real r = reloc (len, 0, cons_sign, got_reloc);
 
   got_reloc = NO_RELOC;
 

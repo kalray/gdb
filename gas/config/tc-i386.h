@@ -1,5 +1,7 @@
 /* tc-i386.h -- Header file for tc-i386.c
-   Copyright (C) 1989-2014 Free Software Foundation, Inc.
+   Copyright 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -132,12 +134,11 @@ extern const char *i386_comment_chars;
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)) && !defined (LEX_AT)
 #define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES) x86_cons (EXP, NBYTES)
 #endif
-extern bfd_reloc_code_real_type x86_cons (expressionS *, int);
+extern void x86_cons (expressionS *, int);
 
-#define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP, RELOC)	\
-  x86_cons_fix_new(FRAG, OFF, LEN, EXP, RELOC)
+#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) x86_cons_fix_new(FRAG, OFF, LEN, EXP)
 extern void x86_cons_fix_new
-(fragS *, unsigned int, unsigned int, expressionS *, bfd_reloc_code_real_type);
+  (fragS *, unsigned int, unsigned int, expressionS *);
 
 #define TC_ADDRESS_BYTES x86_address_bytes
 extern int x86_address_bytes (void);

@@ -1,6 +1,6 @@
 /* gdb-if.c -- sim interface to GDB.
 
-Copyright (C) 2008-2014 Free Software Foundation, Inc.
+Copyright (C) 2008-2013 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -192,7 +192,7 @@ addr_in_swap_list (bfd_vma addr)
 }
 
 SIM_RC
-sim_load (SIM_DESC sd, const char *prog, struct bfd *abfd, int from_tty)
+sim_load (SIM_DESC sd, char *prog, struct bfd *abfd, int from_tty)
 {
   check_desc (sd);
 
@@ -650,35 +650,52 @@ int siggnal;
 
 
 /* Given a signal number used by the RX bsp (that is, newlib),
-   return a target signal number used by GDB.  */
-static int
-rx_signal_to_gdb_signal (int rx)
+   return a host signal number.  (Oddly, the gdb/sim interface uses
+   host signal numbers...)  */
+int
+rx_signal_to_host (int rx)
 {
   switch (rx)
     {
     case 4:
-      return GDB_SIGNAL_ILL;
+#ifdef SIGILL
+      return SIGILL;
+#else
+      return SIGSEGV;
+#endif
 
     case 5:
-      return GDB_SIGNAL_TRAP;
+      return SIGTRAP;
 
     case 10:
-      return GDB_SIGNAL_BUS;
+#ifdef SIGBUS
+      return SIGBUS;
+#else
+      return SIGSEGV;
+#endif
 
     case 11:
-      return GDB_SIGNAL_SEGV;
+      return SIGSEGV;
 
     case 24:
-      return GDB_SIGNAL_XCPU;
+#ifdef SIGXCPU
+      return SIGXCPU;
+#else
+      break;
+#endif
 
     case 2:
-      return GDB_SIGNAL_INT;
+      return SIGINT;
 
     case 8:
-      return GDB_SIGNAL_FPE;
+#ifdef SIGFPE
+      return SIGFPE;
+#else
+      break;
+#endif
 
     case 6:
-      return GDB_SIGNAL_ABRT;
+      return SIGABRT;
     }
 
   return 0;
@@ -703,7 +720,7 @@ handle_step (int rc)
   else if (RX_STOPPED (rc))
     {
       reason = sim_stopped;
-      siggnal = rx_signal_to_gdb_signal (RX_STOP_SIG (rc));
+      siggnal = rx_signal_to_host (RX_STOP_SIG (rc));
     }
   else
     {
@@ -791,12 +808,11 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason_p, int *sigrc_p)
 }
 
 void
-sim_do_command (SIM_DESC sd, const char *cmd)
+sim_do_command (SIM_DESC sd, char *cmd)
 {
-  const char *args;
-  char *p = strdup (cmd);
-
   check_desc (sd);
+
+  char *p = cmd;
 
   /* Skip leading whitespace.  */
   while (isspace (*p))
@@ -809,6 +825,7 @@ sim_do_command (SIM_DESC sd, const char *cmd)
 
   /* Null-terminate the command word, and record the start of any
      further arguments.  */
+  char *args;
   if (*p)
     {
       *p = '\0';
@@ -844,8 +861,6 @@ sim_do_command (SIM_DESC sd, const char *cmd)
   else
     printf ("The 'sim' command expects either 'trace' or 'verbose'"
 	    " as a subcommand.\n");
-
-  free (p);
 }
 
 char **

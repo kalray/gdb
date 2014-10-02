@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -51,6 +51,16 @@ enum varobj_scope_status
 
 /* String representations of gdb's format codes (defined in varobj.c).  */
 extern char *varobj_format_string[];
+
+/* Languages supported by this variable objects system.  This enum is used
+   to index arrays so we make its first enum explicitly zero.  */
+enum varobj_languages
+  {
+    vlang_c = 0, vlang_cplus, vlang_java, vlang_ada, vlang_end
+  };
+
+/* String representations of gdb's known languages (defined in varobj.c).  */
+extern char *varobj_language_string[];
 
 /* Struct thar describes a variable object instance.  */
 
@@ -215,10 +225,10 @@ struct lang_varobj_ops
 			    struct type *new_type);
 };
 
-extern const struct lang_varobj_ops c_varobj_ops;
-extern const struct lang_varobj_ops cplus_varobj_ops;
-extern const struct lang_varobj_ops java_varobj_ops;
-extern const struct lang_varobj_ops ada_varobj_ops;
+const struct lang_varobj_ops c_varobj_ops;
+const struct lang_varobj_ops cplus_varobj_ops;
+const struct lang_varobj_ops java_varobj_ops;
+const struct lang_varobj_ops ada_varobj_ops;
 
 #define default_varobj_ops c_varobj_ops
 /* API functions */
@@ -276,7 +286,7 @@ extern struct type *varobj_get_gdb_type (struct varobj *var);
 
 extern char *varobj_get_path_expr (struct varobj *var);
 
-extern const struct language_defn *varobj_get_language (struct varobj *var);
+extern enum varobj_languages varobj_get_language (struct varobj *var);
 
 extern int varobj_get_attributes (struct varobj *var);
 

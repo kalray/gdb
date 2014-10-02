@@ -1,5 +1,5 @@
 /* Remote target system call support.
-   Copyright 1997-2014 Free Software Foundation, Inc.
+   Copyright 1997-2013 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -76,8 +76,12 @@ char *simulator_sysroot = "";
    The result is 0 for success or a host errno value.  */
 
 int
-cb_get_string (host_callback *cb, CB_SYSCALL *sc, char *buf, int buflen,
-	       TADDR addr)
+cb_get_string (cb, sc, buf, buflen, addr)
+     host_callback *cb;
+     CB_SYSCALL *sc;
+     char *buf;
+     int buflen;
+     TADDR addr;
 {
   char *p, *pend;
 
@@ -106,7 +110,11 @@ cb_get_string (host_callback *cb, CB_SYSCALL *sc, char *buf, int buflen,
    If an error occurs, no buffer is left malloc'd.  */
 
 static int
-get_path (host_callback *cb, CB_SYSCALL *sc, TADDR addr, char **bufp)
+get_path (cb, sc, addr, bufp)
+     host_callback *cb;
+     CB_SYSCALL *sc;
+     TADDR addr;
+     char **bufp;
 {
   char *buf = xmalloc (MAX_PATH_LEN);
   int result;
@@ -139,7 +147,9 @@ get_path (host_callback *cb, CB_SYSCALL *sc, TADDR addr, char **bufp)
 /* Perform a system call on behalf of the target.  */
 
 CB_RC
-cb_syscall (host_callback *cb, CB_SYSCALL *sc)
+cb_syscall (cb, sc)
+     host_callback *cb;
+     CB_SYSCALL *sc;
 {
   TWORD result = 0, errcode = 0;
 

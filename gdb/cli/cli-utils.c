@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "cli/cli-utils.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "value.h"
 #include "gdb_assert.h"
 
@@ -50,7 +50,7 @@ get_number_trailer (char **pp, int trailer)
 	    retval = value_as_long (val);
 	  else
 	    {
-	      printf_filtered (_("History value must have integer type.\n"));
+	      printf_filtered (_("History value must have integer type."));
 	      retval = 0;
 	    }
 	}
@@ -261,39 +261,30 @@ remove_trailing_whitespace (const char *start, char *s)
 /* See documentation in cli-utils.h.  */
 
 char *
-extract_arg_const (const char **arg)
+extract_arg (char **arg)
 {
-  const char *result;
+  char *result, *copy;
 
   if (!*arg)
     return NULL;
 
   /* Find the start of the argument.  */
-  *arg = skip_spaces_const (*arg);
+  *arg = skip_spaces (*arg);
   if (!**arg)
     return NULL;
   result = *arg;
 
   /* Find the end of the argument.  */
-  *arg = skip_to_space_const (*arg + 1);
+  *arg = skip_to_space (*arg + 1);
 
   if (result == *arg)
     return NULL;
 
-  return savestring (result, *arg - result);
-}
+  copy = xmalloc (*arg - result + 1);
+  memcpy (copy, result, *arg - result);
+  copy[*arg - result] = '\0';
 
-/* See documentation in cli-utils.h.  */
-
-char *
-extract_arg (char **arg)
-{
-  const char *arg_const = *arg;
-  char *result;
-
-  result = extract_arg_const (&arg_const);
-  *arg += arg_const - *arg;
-  return result;
+  return copy;
 }
 
 /* See documentation in cli-utils.h.  */

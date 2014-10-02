@@ -1,6 +1,6 @@
 /* Solaris threads debugging interface.
 
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,7 +56,7 @@
 #include "target.h"
 #include "inferior.h"
 #include <fcntl.h>
-#include <sys/stat.h>
+#include "gdb_stat.h"
 #include <dlfcn.h>
 #include "gdbcmd.h"
 #include "gdbcore.h"
@@ -64,11 +64,8 @@
 #include "solib.h"
 #include "symfile.h"
 #include "observer.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "procfs.h"
-#include "symtab.h"
-#include "minsyms.h"
-#include "objfiles.h"
 
 struct target_ops sol_thread_ops;
 
@@ -323,7 +320,7 @@ lwp_to_thread (ptid_t lwp)
    program was started via the normal ptrace (PTRACE_TRACEME).  */
 
 static void
-sol_thread_detach (struct target_ops *ops, const char *args, int from_tty)
+sol_thread_detach (struct target_ops *ops, char *args, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
 
@@ -545,13 +542,13 @@ sol_thread_store_registers (struct target_ops *ops,
    target_write_partial for details of each variant.  One, and only
    one, of readbuf or writebuf must be non-NULL.  */
 
-static enum target_xfer_status
+static LONGEST
 sol_thread_xfer_partial (struct target_ops *ops, enum target_object object,
 			  const char *annex, gdb_byte *readbuf,
 			  const gdb_byte *writebuf,
-			 ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+			 ULONGEST offset, LONGEST len)
 {
-  enum target_xfer_status retval;
+  int retval;
   struct cleanup *old_chain;
   struct target_ops *beneath = find_target_beneath (ops);
 
@@ -567,8 +564,8 @@ sol_thread_xfer_partial (struct target_ops *ops, enum target_object object,
       inferior_ptid = procfs_first_available ();
     }
 
-  retval = beneath->to_xfer_partial (beneath, object, annex, readbuf,
-				     writebuf, offset, len, xfered_len);
+  retval = beneath->to_xfer_partial (beneath, object, annex,
+				     readbuf, writebuf, offset, len);
 
   do_cleanups (old_chain);
 
@@ -580,10 +577,6 @@ check_for_thread_db (void)
 {
   td_err_e err;
   ptid_t ptid;
-
-  /* Don't attempt to use thread_db for remote targets.  */
-  if (!(target_can_run (&current_target) || core_bfd))
-    return;
 
   /* Do nothing if we couldn't load libthread_db.so.1.  */
   if (p_td_ta_new == NULL)
@@ -765,13 +758,13 @@ ps_err_e
 ps_pglobal_lookup (gdb_ps_prochandle_t ph, const char *ld_object_name,
 		   const char *ld_symbol_name, gdb_ps_addr_t *ld_symbol_addr)
 {
-  struct bound_minimal_symbol ms;
+  struct minimal_symbol *ms;
 
   ms = lookup_minimal_symbol (ld_symbol_name, NULL, NULL);
-  if (!ms.minsym)
+  if (!ms)
     return PS_NOSYM;
 
-  *ld_symbol_addr = BMSYMBOL_VALUE_ADDRESS (ms);
+  *ld_symbol_addr = SYMBOL_VALUE_ADDRESS (ms);
   return PS_OK;
 }
 
@@ -1143,7 +1136,7 @@ info_cb (const td_thrhandle_t *th, void *s)
 
 	  printf_filtered ("   startfunc=%s",
 			   msym.minsym
-			   ? MSYMBOL_PRINT_NAME (msym.minsym)
+			   ? SYMBOL_PRINT_NAME (msym.minsym)
 			   : paddress (target_gdbarch (), ti.ti_startfunc));
 	}
 
@@ -1155,7 +1148,7 @@ info_cb (const td_thrhandle_t *th, void *s)
 
 	  printf_filtered ("   sleepfunc=%s",
 			   msym.minsym
-			   ? MSYMBOL_PRINT_NAME (msym.minsym)
+			   ? SYMBOL_PRINT_NAME (msym.minsym)
 			   : paddress (target_gdbarch (), ti.ti_pc));
 	}
 
@@ -1193,7 +1186,7 @@ thread_db_find_thread_from_tid (struct thread_info *thread, void *data)
 }
 
 static ptid_t
-sol_get_ada_task_ptid (struct target_ops *self, long lwp, long thread)
+sol_get_ada_task_ptid (long lwp, long thread)
 {
   struct thread_info *thread_info =
     iterate_over_threads (thread_db_find_thread_from_tid, &thread);

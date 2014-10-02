@@ -1,6 +1,6 @@
 /* Generic serial interface routines
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 #include <ctype.h>
 #include "serial.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "gdbcmd.h"
 #include "cli/cli-utils.h"
 
@@ -30,12 +30,9 @@ extern void _initialize_serial (void);
 
 static unsigned int global_serial_debug_p;
 
-typedef const struct serial_ops *serial_ops_p;
-DEF_VEC_P (serial_ops_p);
+/* Linked list of serial I/O handlers.  */
 
-/* Serial I/O handlers.  */
-
-VEC (serial_ops_p) *serial_ops_list = NULL;
+static struct serial_ops *serial_ops_list = NULL;
 
 /* Pointer to list of scb's.  */
 
@@ -47,7 +44,7 @@ static struct serial *scb_base;
 static char *serial_logfile = NULL;
 static struct ui_file *serial_logfp = NULL;
 
-static const struct serial_ops *serial_interface_lookup (const char *);
+static struct serial_ops *serial_interface_lookup (const char *);
 static void serial_logchar (struct ui_file *stream,
 			    int ch_type, int ch, int timeout);
 static const char logbase_hex[] = "hex";
@@ -130,7 +127,7 @@ serial_logchar (struct ui_file *stream, int ch_type, int ch, int timeout)
 }
 
 void
-serial_log_command (struct target_ops *self, const char *cmd)
+serial_log_command (const char *cmd)
 {
   if (!serial_logfp)
     return;
@@ -146,13 +143,12 @@ serial_log_command (struct target_ops *self, const char *cmd)
 }
 
 
-static const struct serial_ops *
+static struct serial_ops *
 serial_interface_lookup (const char *name)
 {
-  const struct serial_ops *ops;
-  int i;
+  struct serial_ops *ops;
 
-  for (i = 0; VEC_iterate (serial_ops_p, serial_ops_list, i, ops); ++i)
+  for (ops = serial_ops_list; ops; ops = ops->next)
     if (strcmp (name, ops->name) == 0)
       return ops;
 
@@ -160,9 +156,10 @@ serial_interface_lookup (const char *name)
 }
 
 void
-serial_add_interface (const struct serial_ops *optable)
+serial_add_interface (struct serial_ops *optable)
 {
-  VEC_safe_push (serial_ops_p, serial_ops_list, optable);
+  optable->next = serial_ops_list;
+  serial_ops_list = optable;
 }
 
 /* Return the open serial device for FD, if found, or NULL if FD is
@@ -186,7 +183,7 @@ struct serial *
 serial_open (const char *name)
 {
   struct serial *scb;
-  const struct serial_ops *ops;
+  struct serial_ops *ops;
   const char *open_name = name;
 
   if (strcmp (name, "pc") == 0)
@@ -211,7 +208,7 @@ serial_open (const char *name)
   if (!ops)
     return NULL;
 
-  scb = XNEW (struct serial);
+  scb = XMALLOC (struct serial);
 
   scb->ops = ops;
 
@@ -249,7 +246,7 @@ serial_open (const char *name)
    interface ops OPS.  */
 
 static struct serial *
-serial_fdopen_ops (const int fd, const struct serial_ops *ops)
+serial_fdopen_ops (const int fd, struct serial_ops *ops)
 {
   struct serial *scb;
 
@@ -263,7 +260,7 @@ serial_fdopen_ops (const int fd, const struct serial_ops *ops)
   if (!ops)
     return NULL;
 
-  scb = XCNEW (struct serial);
+  scb = XCALLOC (1, struct serial);
 
   scb->ops = ops;
 
@@ -587,7 +584,7 @@ serial_done_wait_handle (struct serial *scb)
 int
 serial_pipe (struct serial *scbs[2])
 {
-  const struct serial_ops *ops;
+  struct serial_ops *ops;
   int fildes[2];
 
   ops = serial_interface_lookup ("pipe");
@@ -670,6 +667,34 @@ using remote targets."),
 			    NULL,
 			    serial_baud_show_cmd,
 			    &serial_set_cmdlist, &serial_show_cmdlist);
+
+  /* The commands "set/show serial baud" used to have a different name.
+     Add aliases to those names to facilitate the transition, and mark
+     them as deprecated, in order to make users aware of the fact that
+     the command names have been changed.  */
+    {
+      const char *cmd_name;
+      struct cmd_list_element *cmd;
+
+      /* FIXME: There is a limitation in the deprecation mechanism,
+	 and the warning ends up not being displayed for prefixed
+	 aliases.  So use a real command instead of an alias.  */
+      add_setshow_zinteger_cmd ("remotebaud", class_alias, &baud_rate, _("\
+Set baud rate for remote serial I/O."), _("\
+Show baud rate for remote serial I/O."), _("\
+This value is used to set the speed of the serial port when debugging\n\
+using remote targets."),
+				NULL,
+				serial_baud_show_cmd,
+				&setlist, &showlist);
+      cmd_name = "remotebaud";
+      cmd = lookup_cmd (&cmd_name, setlist, "", -1, 1);
+      deprecate_cmd (cmd, "set serial baud");
+      cmd_name
+	= "remotebaud"; /* needed because lookup_cmd updates the pointer */
+      cmd = lookup_cmd (&cmd_name, showlist, "", -1, 1);
+      deprecate_cmd (cmd, "show serial baud");
+    }
 
   add_setshow_filename_cmd ("remotelogfile", no_class, &serial_logfile, _("\
 Set filename for remote session recording."), _("\

@@ -528,7 +528,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int          *k1_regfiles = NULL;
   k1_Register  *k1_registers = NULL;
   int          *k1_dec_registers = NULL;
+  unsigned int  k1_max_registers = 0;
   unsigned int  k1_max_dec_registers = 0;
+  int k1_arch_size = 32;
   int readsofar = 0;
   int opt_pretty = 0;
   int found = 0;
@@ -550,6 +552,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1a_dec_registers;
       reassemble_bundle = k1a_reassemble_bundle;
       break;
+
     case bfd_mach_k1io:
       opc_table = k1a_k1optab;
       k1_regfiles = k1_k1a_regfiles;
@@ -557,6 +560,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1a_dec_registers;
       reassemble_bundle = k1a_reassemble_bundle;
       break;
+
+    case bfd_mach_k1bdp_64:
+      k1_arch_size = 64;
     case bfd_mach_k1bdp:
       opc_table = k1b_k1optab;
       k1_regfiles = k1_k1b_regfiles;
@@ -564,6 +570,9 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
+
+    case bfd_mach_k1bio_64:
+      k1_arch_size = 64;
     case bfd_mach_k1bio:
       opc_table = k1b_k1optab;
       k1_regfiles = k1_k1b_regfiles;
@@ -571,13 +580,15 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_dec_registers = k1_k1b_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
+
     default:
       /* Core not supported */
-      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%lu)",
+      (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
 			    info->mach);
       return -1;
   }
 
+  k1_max_registers = k1_regfiles[K1_REGFILE_REGISTERS];
   k1_max_dec_registers = k1_regfiles[K1_REGFILE_DEC_REGISTERS];
 
   if (opc_table == NULL) {
@@ -635,6 +646,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 	if ((op->codeword[i].mask & insn->insn[i]) != op->codeword[i].opcode) {
 	  opcode_match = 0;
 	}
+      }
+      int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
+
+      for(i=0; i < op->codewords; i++) {
+	if (! (op->codeword[i].flags & encoding_space_flags))
+	  opcode_match = 0;
       }
 
       if (opcode_match) {
@@ -712,8 +729,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1_pairedReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
-			  SRF_REGCLASSES(k1)
-				SRF_REGCLASSES(k1b)
+		        SRF_REGCLASSES(k1)
+			SRF_REGCLASSES(k1b)
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1_remoteReg:

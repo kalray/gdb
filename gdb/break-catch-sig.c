@@ -1,6 +1,6 @@
 /* Everything about signal catchpoints, for GDB.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #include "breakpoint.h"
 #include "gdbcmd.h"
 #include "inferior.h"
-#include "infrun.h"
 #include "annotate.h"
 #include "valprint.h"
 #include "cli/cli-utils.h"
@@ -351,10 +350,10 @@ signal_catchpoint_print_recreate (struct breakpoint *b, struct ui_file *fp)
 /* Implement the "explains_signal" breakpoint_ops method for signal
    catchpoints.  */
 
-static int
+static enum bpstat_signal_value
 signal_catchpoint_explains_signal (struct breakpoint *b, enum gdb_signal sig)
 {
-  return 1;
+  return BPSTAT_SIGNAL_PASS;
 }
 
 /* Create a new signal catchpoint.  TEMPFLAG is true if this should be

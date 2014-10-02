@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
+#include "gdb_string.h"
 #include "symtab.h"
 #include "bfd.h"
 #include "symfile.h"
@@ -486,16 +486,6 @@ solib_map_sections (struct so_list *so)
   /* Leave bfd open, core_xfer_memory and "info files" need it.  */
   so->abfd = abfd;
 
-  /* Copy the full path name into so_name, allowing symbol_file_add
-     to find it later.  This also affects the =library-loaded GDB/MI
-     event, and in particular the part of that notification providing
-     the library's host-side path.  If we let the target dictate
-     that objfile's path, and the target is different from the host,
-     GDB/MI will not provide the correct host-side path.  */
-  if (strlen (bfd_get_filename (abfd)) >= SO_NAME_MAX_PATH_SIZE)
-    error (_("Shared library file name is too long."));
-  strcpy (so->so_name, bfd_get_filename (abfd));
-
   if (build_section_table (abfd, &so->sections, &so->sections_end))
     {
       error (_("Can't find the file sections in `%s': %s"),
@@ -650,7 +640,7 @@ solib_read_symbols (struct so_list *so, int flags)
 			   so->so_name);
       else
 	{
-	  if (print_symbol_loading_p (from_tty, 0, 1))
+	  if (from_tty || info_verbose)
 	    printf_unfiltered (_("Loaded symbols for %s\n"), so->so_name);
 	  so->symbols_loaded = 1;
 	}
@@ -904,17 +894,6 @@ solib_add (char *pattern, int from_tty,
 	   struct target_ops *target, int readsyms)
 {
   struct so_list *gdb;
-
-  if (print_symbol_loading_p (from_tty, 0, 0))
-    {
-      if (pattern != NULL)
-	{
-	  printf_unfiltered (_("Loading symbols for shared libraries: %s\n"),
-			     pattern);
-	}
-      else
-	printf_unfiltered (_("Loading symbols for shared libraries.\n"));
-    }
 
   current_program_space->solib_add_generation++;
 
@@ -1287,9 +1266,6 @@ reload_shared_libraries_1 (int from_tty)
 {
   struct so_list *so;
   struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
-
-  if (print_symbol_loading_p (from_tty, 0, 0))
-    printf_unfiltered (_("Loading symbols for shared libraries.\n"));
 
   for (so = so_list_head; so != NULL; so = so->next)
     {

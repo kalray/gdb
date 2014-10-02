@@ -7,7 +7,7 @@ int main (void)
 {
   printf ("foll-exec is about to execl(crashme)...\n");
 
-  execl (BASEDIR "/crashme",
-         BASEDIR "/crashme",
+  execl ("gdb.multi/crashme",
+         "gdb.multi/crashme",
          (char *)0);
 }

@@ -84,6 +84,9 @@ _start:
 	vscatterpf1qps	256(%r9,%zmm31){%k1}	 # AVX512PF
 	vscatterpf1qps	1024(%rcx,%zmm31,4){%k1}	 # AVX512PF
 
+	prefetchwt1	(%rcx)	 # AVX512PF
+	prefetchwt1	0x123(%rax,%r14,8)	 # AVX512PF
+
 	.intel_syntax noprefix
 	vgatherpf0dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
 	vgatherpf0dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
@@ -100,10 +103,10 @@ _start:
 	vgatherpf0qpd	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
 	vgatherpf0qpd	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
-	vgatherpf0qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vgatherpf0qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vgatherpf0qps	YMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
-	vgatherpf0qps	YMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
+	vgatherpf0qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vgatherpf0qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vgatherpf0qps	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
+	vgatherpf0qps	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
 	vgatherpf1dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
 	vgatherpf1dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
@@ -120,10 +123,10 @@ _start:
 	vgatherpf1qpd	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
 	vgatherpf1qpd	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
-	vgatherpf1qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vgatherpf1qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vgatherpf1qps	YMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
-	vgatherpf1qps	YMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
+	vgatherpf1qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vgatherpf1qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vgatherpf1qps	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
+	vgatherpf1qps	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
 	vscatterpf0dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
 	vscatterpf0dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
@@ -140,10 +143,10 @@ _start:
 	vscatterpf0qpd	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
 	vscatterpf0qpd	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
-	vscatterpf0qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vscatterpf0qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vscatterpf0qps	YMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
-	vscatterpf0qps	YMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
+	vscatterpf0qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vscatterpf0qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vscatterpf0qps	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
+	vscatterpf0qps	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
 	vscatterpf1dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
 	vscatterpf1dpd	ZMMWORD PTR [r14+ymm31*8-123]{k1}	 # AVX512PF
@@ -160,8 +163,11 @@ _start:
 	vscatterpf1qpd	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
 	vscatterpf1qpd	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
 
-	vscatterpf1qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vscatterpf1qps	YMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
-	vscatterpf1qps	YMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
-	vscatterpf1qps	YMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
+	vscatterpf1qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vscatterpf1qps	ZMMWORD PTR [r14+zmm31*8-123]{k1}	 # AVX512PF
+	vscatterpf1qps	ZMMWORD PTR [r9+zmm31+256]{k1}	 # AVX512PF
+	vscatterpf1qps	ZMMWORD PTR [rcx+zmm31*4+1024]{k1}	 # AVX512PF
+
+	prefetchwt1	BYTE PTR [rcx]	 # AVX512PF
+	prefetchwt1	BYTE PTR [rax+r14*8+0x1234]	 # AVX512PF
 

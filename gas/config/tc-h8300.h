@@ -1,5 +1,5 @@
 /* This file is tc-h8300.h
-   Copyright (C) 1987-2014 Free Software Foundation, Inc.
+   Copyright 1987-2013 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

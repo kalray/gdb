@@ -1,5 +1,6 @@
 /* BFD back-end for National Semiconductor's CR16C ELF
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2006, 2007, 2009, 2010, 2012
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -714,12 +715,12 @@ elf32_cr16c_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned, ignored;
+	  bfd_boolean unresolved_reloc, warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -939,7 +940,7 @@ elf32_cr16c_link_output_symbol_hook (struct bfd_link_info *info ATTRIBUTE_UNUSED
 }
 
 /* Definitions for setting CR16C target vector.  */
-#define TARGET_LITTLE_SYM		cr16c_elf32_vec
+#define TARGET_LITTLE_SYM		bfd_elf32_cr16c_vec
 #define TARGET_LITTLE_NAME		"elf32-cr16c"
 #define ELF_ARCH			bfd_arch_cr16c
 #define ELF_MACHINE_CODE		EM_CR

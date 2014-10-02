@@ -1,5 +1,5 @@
 /* ldlang.h - linker command language support
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright 1991-2013 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -235,9 +235,6 @@ struct lang_input_statement_flags
   /* 1 means this file was specified in a -l option.  */
   unsigned int maybe_archive : 1;
 
-  /* 1 means this file was specified in a -l:namespec option.  */
-  unsigned int full_name_provided : 1;
-
   /* 1 means search a set of directories for this file.  */
   unsigned int search_dirs : 1;
 
@@ -315,23 +312,6 @@ typedef struct
   lang_statement_header_type header;
   asection *section;
 } lang_input_section_type;
-
-struct map_symbol_def {
-  struct bfd_link_hash_entry *entry;
-  struct map_symbol_def *next;
-};
-
-/* For input sections, when writing a map file: head / tail of a linked
-   list of hash table entries for symbols defined in this section.  */
-typedef struct input_section_userdata_struct
-{
-  struct map_symbol_def *map_symbol_def_head;
-  struct map_symbol_def **map_symbol_def_tail;
-  unsigned long map_symbol_def_count;
-} input_section_userdata_type;
-
-#define get_userdata(x) ((x)->userdata)
-
 
 typedef struct lang_wild_statement_struct lang_wild_statement_type;
 
@@ -490,14 +470,6 @@ struct orphan_save
   lang_output_section_statement_type **os_tail;
 };
 
-struct asneeded_minfo
-{
-  struct asneeded_minfo *next;
-  const char *soname;
-  bfd *ref;
-  const char *name;
-};
-
 extern struct lang_phdr *lang_phdr_list;
 extern struct lang_nocrossrefs *nocrossref_list;
 extern const char *output_target;
@@ -505,6 +477,7 @@ extern lang_output_section_statement_type *abs_output_section;
 extern lang_statement_list_type lang_output_section_statement;
 extern struct lang_input_statement_flags input_flags;
 extern bfd_boolean lang_has_input_file;
+extern etree_type *base;
 extern lang_statement_list_type *stat_ptr;
 extern bfd_boolean delete_output_file_on_failure;
 
@@ -515,9 +488,6 @@ extern lang_statement_list_type file_chain;
 extern lang_statement_list_type input_file_chain;
 
 extern int lang_statement_iteration;
-extern struct asneeded_minfo **asneeded_list_tail;
-
-extern void (*output_bfd_hash_table_free_fn) (struct bfd_link_hash_table *);
 
 extern void lang_init
   (void);
@@ -604,8 +574,6 @@ extern lang_input_statement_type *lang_add_input_file
   (const char *, lang_input_file_enum_type, const char *);
 extern void lang_add_keepsyms_file
   (const char *);
-extern lang_output_section_statement_type *lang_output_section_get
-  (const asection *);
 extern lang_output_section_statement_type *lang_output_section_statement_lookup
   (const char *, int, bfd_boolean);
 extern lang_output_section_statement_type *next_matching_output_section_statement

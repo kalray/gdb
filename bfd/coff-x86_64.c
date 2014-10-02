@@ -1,5 +1,6 @@
 /* BFD back-end for AMD 64 COFF files.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright 2006, 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -737,7 +738,7 @@ const bfd_target
 #ifdef TARGET_SYM
   TARGET_SYM =
 #else
-  x86_64_coff_vec =
+  x86_64coff_vec =
 #endif
 {
 #ifdef TARGET_NAME

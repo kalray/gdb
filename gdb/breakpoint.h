@@ -1,5 +1,5 @@
 /* Data structures associated with breakpoints in GDB.
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,12 +25,10 @@
 #include "ax.h"
 #include "command.h"
 #include "break-common.h"
-#include "probe.h"
 
 struct value;
 struct block;
-struct gdbpy_breakpoint_object;
-struct gdbscm_breakpoint_object;
+struct breakpoint_object;
 struct get_number_or_range_state;
 struct thread_info;
 struct bpstats;
@@ -438,7 +436,7 @@ struct bp_location
 
   /* If the location comes from a probe point, this is the probe associated
      with it.  */
-  struct bound_probe probe;
+  struct probe *probe;
 
   char *function_name;
 
@@ -471,6 +469,22 @@ struct bp_location
 
   struct symtab *symtab;
 };
+
+/* Return values for bpstat_explains_signal.  Note that the order of
+   the constants is important here; they are compared directly in
+   bpstat_explains_signal.  */
+
+enum bpstat_signal_value
+  {
+    /* bpstat does not explain this signal.  */
+    BPSTAT_SIGNAL_NO = 0,
+
+    /* bpstat explains this signal; signal should not be delivered.  */
+    BPSTAT_SIGNAL_HIDE,
+
+    /* bpstat explains this signal; signal should be delivered.  */
+    BPSTAT_SIGNAL_PASS
+  };
 
 /* This structure is a collection of function pointers that, if available,
    will be called instead of the performing the default action for this
@@ -586,9 +600,12 @@ struct breakpoint_ops
   void (*decode_linespec) (struct breakpoint *, char **,
 			   struct symtabs_and_lines *);
 
-  /* Return true if this breakpoint explains a signal.  See
+  /* Return true if this breakpoint explains a signal, but the signal
+     should still be delivered to the inferior.  This is used to make
+     'catch signal' interact properly with 'handle'; see
      bpstat_explains_signal.  */
-  int (*explains_signal) (struct breakpoint *, enum gdb_signal);
+  enum bpstat_signal_value (*explains_signal) (struct breakpoint *,
+					       enum gdb_signal);
 
   /* Called after evaluating the breakpoint's condition,
      and only if it evaluated true.  */
@@ -739,11 +756,8 @@ struct breakpoint
        Python object that has been associated with this breakpoint.
        This is always NULL for a GDB that is not script enabled.  It
        can sometimes be NULL for enabled GDBs as not all breakpoint
-       types are tracked by the scripting language API.  */
-    struct gdbpy_breakpoint_object *py_bp_object;
-
-    /* Same as py_bp_object, but for Scheme.  */
-    struct gdbscm_breakpoint_object *scm_bp_object;
+       types are tracked by the Python scripting API.  */
+    struct breakpoint_object *py_bp_object;
   };
 
 /* An instance of this type is used to represent a watchpoint.  It
@@ -988,10 +1002,11 @@ struct bpstat_what bpstat_what (bpstat);
 /* Find the bpstat associated with a breakpoint.  NULL otherwise.  */
 bpstat bpstat_find_breakpoint (bpstat, struct breakpoint *);
 
-/* Nonzero if a signal that we got in target_wait() was due to
-   circumstances explained by the bpstat; the signal is therefore not
-   random.  */
-extern int bpstat_explains_signal (bpstat, enum gdb_signal);
+/* Nonzero if a signal that we got in wait() was due to circumstances
+   explained by the bpstat; and the signal should therefore not be
+   delivered.  */
+extern enum bpstat_signal_value bpstat_explains_signal (bpstat,
+							enum gdb_signal);
 
 /* Nonzero is this bpstat causes a stop.  */
 extern int bpstat_causes_stop (bpstat);
@@ -1126,9 +1141,6 @@ extern int regular_breakpoint_inserted_here_p (struct address_space *,
 extern int software_breakpoint_inserted_here_p (struct address_space *, 
 						CORE_ADDR);
 
-extern int single_step_breakpoint_inserted_here_p (struct address_space *,
-						   CORE_ADDR);
-
 /* Returns true if there's a hardware watchpoint or access watchpoint
    inserted in the range defined by ADDR and LEN.  */
 extern int hardware_watchpoint_inserted_in_range (struct address_space *,
@@ -1137,16 +1149,6 @@ extern int hardware_watchpoint_inserted_in_range (struct address_space *,
 
 extern int breakpoint_thread_match (struct address_space *, 
 				    CORE_ADDR, ptid_t);
-
-/* Returns true if {ASPACE1,ADDR1} and {ASPACE2,ADDR2} represent the
-   same breakpoint location.  In most targets, this can only be true
-   if ASPACE1 matches ASPACE2.  On targets that have global
-   breakpoints, the address space doesn't really matter.  */
-
-extern int breakpoint_address_match (struct address_space *aspace1,
-				     CORE_ADDR addr1,
-				     struct address_space *aspace2,
-				     CORE_ADDR addr2);
 
 extern void until_break_command (char *, int, int);
 
@@ -1504,7 +1506,8 @@ extern struct tracepoint *get_tracepoint_by_number_on_target (int num);
 /* Find a tracepoint by parsing a number in the supplied string.  */
 extern struct tracepoint *
      get_tracepoint_by_number (char **arg, 
-			       struct get_number_or_range_state *state);
+			       struct get_number_or_range_state *state,
+			       int optional_p);
 
 /* Return a vector of all tracepoints currently defined.  The vector
    is newly allocated; the caller should free when done with it.  */

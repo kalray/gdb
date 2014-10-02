@@ -1,6 +1,6 @@
 /* Handle lists of commands, their decoding and documentation, for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "symtab.h"
 #include <ctype.h>
 #include "gdb_regex.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "completer.h"
 #include "ui-out.h"
 #include "cli/cli-cmds.h"
@@ -226,10 +226,7 @@ add_cmd (const char *name, enum command_class class, void (*fun) (char *, int),
   set_cmd_cfunc (c, fun);
   set_cmd_context (c, NULL);
   c->doc = doc;
-  c->cmd_deprecated = 0;
-  c->deprecated_warn_user = 0;
-  c->malloced_replacement = 0;
-  c->doc_allocated = 0;
+  c->flags = 0;
   c->replacement = NULL;
   c->pre_show_hook = NULL;
   c->hook_in = 0;
@@ -264,8 +261,7 @@ add_cmd (const char *name, enum command_class class, void (*fun) (char *, int),
 struct cmd_list_element *
 deprecate_cmd (struct cmd_list_element *cmd, char *replacement)
 {
-  cmd->cmd_deprecated = 1;
-  cmd->deprecated_warn_user = 1;
+  cmd->flags |= (CMD_DEPRECATED | DEPRECATED_WARN_USER);
 
   if (replacement != NULL)
     cmd->replacement = replacement;
@@ -302,10 +298,10 @@ add_alias_cmd (const char *name, const char *oldname, enum command_class class,
   c = add_cmd (name, class, NULL, old->doc, list);
 
   /* If OLD->DOC can be freed, we should make another copy.  */
-  if (old->doc_allocated)
+  if ((old->flags & DOC_ALLOCATED) != 0)
     {
       c->doc = xstrdup (old->doc);
-      c->doc_allocated = 1;
+      c->flags |= DOC_ALLOCATED;
     }
   /* NOTE: Both FUNC and all the FUNCTIONs need to be copied.  */
   c->func = old->func;
@@ -452,7 +448,7 @@ add_setshow_cmd_full (const char *name,
     }
   set = add_set_or_show_cmd (name, set_cmd, class, var_type, var,
 			     full_set_doc, set_list);
-  set->doc_allocated = 1;
+  set->flags |= DOC_ALLOCATED;
 
   if (set_func != NULL)
     set_cmd_sfunc (set, set_func);
@@ -461,7 +457,7 @@ add_setshow_cmd_full (const char *name,
 
   show = add_set_or_show_cmd (name, show_cmd, class, var_type, var,
 			      full_show_doc, show_list);
-  show->doc_allocated = 1;
+  show->flags |= DOC_ALLOCATED;
   show->show_value_func = show_func;
 
   if (set_result != NULL)
@@ -804,7 +800,7 @@ delete_cmd (const char *name, struct cmd_list_element **list,
 	  *prehookee = iter->hookee_pre;
 	  if (iter->hookee_post)
 	    iter->hookee_post->hook_post = 0;
-	  if (iter->doc && iter->doc_allocated)
+	  if (iter->doc && (iter->flags & DOC_ALLOCATED) != 0)
 	    xfree (iter->doc);
 	  *posthook = iter->hook_post;
 	  *posthookee = iter->hookee_post;
@@ -1399,7 +1395,7 @@ lookup_cmd_1 (const char **text, struct cmd_list_element *clist,
        itself and we will adjust the appropriate DEPRECATED_WARN_USER
        flags.  */
       
-      if (found->deprecated_warn_user)
+      if (found->flags & DEPRECATED_WARN_USER)
 	deprecated_cmd_warning (line);
       found = found->cmd_pointer;
     }
@@ -1604,14 +1600,14 @@ deprecated_cmd_warning (const char *text)
     /* Return if text doesn't evaluate to a command.  */
     return;
 
-  if (!((alias ? alias->deprecated_warn_user : 0)
-      || cmd->deprecated_warn_user) ) 
+  if (!((alias ? (alias->flags & DEPRECATED_WARN_USER) : 0)
+      || (cmd->flags & DEPRECATED_WARN_USER) ) ) 
     /* Return if nothing is deprecated.  */
     return;
   
   printf_filtered ("Warning:");
   
-  if (alias && !cmd->cmd_deprecated)
+  if (alias && !(cmd->flags & CMD_DEPRECATED))
     printf_filtered (" '%s', an alias for the", alias->name);
     
   printf_filtered (" command '");
@@ -1621,7 +1617,7 @@ deprecated_cmd_warning (const char *text)
   
   printf_filtered ("%s", cmd->name);
 
-  if (alias && cmd->cmd_deprecated)
+  if (alias && (cmd->flags & CMD_DEPRECATED))
     printf_filtered ("' (%s) is deprecated.\n", alias->name);
   else
     printf_filtered ("' is deprecated.\n"); 
@@ -1630,7 +1626,7 @@ deprecated_cmd_warning (const char *text)
   /* If it is only the alias that is deprecated, we want to indicate
      the new alias, otherwise we'll indicate the new command.  */
 
-  if (alias && !cmd->cmd_deprecated)
+  if (alias && !(cmd->flags & CMD_DEPRECATED))
     {
       if (alias->replacement)
 	printf_filtered ("Use '%s'.\n\n", alias->replacement);
@@ -1647,9 +1643,9 @@ deprecated_cmd_warning (const char *text)
 
   /* We've warned you, now we'll keep quiet.  */
   if (alias)
-    alias->deprecated_warn_user = 0;
+    alias->flags &= ~DEPRECATED_WARN_USER;
   
-  cmd->deprecated_warn_user = 0;
+  cmd->flags &= ~DEPRECATED_WARN_USER;
 }
 
 
@@ -1791,7 +1787,7 @@ complete_on_cmdlist (struct cmd_list_element *list,
 
 	    if (pass == 0)
 	      {
-		if (ptr->cmd_deprecated)
+		if ((ptr->flags & CMD_DEPRECATED) != 0)
 		  {
 		    saw_deprecated_match = 1;
 		    continue;

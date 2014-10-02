@@ -45,5 +45,3 @@ case "$target" in
     esac
     ;;
 esac
-
-ELF_INTERPRETER_NAME=\"/lib/ld-linux-aarch64.so.1\"

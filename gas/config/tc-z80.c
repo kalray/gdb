@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80 and ASCII R800
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright 2005, 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -467,7 +467,7 @@ wrong_mach (int ins_type)
   if (ins_type & ins_err)
     error (_(p));
   else
-    as_warn ("%s", _(p));
+    as_warn (_(p));
 }
 
 static void
@@ -544,11 +544,12 @@ parse_exp_not_indexed (const char *s, expressionS *op)
 {
   const char *p;
   int indir;
+  segT dummy;
 
   p = skip_space (s);
   op->X_md = indir = is_indir (p);
   input_line_pointer = (char*) s ;
-  expression (op);
+  dummy = expression (op);
   switch (op->X_op)
     {
     case O_absent:
@@ -704,6 +705,7 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
 {
   char *p;
   int lo, hi;
+  fixS * fixp;
 
   p = frag_more (1);
   *p = val->X_add_number;
@@ -730,8 +732,8 @@ emit_byte (expressionS * val, bfd_reloc_code_real_type r_type)
     }
   else
     {
-      fix_new_exp (frag_now, p - frag_now->fr_literal, 1, val,
-		   (r_type == BFD_RELOC_8_PCREL) ? TRUE : FALSE, r_type);
+      fixp = fix_new_exp (frag_now, p - frag_now->fr_literal, 1, val,
+			  (r_type == BFD_RELOC_8_PCREL) ? TRUE : FALSE, r_type);
       /* FIXME : Process constant offsets immediately.  */
     }
 }

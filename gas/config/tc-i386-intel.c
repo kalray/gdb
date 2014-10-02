@@ -1,5 +1,6 @@
 /* tc-i386.c -- Assemble Intel syntax code for ix86/x86-64
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright 2009, 2010
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -141,9 +142,7 @@ operatorT i386_operator (const char *name, unsigned int operands, char *pc)
 	      int adjust = 0;
 	      char *gotfree_input_line = lex_got (&i.reloc[this_operand],
 						  &adjust,
-						  &intel_state.reloc_types,
-						  (i.bnd_prefix != NULL
-						   || add_bnd_prefix));
+						  &intel_state.reloc_types);
 
 	      if (!gotfree_input_line)
 		break;
@@ -416,21 +415,23 @@ static int i386_intel_simplify (expressionS *e)
       if (this_operand >= 0 && intel_state.in_bracket)
 	{
 	  expressionS *scale = NULL;
-	  int has_index = (intel_state.index != NULL);
+
+	  if (intel_state.index)
+	    --scale;
 
 	  if (!intel_state.in_scale++)
 	    intel_state.scale_factor = 1;
 
 	  ret = i386_intel_simplify_symbol (e->X_add_symbol);
-	  if (ret && !has_index && intel_state.index)
+	  if (ret && !scale && intel_state.index)
 	    scale = symbol_get_value_expression (e->X_op_symbol);
 
 	  if (ret)
 	    ret = i386_intel_simplify_symbol (e->X_op_symbol);
-	  if (ret && !scale && !has_index && intel_state.index)
+	  if (ret && !scale && intel_state.index)
 	    scale = symbol_get_value_expression (e->X_add_symbol);
 
-	  if (ret && scale)
+	  if (ret && scale && (scale + 1))
 	    {
 	      resolve_expression (scale);
 	      if (scale->X_op != O_constant

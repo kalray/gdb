@@ -78,7 +78,7 @@ test_displaced17:
 test_displaced:
 	copy $r0 = $r1
 	;;
-	scall 4095
+	scall 1
 	;;
 
 .align 4096

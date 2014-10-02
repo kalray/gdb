@@ -1,6 +1,6 @@
 /* test_plugin.c -- simple linker plugin test
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright 2008, 2009 Free Software Foundation, Inc.
    Written by Cary Coutant <ccoutant@google.com>.
 
    This file is part of gold.
@@ -583,13 +583,6 @@ parse_readelf_line(char* p, struct sym_info* info)
   info->vis = p;
   p += strcspn(p, " ");
   p += strspn(p, " ");
-
-  if (*p == '[')
-    {
-      /* Skip st_other.  */
-      p += strcspn(p, "]");
-      p += strspn(p, "] ");
-    }
 
   /* Section field.  */
   info->sect = p;

@@ -1,6 +1,6 @@
 // icf.h --  Identical Code Folding
 
-// Copyright (C) 2009-2014 Free Software Foundation, Inc.
+// Copyright 2009, 2010, 2013 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.

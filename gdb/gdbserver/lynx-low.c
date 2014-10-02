@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -736,7 +736,6 @@ static struct target_ops lynx_target_ops = {
   NULL,  /* look_up_symbols */
   lynx_request_interrupt,
   NULL,  /* read_auxv */
-  NULL,  /* supports_z_point_type */
   NULL,  /* insert_point */
   NULL,  /* remove_point */
   NULL,  /* stopped_by_watchpoint */

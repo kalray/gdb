@@ -1,5 +1,6 @@
 /* seh pdata/xdata coff object file format
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright 2009, 2010
+   Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -167,13 +168,6 @@ seh_validate_seg (const char *directive)
   	  directive, nseg_name, cseg_name);
   ignore_rest_of_line ();
   return 0;
-}
-
-/* Switch back to the code section, whatever that may be.  */
-static void
-obj_coff_seh_code (int ignored ATTRIBUTE_UNUSED)
-{
-  subseg_set (seh_ctx_cur->code_seg, 0);
 }
 
 static void

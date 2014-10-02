@@ -1,6 +1,6 @@
 /* Implementation of the GDB variable objects API.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #include "valprint.h"
 
 #include "gdb_assert.h"
-#include <string.h>
+#include "gdb_string.h"
 #include "gdb_regex.h"
 
 #include "varobj.h"
@@ -54,6 +54,9 @@ show_varobjdebug (struct ui_file *file, int from_tty,
 /* String representations of gdb's format codes.  */
 char *varobj_format_string[] =
   { "natural", "binary", "decimal", "hexadecimal", "octal" };
+
+/* String representations of gdb's known languages.  */
+char *varobj_language_string[] = { "C", "C++", "Java" };
 
 /* True if we want to allow Python-based pretty-printing.  */
 static int pretty_printing = 0;
@@ -196,6 +199,8 @@ static int install_new_value (struct varobj *var, struct value *value,
 
 /* Language-specific routines.  */
 
+static enum varobj_languages variable_language (struct varobj *var);
+
 static int number_of_children (struct varobj *);
 
 static char *name_of_variable (struct varobj *);
@@ -218,6 +223,14 @@ static struct varobj *varobj_add_child (struct varobj *var,
 					struct value *value);
 
 #endif /* HAVE_PYTHON */
+
+/* Array of known source language routines.  */
+static const struct lang_varobj_ops *languages[vlang_end] = {
+  &c_varobj_ops,
+  &cplus_varobj_ops,
+  &java_varobj_ops,
+  &ada_varobj_ops,
+};
 
 /* Private data */
 
@@ -1046,7 +1059,7 @@ varobj_add_child (struct varobj *var, char *name, struct value *value)
 char *
 varobj_get_type (struct varobj *var)
 {
-  /* For the "fake" variables, do not return a type.  (Its type is
+  /* For the "fake" variables, do not return a type.  (It's type is
      NULL, too.)
      Do not return a type for invalid variables as well.  */
   if (CPLUS_FAKE_CHILD (var) || !var->root->is_valid)
@@ -1113,10 +1126,10 @@ varobj_get_path_expr (struct varobj *var)
     }
 }
 
-const struct language_defn *
+enum varobj_languages
 varobj_get_language (struct varobj *var)
 {
-  return var->root->exp->language_defn;
+  return variable_language (var);
 }
 
 int
@@ -1649,16 +1662,7 @@ varobj_value_has_mutated (struct varobj *var, struct value *new_value,
     return 0;
 
   if (var->root->lang_ops->value_has_mutated)
-    {
-      /* The varobj module, when installing new values, explicitly strips
-	 references, saying that we're not interested in those addresses.
-	 But detection of mutation happens before installing the new
-	 value, so our value may be a reference that we need to strip
-	 in order to remain consistent.  */
-      if (new_value != NULL)
-	new_value = coerce_ref (new_value);
-      return var->root->lang_ops->value_has_mutated (var, new_value, new_type);
-    }
+    return var->root->lang_ops->value_has_mutated (var, new_value, new_type);
   else
     return 0;
 }
@@ -2328,6 +2332,32 @@ cppop (struct cpstack **pstack)
 
 /* Common entry points */
 
+/* Get the language of variable VAR.  */
+static enum varobj_languages
+variable_language (struct varobj *var)
+{
+  enum varobj_languages lang;
+
+  switch (var->root->exp->language_defn->la_language)
+    {
+    default:
+    case language_c:
+      lang = vlang_c;
+      break;
+    case language_cplus:
+      lang = vlang_cplus;
+      break;
+    case language_java:
+      lang = vlang_java;
+      break;
+    case language_ada:
+      lang = vlang_ada;
+      break;
+    }
+
+  return lang;
+}
+
 /* Return the number of children for a given variable.
    The result of this function is defined by the language
    implementation.  The number of children returned by this function
@@ -2799,13 +2829,13 @@ _initialize_varobj (void)
   varobj_table = xmalloc (sizeof_table);
   memset (varobj_table, 0, sizeof_table);
 
-  add_setshow_zuinteger_cmd ("varobj", class_maintenance,
+  add_setshow_zuinteger_cmd ("debugvarobj", class_maintenance,
 			     &varobjdebug,
 			     _("Set varobj debugging."),
 			     _("Show varobj debugging."),
 			     _("When non-zero, varobj debugging is enabled."),
 			     NULL, show_varobjdebug,
-			     &setdebuglist, &showdebuglist);
+			     &setlist, &showlist);
 }
 
 /* Invalidate varobj VAR if it is tied to locals and re-create it if it is

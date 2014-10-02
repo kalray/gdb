@@ -136,9 +136,9 @@ extern const char *i386_comment_chars;
 #endif
 extern void x86_cons (expressionS *, int);
 
-#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP,RELOC) x86_cons_fix_new(FRAG, OFF, LEN, EXP, RELOC)
+#define TC_CONS_FIX_NEW(FRAG,OFF,LEN,EXP) x86_cons_fix_new(FRAG, OFF, LEN, EXP)
 extern void x86_cons_fix_new
-  (fragS *, unsigned int, unsigned int, expressionS *, bfd_reloc_code_real_type);
+  (fragS *, unsigned int, unsigned int, expressionS *);
 
 #define TC_ADDRESS_BYTES x86_address_bytes
 extern int x86_address_bytes (void);

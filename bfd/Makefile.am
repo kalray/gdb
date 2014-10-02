@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+#   Copyright 2012 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -137,10 +137,10 @@ ALL_MACHINES = \
 	cpu-moxie.lo \
 	cpu-msp430.lo \
 	cpu-mt.lo \
-	cpu-nds32.lo \
 	cpu-nios2.lo \
 	cpu-ns32k.lo \
-	cpu-or1k.lo \
+	cpu-openrisc.lo \
+	cpu-or32.lo \
 	cpu-pdp11.lo \
 	cpu-pj.lo \
 	cpu-plugin.lo \
@@ -221,10 +221,10 @@ ALL_MACHINES_CFILES = \
 	cpu-moxie.c \
 	cpu-msp430.c \
 	cpu-mt.c \
-	cpu-nds32.c \
 	cpu-ns32k.c \
 	cpu-nios2.c \
-	cpu-or1k.c \
+	cpu-openrisc.c \
+	cpu-or32.c \
 	cpu-pdp11.c \
 	cpu-pj.c \
 	cpu-plugin.c \
@@ -283,6 +283,7 @@ BFD32_BACKENDS = \
 	coff-m68k.lo \
 	coff-m88k.lo \
 	coff-mips.lo \
+	coff-or32.lo \
 	coff-rs6000.lo \
 	coff-sh.lo \
 	coff-sparc.lo \
@@ -334,6 +335,7 @@ BFD32_BACKENDS = \
 	elf32-i960.lo \
 	elf32-ip2k.lo \
 	elf32-iq2000.lo \
+	elfxx-k1.lo \
 	elf32-k1.lo \
 	elf32-lm32.lo \
 	elf32-m32c.lo \
@@ -350,9 +352,9 @@ BFD32_BACKENDS = \
 	elf32-moxie.lo \
 	elf32-msp430.lo \
 	elf32-mt.lo \
-	elf32-nds32.lo \
 	elf32-nios2.lo \
-	elf32-or1k.lo \
+	elf32-openrisc.lo \
+	elf32-or32.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
 	elf32-rl78.lo \
@@ -471,6 +473,7 @@ BFD32_BACKENDS_CFILES = \
 	coff-m68k.c \
 	coff-m88k.c \
 	coff-mips.c \
+	coff-or32.c \
 	coff-rs6000.c \
 	coff-sh.c \
 	coff-sparc.c \
@@ -523,6 +526,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-ip2k.c \
 	elf32-iq2000.c \
 	elf32-lm32.c \
+	elf32-k1.c \
 	elf32-m32c.c \
 	elf32-m32r.c \
 	elf32-m68hc11.c \
@@ -537,9 +541,9 @@ BFD32_BACKENDS_CFILES = \
 	elf32-moxie.c \
 	elf32-msp430.c \
 	elf32-mt.c \
-	elf32-nds32.c \
 	elf32-nios2.c \
-	elf32-or1k.c \
+	elf32-openrisc.c \
+	elf32-or32.c \
 	elf32-pj.c \
 	elf32-ppc.c \
 	elf32-rl78.c \
@@ -564,6 +568,7 @@ BFD32_BACKENDS_CFILES = \
 	elflink.c \
 	elfxx-sparc.c \
 	elfxx-tilegx.c \
+	elfxx-k1.c \
 	epoc-pe-arm.c \
 	epoc-pei-arm.c \
 	hp300bsd.c \
@@ -656,6 +661,7 @@ BFD64_BACKENDS = \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
 	elf64-ia64-vms.lo \
+	elf64-k1.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
@@ -667,6 +673,7 @@ BFD64_BACKENDS = \
 	elf64.lo \
 	elfn32-mips.lo \
 	elfxx-ia64.lo \
+	elfxx-k1.lo \
 	elfxx-mips.lo \
 	mach-o-x86-64.lo \
 	mmo.lo \
@@ -693,6 +700,7 @@ BFD64_BACKENDS_CFILES = \
 	elf64-gen.c \
 	elf64-hppa.c \
 	elf64-ia64-vms.c \
+	elf64-k1.c \
 	elf64-mips.c \
 	elf64-mmix.c \
 	elf64-ppc.c \
@@ -705,6 +713,7 @@ BFD64_BACKENDS_CFILES = \
 	elfn32-mips.c \
 	elfxx-aarch64.c \
 	elfxx-ia64.c \
+	elfxx-k1.c \
 	elfxx-mips.c \
 	mach-o-x86-64.c \
 	mmo.c \
@@ -743,8 +752,7 @@ OPTIONAL_BACKENDS_CFILES = \
 CONFIG_STATUS_DEPENDENCIES = \
 	$(srcdir)/configure.in \
 	$(srcdir)/config.bfd \
-	$(srcdir)/configure.host \
-	$(srcdir)/development.sh
+	$(srcdir)/configure.host
 
 # These are defined by configure.in:
 WORDSIZE = @wordsize@

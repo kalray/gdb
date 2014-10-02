@@ -1,6 +1,7 @@
 // output.h -- manage the output file for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2014 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2013
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2577,11 +2578,6 @@ class Output_data_dynamic : public Output_section_data
   add_string(elfcpp::DT tag, const std::string& str)
   { this->add_string(tag, str.c_str()); }
 
-  // Add a new dynamic entry with custom value.
-  void
-  add_custom(elfcpp::DT tag)
-  { this->add_entry(Dynamic_entry(tag)); }
-
  protected:
   // Adjust the output section to set the entry size.
   void
@@ -2646,11 +2642,6 @@ class Output_data_dynamic : public Output_section_data
       : tag_(tag), offset_(DYNAMIC_STRING)
     { this->u_.str = str; }
 
-    // Create an entry with a custom value.
-    Dynamic_entry(elfcpp::DT tag)
-      : tag_(tag), offset_(DYNAMIC_CUSTOM)
-    { }
-
     // Return the tag of this entry.
     elfcpp::DT
     tag() const
@@ -2674,9 +2665,7 @@ class Output_data_dynamic : public Output_section_data
       // Symbol adress.
       DYNAMIC_SYMBOL = -3U,
       // String.
-      DYNAMIC_STRING = -4U,
-      // Custom value.
-      DYNAMIC_CUSTOM = -5U
+      DYNAMIC_STRING = -4U
       // Any other value indicates a section address plus OFFSET.
     };
 

@@ -1,5 +1,6 @@
 /* Morpho Technologies MT specific support for 32-bit ELF
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -343,12 +344,12 @@ mt_elf_relocate_section
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 
 	  name = h->root.root.string;
 	}
@@ -496,6 +497,25 @@ mt_elf_set_private_flags (bfd *    abfd,
   return TRUE;
 }
 
+static bfd_boolean
+mt_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
+{
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return TRUE;
+
+  BFD_ASSERT (!elf_flags_init (obfd)
+	      || elf_elfheader (obfd)->e_flags == elf_elfheader (ibfd)->e_flags);
+
+  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
+  elf_flags_init (obfd) = TRUE;
+
+  /* Copy object attributes.  */
+  _bfd_elf_copy_obj_attributes (ibfd, obfd);
+
+  return TRUE;
+}
+
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
@@ -573,7 +593,7 @@ mt_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 }
 
 
-#define TARGET_BIG_SYM	 mt_elf32_vec
+#define TARGET_BIG_SYM	 bfd_elf32_mt_vec
 #define TARGET_BIG_NAME  "elf32-mt"
 
 #define ELF_ARCH	 bfd_arch_mt
@@ -595,6 +615,7 @@ mt_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 #define elf_backend_can_gc_sections		1
 
 #define bfd_elf32_bfd_set_private_flags		mt_elf_set_private_flags
+#define bfd_elf32_bfd_copy_private_bfd_data	mt_elf_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data	mt_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_print_private_bfd_data	mt_elf_print_private_bfd_data
 

@@ -1,5 +1,5 @@
 /* ldmain.h -
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright 1991-2013 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

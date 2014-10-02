@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,9 +30,8 @@
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
-#include <string.h>
+#include "gdb_string.h"
 
-#include "obsd-tdep.h"
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
 #include "solib-svr4.h"
@@ -45,8 +44,7 @@ amd64obsd_supply_regset (const struct regset *regset,
 			 struct regcache *regcache, int regnum,
 			 const void *regs, size_t len)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
 
   gdb_assert (len >= tdep->sizeof_gregset + I387_SIZEOF_FXSAVE);
 
@@ -54,11 +52,6 @@ amd64obsd_supply_regset (const struct regset *regset,
   amd64_supply_fxsave (regcache, regnum,
 		       ((const gdb_byte *)regs) + tdep->sizeof_gregset);
 }
-
-static const struct regset amd64obsd_combined_regset =
-  {
-    NULL, amd64obsd_supply_regset, NULL
-  };
 
 static const struct regset *
 amd64obsd_regset_from_core_section (struct gdbarch *gdbarch,
@@ -71,7 +64,11 @@ amd64obsd_regset_from_core_section (struct gdbarch *gdbarch,
 
   if (strcmp (sect_name, ".reg") == 0
       && sect_size >= tdep->sizeof_gregset + I387_SIZEOF_FXSAVE)
-    return &amd64obsd_combined_regset;
+    {
+      if (tdep->gregset == NULL)
+        tdep->gregset = regset_alloc (gdbarch, amd64obsd_supply_regset, NULL);
+      return tdep->gregset;
+    }
 
   return NULL;
 }
@@ -462,7 +459,6 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   amd64_init_abi (info, gdbarch);
-  obsd_init_abi (info, gdbarch);
 
   /* Initialize general-purpose register set details.  */
   tdep->gregset_reg_offset = amd64obsd_r_reg_offset;

@@ -1,5 +1,6 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -222,11 +223,11 @@ static reloc_howto_type elf_howto_table[] =
 	 FALSE, 0, 0, FALSE),
 
   /* Relocations for supporting difference of symbols.  */
-  HOWTO (R_XTENSA_DIFF8, 0, 0, 8, FALSE, 0, complain_overflow_signed,
+  HOWTO (R_XTENSA_DIFF8, 0, 0, 8, FALSE, 0, complain_overflow_bitfield,
 	 bfd_elf_xtensa_reloc, "R_XTENSA_DIFF8", FALSE, 0, 0xff, FALSE),
-  HOWTO (R_XTENSA_DIFF16, 0, 1, 16, FALSE, 0, complain_overflow_signed,
+  HOWTO (R_XTENSA_DIFF16, 0, 1, 16, FALSE, 0, complain_overflow_bitfield,
 	 bfd_elf_xtensa_reloc, "R_XTENSA_DIFF16", FALSE, 0, 0xffff, FALSE),
-  HOWTO (R_XTENSA_DIFF32, 0, 2, 32, FALSE, 0, complain_overflow_signed,
+  HOWTO (R_XTENSA_DIFF32, 0, 2, 32, FALSE, 0, complain_overflow_bitfield,
 	 bfd_elf_xtensa_reloc, "R_XTENSA_DIFF32", FALSE, 0, 0xffffffff, FALSE),
 
   /* General immediate operand relocations.  */
@@ -2160,9 +2161,9 @@ vsprint_msg (const char *origmsg, const char *fmt, int arglen, ...)
   static char *message = NULL;
   bfd_size_type orig_len, len = 0;
   bfd_boolean is_append;
-  va_list ap;
 
-  va_start (ap, arglen);
+  VA_OPEN (ap, arglen);
+  VA_FIXEDARG (ap, const char *, origmsg);
 
   is_append = (origmsg == message);
 
@@ -2179,7 +2180,7 @@ vsprint_msg (const char *origmsg, const char *fmt, int arglen, ...)
 	memcpy (message, origmsg, orig_len);
       vsprintf (message + orig_len, fmt, ap);
     }
-  va_end (ap);
+  VA_CLOSE (ap);
   return message;
 }
 
@@ -2637,12 +2638,10 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean ignored;
-
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 
 	  if (relocation == 0
 	      && !unresolved_reloc
@@ -9013,8 +9012,7 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		  || r_type == R_XTENSA_DIFF16
 		  || r_type == R_XTENSA_DIFF32)
 		{
-		  bfd_signed_vma diff_value = 0;
-		  bfd_vma new_end_offset, diff_mask = 0;
+		  bfd_vma diff_value = 0, new_end_offset, diff_mask = 0;
 
 		  if (bfd_get_section_limit (abfd, sec) < old_source_offset)
 		    {
@@ -9028,15 +9026,15 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		    {
 		    case R_XTENSA_DIFF8:
 		      diff_value =
-			bfd_get_signed_8 (abfd, &contents[old_source_offset]);
+			bfd_get_8 (abfd, &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF16:
 		      diff_value =
-			bfd_get_signed_16 (abfd, &contents[old_source_offset]);
+			bfd_get_16 (abfd, &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF32:
 		      diff_value =
-			bfd_get_signed_32 (abfd, &contents[old_source_offset]);
+			bfd_get_32 (abfd, &contents[old_source_offset]);
 		      break;
 		    }
 
@@ -9048,25 +9046,24 @@ relax_section (bfd *abfd, asection *sec, struct bfd_link_info *link_info)
 		  switch (r_type)
 		    {
 		    case R_XTENSA_DIFF8:
-		      diff_mask = 0x7f;
-		      bfd_put_signed_8 (abfd, diff_value,
+		      diff_mask = 0xff;
+		      bfd_put_8 (abfd, diff_value,
 				 &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF16:
-		      diff_mask = 0x7fff;
-		      bfd_put_signed_16 (abfd, diff_value,
+		      diff_mask = 0xffff;
+		      bfd_put_16 (abfd, diff_value,
 				  &contents[old_source_offset]);
 		      break;
 		    case R_XTENSA_DIFF32:
-		      diff_mask = 0x7fffffff;
-		      bfd_put_signed_32 (abfd, diff_value,
+		      diff_mask = 0xffffffff;
+		      bfd_put_32 (abfd, diff_value,
 				  &contents[old_source_offset]);
 		      break;
 		    }
 
-		  /* Check for overflow. Sign bits must be all zeroes or all ones */
-		  if ((diff_value & ~diff_mask) != 0 &&
-		      (diff_value & ~diff_mask) != (-1 & ~diff_mask))
+		  /* Check for overflow.  */
+		  if ((diff_value & ~diff_mask) != 0)
 		    {
 		      (*link_info->callbacks->reloc_dangerous)
 			(link_info, _("overflow after relaxation"),
@@ -10760,9 +10757,9 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 
 #define ELF_TARGET_ID			XTENSA_ELF_DATA
 #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM		xtensa_elf32_le_vec
+#define TARGET_LITTLE_SYM		bfd_elf32_xtensa_le_vec
 #define TARGET_LITTLE_NAME		"elf32-xtensa-le"
-#define TARGET_BIG_SYM			xtensa_elf32_be_vec
+#define TARGET_BIG_SYM			bfd_elf32_xtensa_be_vec
 #define TARGET_BIG_NAME			"elf32-xtensa-be"
 #define ELF_ARCH			bfd_arch_xtensa
 

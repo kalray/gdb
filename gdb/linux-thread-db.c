@@ -1,6 +1,6 @@
 /* libthread_db assisted debugging support, generic parts.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,6 @@
 #include "gdbcmd.h"
 #include "gdbthread.h"
 #include "inferior.h"
-#include "infrun.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "target.h"
@@ -197,9 +196,6 @@ struct thread_db_info
   td_err_e (*td_thr_tls_get_addr_p) (const td_thrhandle_t *th,
 				     psaddr_t map_address,
 				     size_t offset, psaddr_t *address);
-  td_err_e (*td_thr_tlsbase_p) (const td_thrhandle_t *th,
-				unsigned long int modid,
-				psaddr_t *base);
 };
 
 /* List of known processes using thread_db, and the required
@@ -569,16 +565,16 @@ enable_thread_event (int event, CORE_ADDR *bp)
 static int
 inferior_has_bug (const char *ver_symbol, int ver_major_min, int ver_minor_min)
 {
-  struct bound_minimal_symbol version_msym;
+  struct minimal_symbol *version_msym;
   CORE_ADDR version_addr;
   char *version;
   int err, got, retval = 0;
 
   version_msym = lookup_minimal_symbol (ver_symbol, NULL, NULL);
-  if (version_msym.minsym == NULL)
+  if (version_msym == NULL)
     return 0;
 
-  version_addr = BMSYMBOL_VALUE_ADDRESS (version_msym);
+  version_addr = SYMBOL_VALUE_ADDRESS (version_msym);
   got = target_read_string (version_addr, &version, 32, &err);
   if (err == 0 && memchr (version, 0, got) == &version[got -1])
     {
@@ -803,7 +799,6 @@ try_thread_db_load_1 (struct thread_db_info *info)
   info->td_ta_event_getmsg_p = dlsym (info->handle, "td_ta_event_getmsg");
   info->td_thr_event_enable_p = dlsym (info->handle, "td_thr_event_enable");
   info->td_thr_tls_get_addr_p = dlsym (info->handle, "td_thr_tls_get_addr");
-  info->td_thr_tlsbase_p = dlsym (info->handle, "td_thr_tlsbase");
 
   if (thread_db_find_new_threads_silently (inferior_ptid) != 0)
     {
@@ -843,7 +838,7 @@ try_thread_db_load_1 (struct thread_db_info *info)
    relative, or just LIBTHREAD_DB.  */
 
 static int
-try_thread_db_load (const char *library, int check_auto_load_safe)
+try_thread_db_load (const char *library)
 {
   void *handle;
   struct thread_db_info *info;
@@ -851,25 +846,6 @@ try_thread_db_load (const char *library, int check_auto_load_safe)
   if (libthread_db_debug)
     printf_unfiltered (_("Trying host libthread_db library: %s.\n"),
                        library);
-
-  if (check_auto_load_safe)
-    {
-      if (access (library, R_OK) != 0)
-	{
-	  /* Do not print warnings by file_is_auto_load_safe if the library does
-	     not exist at this place.  */
-	  if (libthread_db_debug)
-	    printf_unfiltered (_("open failed: %s.\n"), safe_strerror (errno));
-	  return 0;
-	}
-
-      if (!file_is_auto_load_safe (library, _("auto-load: Loading libthread-db "
-					      "library \"%s\" from explicit "
-					      "directory.\n"),
-				   library))
-	return 0;
-    }
-
   handle = dlopen (library, RTLD_NOW);
   if (handle == NULL)
     {
@@ -943,7 +919,12 @@ try_thread_db_load_from_pdir_1 (struct objfile *obj, const char *subdir)
     }
   strcat (cp, LIBTHREAD_DB_SO);
 
-  result = try_thread_db_load (path, 1);
+  if (!file_is_auto_load_safe (path, _("auto-load: Loading libthread-db "
+				       "library \"%s\" from $pdir.\n"),
+			       path))
+    result = 0;
+  else
+    result = try_thread_db_load (path);
 
   do_cleanups (cleanup);
   return result;
@@ -989,7 +970,7 @@ try_thread_db_load_from_pdir (const char *subdir)
 static int
 try_thread_db_load_from_sdir (void)
 {
-  return try_thread_db_load (LIBTHREAD_DB_SO, 0);
+  return try_thread_db_load (LIBTHREAD_DB_SO);
 }
 
 /* Try to load libthread_db from directory DIR of length DIR_LEN.
@@ -1012,7 +993,13 @@ try_thread_db_load_from_dir (const char *dir, size_t dir_len)
   path[dir_len] = '/';
   strcpy (path + dir_len + 1, LIBTHREAD_DB_SO);
 
-  result = try_thread_db_load (path, 1);
+  if (!file_is_auto_load_safe (path, _("auto-load: Loading libthread-db "
+				       "library \"%s\" from explicit "
+				       "directory.\n"),
+			       path))
+    result = 0;
+  else
+    result = try_thread_db_load (path);
 
   do_cleanups (cleanup);
   return result;
@@ -1353,7 +1340,7 @@ detach_thread (ptid_t ptid)
 }
 
 static void
-thread_db_detach (struct target_ops *ops, const char *args, int from_tty)
+thread_db_detach (struct target_ops *ops, char *args, int from_tty)
 {
   struct target_ops *target_beneath = find_target_beneath (ops);
   struct thread_db_info *info;
@@ -1407,7 +1394,7 @@ check_event (ptid_t ptid)
 
   /* Bail out early if we're not at a thread event breakpoint.  */
   stop_pc = regcache_read_pc (regcache)
-	    - target_decr_pc_after_break (gdbarch);
+	    - gdbarch_decr_pc_after_break (gdbarch);
   if (stop_pc != info->td_create_bp_addr
       && stop_pc != info->td_death_bp_addr)
     return;
@@ -1777,8 +1764,7 @@ thread_db_pid_to_str (struct target_ops *ops, ptid_t ptid)
    INFO.  */
 
 static char *
-thread_db_extra_thread_info (struct target_ops *self,
-			     struct thread_info *info)
+thread_db_extra_thread_info (struct thread_info *info)
 {
   if (info->private == NULL)
     return NULL;
@@ -1816,39 +1802,21 @@ thread_db_get_thread_local_address (struct target_ops *ops,
 
       info = get_thread_db_info (ptid_get_pid (ptid));
 
+      /* glibc doesn't provide the needed interface.  */
+      if (!info->td_thr_tls_get_addr_p)
+	throw_error (TLS_NO_LIBRARY_SUPPORT_ERROR,
+		     _("No TLS library support"));
+
+      /* Caller should have verified that lm != 0.  */
+      gdb_assert (lm != 0);
+
       /* Finally, get the address of the variable.  */
-      if (lm != 0)
-	{
-	  /* glibc doesn't provide the needed interface.  */
-	  if (!info->td_thr_tls_get_addr_p)
-	    throw_error (TLS_NO_LIBRARY_SUPPORT_ERROR,
-			 _("No TLS library support"));
-
-	  /* Note the cast through uintptr_t: this interface only works if
-	     a target address fits in a psaddr_t, which is a host pointer.
-	     So a 32-bit debugger can not access 64-bit TLS through this.  */
-	  err = info->td_thr_tls_get_addr_p (&thread_info->private->th,
-					     (psaddr_t)(uintptr_t) lm,
-					     offset, &address);
-	}
-      else
-	{
-	  /* If glibc doesn't provide the needed interface throw an error
-	     that LM is zero - normally cases it should not be.  */
-	  if (!info->td_thr_tlsbase_p)
-	    throw_error (TLS_LOAD_MODULE_NOT_FOUND_ERROR,
-			 _("TLS load module not found"));
-
-	  /* This code path handles the case of -static -pthread executables:
-	     https://sourceware.org/ml/libc-help/2014-03/msg00024.html
-	     For older GNU libc r_debug.r_map is NULL.  For GNU libc after
-	     PR libc/16831 due to GDB PR threads/16954 LOAD_MODULE is also NULL.
-	     The constant number 1 depends on GNU __libc_setup_tls
-	     initialization of l_tls_modid to 1.  */
-	  err = info->td_thr_tlsbase_p (&thread_info->private->th,
-					1, &address);
-	  address = (char *) address + offset;
-	}
+      /* Note the cast through uintptr_t: this interface only works if
+	 a target address fits in a psaddr_t, which is a host pointer.
+	 So a 32-bit debugger can not access 64-bit TLS through this.  */
+      err = info->td_thr_tls_get_addr_p (&thread_info->private->th,
+					 (psaddr_t)(uintptr_t) lm,
+					 offset, &address);
 
 #ifdef THREAD_DB_HAS_TD_NOTALLOC
       /* The memory hasn't been allocated, yet.  */
@@ -1898,7 +1866,7 @@ thread_db_find_thread_from_tid (struct thread_info *thread, void *data)
 /* Implement the to_get_ada_task_ptid target method for this target.  */
 
 static ptid_t
-thread_db_get_ada_task_ptid (struct target_ops *self, long lwp, long thread)
+thread_db_get_ada_task_ptid (long lwp, long thread)
 {
   struct thread_info *thread_info;
 

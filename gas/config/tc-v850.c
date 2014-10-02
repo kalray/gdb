@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright 1996-2013 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,6 +26,9 @@
 
 /* Sign-extend a 16-bit number.  */
 #define SEXT16(x)	((((x) & 0xffff) ^ (~0x7fff)) + 0x8000)
+
+/* Temporarily holds the reloc in a cons expression.  */
+static bfd_reloc_code_real_type hold_cons_reloc = BFD_RELOC_UNUSED;
 
 /* Set to TRUE if we want to be pedantic about signed overflows.  */
 static bfd_boolean warn_signed_overflows   = FALSE;
@@ -2029,12 +2032,6 @@ handle_lo16 (const struct v850_operand *operand, const char **errmsg)
 static bfd_reloc_code_real_type
 handle_ctoff (const struct v850_operand *operand, const char **errmsg)
 {
-  if (v850_target_arch == bfd_arch_v850_rh850)
-    {
-      *errmsg = _("ctoff() is not supported by the rh850 ABI. Use -mgcc-abi instead");
-      return BFD_RELOC_64;  /* Used to indicate an error condition.  */
-    }
-
   if (operand == NULL)
     return BFD_RELOC_V850_CALLT_16_16_OFFSET;
 
@@ -2159,7 +2156,7 @@ v850_reloc_prefix (const struct v850_operand *operand, const char **errmsg)
   if (paren_skipped)
     --input_line_pointer;
 
-  return BFD_RELOC_NONE;
+  return BFD_RELOC_UNUSED;
 }
 
 /* Insert an operand value into an instruction.  */
@@ -2410,7 +2407,7 @@ md_assemble (char *str)
 	  input_line_pointer = str;
 
 	  /* lo(), hi(), hi0(), etc...  */
-	  if ((reloc = v850_reloc_prefix (operand, &errmsg)) != BFD_RELOC_NONE)
+	  if ((reloc = v850_reloc_prefix (operand, &errmsg)) != BFD_RELOC_UNUSED)
 	    {
 	      /* This is a fake reloc, used to indicate an error condition.  */
 	      if (reloc == BFD_RELOC_64)
@@ -2980,7 +2977,7 @@ md_assemble (char *str)
 
 		  fixups[fc].exp     = ex;
 		  fixups[fc].opindex = *opindex_ptr;
-		  fixups[fc].reloc   = BFD_RELOC_NONE;
+		  fixups[fc].reloc   = BFD_RELOC_UNUSED;
 		  ++fc;
 		  break;
 		}
@@ -3242,7 +3239,7 @@ md_assemble (char *str)
 
       reloc = fixups[i].reloc;
 
-      if (reloc != BFD_RELOC_NONE)
+      if (reloc != BFD_RELOC_UNUSED)
 	{
 	  reloc_howto_type *reloc_howto =
 	    bfd_reloc_type_lookup (stdoutput, reloc);
@@ -3637,18 +3634,15 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
 /* Parse a cons expression.  We have to handle hi(), lo(), etc
    on the v850.  */
 
-bfd_reloc_code_real_type
+void
 parse_cons_expression_v850 (expressionS *exp)
 {
   const char *errmsg;
-  bfd_reloc_code_real_type r;
-
   /* See if there's a reloc prefix like hi() we have to handle.  */
-  r = v850_reloc_prefix (NULL, &errmsg);
+  hold_cons_reloc = v850_reloc_prefix (NULL, &errmsg);
 
   /* Do normal expression parsing.  */
   expression (exp);
-  return r;
 }
 
 /* Create a fixup for a cons expression.  If parse_cons_expression_v850
@@ -3659,23 +3653,24 @@ void
 cons_fix_new_v850 (fragS *frag,
 		   int where,
 		   int size,
-		   expressionS *exp,
-		   bfd_reloc_code_real_type r)
+		   expressionS *exp)
 {
-  if (r == BFD_RELOC_NONE)
+  if (hold_cons_reloc == BFD_RELOC_UNUSED)
     {
       if (size == 4)
-	r = BFD_RELOC_32;
+	hold_cons_reloc = BFD_RELOC_32;
       if (size == 2)
-	r = BFD_RELOC_16;
+	hold_cons_reloc = BFD_RELOC_16;
       if (size == 1)
-	r = BFD_RELOC_8;
+	hold_cons_reloc = BFD_RELOC_8;
     }
 
   if (exp != NULL)
-    fix_new_exp (frag, where, size, exp, 0, r);
+    fix_new_exp (frag, where, size, exp, 0, hold_cons_reloc);
   else
-    fix_new (frag, where, size, NULL, 0, 0, r);
+    fix_new (frag, where, size, NULL, 0, 0, hold_cons_reloc);
+
+  hold_cons_reloc = BFD_RELOC_UNUSED;
 }
 
 bfd_boolean

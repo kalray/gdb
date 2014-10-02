@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,24 +44,16 @@ static int highest_address_space_num;
 
 DEFINE_REGISTRY (program_space, REGISTRY_ACCESS_FIELD)
 
-/* An address space.  It is used for comparing if pspaces/inferior/threads
-   see the same address space and for associating caches to each address
+
+
+/* An address space.  Currently this is not used for much other than
+   for comparing if pspaces/inferior/threads see the same address
    space.  */
 
 struct address_space
 {
   int num;
-
-  /* Per aspace data-pointers required by other GDB modules.  */
-  REGISTRY_FIELDS;
 };
-
-/* Keep a registry of per-address_space data-pointers required by other GDB
-   modules.  */
-
-DEFINE_REGISTRY (address_space, REGISTRY_ACCESS_FIELD)
-
-
 
 /* Create a new address space object, and add it to the list.  */
 
@@ -70,9 +62,8 @@ new_address_space (void)
 {
   struct address_space *aspace;
 
-  aspace = XCNEW (struct address_space);
+  aspace = XZALLOC (struct address_space);
   aspace->num = ++highest_address_space_num;
-  address_space_alloc_data (aspace);
 
   return aspace;
 }
@@ -98,7 +89,6 @@ maybe_new_address_space (void)
 static void
 free_address_space (struct address_space *aspace)
 {
-  address_space_free_data (aspace);
   xfree (aspace);
 }
 
@@ -126,7 +116,7 @@ add_program_space (struct address_space *aspace)
 {
   struct program_space *pspace;
 
-  pspace = XCNEW (struct program_space);
+  pspace = XZALLOC (struct program_space);
 
   pspace->num = ++last_program_space_num;
   pspace->aspace = aspace;
@@ -160,13 +150,38 @@ release_program_space (struct program_space *pspace)
   free_all_objfiles ();
   if (!gdbarch_has_shared_address_space (target_gdbarch ()))
     free_address_space (pspace->aspace);
-  clear_section_table (&pspace->target_sections);
+  resize_section_table (&pspace->target_sections,
+			-resize_section_table (&pspace->target_sections, 0));
   clear_program_space_solib_cache (pspace);
     /* Discard any data modules have associated with the PSPACE.  */
   program_space_free_data (pspace);
   xfree (pspace);
 
   do_cleanups (old_chain);
+}
+
+/* Unlinks PSPACE from the pspace list, and releases it.  */
+
+void
+remove_program_space (struct program_space *pspace)
+{
+  struct program_space *ss, **ss_link;
+
+  ss = program_spaces;
+  ss_link = &program_spaces;
+  while (ss)
+    {
+      if (ss != pspace)
+	{
+	  ss_link = &ss->next;
+	  ss = *ss_link;
+	  continue;
+	}
+
+      *ss_link = ss->next;
+      release_program_space (ss);
+      ss = *ss_link;
+    }
 }
 
 /* Copies program space SRC to DEST.  Copies the main executable file,

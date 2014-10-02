@@ -1,5 +1,6 @@
 /* windmc.c -- a program to compile Windows message files.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
    Written by Kai Tietz, Onevision.
 
    This file is part of GNU Binutils.

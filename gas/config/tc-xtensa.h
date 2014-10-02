@@ -1,5 +1,6 @@
 /* tc-xtensa.h -- Header file for tc-xtensa.c.
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -179,11 +180,6 @@ enum xtensa_relax_statesE
      relaxation.  However, we need to remember where they were so we can
      prevent the linker from changing the size of any frag between the
      section start and the org frag.  */
-
-  RELAX_TRAMPOLINE,
-  /* Every few thousand frags, we insert one of these, just in case we may
-     need some space for a trampoline (jump to a jump) because the function
-     has gotten too big. If not needed, it disappears. */
 
   RELAX_NONE
 };
