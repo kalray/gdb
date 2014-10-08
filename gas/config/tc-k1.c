@@ -142,6 +142,7 @@ typedef enum {
   K1_BCU = 1,
   K1_ALU0= 2,
   K1_ALU1= 4,
+  K1_ALU0_ALU1=6,
   K1_MAU = 8,
   K1_LSU = 16,
 } k1_slots_t;
@@ -224,7 +225,9 @@ int is_code_section(asection *sec)
     return ((bfd_get_section_flags(NULL, sec) & (SEC_CODE))) ;
 }
 
-static char *k1_slots_name(const k1insn_t *insn) {
+__attribute__((unused))
+static char *
+k1_slots_name(const k1insn_t *insn) {
   switch(insn->slots) {
   case K1_BCU: return "BCU";
   case K1_ALU0: return "ALU0";
@@ -236,16 +239,6 @@ static char *k1_slots_name(const k1insn_t *insn) {
   }
 }
 
-static char *k1_type_name(const k1insn_t *insn) {
-  switch(insn->type) {
-  case K1_OTHER: return "OTHER";
-  case K1_LITE:  return "LITE";
-  case K1_TINY:  return "TINY";
-  case K1_TMD:   return "TINY MONO DOUBLE";
-  case K1_LMD:   return "LITE MONO DOUBLE";
-  default: return "UNKNOWN";
-  }
-}
 
 /* Either 32 or 64.  */
 static int k1_arch_size = 32;
@@ -809,7 +802,9 @@ static void supported_cores(char buf[], size_t buflen) {
   }
 }
 
-int get_regnum_by_name(char *name){
+__attribute__((unused))
+int
+get_regnum_by_name(char *name){
     int i;
     for(i=0; i < k1_regfiles[K1_REGFILE_REGISTERS]; i++){
         if(STREQ(k1_registers[i].name, name)){
@@ -925,7 +920,8 @@ static match_operands_code
 match_operands(const k1opc_t * op, const expressionS * tok,
         int ntok)
  {
-    int i;
+    unsigned int ii;
+    int jj;
     int nop;
     k1bfield *opdef;
     long long min, max;
@@ -940,8 +936,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     /* Check enconding space */
     int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
 
-    for(i=0; i < op->codewords; i++) {
-      if (! (op->codeword[i].flags & encoding_space_flags))
+    for(ii=0; ii < op->codewords; ii++) {
+      if (! (op->codeword[ii].flags & encoding_space_flags))
 	return MATCH_NOT_FOUND;
     }
 
@@ -963,15 +959,15 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     }
 
     /* Now check for compatiblility of each operand. */
-    for (i = 0; i < ntok; i++) {
-        int operand_type = op->format[i]->type;
-        char *operand_type_name = op->format[i]->tname;
-        opdef = op->format[i];
-        int *valid_regs = op->format[i]->regs;
+    for (jj = 0; jj < ntok; jj++) {
+        int operand_type = op->format[jj]->type;
+        char *operand_type_name = op->format[jj]->tname;
+        opdef = op->format[jj];
+        int *valid_regs = op->format[jj]->regs;
 
 	/* When operand is a register, check if it is valid. */
-	if ((tok[i].X_op == O_register) &&
-	    (valid_regs == NULL || !valid_regs[k1_registers[tok[i].X_add_number].id])) {
+	if ((tok[jj].X_op == O_register) &&
+	    (valid_regs == NULL || !valid_regs[k1_registers[tok[jj].X_add_number].id])) {
 	  return MATCH_NOT_FOUND;
 	}
 
@@ -984,14 +980,14 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 
         switch (operand_type) {
             case RegClass_k1_singleReg:
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_GRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
             case RegClass_k1_pairedReg:
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
 			SRF_REGCLASSES(k1b)
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
 
             case Immediate_k1_flagmask2:
             case Immediate_k1_brknumber:
@@ -1007,7 +1003,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_signed37:
             case Immediate_k1_signed43:
 
-                if(tok[i].X_op == O_symbol) {
+                if(tok[jj].X_op == O_symbol) {
 		  return MATCH_NOT_FOUND;
                 }
             case Immediate_k1_signed8:
@@ -1019,17 +1015,17 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed32:
-                if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
+                if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
                 }
-                if (tok[i].X_op == O_constant){
-  		    long long signed_value = tok[i].X_add_number;
-  		    unsigned long long unsigned_value = tok[i].X_add_number;
+                if (tok[jj].X_op == O_constant){
+  		    long long signed_value = tok[jj].X_add_number;
+  		    unsigned long long unsigned_value = tok[jj].X_add_number;
   		    int match_signed = 0;
 		    int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
-                    if( !(opdef->flags & k1SIGNED) && (tok[i].X_unsigned == 0)){
+                    if( !(opdef->flags & k1SIGNED) && (tok[jj].X_unsigned == 0)){
 		      return MATCH_NOT_FOUND;
                     }
 
@@ -1366,12 +1362,11 @@ emit_insn(k1insn_t * insn, int stopflag){
 
     for (i = 0; i < insn->nfixups; i++) {
       int size, pcrel;
-      fixS *fixP;
       reloc_howto_type *reloc_howto = bfd_reloc_type_lookup(stdoutput, insn->fixup[i].reloc);
       assert(reloc_howto);
       size = bfd_get_reloc_size(reloc_howto);
       pcrel = reloc_howto->pc_relative;
-      fixP = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where, size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+      fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where, size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
     }
 }
 
@@ -1613,7 +1608,9 @@ static int cmp_bundling(const void *a, const void *b)
  *
  */
 
-static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
+__attribute__((unused))
+static int
+find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
   int hash = 0;
   int i;
   int canonical_ix;
@@ -1868,7 +1865,11 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 // Tag EXU on IMMX
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-                    D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    D(stderr, "insn : %#x (%s), immx : %#x (%d), tag %d\n",
+		      bundle_insn[j]->insn[0],
+		      bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0],
+		      bundle_insn[j]->immx,
+		      tag);
                 }
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
@@ -1902,7 +1903,10 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-                D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                D(stderr, "TINY : insn : %#x (%s), immx : %#x (%d), tag %d\n",
+		  bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,
+		  immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx,
+		  tag);
             }
         }
     }
@@ -1917,6 +1921,7 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     *bundle_insncnt_p = j;
 }
 
+__attribute__((unused))
 static int
 k1b_is_equivalent_bundle(Bundling b1, const k1insn_t *insn){
   Bundling b2 = find_bundling(insn);
@@ -1986,11 +1991,14 @@ static int is_lite(const k1insn_t *insn) {
   return used_resources(insn,Resource_k1_LITE);
 }
 
+__attribute__((unused))
 static int is_alud(const k1insn_t *insn) {
   return used_resources(insn,Resource_k1_ALUD);
 }
 
-static void bundle_resources(char string_buffer[], int buffer_size, int resource, const k1insn_t *shadow_bundle[], int bundle_size) {
+__attribute__((unused))
+static void
+bundle_resources(char string_buffer[], int buffer_size, int resource, const k1insn_t *shadow_bundle[], int bundle_size) {
   int i;
 
   if(buffer_size == 0) { return; }
@@ -2016,7 +2024,9 @@ static void bundle_resources(char string_buffer[], int buffer_size, int resource
   }
 }
 
-static char *k1b_insn_slot_type(const k1insn_t *insn) {
+__attribute__((unused))
+static char *
+k1b_insn_slot_type(const k1insn_t *insn) {
   char *slot_type=k1_slots_name(insn);
   
   if(is_tiny(insn)) {
@@ -2618,7 +2628,6 @@ md_assemble(char *s)
     expressionS tok[K1MAXOPERANDS];
     char *tok_begins[2*K1MAXOPERANDS];
     int ntok;
-    int start_bundle;
 
     if (get_byte_counter(now_seg) & 3)
         as_fatal("code segment not word aligned in md_assemble\n");
@@ -2650,12 +2659,11 @@ md_assemble(char *s)
             int bundle_insn_cnt = 0;
             int syllables = 0;
             int entry;
-            int bundle_err_done = 0;
             int align_warn_done = 0; /* Alignment contraint warning already
              * raised for this bundle or not */
 
             /* retain bundle start adress for error messages */
-            start_bundle = get_byte_counter(now_seg);
+	    //            start_bundle = get_byte_counter(now_seg);
 
 #ifdef OBJ_ELF
             /* Emit Dwarf debug line information */
@@ -2700,7 +2708,6 @@ md_assemble(char *s)
                     for (j = 0; j < k1_resource_max; j++)
                         if (resources_used[(i * k1_resource_max) + j] > resources[j]) {
                             as_bad("Resource %s over-used in bundle: %d used, %d available", k1_resource_names[j], resources_used[(i * k1_resource_max) + j], resources[j]);
-                            bundle_err_done = TRUE;
                         }
                 }
             }
@@ -2850,7 +2857,7 @@ static int k1op_compar(const void *a, const void *b)
 
 
 static void
-print_hash(const char *key, PTR val){
+print_hash(const char *key,  __attribute__((unused)) PTR val){
   printf("%s\n", key);
 }
  
@@ -3684,10 +3691,8 @@ k1_pic_ptr (int nbytes)
 static void
 k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
  {
-    char* param;
     const char *target_name = k1_core_info->names[subcore_id];
 
-    param=input_line_pointer;
     while ( (input_line_pointer!=NULL)
             && ! is_end_of_line [(unsigned char) *input_line_pointer])
  {
@@ -3789,9 +3794,7 @@ k1_check_resources(int f)
 static void
 k1_set_rta_flags(int f ATTRIBUTE_UNUSED)
  {
-    int param_value;
-
-    param_value = get_absolute_expression();
+   get_absolute_expression();
     /* Ignore .rta directive from know on. */
     /*  set_assume_param(&k1_abi, get_absolute_expression (), &k1_abi_set); */
 }
@@ -3978,7 +3981,6 @@ k1_align(int arg, int is_bytes)
  {
     char * saved_input_line_pointer = input_line_pointer;
     int align;
-    offsetT fill = 0;
     int max;
 
     if (is_code_section(now_seg))
@@ -4023,7 +4025,7 @@ k1_align(int arg, int is_bytes)
             ++input_line_pointer;
             if (*input_line_pointer != ',')
               {
-                fill = get_absolute_expression();
+                get_absolute_expression();
                 SKIP_WHITESPACE();
               }
             if (*input_line_pointer == ',')
@@ -4168,7 +4170,6 @@ static int proc_endp_status = 0;
 static void
 k1_endp(int start ATTRIBUTE_UNUSED)
  {
-    char * procname;
     char c;
 
 
@@ -4180,7 +4181,6 @@ k1_endp(int start ATTRIBUTE_UNUSED)
     while (1)
  {
         SKIP_WHITESPACE();
-        procname = input_line_pointer;
         c = get_symbol_end();
         *input_line_pointer = c;
         SKIP_WHITESPACE();
@@ -4298,13 +4298,11 @@ k1_endp(int start ATTRIBUTE_UNUSED)
 static void
 k1_proc(int start ATTRIBUTE_UNUSED)
  {
-    char * procname;
     char c;
     /* there may be several names separated by commas... */
     while (1)
  {
         SKIP_WHITESPACE();
-        procname = input_line_pointer;
         c = get_symbol_end();
         *input_line_pointer = c;
         SKIP_WHITESPACE();
