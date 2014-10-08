@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2014-09-08 17:15+0200\n"
+"POT-Creation-Date: 2014-09-29 12:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -194,7 +194,7 @@ msgid "Warning: Writing section `%s' to huge (ie negative) file offset 0x%lx."
 msgstr ""
 
 #: bout.c:1146 elf-m10300.c:2665 elf32-avr.c:1706 elf32-frv.c:5641
-#: elf64-ia64-vms.c:354 elfxx-sparc.c:2869 reloc.c:7114 reloc16.c:160
+#: elf64-ia64-vms.c:354 elfxx-sparc.c:2869 reloc.c:7122 reloc16.c:160
 #: elf32-ia64.c:351 elf64-ia64.c:351
 msgid "%P%F: --relax and -r may not be used together\n"
 msgstr ""
@@ -689,7 +689,7 @@ msgstr ""
 #: elf32-cr16.c:1484 elf32-cr16c.c:780 elf32-cris.c:2016 elf32-crx.c:922
 #: elf32-d10v.c:513 elf32-epiphany.c:556 elf32-fr30.c:589 elf32-frv.c:4039
 #: elf32-h8300.c:525 elf32-i860.c:1212 elf32-ip2k.c:1468 elf32-iq2000.c:688
-#: elf32-k1.c:818 elf32-k1.c:2028 elf32-lm32.c:1160 elf32-m32c.c:553
+#: elf32-k1.c:826 elf32-k1.c:2036 elf32-lm32.c:1160 elf32-m32c.c:553
 #: elf32-m32r.c:3066 elf32-m68hc1x.c:1283 elf32-mep.c:535 elf32-metag.c:1992
 #: elf32-microblaze.c:1559 elf32-moxie.c:282 elf32-mt.c:395
 #: elf32-openrisc.c:404 elf32-score.c:2729 elf32-score7.c:2537
@@ -722,7 +722,7 @@ msgstr ""
 #: elf32-cr16.c:1496 elf32-cr16c.c:792 elf32-cris.c:2028 elf32-crx.c:934
 #: elf32-d10v.c:525 elf32-epiphany.c:571 elf32-fr30.c:601 elf32-frv.c:4051
 #: elf32-h8300.c:537 elf32-i860.c:1224 elf32-ip2k.c:1483 elf32-iq2000.c:700
-#: elf32-k1.c:826 elf32-k1.c:2036 elf32-lm32.c:1172 elf32-m32c.c:565
+#: elf32-k1.c:834 elf32-k1.c:2044 elf32-lm32.c:1172 elf32-m32c.c:565
 #: elf32-m32r.c:3078 elf32-m68hc1x.c:1295 elf32-mep.c:547 elf32-metag.c:2004
 #: elf32-microblaze.c:1571 elf32-moxie.c:294 elf32-msp430.c:1329
 #: elf32-mt.c:403 elf32-openrisc.c:416 elf32-score.c:2746 elf32-score7.c:2549
@@ -1306,7 +1306,7 @@ msgstr ""
 
 #: elf32-avr.c:1264 elf32-bfin.c:3228 elf32-cris.c:2024 elf32-epiphany.c:567
 #: elf32-fr30.c:597 elf32-frv.c:4047 elf32-i860.c:1220 elf32-ip2k.c:1479
-#: elf32-iq2000.c:696 elf32-k1.c:822 elf32-k1.c:2032 elf32-m32c.c:561
+#: elf32-iq2000.c:696 elf32-k1.c:830 elf32-k1.c:2040 elf32-m32c.c:561
 #: elf32-mep.c:543 elf32-metag.c:2000 elf32-moxie.c:290 elf32-msp430.c:1325
 #: elf32-mt.c:399 elf32-openrisc.c:412 elf32-tilepro.c:3673 elf32-v850.c:2289
 #: elf32-xstormy16.c:944 elf64-mmix.c:1545 elfxx-tilegx.c:4058
@@ -1330,7 +1330,7 @@ msgstr ""
 msgid "%B(%A+0x%lx): reloc against `%s': error %d"
 msgstr ""
 
-#: elf32-bfin.c:2732 elf32-k1.c:343
+#: elf32-bfin.c:2732 elf32-k1.c:351
 msgid "%B: relocation at `%A+0x%x' references symbol `%s' with nonzero addend"
 msgstr ""
 
@@ -1342,11 +1342,11 @@ msgstr ""
 msgid "R_BFIN_FUNCDESC references dynamic symbol with nonzero addend"
 msgstr ""
 
-#: elf32-bfin.c:2886 elf32-bfin.c:3009 elf32-k1.c:487 elf32-k1.c:614
+#: elf32-bfin.c:2886 elf32-bfin.c:3009 elf32-k1.c:495 elf32-k1.c:622
 msgid "cannot emit fixups in read-only section"
 msgstr ""
 
-#: elf32-bfin.c:2917 elf32-bfin.c:3047 elf32-k1.c:519 elf32-k1.c:653
+#: elf32-bfin.c:2917 elf32-bfin.c:3047 elf32-k1.c:527 elf32-k1.c:661
 #: elf32-lm32.c:1095 elf32-sh.c:4913
 msgid "cannot emit dynamic relocations in read-only section"
 msgstr ""
@@ -1363,16 +1363,16 @@ msgstr ""
 msgid "warning: relocation references a different segment"
 msgstr ""
 
-#: elf32-bfin.c:4907 elf32-k1.c:1615
+#: elf32-bfin.c:4907 elf32-k1.c:1623
 msgid "%B: unsupported relocation type %i"
 msgstr ""
 
-#: elf32-bfin.c:5034 elf32-frv.c:6638 elfxx-k1.c:300
+#: elf32-bfin.c:5034 elf32-frv.c:6638 elfxx-k1.c:310
 #, c-format
 msgid "%s: cannot link non-fdpic object file into fdpic executable"
 msgstr ""
 
-#: elf32-bfin.c:5038 elf32-frv.c:6642 elfxx-k1.c:304
+#: elf32-bfin.c:5038 elf32-frv.c:6642 elfxx-k1.c:314
 #, c-format
 msgid "%s: cannot link fdpic object file into non-fdpic executable"
 msgstr ""
@@ -1752,29 +1752,29 @@ msgstr ""
 msgid "%s: uses different e_flags (0x%lx) fields than previous modules (0x%lx)"
 msgstr ""
 
-#: elf32-k1.c:278 elf64-ia64-vms.c:3942 elf32-ia64.c:4468 elf64-ia64.c:4468
+#: elf32-k1.c:286 elf64-ia64-vms.c:3942 elf32-ia64.c:4468 elf64-ia64.c:4468
 msgid ""
 "%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `"
 "%A'."
 msgstr ""
 
-#: elf32-k1.c:296 elf32-k1.c:360 elf32-k1.c:550
+#: elf32-k1.c:304 elf32-k1.c:368 elf32-k1.c:558
 msgid "%H: !IS_FDPIC in fdpic specific code\n"
 msgstr ""
 
-#: elf32-k1.c:446
+#: elf32-k1.c:454
 msgid "R_K1_FUNCDESC references dynamic symbol with nonzero addend"
 msgstr ""
 
-#: elf32-k1.c:572
+#: elf32-k1.c:580
 msgid "R_K1_FUNCDESC_VALUE references dynamic symbol with nonzero addend"
 msgstr ""
 
-#: elf32-k1.c:739
+#: elf32-k1.c:747
 msgid "%B(%A+0x%lx): reloc against `%s': %s"
 msgstr ""
 
-#: elf32-k1.c:741 elf32-k1.c:745
+#: elf32-k1.c:749 elf32-k1.c:753
 msgid "relocation references a different segment"
 msgstr ""
 
@@ -2812,7 +2812,7 @@ msgstr ""
 msgid "internal inconsistency in size of .got.loc section"
 msgstr ""
 
-#: elf32-xtensa.c:3480 elfxx-k1.c:290
+#: elf32-xtensa.c:3480 elfxx-k1.c:300
 msgid "%B: incompatible machine type. Output is 0x%x. Input is 0x%x"
 msgstr ""
 
@@ -4150,11 +4150,11 @@ msgstr ""
 msgid "Partition[%d] length = 0x%.8lx (%ld)\n"
 msgstr ""
 
-#: reloc.c:7161
+#: reloc.c:7169
 msgid "INPUT_SECTION_FLAGS are not supported.\n"
 msgstr ""
 
-#: reloc.c:7316
+#: reloc.c:7324
 msgid "%X%P: %B(%A): relocation \"%R\" goes out of range\n"
 msgstr ""
 

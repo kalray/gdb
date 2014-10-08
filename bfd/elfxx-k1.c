@@ -37,9 +37,11 @@ const struct k1_reloc_map k1_reloc_map[]=
   { BFD_RELOC_K1_HI22,       R_K1_HI22 },
   { BFD_RELOC_K1_GPREL_LO10, R_K1_GPREL_LO10 },
   { BFD_RELOC_K1_GPREL_HI22, R_K1_GPREL_HI22 },
+  
   { BFD_RELOC_K1_TPREL_LO10, R_K1_TPREL_LO10 },
   { BFD_RELOC_K1_TPREL_HI22, R_K1_TPREL_HI22 },
   { BFD_RELOC_K1_TPREL_32,   R_K1_TPREL_32 },
+  
   { BFD_RELOC_K1_GOTOFF_LO10,R_K1_GOTOFF_LO10 },
   { BFD_RELOC_K1_GOTOFF_HI22,R_K1_GOTOFF_HI22 },
   { BFD_RELOC_K1_GOT_LO10,   R_K1_GOT_LO10 },
@@ -60,9 +62,17 @@ const struct k1_reloc_map k1_reloc_map[]=
   { BFD_RELOC_K1_COPY,       R_K1_COPY },
   { BFD_RELOC_K1_JMP_SLOT,   R_K1_JMP_SLOT },
   { BFD_RELOC_K1_RELATIVE,   R_K1_RELATIVE },
+  
   { BFD_RELOC_K1_EXTEND6,    R_K1_EXTEND6 },
   { BFD_RELOC_K1_HI27,       R_K1_HI27 },
   { BFD_RELOC_K1_ELO10,      R_K1_ELO10 },
+  { BFD_RELOC_64,            R_K1_64 },
+
+  { BFD_RELOC_K1_TPREL64_EXTEND6,    R_K1_TPREL64_EXTEND6 },
+  { BFD_RELOC_K1_TPREL64_HI27,       R_K1_TPREL64_HI27 },
+  { BFD_RELOC_K1_TPREL64_ELO10,      R_K1_TPREL64_ELO10 },
+  { BFD_RELOC_K1_TPREL64_64,            R_K1_TPREL64_64 },
+
 
 /*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
   { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
@@ -124,7 +134,7 @@ k1_elf_link_hash_table_create (bfd *abfd)
   else
 #endif
     {
-      ret->bytes_per_rela = sizeof (Elf64_External_Rela);
+      ret->bytes_per_rela = sizeof (Elf32_External_Rela);
     }
   
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
