@@ -501,6 +501,8 @@ pseudo_func[] =
        BFD_RELOC_UNUSED,  BFD_RELOC_UNUSED, BFD_RELOC_UNUSED},
      { "gotoff",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFF_LO10,
        BFD_RELOC_K1_GOTOFF_HI22, BFD_RELOC_UNUSED, BFD_RELOC_K1_GOTOFF },
+     { "gotoff64",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFF64_LO10,
+       BFD_RELOC_K1_GOTOFF64_HI27, BFD_RELOC_K1_GOTOFF64_EXTEND6, BFD_RELOC_K1_GOTOFF64 },
      { "got",      PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOT_LO10,
        BFD_RELOC_K1_GOT_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_K1_GOT },
     /* { "gotoffx",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFFX_LO9, */
@@ -1543,6 +1545,12 @@ fixS *fix;
 	case BFD_RELOC_K1_GOTOFF:
         case BFD_RELOC_K1_GOTOFF_HI22:
         case BFD_RELOC_K1_GOTOFF_LO10:
+
+	case BFD_RELOC_K1_GOTOFF64:
+        case BFD_RELOC_K1_GOTOFF64_HI27:
+        case BFD_RELOC_K1_GOTOFF64_LO10:
+        case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
 	case BFD_RELOC_K1_GOT:
         case BFD_RELOC_K1_GOT_HI22:
         case BFD_RELOC_K1_GOT_LO10:
@@ -2780,6 +2788,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_GLOB_DAT:
         case BFD_RELOC_K1_GOT:
         case BFD_RELOC_K1_GOTOFF:
+        case BFD_RELOC_K1_GOTOFF64:
             //  case BFD_RELOC_32_PCREL:
             image = value;
             md_number_to_chars(fixpos, image, fixP->fx_size);
@@ -2802,6 +2811,10 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_GPREL_HI22:
 //    case BFD_RELOC_K1_NEG_GPREL_HI23:
         case BFD_RELOC_K1_GOTOFF_HI22:
+
+        case BFD_RELOC_K1_GOTOFF64_HI27:
+        case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
         case BFD_RELOC_K1_GOT_HI22:
 //    case BFD_RELOC_K1_GOTOFFX_HI23:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
@@ -2844,6 +2857,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_GPREL_LO10:
 //    case BFD_RELOC_K1_NEG_GPREL_LO9:
         case BFD_RELOC_K1_GOTOFF_LO10:
+        case BFD_RELOC_K1_GOTOFF64_LO10:
         case BFD_RELOC_K1_GOT_LO10:
 //    case BFD_RELOC_K1_GOTOFFX_LO9:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
@@ -4013,6 +4027,11 @@ k1_force_reloc(fixS * fixP)
 	    case BFD_RELOC_K1_GOTOFF:
             case BFD_RELOC_K1_GOTOFF_HI22:
             case BFD_RELOC_K1_GOTOFF_LO10:
+	    case BFD_RELOC_K1_GOTOFF64:
+            case BFD_RELOC_K1_GOTOFF64_HI27:
+            case BFD_RELOC_K1_GOTOFF64_LO10:
+            case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
 	    case BFD_RELOC_K1_GOT:
             case BFD_RELOC_K1_GOT_HI22:
             case BFD_RELOC_K1_GOT_LO10:
@@ -4066,6 +4085,12 @@ k1_force_reloc_sub_same(fixS * fixP, segT sec)
 	  case BFD_RELOC_K1_GOTOFF:
           case BFD_RELOC_K1_GOTOFF_HI22:
           case BFD_RELOC_K1_GOTOFF_LO10:
+
+	  case BFD_RELOC_K1_GOTOFF64:
+          case BFD_RELOC_K1_GOTOFF64_HI27:
+          case BFD_RELOC_K1_GOTOFF64_LO10:
+          case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
 	  case BFD_RELOC_K1_GOT:
           case BFD_RELOC_K1_GOT_HI22:
           case BFD_RELOC_K1_GOT_LO10:
