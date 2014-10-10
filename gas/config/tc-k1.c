@@ -69,6 +69,8 @@ static int check_resource_usage = 1;
 static int generate_illegal_code = 0;
 /* Dump asm tables : for debugging */
 static int dump_table = 0;
+/* Dump instructions: for documentation */
+static int dump_insn = 0;
 /* Core string passed as argument with -mcore option */
 char *mcore= NULL;
 
@@ -176,6 +178,9 @@ typedef struct k1insn_s k1insn_t;
 
 typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
 static reorder_bundle_t reorder_bundle = NULL;
+
+typedef void (*print_insn_t)(k1opc_t *op);
+static print_insn_t print_insn = NULL;
 
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
@@ -584,22 +589,21 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 /* added to std long options */
 
 #define OPTION_HEXFILE	(OPTION_MD_BASE + 0)
-#define OPTION_DUMPTABLES (OPTION_MD_BASE + 1)
-#define OPTION_DUMPVERILOG (OPTION_MD_BASE + 2)
-#define OPTION_LITTLE_ENDIAN (OPTION_MD_BASE + 3)
-#define OPTION_BIG_ENDIAN (OPTION_MD_BASE + 4)
-#define OPTION_EMITALLRELOCS (OPTION_MD_BASE + 6)
-#define OPTION_MCORE (OPTION_MD_BASE + 7)
-#define OPTION_CHECK_RESOURCES (OPTION_MD_BASE + 8)
-#define OPTION_NO_CHECK_RESOURCES (OPTION_MD_BASE + 9)
-#define OPTION_GENERATE_ILLEGAL_CODE (OPTION_MD_BASE + 10)
-#define OPTION_DUMP_TABLE (OPTION_MD_BASE + 11)
-#define OPTION_PIC	(OPTION_MD_BASE + 12)
-#define OPTION_BIGPIC	(OPTION_MD_BASE + 13)
-#define OPTION_FDPIC	(OPTION_MD_BASE + 14)
-#define OPTION_NOPIC    (OPTION_MD_BASE + 15)
-#define OPTION_32 (OPTION_MD_BASE + 16)
-#define OPTION_64 (OPTION_MD_BASE + 17)
+#define OPTION_LITTLE_ENDIAN (OPTION_MD_BASE + 1)
+#define OPTION_BIG_ENDIAN (OPTION_MD_BASE + 2)
+#define OPTION_EMITALLRELOCS (OPTION_MD_BASE + 3)
+#define OPTION_MCORE (OPTION_MD_BASE + 4)
+#define OPTION_CHECK_RESOURCES (OPTION_MD_BASE + 5)
+#define OPTION_NO_CHECK_RESOURCES (OPTION_MD_BASE + 6)
+#define OPTION_GENERATE_ILLEGAL_CODE (OPTION_MD_BASE + 7)
+#define OPTION_DUMP_TABLE (OPTION_MD_BASE + 8)
+#define OPTION_PIC	(OPTION_MD_BASE + 9)
+#define OPTION_BIGPIC	(OPTION_MD_BASE + 10)
+#define OPTION_FDPIC	(OPTION_MD_BASE + 11)
+#define OPTION_NOPIC    (OPTION_MD_BASE + 12)
+#define OPTION_32 (OPTION_MD_BASE + 13)
+#define OPTION_64 (OPTION_MD_BASE + 14)
+#define OPTION_DUMPINSN (OPTION_MD_BASE + 15)
 
 struct option md_longopts[] =
  {
@@ -619,6 +623,7 @@ struct option md_longopts[] =
      {"mno-fdpic", no_argument,    NULL, OPTION_NOPIC},
      {"m32", no_argument,    NULL, OPTION_32},
      {"m64", no_argument,    NULL, OPTION_64},
+     {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -685,6 +690,9 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_DUMP_TABLE:
     dump_table = 1;
+    break;
+  case OPTION_DUMPINSN:
+    dump_insn = 1;
     break;
   case OPTION_PIC:
   /* fallthrough, for now the same on K1 */
@@ -971,12 +979,12 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	  return MATCH_NOT_FOUND;
 	}
 
-#define SRF_REGCLASSES(core)                           \
-	  case RegClass_ ## core ## _systemReg:                        \
-	  case RegClass_ ## core ##_nopcpsReg:                 \
-	  case RegClass_ ## core ## _onlypsReg:                        \
-	  case RegClass_ ## core ## _onlyraReg:                        \
-	  case RegClass_ ## core ## _onlyfxReg:
+#define SRF_REGCLASSES(core)					       \
+	case RegClass_ ## core ## _systemReg:			       \
+        case RegClass_ ## core ## _nopcpsReg:			       \
+        case RegClass_ ## core ## _onlypsReg:			       \
+        case RegClass_ ## core ## _onlyraReg:			       \
+	case RegClass_ ## core ## _onlyfxReg:
 
         switch (operand_type) {
             case RegClass_k1_singleReg:
@@ -1580,12 +1588,6 @@ static Bundling find_bundling(const k1insn_t *insn)
     return insn_bundlings;
 }
 
-static int find_reservation(const k1insn_t *insn)
- {
-    int insn_reservation = insn->opdef->reservation;
-    return insn_reservation;
-}
-
 static int cmp_bundling(const void *a, const void *b)
  {
     const Bundling *ba = (const Bundling *)a;
@@ -1768,6 +1770,120 @@ k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     return 0;
 }
 
+/* Write in buf almost buf_size.
+   Returns the number of writen characters.
+ */
+static int
+insn_syntax(k1opc_t *op, char *buf, int buf_size) {
+  int chars = snprintf(buf, buf_size, "%s ",op->as_op);
+  int i;
+  char *fmtp = op->fmtstring;
+  char ch;
+
+  for (i = 0; op->format[i]; i++) {
+    int type  = op->format[i]->type;
+    char *type_name  = op->format[i]->tname;
+    int flags = op->format[i]->flags;
+    int width = op->format[i]->width;
+
+    /* Print characters in the format string up to the following
+     * % or nul. */
+    while((chars < buf_size) && (ch=*fmtp) && ch != '%') {
+      buf[chars++] = ch;
+      fmtp++;
+    }
+
+    /* Skip past %s */
+    if(ch == '%') {
+      ch=*fmtp++;
+      fmtp++;
+    }
+    
+    switch (type) {
+    case RegClass_k1_singleReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "grf");
+      break;
+    case RegClass_k1_pairedReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "prf");
+      break;
+    case RegClass_k1_systemReg:
+    case RegClass_k1_nopcpsReg:
+    case RegClass_k1_onlypsReg:
+    case RegClass_k1_onlyraReg:
+    case RegClass_k1_onlyfxReg:
+    case RegClass_k1b_systemReg:
+    case RegClass_k1b_nopcpsReg:
+    case RegClass_k1b_onlypsReg:
+    case RegClass_k1b_onlyraReg:
+    case RegClass_k1b_onlyfxReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "srf");
+      break;
+    case RegClass_k1_remoteReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "nrf");
+      break;
+    case Immediate_k1_eventmask2:
+    case Immediate_k1_flagmask2:
+    case Immediate_k1_brknumber:
+    case Immediate_k1_sysnumber:
+    case Immediate_k1_signed5:
+    case Immediate_k1_signed10:
+    case Immediate_k1_signed11:
+    case Immediate_k1_signed16:
+    case Immediate_k1_signed27:
+    case Immediate_k1_signed32:
+    case Immediate_k1_signed32M:
+    case Immediate_k1_signed37:
+    case Immediate_k1_signed43:
+    case Immediate_k1_unsigned5:
+    case Immediate_k1_unsigned6:
+    case Immediate_k1_unsigned32:
+    case Immediate_k1_unsigned32L:
+    case Immediate_k1_pcrel17:
+    case Immediate_k1_pcrel18:
+    case Immediate_k1_pcrel27:
+      if(flags & k1SIGNED){
+	chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
+      }
+      else {
+	chars += snprintf(&buf[chars], buf_size - chars, "u%d",width);
+      }
+      break;
+    default:
+      fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
+      exit(-1);
+    }
+  }
+
+  /* Print trailing characters in the format string, if any */
+  while((chars < buf_size) && (ch=*fmtp)) {
+    buf[chars++] = ch;
+    fmtp++;
+  }
+  
+  if(chars < buf_size) {
+    buf[chars++] = '\0';
+  }
+  else {
+    buf[buf_size-1] = '\0';
+  }
+
+  return chars;
+}
+
+static void
+k1a_print_insn(k1opc_t *op) {
+  int asm_chars = 48;
+  char asm_str[asm_chars];
+  int chars = insn_syntax(op, asm_str, asm_chars);
+  int i;
+
+  for(i=chars-1; i<asm_chars-1; i++) {
+    asm_str[i] = '-';
+  }
+ 
+  printf("%s | syllables: %d\n", asm_str, op->codewords);
+}
+
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
 k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
@@ -1921,50 +2037,8 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     *bundle_insncnt_p = j;
 }
 
-__attribute__((unused))
-static int
-k1b_is_equivalent_bundle(Bundling b1, const k1insn_t *insn){
-  Bundling b2 = find_bundling(insn);
-
-    switch(b1){
-        case Bundling_k1_BCU:
-            if(b2 == Bundling_k1_BCU){
-                return 1;
-            } else {
-                return 0;
-            }
-        case Bundling_k1_ALU:
-            if(b2 == Bundling_k1_ALU || b2 == Bundling_k1_ALU_X){
-                return 1;
-            } else {
-                return 0;
-            }
-        case Bundling_k1_ALUD:
-	    if(b2 == Bundling_k1_ALUD || b2 == Bundling_k1_ALUD_Z || b2 == Bundling_k1_ALUD_Y) {
-                return 1;
-            } else {
-                return 0;
-            }
-        case Bundling_k1_MAU:
-            if(b2 == Bundling_k1_MAU || b2 == Bundling_k1_MAU_X){
-                return 1;
-            } else {
-                return 0;
-            }
-        case Bundling_k1_LSU:
-            if(b2 == Bundling_k1_LSU || b2 == Bundling_k1_LSU_X){
-                return 1;
-            } else {
-                return 0;
-            }
-        default:
-            return 0;
-    }
-    return 0;
-}
-
-static int is_mono_double(const k1insn_t *insn) {
-  int reservation = find_reservation(insn);
+static int is_mono_double(const k1opc_t *op) {
+  int reservation = op->reservation;
   return (reservation == Reservation_k1_ALUD_LITE   ||
 	  reservation == Reservation_k1_ALUD_LITE_X ||
 	  reservation == Reservation_k1_ALUD_TINY   ||
@@ -1972,9 +2046,9 @@ static int is_mono_double(const k1insn_t *insn) {
 }
 
 
-static int used_resources(const k1insn_t *insn, int resource) {
-  int insn_reservations = insn->opdef->reservation;
-  int reservation = insn_reservations  & 0xff;
+static int used_resources(const k1opc_t *op, int resource) {
+  int op_reservations = op->reservation;
+  int reservation = op_reservations  & 0xff;
   const int *reservation_table = k1_reservation_table_table[reservation];
 
   if(resource < 0 || resource > RESOURCE_MAX) {
@@ -1983,17 +2057,17 @@ static int used_resources(const k1insn_t *insn, int resource) {
   return reservation_table[resource];
 }
 
-static int is_tiny(const k1insn_t *insn) {
-  return used_resources(insn,Resource_k1_TINY);
+static int is_tiny(const k1opc_t *op) {
+  return used_resources(op,Resource_k1_TINY);
 }
 
-static int is_lite(const k1insn_t *insn) {
-  return used_resources(insn,Resource_k1_LITE);
+static int is_lite(const k1opc_t *op) {
+  return used_resources(op,Resource_k1_LITE);
 }
 
 __attribute__((unused))
-static int is_alud(const k1insn_t *insn) {
-  return used_resources(insn,Resource_k1_ALUD);
+static int is_alud(const k1opc_t *op) {
+  return used_resources(op,Resource_k1_ALUD);
 }
 
 __attribute__((unused))
@@ -2008,7 +2082,7 @@ bundle_resources(char string_buffer[], int buffer_size, int resource, const k1in
   for(i=0; i < bundle_size; i++){
     if(shadow_bundle[i] != NULL){
       char tmp_str[256];
-      int used_resources_val = used_resources(shadow_bundle[i],resource);
+      int used_resources_val = used_resources(shadow_bundle[i]->opdef,resource);
       if(resource == Resource_k1_TINY || resource == Resource_k1_LITE) {
 	if(shadow_bundle[i]->slots == (K1_ALU0 | K1_ALU1)) {
 	  used_resources_val++;
@@ -2029,18 +2103,18 @@ static char *
 k1b_insn_slot_type(const k1insn_t *insn) {
   char *slot_type=k1_slots_name(insn);
   
-  if(is_tiny(insn)) {
+  if(is_tiny(insn->opdef)) {
     slot_type = "TINY";
   }
-  if(is_lite(insn)) {
+  if(is_lite(insn->opdef)) {
     slot_type = "LITE";
   }
-  if(is_mono_double(insn)) {
+  if(is_mono_double(insn->opdef)) {
     slot_type = "MONODOUBLE";
-    if(is_tiny(insn)) {
+    if(is_tiny(insn->opdef)) {
       slot_type = "TINY MONODOUBLE";
     }
-    if(is_lite(insn)) {
+    if(is_lite(insn->opdef)) {
       slot_type = "LITE MONODOUBLE";
     }
   }
@@ -2161,8 +2235,8 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 
   case Bundling_k1_TINY:
   case Bundling_k1_TINY_X:
-    if (is_lite(cur_insn)){
-      if (is_mono_double(cur_insn)){
+    if (is_lite(cur_insn->opdef)){
+      if (is_mono_double(cur_insn->opdef)){
 	// LITE MONODOUBLE
 	PUSH(mau,state, states, states_sz, states_storage_sz);
 	PUSH_ALUD(state, states, states_sz, states_storage_sz);
@@ -2173,8 +2247,8 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 	PUSH(alu1,state, states, states_sz, states_storage_sz);
 	PUSH(alu0,state, states, states_sz, states_storage_sz);
       }
-    } else if (is_tiny(cur_insn)){
-      if (is_mono_double(cur_insn)){
+    } else if (is_tiny(cur_insn->opdef)){
+      if (is_mono_double(cur_insn->opdef)){
 	// TINY MONODOUBLE
 	PUSH(lsu,state, states, states_sz, states_storage_sz);
 	PUSH(mau,state, states, states_sz, states_storage_sz);
@@ -2192,6 +2266,84 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     break;
   }
   return 0;
+}
+
+static void
+k1b_print_insn(k1opc_t *op) {
+  int asm_chars = 48;
+  char asm_str[asm_chars];
+  int chars = insn_syntax(op, asm_str, asm_chars);
+  int i;
+  char *insn_type = "UNKNOWN";
+  char *insn_mode = "";
+  
+  for(i=chars-1; i<asm_chars-1; i++) {
+    asm_str[i] = '-';
+  }
+ 
+  switch(op->bundlings){
+  case Bundling_k1_ALL:
+    insn_type="ALL            ";
+    break;
+  case Bundling_k1_ALU:
+  case Bundling_k1_ALU_X:
+    insn_type="ALU            ";
+    break;
+  case Bundling_k1_BCU:
+    insn_type="BCU            ";
+    break;
+
+  case Bundling_k1_ALUD:
+  case Bundling_k1_ALUD_Y:
+  case Bundling_k1_ALUD_Z:
+    insn_type="ALUD           ";
+    break;    
+
+  case Bundling_k1_MAU:
+  case Bundling_k1_MAU_X:
+    insn_type="MAU            ";
+    break;
+
+  case Bundling_k1_LSU:
+  case Bundling_k1_LSU_X:
+    insn_type="LSU            ";
+    break;
+
+  case Bundling_k1_TINY:
+  case Bundling_k1_TINY_X:
+    if (is_lite(op)){
+      if (is_mono_double(op)){
+	insn_type="LITE_MONODOUBLE";
+      } else {
+	insn_type="LITE           ";
+      }
+    } else if (is_tiny(op)){
+      if (is_mono_double(op)){
+	insn_type="TINY_MONODOUBLE";
+      } else {
+	insn_type="TINY           ";
+      }
+    } else {
+        as_fatal("TINY instruction is neither a TINY or LITE\n");
+    }
+    break;
+  }
+
+  if (op->codeword[0].flags & k1OPCODE_FLAG_MODE64 && 
+      op->codeword[0].flags & k1OPCODE_FLAG_MODE32) {
+    insn_mode = "32|64";
+  }
+  else if(op->codeword[0].flags & k1OPCODE_FLAG_MODE64) {
+    insn_mode = "64";
+  }
+  else if(op->codeword[0].flags & k1OPCODE_FLAG_MODE32) {
+    insn_mode = "32";
+  }
+  else {
+    as_fatal("Unknown instruction mode.\n");
+  }
+
+  printf("%s | syllables: %d | type: %s | mode: %s bits\n", asm_str, op->codewords, insn_type, insn_mode);
 }
 
 static void
@@ -2478,11 +2630,13 @@ k1_set_cpu(void) {
     if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp))
       as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
+    print_insn = k1a_print_insn;
     break;
   case ELF_K1_CORE_IO:
     if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io))
       as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
+    print_insn = k1a_print_insn;
     break;
   case ELF_K1_CORE_B_DP:
     if (k1_arch_size == 32) {
@@ -2493,6 +2647,7 @@ k1_set_cpu(void) {
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1b_reorder_bundle;
+    print_insn = k1b_print_insn;
     break;
   case ELF_K1_CORE_B_IO:
     if (k1_arch_size == 32){
@@ -2503,6 +2658,7 @@ k1_set_cpu(void) {
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1b_reorder_bundle;
+    print_insn = k1b_print_insn;
     break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
@@ -2555,17 +2711,14 @@ md_begin()
     /* Each name should appear only once */
 
     k1_opcode_hash = hash_new();
- {
+    {
         k1opc_t *op;
         const char *name = 0;
         const char *retval = 0;
-        for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++)
- {
-
+        for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++) {
             /* enter in hash table if this is a new name */
 
-            if (!(STREQ(name, op->as_op)))
- {
+            if (!(STREQ(name, op->as_op))) {
                 name = op->as_op;
                 retval = hash_insert(k1_opcode_hash, name, (PTR) op);
                 if (retval)
@@ -2573,10 +2726,18 @@ md_begin()
                             name, retval);
             }
         }
- }
+    }
 
-    if(dump_table){
+    if(dump_table) {
       hash_traverse(k1_opcode_hash, print_hash);
+      exit(0);
+    }
+
+    if(dump_insn) {
+      k1opc_t *op;
+      for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++) {
+	print_insn(op);
+      }
       exit(0);
     }
 
