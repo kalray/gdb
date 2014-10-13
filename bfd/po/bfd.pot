@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2014-09-29 12:35+0200\n"
+"POT-Creation-Date: 2014-10-10 08:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -194,7 +194,7 @@ msgid "Warning: Writing section `%s' to huge (ie negative) file offset 0x%lx."
 msgstr ""
 
 #: bout.c:1146 elf-m10300.c:2665 elf32-avr.c:1706 elf32-frv.c:5641
-#: elf64-ia64-vms.c:354 elfxx-sparc.c:2869 reloc.c:7122 reloc16.c:160
+#: elf64-ia64-vms.c:354 elfxx-sparc.c:2869 reloc.c:7130 reloc16.c:160
 #: elf32-ia64.c:351 elf64-ia64.c:351
 msgid "%P%F: --relax and -r may not be used together\n"
 msgstr ""
@@ -1367,12 +1367,12 @@ msgstr ""
 msgid "%B: unsupported relocation type %i"
 msgstr ""
 
-#: elf32-bfin.c:5034 elf32-frv.c:6638 elfxx-k1.c:310
+#: elf32-bfin.c:5034 elf32-frv.c:6638 elfxx-k1.c:315
 #, c-format
 msgid "%s: cannot link non-fdpic object file into fdpic executable"
 msgstr ""
 
-#: elf32-bfin.c:5038 elf32-frv.c:6642 elfxx-k1.c:314
+#: elf32-bfin.c:5038 elf32-frv.c:6642 elfxx-k1.c:319
 #, c-format
 msgid "%s: cannot link fdpic object file into non-fdpic executable"
 msgstr ""
@@ -2812,7 +2812,7 @@ msgstr ""
 msgid "internal inconsistency in size of .got.loc section"
 msgstr ""
 
-#: elf32-xtensa.c:3480 elfxx-k1.c:300
+#: elf32-xtensa.c:3480 elfxx-k1.c:305
 msgid "%B: incompatible machine type. Output is 0x%x. Input is 0x%x"
 msgstr ""
 
@@ -4150,11 +4150,11 @@ msgstr ""
 msgid "Partition[%d] length = 0x%.8lx (%ld)\n"
 msgstr ""
 
-#: reloc.c:7169
+#: reloc.c:7177
 msgid "INPUT_SECTION_FLAGS are not supported.\n"
 msgstr ""
 
-#: reloc.c:7324
+#: reloc.c:7332
 msgid "%X%P: %B(%A): relocation \"%R\" goes out of range\n"
 msgstr ""
 
