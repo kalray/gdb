@@ -448,31 +448,18 @@ const pseudo_typeS md_pseudo_table[] =
 
 enum reloc_func 
   {
-    /* FUNC_FPTR_RELATIVE, */
       FUNC_GP_RELATIVE,
       FUNC_GP_10_RELATIVE,
       FUNC_GP_16_RELATIVE,
       FUNC_GOTOFF_RELATIVE,
+      FUNC_GOTOFF64_RELATIVE,
       FUNC_GOT_RELATIVE,
       FUNC_PLT_RELATIVE,
-    /* FUNC_GOTX_RELATIVE, */
       FUNC_GOT_FDESC_RELATIVE,
       FUNC_GOTOFF_FDESC_RELATIVE,
       FUNC_FDESC_RELATIVE,
-    /* FUNC_SEG_RELATIVE, */
-    /* FUNC_LTV_RELATIVE, */
-    /* FUNC_GOT_FPTR_RELATIVE, */
-    /* FUNC_IPLT_RELOC, */
-    /* FUNC_NEG_GP_RELATIVE, */
       FUNC_TP_RELATIVE,
-      FUNC_PC_RELATIVE,
-    /* FUNC_DTP_RELATIVE, */
-    /* FUNC_DTP_MODULE, */
-    /* FUNC_DTP_INDEX, */
-    /* FUNC_DTP_LOAD_MODULE, */
-    /* FUNC_GOT_TP_RELATIVE, */
-    /* FUNC_GOT_DTP_INDEX_RELATIVE, */
-    /* FUNC_GOT_DTP_LOAD_MODULE_RELATIVE */
+      FUNC_TP64_RELATIVE,
   };
 /* Pseudo functions used to indicate relocation types (these functions
  * start with an at sign (@).  */
@@ -496,8 +483,6 @@ static struct
 pseudo_func[] =
  {
     // reloc pseudo functions:
-    /* { "fptr",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_FPTR32 }, */
      { "gprel",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GPREL_LO10,
        BFD_RELOC_K1_GPREL_HI22,       BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
      { "gprel10",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_10_GPREL,
@@ -510,8 +495,6 @@ pseudo_func[] =
        BFD_RELOC_K1_GOTOFF64_HI27, BFD_RELOC_K1_GOTOFF64_EXTEND6, BFD_RELOC_K1_GOTOFF64 },
      { "got",      PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOT_LO10,
        BFD_RELOC_K1_GOT_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_K1_GOT },
-    /* { "gotoffx",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFFX_LO9, */
-    /* BFD_RELOC_K1_GOTOFFX_HI23,     BFD_RELOC_UNUSED }, */
      { "plt",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_PLT_LO10,
        BFD_RELOC_K1_PLT_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
      { "got_funcdesc",    PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_FUNCDESC_GOT_LO10,
@@ -520,40 +503,10 @@ pseudo_func[] =
        BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
      { "funcdesc",    PSEUDO_FUNC_RELOC, { 0 },BFD_RELOC_UNUSED,
        BFD_RELOC_UNUSED,      BFD_RELOC_UNUSED, BFD_RELOC_K1_FUNCDESC },
-    /*{ "segrel",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED,*/
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_SEGREL32 }, */
-    /* { "ltv",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_LTV32}, */
-    /* // placeholder for FUNC_GOT_FPTR_RELATIVE */
-    /* { "", 0, { 0 }, BFD_RELOC_K1_GOTOFF_FPTR_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_FPTR_HI23, BFD_RELOC_UNUSED }, */
-    /* { "iplt",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_IPLT }, */
-    /* { "neggprel",PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_NEG_GPREL_LO9, */
-    /* BFD_RELOC_K1_NEG_GPREL_HI23,   BFD_RELOC_UNUSED }, */
     { "tprel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL_LO10,
       BFD_RELOC_K1_TPREL_HI22,       BFD_RELOC_UNUSED, BFD_RELOC_K1_TPREL_32  },
      { "tprel64",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL64_ELO10,
        BFD_RELOC_K1_TPREL64_HI27,  BFD_RELOC_K1_TPREL64_EXTEND6,  BFD_RELOC_K1_TPREL64_64 },
-//     { "pcrel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_PCREL_LO10,
-//     BFD_RELOC_K1_PCREL_HI22,       BFD_RELOC_UNUSED },
-    /* { "dtprel",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_DTPREL_LO9, */
-    /* BFD_RELOC_K1_DTPREL_HI23,      BFD_RELOC_K1_DTPREL32 }, */
-    /* { "dtpmod",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_DTPMOD32 }, */
-    /* { "dtpndx",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_UNUSED }, */
-    /* { "dtpldm",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_UNUSED }, */
-    /* // placeholder for GOTOFF_TPREL */
-    /* { "",        0,                { 0 }, BFD_RELOC_K1_GOTOFF_TPREL_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_TPREL_HI23,BFD_RELOC_UNUSED }, */
-    /* // placeholder for GOTOFF_DTPNDX */
-    /* { "" ,       0,                { 0 }, BFD_RELOC_K1_GOTOFF_DTPNDX_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_DTPNDX_HI23, BFD_RELOC_UNUSED }, */
-    /* // placeholder for GOTOFF_DTPLDM */
-    /* { "",        0,                { 0 }, BFD_RELOC_K1_GOTOFF_DTPLDM_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_DTPLDM_HI23, BFD_RELOC_UNUSED } */
 };
 
 /*****************************************************/
@@ -2766,101 +2719,41 @@ md_begin()
      * &zero_address_frag);
      */
     pseudo_func[FUNC_GP_RELATIVE].u.sym =
-        symbol_create (".<gprel>", undefined_section, FUNC_GP_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gprel>", undefined_section, FUNC_GP_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GP_10_RELATIVE].u.sym =
-        symbol_create (".<gprel10>", undefined_section, FUNC_GP_10_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gprel10>", undefined_section, FUNC_GP_10_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GP_16_RELATIVE].u.sym =
-        symbol_create (".<gprel16>", undefined_section, FUNC_GP_16_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gprel16>", undefined_section, FUNC_GP_16_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOTOFF_RELATIVE].u.sym =
-        symbol_create (".<gotoff>", undefined_section, FUNC_GOT_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gotoff>", undefined_section, FUNC_GOTOFF_RELATIVE,
+		     &zero_address_frag);
+    pseudo_func[FUNC_GOTOFF64_RELATIVE].u.sym =
+      symbol_create (".<gotoff64>", undefined_section, FUNC_GOTOFF64_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOT_RELATIVE].u.sym =
-        symbol_create (".<got>", undefined_section, FUNC_GOT_RELATIVE,
-        &zero_address_frag);
-        
+      symbol_create (".<got>", undefined_section, FUNC_GOT_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_PLT_RELATIVE].u.sym =
-        symbol_create (".<plt>", undefined_section, FUNC_PLT_RELATIVE,
-        &zero_address_frag);
-        
+      symbol_create (".<plt>", undefined_section, FUNC_PLT_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOT_FDESC_RELATIVE].u.sym =
-        symbol_create (".<got.fdesc>", undefined_section, FUNC_GOT_FDESC_RELATIVE,
-        &zero_address_frag);
+      symbol_create (".<got.fdesc>", undefined_section, FUNC_GOT_FDESC_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOTOFF_FDESC_RELATIVE].u.sym =
-        symbol_create (".<gotoff.fdesc>", undefined_section, FUNC_GOTOFF_FDESC_RELATIVE,
-        &zero_address_frag);
+      symbol_create (".<gotoff.fdesc>", undefined_section, FUNC_GOTOFF_FDESC_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_FDESC_RELATIVE].u.sym =
-        symbol_create (".<fdesc>", undefined_section, FUNC_FDESC_RELATIVE,
-        &zero_address_frag);
-
-
-    /* pseudo_func[FUNC_GOTX_RELATIVE].u.sym =
-     * symbol_create (".<gotoffx>", undefined_section, FUNC_GOTX_RELATIVE,
-     * &zero_address_frag);
-     *
-     *
-     * pseudo_func[FUNC_SEG_RELATIVE].u.sym =
-     * symbol_create (".<segrel>", undefined_section, FUNC_SEG_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_LTV_RELATIVE].u.sym =
-     * symbol_create (".<ltv>", undefined_section, FUNC_LTV_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_FPTR_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.fptr>", undefined_section, FUNC_GOT_FPTR_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_IPLT_RELOC].u.sym =
-     * symbol_create (".<iplt>", undefined_section, FUNC_IPLT_RELOC,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_NEG_GP_RELATIVE].u.sym =
-     * symbol_create (".<neggprel>", undefined_section, FUNC_NEG_GP_RELATIVE,
-     * &zero_address_frag);
-     */
-    
+      symbol_create (".<fdesc>", undefined_section, FUNC_FDESC_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_TP_RELATIVE].u.sym =
-	symbol_create (".<tprel>", undefined_section, FUNC_TP_RELATIVE,
-		       &zero_address_frag);
-//     pseudo_func[FUNC_TP_RELATIVE].u.sym =
-//         symbol_create (".<pcrel>", undefined_section, FUNC_PC_RELATIVE,
-//                        &zero_address_frag);
-    /*
-     * pseudo_func[FUNC_DTP_RELATIVE].u.sym =
-     * symbol_create (".<dtprel>", undefined_section, FUNC_DTP_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_DTP_MODULE].u.sym =
-     * symbol_create (".<dtpmod>", undefined_section, FUNC_DTP_MODULE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_DTP_INDEX].u.sym =
-     * symbol_create (".<dtpndx>", undefined_section, FUNC_DTP_INDEX,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_DTP_LOAD_MODULE].u.sym =
-     * symbol_create (".<dtpldm>", undefined_section, FUNC_DTP_LOAD_MODULE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_TP_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.tprel>", undefined_section, FUNC_GOT_TP_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_DTP_INDEX_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.dtpndx>", undefined_section, FUNC_GOT_DTP_INDEX_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_DTP_LOAD_MODULE_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.dtpldm>", undefined_section, FUNC_GOT_DTP_LOAD_MODULE_RELATIVE,
-     * &zero_address_frag);
-     */
+      symbol_create (".<tprel>", undefined_section, FUNC_TP_RELATIVE,
+		     &zero_address_frag);
+    pseudo_func[FUNC_TP64_RELATIVE].u.sym =
+      symbol_create (".<tprel64>", undefined_section, FUNC_TP64_RELATIVE,
+		     &zero_address_frag);
     /*  bfd_set_private_flags(stdoutput, 0); *//* default flags */
 }
 
