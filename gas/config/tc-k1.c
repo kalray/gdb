@@ -452,7 +452,6 @@ enum reloc_func
       FUNC_GP_10_RELATIVE,
       FUNC_GP_16_RELATIVE,
       FUNC_GOTOFF_RELATIVE,
-      FUNC_GOTOFF64_RELATIVE,
       FUNC_GOT_RELATIVE,
       FUNC_PLT_RELATIVE,
       FUNC_GOT_FDESC_RELATIVE,
@@ -460,6 +459,8 @@ enum reloc_func
       FUNC_FDESC_RELATIVE,
       FUNC_TP_RELATIVE,
       FUNC_TP64_RELATIVE,
+      FUNC_GOTOFF64_RELATIVE,
+      FUNC_PLT64_RELATIVE,
   };
 /* Pseudo functions used to indicate relocation types (these functions
  * start with an at sign (@).  */
@@ -483,30 +484,76 @@ static struct
 pseudo_func[] =
  {
     // reloc pseudo functions:
-     { "gprel",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GPREL_LO10,
-       BFD_RELOC_K1_GPREL_HI22,       BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
-     { "gprel10",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_10_GPREL,
-       BFD_RELOC_UNUSED, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED},
-     { "gprel16",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_16_GPREL,
-       BFD_RELOC_UNUSED,  BFD_RELOC_UNUSED, BFD_RELOC_UNUSED},
-     { "gotoff",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFF_LO10,
-       BFD_RELOC_K1_GOTOFF_HI22, BFD_RELOC_UNUSED, BFD_RELOC_K1_GOTOFF },
-     { "gotoff64",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFF64_LO10,
-       BFD_RELOC_K1_GOTOFF64_HI27, BFD_RELOC_K1_GOTOFF64_EXTEND6, BFD_RELOC_K1_GOTOFF64 },
-     { "got",      PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOT_LO10,
-       BFD_RELOC_K1_GOT_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_K1_GOT },
-     { "plt",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_PLT_LO10,
-       BFD_RELOC_K1_PLT_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
-     { "got_funcdesc",    PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_FUNCDESC_GOT_LO10,
-       BFD_RELOC_K1_FUNCDESC_GOT_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
-     { "gotoff_funcdesc",    PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10,
-       BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,      BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
-     { "funcdesc",    PSEUDO_FUNC_RELOC, { 0 },BFD_RELOC_UNUSED,
-       BFD_RELOC_UNUSED,      BFD_RELOC_UNUSED, BFD_RELOC_K1_FUNCDESC },
-    { "tprel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL_LO10,
-      BFD_RELOC_K1_TPREL_HI22,       BFD_RELOC_UNUSED, BFD_RELOC_K1_TPREL_32  },
-     { "tprel64",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL64_ELO10,
-       BFD_RELOC_K1_TPREL64_HI27,  BFD_RELOC_K1_TPREL64_EXTEND6,  BFD_RELOC_K1_TPREL64_64 },
+     { "gprel",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GPREL_LO10, BFD_RELOC_K1_GPREL_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "gprel10",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_10_GPREL, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED},
+
+     { "gprel16",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_16_GPREL, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED},
+
+     { "gotoff",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOTOFF_LO10, BFD_RELOC_K1_GOTOFF_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_GOTOFF },
+
+     { "got",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOT_LO10, BFD_RELOC_K1_GOT_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_GOT },
+
+     { "plt",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_PLT_LO10, BFD_RELOC_K1_PLT_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "got_funcdesc",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_FUNCDESC_GOT_LO10, BFD_RELOC_K1_FUNCDESC_GOT_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "gotoff_funcdesc",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10, BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "funcdesc",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_UNUSED, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_FUNCDESC },
+
+     { "tprel",
+       PSEUDO_FUNC_RELOC,{ 0 },
+       BFD_RELOC_K1_TPREL_LO10, BFD_RELOC_K1_TPREL_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_TPREL_32  },
+     
+     { "tprel64",
+       PSEUDO_FUNC_RELOC,{ 0 },
+       BFD_RELOC_K1_TPREL64_ELO10, BFD_RELOC_K1_TPREL64_HI27,  BFD_RELOC_K1_TPREL64_EXTEND6,
+       BFD_RELOC_K1_TPREL64_64 },
+
+     { "gotoff64",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOTOFF64_LO10, BFD_RELOC_K1_GOTOFF64_HI27, BFD_RELOC_K1_GOTOFF64_EXTEND6,
+       BFD_RELOC_K1_GOTOFF64 },
+
+     { "got64",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOT64_LO10, BFD_RELOC_K1_GOT64_HI27, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_GOT64 },
+
+     { "plt64",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_PLT64_LO10, BFD_RELOC_K1_PLT64_HI27, BFD_RELOC_K1_PLT64_EXTEND6,
+       BFD_RELOC_UNUSED },
+
 };
 
 /*****************************************************/
@@ -2203,7 +2250,6 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 	PUSH_ALUD(state, states, states_sz, states_storage_sz);
       } else {
 	// LITE SINGLE
-	PUSH(lsu,state, states, states_sz, states_storage_sz);
 	PUSH(mau,state, states, states_sz, states_storage_sz);
 	PUSH(alu1,state, states, states_sz, states_storage_sz);
 	PUSH(alu0,state, states, states_sz, states_storage_sz);
@@ -2789,7 +2835,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 
     rel->howto = bfd_reloc_type_lookup(stdoutput, fixP->fx_r_type);
     if(rel->howto == NULL){
-        as_fatal("[md_apply_fix] unsupported relocation type");
+        as_fatal("[md_apply_fix] unsupported relocation type (can't find howto)");
     }
 
     if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
@@ -2868,8 +2914,11 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 
         case BFD_RELOC_K1_GOTOFF64_HI27:
         case BFD_RELOC_K1_GOTOFF64_EXTEND6:
-
+        case BFD_RELOC_K1_GOT64_HI27:
         case BFD_RELOC_K1_GOT_HI22:
+        case BFD_RELOC_K1_PLT64_HI27:
+        case BFD_RELOC_K1_PLT64_EXTEND6:
+	  
 //    case BFD_RELOC_K1_GOTOFFX_HI23:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
         case BFD_RELOC_K1_PLT_HI22:
@@ -2912,10 +2961,12 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_K1_NEG_GPREL_LO9:
         case BFD_RELOC_K1_GOTOFF_LO10:
         case BFD_RELOC_K1_GOTOFF64_LO10:
+        case BFD_RELOC_K1_GOT64_LO10:
         case BFD_RELOC_K1_GOT_LO10:
 //    case BFD_RELOC_K1_GOTOFFX_LO9:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
         case BFD_RELOC_K1_PLT_LO10:
+        case BFD_RELOC_K1_PLT64_LO10:
         case BFD_RELOC_K1_FUNCDESC_GOT_LO10:
 	case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10:
 //    case BFD_RELOC_K1_TPREL_LO9:
@@ -2941,7 +2992,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_K1_TPREL32:
 //      break;
         default:
-            as_fatal("[md_apply_fix] unsupported relocation type");
+	  as_fatal("[md_apply_fix] unsupported relocation type (type not handled : %d)", fixP->fx_r_type);
     }
 }
 
