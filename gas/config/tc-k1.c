@@ -2168,7 +2168,6 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 	PUSH_ALUD(state, states, states_sz, states_storage_sz);
       } else {
 	// LITE SINGLE
-	PUSH(lsu,state, states, states_sz, states_storage_sz);
 	PUSH(mau,state, states, states_sz, states_storage_sz);
 	PUSH(alu1,state, states, states_sz, states_storage_sz);
 	PUSH(alu0,state, states, states_sz, states_storage_sz);
