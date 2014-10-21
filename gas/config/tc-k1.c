@@ -2363,10 +2363,12 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   int bidx;
   for(bidx=0; bidx < *bundle_insncnt_p; bidx++){
     if(find_bundling(bundle_insn[bidx]) == Bundling_k1_ALL){
-      if(*bundle_insncnt_p == 1)
+      if(*bundle_insncnt_p == 1) {
        return;
-       else
-	 as_fatal("Too many ops in a single op bundle\n");
+      }
+      else {
+	as_fatal("Too many ops in a single op bundle (%s):\n",bundle_insn[bidx]->opdef->as_op);
+      }
     }
   }
 
