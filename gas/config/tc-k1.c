@@ -2218,6 +2218,7 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
   }
   k1insn_t *cur_insn = bundle_insn[state->cur_insn];
   switch(find_scheduling(cur_insn)){
+
   case Reservation_k1_ALL:
     as_fatal("ALL reservation encountered, should have been handled before");
     break;
@@ -2335,7 +2336,6 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     break;
   default:
     as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
-
 	      cur_insn->opdef->as_op, find_scheduling(cur_insn));
   }
   return 0;
