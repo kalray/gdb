@@ -96,25 +96,15 @@ k1_elf32_check_relocs (bfd * abfd,
 
       switch (r_type)
 	{
-#if 0  
-       /* This relocation describes the C++ object vtable hierarchy.
-           Reconstruct it for later use during GC.  */
-        case R_K1_GNU_VTINHERIT:
-          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-            return FALSE;
-          break;
-
-        /* This relocation describes which C++ vtable entries
-           are actually used.  Record for later use during GC.  */
-        case R_K1_GNU_VTENTRY:
-          BFD_ASSERT (h != NULL);
-          if (h != NULL
-              && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-            return FALSE;
-          break;
-#endif
+	  /* 32bits */
 	case R_K1_LO10:
 	case R_K1_HI22:
+
+	  /* 64 bits */
+	case R_K1_EXTEND6:
+	case R_K1_HI27:
+	case R_K1_ELO10:
+
 	  /*
 	   * if some reloc uses special symbol named "_gp_disp" and
 	   * GOT not yet created, create it
@@ -131,12 +121,24 @@ k1_elf32_check_relocs (bfd * abfd,
         case R_K1_GOTOFF:
         case R_K1_GOTOFF_HI22:
         case R_K1_GOTOFF_LO10:
+
+        case R_K1_GOTOFF64:
+        case R_K1_GOTOFF64_HI27:
+        case R_K1_GOTOFF64_EXTEND6:
+        case R_K1_GOTOFF64_LO10:
+
           htab->needs_got = TRUE;
           /*fallthrough */
         case R_K1_GOT:
         case R_K1_GOT_HI22:
         case R_K1_GOT_LO10:
         case R_K1_GLOB_DAT:
+
+        case R_K1_GOT64:
+        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_LO10:
+        case R_K1_GLOB_DAT64:
+
           if (htab->sgot == NULL)
           {
             if (htab->elf.dynobj == NULL)	    
@@ -154,6 +156,10 @@ k1_elf32_check_relocs (bfd * abfd,
         case R_K1_GOT:
         case R_K1_GOT_HI22:
         case R_K1_GOT_LO10:
+
+        case R_K1_GOT64:
+        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_LO10:
           if (h != NULL)
               h->got.refcount += 1;
           else
@@ -178,6 +184,11 @@ k1_elf32_check_relocs (bfd * abfd,
           
         case R_K1_PLT_HI22:
         case R_K1_PLT_LO10:
+
+        case R_K1_PLT64_HI27:
+        case R_K1_PLT64_LO10:
+        case R_K1_PLT64_EXTEND6:
+
         case R_K1_27_PCREL:
           /* If this is a local symbol, we resolve it directly without
              creating a procedure linkage table entry.  */
@@ -187,7 +198,9 @@ k1_elf32_check_relocs (bfd * abfd,
               h->plt.refcount += 1;
             }
           break;
+
         case R_K1_32:
+	case R_K1_64:
            if (h != NULL && !info->shared)
             {
               /* If this reloc is in a read-only section, we might
@@ -311,7 +324,7 @@ k1_elf32_check_relocs (bfd * abfd,
 
 
 static bfd_boolean
-k1_elf32_relocate_section
+k1_elf64_relocate_section
     (bfd *                   output_bfd ATTRIBUTE_UNUSED,
      struct bfd_link_info *  info,
      bfd *                   input_bfd,
@@ -328,6 +341,8 @@ k1_elf32_relocate_section
   Elf_Internal_Rela *           relend;
   bfd_vma *local_got_offsets;
   struct k1_elf_link_hash_table *htab;
+  asection *sreloc;
+
   htab = k1_elf_hash_table (info);
   if (htab == NULL)
     return FALSE;
@@ -337,6 +352,9 @@ k1_elf32_relocate_section
   sym_hashes = elf_sym_hashes (input_bfd);
   relend     = relocs + input_section->reloc_count;
   local_got_offsets = elf_local_got_offsets (input_bfd);
+
+  sreloc = elf_section_data (input_section)->sreloc;
+
 
   for (rel = relocs; rel < relend; rel ++)
     {
@@ -351,7 +369,7 @@ k1_elf32_relocate_section
       int                          r_type;
       bfd_boolean                  gp_disp_p;
       
-      DPRINT("k1_elf32_relocate_section");
+      DPRINT("k1_elf64_relocate_section");
       
       r_type = ELF64_R_TYPE (rel->r_info);
 
@@ -466,7 +484,8 @@ k1_elf32_relocate_section
       switch (r_type)
         {
         case R_K1_32:
-          if (input_section->flags & SEC_ALLOC == 0)
+	case R_K1_64:
+          if ((input_section->flags & SEC_ALLOC) == 0)
             break;
           if ((info->shared
                && (h == NULL
@@ -484,7 +503,6 @@ k1_elf32_relocate_section
               Elf_Internal_Rela outrel;
               bfd_byte *loc;
               bfd_boolean skip, relocate;
-              asection *sreloc;
 
               /* When generating a shared object, these relocations
                  are copied into the output file to be resolved at run
@@ -518,8 +536,6 @@ k1_elf32_relocate_section
                   outrel.r_info = ELF64_R_INFO (0, R_K1_RELATIVE);
                 }
 
-              sreloc = elf_section_data (input_section)->sreloc;
-
               BFD_ASSERT (sreloc != NULL && sreloc->contents != NULL);
 
               loc = sreloc->contents;
@@ -535,14 +551,21 @@ k1_elf32_relocate_section
                 continue;
               }
                 break;
+
 	    /* Handle K1 specific things here */
         case R_K1_HI22:
         case R_K1_LO10:
+
+        case R_K1_HI27:
+        case R_K1_EXTEND6:
+        case R_K1_ELO10:
+
           if (gp_disp_p)
           {
             bfd_vma got_value;
             bfd_vma p;
 
+	    /* current bundle address */
             p = (input_section->output_section->vma
               + input_section->output_offset
               + rel->r_offset);
@@ -555,33 +578,55 @@ k1_elf32_relocate_section
              * start address, not our (the instruction word)
              * address, hence the +4 and +8
              */
-            if (r_type == R_K1_LO10)
+            if (r_type == R_K1_LO10 || r_type == R_K1_ELO10 || r_type == R_K1_EXTEND6)
               relocation = got_value - p + 4;
             else
               relocation = got_value - p + 8;
           }
           break;
+
 	case R_K1_TPREL_LO10:
 	case R_K1_TPREL_HI22:
 	case R_K1_TPREL_32:
+
+	case R_K1_TPREL64_EXTEND6:
+	case R_K1_TPREL64_ELO10:
+	case R_K1_TPREL64_HI27:
+	case R_K1_TPREL64_64:
+
 	    relocation -=  htab->elf.tls_sec->vma;
 	    break;
+
 	case R_K1_10_GPREL:
 	case R_K1_16_GPREL:
 	case R_K1_GPREL_LO10:
 	case R_K1_GPREL_HI22:
             relocation -=  k1_gp_base (output_bfd, info);
 	    break;
-    case R_K1_GOTOFF:
-    case R_K1_GOTOFF_HI22:
-    case R_K1_GOTOFF_LO10:
-        BFD_ASSERT (htab->sgotplt != NULL);
-        relocation -= htab->sgotplt->output_section->vma
+
+	case R_K1_GOTOFF:
+	case R_K1_GOTOFF_HI22:
+	case R_K1_GOTOFF_LO10:
+
+        case R_K1_GOTOFF64:
+        case R_K1_GOTOFF64_HI27:
+        case R_K1_GOTOFF64_EXTEND6:
+        case R_K1_GOTOFF64_LO10:
+
+	  BFD_ASSERT (htab->sgotplt != NULL);
+	  relocation -= htab->sgotplt->output_section->vma
             + htab->sgotplt->output_offset;
-        break;
+	  break;
+
 	case R_K1_GOT:
 	case R_K1_GOT_HI22:
 	case R_K1_GOT_LO10:
+
+        case R_K1_GOT64:
+        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_LO10:
+        case R_K1_GLOB_DAT64:
+
           if (htab->sgot == NULL)
                   abort ();
         {
@@ -665,6 +710,11 @@ k1_elf32_relocate_section
           
         case R_K1_PLT_HI22:
         case R_K1_PLT_LO10:
+
+        case R_K1_PLT64_HI27:
+        case R_K1_PLT64_LO10:
+        case R_K1_PLT64_EXTEND6:
+
         case R_K1_27_PCREL:
           /* Relocation is to the entry for this symbol in the
              procedure linkage table.  */
@@ -688,9 +738,11 @@ k1_elf32_relocate_section
                         + h->plt.offset);
           rel->r_addend = 0;
 	  break;
+
 	default:
 	    break;
         }
+
 
       /* Generic relocation */
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
@@ -1038,7 +1090,7 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 #define bfd_elf64_bfd_link_hash_table_create    k1_elf_link_hash_table_create
 
 #define elf_backend_can_gc_sections             1
-#define elf_backend_relocate_section            k1_elf32_relocate_section
+#define elf_backend_relocate_section            k1_elf64_relocate_section
 #define elf_backend_rela_normal                 1
 
 

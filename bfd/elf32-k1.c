@@ -1784,8 +1784,10 @@ k1_elf32_relocate_section
       switch (r_type)
         {
         case R_K1_32:
-          if (input_section->flags & SEC_ALLOC == 0)
+          if ((input_section->flags & SEC_ALLOC) == 0){
             break;
+	  }
+
           if ((info->shared
                && (h == NULL
                    || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
