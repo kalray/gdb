@@ -2211,40 +2211,97 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     return 1;
   }
   k1insn_t *cur_insn = bundle_insn[state->cur_insn];
-  switch(find_bundling(cur_insn)){
-  case Bundling_k1_ALL:
-    as_fatal("ALL bundling encountered, should have been handled before");
+  switch(find_reservation(cur_insn)){
+
+  case Reservation_k1_ALL:
+    as_fatal("ALL reservation encountered, should have been handled before");
     break;
-  case Bundling_k1_ALU:
-  case Bundling_k1_ALU_X:
+
+    //  case Bundling_k1_ALU:
+    //  case Bundling_k1_ALU_X:
+  case Reservation_k1_ALU_FULL:
+  case Reservation_k1_ALU_FULL_X:
+  case Reservation_k1b_ALU_FULL:
+  case Reservation_k1b_ALU_FULL_X:
     PUSH(alu1,state, states, states_sz, states_storage_sz);
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Bundling_k1_BCU:
+  case Reservation_k1_ALU_FULL_ODD:
+  case Reservation_k1b_ALU_FULL_ODD:
+    PUSH(alu0,state, states, states_sz, states_storage_sz);
+    break;
+
+  case Reservation_k1_BCU:
+  case Reservation_k1_BCU_TINY_TINY_MAU:
+    //  case Bundling_k1_BCU:
     PUSH(bcu,state, states, states_sz, states_storage_sz);
     break;
 
-  case Bundling_k1_ALUD:
-  case Bundling_k1_ALUD_Y:
-  case Bundling_k1_ALUD_Z:
+    //  case Bundling_k1_ALUD:
+  case Reservation_k1_ALUD_OPX:
+  case Reservation_k1_ALUD_OPX_ODD:
+  case Reservation_k1_ALUD_FULL:
+  case Reservation_k1_ALUD_FULL_ODD:
+  case Reservation_k1b_ALUD_OPX:
+  case Reservation_k1b_ALUD_OPX_ODD:
+
+    //  case Bundling_k1_ALUD_Y:
+  case Reservation_k1_ALUD_OPX_Y:
+  case Reservation_k1b_ALUD_OPX_Y:
+
+    
+    //  case Bundling_k1_ALUD_Z:
+  case Reservation_k1_ALUD_OPX_Z:
+  case Reservation_k1b_ALUD_OPX_Z:
+
     PUSH_ALUD(state, states, states_sz, states_storage_sz);
     break;    
 
-  case Bundling_k1_MAU:
-  case Bundling_k1_MAU_X:
+    //  case Bundling_k1_MAU:
+  case Reservation_k1_MAU:
+  case Reservation_k1_MAU_ACC:
+  case Reservation_k1_MAU_ACC_1:
+  case Reservation_k1_MAU_ACC_ODD:
+  case Reservation_k1b_MAU:
+  case Reservation_k1b_MAU_ACC:
+  case Reservation_k1b_MAU_ACC_ODD:
+
+    //  case Bundling_k1_MAU_X:
+  case Reservation_k1_MAU_X:
+  case Reservation_k1_MAU_ACC_X:
+  case Reservation_k1b_MAU_X:
+  case Reservation_k1b_MAU_ACC_X:
     PUSH(mau,state, states, states_sz, states_storage_sz);
     break;
 
-  case Bundling_k1_LSU:
-  case Bundling_k1_LSU_X:
+    //  case Bundling_k1_LSU:
+  case Reservation_k1_LSU:
+  case Reservation_k1_LSU_ACC:
+
+    //  case Bundling_k1_LSU_X:
+  case Reservation_k1_LSU_X:
+  case Reservation_k1_LSU_ACC_X:
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     break;
 
-  case Bundling_k1_TINY:
-  case Bundling_k1_TINY_X:
-    if (is_lite(cur_insn->opdef)){
-      if (is_mono_double(cur_insn->opdef)){
+    //  case Bundling_k1_TINY:
+  case Reservation_k1_ALU_TINY:
+  case Reservation_k1_ALU_LITE:
+  case Reservation_k1_ALUD_TINY:
+  case Reservation_k1_ALUD_LITE:
+
+
+    //  case Bundling_k1_TINY_X:
+  case Reservation_k1_ALU_TINY_X:
+  case Reservation_k1_ALU_LITE_X:
+  case Reservation_k1_ALUD_TINY_X:
+  case Reservation_k1_ALUD_LITE_X:
+
+    // FIXME : If we stick to scheduling class in the switch (was bundling class before),
+    // we can remove the is_* test and simply split in different cases.
+    if (is_lite(cur_insn)){
+      if (is_mono_double(cur_insn)){
 	// LITE MONODOUBLE
 	PUSH(mau,state, states, states_sz, states_storage_sz);
 	PUSH_ALUD(state, states, states_sz, states_storage_sz);
@@ -2271,6 +2328,9 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
         as_fatal("TINY instruction is neither a TINY or LITE\n");
     }
     break;
+  default:
+    as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
+	      cur_insn->opdef->as_op, find_reservation(cur_insn));
   }
   return 0;
 }
