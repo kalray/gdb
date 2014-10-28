@@ -1424,8 +1424,8 @@ k1_elf32_check_relocs (bfd * abfd,
 
   return TRUE;
 }
-/* Look through the relocs for a section during the first phase.  */
 
+/* Look through the relocs for a section during the first phase.  */
 static bfd_boolean
 k1_elf32_fdpic_check_relocs (bfd * abfd,
                  struct bfd_link_info *info,
