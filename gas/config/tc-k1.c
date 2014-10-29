@@ -1016,7 +1016,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
-                if(tok[jj].X_op == O_symbol) {
+                if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup) {
 		  return MATCH_NOT_FOUND;
                 }
 
@@ -1183,7 +1183,7 @@ insert_operand(k1insn_t * insn,
 	      insn->nfixups = 1;
 	    } else if (reloc_hi != BFD_RELOC_UNUSED 
 		       && reloc_lo != BFD_RELOC_UNUSED) {
-	      if (insn->len > 1 && reloc_extend == BFD_RELOC_UNUSED)
+	      if (insn->len > 2 && reloc_extend == BFD_RELOC_UNUSED)
 		as_fatal("only one immediate extension allowed !");
 	      insn->fixup[0].reloc = reloc_lo;
 	      insn->fixup[0].exp = reloc_arg;
@@ -1196,7 +1196,7 @@ insert_operand(k1insn_t * insn,
 		insn->nfixups = 2;
 	      }
 			
-	      insn->immx = immxcnt;
+
 	      immxbuf[immxcnt].insn[0] = 0;
 	      immxbuf[immxcnt].fixup[0].reloc = reloc_hi;
 	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
@@ -1206,6 +1206,8 @@ insert_operand(k1insn_t * insn,
 
 	      insn->len -= 1;
 	      immxcnt++;
+
+	      insn->immx = immxcnt;
 	      immx_ready = 1;
 	    }
 	  }
