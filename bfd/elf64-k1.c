@@ -31,8 +31,8 @@ static const bfd_vma plt_small_entry[PLT_ENTRY_SIZE] =
 //#define IS_FDPIC(bfd) ((bfd)->xvec == &bfd_elf32_k1_linux_vec)
 //#define IS_FDPIC(bfd) (0)
 
-static reloc_howto_type* k1_elf32_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
-static reloc_howto_type* k1_elf32_reloc_name_lookup (bfd *, const char *);
+static reloc_howto_type* k1_elf64_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+static reloc_howto_type* k1_elf64_reloc_name_lookup (bfd *, const char *);
 
 K1_INFO_TO_HOWTO_DEF(64)
 K1_RELOC_NAME_LOOKUP_DEF(64)
