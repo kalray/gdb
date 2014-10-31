@@ -948,13 +948,13 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
 }
 
 static int
-has_relocation_of_size(k1bfield *opnd, int size) {
+has_relocation_of_size(k1bfield *opnd, int is_symbol, int size) {
   int i;
   for(i=0; i<opnd->reloc_nb; i++) {
     if(opnd->relocs[i]->bitsize == size) {
       return 1;
     }
-    if(opnd->relocs[i]->relative != K1_REL_ABS) {
+    if(is_symbol && opnd->relocs[i]->relative != K1_REL_ABS) {
       return 1;
     }
   }
@@ -1027,12 +1027,12 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	if(is_immediate) {
 	  if(tok[jj].X_op == O_symbol) {
 	    int reloc_size = (k1_arch_size == 64) ? 43 : 32;
-	    if(! has_relocation_of_size(op->format[jj], reloc_size)) {
+	    if(! has_relocation_of_size(op->format[jj], 1, reloc_size)) {
 	      return MATCH_NOT_FOUND;
 	    }
 	  }
 	  if (tok[jj].X_op == O_pseudo_fixup) {
-	    if(!has_relocation_of_size( op->format[jj], k1_reloc_size_insn(tok[jj].X_op_symbol))) {
+	    if(!has_relocation_of_size( op->format[jj], 0, k1_reloc_size_insn(tok[jj].X_op_symbol))) {
 	      return MATCH_NOT_FOUND;
 	    }
 	  }
