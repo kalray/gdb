@@ -765,7 +765,7 @@ valueT md_chars_to_number(char *buf, int n){
 }
 
 static int
-real_k1_reloc_size_insn(symbolS *sym) {
+k1_reloc_size_insn(symbolS *sym) {
   int i;
   reloc_howto_type *howto;
   int size = 0;
@@ -947,6 +947,20 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     return -1;
 }
 
+static int
+has_relocation_of_size(k1bfield *opnd, int size) {
+  int i;
+  for(i=0; i<opnd->reloc_nb; i++) {
+    if(opnd->relocs[i]->bitsize == size) {
+      return 1;
+    }
+    if(opnd->relocs[i]->relative != K1_REL_ABS) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /*
  * Check input expressions against required operands
  */
@@ -998,6 +1012,9 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     for (jj = 0; jj < ntok; jj++) {
         int operand_type = op->format[jj]->type;
         char *operand_type_name = op->format[jj]->tname;
+	int has_relocation = (op->format[jj]->reloc_nb > 0);
+	int is_immediate = (op->format[jj]->reg_nb == 0);
+
         opdef = op->format[jj];
         int *valid_regs = op->format[jj]->regs;
 
@@ -1006,6 +1023,21 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	    (valid_regs == NULL || !valid_regs[k1_registers[tok[jj].X_add_number].id])) {
 	  return MATCH_NOT_FOUND;
 	}
+
+	if(is_immediate) {
+	  if(tok[jj].X_op == O_symbol) {
+	    int reloc_size = (k1_arch_size == 64) ? 43 : 32;
+	    if(! has_relocation_of_size(op->format[jj], reloc_size)) {
+	      return MATCH_NOT_FOUND;
+	    }
+	  }
+	  if (tok[jj].X_op == O_pseudo_fixup) {
+	    if(!has_relocation_of_size( op->format[jj], k1_reloc_size_insn(tok[jj].X_op_symbol))) {
+	      return MATCH_NOT_FOUND;
+	    }
+	  }
+	}
+
 
 #define SRF_REGCLASSES(core)					       \
 	case RegClass_ ## core ## _systemReg:			       \
@@ -1036,44 +1068,16 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_unsigned32:
             case Immediate_k1_unsigned32L:
             case Immediate_k1_signed32M:
-
             case Immediate_k1_signed8:
-
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
             case Immediate_k1_signed10:
-	      if(tok[jj].X_op == O_symbol) {
-		return MATCH_NOT_FOUND;
-	      }
-	      if (tok[jj].X_op == O_pseudo_fixup  && real_k1_reloc_size_insn(tok[jj].X_op_symbol) != op->format[jj]->width) {
-		return MATCH_NOT_FOUND;
-	      }
-
             case Immediate_k1_signed37:
-	      // a symbol may not always fit, reject these formats
-	      if(k1_arch_size == 64
-		 && (tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup)){
-                    return MATCH_NOT_FOUND;
-                }
-
             case Immediate_k1_signed32:
-	      // a 64bits symbol may not fit on 32bits
-                if(k1_arch_size == 64
-		   && (tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup)){
-                    return MATCH_NOT_FOUND;
-                }
-
-		/* used in relative branch */
 	    case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel27:
-
-	      /* used in load/store offset in 32/64 bits */
             case Immediate_k1_signed27:
-
-	    /*   /\* used in conunction with tprel *\/ */
-            /* case Immediate_k1_signed16: */
-	      
             case Immediate_k1_signed43:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
