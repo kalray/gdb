@@ -764,6 +764,31 @@ valueT md_chars_to_number(char *buf, int n){
     return val;
 }
 
+static int
+real_k1_reloc_size_insn(symbolS *sym) {
+  int i;
+  reloc_howto_type *howto;
+  int size = 0;
+  for (i = 0; i < NELEMS(pseudo_func); i++){
+    if (sym == pseudo_func[i].u.sym){
+      if (pseudo_func[i].reloc_lo != BFD_RELOC_UNUSED){
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo);
+	size += howto->bitsize;
+      }
+      if (pseudo_func[i].reloc_hi != BFD_RELOC_UNUSED){
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo);
+	size += howto->bitsize;
+      }
+      
+      if (pseudo_func[i].reloc_extend != BFD_RELOC_UNUSED){
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo);
+	size += howto->bitsize;
+      }
+    }
+    return size;
+  }
+}
+
 static void
 real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
         bfd_reloc_code_real_type *reloc_hi,
@@ -1016,9 +1041,13 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
-                if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup) {
-		  return MATCH_NOT_FOUND;
-                }
+            case Immediate_k1_signed10:
+	      if(tok[jj].X_op == O_symbol) {
+		return MATCH_NOT_FOUND;
+	      }
+	      if (tok[jj].X_op == O_pseudo_fixup  && real_k1_reloc_size_insn(tok[jj].X_op_symbol) != op->format[jj]->width) {
+		return MATCH_NOT_FOUND;
+	      }
 
             case Immediate_k1_signed37:
 	      // a symbol may not always fit, reject these formats
@@ -1040,7 +1069,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_pcrel27:
 
 	      /* used in load/store offset in 32/64 bits */
-            case Immediate_k1_signed10:
             case Immediate_k1_signed27:
 
 	    /*   /\* used in conunction with tprel *\/ */
@@ -1206,7 +1234,6 @@ insert_operand(k1insn_t * insn,
 
 	      insn->len -= 1;
 	      immxcnt++;
-
 	      insn->immx = immxcnt;
 	      immx_ready = 1;
 	    }
@@ -1261,7 +1288,6 @@ insert_operand(k1insn_t * insn,
 
 		case Immediate_k1_signed32:
 
-		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1273,6 +1299,7 @@ insert_operand(k1insn_t * insn,
 		  // from insn and must not be emited twice
 		  insn->len -= 1;
 		  immxcnt++;
+		  insn->immx = immxcnt;
 		  immx_ready = 1;
 		  // fallthough
 		  
@@ -1291,7 +1318,6 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 
-		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_HI27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1303,6 +1329,7 @@ insert_operand(k1insn_t * insn,
 		  // from insn and must not be emited twice
 		  insn->len -= 1;
 		  immxcnt++;
+		  insn->immx = immxcnt;
 		  immx_ready = 1;
 		  break;
 		  
@@ -1316,7 +1343,6 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[1].where = 0;
 		  insn->nfixups = 2;
 		  /* } */
-		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = insn->insn[1];
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1326,8 +1352,9 @@ insert_operand(k1insn_t * insn,
 
 		  // decrement insn->len: immx part handled separately
 		  // from insn and must not be emited twice
-		  insn->len -= 1;
 		  immxcnt++;
+		  insn->immx = immxcnt;
+		  insn->len -= 1;
 		  immx_ready = 1;
 		  break;
 
@@ -1393,16 +1420,16 @@ assemble_insn( const k1opc_t * opcode,
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
 	  insn->len -= 1; 
-	  insn->immx = immxcnt;
 	  immxcnt++;
+	  insn->immx = immxcnt;
         }
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX1){
 	  immxbuf[immxcnt].insn[0] = insn->insn[i];
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
 	  insn->len -= 1;
-	  insn->immx64 = immxcnt;
 	  immxcnt++;
+	  insn->immx64 = immxcnt;
         }
       }
     }
