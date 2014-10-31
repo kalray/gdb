@@ -2734,12 +2734,16 @@ md_assemble(char *s)
             for(i=0; i < 4; i++){
               for (j = 0; j < immxcnt; j++) {
                   if(k1_exunum2_fld(immxbuf[j].insn[0]) == i){
+		    assert(immxbuf[j].written == 0);
                       emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
                       immxbuf[j].written = 1;
                       entry++;
                   }
               }
             }
+	    if (entry != immxcnt){
+	      as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
+	    }
 
             // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
