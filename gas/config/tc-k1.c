@@ -776,17 +776,19 @@ k1_reloc_size_insn(symbolS *sym) {
 	size += howto->bitsize;
       }
       if (pseudo_func[i].reloc_hi != BFD_RELOC_UNUSED){
-	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo);
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_hi);
 	size += howto->bitsize;
       }
       
       if (pseudo_func[i].reloc_extend != BFD_RELOC_UNUSED){
-	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo);
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_extend);
 	size += howto->bitsize;
       }
+      return size;
     }
-    return size;
   }
+  as_bad("[Relocation] : bad symbol.\n");
+  return -1;
 }
 
 static void
@@ -1229,6 +1231,7 @@ insert_operand(k1insn_t * insn,
 	      }
 			
 
+	      insn->immx = immxcnt;
 	      immxbuf[immxcnt].insn[0] = 0;
 	      immxbuf[immxcnt].fixup[0].reloc = reloc_hi;
 	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
@@ -1238,7 +1241,6 @@ insert_operand(k1insn_t * insn,
 
 	      insn->len -= 1;
 	      immxcnt++;
-	      insn->immx = immxcnt;
 	      immx_ready = 1;
 	    }
 	  }
@@ -1292,6 +1294,7 @@ insert_operand(k1insn_t * insn,
 
 		case Immediate_k1_signed32:
 
+		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1303,7 +1306,6 @@ insert_operand(k1insn_t * insn,
 		  // from insn and must not be emited twice
 		  insn->len -= 1;
 		  immxcnt++;
-		  insn->immx = immxcnt;
 		  immx_ready = 1;
 		  // fallthough
 		  
@@ -1322,6 +1324,7 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 
+		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_HI27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1333,7 +1336,6 @@ insert_operand(k1insn_t * insn,
 		  // from insn and must not be emited twice
 		  insn->len -= 1;
 		  immxcnt++;
-		  insn->immx = immxcnt;
 		  immx_ready = 1;
 		  break;
 		  
@@ -1347,6 +1349,7 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[1].where = 0;
 		  insn->nfixups = 2;
 		  /* } */
+		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = insn->insn[1];
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1357,7 +1360,6 @@ insert_operand(k1insn_t * insn,
 		  // decrement insn->len: immx part handled separately
 		  // from insn and must not be emited twice
 		  immxcnt++;
-		  insn->immx = immxcnt;
 		  insn->len -= 1;
 		  immx_ready = 1;
 		  break;
@@ -1420,20 +1422,20 @@ assemble_insn( const k1opc_t * opcode,
     if (!immx_ready){
       for(i=0; i < opcode->codewords; i++){
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX0){
+	  insn->immx = immxcnt;
 	  immxbuf[immxcnt].insn[0] = insn->insn[i];
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
 	  insn->len -= 1; 
 	  immxcnt++;
-	  insn->immx = immxcnt;
         }
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX1){
+	  insn->immx64 = immxcnt;
 	  immxbuf[immxcnt].insn[0] = insn->insn[i];
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
 	  insn->len -= 1;
 	  immxcnt++;
-	  insn->immx64 = immxcnt;
         }
       }
     }
@@ -2107,6 +2109,7 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 }
 
                 // Tag EXU on IMMX
+                D(stderr, "bundle_insn[%d]->immx ? %d\n",j,bundle_insn[j]->immx);
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
                     D(stderr, "insn : %#x (%s), immx : %#x (%d), tag %d\n",
@@ -2115,6 +2118,7 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 		      bundle_insn[j]->immx,
 		      tag);
                 }
+                D(stderr, "bundle_insn[%d]->immx64 ? %d\n",j,bundle_insn[j]->immx64);
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
                 }
