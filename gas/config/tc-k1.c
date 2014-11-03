@@ -2772,6 +2772,8 @@ md_assemble(char *s)
 
         insncnt = 0;
         immxcnt = 0;
+	memset(immxbuf, 0, sizeof(immxbuf));
+
         return;
     }
 
