@@ -183,6 +183,9 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     int print_thread_events_save = print_thread_events;
     char *host, *port, *tar_remote_cmd;
 
+    if (!args)
+        args = "";
+
     port = strchr (args, ':');
     if (port) {
         *port = 0;
@@ -211,7 +214,21 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     batch_silent = 1;
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
-    execute_command (tar_remote_cmd, 0);
+
+    volatile struct gdb_exception ex;
+
+    TRY_CATCH (ex, RETURN_MASK_ALL)
+    {
+        execute_command (tar_remote_cmd, 0);
+    }
+    if (ex.reason < 0)
+    {
+        observer_detach_new_thread (new_thread_observer);
+        batch_silent = saved_batch_silent;
+        print_thread_events = print_thread_events_save;
+        throw_exception (ex);
+    }
+
     /* We need to tell the debugger to fake a synchronous
        command. This has already been done at the upper level when the
        main loop executes the "run" command, but the execute_command
