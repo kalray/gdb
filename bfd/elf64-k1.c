@@ -534,6 +534,7 @@ k1_elf64_relocate_section
                   /* This symbol is local, or marked to become local.  */
                   relocate = TRUE;
                   outrel.r_info = ELF64_R_INFO (0, R_K1_RELATIVE);
+		  outrel.r_addend = relocation + rel->r_addend;
                 }
 
               BFD_ASSERT (sreloc != NULL && sreloc->contents != NULL);
@@ -541,7 +542,7 @@ k1_elf64_relocate_section
               loc = sreloc->contents;
               loc += sreloc->reloc_count++ * sizeof (Elf64_External_Rela);
 
-              bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+              bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
 
               /* If this reloc is against an external symbol, we do
                  not want to fiddle with the addend.  Otherwise, we
@@ -874,8 +875,9 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
                       + got_offset);
       
       rel.r_info = ELF64_R_INFO (h->dynindx, R_K1_JMP_SLOT);
+      rel.r_addend = 0;
       loc = relplt->contents + plt_index * sizeof (Elf64_External_Rela);
-      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      bfd_elf32_swap_reloca_out (output_bfd, &rel, loc);
 
       if (!h->def_regular)
         {

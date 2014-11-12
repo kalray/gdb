@@ -1829,13 +1829,16 @@ k1_elf32_relocate_section
                        && h->dynindx != -1
                        && (!info->shared
                            || !SYMBOLIC_BIND (info, h)
-                           || !h->def_regular))
+                           || !h->def_regular)){
                 outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
+		outrel.r_addend = rel->r_addend;
+	      }
               else
                 {
                   /* This symbol is local, or marked to become local.  */
                   relocate = TRUE;
                   outrel.r_info = ELF32_R_INFO (0, R_K1_RELATIVE);
+		  outrel.r_addend = relocation + rel->r_addend;
                 }
 
               sreloc = elf_section_data (input_section)->sreloc;
@@ -1845,7 +1848,7 @@ k1_elf32_relocate_section
               loc = sreloc->contents;
               loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rela);
 
-              bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+              bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
 
               /* If this reloc is against an external symbol, we do
                  not want to fiddle with the addend.  Otherwise, we
@@ -2294,8 +2297,10 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
                       + got_offset);
       
       rel.r_info = ELF32_R_INFO (h->dynindx, R_K1_JMP_SLOT);
+
+      rel.r_addend = 0;
       loc = relplt->contents + plt_index * sizeof (Elf32_External_Rela);
-      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      bfd_elf32_swap_reloca_out (output_bfd, &rel, loc);
 
       if (!h->def_regular)
         {
