@@ -10,6 +10,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "toolroot"      => "",
+                        "toolchain"     => {"type" => "keywords", "keywords" => [:default, :bare, :rtems, :linux, :embedded], "default" => "default", "help" => "Toolchain type." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"        => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
                         "prefix"         => ["devimage", "Install prefix"],
@@ -51,7 +52,7 @@ prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 b.default_targets = [install]
 
 cores      = options["cores"]
-
+toolchain  = options["toolchain"].to_s
 
 program_prefix = "#{arch}-"
 family_prefix = "#{processor_path}/#{arch}-family"
@@ -59,6 +60,8 @@ family_prefix = "#{processor_path}/#{arch}-family"
 skip_build = false
 skip_valid = false
 skip_install = false
+
+build_valid.skip = true if(toolchain == "bare")
 
 case arch
 when "k1"
