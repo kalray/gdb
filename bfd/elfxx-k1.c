@@ -23,6 +23,16 @@
 /*   unsigned int k1_reloc_val; */
 /* }; */
 
+/*
+ * Defined in elf32-k1.c
+ */
+extern const size_t plt_entry_k1a_size;
+extern const size_t plt_entry_k1b32_size;
+
+/*
+ * Defined in elf64-k1.c
+ */
+extern const size_t plt_entry_k1b64_size;
 
 const struct k1_reloc_map k1_reloc_map[]=
 {
@@ -80,6 +90,7 @@ const struct k1_reloc_map k1_reloc_map[]=
 
   { BFD_RELOC_K1_GOT64_LO10, R_K1_GOT64_LO10 },
   { BFD_RELOC_K1_GOT64_HI27, R_K1_GOT64_HI27 },
+  { BFD_RELOC_K1_GOT64_EXTEND6, R_K1_GOT64_EXTEND6 },
 
   { BFD_RELOC_K1_GOT64,        R_K1_GOT64 },
 
@@ -89,6 +100,7 @@ const struct k1_reloc_map k1_reloc_map[]=
 
   { BFD_RELOC_K1_S37_LO10, R_K1_S37_LO10},
   { BFD_RELOC_K1_S37_HI27, R_K1_S37_HI27},
+  { BFD_RELOC_K1_JMP_SLOT64, R_K1_JMP_SLOT64},
 /*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
   { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
 };
@@ -138,20 +150,22 @@ k1_elf_link_hash_table_create (bfd *abfd)
   if (ABI_64_P (abfd))
     {
       ret->bytes_per_rela = sizeof (Elf64_External_Rela);
-      /* ret->dtpoff_reloc = R_TILEGX_TLS_DTPOFF64; */
-      /* ret->dtpmod_reloc = R_TILEGX_TLS_DTPMOD64; */
-      /* ret->tpoff_reloc = R_TILEGX_TLS_TPOFF64; */
-      /* ret->r_info = tilegx_elf_r_info_64; */
-      /* ret->r_symndx = tilegx_elf_r_symndx_64; */
-      /* ret->dynamic_interpreter = ELF64_DYNAMIC_INTERPRETER; */
-      /* ret->put_word = tilegx_put_word_64; */
+      ret->plt_entry_size = plt_entry_k1b64_size;
+      ret->bytes_per_address = 8;
     }
   else
 #endif
     {
       ret->bytes_per_rela = sizeof (Elf32_External_Rela);
+      ret->plt_entry_size = plt_entry_k1a_size;
+      ret->bytes_per_address = 4;
+      // if the PLTs differ, then we should check the machine
+      BFD_ASSERT(plt_entry_k1a_size == plt_entry_k1b32_size);
     }
-  
+
+  // first PLT slot is reserved.
+  //  ret->plt_header_size = ret->plt_entry_size;
+
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
                                       sizeof (struct k1_elf_link_hash_entry),
                                       K1_ELF_DATA))
@@ -161,6 +175,44 @@ k1_elf_link_hash_table_create (bfd *abfd)
     }
 
   return &ret->elf.root;
+}
+
+/* Return address for Ith PLT stub in section PLT, for relocation REL
+ or (bfd_vma) -1 if it should not be included. */
+
+bfd_vma
+k1_plt_sym_val (bfd_vma i, const asection *plt,
+	 const arelent *rel ATTRIBUTE_UNUSED)
+{
+  bfd *abfd = plt->owner;
+  int is_64 = ABI_64_P(abfd);
+  int is_k1a = bfd_get_mach(abfd) == bfd_mach_k1dp
+    || bfd_get_mach(abfd) == bfd_mach_k1io;
+
+  int is_k1b32 = bfd_get_mach(abfd) == bfd_mach_k1bdp
+    || bfd_get_mach(abfd) == bfd_mach_k1bio;
+
+  int is_k1b64 = bfd_get_mach(abfd) == bfd_mach_k1bdp_64
+    || bfd_get_mach(abfd) == bfd_mach_k1bio_64;
+
+  bfd_reloc_code_real_type plt_jmp_slot_type = is_k1b64 ? R_K1_JMP_SLOT64 : R_K1_JMP_SLOT;
+  unsigned int plt_header_size = 0;
+  unsigned int plt_entry_size = 0;
+
+  if (is_k1a){
+    plt_entry_size = plt_entry_k1a_size;
+  } else if (is_k1b32) {
+      plt_entry_size = plt_entry_k1b32_size;
+  } else if (is_k1b64) {
+      plt_entry_size = plt_entry_k1b64_size;
+  }
+
+  plt_header_size = plt_entry_size;
+  
+  if (rel->howto->type != plt_jmp_slot_type)
+        return (bfd_vma)-1;
+
+    return plt->vma + plt_header_size + i*plt_entry_size;
 }
 
 /* Update the got entry reference counts for the section being removed.  */
@@ -517,13 +569,14 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, info->shared, h))
         {
-          asection *s = htab->splt;
+          asection *splt = htab->splt;
 
           /* The first entry in .plt is reserved.  */
-          if (s->size == 0)
-            s->size =  PLT_ENTRY_SIZE;
+          if (splt->size == 0){
+            splt->size = k1_elf_plt_bytes(htab); //PLT_ENTRY_SIZE;
+	  }
 
-          h->plt.offset = s->size;
+          h->plt.offset = splt->size;
 
           /* If this symbol is not defined in a regular file, and we are
              not generating a shared library, then set the symbol to this
@@ -533,16 +586,16 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
           if (! info->shared
               && !h->def_regular)
             {
-              h->root.u.def.section = s;
+              h->root.u.def.section = splt;
               h->root.u.def.value = h->plt.offset;
             }
 
           /* Make room for this entry.  */
-          s->size +=  PLT_ENTRY_SIZE;
+          splt->size +=  k1_elf_plt_bytes(htab); //PLT_ENTRY_SIZE;
 
           /* We also need to make an entry in the .got.plt section, which
              will be placed in the .got section by the linker script.  */
-          htab->sgotplt->size += 4;
+          htab->sgotplt->size += k1_elf_got_entry_size(htab);
 
           /* We also need to make an entry in the .rel.plt section.  */
           htab->srelplt->size += k1_elf_rela_bytes (htab); //sizeof (Elf32_External_Rela);
@@ -579,7 +632,7 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 
       s = htab->sgot;
       h->got.offset = s->size;
-      s->size += 4;
+      s->size += k1_elf_got_entry_size(htab);
       htab->srelgot->size += k1_elf_rela_bytes (htab); //sizeof (Elf32_External_Rela);
     }
   else
@@ -1615,18 +1668,6 @@ k1_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   return TRUE;
 }
 
-/* Return address for Ith PLT stub in section PLT, for relocation REL
- or (bfd_vma) -1 if it should not be included. */
-
-bfd_vma
-k1_plt_sym_val (bfd_vma i, const asection *plt,
-	 const arelent *rel ATTRIBUTE_UNUSED)
-{
-    if (rel->howto->type != R_K1_JMP_SLOT)
-        return (bfd_vma)-1;
-
-    return plt->vma + 16 + i*16;
-}
 
 
 /* Determine the positive and negative ranges to be used by each

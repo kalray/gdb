@@ -14,8 +14,6 @@
 #define K1_MACH_MASK 0x0000000f
 
 /* The same in PIC */
-#define PLT_ENTRY_SIZE          16
-#define PLT_SMALL_ENTRY_SIZE     16
 
 #ifdef BFD64
 #define ELF_R_SYM(bfd, i)					\
@@ -136,6 +134,7 @@ elf_k1_final_write_processing (bfd *abfd,
 bfd_boolean
 elf_k1_object_p (bfd *abfd);
 
+#define PLT_SIZE(a) (4*sizeof(a)/sizeof(bfd_vma))
 bfd_vma
 k1_plt_sym_val (bfd_vma i, const asection *plt,
 		const arelent *rel ATTRIBUTE_UNUSED);
@@ -341,6 +340,11 @@ struct k1_elf_link_hash_table
   struct _k1fdpic_dynamic_got_info *g;
 
   int bytes_per_rela;
+
+  //  unsigned int plt_header_size;
+  unsigned int plt_entry_size;
+
+  int bytes_per_address;
 };
 
 /* Get the ELF linker hash table from a link_info structure.  */
@@ -352,6 +356,12 @@ struct k1_elf_link_hash_table
 /* The size of an external RELA relocation.  */
 #define k1_elf_rela_bytes(htab) \
   ((htab)->bytes_per_rela)
+
+/* The size of a PLT entry.  */
+#define k1_elf_plt_bytes(htab) \
+  ((htab)->plt_entry_size)
+
+#define k1_elf_got_entry_size(htab)  ((htab)->bytes_per_address)
 
 #define k1fdpic_relocs_info(info) \
   (k1_elf_hash_table (info)->relocs_info)
@@ -565,7 +575,7 @@ static void k1_elf ## size ## _info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, \
                                   Elf_Internal_Rela *dst){ \
   unsigned int r; \
   r = ELF## size ##_R_TYPE (dst->r_info); \
-  BFD_ASSERT (r < (unsigned int) R_K1_max); \
+  BFD_ASSERT (r < (unsigned int) R_K1_max);		\
   cache_ptr->howto = &elf ## size ##_k1_howto_table[r]; \
 }
 

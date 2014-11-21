@@ -18,21 +18,23 @@
 #define PLT_MIN_ENTRY_SIZE      16
 #define PLT_FULL_ENTRY_SIZE     20
 
-static const bfd_vma plt_small_entry_k1a[PLT_ENTRY_SIZE] =
+static const bfd_vma plt_small_entry_k1a[] =
   {
     /* get $r14 = $pc     ;; */      0x00700380,
     /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
                                      0x18000000,
     /* igoto $r9          ;; */      0x00114009,
   };
+const size_t plt_entry_k1a_size = PLT_SIZE(plt_small_entry_k1a);
 
-static const bfd_vma plt_small_entry_k1b32[PLT_ENTRY_SIZE] =
+const bfd_vma plt_small_entry_k1b32[] = 
   {
     /* get $r14 = $pc     ;; */      0x01000380,
     /* lw $r9 = 0[$r14]   ;; */      0xac24000e,
                                      0x18000000,
     /* igoto $r9          ;; */      0x00114009,
   };
+const size_t plt_entry_k1b32_size = PLT_SIZE(plt_small_entry_k1b32);
 
 /* PLT templates for (FD)PIC ABI */
 static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
@@ -43,7 +45,6 @@ static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
     /* lw $r14 = 4[$r14]  ;; */ 0x2438010e,
     /* igoto $r9          ;; */ 0x00114009,
   };
-
 
 static bfd_boolean
 k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
@@ -1846,7 +1847,7 @@ k1_elf32_relocate_section
               BFD_ASSERT (sreloc != NULL && sreloc->contents != NULL);
 
               loc = sreloc->contents;
-              loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rela);
+              loc += sreloc->reloc_count++ * k1_elf_rela_bytes(htab);
 
               bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
 
@@ -1937,7 +1938,7 @@ k1_elf32_relocate_section
 
                       loc = htab->srelgot->contents;
                       loc +=
-                        htab->srelgot->reloc_count++ * sizeof (Elf32_External_Rela);
+                        htab->srelgot->reloc_count++ * k1_elf_rela_bytes(htab);
                       bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
                     }
                   local_got_offsets[r_symndx] |= 1;
@@ -2244,33 +2245,39 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
 
          For static executables, we don't reserve anything.  */
 
-      plt_index = h->plt.offset / PLT_ENTRY_SIZE - 1;
-      got_offset = (plt_index + 3) * 4;
+      /* plt_index = h->plt.offset / PLT_ENTRY_SIZE - 1; */
+      /* got_offset = (plt_index + 3) * 4; */
 
       /* Fill in the entry in the procedure linkage table.  */
         {
           int i;
+	  unsigned int loc_plt_size;
           const bfd_vma *template;
 	  switch(output_bfd->arch_info->mach){
 	  case bfd_mach_k1dp:
 	  case bfd_mach_k1io:
 	    template = plt_small_entry_k1a;
+	    loc_plt_size = plt_entry_k1a_size;
 	    break;
 	  case bfd_mach_k1bdp:
 	  case bfd_mach_k1bio:
 	    template = plt_small_entry_k1b32;
+	    loc_plt_size = plt_entry_k1b32_size;
 	    break;
 	  default:
 	    (*_bfd_error_handler)
 	      ("can't make a plt entry for unknown mach: %d", output_bfd->arch_info->mach);
 	    return FALSE;
 	  }
+	  plt_index = h->plt.offset / loc_plt_size - 1;
+	  got_offset = (plt_index + 3) * 4;
+
           bfd_vma pcgotoffset = got->output_section->vma + gotplt->output_offset +got_offset;
 
           pcgotoffset -= plt->output_section->vma + plt->output_offset + h->plt.offset;
 
           BFD_ASSERT(plt->contents != NULL);
-          for (i = 0; i < (PLT_SMALL_ENTRY_SIZE / 4); ++i)
+          for (i = 0; i < (loc_plt_size / 4); ++i)
             bfd_put_32(output_bfd, template[i], plt->contents + h->plt.offset + (4*i));
           
           _bfd_final_link_relocate (elf32_k1_howto_table + R_K1_LO10,
@@ -2299,7 +2306,7 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
       rel.r_info = ELF32_R_INFO (h->dynindx, R_K1_JMP_SLOT);
 
       rel.r_addend = 0;
-      loc = relplt->contents + plt_index * sizeof (Elf32_External_Rela);
+      loc = relplt->contents + plt_index * k1_elf_rela_bytes(htab);
       bfd_elf32_swap_reloca_out (output_bfd, &rel, loc);
 
       if (!h->def_regular)
@@ -2364,7 +2371,7 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
       bfd_put_32 (output_bfd, (bfd_vma) 0,
                       sgot->contents + (h->got.offset & ~(bfd_vma) 1));
       loc = srela->contents;
-      loc += srela->reloc_count++ * sizeof (Elf32_External_Rela);
+      loc += srela->reloc_count++ * k1_elf_rela_bytes(htab);
       bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
     }
 
@@ -2474,7 +2481,7 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
             }
             
         }
-        elf_section_data (htab->splt->output_section)->this_hdr.sh_entsize = 4;
+        elf_section_data (htab->splt->output_section)->this_hdr.sh_entsize = htab->plt_entry_size;
     }
         
   if (htab->sgotplt && htab->sgotplt->size > 0)
@@ -2484,15 +2491,15 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
                    (sdyn == NULL ? 0
                     : sdyn->output_section->vma + sdyn->output_offset),
                       htab->sgotplt->contents);
-      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + 4);
-      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + 8);
+      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + htab->bytes_per_address);
+      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + htab->bytes_per_address * 2);
       
 
-      elf_section_data (htab->sgotplt->output_section)->this_hdr.sh_entsize = 4;
+      elf_section_data (htab->sgotplt->output_section)->this_hdr.sh_entsize = htab->bytes_per_address;
     }
 
   if (htab->sgot && htab->sgot->size > 0)
-    elf_section_data (htab->sgot->output_section)->this_hdr.sh_entsize = 4;
+    elf_section_data (htab->sgot->output_section)->this_hdr.sh_entsize = htab->bytes_per_address;
     
 
   return TRUE;
@@ -3110,7 +3117,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_backend_plt_readonly                1
 #define elf_backend_can_refcount                1
 #define elf_backend_want_plt_sym                0
-#define elf_backend_got_header_size             12
+#define elf_backend_got_header_size             (4*3)
 
 
 #define elf_backend_gc_mark_hook                _bfd_elf_gc_mark_hook

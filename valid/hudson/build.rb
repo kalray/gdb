@@ -157,7 +157,12 @@ b.target("#{variant}_build") do
 
     additional_flags = "CFLAGS=-g"
 
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\"  -j#{jobs} all",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' " +
+                  " ARCH=#{arch} " +
+                  " #{additional_flags} " +
+                  " KALRAY_VERSION=\"#{version}\" " +
+                  "bfdincludedir=#{} " +
+                  " -j#{jobs} all",
         :skip=>skip_build)
 
   end
