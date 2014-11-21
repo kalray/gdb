@@ -61,6 +61,26 @@ K1_INFO_TO_HOWTO_DEF(32)
 K1_RELOC_NAME_LOOKUP_DEF(32)
 K1_RELOC_TYPE_LOOKUP_DEF(32)
 
+struct bfd_link_hash_table *
+k1_elf32_link_hash_table_create (bfd *abfd)
+{
+  struct k1_elf_link_hash_table *ret;
+  ret = k1_elfxx_link_hash_table_create(abfd);
+  
+  if (ret == NULL)
+    return NULL;
+
+  ret->bytes_per_rela = sizeof (Elf32_External_Rela);
+  ret->plt_entry_size = plt_entry_k1a_size;
+  ret->bytes_per_address = 4;
+
+  /* if the PLTs differ, then we should check the machine */
+  BFD_ASSERT(plt_entry_k1a_size == plt_entry_k1b32_size);
+
+  return &ret->elf.root;
+}
+
+
 
 static bfd_boolean
 k1_elf32_fdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
@@ -3106,7 +3126,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_info_to_howto                       k1_elf32_info_to_howto
 #define bfd_elf32_bfd_is_target_special_symbol  elf32_k1_is_target_special_symbol
 
-#define bfd_elf32_bfd_link_hash_table_create    k1_elf_link_hash_table_create
+#define bfd_elf32_bfd_link_hash_table_create    k1_elf32_link_hash_table_create
 
 #define elf_backend_can_gc_sections             1
 #define elf_backend_relocate_section            k1_elf32_relocate_section

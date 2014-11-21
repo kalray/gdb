@@ -54,8 +54,8 @@ extern void k1_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 extern bfd_boolean
 elf32_k1_is_target_special_symbol (bfd * abfd ATTRIBUTE_UNUSED, asymbol * sym);
 
-extern struct bfd_link_hash_table *
-k1_elf_link_hash_table_create (bfd *abfd);
+extern struct k1_elf_link_hash_table *
+k1_elfxx_link_hash_table_create (bfd *abfd);
 
 bfd_boolean
 k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat);
@@ -341,7 +341,7 @@ struct k1_elf_link_hash_table
 
   int bytes_per_rela;
 
-  //  unsigned int plt_header_size;
+  /*  unsigned int plt_header_size;  */
   unsigned int plt_entry_size;
 
   int bytes_per_address;

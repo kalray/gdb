@@ -137,15 +137,17 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
 
 /* Create a k1 ELF linker hash table.  */
 
-struct bfd_link_hash_table *
-k1_elf_link_hash_table_create (bfd *abfd)
+struct k1_elf_link_hash_table *
+k1_elfxx_link_hash_table_create (bfd *abfd)
 {
   struct k1_elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct k1_elf_link_hash_table);
 
   ret = (struct k1_elf_link_hash_table *) bfd_zmalloc (amt);
+ 
   if (ret == NULL)
     return NULL;
+
 #ifdef BFD64
   if (ABI_64_P (abfd))
     {
@@ -174,7 +176,7 @@ k1_elf_link_hash_table_create (bfd *abfd)
       return NULL;
     }
 
-  return &ret->elf.root;
+  return ret;
 }
 
 /* Return address for Ith PLT stub in section PLT, for relocation REL
