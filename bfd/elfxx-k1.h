@@ -41,6 +41,13 @@ bfd_boolean k1_gc_sweep_hook (bfd * abfd,
 			      asection * sec,
 			      const Elf_Internal_Rela * relocs);
 
+bfd_boolean
+k1_elfxx_check_relocs (bfd * abfd,
+		       struct bfd_link_info *info,
+		       asection *sec,
+		       const Elf_Internal_Rela *relocs);
+
+
 
 int
 _k1fdpic_resolve_final_relocs_info (void **entryp, void *p);
