@@ -546,7 +546,7 @@ pseudo_func[] =
 
      { "got64",
        PSEUDO_FUNC_RELOC, { 0 },
-       BFD_RELOC_K1_GOT64_LO10, BFD_RELOC_K1_GOT64_HI27, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_GOT64_LO10, BFD_RELOC_K1_GOT64_HI27, BFD_RELOC_K1_GOT64_EXTEND6,
        BFD_RELOC_K1_GOT64 },
 
      { "plt64",
@@ -3107,6 +3107,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_GOTOFF64_HI27:
         case BFD_RELOC_K1_GOTOFF64_EXTEND6:
         case BFD_RELOC_K1_GOT64_HI27:
+        case BFD_RELOC_K1_GOT64_EXTEND6:
         case BFD_RELOC_K1_GOT_HI22:
         case BFD_RELOC_K1_PLT64_HI27:
         case BFD_RELOC_K1_PLT64_EXTEND6:

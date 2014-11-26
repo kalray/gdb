@@ -23,6 +23,16 @@
 /*   unsigned int k1_reloc_val; */
 /* }; */
 
+/*
+ * Defined in elf32-k1.c
+ */
+extern const size_t plt_entry_k1a_size;
+extern const size_t plt_entry_k1b32_size;
+
+/*
+ * Defined in elf64-k1.c
+ */
+extern const size_t plt_entry_k1b64_size;
 
 const struct k1_reloc_map k1_reloc_map[]=
 {
@@ -80,6 +90,7 @@ const struct k1_reloc_map k1_reloc_map[]=
 
   { BFD_RELOC_K1_GOT64_LO10, R_K1_GOT64_LO10 },
   { BFD_RELOC_K1_GOT64_HI27, R_K1_GOT64_HI27 },
+  { BFD_RELOC_K1_GOT64_EXTEND6, R_K1_GOT64_EXTEND6 },
 
   { BFD_RELOC_K1_GOT64,        R_K1_GOT64 },
 
@@ -89,6 +100,7 @@ const struct k1_reloc_map k1_reloc_map[]=
 
   { BFD_RELOC_K1_S37_LO10, R_K1_S37_LO10},
   { BFD_RELOC_K1_S37_HI27, R_K1_S37_HI27},
+  { BFD_RELOC_K1_JMP_SLOT64, R_K1_JMP_SLOT64},
 /*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
   { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
 };
@@ -125,33 +137,37 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
 
 /* Create a k1 ELF linker hash table.  */
 
-struct bfd_link_hash_table *
-k1_elf_link_hash_table_create (bfd *abfd)
+struct k1_elf_link_hash_table *
+k1_elfxx_link_hash_table_create (bfd *abfd)
 {
   struct k1_elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct k1_elf_link_hash_table);
 
   ret = (struct k1_elf_link_hash_table *) bfd_zmalloc (amt);
+ 
   if (ret == NULL)
     return NULL;
+
 #ifdef BFD64
   if (ABI_64_P (abfd))
     {
       ret->bytes_per_rela = sizeof (Elf64_External_Rela);
-      /* ret->dtpoff_reloc = R_TILEGX_TLS_DTPOFF64; */
-      /* ret->dtpmod_reloc = R_TILEGX_TLS_DTPMOD64; */
-      /* ret->tpoff_reloc = R_TILEGX_TLS_TPOFF64; */
-      /* ret->r_info = tilegx_elf_r_info_64; */
-      /* ret->r_symndx = tilegx_elf_r_symndx_64; */
-      /* ret->dynamic_interpreter = ELF64_DYNAMIC_INTERPRETER; */
-      /* ret->put_word = tilegx_put_word_64; */
+      ret->plt_entry_size = plt_entry_k1b64_size;
+      ret->bytes_per_address = 8;
     }
   else
 #endif
     {
       ret->bytes_per_rela = sizeof (Elf32_External_Rela);
+      ret->plt_entry_size = plt_entry_k1a_size;
+      ret->bytes_per_address = 4;
+      // if the PLTs differ, then we should check the machine
+      BFD_ASSERT(plt_entry_k1a_size == plt_entry_k1b32_size);
     }
-  
+
+  // first PLT slot is reserved.
+  //  ret->plt_header_size = ret->plt_entry_size;
+
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
                                       sizeof (struct k1_elf_link_hash_entry),
                                       K1_ELF_DATA))
@@ -160,8 +176,328 @@ k1_elf_link_hash_table_create (bfd *abfd)
       return NULL;
     }
 
-  return &ret->elf.root;
+  return ret;
 }
+
+/* Return address for Ith PLT stub in section PLT, for relocation REL
+ or (bfd_vma) -1 if it should not be included. */
+
+bfd_vma
+k1_plt_sym_val (bfd_vma i, const asection *plt,
+	 const arelent *rel ATTRIBUTE_UNUSED)
+{
+  bfd *abfd = plt->owner;
+  int is_64 = ABI_64_P(abfd);
+  int is_k1a = bfd_get_mach(abfd) == bfd_mach_k1dp
+    || bfd_get_mach(abfd) == bfd_mach_k1io;
+
+  int is_k1b32 = bfd_get_mach(abfd) == bfd_mach_k1bdp
+    || bfd_get_mach(abfd) == bfd_mach_k1bio;
+
+  int is_k1b64 = bfd_get_mach(abfd) == bfd_mach_k1bdp_64
+    || bfd_get_mach(abfd) == bfd_mach_k1bio_64;
+
+  bfd_reloc_code_real_type plt_jmp_slot_type = is_k1b64 ? R_K1_JMP_SLOT64 : R_K1_JMP_SLOT;
+  unsigned int plt_header_size = 0;
+  unsigned int plt_entry_size = 0;
+
+  if (is_k1a){
+    plt_entry_size = plt_entry_k1a_size;
+  } else if (is_k1b32) {
+      plt_entry_size = plt_entry_k1b32_size;
+  } else if (is_k1b64) {
+      plt_entry_size = plt_entry_k1b64_size;
+  }
+
+  plt_header_size = plt_entry_size;
+  
+  if (rel->howto->type != plt_jmp_slot_type)
+        return (bfd_vma)-1;
+
+    return plt->vma + plt_header_size + i*plt_entry_size;
+}
+
+bfd_boolean
+k1_elfxx_check_relocs (bfd * abfd,
+		       struct bfd_link_info *info,
+		       asection *sec,
+		       const Elf_Internal_Rela *relocs)
+{
+  bfd *dynobj;
+  Elf_Internal_Shdr *symtab_hdr;
+  struct k1_elf_link_hash_table *htab;
+  struct elf_link_hash_entry **sym_hashes;
+  const Elf_Internal_Rela *rel;
+  const Elf_Internal_Rela *rel_end;
+  //asection *sgot;
+  //asection *srelgot;
+  asection *sreloc = NULL;
+
+  DPRINT("check_relocs");
+
+  if (info->relocatable)
+    return TRUE;
+
+  dynobj = elf_hash_table (info)->dynobj;
+  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
+  sym_hashes = elf_sym_hashes (abfd);
+  htab = k1_elf_hash_table(info);
+  rel_end = relocs + sec->reloc_count;
+  for (rel = relocs; rel < rel_end; rel++)
+    {
+      unsigned long r_symndx;
+      struct elf_link_hash_entry *h;
+      int r_type = ELF_R_TYPE (abfd, rel->r_info);
+      Elf_Internal_Sym *sym;
+      const char *name = NULL;
+
+      r_symndx = ELF_R_SYM (abfd, rel->r_info);
+      if (r_symndx < symtab_hdr->sh_info)
+	{
+          /* A local symbol.  */
+	  sym = bfd_sym_from_r_symndx (&htab->sym_sec,
+				       abfd, r_symndx);
+	  if (sym == NULL)
+	    return FALSE;
+	  h= NULL;
+	}
+      else {
+        sym = NULL;
+        h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	struct elf_link_hash_entry * h2 = h;
+
+	while (h2->root.type == bfd_link_hash_indirect
+	       || h2->root.type == bfd_link_hash_warning)
+	  h2 = (struct elf_link_hash_entry *) h2->root.u.i.link;
+
+	name = h->root.root.string;
+      }
+
+      switch (r_type)
+	{
+	  /* 32bits */
+	case R_K1_LO10:
+	case R_K1_HI22:
+
+	  /* 64 bits */
+	case R_K1_EXTEND6:
+	case R_K1_HI27:
+	case R_K1_ELO10:
+
+	  /*
+	   * if some reloc uses special symbol named "_gp_disp" and
+	   * GOT not yet created, create it
+	   */
+	  if (htab->sgot == NULL && name != NULL && strcmp (name, "_gp_disp") == 0){
+            if (htab->elf.dynobj == NULL)
+	      htab->elf.dynobj = dynobj = abfd;
+	    if (!k1_create_got_section (dynobj, info)){
+	      return FALSE;
+	    }
+	  }
+	  break;
+
+        case R_K1_GOTOFF:
+        case R_K1_GOTOFF_HI22:
+        case R_K1_GOTOFF_LO10:
+
+        case R_K1_GOTOFF64:
+        case R_K1_GOTOFF64_HI27:
+        case R_K1_GOTOFF64_EXTEND6:
+        case R_K1_GOTOFF64_LO10:
+
+          htab->needs_got = TRUE;
+          /*fallthrough */
+        case R_K1_GOT:
+        case R_K1_GOT_HI22:
+        case R_K1_GOT_LO10:
+        case R_K1_GLOB_DAT:
+
+        case R_K1_GOT64:
+        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_LO10:
+        case R_K1_GLOB_DAT64:
+
+          if (htab->sgot == NULL)
+	    {
+	      if (htab->elf.dynobj == NULL)
+		htab->elf.dynobj = dynobj = abfd;
+	      if (!k1_create_got_section (dynobj, info))
+		return FALSE;
+	    }
+	  break;
+        default:
+          break;
+        }
+
+      switch (r_type)
+        {
+        case R_K1_GOT:
+        case R_K1_GOT_HI22:
+        case R_K1_GOT_LO10:
+
+        case R_K1_GOT64:
+        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_LO10:
+          if (h != NULL)
+	    h->got.refcount += 1;
+          else
+            {
+              bfd_signed_vma *local_got_refcounts;
+              /* This is a global offset table entry for a local symbol.  */
+              local_got_refcounts = elf_local_got_refcounts (abfd);
+              if (local_got_refcounts == NULL)
+                {
+                  bfd_size_type size;
+
+                  size = symtab_hdr->sh_info;
+                  size *= sizeof (bfd_signed_vma);
+                  local_got_refcounts = bfd_zalloc (abfd, size);
+                  if (local_got_refcounts == NULL)
+                    return FALSE;
+                  elf_local_got_refcounts (abfd) = local_got_refcounts;
+                }
+              local_got_refcounts[r_symndx] += 1;
+            }
+	  break;
+
+        case R_K1_PLT_HI22:
+        case R_K1_PLT_LO10:
+
+        case R_K1_PLT64_HI27:
+        case R_K1_PLT64_LO10:
+        case R_K1_PLT64_EXTEND6:
+
+        case R_K1_27_PCREL:
+          /* If this is a local symbol, we resolve it directly without
+             creating a procedure linkage table entry.  */
+          if (h != NULL)
+            {
+              h->needs_plt = 1;
+              h->plt.refcount += 1;
+            }
+          break;
+
+        case R_K1_32:
+	case R_K1_64:
+	  if (h != NULL && !info->shared)
+            {
+              /* If this reloc is in a read-only section, we might
+                 need a copy reloc.  We can't check reliably at this
+                 stage whether the section is read-only, as input
+                 sections have not yet been mapped to output sections.
+                 Tentatively set the flag for now, and correct in
+                 adjust_dynamic_symbol.  */
+              h->non_got_ref = 1;
+
+              /* We may need a .plt entry if the function this reloc
+                 refers to is in a shared lib.  */;
+	      //               h->plt.refcount += 1;
+	      //               h->needs_plt = 1;
+              h->pointer_equality_needed = 1;
+            }
+
+	  /* If we are creating a shared library, and this is a reloc
+             against a global symbol, or a non PC relative reloc
+             against a local symbol, then we need to copy the reloc
+             into the shared library.  However, if we are linking with
+             -Bsymbolic, we do not need to copy a reloc against a
+             global symbol which is defined in an object we are
+             including in the link (i.e., DEF_REGULAR is set).  At
+             this point we have not seen all the input files, so it is
+             possible that DEF_REGULAR is not set now but will be set
+             later (it is never cleared).  In case of a weak definition,
+             DEF_REGULAR may be cleared later by a strong definition in
+             a shared library.  We account for that possibility below by
+             storing information in the relocs_copied field of the hash
+             table entry.  A similar situation occurs when creating
+             shared libraries and symbol visibility changes render the
+             symbol local.
+
+             If on the other hand, we are creating an executable, we
+             may need to keep relocations for symbols satisfied by a
+             dynamic library if we manage to avoid copy relocs for the
+             symbol.  */
+          if ((info->shared
+               && (sec->flags & SEC_ALLOC) != 0)
+	      || (!info->shared
+                  && (sec->flags & SEC_ALLOC) != 0
+                  && h != NULL
+                  && (h->root.type == bfd_link_hash_defweak
+                      || !h->def_regular)))
+            {
+              struct k1_elf_dyn_relocs *p;
+              struct k1_elf_dyn_relocs **head;
+
+              /* We must copy these reloc types into the output file.
+                 Create a reloc section in dynobj and make room for
+                 this reloc.  */
+              if (sreloc == NULL)
+                {
+                  if (htab->elf.dynobj == NULL)
+                    htab->elf.dynobj = abfd;
+                  dynobj = htab->elf.dynobj;
+
+                  sreloc = _bfd_elf_make_dynamic_reloc_section
+                    (sec, dynobj, 2, abfd, /*rela?*/ TRUE);
+
+                  if (sreloc == NULL)
+                    return FALSE;
+                }
+
+              /* If this is a global symbol, we count the number of
+                 relocations we need for this symbol.  */
+              if (h != NULL)
+                {
+                  head = &((struct k1_elf_link_hash_entry *) h)->dyn_relocs;
+                }
+              else
+                {
+                  /* Track dynamic relocs needed for local syms too.
+                     We really need local syms available to do this
+                     easily.  Oh well.  */
+                  void **vpp;
+                  asection *s;
+
+                  sym = bfd_sym_from_r_symndx (&htab->sym_sec,
+					       abfd, r_symndx);
+                  if (sym == NULL)
+                    return FALSE;
+
+                  s = bfd_section_from_elf_index (abfd, sym->st_shndx);
+                  if (s == NULL)
+                    s = sec;
+
+                  vpp = &elf_section_data (s)->local_dynrel;
+                  head = (struct k1_elf_dyn_relocs **)vpp;
+                }
+
+              p = *head;
+              if (p == NULL || p->sec != sec)
+                {
+                  bfd_size_type amt = sizeof *p;
+                  p = (struct k1_elf_dyn_relocs *) bfd_alloc (dynobj,
+							      amt);
+                  if (p == NULL)
+                    return FALSE;
+                  p->next = *head;
+                  *head = p;
+                  p->sec = sec;
+                  p->count = 0;
+                  p->pc_count = 0;
+                }
+
+              p->count += 1;
+            }
+          break;
+	default:
+	  break;
+	}
+    }
+
+  return TRUE;
+}
+
 
 /* Update the got entry reference counts for the section being removed.  */
 
@@ -517,13 +853,14 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, info->shared, h))
         {
-          asection *s = htab->splt;
+          asection *splt = htab->splt;
 
           /* The first entry in .plt is reserved.  */
-          if (s->size == 0)
-            s->size =  PLT_ENTRY_SIZE;
+          if (splt->size == 0){
+            splt->size = k1_elf_plt_bytes(htab); //PLT_ENTRY_SIZE;
+	  }
 
-          h->plt.offset = s->size;
+          h->plt.offset = splt->size;
 
           /* If this symbol is not defined in a regular file, and we are
              not generating a shared library, then set the symbol to this
@@ -533,16 +870,16 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
           if (! info->shared
               && !h->def_regular)
             {
-              h->root.u.def.section = s;
+              h->root.u.def.section = splt;
               h->root.u.def.value = h->plt.offset;
             }
 
           /* Make room for this entry.  */
-          s->size +=  PLT_ENTRY_SIZE;
+          splt->size +=  k1_elf_plt_bytes(htab); //PLT_ENTRY_SIZE;
 
           /* We also need to make an entry in the .got.plt section, which
              will be placed in the .got section by the linker script.  */
-          htab->sgotplt->size += 4;
+          htab->sgotplt->size += k1_elf_got_entry_size(htab);
 
           /* We also need to make an entry in the .rel.plt section.  */
           htab->srelplt->size += k1_elf_rela_bytes (htab); //sizeof (Elf32_External_Rela);
@@ -579,7 +916,7 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 
       s = htab->sgot;
       h->got.offset = s->size;
-      s->size += 4;
+      s->size += k1_elf_got_entry_size(htab);
       htab->srelgot->size += k1_elf_rela_bytes (htab); //sizeof (Elf32_External_Rela);
     }
   else
@@ -1615,18 +1952,6 @@ k1_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
   return TRUE;
 }
 
-/* Return address for Ith PLT stub in section PLT, for relocation REL
- or (bfd_vma) -1 if it should not be included. */
-
-bfd_vma
-k1_plt_sym_val (bfd_vma i, const asection *plt,
-	 const arelent *rel ATTRIBUTE_UNUSED)
-{
-    if (rel->howto->type != R_K1_JMP_SLOT)
-        return (bfd_vma)-1;
-
-    return plt->vma + 16 + i*16;
-}
 
 
 /* Determine the positive and negative ranges to be used by each

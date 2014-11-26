@@ -18,21 +18,23 @@
 #define PLT_MIN_ENTRY_SIZE      16
 #define PLT_FULL_ENTRY_SIZE     20
 
-static const bfd_vma plt_small_entry_k1a[PLT_ENTRY_SIZE] =
+static const bfd_vma plt_small_entry_k1a[] =
   {
     /* get $r14 = $pc     ;; */      0x00700380,
     /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
                                      0x18000000,
     /* igoto $r9          ;; */      0x00114009,
   };
+const size_t plt_entry_k1a_size = PLT_SIZE(plt_small_entry_k1a);
 
-static const bfd_vma plt_small_entry_k1b32[PLT_ENTRY_SIZE] =
+const bfd_vma plt_small_entry_k1b32[] = 
   {
     /* get $r14 = $pc     ;; */      0x01000380,
     /* lw $r9 = 0[$r14]   ;; */      0xac24000e,
                                      0x18000000,
     /* igoto $r9          ;; */      0x00114009,
   };
+const size_t plt_entry_k1b32_size = PLT_SIZE(plt_small_entry_k1b32);
 
 /* PLT templates for (FD)PIC ABI */
 static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
@@ -43,7 +45,6 @@ static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
     /* lw $r14 = 4[$r14]  ;; */ 0x2438010e,
     /* igoto $r9          ;; */ 0x00114009,
   };
-
 
 static bfd_boolean
 k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
@@ -59,6 +60,26 @@ static reloc_howto_type* k1_elf32_reloc_name_lookup (bfd *, const char *);
 K1_INFO_TO_HOWTO_DEF(32)
 K1_RELOC_NAME_LOOKUP_DEF(32)
 K1_RELOC_TYPE_LOOKUP_DEF(32)
+
+struct bfd_link_hash_table *
+k1_elf32_link_hash_table_create (bfd *abfd)
+{
+  struct k1_elf_link_hash_table *ret;
+  ret = k1_elfxx_link_hash_table_create(abfd);
+  
+  if (ret == NULL)
+    return NULL;
+
+  ret->bytes_per_rela = sizeof (Elf32_External_Rela);
+  ret->plt_entry_size = plt_entry_k1a_size;
+  ret->bytes_per_address = 4;
+
+  /* if the PLTs differ, then we should check the machine */
+  BFD_ASSERT(plt_entry_k1a_size == plt_entry_k1b32_size);
+
+  return &ret->elf.root;
+}
+
 
 
 static bfd_boolean
@@ -1157,274 +1178,6 @@ k1_elf32_fdpic_gc_sweep_hook (bfd *abfd,
   return TRUE;
 }
 
-static bfd_boolean
-k1_elf32_check_relocs (bfd * abfd,
-		   struct bfd_link_info *info,
-		   asection *sec,
-                   const Elf_Internal_Rela *relocs)
-{
-  bfd *dynobj;
-  Elf_Internal_Shdr *symtab_hdr;
-  struct k1_elf_link_hash_table *htab;
-  struct elf_link_hash_entry **sym_hashes;
-  const Elf_Internal_Rela *rel;
-  const Elf_Internal_Rela *rel_end;
-  //asection *sgot;
-  //asection *srelgot;
-  asection *sreloc = NULL;
-  
-  DPRINT("check_relocs");
-  
-  if (info->relocatable)
-    return TRUE;
-
-  dynobj = elf_hash_table (info)->dynobj;
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  sym_hashes = elf_sym_hashes (abfd);
-  htab = k1_elf_hash_table(info);
-  rel_end = relocs + sec->reloc_count;
-  for (rel = relocs; rel < rel_end; rel++)
-    {
-      unsigned long r_symndx;
-      struct elf_link_hash_entry *h;
-      int r_type = ELF32_R_TYPE (rel->r_info);
-      Elf_Internal_Sym *sym;
-      const char *name = NULL;
-
-      r_symndx = ELF32_R_SYM (rel->r_info);
-      if (r_symndx < symtab_hdr->sh_info)
-      {
-          /* A local symbol.  */
-        sym = bfd_sym_from_r_symndx (&htab->sym_sec,
-                                        abfd, r_symndx);
-        if (sym == NULL)
-          return FALSE;
-        h= NULL;
-      }
-      else {
-        sym = NULL;
-        h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	struct elf_link_hash_entry * h2 = h;
-
-	while (h2->root.type == bfd_link_hash_indirect
-	       || h2->root.type == bfd_link_hash_warning)
-	  h2 = (struct elf_link_hash_entry *) h2->root.u.i.link;
-
-	name = h->root.root.string;
-      }
-
-      switch (r_type)
-	{
-#if 0  
-       /* This relocation describes the C++ object vtable hierarchy.
-           Reconstruct it for later use during GC.  */
-        case R_K1_GNU_VTINHERIT:
-          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-            return FALSE;
-          break;
-
-        /* This relocation describes which C++ vtable entries
-           are actually used.  Record for later use during GC.  */
-        case R_K1_GNU_VTENTRY:
-          BFD_ASSERT (h != NULL);
-          if (h != NULL
-              && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-            return FALSE;
-          break;
-#endif
-	case R_K1_LO10:
-	case R_K1_HI22:
-	  /*
-	   * if some reloc uses special symbol named "_gp_disp" and
-	   * GOT not yet created, create it
-	   */
-	  if (htab->sgot == NULL && name != NULL && strcmp (name, "_gp_disp") == 0){
-            if (htab->elf.dynobj == NULL)
-	      htab->elf.dynobj = dynobj = abfd;
-	    if (!k1_create_got_section (dynobj, info)){
-	      return FALSE;
-	    }
-	  }
-	  break;
-
-        case R_K1_GOTOFF:
-        case R_K1_GOTOFF_HI22:
-        case R_K1_GOTOFF_LO10:
-          htab->needs_got = TRUE;
-          /*fallthrough */
-        case R_K1_GOT:
-        case R_K1_GOT_HI22:
-        case R_K1_GOT_LO10:
-        case R_K1_GLOB_DAT:
-          if (htab->sgot == NULL)
-          {
-            if (htab->elf.dynobj == NULL)	    
-	      htab->elf.dynobj = dynobj = abfd;
-	    if (!k1_create_got_section (dynobj, info))
-	      return FALSE;
-          }
-	  break;
-        default:
-          break;
-        }
-        
-      switch (r_type)
-        {
-        case R_K1_GOT:
-        case R_K1_GOT_HI22:
-        case R_K1_GOT_LO10:
-          if (h != NULL)
-              h->got.refcount += 1;
-          else
-            {
-              bfd_signed_vma *local_got_refcounts;
-              /* This is a global offset table entry for a local symbol.  */
-              local_got_refcounts = elf_local_got_refcounts (abfd);
-              if (local_got_refcounts == NULL)
-                {
-                  bfd_size_type size;
-
-                  size = symtab_hdr->sh_info;
-                  size *= sizeof (bfd_signed_vma);
-                  local_got_refcounts = bfd_zalloc (abfd, size);
-                  if (local_got_refcounts == NULL)
-                    return FALSE;
-                  elf_local_got_refcounts (abfd) = local_got_refcounts;
-                }
-              local_got_refcounts[r_symndx] += 1;
-            }
-	  break;
-          
-        case R_K1_PLT_HI22:
-        case R_K1_PLT_LO10:
-        case R_K1_27_PCREL:
-          /* If this is a local symbol, we resolve it directly without
-             creating a procedure linkage table entry.  */
-          if (h != NULL)
-            {
-              h->needs_plt = 1;
-              h->plt.refcount += 1;
-            }
-          break;
-        case R_K1_32:
-           if (h != NULL && !info->shared)
-            {
-              /* If this reloc is in a read-only section, we might
-                 need a copy reloc.  We can't check reliably at this
-                 stage whether the section is read-only, as input
-                 sections have not yet been mapped to output sections.
-                 Tentatively set the flag for now, and correct in
-                 adjust_dynamic_symbol.  */
-              h->non_got_ref = 1;
-
-              /* We may need a .plt entry if the function this reloc
-                 refers to is in a shared lib.  */;
-//               h->plt.refcount += 1;
-//               h->needs_plt = 1;
-              h->pointer_equality_needed = 1;
-            }
-            
-             /* If we are creating a shared library, and this is a reloc
-             against a global symbol, or a non PC relative reloc
-             against a local symbol, then we need to copy the reloc
-             into the shared library.  However, if we are linking with
-             -Bsymbolic, we do not need to copy a reloc against a
-             global symbol which is defined in an object we are
-             including in the link (i.e., DEF_REGULAR is set).  At
-             this point we have not seen all the input files, so it is
-             possible that DEF_REGULAR is not set now but will be set
-             later (it is never cleared).  In case of a weak definition,
-             DEF_REGULAR may be cleared later by a strong definition in
-             a shared library.  We account for that possibility below by
-             storing information in the relocs_copied field of the hash
-             table entry.  A similar situation occurs when creating
-             shared libraries and symbol visibility changes render the
-             symbol local.
-
-             If on the other hand, we are creating an executable, we
-             may need to keep relocations for symbols satisfied by a
-             dynamic library if we manage to avoid copy relocs for the
-             symbol.  */
-          if ((info->shared
-               && (sec->flags & SEC_ALLOC) != 0)
-               || (!info->shared
-                  && (sec->flags & SEC_ALLOC) != 0
-                  && h != NULL
-                  && (h->root.type == bfd_link_hash_defweak
-                      || !h->def_regular)))
-            {
-              struct k1_elf_dyn_relocs *p;
-              struct k1_elf_dyn_relocs **head;
-
-              /* We must copy these reloc types into the output file.
-                 Create a reloc section in dynobj and make room for
-                 this reloc.  */
-              if (sreloc == NULL)
-                {
-                  if (htab->elf.dynobj == NULL)
-                    htab->elf.dynobj = abfd;
-                  dynobj = htab->elf.dynobj;
-
-                  sreloc = _bfd_elf_make_dynamic_reloc_section
-                    (sec, dynobj, 2, abfd, /*rela?*/ TRUE);
-                  
-                  if (sreloc == NULL)
-                    return FALSE;
-                }
-
-              /* If this is a global symbol, we count the number of
-                 relocations we need for this symbol.  */
-              if (h != NULL)
-                {
-                  head = &((struct k1_elf_link_hash_entry *) h)->dyn_relocs;
-                }
-              else
-                {
-                  /* Track dynamic relocs needed for local syms too.
-                     We really need local syms available to do this
-                     easily.  Oh well.  */
-                  void **vpp;
-                  asection *s;
-
-                  sym = bfd_sym_from_r_symndx (&htab->sym_sec,
-                                                abfd, r_symndx);
-                  if (sym == NULL)
-                    return FALSE;
-
-                  s = bfd_section_from_elf_index (abfd, sym->st_shndx);
-                  if (s == NULL)
-                    s = sec;
-
-                  vpp = &elf_section_data (s)->local_dynrel;
-                  head = (struct k1_elf_dyn_relocs **)vpp;
-                }
-
-              p = *head;
-              if (p == NULL || p->sec != sec)
-                {
-                  bfd_size_type amt = sizeof *p;
-                  p = (struct k1_elf_dyn_relocs *) bfd_alloc (dynobj,
-                                                           amt);
-                  if (p == NULL)
-                    return FALSE;
-                  p->next = *head;
-                  *head = p;
-                  p->sec = sec;
-                  p->count = 0;
-                  p->pc_count = 0;
-                }
-
-              p->count += 1;
-            }
-          break;
-	default:
-	  break;
-	}
-    }
-
-  return TRUE;
-}
-
 /* Look through the relocs for a section during the first phase.  */
 static bfd_boolean
 k1_elf32_fdpic_check_relocs (bfd * abfd,
@@ -1829,13 +1582,16 @@ k1_elf32_relocate_section
                        && h->dynindx != -1
                        && (!info->shared
                            || !SYMBOLIC_BIND (info, h)
-                           || !h->def_regular))
+                           || !h->def_regular)){
                 outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
+		outrel.r_addend = rel->r_addend;
+	      }
               else
                 {
                   /* This symbol is local, or marked to become local.  */
                   relocate = TRUE;
                   outrel.r_info = ELF32_R_INFO (0, R_K1_RELATIVE);
+		  outrel.r_addend = relocation + rel->r_addend;
                 }
 
               sreloc = elf_section_data (input_section)->sreloc;
@@ -1843,9 +1599,9 @@ k1_elf32_relocate_section
               BFD_ASSERT (sreloc != NULL && sreloc->contents != NULL);
 
               loc = sreloc->contents;
-              loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rela);
+              loc += sreloc->reloc_count++ * k1_elf_rela_bytes(htab);
 
-              bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+              bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
 
               /* If this reloc is against an external symbol, we do
                  not want to fiddle with the addend.  Otherwise, we
@@ -1934,7 +1690,7 @@ k1_elf32_relocate_section
 
                       loc = htab->srelgot->contents;
                       loc +=
-                        htab->srelgot->reloc_count++ * sizeof (Elf32_External_Rela);
+                        htab->srelgot->reloc_count++ * k1_elf_rela_bytes(htab);
                       bfd_elf32_swap_reloca_out (output_bfd, &outrel, loc);
                     }
                   local_got_offsets[r_symndx] |= 1;
@@ -2241,33 +1997,39 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
 
          For static executables, we don't reserve anything.  */
 
-      plt_index = h->plt.offset / PLT_ENTRY_SIZE - 1;
-      got_offset = (plt_index + 3) * 4;
+      /* plt_index = h->plt.offset / PLT_ENTRY_SIZE - 1; */
+      /* got_offset = (plt_index + 3) * 4; */
 
       /* Fill in the entry in the procedure linkage table.  */
         {
           int i;
+	  unsigned int loc_plt_size;
           const bfd_vma *template;
 	  switch(output_bfd->arch_info->mach){
 	  case bfd_mach_k1dp:
 	  case bfd_mach_k1io:
 	    template = plt_small_entry_k1a;
+	    loc_plt_size = plt_entry_k1a_size;
 	    break;
 	  case bfd_mach_k1bdp:
 	  case bfd_mach_k1bio:
 	    template = plt_small_entry_k1b32;
+	    loc_plt_size = plt_entry_k1b32_size;
 	    break;
 	  default:
 	    (*_bfd_error_handler)
 	      ("can't make a plt entry for unknown mach: %d", output_bfd->arch_info->mach);
 	    return FALSE;
 	  }
+	  plt_index = h->plt.offset / loc_plt_size - 1;
+	  got_offset = (plt_index + 3) * 4;
+
           bfd_vma pcgotoffset = got->output_section->vma + gotplt->output_offset +got_offset;
 
           pcgotoffset -= plt->output_section->vma + plt->output_offset + h->plt.offset;
 
           BFD_ASSERT(plt->contents != NULL);
-          for (i = 0; i < (PLT_SMALL_ENTRY_SIZE / 4); ++i)
+          for (i = 0; i < (loc_plt_size / 4); ++i)
             bfd_put_32(output_bfd, template[i], plt->contents + h->plt.offset + (4*i));
           
           _bfd_final_link_relocate (elf32_k1_howto_table + R_K1_LO10,
@@ -2294,8 +2056,10 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
                       + got_offset);
       
       rel.r_info = ELF32_R_INFO (h->dynindx, R_K1_JMP_SLOT);
-      loc = relplt->contents + plt_index * sizeof (Elf32_External_Rela);
-      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+
+      rel.r_addend = 0;
+      loc = relplt->contents + plt_index * k1_elf_rela_bytes(htab);
+      bfd_elf32_swap_reloca_out (output_bfd, &rel, loc);
 
       if (!h->def_regular)
         {
@@ -2359,7 +2123,7 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
       bfd_put_32 (output_bfd, (bfd_vma) 0,
                       sgot->contents + (h->got.offset & ~(bfd_vma) 1));
       loc = srela->contents;
-      loc += srela->reloc_count++ * sizeof (Elf32_External_Rela);
+      loc += srela->reloc_count++ * k1_elf_rela_bytes(htab);
       bfd_elf32_swap_reloca_out (output_bfd, &rela, loc);
     }
 
@@ -2469,7 +2233,7 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
             }
             
         }
-        elf_section_data (htab->splt->output_section)->this_hdr.sh_entsize = 4;
+        elf_section_data (htab->splt->output_section)->this_hdr.sh_entsize = htab->plt_entry_size;
     }
         
   if (htab->sgotplt && htab->sgotplt->size > 0)
@@ -2479,15 +2243,15 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
                    (sdyn == NULL ? 0
                     : sdyn->output_section->vma + sdyn->output_offset),
                       htab->sgotplt->contents);
-      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + 4);
-      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + 8);
+      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + htab->bytes_per_address);
+      bfd_put_32 (output_bfd, 0, htab->sgotplt->contents + htab->bytes_per_address * 2);
       
 
-      elf_section_data (htab->sgotplt->output_section)->this_hdr.sh_entsize = 4;
+      elf_section_data (htab->sgotplt->output_section)->this_hdr.sh_entsize = htab->bytes_per_address;
     }
 
   if (htab->sgot && htab->sgot->size > 0)
-    elf_section_data (htab->sgot->output_section)->this_hdr.sh_entsize = 4;
+    elf_section_data (htab->sgot->output_section)->this_hdr.sh_entsize = htab->bytes_per_address;
     
 
   return TRUE;
@@ -3094,7 +2858,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_info_to_howto                       k1_elf32_info_to_howto
 #define bfd_elf32_bfd_is_target_special_symbol  elf32_k1_is_target_special_symbol
 
-#define bfd_elf32_bfd_link_hash_table_create    k1_elf_link_hash_table_create
+#define bfd_elf32_bfd_link_hash_table_create    k1_elf32_link_hash_table_create
 
 #define elf_backend_can_gc_sections             1
 #define elf_backend_relocate_section            k1_elf32_relocate_section
@@ -3105,7 +2869,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_backend_plt_readonly                1
 #define elf_backend_can_refcount                1
 #define elf_backend_want_plt_sym                0
-#define elf_backend_got_header_size             12
+#define elf_backend_got_header_size             (4*3)
 
 
 #define elf_backend_gc_mark_hook                _bfd_elf_gc_mark_hook
@@ -3119,7 +2883,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_backend_size_dynamic_sections       k1_size_dynamic_sections
 
 
-#define elf_backend_check_relocs                k1_elf32_check_relocs
+#define elf_backend_check_relocs                k1_elfxx_check_relocs
 #define elf_backend_action_discarded            k1_bfd_elf_action_discarded
 
 

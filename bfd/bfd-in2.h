@@ -5314,6 +5314,7 @@ to two words (uses imm instruction).  */
   BFD_RELOC_K1_TPREL64_64,
   BFD_RELOC_K1_GOT64_HI27,
   BFD_RELOC_K1_GOT64_LO10,
+  BFD_RELOC_K1_GOT64_EXTEND6,
   BFD_RELOC_K1_GOT64,
   BFD_RELOC_K1_GLOB_DAT64,
   BFD_RELOC_K1_PLT64_HI27,
@@ -5321,6 +5322,7 @@ to two words (uses imm instruction).  */
   BFD_RELOC_K1_PLT64_EXTEND6,
   BFD_RELOC_K1_S37_LO10,
   BFD_RELOC_K1_S37_HI27,
+  BFD_RELOC_K1_JMP_SLOT64,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is
