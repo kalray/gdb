@@ -529,6 +529,7 @@ attach_mppa_command (char *args, int from_tty)
     cur_inf = current_inferior();
     set_inferior_data (cur_inf, k1_attached_inf_data, NULL);
     cur_ptid = inferior_ptid;
+    int cur_pid = cur_inf->pid;
 
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
@@ -552,6 +553,10 @@ attach_mppa_command (char *args, int from_tty)
 		inf->control.stop_soon = NO_STOP_QUIETLY;
     }
 
+    int bstopped = 0, bcur_inf_stopped = 0;
+    ptid_t stopped_ptid;
+    osdata = get_osdata (NULL);
+
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
                       ix_items, item);
@@ -564,13 +569,28 @@ attach_mppa_command (char *args, int from_tty)
         if (strcmp (running, "yes"))
             continue;
 
+        if (pid == cur_pid)
+            bcur_inf_stopped = 1;
+
+        if (!bstopped)
+        {
+            bstopped = 1;
+            stopped_ptid = any_live_thread_of_process (pid)->ptid;
+        }
+
         if (file && file[0]) {
             switch_to_thread (any_thread_of_process (pid)->ptid);
             exec_file_attach (file, 0);
             symbol_file_add_main (file, 0);
         }
     }
-    switch_to_thread (cur_ptid);
+    if (!bstopped)
+        async_enable_stdin ();
+
+    if (!bstopped || bcur_inf_stopped)
+        switch_to_thread (cur_ptid);
+    else
+        switch_to_thread (stopped_ptid);
 
     /* This is a hack to populate the dwarf mapping tables now that we
        have the architecture at hand. Having these tables initialized
