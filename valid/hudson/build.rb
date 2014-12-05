@@ -263,7 +263,7 @@ b.target("gdb_long_valid") do
 end
 
 b.target("package") do
-  b.logtitle = "Report for GDB packaging, arch = #{arch}, type = #{build_type}"
+  b.logtitle = "Report for GDB packaging, arch = #{arch}"
 
   # GDB package
   cd gdb_install_prefix
