@@ -569,6 +569,10 @@ attach_mppa_command (char *args, int from_tty)
         if (strcmp (running, "yes"))
             continue;
 
+        struct thread_info *live_th = any_live_thread_of_process (pid);
+        if (live_th && !live_th->stop_requested)
+            set_stop_requested (live_th->ptid, 1);
+
         if (pid == cur_pid)
             bcur_inf_stopped = 1;
 
