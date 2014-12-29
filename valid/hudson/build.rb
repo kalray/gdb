@@ -10,7 +10,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "toolroot"      => "",
-                        "simroot"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
+                        "k1debug_prefix"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
                         "prefix"        => ["devimage", "Install prefix"],
@@ -51,13 +51,13 @@ mds_path       = File.join(workspace,options["mds"])
 host       = options["host"]
 
 toolroot   = options["toolroot"]
-simroot    = options["simroot"].empty? ? toolroot : options["simroot"]
+k1debug_prefix    = options["k1debug_prefix"].empty? ? toolroot : options["k1debug_prefix"]
 
 build_path         = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
 prefix             = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
 pkg_prefix         = options["pkg_prefix"].empty? ? prefix : options["pkg_prefix"]
 gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
-k1debug_prefix     = simroot
+k1debug_prefix     = k1debug_prefix
 
 b.default_targets = [install]
 
@@ -206,7 +206,7 @@ b.target("#{variant}_post_build_valid") do
   if (variant == "gdb")
     if( arch == "k1" )
       Dir.chdir build_path + "/gdb/testsuite"
-      b.valid(:cmd => "LANG=C PATH=#{simroot}/bin:#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+      b.valid(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
     end
   end
@@ -257,7 +257,7 @@ b.target("gdb_long_valid") do
     b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
     b.run("make")
     cd "gdb/testsuite"
-    b.run(:cmd => "LANG=C PATH=#{simroot}/bin#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.run(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
