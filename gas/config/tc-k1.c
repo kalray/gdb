@@ -1076,7 +1076,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_signed10:
             case Immediate_k1_signed37:
             case Immediate_k1_signed32:
-	    case Immediate_k1_pcrel17:
+			case Immediate_k1_pcrel17:
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed27:
@@ -2817,11 +2817,11 @@ k1_set_cpu(void) {
   }
 
   if(!k1_registers) {
-    k1_registers = k1_k1a_registers;
+    k1_registers = k1_k1dp_registers;
   }
 
   if(!k1_regfiles) {
-    k1_regfiles = k1_k1a_regfiles;
+    k1_regfiles = k1_k1dp_regfiles;
   }
 
   switch(k1_core_info->elf_cores[subcore_id]) {
