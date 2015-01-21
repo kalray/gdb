@@ -61,7 +61,9 @@ skip_build = false
 skip_valid = false
 skip_install = false
 
-build_valid.skip = true if(toolchain == "bare")
+## FIXME : we should not skip gdb valid.
+## It has been disable in _fpga branch wrongfully and should be fixed and re-enabled ASAP.
+build_valid.skip = true ##if(toolchain == "bare")
 
 case arch
 when "k1"
