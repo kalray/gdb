@@ -36,9 +36,11 @@
 #include "target.h"
 #include "target-descriptions.h"
 #include "user-regs.h"
+#include "rsp-low.h"
 
 #include "elf/k1.h"
 #include "opcode/k1.h"
+#include "remote.h"
 
 struct k1_inferior_data {
     CORE_ADDR step_pad_area;
@@ -442,6 +444,52 @@ patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
     *syllab |= (value << bfield->to_offset) & ~mask;
 }
 
+static int get_intsys_handlers (CORE_ADDR *hsys, CORE_ADDR *hint, CORE_ADDR *hev)
+{
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  CORE_ADDR lhsys = 0;
+  
+  sprintf (buf, "kH");
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  
+
+  hex2bin (buf + 8 * 0, (gdb_byte *) &lhsys, 4);
+
+  if (lhsys == 0xFFFFFFFF)
+    return 1;
+  
+  if (hsys)
+    *hsys = lhsys;
+  if (hint)
+  {
+    *hint = 0;
+    hex2bin (buf + 8 * 1, (gdb_byte *) hint, 4);
+  }
+  if (hev)
+  {
+    *hev = 0;
+    hex2bin (buf + 8 * 2, (gdb_byte *) hev, 4);
+  }
+
+  free (buf);
+
+  return 0;
+}
+
+static void set_mos_reg_spc (unsigned long spc)
+{
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  sprintf (buf, "kS%lx", spc);
+  
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  
+  free (buf);
+}
+
 static void
 patch_bcu_instruction (struct gdbarch *gdbarch, 
 		       CORE_ADDR from, CORE_ADDR to, struct regcache *regs,
@@ -526,10 +574,15 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
                    || strcmp ("trapa", op->as_op) == 0
                    || strcmp ("trapo", op->as_op) == 0) {
             ULONGEST reg_value;
+            CORE_ADDR hsys;
 
             dsc->scall_jump = 1;
-	    regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
-            dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
+            regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
+
+            if (!get_intsys_handlers (&hsys, NULL, NULL))
+              dsc->dest = hsys;
+            else
+              dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
         } else if (strcmp ("loopdo", op->as_op) == 0
                    || strcmp ("loopgtz", op->as_op) == 0
                    || strcmp ("loopnez", op->as_op) == 0) {
@@ -637,7 +690,7 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
             (pc == to || (dsc->scall_jump && pc == dsc->dest))) {
             /* The branchy instruction jumped to its destination. */
             pc = dsc->dest;
-
+            
             /* Rewrite RA only if the brach executed correctly. */
             if (dsc->rewrite_RA) {
                 regcache_raw_write_unsigned (regs, tdep->ra_regnum, from + dsc->num_insn_words * 4);
@@ -645,18 +698,34 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
             }
     
             if (dsc->scall_jump) {
+              CORE_ADDR hsys;
+              if (0 == get_intsys_handlers (&hsys, NULL, NULL) && dsc->dest == hsys)
+                set_mos_reg_spc (from+dsc->num_insn_words * 4);
+              else
                 regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
-                if (debug_displaced) printf_filtered ("displaced: rewrite SPC\n");
+              if (debug_displaced) printf_filtered ("displaced: rewrite SPC\n");
             }
         } else {
             /* Uh oh... seems we've taken some exceptional condition. 
                This means interrupt or H/W trap. */
-            regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
-	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%lx\n", 
-						  (unsigned long)spc);
-            gdb_assert (spc == to);
-	    spc = from;
-	    regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
+            CORE_ADDR hit, hev;
+            int bmos_booted = !get_intsys_handlers (NULL, &hit, &hev);
+            if (!bmos_booted)
+            {
+              regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
+	      if (debug_displaced)
+                printf_filtered ("displaced: trapped SPC=%lx\n", (unsigned long) spc);
+              gdb_assert (spc == to);
+	      spc = from;
+	      regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
+            }
+            else
+            {
+              if (debug_displaced)
+                printf_filtered ("displaced: trapped - mOS booted\n");
+              gdb_assert (pc == hit || pc == hev);
+              set_mos_reg_spc (from);              
+            }
             exception = 1;
         }
     }
