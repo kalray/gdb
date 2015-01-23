@@ -1492,7 +1492,17 @@ emit_insn(k1insn_t * insn, int stopflag){
       assert(reloc_howto);
       size = bfd_get_reloc_size(reloc_howto);
       pcrel = reloc_howto->pc_relative;
-      fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where, size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+      fixS* fixup = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where,
+				size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+      /*
+       * Set this bit so that large value can still be
+       * handled. Without it, assembler will fail in fixup_segment
+       * when it checks there is enough bits to store the value. As we
+       * usually split our reloc across different words, it may think
+       * that 4 bytes are not enough for large value. This simply
+       * skips the tests
+       */
+      fixup->fx_no_overflow = 1;
     }
 }
 
