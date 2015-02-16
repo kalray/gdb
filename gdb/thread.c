@@ -853,6 +853,11 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	    error (_("Requested thread not found in requested process"));
 	  continue;
 	}
+      {
+        extern int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid);
+        if (kalray_hide_thread (tp, current_ptid))
+          continue;
+      }
 
       if (ptid_equal (tp->ptid, current_ptid))
 	current_thread = tp->num;

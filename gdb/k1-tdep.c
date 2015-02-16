@@ -37,10 +37,13 @@
 #include "target-descriptions.h"
 #include "user-regs.h"
 #include "rsp-low.h"
+#include "remote.h"
+#include "event-loop.h"
 
 #include "elf/k1.h"
 #include "opcode/k1.h"
-#include "remote.h"
+#include "k1-target.h"
+#include "gdbthread.h"
 
 struct k1_inferior_data {
     CORE_ADDR step_pad_area;
@@ -74,6 +77,7 @@ struct k1_frame_cache
     CORE_ADDR saved_sp;
 };
 
+static __attribute__ ((unused)) char *bundling_names (Bundling bundling);
 extern const char *k1_pseudo_register_name (struct gdbarch *gdbarch,
 					    int regnr);
 extern struct type *k1_pseudo_register_type (struct gdbarch *gdbarch, 
@@ -158,13 +162,13 @@ k1_arch (void)
     return k1_current_arch;
 }
 
-const char *
+static const char *
 k1_dummy_register_name (struct gdbarch *gdbarch, int regno)
 {
     return "";
 }
 
-struct type *
+static struct type *
 k1_dummy_register_type (struct gdbarch *gdbarch, int regno)
 {
     return builtin_type (gdbarch)->builtin_int;
@@ -376,7 +380,19 @@ struct displaced_step_closure {
 static void
 k1_inferior_created (struct target_ops *target, int from_tty)
 {
-    k1_current_arch = K1_NUM_ARCHES;
+  static int first = 1;
+  
+  k1_current_arch = K1_NUM_ARCHES;
+  
+  if (first && idx_global_debug_level)
+  {
+    char cont_cmd[25];
+    
+    first = 0;
+    inf_created_change_th = 1;
+    sprintf (cont_cmd, "c -a");
+    execute_command (cont_cmd, 0);
+  }
 }
 
 static CORE_ADDR
@@ -444,21 +460,44 @@ patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
     *syllab |= (value << bfield->to_offset) & ~mask;
 }
 
+void send_cluster_debug_level (int level)
+{
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  sprintf (buf, "kD%d", level);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
+static void inform_dsu_stepi_bkp (void)
+{
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  strcpy (buf, "kB");
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
+#if 0
 static int get_intsys_handlers (CORE_ADDR *hsys, CORE_ADDR *hint, CORE_ADDR *hev)
 {
   char *buf = (char *) malloc (256);
   long size = 256;
   CORE_ADDR lhsys = 0;
   
-  sprintf (buf, "kH");
+  sprintf (buf, "kh");
   putpkt (buf);
   getpkt (&buf, &size, 0);
-  
 
   hex2bin (buf + 8 * 0, (gdb_byte *) &lhsys, 4);
 
   if (lhsys == 0xFFFFFFFF)
+  {
+    free (buf);
     return 1;
+  }
   
   if (hsys)
     *hsys = lhsys;
@@ -477,17 +516,31 @@ static int get_intsys_handlers (CORE_ADDR *hsys, CORE_ADDR *hint, CORE_ADDR *hev
 
   return 0;
 }
+#endif
 
-static void set_mos_reg_spc (unsigned long spc)
+int get_cluster_debug_level (int pid)
 {
-  char *buf = (char *) malloc (256);
-  long size = 256;
-  sprintf (buf, "kS%lx", spc);
+  struct inferior *inf;
+  int ret;
+
+  if (pid == -1)
+    inf = current_inferior ();
+  else
+    inf = find_inferior_pid (pid);
   
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  
-  free (buf);
+  ret = mppa_inferior_data (inf)->idx_cluster_debug_level;
+  return ret;
+}
+
+
+int get_debug_level (int pid)
+{
+  int ret = get_cluster_debug_level (pid);
+
+  if (ret == DBG_LEVEL_INHERITED)
+    ret = idx_global_debug_level;
+
+  return ret;
 }
 
 static void
@@ -574,15 +627,10 @@ patch_bcu_instruction (struct gdbarch *gdbarch,
                    || strcmp ("trapa", op->as_op) == 0
                    || strcmp ("trapo", op->as_op) == 0) {
             ULONGEST reg_value;
-            CORE_ADDR hsys;
 
             dsc->scall_jump = 1;
             regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
-
-            if (!get_intsys_handlers (&hsys, NULL, NULL))
-              dsc->dest = hsys;
-            else
-              dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
+            dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
         } else if (strcmp ("loopdo", op->as_op) == 0
                    || strcmp ("loopgtz", op->as_op) == 0
                    || strcmp ("loopnez", op->as_op) == 0) {
@@ -657,7 +705,16 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch,
 
     write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
     
+  inform_dsu_stepi_bkp ();
+
     return dsc;
+}
+
+static void stepi_to_skip_pm_cb (void *context)
+{
+  char si_cmd[25];
+  strcpy (si_cmd, "si");
+  execute_command (si_cmd, 0);
 }
 
 static void
@@ -698,34 +755,18 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
             }
     
             if (dsc->scall_jump) {
-              CORE_ADDR hsys;
-              if (0 == get_intsys_handlers (&hsys, NULL, NULL) && dsc->dest == hsys)
-                set_mos_reg_spc (from+dsc->num_insn_words * 4);
-              else
-                regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
+                  regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
               if (debug_displaced) printf_filtered ("displaced: rewrite SPC\n");
             }
         } else {
             /* Uh oh... seems we've taken some exceptional condition. 
                This means interrupt or H/W trap. */
-            CORE_ADDR hit, hev;
-            int bmos_booted = !get_intsys_handlers (NULL, &hit, &hev);
-            if (!bmos_booted)
-            {
               regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
-	      if (debug_displaced)
-                printf_filtered ("displaced: trapped SPC=%lx\n", (unsigned long) spc);
+	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%lx\n", 
+						  (unsigned long)spc);
               gdb_assert (spc == to);
 	      spc = from;
 	      regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
-            }
-            else
-            {
-              if (debug_displaced)
-                printf_filtered ("displaced: trapped - mOS booted\n");
-              gdb_assert (pc == hit || pc == hev);
-              set_mos_reg_spc (from);              
-            }
             exception = 1;
         }
     }
@@ -766,6 +807,24 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
     regcache_write_pc (regs, pc);
     if (debug_displaced) 
 	printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
+
+  if (1)
+  {
+    struct thread_info *th = find_thread_ptid (inferior_ptid);
+    int cpu_level = get_cpu_exec_level ();
+    int debug_level = get_debug_level (inferior_ptid.pid);
+
+    if (debug_level > cpu_level)
+    {
+      if (th->control.step_range_start == 1 || th->control.step_range_end == 1)
+      {
+        printf ("[Schedule stepi after breakpoint to skip PM, exec_level = %s"
+          ", debug_level = %s]\n", get_str_debug_level (cpu_level),
+          get_str_debug_level (debug_level));
+        create_timer (0, stepi_to_skip_pm_cb, NULL);
+      }
+    }
+  }
 }
 
 static void 
@@ -1024,7 +1083,7 @@ k1_return_value (struct gdbarch *gdbarch, struct value *func_type,
     return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
-int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+static int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
     /* R0 point to the jmpbuf, and RA is at offset 0x34 in the buf */
     gdb_byte buf[4];
@@ -1302,4 +1361,52 @@ _initialize_k1_tdep (void)
   observer_attach_inferior_created (k1_inferior_created);
   
   k1_inferior_data_token = register_inferior_data_with_cleanup (NULL, k1_cleanup_inferior_data);
+}
+
+int get_thread_mode_used_for_ptid (ptid_t ptid)
+{
+  int ret;
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  sprintf (buf, "kmp%x.%x", (unsigned int) ptid.pid, (unsigned int) ptid.lwp);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  ret = (int) (buf[0] - '0');
+  free (buf);
+
+  return ret;
+}
+
+int get_cpu_exec_level (void)
+{
+  int ret;
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  strcpy (buf, "kc");
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  ret = (int) (buf[0] - '0');
+  free (buf);
+
+  return ret;
+}
+
+int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
+{
+  int debug_level;
+  int th_mode_used;
+  
+  debug_level = get_debug_level (tp->ptid.pid);
+  th_mode_used = get_thread_mode_used_for_ptid (tp->ptid);
+  
+  // don't hide a stopped thread and the current thread
+  if (tp->state != THREAD_STOPPED && !ptid_equal (tp->ptid, crt_ptid))
+  {
+    // hide the thread if it was never seen in a exec level >= debug level
+    // in debug_level system, don't hide anything
+    if (debug_level && th_mode_used < (1 << debug_level))
+      return 1;
+  }
+
+  return 0;
 }

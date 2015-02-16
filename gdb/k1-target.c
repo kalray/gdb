@@ -1,4 +1,4 @@
-/* Target ops to connect to the K1 simulator. 
+/* Target ops to connect to the K1 simulator.
 
    Copyright (C) 2010, Kalray
 */
@@ -25,10 +25,14 @@
 #include "symfile.h"
 #include "top.h"
 #include "arch-utils.h"
-#include "elf/k1.h"
-
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
+#include "event-top.h"
+#include "regcache.h"
+#include "event-loop.h"
+
+#include "elf/k1.h"
+#include "k1-target.h"
 
 static cmd_cfunc_ftype *real_run_command;
 
@@ -37,16 +41,22 @@ static char *da_options = NULL;
 
 static const char *simulation_vehicles[] = { "k1-cluster", "k1-runner", NULL };
 static const char *simulation_vehicle;
+static const char *scluster_debug_levels[] = {"system", "kernel-user", "user", "inherited", NULL};
+static const char *scluster_debug_level;
+static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NULL};
+static const char *sglobal_debug_level;
+int idx_global_debug_level;
 
 static pid_t server_pid;
 static int after_first_resume;
+int inf_created_change_th = 0;
 
 static const struct inferior_data *k1_attached_inf_data;
 
-struct inferior_data {
-    const char *cluster;
-    int booted;
-};
+const char *get_str_debug_level (int level)
+{
+  return scluster_debug_levels[level];
+}
 
 static struct inferior_data*
 mppa_init_inferior_data (struct inferior *inf)
@@ -58,6 +68,7 @@ mppa_init_inferior_data (struct inferior *inf)
     struct osdata_item *item;
     int ix_items;
 
+    data->idx_cluster_debug_level = DBG_LEVEL_INHERITED;
     set_inferior_data (inf, k1_attached_inf_data, data);
 
     /* Cluster name */
@@ -80,7 +91,7 @@ mppa_init_inferior_data (struct inferior *inf)
     return data;
 }
 
-static struct inferior_data*
+struct inferior_data*
 mppa_inferior_data (struct inferior *inf)
 {
     struct inferior_data *data = inferior_data (inf, k1_attached_inf_data);
@@ -175,13 +186,14 @@ mppa_threads_extra_info (struct target_ops *ops, struct thread_info *tp)
     return NULL;
 }
 
-void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
+static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
     const char tar_remote_str[] = "target extended-remote";
     int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
     int print_thread_events_save = print_thread_events;
     char *host, *port, *tar_remote_cmd;
+    volatile struct gdb_exception ex;
 
     if (!args)
         args = "";
@@ -214,8 +226,6 @@ void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     batch_silent = 1;
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
-
-    volatile struct gdb_exception ex;
 
     TRY_CATCH (ex, RETURN_MASK_ALL)
     {
@@ -282,7 +292,7 @@ Use the \"file\" or \"exec-file\" command."));
     while (arg && *arg++) nb_da_args++;
 
     stub_args = xmalloc ((nb_args+nb_da_args+6)*sizeof (char*));
-    stub_args[argidx++] = simulation_vehicle;
+    stub_args[argidx++] = (char *) simulation_vehicle;
 
     core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
 
@@ -436,7 +446,7 @@ k1_target_wait (struct target_ops *target,
 
             if (file && file[0] != 0) {
                 status->kind = TARGET_WAITKIND_EXECD;
-                status->value.execd_pathname = file;
+                status->value.execd_pathname = (char *) file;
             } else {
                 printf_filtered ("[ %s booted ]\n", cluster);
                 status->kind = TARGET_WAITKIND_SPURIOUS;
@@ -480,6 +490,67 @@ k1_target_can_async (struct target_ops *ops)
   return target_async_permitted;
 }
 
+static void change_thread_cb (struct inferior *inf)
+{
+  struct thread_info *th;
+  
+  //printf ("change thread_cb pid=%d, lpw=%d\n", inferior_ptid.pid, inferior_ptid.lwp);
+
+  if (is_stopped (inferior_ptid))
+    return;
+  
+  th = any_live_thread_of_process (inf->pid);
+  if (!is_stopped (th->ptid))
+      return;
+
+  switch_to_thread (th->ptid);
+}
+
+static int
+is_crt_cpu_in_user_mode (struct regcache *regcache)
+{
+  uint64_t ps;
+  regcache_raw_read_unsigned (regcache, 65, &ps);
+
+  return ((ps & 1) == 0); //PS.PM == 0 (user mode)
+}
+
+static void
+k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int regnum)
+{
+  // don't use current_inferior () & current_inferior_
+  // our caller (regcache_raw_read) changes only inferior_ptid
+  
+  struct target_ops *remote_target;
+  int crt_thread_mode_used, new_mode;
+  struct inferior_data *data;
+  struct inferior *inf;
+  
+  // get the registers of the current thread (CPU) in the usual way
+  remote_target = find_target_beneath (target);
+  remote_target->to_fetch_registers (target, regcache, regnum);
+
+  // first time we see a cluster, set the debug level if postponed
+  inf = find_inferior_pid (inferior_ptid.pid);
+  data = mppa_inferior_data (inf);
+  if (data->cluster_debug_level_postponed)
+  {
+    data->cluster_debug_level_postponed = 0;
+    send_cluster_debug_level (get_debug_level (inferior_ptid.pid));
+  }
+
+  // after attach, if "c -a" executed to skip system code because of the
+  // debug level, change the thread to a stopped one
+  if (inf_created_change_th)
+  {
+    if (is_crt_cpu_in_user_mode (regcache))
+    {
+      inf_created_change_th = 0;
+      create_timer (0, (void (*)(void*)) change_thread_cb, inf);
+    }
+  }
+}
+
 static struct cmd_list_element *kalray_set_cmdlist;
 static struct cmd_list_element *kalray_show_cmdlist;
 
@@ -495,6 +566,117 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
+static int str_debug_level_to_idx (const char *slevel)
+{
+  int level;
+  for (level = 0; level < DBG_LEVEL_MAX; level++)
+    if (!strcmp (slevel, scluster_debug_levels[level]))
+      return level;
+
+  return 0;
+}
+
+static void apply_cluster_debug_level (struct inferior *inf)
+{
+  int level;
+  struct thread_info *th;
+  ptid_t save_ptid, th_ptid;
+
+  level = get_debug_level (inf->pid);
+  
+  th = any_live_thread_of_process (inf->pid);
+  if (th == NULL || th->state != THREAD_STOPPED)
+  {
+    struct inferior_data *data = mppa_inferior_data (inf);
+    //printf ("Info: No stopped CPU found for %s. "
+    //  "Postpone the setting of the cluster debug level.\n", data->cluster);
+    data->cluster_debug_level_postponed = 1;
+    return;
+  }
+
+  save_ptid = inferior_ptid;
+  th_ptid = th->ptid;
+  switch_to_thread (th_ptid);
+  set_general_thread (th_ptid);
+
+  send_cluster_debug_level (level);
+
+  switch_to_thread (save_ptid);
+  set_general_thread (save_ptid);
+}
+
+static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_element *c)
+{
+  int new_level, prev_level;
+  struct inferior *inf;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    error (_("Cannot set debug level without a selected thread."));
+  
+  inf = current_inferior ();
+  prev_level = get_cluster_debug_level (inf->pid);
+  new_level = str_debug_level_to_idx (scluster_debug_level);
+
+  if (new_level != prev_level)
+  {
+    struct inferior_data *data = mppa_inferior_data (inf);
+    data->idx_cluster_debug_level = new_level; 
+    apply_cluster_debug_level (inf);
+  }
+}
+
+static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
+{
+  apply_cluster_debug_level (inf);
+  return 0;
+}
+
+static void apply_global_debug_level (int level)
+{
+  idx_global_debug_level = level;
+  if (have_inferiors ())
+    iterate_over_inferiors (set_cluster_debug_level_iter, NULL);
+  else
+  {
+    printf ("Info: No cluster found. Action postponed for attach.\n");
+  }
+}
+
+static void set_global_debug_level (char *args, int from_tty, struct cmd_list_element *c)
+{
+  int new_level = str_debug_level_to_idx (sglobal_debug_level);
+  if (new_level != idx_global_debug_level) 
+  {
+    apply_global_debug_level (new_level);
+  }
+}
+
+static void
+show_cluster_debug_level (struct ui_file *file, int from_tty, 
+  struct cmd_list_element *c, const char *value)
+{
+  struct inferior_data *data;
+  int level;
+
+  if (ptid_equal (inferior_ptid, null_ptid) || is_exited (inferior_ptid))
+    error (_("Cannot show debug level without a live selected thread."));
+
+  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
+  
+  level = get_cluster_debug_level (-1);
+  fprintf_filtered (file, "The cluster debug level is \"%s\"%s.\n",
+    scluster_debug_levels[level], 
+    data->cluster_debug_level_postponed ? " (setting postponed)" : "");
+}
+
+static void
+show_global_debug_level (struct ui_file *file, int from_tty, 
+  struct cmd_list_element *c, const char *value)
+{
+  fprintf_filtered (file, "The global debug level  is \"%s\".\n",
+    scluster_debug_levels[idx_global_debug_level]);
+}
+
 extern int remote_hw_breakpoint_limit;
 extern int remote_hw_watchpoint_limit;
 
@@ -508,7 +690,8 @@ attach_mppa_command (char *args, int from_tty)
     struct osdata_item *item;
     int ix_items;
     struct inferior *cur_inf;
-    ptid_t cur_ptid;
+    ptid_t cur_ptid, stopped_ptid;
+    int cur_pid, bstopped, bcur_inf_stopped;
 
     dont_repeat ();
 
@@ -529,7 +712,7 @@ attach_mppa_command (char *args, int from_tty)
     cur_inf = current_inferior();
     set_inferior_data (cur_inf, k1_attached_inf_data, NULL);
     cur_ptid = inferior_ptid;
-    int cur_pid = cur_inf->pid;
+    cur_pid = cur_inf->pid;
 
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
@@ -553,8 +736,8 @@ attach_mppa_command (char *args, int from_tty)
 		inf->control.stop_soon = NO_STOP_QUIETLY;
     }
 
-    int bstopped = 0, bcur_inf_stopped = 0;
-    ptid_t stopped_ptid;
+    bstopped = 0;
+    bcur_inf_stopped = 0;
     osdata = get_osdata (NULL);
 
     for (ix_items = 0;
@@ -562,6 +745,7 @@ attach_mppa_command (char *args, int from_tty)
                       ix_items, item);
          ix_items++) {
         char *endptr;
+        struct thread_info *live_th;
         unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
         const char *file = get_osdata_column (item, "command");
         const char *running = get_osdata_column (item, "running");
@@ -569,7 +753,7 @@ attach_mppa_command (char *args, int from_tty)
         if (strcmp (running, "yes"))
             continue;
 
-        struct thread_info *live_th = any_live_thread_of_process (pid);
+        live_th = any_live_thread_of_process (pid);
         if (live_th && !live_th->stop_requested)
             set_stop_requested (live_th->ptid, 1);
 
@@ -584,7 +768,7 @@ attach_mppa_command (char *args, int from_tty)
 
         if (file && file[0]) {
             switch_to_thread (any_thread_of_process (pid)->ptid);
-            exec_file_attach (file, 0);
+            exec_file_attach ((char *) file, 0);
             symbol_file_add_main (file, 0);
         }
     }
@@ -601,9 +785,14 @@ attach_mppa_command (char *args, int from_tty)
        from the debug reader routines will break as objfile_arch won't
        have the register descriptions */
     gdbarch_dwarf2_reg_to_regnum (get_current_arch(), 0);
+    
+    if (idx_global_debug_level)
+    {
+      apply_global_debug_level (idx_global_debug_level);
+    }
 }
 
-void
+static void
 run_mppa_command (char *args, int from_tty)
 {
     char set_non_stop_cmd[] = "set non-stop";
@@ -628,6 +817,9 @@ void
 _initialize__k1_target (void)
 {
     simulation_vehicle = simulation_vehicles[0];
+    scluster_debug_level = scluster_debug_levels[DBG_LEVEL_INHERITED];
+    idx_global_debug_level = DBG_LEVEL_SYSTEM;
+    sglobal_debug_level = sglobal_debug_levels[idx_global_debug_level];
     
     k1_target_ops.to_shortname = "mppa";
     k1_target_ops.to_longname = "Kalray MPPA connection";
@@ -653,6 +845,8 @@ _initialize__k1_target (void)
     k1_target_ops.to_pid_to_str = mppa_pid_to_str;
     k1_target_ops.to_extra_thread_info = mppa_threads_extra_info;
 
+    k1_target_ops.to_fetch_registers = k1_fetch_registers;
+    
     k1_target_ops.to_magic = OPS_MAGIC;
     
     add_target (&k1_target_ops);
@@ -680,6 +874,18 @@ Set the simulation vehicle to use for execution."), _("\
 Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
 			  &kalray_set_cmdlist, &kalray_show_cmdlist);
 
+    add_setshow_enum_cmd ("cluster_debug_level", class_maintenance,
+			  scluster_debug_levels, &scluster_debug_level,
+        _("Set the cluster debug level."), _("Show the cluster debug level."), 
+        NULL, set_cluster_debug_level, show_cluster_debug_level,
+			  &kalray_set_cmdlist, &kalray_show_cmdlist);
+    
+    add_setshow_enum_cmd ("global_debug_level", class_maintenance,
+			  sglobal_debug_levels, &sglobal_debug_level,
+        _("Set the global debug level."), _("Show the global debug level."), 
+        NULL, set_global_debug_level, show_global_debug_level,
+			  &kalray_set_cmdlist, &kalray_show_cmdlist);
+    
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
 Usage is `attach-mppa PORT'."));

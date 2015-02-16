@@ -139,7 +139,7 @@ static void sync_remote_interrupt_twice (int signo);
 
 static void interrupt_query (void);
 
-static void set_general_thread (struct ptid ptid);
+/*static*/ void set_general_thread (struct ptid ptid);
 static void set_continue_thread (struct ptid ptid);
 
 static void get_offsets (void);
@@ -1813,7 +1813,7 @@ set_thread (struct ptid ptid, int gen)
     rs->continue_thread = ptid;
 }
 
-static void
+/*static */void
 set_general_thread (struct ptid ptid)
 {
   set_thread (ptid, 1);
