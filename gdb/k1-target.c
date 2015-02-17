@@ -659,7 +659,10 @@ show_cluster_debug_level (struct ui_file *file, int from_tty,
   int level;
 
   if (ptid_equal (inferior_ptid, null_ptid) || is_exited (inferior_ptid))
-    error (_("Cannot show debug level without a live selected thread."));
+  {
+    printf (_("Cannot show debug level without a live selected thread."));
+    return;
+  }
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   
