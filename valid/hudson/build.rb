@@ -6,16 +6,20 @@ include Metabuild
 
 options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "clone"         => ".",
-                        "cores"          => ["none", "List of family cores."],
+                        "cores"         => ["none", "List of family cores."],
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "toolroot"      => "",
                         "toolchain"     => {"type" => "keywords", "keywords" => [:default, :bare, :rtems, :linux, :embedded], "default" => "default", "help" => "Toolchain type." },
+                        "k1debug_prefix"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
-                        "variant"        => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
-                        "prefix"         => ["devimage", "Install prefix"],
-                        "host"           => ["x86", "Host for the build"],
-                        "sysroot"        => ["sysroot", "Sysroot directory"],
+                        "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
+                        "prefix"        => ["devimage", "Install prefix"],
+                        "pkg_prefix"    => {"type" => "string", "default" => "", "help" => "Where to install software to build packages." },
+                        "host"          => ["x86", "Host for the build"],
+                        "sysroot"       => ["sysroot", "Sysroot directory"],
+                        "execution_platform" => {"type" => "keywords",
+ "keywords" => [:hw, :sim], "default" => "sim", "help" => "Execution platform: can be hardware (jtag) or simulation (k1-mppa, k1-cluster)." },
                       })
 
 workspace = options["workspace"]
@@ -34,9 +38,11 @@ install = Target.new("#{variant}_install", repo, [build_valid], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build], [])
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
 
+package = Target.new("package", repo, [], [])
+
 install.write_prefix()
 
-b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid])
+b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, package])
 
 arch = options["target"]
 b.logsession = arch
@@ -46,12 +52,19 @@ mds_path       = File.join(workspace,options["mds"])
 
 host       = options["host"]
 
-build_path = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
-prefix = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
+toolroot   = options["toolroot"]
+k1debug_prefix    = options["k1debug_prefix"].empty? ? toolroot : options["k1debug_prefix"]
+
+build_path         = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
+prefix             = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
+pkg_prefix         = options["pkg_prefix"].empty? ? prefix : options["pkg_prefix"]
+gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
+k1debug_prefix     = k1debug_prefix
 
 b.default_targets = [install]
 
 cores      = options["cores"]
+
 toolchain  = options["toolchain"].to_s
 
 program_prefix = "#{arch}-"
@@ -130,7 +143,7 @@ b.target("#{variant}_build") do
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
       b.run(:cmd => "echo #{machine_type}" )
-      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{prefix}")
+      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
       b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
@@ -182,6 +195,10 @@ b.target("#{variant}_install") do
     if( arch == "k1" )
       cd build_path
       b.run(:cmd => "make install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+
+      # Copy to k1debug.
+      b.run("mkdir -p #{k1debug_prefix}") unless File.exist?(k1debug_prefix)
+      b.run("rsync -av #{gdb_install_prefix}/* #{k1debug_prefix}")
     end
   else
     cd build_path
@@ -192,13 +209,23 @@ b.target("#{variant}_install") do
   end
 end
 
+execution_platform = options['execution_platform'].to_s
+
+$execution_board = "k1-iss"
+$execution_ref = "gdb.sum.ref"
+
+if ( execution_platform == "hw" )
+  $execution_board = "k1-jtag-runner" 
+  $execution_ref = "gdb.sum.hw.ref"
+end
+
 b.target("#{variant}_post_build_valid") do
   b.logtitle = "Report for GDB  #{variant}_post_build_valid, arch = #{arch}"
   if (variant == "gdb")
     if( arch == "k1" )
       Dir.chdir build_path + "/gdb/testsuite"
-      b.valid(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
-      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
+      b.valid(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
     end
   end
 end
@@ -248,9 +275,37 @@ b.target("gdb_long_valid") do
     b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
     b.run("make")
     cd "gdb/testsuite"
-    b.run(:cmd => "LANG=C PATH=#{options["toolroot"]}/bin:$PATH LD_LIBRARY_PATH=#{options["toolroot"]}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.run(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
+end
+
+b.target("package") do
+  b.logtitle = "Report for GDB packaging, arch = #{arch}"
+
+  # GDB package
+  cd gdb_install_prefix
+
+  gdb_name = "#{arch}-gdb"
+  gdb_tar  = "#{gdb_name}.tar"
+  b.run("tar cf #{gdb_tar} ./*")
+  tar_package = File.expand_path(gdb_tar)
+
+  depends = []
+
+  package_description = "#{arch.upcase} GDB package.\n"
+  package_description += "This package provides GNU Debugger for MPPA."
+
+  tools_version = options["version"]
+
+  (version,buildID) = tools_version.split("-")
+  release_info = b.release_info(version,buildID)
+  pinfo = b.package_info(gdb_name, release_info,
+                         package_description, "/usr/local/#{arch}tools",
+                         workspace, depends)
+
+  b.create_package(tar_package, pinfo)
+  b.run("rm #{tar_package}")
 end
 
 b.launch
