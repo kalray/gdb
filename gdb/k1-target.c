@@ -854,6 +854,11 @@ _initialize__k1_target (void)
     
     add_target (&k1_target_ops);
 
+    {
+      extern int (*p_kalray_hide_thread) (struct thread_info *tp, ptid_t crt_ptid);
+      p_kalray_hide_thread = kalray_hide_thread;
+    }
+
     add_prefix_cmd ("kalray", class_maintenance, set_kalray_cmd, _("\
 Kalray specific variables\n				    \
 Configure various Kalray specific variables."),

@@ -770,6 +770,8 @@ pc_in_thread_step_range (CORE_ADDR pc, struct thread_info *thread)
 	  && pc < thread->control.step_range_end);
 }
 
+int (*p_kalray_hide_thread) (struct thread_info *tp, ptid_t crt_ptid) = 0;
+
 /* Prints the list of threads and their details on UIOUT.
    This is a version of 'info_threads_command' suitable for
    use from MI.
@@ -853,11 +855,9 @@ print_thread_info (struct ui_out *uiout, char *requested_threads, int pid)
 	    error (_("Requested thread not found in requested process"));
 	  continue;
 	}
-      {
-        extern int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid);
-        if (kalray_hide_thread (tp, current_ptid))
-          continue;
-      }
+
+  if (p_kalray_hide_thread && p_kalray_hide_thread (tp, current_ptid))
+    continue;
 
       if (ptid_equal (tp->ptid, current_ptid))
 	current_thread = tp->num;
