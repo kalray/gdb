@@ -10,7 +10,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "toolroot"      => "",
-                        "toolchain"     => {"type" => "keywords", "keywords" => [:default, :bare, :rtems, :linux, :embedded], "default" => "default", "help" => "Toolchain type." },
+                        "toolchain"     => {"type" => "keywords", "keywords" => [:default, :bare, :rtems, :linux], "default" => "default", "help" => "Toolchain type." },
                         "k1debug_prefix"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
@@ -60,6 +60,8 @@ prefix             = options["prefix"].empty? ? "#{build_path}/release" : option
 pkg_prefix         = options["pkg_prefix"].empty? ? prefix : options["pkg_prefix"]
 gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
 k1debug_prefix     = k1debug_prefix
+
+pkg_prefix_name = options.fetch("pi-prefix-name","#{arch}-")
 
 b.default_targets = [install]
 
@@ -284,7 +286,7 @@ b.target("package") do
   # GDB package
   cd gdb_install_prefix
 
-  gdb_name = "#{arch}-gdb"
+  gdb_name = "#{pkg_prefix_name}gdb"
   gdb_tar  = "#{gdb_name}.tar"
   b.run("tar cf #{gdb_tar} ./*")
   tar_package = File.expand_path(gdb_tar)
@@ -299,8 +301,7 @@ b.target("package") do
   (version,buildID) = tools_version.split("-")
   release_info = b.release_info(version,buildID)
   pinfo = b.package_info(gdb_name, release_info,
-                         package_description, "/usr/local/#{arch}tools",
-                         workspace, depends)
+                         package_description, depends)
 
   b.create_package(tar_package, pinfo)
   b.run("rm #{tar_package}")
