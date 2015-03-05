@@ -37,7 +37,7 @@ const bfd_vma plt_small_entry_k1b32[] =
 const size_t plt_entry_k1b32_size = PLT_SIZE(plt_small_entry_k1b32);
 
 /* PLT templates for (FD)PIC ABI */
-static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
+static const bfd_vma fdpic_abi_plt_full_entry_k1a[PLT_FULL_ENTRY_SIZE] =
   {
     /* add $r14 = $r14, 0 ;; */ 0xe238000e,
                                 0x00000000,
@@ -45,6 +45,18 @@ static const bfd_vma fdpic_abi_plt_full_entry[PLT_FULL_ENTRY_SIZE] =
     /* lw $r14 = 4[$r14]  ;; */ 0x2438010e,
     /* igoto $r9          ;; */ 0x00114009,
   };
+
+/* PLT templates for (FD)PIC ABI */
+static const bfd_vma fdpic_abi_plt_full_entry_k1b32[PLT_FULL_ENTRY_SIZE] =
+  {
+    /* add $r14 = $r14, 0 ;; */ 0xe138000e,
+                                0x00000000,
+    /* lw $r9 = 0[$r14]   ;; */ 0x2c24000e,
+    /* lw $r14 = 4[$r14]  ;; */ 0x2c38010e,
+    /* igoto $r9          ;; */ 0x00114009,
+  };
+
+
 
 static bfd_boolean
 k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
@@ -2780,8 +2792,22 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
   if (entry->plt_entry != (bfd_vma) -1)
     {
       int i;
-      const bfd_vma *template = fdpic_abi_plt_full_entry;
-            
+      const bfd_vma *template;
+      switch(output_bfd->arch_info->mach){
+        case bfd_mach_k1dp:
+        case bfd_mach_k1io:
+          template = fdpic_abi_plt_full_entry_k1a;
+          break;
+        case bfd_mach_k1bdp:
+        case bfd_mach_k1bio:
+          template = fdpic_abi_plt_full_entry_k1b32;
+          break;
+        default:
+          (*_bfd_error_handler)
+            ("can't make a plt entry for unknown mach: %d", output_bfd->arch_info->mach);
+          return FALSE;
+      }
+           
       bfd_byte *plt_code = k1fdpic_plt_section (info)->contents
         + entry->plt_entry;
 
