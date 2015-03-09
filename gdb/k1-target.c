@@ -45,7 +45,7 @@ static const char *scluster_debug_levels[] = {"system", "kernel-user", "user", "
 static const char *scluster_debug_level;
 static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NULL};
 static const char *sglobal_debug_level;
-int idx_global_debug_level;
+int idx_global_debug_level, global_debug_level_set;
 
 static pid_t server_pid;
 static int after_first_resume;
@@ -438,11 +438,20 @@ k1_target_wait (struct target_ops *target,
             unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
             const char *file = get_osdata_column (item, "command");
             const char *cluster = get_osdata_column (item, "cluster");
+            int os_debug_level;
          
             if (pid != ptid_get_pid (res))
                 continue;
 
             mppa_inferior_data (inferior)->booted = 1;
+            
+            //if os support a debug level, set it to the cluster
+            os_debug_level = get_os_supported_debug_levels (inferior);
+            if (os_debug_level > DBG_LEVEL_SYSTEM)
+            {
+              set_cluster_debug_level_no_check (inferior, os_debug_level);
+            }
+            //continue_if_os_supports_debug_level (inferior);
 
             if (file && file[0] != 0) {
                 status->kind = TARGET_WAITKIND_EXECD;
@@ -605,6 +614,13 @@ static void apply_cluster_debug_level (struct inferior *inf)
   set_general_thread (save_ptid);
 }
 
+void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level)
+{
+  struct inferior_data *data = mppa_inferior_data (inf);
+  data->idx_cluster_debug_level = debug_level; 
+  apply_cluster_debug_level (inf);
+}
+
 static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_element *c)
 {
   int new_level, prev_level;
@@ -618,11 +634,7 @@ static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_e
   new_level = str_debug_level_to_idx (scluster_debug_level);
 
   if (new_level != prev_level)
-  {
-    struct inferior_data *data = mppa_inferior_data (inf);
-    data->idx_cluster_debug_level = new_level; 
-    apply_cluster_debug_level (inf);
-  }
+    set_cluster_debug_level_no_check (inf, new_level);
 }
 
 static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
@@ -631,7 +643,7 @@ static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
   return 0;
 }
 
-static void apply_global_debug_level (int level)
+void apply_global_debug_level (int level)
 {
   idx_global_debug_level = level;
   if (have_inferiors ())
@@ -645,6 +657,7 @@ static void apply_global_debug_level (int level)
 static void set_global_debug_level (char *args, int from_tty, struct cmd_list_element *c)
 {
   int new_level = str_debug_level_to_idx (sglobal_debug_level);
+  global_debug_level_set = 1;
   if (new_level != idx_global_debug_level) 
   {
     apply_global_debug_level (new_level);
@@ -822,6 +835,7 @@ _initialize__k1_target (void)
     simulation_vehicle = simulation_vehicles[0];
     scluster_debug_level = scluster_debug_levels[DBG_LEVEL_INHERITED];
     idx_global_debug_level = DBG_LEVEL_SYSTEM;
+    global_debug_level_set = 0;
     sglobal_debug_level = sglobal_debug_levels[idx_global_debug_level];
     
     k1_target_ops.to_shortname = "mppa";

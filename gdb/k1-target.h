@@ -13,6 +13,7 @@ struct inferior_data
 };
 
 extern int idx_global_debug_level;
+extern int global_debug_level_set;
 extern int inf_created_change_th;
 
 void _initialize__k1_target (void);
@@ -23,6 +24,9 @@ int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid);
 int get_thread_mode_used_for_ptid (ptid_t ptid);
 int get_cpu_exec_level (void);
 const char *get_str_debug_level (int level);
+int get_os_supported_debug_levels (struct inferior *inf);
+void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level);
+void apply_global_debug_level (int level);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);
 

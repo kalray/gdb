@@ -384,14 +384,31 @@ k1_inferior_created (struct target_ops *target, int from_tty)
   
   k1_current_arch = K1_NUM_ARCHES;
   
-  if (first && idx_global_debug_level)
+  if (first)
   {
     char cont_cmd[25];
-    
-    first = 0;
-    inf_created_change_th = 1;
     sprintf (cont_cmd, "c -a");
-    execute_command (cont_cmd, 0);
+
+    first = 0;
+    if (idx_global_debug_level)
+    {
+      inf_created_change_th = 1;
+      execute_command (cont_cmd, 0);
+    }
+    else if (!global_debug_level_set)
+    {
+      struct inferior *inf = current_inferior ();
+      int os_debug_level = get_os_supported_debug_levels (inf);
+      //printf ("os supported debug level = %d\n", os_debug_level);
+      if (os_debug_level > DBG_LEVEL_SYSTEM)
+      {
+        apply_global_debug_level (os_debug_level);
+        //set_cluster_debug_level_no_check (inf, os_debug_level);
+
+        inf_created_change_th = 1;
+        execute_command (cont_cmd, 0);
+      }
+    }
   }
 }
 
@@ -468,6 +485,23 @@ void send_cluster_debug_level (int level)
   putpkt (buf);
   getpkt (&buf, &size, 0);
   free (buf);
+}
+
+int get_os_supported_debug_levels (struct inferior *inf)
+{
+  char *buf = (char *) malloc (256);
+  long size = 256;  
+  int ret;
+  
+  sprintf (buf, "kdp%x.1", (unsigned int) inf->pid);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  
+  ret = *buf - '0';
+  if (ret >= DBG_LEVEL_SYSTEM && ret < DBG_LEVEL_MAX)
+    return ret;
+
+  return DBG_LEVEL_SYSTEM;
 }
 
 static void inform_dsu_stepi_bkp (void)
