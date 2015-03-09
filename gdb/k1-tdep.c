@@ -477,6 +477,16 @@ patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
     *syllab |= (value << bfield->to_offset) & ~mask;
 }
 
+void send_stop_at_main (int bstop)
+{
+  char *buf = (char *) malloc (256);
+  long size = 256;
+  sprintf (buf, "ks%d", bstop);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
 void send_cluster_debug_level (int level)
 {
   char *buf = (char *) malloc (256);

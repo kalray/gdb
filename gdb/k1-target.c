@@ -829,6 +829,23 @@ mppa_inferior_data_cleanup (struct inferior *inf, void *data)
     xfree (data);
 }
 
+static void mppa_observer_breakpoint_created (struct breakpoint *b)
+{
+  if (b && b->addr_string && !strcmp (b->addr_string, "main"))
+  {
+    send_stop_at_main (0);
+  }
+
+}
+
+static void mppa_observer_breakpoint_deleted (struct breakpoint *b)
+{
+  if (b && b->addr_string && !strcmp (b->addr_string, "main"))
+  {
+    send_stop_at_main (1);
+  }
+}
+
 void
 _initialize__k1_target (void)
 {
@@ -918,4 +935,7 @@ Connect to a MPPA TLM platform and start debugging it."));
 
     observer_attach_inferior_created (k1_push_arch_stratum);
     k1_attached_inf_data = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
+    
+    observer_attach_breakpoint_created (mppa_observer_breakpoint_created);
+    observer_attach_breakpoint_deleted (mppa_observer_breakpoint_deleted);
 }
