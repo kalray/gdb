@@ -15,6 +15,7 @@ struct inferior_data
 extern int idx_global_debug_level;
 extern int global_debug_level_set;
 extern int inf_created_change_th;
+extern int opt_hide_threads;
 
 void _initialize__k1_target (void);
 void send_cluster_debug_level (int level);

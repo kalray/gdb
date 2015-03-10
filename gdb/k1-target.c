@@ -46,6 +46,7 @@ static const char *scluster_debug_level;
 static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NULL};
 static const char *sglobal_debug_level;
 int idx_global_debug_level, global_debug_level_set;
+int opt_hide_threads = 1;
 
 static pid_t server_pid;
 static int after_first_resume;
@@ -925,6 +926,10 @@ Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
         _("Set the global debug level."), _("Show the global debug level."), 
         NULL, set_global_debug_level, show_global_debug_level,
 			  &kalray_set_cmdlist, &kalray_show_cmdlist);
+    
+    add_setshow_boolean_cmd ("hide_threads", class_maintenance, &opt_hide_threads,
+      _("Set hide threads in debug level."), _("Show hide threads in debug level."),
+      NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
     
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
