@@ -539,10 +539,10 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int re
   remote_target = find_target_beneath (target);
   remote_target->to_fetch_registers (target, regcache, regnum);
 
-  // first time we see a cluster, set the debug level if postponed
+  // first time we see a cluster, set the debug level if postponed and not RM of a cluster
   inf = find_inferior_pid (inferior_ptid.pid);
   data = mppa_inferior_data (inf);
-  if (data->cluster_debug_level_postponed)
+  if (data->cluster_debug_level_postponed && inferior_ptid.lwp != 17)
   {
     data->cluster_debug_level_postponed = 0;
     send_cluster_debug_level (get_debug_level (inferior_ptid.pid));
@@ -594,7 +594,8 @@ static void apply_cluster_debug_level (struct inferior *inf)
   level = get_debug_level (inf->pid);
   
   th = any_live_thread_of_process (inf->pid);
-  if (th == NULL || th->state != THREAD_STOPPED)
+  //the CPU must be stopped and must be a PE for the clusters
+  if (th == NULL || th->state != THREAD_STOPPED || th->ptid.lwp == 17)
   {
     struct inferior_data *data = mppa_inferior_data (inf);
     //printf ("Info: No stopped CPU found for %s. "
