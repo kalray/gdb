@@ -1395,6 +1395,9 @@ int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
 {
   int debug_level;
   int th_mode_used;
+
+  if (!opt_hide_threads) //don't hide if option hide_threads is off
+    return 0;
   
   debug_level = get_debug_level (tp->ptid.pid);
   th_mode_used = get_thread_mode_used_for_ptid (tp->ptid);
