@@ -179,7 +179,7 @@ b.target("#{variant}_install") do
   if( variant == "gdb")
     if( arch == "k1" )
       cd build_path
-      b.run(:cmd => "make install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+      b.run(:cmd => "make install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
 
       # Copy to k1debug.
       b.run("mkdir -p #{k1debug_prefix}") unless File.exist?(k1debug_prefix)
