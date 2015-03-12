@@ -183,7 +183,7 @@ b.target("#{variant}_install") do
     end
   else
     cd build_path
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip",
         :skip=>skip_install)
     b.run(:cmd=>"ls #{prefix}/bin/#{arch}-*",
         :skip=>skip_install)
