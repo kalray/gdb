@@ -479,6 +479,9 @@ patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
 
 void send_stop_at_main (int bstop)
 {
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return;
+
   char *buf = (char *) malloc (256);
   long size = 256;
   sprintf (buf, "ks%d", bstop);
@@ -489,6 +492,9 @@ void send_stop_at_main (int bstop)
 
 void send_cluster_debug_level (int level)
 {
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return;
+
   char *buf = (char *) malloc (256);
   long size = 256;
   sprintf (buf, "kD%d", level);
