@@ -8,8 +8,9 @@ struct inferior_data
 {
   const char *cluster;
   int booted;
-  int idx_cluster_debug_level;
+  int cluster_debug_level;
   int cluster_debug_level_postponed;
+  int os_supported_debug_level;
 };
 
 extern int idx_global_debug_level;
@@ -19,6 +20,7 @@ extern int opt_hide_threads;
 
 void _initialize__k1_target (void);
 void send_cluster_debug_level (int level);
+void send_cluster_postponed_debug_level (struct inferior *inf, int level);
 int get_debug_level (int pid);
 int get_cluster_debug_level (int pid);
 int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid);

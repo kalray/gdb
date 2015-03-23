@@ -69,7 +69,8 @@ mppa_init_inferior_data (struct inferior *inf)
     struct osdata_item *item;
     int ix_items;
 
-    data->idx_cluster_debug_level = DBG_LEVEL_INHERITED;
+    data->cluster_debug_level = DBG_LEVEL_INHERITED;
+    data->os_supported_debug_level = -1;
     set_inferior_data (inf, k1_attached_inf_data, data);
 
     /* Cluster name */
@@ -440,15 +441,18 @@ k1_target_wait (struct target_ops *target,
             const char *file = get_osdata_column (item, "command");
             const char *cluster = get_osdata_column (item, "cluster");
             int os_debug_level;
+            struct inferior_data *data;
          
             if (pid != ptid_get_pid (res))
                 continue;
 
-            mppa_inferior_data (inferior)->booted = 1;
+            data = mppa_inferior_data (inferior);
+            data->booted = 1;
             
             //if os support a debug level, set it to the cluster
             os_debug_level = get_os_supported_debug_levels (inferior);
-            if (os_debug_level > DBG_LEVEL_SYSTEM)
+            if (os_debug_level > DBG_LEVEL_SYSTEM && !global_debug_level_set &&
+              data->cluster_debug_level == DBG_LEVEL_INHERITED)
             {
               set_cluster_debug_level_no_check (inferior, os_debug_level);
             }
@@ -589,6 +593,7 @@ static int str_debug_level_to_idx (const char *slevel)
 static void apply_cluster_debug_level (struct inferior *inf)
 {
   int level;
+  int os_supported_level;
   struct thread_info *th;
   ptid_t save_ptid, th_ptid;
 
@@ -602,8 +607,13 @@ static void apply_cluster_debug_level (struct inferior *inf)
     //printf ("Info: No stopped CPU found for %s. "
     //  "Postpone the setting of the cluster debug level.\n", data->cluster);
     data->cluster_debug_level_postponed = 1;
+    send_cluster_postponed_debug_level (inf, level);
     return;
   }
+
+  os_supported_level = get_os_supported_debug_levels (inf);
+  if (level > os_supported_level)
+    return;
 
   save_ptid = inferior_ptid;
   th_ptid = th->ptid;
@@ -619,7 +629,7 @@ static void apply_cluster_debug_level (struct inferior *inf)
 void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level)
 {
   struct inferior_data *data = mppa_inferior_data (inf);
-  data->idx_cluster_debug_level = debug_level; 
+  data->cluster_debug_level = debug_level; 
   apply_cluster_debug_level (inf);
 }
 
@@ -630,13 +640,24 @@ static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_e
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("Cannot set debug level without a selected thread."));
-  
+
   inf = current_inferior ();
   prev_level = get_cluster_debug_level (inf->pid);
   new_level = str_debug_level_to_idx (scluster_debug_level);
 
   if (new_level != prev_level)
-    set_cluster_debug_level_no_check (inf, new_level);
+  {
+    int os_supported_level = get_os_supported_debug_levels (inf);
+    if (os_supported_level < new_level)
+    {
+      struct inferior_data *data = mppa_inferior_data (inf);
+      printf ("Cannot set debug level %s for %s (highest level supported by os is %s).\n",
+        scluster_debug_levels[new_level], data->cluster,
+        scluster_debug_levels[os_supported_level]);
+    }
+    else
+      set_cluster_debug_level_no_check (inf, new_level);
+  }
 }
 
 static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)

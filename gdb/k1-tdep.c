@@ -397,19 +397,24 @@ k1_inferior_created (struct target_ops *target, int from_tty)
     }
     else if (!global_debug_level_set)
     {
-      struct inferior *inf = current_inferior ();
-      int os_debug_level = get_os_supported_debug_levels (inf);
-      //printf ("os supported debug level = %d\n", os_debug_level);
-      if (os_debug_level > DBG_LEVEL_SYSTEM)
+      //set global debug level if not set before attach and if we boot with gdb
+      struct regcache *rc = get_current_regcache ();
+      if (rc && regcache_read_pc (rc) != 0)
       {
-        apply_global_debug_level (os_debug_level);
-        //set_cluster_debug_level_no_check (inf, os_debug_level);
+        struct inferior *inf = current_inferior ();
+        int os_debug_level = get_os_supported_debug_levels (inf);
+        //printf ("os supported debug level = %d\n", os_debug_level);
+        if (os_debug_level > DBG_LEVEL_SYSTEM)
+        {
+          apply_global_debug_level (os_debug_level);
+          //set_cluster_debug_level_no_check (inf, os_debug_level);
 
-        inf_created_change_th = 1;
-        execute_command (cont_cmd, 0);
+          inf_created_change_th = 1;
+          execute_command (cont_cmd, 0);
+        }
       }
-    }
-  }
+    } // !global_debug_level_set
+  } // first
 }
 
 static CORE_ADDR
@@ -479,11 +484,14 @@ patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
 
 void send_stop_at_main (int bstop)
 {
+  char *buf;
+  long size;
+  
   if (ptid_equal (inferior_ptid, null_ptid))
     return;
 
-  char *buf = (char *) malloc (256);
-  long size = 256;
+  size = 256;
+  buf = (char *) malloc (size);
   sprintf (buf, "ks%d", bstop);
   putpkt (buf);
   getpkt (&buf, &size, 0);
@@ -492,12 +500,28 @@ void send_stop_at_main (int bstop)
 
 void send_cluster_debug_level (int level)
 {
+  char *buf;
+  long size;
+  
   if (ptid_equal (inferior_ptid, null_ptid))
     return;
 
-  char *buf = (char *) malloc (256);
-  long size = 256;
+  size = 256;
+  buf = (char *) malloc (size);
   sprintf (buf, "kD%d", level);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
+void send_cluster_postponed_debug_level (struct inferior *inf, int level)
+{
+  char *buf;
+  long size;
+  
+  size = 256;
+  buf = (char *) malloc (size);
+  sprintf (buf, "kP%dp%x.1", level, inf->pid);
   putpkt (buf);
   getpkt (&buf, &size, 0);
   free (buf);
@@ -507,17 +531,25 @@ int get_os_supported_debug_levels (struct inferior *inf)
 {
   char *buf = (char *) malloc (256);
   long size = 256;  
-  int ret;
-  
-  sprintf (buf, "kdp%x.1", (unsigned int) inf->pid);
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  
-  ret = *buf - '0';
-  if (ret >= DBG_LEVEL_SYSTEM && ret < DBG_LEVEL_MAX)
-    return ret;
+  struct inferior_data *data = mppa_inferior_data (inf);
+  int ret = data->os_supported_debug_level;
 
-  return DBG_LEVEL_SYSTEM;
+  if (data->os_supported_debug_level == -1)
+  {
+    sprintf (buf, "kdp%x.1", (unsigned int) inf->pid);
+    putpkt (buf);
+    getpkt (&buf, &size, 0);
+
+    ret = *buf - '0';
+    free (buf);
+
+    if (ret < DBG_LEVEL_SYSTEM || ret >= DBG_LEVEL_MAX)
+      ret = DBG_LEVEL_SYSTEM;
+
+    data->os_supported_debug_level = ret;
+  }
+
+  return ret;
 }
 
 static void inform_dsu_stepi_bkp (void)
@@ -578,7 +610,7 @@ int get_cluster_debug_level (int pid)
   else
     inf = find_inferior_pid (pid);
   
-  ret = mppa_inferior_data (inf)->idx_cluster_debug_level;
+  ret = mppa_inferior_data (inf)->cluster_debug_level;
   return ret;
 }
 
