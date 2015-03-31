@@ -10,6 +10,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "cores"         => ["none", "List of family cores."],
                         "processor"     => "processor",
                         "mds"           => "mds",
+                        "build_type"    => ["Debug", "Can be Release or Debug." ],
                         "toolroot"      => "",
                         "k1debug_prefix"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
@@ -27,6 +28,7 @@ gdb_clone =  options["clone"]
 gdb_path  =  File.join(workspace, gdb_clone)
 
 variant = options["variant"].to_s
+build_type= options['build_type']
 
 repo = Git.new(gdb_clone,workspace)
 
@@ -179,18 +181,23 @@ b.target("#{variant}_install") do
   if( variant == "gdb")
     if( arch == "k1" )
       cd build_path
-      b.run(:cmd => "make install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
-
+      if ("#{build_type}" == "Release") then
+        b.run(:cmd => "make install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+      else
+        b.run(:cmd => "make install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+      end
       # Copy to k1debug.
       b.run("mkdir -p #{k1debug_prefix}") unless File.exist?(k1debug_prefix)
       b.run("rsync -av #{gdb_install_prefix}/* #{k1debug_prefix}")
     end
   else
     cd build_path
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip",
-        :skip=>skip_install)
-    b.run(:cmd=>"ls #{prefix}/bin/#{arch}-*",
-        :skip=>skip_install)
+    if ("#{build_type}" == "Release") then
+      b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
+    else
+      b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
+    end
+    b.run(:cmd=>"ls #{prefix}/bin/#{arch}-*", :skip=>skip_install)
   end
 end
 
