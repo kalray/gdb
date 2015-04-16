@@ -6,6 +6,7 @@ include Metabuild
 
 options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "clone"         => ".",
+                        "build_type"    => ["Debug", "Can be Release or Debug." ], 
                         "cores"         => ["none", "List of family cores."],
                         "processor"     => "processor",
                         "mds"           => "mds",
@@ -25,6 +26,18 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
 workspace = options["workspace"]
 gdb_clone =  options["clone"]
 gdb_path  =  File.join(workspace, gdb_clone)
+
+build_type= options['build_type']
+
+debug_flags = "CFLAGS=\"-O0 -g3\" CXXFLAGS=\"-O0 -g3\""
+if build_type == "Debug" then
+  extra_flags = debug_flags
+  install_target = "install"
+else
+  extra_flags = ""
+  install_target = "install-strip"
+end
+
 
 variant = options["variant"].to_s
 jobs = options["jobs"]
@@ -147,7 +160,7 @@ b.target("#{variant}_build") do
       b.run(:cmd => "echo #{machine_type}" )
       b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
-      b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
+      b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} #{extra_flags} KALRAY_VERSION=\"#{version}\"")
     end
   else
     b.create_goto_dir! build_path
@@ -177,6 +190,7 @@ b.target("#{variant}_build") do
     b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' " +
                   " ARCH=#{arch} " +
                   " #{additional_flags} " +
+                  " #{extra_flags} " +
                   " KALRAY_VERSION=\"#{version}\" " +
                   "bfdincludedir=#{} " +
                   " -j#{jobs} all",
@@ -204,7 +218,7 @@ b.target("#{variant}_install") do
     end
   else
     cd build_path
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{install_target}",
         :skip=>skip_install)
     b.run(:cmd=>"ls #{prefix}/bin/#{arch}-*",
         :skip=>skip_install)
