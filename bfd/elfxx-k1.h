@@ -101,16 +101,6 @@ bfd_boolean
 k1_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info);
 
 bfd_boolean
-k1_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
-			    struct bfd_link_info *info);
-
-bfd_boolean
-k1_finish_dynamic_symbol (bfd * output_bfd,
-                                struct bfd_link_info *info,
-                                struct elf_link_hash_entry *h,
-			  Elf_Internal_Sym * sym);
-
-bfd_boolean
 k1_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 			  struct bfd_link_info *info);
 
@@ -540,6 +530,11 @@ bfd_vma
 k1_elf32_fdpic_add_dyn_reloc (bfd *output_bfd, asection *sreloc, bfd_vma offset,
                          int reloc_type, long dynindx, bfd_vma addend,
 			      struct k1fdpic_relocs_info *entry);
+
+int k1_elf_link_output_symbol_hook
+  (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+   const char *name ATTRIBUTE_UNUSED, Elf_Internal_Sym *sym,
+   asection *input_sec, struct elf_link_hash_entry *h ATTRIBUTE_UNUSED);
 
 struct k1_reloc_map
 {

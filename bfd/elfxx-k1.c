@@ -261,7 +261,7 @@ k1_elfxx_check_relocs (bfd * abfd,
 	    return FALSE;
 	  h= NULL;
 	}
-      else {
+      else if (sym_hashes[r_symndx - symtab_hdr->sh_info] != NULL){
         sym = NULL;
         h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 	struct elf_link_hash_entry * h2 = h;
@@ -2460,4 +2460,18 @@ k1_bfd_elf_action_discarded (asection *sec)
         return 0;
 
     return _bfd_elf_default_action_discarded (sec);
+}
+
+int
+k1_elf_link_output_symbol_hook
+  (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+   const char *name ATTRIBUTE_UNUSED, Elf_Internal_Sym *sym,
+   asection *input_sec, struct elf_link_hash_entry *h ATTRIBUTE_UNUSED)
+{
+  if ( name != NULL &&
+       !strcmp (name, "_gp_disp"))
+    {
+      return 2;
+    }
+  return 1;
 }

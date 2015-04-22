@@ -701,7 +701,8 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
   /* Mark some specially defined symbols as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
       || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0
-      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0
+      || strcmp (h->root.root.string, "_gp_disp") == 0)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;
@@ -851,7 +852,7 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 #define elf_backend_want_plt_sym                0
 #define elf_backend_got_header_size             (8*3)
 
-
+#define elf_backend_link_output_symbol_hook     k1_elf_link_output_symbol_hook
 #define elf_backend_gc_mark_hook                _bfd_elf_gc_mark_hook
 #define elf_backend_gc_sweep_hook               k1_gc_sweep_hook
 
