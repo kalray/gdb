@@ -1755,7 +1755,12 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
   case bfd_mach_k1bio_64:
 	fprintf (f, "\nMachine     = k1bio:64\n");
 	break;
-
+  case bfd_mach_k1bdp_usr:
+	fprintf (f, "\nMachine     = k1bdp_usr\n");
+	break;
+  case bfd_mach_k1bio_usr:
+	fprintf (f, "\nMachine     = k1bio_usr\n");
+	break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
   }

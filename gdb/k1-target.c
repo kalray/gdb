@@ -25,10 +25,18 @@
 #include "symfile.h"
 #include "top.h"
 #include "arch-utils.h"
+#include "regcache.h"
 #include "elf/k1.h"
 
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
+#include "cli/cli-utils.h"
+
+#ifndef MAX
+  # define MAX(a, b) ((a < b) ? (b) : (a))
+#endif
+
+void _initialize__k1_target (void);
 
 static cmd_cfunc_ftype *real_run_command;
 
@@ -80,11 +88,34 @@ mppa_init_inferior_data (struct inferior *inf)
     return data;
 }
 
+static int
+is_current_k1b_user (void)
+{
+  int ret = 0;
+  
+  struct gdbarch *arch = get_current_arch ();
+  if (arch)
+  {
+    const struct bfd_arch_info *info = gdbarch_bfd_arch_info (arch);
+    if (info)
+    {
+      int mach = info->mach;
+      ret = (mach == bfd_mach_k1bdp_usr || mach == bfd_mach_k1bio_usr);
+    }
+  }
+  
+  return ret;
+}
+
 static struct inferior_data*
 mppa_inferior_data (struct inferior *inf)
 {
-    struct inferior_data *data = inferior_data (inf, k1_attached_inf_data);
-
+    struct inferior_data *data;
+    
+    if (is_current_k1b_user ())
+      return NULL;
+    
+    data = inferior_data (inf, k1_attached_inf_data);
     if (!data)
         data = mppa_init_inferior_data (inf);
 
@@ -134,6 +165,9 @@ static void k1_target_create_inferior (struct target_ops *ops,
 static int 
 k1_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
+  if (is_current_k1b_user ())
+    return 0;
+
     return 1;
 }
 
@@ -143,7 +177,7 @@ k1_target_open (char *name, int from_tty)
 
 }
 
-static void k1_target_close ()
+static void k1_target_close (void)
 {
 
 }
@@ -157,7 +191,7 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
 
     ti = find_thread_ptid (ptid);
 
-    if (ti) {
+    if (ti && !is_current_k1b_user ()) {
         const char *extra = remote_target->to_extra_thread_info (ti);
         data = mppa_inferior_data (find_inferior_pid (ptid_get_pid (ptid)));
 
@@ -166,7 +200,7 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
         
         return xstrprintf ("%s of %s", extra, data->cluster);
     } else
-        return find_target_beneath (ops)->to_pid_to_str (find_target_beneath (ops), ptid);
+        return remote_target->to_pid_to_str (remote_target, ptid);
 }
 
 static char *
@@ -175,7 +209,7 @@ mppa_threads_extra_info (struct thread_info *tp)
     return NULL;
 }
 
-void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
+static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
     const char tar_remote_str[] = "target extended-remote";
     int saved_batch_silent = batch_silent;
@@ -256,7 +290,7 @@ Use the \"file\" or \"exec-file\" command."));
     while (arg && *arg++) nb_da_args++;
 
     stub_args = xmalloc ((nb_args+nb_da_args+6)*sizeof (char*));
-    stub_args[argidx++] = simulation_vehicle;
+    stub_args[argidx++] = (char *) simulation_vehicle;
 
     core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
 
@@ -358,7 +392,7 @@ mppa_target_resume (struct target_ops *ops,
 {
     struct target_ops *remote_target = find_target_beneath(ops);
 
-    if (!after_first_resume) {
+    if (!after_first_resume && !is_current_k1b_user ()) {
         after_first_resume = 1;
         iterate_over_inferiors (mppa_mark_clusters_booted, NULL);
     }
@@ -376,6 +410,8 @@ k1_target_wait (struct target_ops *target,
     int ix_items;
 
     res = remote_target->to_wait (remote_target, ptid, status, options);
+    if (is_current_k1b_user ())
+      return res;
 
     if (!after_first_resume)
         return res;
@@ -405,7 +441,7 @@ k1_target_wait (struct target_ops *target,
 
             if (file && file[0] != 0) {
                 status->kind = TARGET_WAITKIND_EXECD;
-                status->value.execd_pathname = file;
+                status->value.execd_pathname = (char *) file;
             } else {
                 printf_filtered ("[ %s booted ]\n", cluster);
                 status->kind = TARGET_WAITKIND_SPURIOUS;
@@ -462,6 +498,83 @@ static void
 show_kalray_cmd (char *args, int from_tty)
 {
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
+}
+
+static void
+attach_user_command (char *args, int from_tty)
+{
+  static const char *syntax = "Syntax: attach-user <comm> [<k1_user_mode_program>]\n";
+  char *file, *comm, *pargs, *cmd;
+  int saved_batch_silent = batch_silent;
+  int print_thread_events_save = print_thread_events;
+  volatile struct gdb_exception ex;
+
+  if (!ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf ("Gdb already attached!\n");
+    return;
+  }
+  
+  pargs = args;
+  comm = extract_arg (&pargs);
+  if (!comm)
+  {
+    printf ("Error: the comm was not specified!\n%s", syntax);
+    return;
+  }
+  file = extract_arg (&pargs);
+
+  cmd = (char *) malloc (MAX (strlen (comm),
+    (file != NULL) ? strlen (file) : 0) + 100);
+  
+  execute_command ("set pagination off", 0);
+
+  sprintf (cmd, "target remote %s", comm);
+  batch_silent = 1;
+  print_thread_events_save = 0;
+  
+  TRY_CATCH (ex, RETURN_MASK_ALL)
+  {
+    execute_command (cmd, 0);
+  }
+  if (ex.reason < 0)
+  {
+    printf ("Error while trying to connect (%s).\n", ex.message ?: "");
+    goto end;
+  }
+  k1_push_arch_stratum (NULL, 0);
+  printf ("Attached to user debug using %s.\n", comm);
+  
+  if (file)
+  {
+    struct stat s;
+    if (stat( file, &s) != 0)
+      printf ("Cannot load file %s: %s\n", file, strerror(errno));
+    else
+    {
+      struct regcache *regc = get_thread_regcache (inferior_ptid);
+      CORE_ADDR pc = regcache_read_pc (regc);
+      sprintf (cmd, "add-symbol-file %s 0x%lx", file, pc);
+      TRY_CATCH (ex, RETURN_MASK_ALL)
+      {
+        execute_command (cmd, 0);
+      }
+      if (ex.reason < 0)
+      {
+        printf ("Error while trying to add symbol file %s (%s).\n",
+          file, ex.message ?: "");
+        goto end;
+      }
+    }
+  }
+  
+  end:
+  batch_silent = saved_batch_silent;
+  print_thread_events = print_thread_events_save;
+  free (comm);
+  free (cmd);
+  if (file)
+    free (file);
 }
 
 static void
@@ -530,7 +643,7 @@ attach_mppa_command (char *args, int from_tty)
 
         if (file && file[0]) {
             switch_to_thread (any_thread_of_process (pid)->ptid);
-            exec_file_attach (file, 0);
+            exec_file_attach ((char *) file, 0);
             symbol_file_add_main (file, 0);
         }
     }
@@ -543,7 +656,7 @@ attach_mppa_command (char *args, int from_tty)
     gdbarch_dwarf2_reg_to_regnum (get_current_arch(), 0);
 }
 
-void
+static void
 run_mppa_command (char *args, int from_tty)
 {
     char set_target_async_cmd[] = "set target-async";
@@ -625,6 +738,9 @@ Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
 Usage is `attach-mppa PORT'."));
+    add_com ("attach-user", class_run, attach_user_command,
+      _("Connect to gdbserver running on MPPA to make user mode debug.\n"
+      "Usage is `attach-user <comm> [<k1_user_mode_program>]'."));
 
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));

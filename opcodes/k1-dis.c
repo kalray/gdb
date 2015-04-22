@@ -563,6 +563,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
     case bfd_mach_k1bdp_64:
       k1_arch_size = 64;
+    case bfd_mach_k1bdp_usr:
     case bfd_mach_k1bdp:
       opc_table = k1b_k1optab;
       k1_regfiles = k1_k1b_regfiles;
@@ -573,6 +574,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
     case bfd_mach_k1bio_64:
       k1_arch_size = 64;
+    case bfd_mach_k1bio_usr:
     case bfd_mach_k1bio:
       opc_table = k1b_k1optab;
       k1_regfiles = k1_k1b_regfiles;

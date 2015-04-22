@@ -164,13 +164,13 @@ k1_arch (void)
     return k1_current_arch;
 }
 
-const char *
+static const char *
 k1_dummy_register_name (struct gdbarch *gdbarch, int regno)
 {
     return "";
 }
 
-struct type *
+static struct type *
 k1_dummy_register_type (struct gdbarch *gdbarch, int regno)
 {
     return builtin_type (gdbarch)->builtin_int;
@@ -401,7 +401,7 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
     struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
     struct k1_inferior_data *data = k1_inferior_data (current_inferior());
     struct regcache *regs = get_current_regcache ();
-    uint32_t ps;
+    unsigned long ps = 0;
 
     if (!data->has_step_pad_area_p) {
 	struct minimal_symbol *msym = lookup_minimal_symbol ("_debug_start", 
@@ -957,7 +957,7 @@ k1_return_value (struct gdbarch *gdbarch, struct value *func_type,
     return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
-int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+static int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
     /* R0 point to the jmpbuf, and RA is at offset 0x34 in the buf */
     gdb_byte buf[4];
@@ -985,7 +985,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch_tdep *tdep;
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
-  int i, num_pseudos;
+  int i, num_pseudos, bis_k1b_user;
+  unsigned long mach;
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
   int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
 
@@ -1011,6 +1012,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   pc_name = k1_pc_name (gdbarch);
   sp_name = k1_sp_name (gdbarch);
+  mach = gdbarch_bfd_arch_info (gdbarch)->mach;
+  bis_k1b_user = (mach == bfd_mach_k1bdp_usr || mach == bfd_mach_k1bio_usr);
+  //printf ("bis_k1b_user=%d\n", bis_k1b_user);
 
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
@@ -1051,41 +1055,44 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ev_name) == 0)
 	      has_ev = i;
       
-      if (has_pc < 0)
-	  error ("There's no '%s' register!", pc_name);
-      if (has_sp < 0)
-	  error ("There's no '%s' register!", sp_name);
-      if (has_le < 0)
-	  error ("There's no '%s' register!", k1_le_name);
-      if (has_ls < 0)
-	  error ("There's no '%s' register!", k1_ls_name);
-      if (has_lc < 0)
-	  error ("There's no '%s' register!", k1_lc_name);
+    if (has_pc < 0)
+      error ("There's no '%s' register!", pc_name);
+    if (has_sp < 0)
+      error ("There's no '%s' register!", sp_name);
+    if (has_le < 0)
+      error ("There's no '%s' register!", k1_le_name);
+    if (has_ls < 0)
+      error ("There's no '%s' register!", k1_ls_name);
+    if (has_lc < 0)
+      error ("There's no '%s' register!", k1_lc_name);
+    if (has_local < 0)
+      error ("There's no '%s' register!", k1_local_name);
+    if (has_ra < 0)
+      error ("There's no '%s' register!", k1_ra_name);
+    if (!bis_k1b_user)
+    {
       if (has_ps < 0)
-	  error ("There's no '%s' register!", k1_ps_name);
-      if (has_local < 0)
-	  error ("There's no '%s' register!", k1_local_name);
-      if (has_ra < 0)
-	  error ("There's no '%s' register!", k1_ra_name);
+        error ("There's no '%s' register!", k1_ps_name);
       if (has_spc < 0)
-	  error ("There's no '%s' register!", k1_spc_name);
+        error ("There's no '%s' register!", k1_spc_name);
       if (has_ev < 0)
-	  error ("There's no '%s' register!", k1_ev_name);
+        error ("There's no '%s' register!", k1_ev_name);
+    }
 
-      tdep->ev_regnum = has_ev;
-      tdep->le_regnum = has_le;
-      tdep->ls_regnum = has_ls;
-      tdep->lc_regnum = has_lc;
-      tdep->ps_regnum = has_ps;
-      tdep->ra_regnum = has_ra;
-      tdep->spc_regnum = has_spc;
-      tdep->local_regnum = has_local;
-      set_gdbarch_pc_regnum (gdbarch, has_pc);
-      set_gdbarch_sp_regnum (gdbarch, has_sp);
+    tdep->ev_regnum = has_ev;
+    tdep->le_regnum = has_le;
+    tdep->ls_regnum = has_ls;
+    tdep->lc_regnum = has_lc;
+    tdep->ps_regnum = has_ps;
+    tdep->ra_regnum = has_ra;
+    tdep->spc_regnum = has_spc;
+    tdep->local_regnum = has_local;
+    set_gdbarch_pc_regnum (gdbarch, has_pc);
+    set_gdbarch_sp_regnum (gdbarch, has_sp);
   } else {
-      set_gdbarch_num_regs (gdbarch, 1);
-      set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
-      set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
+    set_gdbarch_num_regs (gdbarch, 1);
+    set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
+    set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
   }
 
   set_gdbarch_num_pseudo_regs (gdbarch, k1_num_pseudos (gdbarch));
@@ -1153,7 +1160,7 @@ static void k1_look_for_insns (void)
         case K1_K1IO: op = k1a_k1optab; break;
         case K1_K1BDP: op = k1b_k1optab; break;
         case K1_K1BIO: op = k1b_k1optab; break;
-        default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
+        default: internal_error (__FILE__, __LINE__, "Unknown arch id.");
         }
         
         while (op->as_op[0]) {
