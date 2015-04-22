@@ -1511,7 +1511,8 @@ k1_elf32_relocate_section
                 || h->root.type == bfd_link_hash_defweak)
             {
               sec = h->root.u.def.section;
-              if (sec != NULL)
+              if (sec != NULL &&
+		  sec->output_section != NULL)
                 relocation = (h->root.u.def.value
                           + sec->output_section->vma
                           + sec->output_offset);
