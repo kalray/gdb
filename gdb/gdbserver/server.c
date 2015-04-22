@@ -1462,7 +1462,7 @@ handle_qxfer (char *own_buf, int packet_len, int *new_packet_len_p)
 		  write_enn (own_buf);
 		  return 1;
 		}
-
+        len=250; //§§
 	      /* Read one extra byte, as an indicator of whether there is
 		 more.  */
 	      if (len > PBUFSIZ - 2)
@@ -2909,6 +2909,13 @@ main (int argc, char *argv[])
 	program_argv[i] = xstrdup (next_arg[i]);
       program_argv[i] = NULL;
 
+      if (argc >=3 && !strcmp (argv[2], "dapp1"))
+      {
+        volatile int loop = 1;
+        while (loop)
+          ;
+      }
+      
       /* Wait till we are at first instruction in program.  */
       start_inferior (program_argv);
 
