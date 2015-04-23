@@ -217,6 +217,9 @@ static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     int print_thread_events_save = print_thread_events;
     char *host, *port, *tar_remote_cmd;
 
+    if (!args)
+        args = "";
+
     port = strchr (args, ':');
     if (port) {
         *port = 0;
@@ -245,7 +248,28 @@ static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     batch_silent = 1;
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
-    execute_command (tar_remote_cmd, 0);
+
+    volatile struct gdb_exception ex;
+
+    TRY_CATCH (ex, RETURN_MASK_ALL)
+    {
+        execute_command (tar_remote_cmd, 0);
+    }
+    if (ex.reason < 0)
+    {
+        observer_detach_new_thread (new_thread_observer);
+        batch_silent = saved_batch_silent;
+        print_thread_events = print_thread_events_save;
+        throw_exception (ex);
+    }
+
+    /* We need to tell the debugger to fake a synchronous
+       command. This has already been done at the upper level when the
+       main loop executes the "run" command, but the execute_command
+       call we did just above reseted to async handling when it
+       terminated. */ 
+    async_disable_stdin ();
+
     k1_push_arch_stratum (NULL, 0);
     /* Remove hacks*/
     observer_detach_new_thread (new_thread_observer);
@@ -342,7 +366,7 @@ Use the \"file\" or \"exec-file\" command."));
 	char *dir;
 
 	close (pipefds[0]);
-	dup2(pipefds[1], 100);
+	dup2(pipefds[1], 500);
 	close (pipefds[1]);
 
 	setsid ();
@@ -607,6 +631,7 @@ attach_mppa_command (char *args, int from_tty)
     cur_inf = current_inferior();
     set_inferior_data (cur_inf, k1_attached_inf_data, NULL);
     cur_ptid = inferior_ptid;
+    int cur_pid = cur_inf->pid;
 
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
@@ -629,6 +654,10 @@ attach_mppa_command (char *args, int from_tty)
         execute_command (attach_cmd, 0);
     }
 
+    int bstopped = 0, bcur_inf_stopped = 0;
+    ptid_t stopped_ptid;
+    osdata = get_osdata (NULL);
+
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
                       ix_items, item);
@@ -641,13 +670,32 @@ attach_mppa_command (char *args, int from_tty)
         if (strcmp (running, "yes"))
             continue;
 
+        struct thread_info *live_th = any_live_thread_of_process (pid);
+        if (live_th && !live_th->stop_requested)
+            set_stop_requested (live_th->ptid, 1);
+
+        if (pid == cur_pid)
+            bcur_inf_stopped = 1;
+
+        if (!bstopped)
+        {
+            bstopped = 1;
+            stopped_ptid = any_live_thread_of_process (pid)->ptid;
+        }
+
         if (file && file[0]) {
             switch_to_thread (any_thread_of_process (pid)->ptid);
             exec_file_attach ((char *) file, 0);
             symbol_file_add_main (file, 0);
         }
     }
-    switch_to_thread (cur_ptid);
+    if (!bstopped)
+        async_enable_stdin ();
+
+    if (!bstopped || bcur_inf_stopped)
+        switch_to_thread (cur_ptid);
+    else
+        switch_to_thread (stopped_ptid);
 
     /* This is a hack to populate the dwarf mapping tables now that we
        have the architecture at hand. Having these tables initialized

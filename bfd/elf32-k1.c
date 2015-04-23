@@ -1511,7 +1511,8 @@ k1_elf32_relocate_section
                 || h->root.type == bfd_link_hash_defweak)
             {
               sec = h->root.u.def.section;
-              if (sec != NULL)
+              if (sec != NULL &&
+		  sec->output_section != NULL)
                 relocation = (h->root.u.def.value
                           + sec->output_section->vma
                           + sec->output_offset);
@@ -2146,7 +2147,8 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
   /* Mark some specially defined symbols as absolute.  */
   if (strcmp (h->root.root.string, "_DYNAMIC") == 0
       || strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0
-      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0)
+      || strcmp (h->root.root.string, "_PROCEDURE_LINKAGE_TABLE_") == 0
+      || strcmp (h->root.root.string, "_gp_disp") == 0)
     sym->st_shndx = SHN_ABS;
 
   return TRUE;
@@ -2897,6 +2899,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_backend_want_plt_sym                0
 #define elf_backend_got_header_size             (4*3)
 
+#define elf_backend_link_output_symbol_hook     k1_elf_link_output_symbol_hook
 
 #define elf_backend_gc_mark_hook                _bfd_elf_gc_mark_hook
 #define elf_backend_gc_sweep_hook               k1_gc_sweep_hook
