@@ -69,6 +69,8 @@ static int check_resource_usage = 1;
 static int generate_illegal_code = 0;
 /* Dump asm tables : for debugging */
 static int dump_table = 0;
+/* Dump instructions: for documentation */
+static int dump_insn = 0;
 /* Core string passed as argument with -mcore option */
 char *mcore= NULL;
 
@@ -137,26 +139,48 @@ struct k1_fixup_s
 
 typedef struct k1_fixup_s k1_fixup_t;
 
+typedef enum {
+  K1_UNDEF = 0,
+  K1_BCU = 1,
+  K1_ALU0= 2,
+  K1_ALU1= 4,
+  K1_ALU0_ALU1=6,
+  K1_MAU = 8,
+  K1_LSU = 16,
+} k1_slots_t;
+
+typedef enum {
+  K1_OTHER,  /* Not defined type */
+  K1_LITE,   /* LITE */
+  K1_TINY,   /* TINY */
+  K1_LMD,    /* LITE MONO DOUBLE */
+  K1_TMD,    /* TINY MONO DOUBLE */
+} k1_insn_type_t;
+
 /* a single assembled instruction record */
 /* may include immediate extension word  */
 
-struct k1insn_s
- {
-    int written;		/* written out ?                           */
-    const k1opc_t *opdef;	/* Opcode table entry for this insn        */
-    unsigned len;		/* length of instruction in words (1 or 2) */
-    int immx;                   /* insn is extended */
-    int immx64;                 /* only used for 64 immx */
-    unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
-    int nfixups;		/* the number of fixups 0, 1               */
-    k1_fixup_t fixup[1];	/* the actual fixups                       */
-    Bundling bundling;          /* the bundling type                       */
+struct k1insn_s {
+  int written;		                /* written out ?                           */
+  const k1opc_t *opdef;	                /* Opcode table entry for this insn        */
+  unsigned len;		                /* length of instruction in words (1 or 2) */
+  int immx;                             /* insn is extended */
+  int immx64;                           /* only used for 64 immx */
+  unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
+  int nfixups;		                /* the number of fixups [0,2]              */
+  k1_fixup_t fixup[2];	                /* the actual fixups                       */
+  Bundling bundling;                    /* the bundling type                       */
+  k1_slots_t slots;                     /* Used slots (one slot per bit).          */
+  k1_insn_type_t type;                  /* Type of instruction.                    */
 };
 
 typedef struct k1insn_s k1insn_t;
 
 typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
 static reorder_bundle_t reorder_bundle = NULL;
+
+typedef void (*print_insn_t)(k1opc_t *op);
+static print_insn_t print_insn = NULL;
 
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
@@ -205,6 +229,31 @@ int is_code_section(asection *sec)
  {
     return ((bfd_get_section_flags(NULL, sec) & (SEC_CODE))) ;
 }
+
+__attribute__((unused))
+static char *
+k1_slots_name(const k1insn_t *insn) {
+  switch(insn->slots) {
+  case K1_BCU: return "BCU";
+  case K1_ALU0: return "ALU0";
+  case K1_ALU1: return "ALU1";
+  case K1_ALU0 | K1_ALU1: return "ALU0 + ALU1";
+  case K1_MAU: return "MAU";
+  case K1_LSU: return "LSU";
+  default: return "UNKNOWN";
+  }
+}
+
+
+/* Either 32 or 64.  */
+static int k1_arch_size = 32;
+
+const char *
+k1_target_format (void)
+{
+  return k1_arch_size == 64 ? "elf64-k1" : "elf32-k1";
+}
+
 
 /****************************************************/
 /*             Local Variables                      */
@@ -282,6 +331,7 @@ const pseudo_typeS md_pseudo_table[] =
      {"single", k1_float_cons, 'f'},
      {"string", k1_stringer, 9},
      {"word", k1_cons, 4},
+     {"dword", k1_cons, 8},
 
      /* override ones defined in obj-elf.c */
 
@@ -390,7 +440,7 @@ const pseudo_typeS md_pseudo_table[] =
      {"p2alignw", k1_align_ptwo, -2},
      {"p2alignl", k1_align_ptwo, -4},
 #ifdef OBJ_ELF
-     { "file", (void (*) (int)) dwarf2_directive_file, 0},
+     { "file", (void (*) PARAMS((int))) dwarf2_directive_file, 0},
      { "loc", dwarf2_directive_loc, 0},
 #endif
      {NULL, 0, 0}
@@ -398,31 +448,19 @@ const pseudo_typeS md_pseudo_table[] =
 
 enum reloc_func 
   {
-    /* FUNC_FPTR_RELATIVE, */
       FUNC_GP_RELATIVE,
       FUNC_GP_10_RELATIVE,
       FUNC_GP_16_RELATIVE,
       FUNC_GOTOFF_RELATIVE,
       FUNC_GOT_RELATIVE,
       FUNC_PLT_RELATIVE,
-    /* FUNC_GOTX_RELATIVE, */
       FUNC_GOT_FDESC_RELATIVE,
       FUNC_GOTOFF_FDESC_RELATIVE,
       FUNC_FDESC_RELATIVE,
-    /* FUNC_SEG_RELATIVE, */
-    /* FUNC_LTV_RELATIVE, */
-    /* FUNC_GOT_FPTR_RELATIVE, */
-    /* FUNC_IPLT_RELOC, */
-    /* FUNC_NEG_GP_RELATIVE, */
       FUNC_TP_RELATIVE,
-      FUNC_PC_RELATIVE,
-    /* FUNC_DTP_RELATIVE, */
-    /* FUNC_DTP_MODULE, */
-    /* FUNC_DTP_INDEX, */
-    /* FUNC_DTP_LOAD_MODULE, */
-    /* FUNC_GOT_TP_RELATIVE, */
-    /* FUNC_GOT_DTP_INDEX_RELATIVE, */
-    /* FUNC_GOT_DTP_LOAD_MODULE_RELATIVE */
+      FUNC_TP64_RELATIVE,
+      FUNC_GOTOFF64_RELATIVE,
+      FUNC_PLT64_RELATIVE,
   };
 /* Pseudo functions used to indicate relocation types (these functions
  * start with an at sign (@).  */
@@ -441,65 +479,81 @@ static struct
         symbolS *sym;
     }
     u;
-    bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_32;
+   bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_extend, reloc_32;
 }
 pseudo_func[] =
  {
     // reloc pseudo functions:
-    /* { "fptr",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_FPTR32 }, */
-     { "gprel",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GPREL_LO10,
-       BFD_RELOC_K1_GPREL_HI22,       BFD_RELOC_UNUSED },
-     { "gprel10",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_10_GPREL,
-       BFD_RELOC_UNUSED, BFD_RELOC_UNUSED },
-     { "gprel16",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_16_GPREL,
-       BFD_RELOC_UNUSED,  BFD_RELOC_UNUSED },
-     { "gotoff",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFF_LO10,
-       BFD_RELOC_K1_GOTOFF_HI22,      BFD_RELOC_K1_GOTOFF },
-     { "got",      PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOT_LO10,
-       BFD_RELOC_K1_GOT_HI22,      BFD_RELOC_K1_GOT },
-    /* { "gotoffx",PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_GOTOFFX_LO9, */
-    /* BFD_RELOC_K1_GOTOFFX_HI23,     BFD_RELOC_UNUSED }, */
-     { "plt",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_PLT_LO10,
-     BFD_RELOC_K1_PLT_HI22,      BFD_RELOC_UNUSED },
-     { "got_funcdesc",    PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_FUNCDESC_GOT_LO10,
-       BFD_RELOC_K1_FUNCDESC_GOT_HI22,      BFD_RELOC_UNUSED },
-     { "gotoff_funcdesc",    PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10,
-       BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,      BFD_RELOC_UNUSED },
-     { "funcdesc",    PSEUDO_FUNC_RELOC, { 0 },BFD_RELOC_UNUSED,
-       BFD_RELOC_UNUSED,      BFD_RELOC_K1_FUNCDESC },
-    /*{ "segrel",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED,*/
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_SEGREL32 }, */
-    /* { "ltv",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_LTV32}, */
-    /* // placeholder for FUNC_GOT_FPTR_RELATIVE */
-    /* { "", 0, { 0 }, BFD_RELOC_K1_GOTOFF_FPTR_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_FPTR_HI23, BFD_RELOC_UNUSED }, */
-    /* { "iplt",	PSEUDO_FUNC_RELOC, { 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_IPLT }, */
-    /* { "neggprel",PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_NEG_GPREL_LO9, */
-    /* BFD_RELOC_K1_NEG_GPREL_HI23,   BFD_RELOC_UNUSED }, */
-    { "tprel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_TPREL_LO10,
-    BFD_RELOC_K1_TPREL_HI22,       BFD_RELOC_K1_TPREL_32 },
-//     { "pcrel",   PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_PCREL_LO10,
-//     BFD_RELOC_K1_PCREL_HI22,       BFD_RELOC_UNUSED },
-    /* { "dtprel",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_K1_DTPREL_LO9, */
-    /* BFD_RELOC_K1_DTPREL_HI23,      BFD_RELOC_K1_DTPREL32 }, */
-    /* { "dtpmod",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_K1_DTPMOD32 }, */
-    /* { "dtpndx",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_UNUSED }, */
-    /* { "dtpldm",  PSEUDO_FUNC_RELOC,{ 0 }, BFD_RELOC_UNUSED, */
-    /* BFD_RELOC_UNUSED,              BFD_RELOC_UNUSED }, */
-    /* // placeholder for GOTOFF_TPREL */
-    /* { "",        0,                { 0 }, BFD_RELOC_K1_GOTOFF_TPREL_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_TPREL_HI23,BFD_RELOC_UNUSED }, */
-    /* // placeholder for GOTOFF_DTPNDX */
-    /* { "" ,       0,                { 0 }, BFD_RELOC_K1_GOTOFF_DTPNDX_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_DTPNDX_HI23, BFD_RELOC_UNUSED }, */
-    /* // placeholder for GOTOFF_DTPLDM */
-    /* { "",        0,                { 0 }, BFD_RELOC_K1_GOTOFF_DTPLDM_LO9, */
-    /* BFD_RELOC_K1_GOTOFF_DTPLDM_HI23, BFD_RELOC_UNUSED } */
+     { "gprel",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GPREL_LO10, BFD_RELOC_K1_GPREL_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "gprel10",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_10_GPREL, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED},
+
+     { "gprel16",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_16_GPREL, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED},
+
+     { "gotoff",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOTOFF_LO10, BFD_RELOC_K1_GOTOFF_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_GOTOFF },
+
+     { "got",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOT_LO10, BFD_RELOC_K1_GOT_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_GOT },
+
+     { "plt",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_PLT_LO10, BFD_RELOC_K1_PLT_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "got_funcdesc",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_FUNCDESC_GOT_LO10, BFD_RELOC_K1_FUNCDESC_GOT_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "gotoff_funcdesc",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10, BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_UNUSED },
+
+     { "funcdesc",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_UNUSED, BFD_RELOC_UNUSED, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_FUNCDESC },
+
+     { "tprel",
+       PSEUDO_FUNC_RELOC,{ 0 },
+       BFD_RELOC_K1_TPREL_LO10, BFD_RELOC_K1_TPREL_HI22, BFD_RELOC_UNUSED,
+       BFD_RELOC_K1_TPREL_32  },
+     
+     { "tprel64",
+       PSEUDO_FUNC_RELOC,{ 0 },
+       BFD_RELOC_K1_TPREL64_ELO10, BFD_RELOC_K1_TPREL64_HI27,  BFD_RELOC_K1_TPREL64_EXTEND6,
+       BFD_RELOC_K1_TPREL64_64 },
+
+     { "gotoff64",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOTOFF64_LO10, BFD_RELOC_K1_GOTOFF64_HI27, BFD_RELOC_K1_GOTOFF64_EXTEND6,
+       BFD_RELOC_K1_GOTOFF64 },
+
+     { "got64",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_GOT64_LO10, BFD_RELOC_K1_GOT64_HI27, BFD_RELOC_K1_GOT64_EXTEND6,
+       BFD_RELOC_K1_GOT64 },
+
+     { "plt64",
+       PSEUDO_FUNC_RELOC, { 0 },
+       BFD_RELOC_K1_PLT64_LO10, BFD_RELOC_K1_PLT64_HI27, BFD_RELOC_K1_PLT64_EXTEND6,
+       BFD_RELOC_UNUSED },
+
 };
 
 /*****************************************************/
@@ -537,20 +591,21 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 /* added to std long options */
 
 #define OPTION_HEXFILE	(OPTION_MD_BASE + 0)
-#define OPTION_DUMPTABLES (OPTION_MD_BASE + 1)
-#define OPTION_DUMPVERILOG (OPTION_MD_BASE + 2)
-#define OPTION_LITTLE_ENDIAN (OPTION_MD_BASE + 3)
-#define OPTION_BIG_ENDIAN (OPTION_MD_BASE + 4)
-#define OPTION_EMITALLRELOCS (OPTION_MD_BASE + 6)
-#define OPTION_MCORE (OPTION_MD_BASE + 7)
-#define OPTION_CHECK_RESOURCES (OPTION_MD_BASE + 8)
-#define OPTION_NO_CHECK_RESOURCES (OPTION_MD_BASE + 9)
-#define OPTION_GENERATE_ILLEGAL_CODE (OPTION_MD_BASE + 10)
-#define OPTION_DUMP_TABLE (OPTION_MD_BASE + 11)
-#define OPTION_PIC	(OPTION_MD_BASE + 12)
-#define OPTION_BIGPIC	(OPTION_MD_BASE + 13)
-#define OPTION_FDPIC	(OPTION_MD_BASE + 14)
-#define OPTION_NOPIC    (OPTION_MD_BASE + 15)
+#define OPTION_LITTLE_ENDIAN (OPTION_MD_BASE + 1)
+#define OPTION_BIG_ENDIAN (OPTION_MD_BASE + 2)
+#define OPTION_EMITALLRELOCS (OPTION_MD_BASE + 3)
+#define OPTION_MCORE (OPTION_MD_BASE + 4)
+#define OPTION_CHECK_RESOURCES (OPTION_MD_BASE + 5)
+#define OPTION_NO_CHECK_RESOURCES (OPTION_MD_BASE + 6)
+#define OPTION_GENERATE_ILLEGAL_CODE (OPTION_MD_BASE + 7)
+#define OPTION_DUMP_TABLE (OPTION_MD_BASE + 8)
+#define OPTION_PIC	(OPTION_MD_BASE + 9)
+#define OPTION_BIGPIC	(OPTION_MD_BASE + 10)
+#define OPTION_FDPIC	(OPTION_MD_BASE + 11)
+#define OPTION_NOPIC    (OPTION_MD_BASE + 12)
+#define OPTION_32 (OPTION_MD_BASE + 13)
+#define OPTION_64 (OPTION_MD_BASE + 14)
+#define OPTION_DUMPINSN (OPTION_MD_BASE + 15)
 
 struct option md_longopts[] =
  {
@@ -568,6 +623,9 @@ struct option md_longopts[] =
      {"mfdpic",	no_argument,	NULL, OPTION_FDPIC},
      {"mnopic", no_argument,    NULL, OPTION_NOPIC},
      {"mno-fdpic", no_argument,    NULL, OPTION_NOPIC},
+     {"m32", no_argument,    NULL, OPTION_32},
+     {"m64", no_argument,    NULL, OPTION_64},
+     {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -635,6 +693,9 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_DUMP_TABLE:
     dump_table = 1;
     break;
+  case OPTION_DUMPINSN:
+    dump_insn = 1;
+    break;
   case OPTION_PIC:
   /* fallthrough, for now the same on K1 */
   case OPTION_BIGPIC:
@@ -646,6 +707,13 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_NOPIC:
     k1_pic_flags &= ~(ELF_K1_FDPIC);
+    break;
+  case OPTION_32:
+    k1_arch_size = 32;
+    break;
+
+  case OPTION_64:
+    k1_arch_size = 64;
     break;
   default:
     return 0;
@@ -696,9 +764,37 @@ valueT md_chars_to_number(char *buf, int n){
     return val;
 }
 
+static int
+k1_reloc_size_insn(symbolS *sym) {
+  int i;
+  reloc_howto_type *howto;
+  int size = 0;
+  for (i = 0; i < NELEMS(pseudo_func); i++){
+    if (sym == pseudo_func[i].u.sym){
+      if (pseudo_func[i].reloc_lo != BFD_RELOC_UNUSED){
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo);
+	size += howto->bitsize;
+      }
+      if (pseudo_func[i].reloc_hi != BFD_RELOC_UNUSED){
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_hi);
+	size += howto->bitsize;
+      }
+      
+      if (pseudo_func[i].reloc_extend != BFD_RELOC_UNUSED){
+	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_extend);
+	size += howto->bitsize;
+      }
+      return size;
+    }
+  }
+  as_bad("[Relocation] : bad symbol.\n");
+  return -1;
+}
+
 static void
 real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
         bfd_reloc_code_real_type *reloc_hi,
+        bfd_reloc_code_real_type *reloc_extend,
         bfd_reloc_code_real_type *reloc_32)
  {
     int i;
@@ -710,6 +806,8 @@ real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
                 *reloc_lo = pseudo_func[i].reloc_lo;
             if (reloc_hi)
                 *reloc_hi = pseudo_func[i].reloc_hi;
+            if (reloc_extend)
+                *reloc_extend = pseudo_func[i].reloc_extend;
             if (reloc_32)
                 *reloc_32 = pseudo_func[i].reloc_32;
             break;
@@ -741,7 +839,9 @@ static void supported_cores(char buf[], size_t buflen) {
   }
 }
 
-int get_regnum_by_name(char *name){
+__attribute__((unused))
+int
+get_regnum_by_name(char *name){
     int i;
     for(i=0; i < k1_regfiles[K1_REGFILE_REGISTERS]; i++){
         if(STREQ(k1_registers[i].name, name)){
@@ -849,6 +949,20 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
     return -1;
 }
 
+static int
+has_relocation_of_size(k1bfield *opnd, int is_symbol, int size) {
+  int i;
+  for(i=0; i<opnd->reloc_nb; i++) {
+    if(opnd->relocs[i]->bitsize == size) {
+      return 1;
+    }
+    if(is_symbol && opnd->relocs[i]->relative != K1_REL_ABS) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /*
  * Check input expressions against required operands
  */
@@ -857,7 +971,8 @@ static match_operands_code
 match_operands(const k1opc_t * op, const expressionS * tok,
         int ntok)
  {
-    int i;
+    unsigned int ii;
+    int jj;
     int nop;
     k1bfield *opdef;
     long long min, max;
@@ -867,6 +982,14 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     for (nop = 0; op && op->format[nop]; nop++);
     if (ntok != nop) {
       return MATCH_NOT_FOUND;
+    }
+
+    /* Check enconding space */
+    int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
+
+    for(ii=0; ii < op->codewords; ii++) {
+      if (! (op->codeword[ii].flags & encoding_space_flags))
+	return MATCH_NOT_FOUND;
     }
 
 #define IS_K1_REGFILE_GRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_GRF]) \
@@ -886,35 +1009,55 @@ match_operands(const k1opc_t * op, const expressionS * tok,
       return MATCH_NOT_FOUND;						\
     }
 
+    int immediate_bits = 0;
     /* Now check for compatiblility of each operand. */
-    for (i = 0; i < ntok; i++) {
-        int operand_type = op->format[i]->type;
-        char *operand_type_name = op->format[i]->tname;
-        opdef = op->format[i];
-        int *valid_regs = op->format[i]->regs;
+    for (jj = 0; jj < ntok; jj++) {
+        int operand_type = op->format[jj]->type;
+        char *operand_type_name = op->format[jj]->tname;
+	int has_relocation = (op->format[jj]->reloc_nb > 0);
+	int is_immediate = (op->format[jj]->reg_nb == 0);
+
+        opdef = op->format[jj];
+        int *valid_regs = op->format[jj]->regs;
 
 	/* When operand is a register, check if it is valid. */
-	if ((tok[i].X_op == O_register) &&
-	    (valid_regs == NULL || !valid_regs[k1_registers[tok[i].X_add_number].id])) {
+	if ((tok[jj].X_op == O_register) &&
+	    (valid_regs == NULL || !valid_regs[k1_registers[tok[jj].X_add_number].id])) {
 	  return MATCH_NOT_FOUND;
 	}
 
-#define SRF_REGCLASSES(core)                           \
-	  case RegClass_ ## core ## _systemReg:                        \
-	  case RegClass_ ## core ##_nopcpsReg:                 \
-	  case RegClass_ ## core ## _onlypsReg:                        \
-	  case RegClass_ ## core ## _onlyraReg:                        \
-	  case RegClass_ ## core ## _onlyfxReg:
+	if(is_immediate) {
+	  if(tok[jj].X_op == O_symbol) {
+	    int reloc_size = (k1_arch_size == 64) ? 43 : 32;
+	    if(! has_relocation_of_size(op->format[jj], 1, reloc_size)) {
+	      return MATCH_NOT_FOUND;
+	    }
+	  }
+	  if (tok[jj].X_op == O_pseudo_fixup) {
+	    if(!has_relocation_of_size( op->format[jj], 0, k1_reloc_size_insn(tok[jj].X_op_symbol))) {
+	      return MATCH_NOT_FOUND;
+	    }
+	  }
+	}
+
+
+#define SRF_REGCLASSES(core)					       \
+	case RegClass_ ## core ## _systemReg:			       \
+        case RegClass_ ## core ## _nopcpsReg:			       \
+        case RegClass_ ## core ## _onlypsReg:			       \
+        case RegClass_ ## core ## _onlyraReg:			       \
+	case RegClass_ ## core ## _onlyfxReg:
 
         switch (operand_type) {
             case RegClass_k1_singleReg:
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_GRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
             case RegClass_k1_pairedReg:
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_PRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
 			SRF_REGCLASSES(k1)
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_SRF)
+			SRF_REGCLASSES(k1b)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1_remoteReg:
-	      MATCH_K1_REGFILE(tok[i],IS_K1_REGFILE_NRF)
+	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
 
             case Immediate_k1_flagmask2:
             case Immediate_k1_brknumber:
@@ -923,38 +1066,61 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_unsigned5:
             case Immediate_k1_unsigned6:
             case Immediate_k1_eventmask2:
+            case Immediate_k1_unsigned16:
             case Immediate_k1_unsigned32:
             case Immediate_k1_unsigned32L:
             case Immediate_k1_signed32M:
-                if(tok[i].X_op == O_symbol) {
-		  return MATCH_NOT_FOUND;
-                }
-            case Immediate_k1_signed10:
+            case Immediate_k1_signed8:
+            case Immediate_k1_signed11:
             case Immediate_k1_signed16:
-            case Immediate_k1_pcrel18:
-            case Immediate_k1_pcrel17:
-            case Immediate_k1_pcrel27:
+            case Immediate_k1_signed10:
+            case Immediate_k1_signed37:
             case Immediate_k1_signed32:
-                if(tok[i].X_op == O_symbol || tok[i].X_op == O_pseudo_fixup){
+		    case Immediate_k1_signed37:
+		    case Immediate_k1_signed43:
+            case Immediate_k1_pcrel17:
+            case Immediate_k1_pcrel18:
+            case Immediate_k1_pcrel27:
+            case Immediate_k1_signed27:
+            case Immediate_k1_signed43:
+                if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
                 }
-                if (tok[i].X_op == O_constant){
+                if (tok[jj].X_op == O_constant){
+  		    long long signed_value = tok[jj].X_add_number;
+  		    unsigned long long unsigned_value = tok[jj].X_add_number;
+  		    int match_signed = 0;
+		    int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
-                    if( !(opdef->flags & k1SIGNED) && (tok[i].X_unsigned == 0)){
+                    if( !(opdef->flags & k1SIGNED) && (tok[jj].X_unsigned == 0)){
 		      return MATCH_NOT_FOUND;
                     }
+
+		    // [JV] Special case of both signed and unsigned 
+		    if(opdef->width == 32) {
+		      signed long long high_mask = 0x8000000000000000LL;
+		      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
+
+		      high_mask = high_mask >> shift;
+
+		      // If high bits set to zero, can perform sign extension.
+		      if((signed_value & high_mask) == 0) {
+			signed_value = (signed_value << (64 - opdef->width)) >> (64 - opdef->width);
+		      }
+		    }
 
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
-                    if (((!(opdef->flags & k1SIGNED)) &&
-			 ((((unsigned long long)(unsigned int)tok[i].X_add_number >> opdef->rightshift)& mask) != ((unsigned long long)(unsigned int)tok[i].X_add_number >> opdef->rightshift))) ||
-			((opdef->flags & k1SIGNED) &&
-			 (((((signed long long)(signed int)tok[i].X_add_number) >> opdef->rightshift) < min) || ((((signed long long)(signed int)tok[i].X_add_number) >> opdef->rightshift) > max)))){
+
+		    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
+		    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
+
+                    if ( ( (!(opdef->flags & k1SIGNED)) && !match_unsigned ) ||
+			 ( (opdef->flags & k1SIGNED)    && !match_signed ) ) {
 		      return MATCH_NOT_FOUND;
                     }
-
                     break;
                 }
 
@@ -1000,21 +1166,24 @@ find_format(const k1opc_t * opcode,
     return NULL;
 }
 
-/*
- * Insert an operand into the instruction.
- */
 
-static void
+/*
+ * Insert an operand into the instruction INSN.
+ * Returns 1 if the immediate extension (IMMX) has been
+ * handled along with relocation, 0 if not.
+ */
+static int
 insert_operand(k1insn_t * insn,
-        k1bfield * opdef,
-        const expressionS * arg)
+	       k1bfield * opdef,
+	       const expressionS * arg)
  {
-    unsigned int op = 0;
-    /* long long max = (1LL << (opdef->width - 1)) - 1; */
-    /* long long min = (-1LL << (opdef->width - 1)); */
+    unsigned long long op = 0;
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
     int bf_idx;
+    int immx_ready = 0;
+    //    max = (1LL << (opdef->width - 1)) - 1;
+    //    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
         return;			/* syntactic sugar ? */
@@ -1022,148 +1191,204 @@ insert_operand(k1insn_t * insn,
     /* try to resolve the value */
 
     switch (arg->X_op)
- {
-        case O_register:
-            op = k1_registers[arg->X_add_number].id;
-            break;
-        case O_pseudo_fixup:
-	    if (insn->nfixups == 0)
-		{
-		    bfd_reloc_code_real_type reloc_lo, reloc_hi;
-		    expressionS reloc_arg;
+      {
+      case O_register:
+	op = k1_registers[arg->X_add_number].id;
+	break;
+      case O_pseudo_fixup:
+	if (insn->nfixups == 0)
+	  {
+	    bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_extend;
+	    expressionS reloc_arg;
 		    
-		    real_k1_reloc_type(arg->X_op_symbol, &reloc_lo, &reloc_hi, 0);
-		    reloc_arg = *arg;
-		    reloc_arg.X_op = O_symbol;
+	    real_k1_reloc_type(arg->X_op_symbol, &reloc_lo, &reloc_hi, &reloc_extend, 0);
+	    reloc_arg = *arg;
+	    reloc_arg.X_op = O_symbol;
 
-		    if (reloc_hi != BFD_RELOC_UNUSED 
-			&& reloc_lo == BFD_RELOC_UNUSED) {
-			insn->fixup[0].reloc = reloc_hi;
-			insn->fixup[0].exp = reloc_arg;
-			insn->fixup[0].where = 0;
-			insn->nfixups = 1;
-		    } else if (reloc_hi == BFD_RELOC_UNUSED 
-			       && reloc_lo != BFD_RELOC_UNUSED) {
-			insn->fixup[0].reloc = reloc_lo;
-			insn->fixup[0].exp = reloc_arg;
-			insn->fixup[0].where = 0;
-			insn->nfixups = 1;
-		    } else if (reloc_hi != BFD_RELOC_UNUSED 
-			       && reloc_lo != BFD_RELOC_UNUSED) {
-			if (insn->len > 1)
-			    as_fatal("only one immediate extension allowed !");
-			insn->fixup[0].reloc = reloc_lo;
-			insn->fixup[0].exp = reloc_arg;
-			insn->fixup[0].where = 0;
-			insn->nfixups = 1;
-			insn->immx = immxcnt;
-			immxbuf[immxcnt].insn[0] = 0;
-			immxbuf[immxcnt].fixup[0].reloc = reloc_hi;
-			immxbuf[immxcnt].fixup[0].exp = reloc_arg;
-			immxbuf[immxcnt].fixup[0].where = 0;
-			immxbuf[immxcnt].nfixups = 1;
-			immxbuf[immxcnt].len = 1;
-			immxcnt++;
-		    }
-		}
-	    else
-		{
-		    as_fatal ("No room for fixup ");
-		}
-      break;
-        case O_constant:		/* we had better generate a fixup if > max */
-            if (!(arg->X_add_symbol))
-            {
-                if(opdef->flags & k1SIGNED){
-                  op = (int)((int)arg->X_add_number >> opdef->rightshift);
-                }else{
-                  op = ((unsigned int)arg->X_add_number >> opdef->rightshift);
-                }
-                break;
-            }
-            /* else falls through to fixup */
-        default:
-            /*      fprintf(stdout, "generate a fixup\n"); */
+	    if (reloc_hi != BFD_RELOC_UNUSED 
+		&& reloc_lo == BFD_RELOC_UNUSED) {
+	      insn->fixup[0].reloc = reloc_hi;
+	      insn->fixup[0].exp = reloc_arg;
+	      insn->fixup[0].where = 0;
+	      insn->nfixups = 1;
+	    } else if (reloc_hi == BFD_RELOC_UNUSED 
+		       && reloc_lo != BFD_RELOC_UNUSED) {
+	      insn->fixup[0].reloc = reloc_lo;
+	      insn->fixup[0].exp = reloc_arg;
+	      insn->fixup[0].where = 0;
+	      insn->nfixups = 1;
+	    } else if (reloc_hi != BFD_RELOC_UNUSED 
+		       && reloc_lo != BFD_RELOC_UNUSED) {
+	      if (insn->len > 2 && reloc_extend == BFD_RELOC_UNUSED)
+		as_fatal("only one immediate extension allowed !");
+	      insn->fixup[0].reloc = reloc_lo;
+	      insn->fixup[0].exp = reloc_arg;
+	      insn->fixup[0].where = 0;
+	      insn->nfixups = 1;
+	      if (reloc_extend != BFD_RELOC_UNUSED) {
+		insn->fixup[1].reloc = reloc_extend;
+		insn->fixup[1].exp = reloc_arg;
+		insn->fixup[1].where = 0;
+		insn->nfixups = 2;
+	      }
+			
+
+	      insn->immx = immxcnt;
+	      immxbuf[immxcnt].insn[0] = 0;
+	      immxbuf[immxcnt].fixup[0].reloc = reloc_hi;
+	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
+	      immxbuf[immxcnt].fixup[0].where = 0;
+	      immxbuf[immxcnt].nfixups = 1;
+	      immxbuf[immxcnt].len = 1;
+
+	      insn->len -= 1;
+	      immxcnt++;
+	      immx_ready = 1;
+	    }
+	  }
+	else
+	  {
+	    as_fatal ("No room for fixup ");
+	  }
+	break;
+      case O_constant:		/* we had better generate a fixup if > max */
+	if (!(arg->X_add_symbol))
+	  {
+	    if(opdef->flags & k1SIGNED){
+	      op = ((signed long long)arg->X_add_number >> opdef->rightshift);
+	    }else{
+	      op = ((unsigned long long)arg->X_add_number >> opdef->rightshift);
+	    }
+	    break;
+	  }
+	/* else falls through to fixup */
+      default:
+	/*      fprintf(stdout, "generate a fixup\n"); */
         {
-            if (insn->nfixups == 0)
+	  if (insn->nfixups == 0)
             {
-                switch (opdef->type)
+	      switch (opdef->type)
                 {
-                  case Immediate_k1_pcrel17:
-                        insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
-                        insn->fixup[0].exp = *arg;
-                        insn->fixup[0].where = 0;
-                        insn->nfixups = 1;
-                        break;
-                  case Immediate_k1_pcrel18:
-                        insn->fixup[0].reloc = BFD_RELOC_K1_18_PCREL;
-                        insn->fixup[0].exp = *arg;
-                        insn->fixup[0].where = 0;
-                        insn->nfixups = 1;
-                        break;
-                    case Immediate_k1_pcrel27:
-                        insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
-                        insn->fixup[0].exp = *arg;
-                        insn->fixup[0].where = 0;
-                        insn->nfixups = 1;
-                        break;
+		case Immediate_k1_pcrel17:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+		  break;
+		case Immediate_k1_pcrel18:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_18_PCREL;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+		  break;
+		case Immediate_k1_pcrel27:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+		  break;
+		case Immediate_k1_signed27:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1B */
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+		  break;
 
-                    case Immediate_k1_signed10:
-                    case Immediate_k1_signed16:
-			insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
-			insn->fixup[0].exp = *arg;
-			insn->fixup[0].where = 0;
-			insn->nfixups = 1;
-			insn->immx = immxcnt;
-			immxbuf[immxcnt].insn[0] = 0;
-			immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
-			immxbuf[immxcnt].fixup[0].exp = *arg;
-			immxbuf[immxcnt].fixup[0].where = 0;
-			immxbuf[immxcnt].nfixups = 1;
-			immxbuf[immxcnt].len = 1;
-			immxcnt++;
-			break;
+		case Immediate_k1_signed32:
 
-                    default:
-                        as_fatal("don't know how to generate a fixup record");
+		  insn->immx = immxcnt;
+		  immxbuf[immxcnt].insn[0] = 0;
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
+		  immxbuf[immxcnt].fixup[0].exp = *arg;
+		  immxbuf[immxcnt].fixup[0].where = 0;
+		  immxbuf[immxcnt].nfixups = 1;
+		  immxbuf[immxcnt].len = 1;
+
+		  // decrement insn->len: immx part handled separately
+		  // from insn and must not be emited twice
+		  insn->len -= 1;
+		  immxcnt++;
+		  immx_ready = 1;
+		  // fallthough
+		  
+		case Immediate_k1_signed10:
+		  /* if (k1_arch_size == 32){ */
+		  insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+
+		  break;
+
+		case Immediate_k1_signed37:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+
+		  insn->immx = immxcnt;
+		  immxbuf[immxcnt].insn[0] = 0;
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_HI27;
+		  immxbuf[immxcnt].fixup[0].exp = *arg;
+		  immxbuf[immxcnt].fixup[0].where = 0;
+		  immxbuf[immxcnt].nfixups = 1;
+		  immxbuf[immxcnt].len = 1;
+
+		  // decrement insn->len: immx part handled separately
+		  // from insn and must not be emited twice
+		  insn->len -= 1;
+		  immxcnt++;
+		  immx_ready = 1;
+		  break;
+		  
+		case Immediate_k1_signed43:
+		  /* } else { */
+		  insn->fixup[0].reloc = BFD_RELOC_K1_ELO10;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->fixup[1].reloc = BFD_RELOC_K1_EXTEND6;
+		  insn->fixup[1].exp = *arg;
+		  insn->fixup[1].where = 0;
+		  insn->nfixups = 2;
+		  /* } */
+		  insn->immx = immxcnt;
+		  immxbuf[immxcnt].insn[0] = insn->insn[1];
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI27;
+		  immxbuf[immxcnt].fixup[0].exp = *arg;
+		  immxbuf[immxcnt].fixup[0].where = 0;
+		  immxbuf[immxcnt].nfixups = 1;
+		  immxbuf[immxcnt].len = 1;
+
+		  // decrement insn->len: immx part handled separately
+		  // from insn and must not be emited twice
+		  immxcnt++;
+		  insn->len -= 1;
+		  immx_ready = 1;
+		  break;
+
+		default:
+		  as_fatal("don't know how to generate a fixup record");
                 }
-                return;
+	      return immx_ready;
             }
-            else
- {
-                as_fatal("No room for fixup ");
+	  else
+	    {
+	      as_fatal("No room for fixup ");
             }
         }
-    }
-
-    /*
-    if ( ((!(opdef->flags & k1SIGNED)) && ((op & mask) != op)) ||
-	 ((opdef->flags & k1SIGNED) && ((((signed long long) op) < min) || (((signed long long) op) > max))) )
-      {
-        // Generate immx. FIXME HACK : On K1, we always extend 10 bits bfields, even for make that uses 16 bits
-            mask = ~(-1LL << 10);
-            insn->len = 1;
-            insn->immx = immxcnt;
-
-            immxbuf[immxcnt].insn[0] = (unsigned int)op >> 10; // Good news, IMMX is now 0x00000000, don't bother with macro.
-//            fprintf(stderr, "INSN %#llx gets immx %d (%#llx)\n", insn->insn[0], immxcnt, immxbuf[immxcnt].insn[0]);
-            immxbuf[immxcnt].nfixups = 0;
-            immxbuf[immxcnt].len = 1;
-            immxcnt++;
-
-    }
-     */
+      }
 
     for(bf_idx=0;bf_idx < bf_nb; bf_idx++) {
-      unsigned int value = ((unsigned int)op >> bfields[bf_idx].from_offset);
+      unsigned long long value = ((unsigned long long)op >> bfields[bf_idx].from_offset);
       int j = 0;
       int to_offset = bfields[bf_idx].to_offset;
       value &= (1LL << bfields[bf_idx].size) - 1;
       j = to_offset / 32;
       to_offset = to_offset % 32;
-      insn->insn[j] |= value << to_offset;
+      insn->insn[j] |= (value << to_offset) & 0xffffffff;
     }
-    return;
+
+    return immx_ready;
 }
 
 /*
@@ -1180,6 +1405,8 @@ assemble_insn( const k1opc_t * opcode,
  {
     int argidx;
     unsigned int i;
+    unsigned int immx_ready = 0;
+
     memset(insn, 0, sizeof (*insn));
     insn->opdef = opcode;
     for(i=0; i < opcode->codewords; i++) {
@@ -1189,25 +1416,30 @@ assemble_insn( const k1opc_t * opcode,
     insn->immx = NOIMMX;
     insn->immx64 = NOIMMX;
     for (argidx = 0; argidx < ntok; argidx++){
-        insert_operand(insn, opcode->format[argidx], &tok[argidx]);
+        int ret = insert_operand(insn, opcode->format[argidx], &tok[argidx]);
+	immx_ready |= ret;
     }
-    for(i=0; i < opcode->codewords; i++){
+
+    // Handle immx if insert_operand did not already take care of that
+    if (!immx_ready){
+      for(i=0; i < opcode->codewords; i++){
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX0){
-            immxbuf[immxcnt].insn[0] = insn->insn[i];
-            immxbuf[immxcnt].nfixups = 0;
-            immxbuf[immxcnt].len = 1;
-            insn->len -= 1; 
-            insn->immx = immxcnt;
-            immxcnt++;
+	  insn->immx = immxcnt;
+	  immxbuf[immxcnt].insn[0] = insn->insn[i];
+	  immxbuf[immxcnt].nfixups = 0;
+	  immxbuf[immxcnt].len = 1;
+	  insn->len -= 1; 
+	  immxcnt++;
         }
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX1){
-            immxbuf[immxcnt].insn[0] = insn->insn[i];
-            immxbuf[immxcnt].nfixups = 0;
-            immxbuf[immxcnt].len = 1;
-            insn->len -= 1;
-            insn->immx64 = immxcnt;
-            immxcnt++;
+	  insn->immx64 = immxcnt;
+	  immxbuf[immxcnt].insn[0] = insn->insn[i];
+	  immxbuf[immxcnt].nfixups = 0;
+	  immxbuf[immxcnt].len = 1;
+	  insn->len -= 1;
+	  immxcnt++;
         }
+      }
     }
 //    printf("Insert instruction: len = %d, insn[0] = 0x%x, insn[1] = 0x%x, immx : %d (%#x), immx64 = %d\n",insn->len,insn->insn[0],insn->insn[1], insn->immx, immxbuf[insn->immx].insn[0], insn->immx64);
     return;
@@ -1262,7 +1494,17 @@ emit_insn(k1insn_t * insn, int stopflag){
       assert(reloc_howto);
       size = bfd_get_reloc_size(reloc_howto);
       pcrel = reloc_howto->pc_relative;
-      fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where, size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+      fixS* fixup = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where,
+				size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+      /*
+       * Set this bit so that large value can still be
+       * handled. Without it, assembler will fail in fixup_segment
+       * when it checks there is enough bits to store the value. As we
+       * usually split our reloc across different words, it may think
+       * that 4 bytes are not enough for large value. This simply
+       * skips the tests
+       */
+      fixup->fx_no_overflow = 1;
     }
 }
 
@@ -1439,6 +1681,12 @@ fixS *fix;
 	case BFD_RELOC_K1_GOTOFF:
         case BFD_RELOC_K1_GOTOFF_HI22:
         case BFD_RELOC_K1_GOTOFF_LO10:
+
+	case BFD_RELOC_K1_GOTOFF64:
+        case BFD_RELOC_K1_GOTOFF64_HI27:
+        case BFD_RELOC_K1_GOTOFF64_LO10:
+        case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
 	case BFD_RELOC_K1_GOT:
         case BFD_RELOC_K1_GOT_HI22:
         case BFD_RELOC_K1_GOT_LO10:
@@ -1476,7 +1724,7 @@ static Bundling find_bundling(const k1insn_t *insn)
     return insn_bundlings;
 }
 
-static int find_reservation(const k1insn_t *insn)
+static int find_scheduling(const k1insn_t *insn)
  {
     int insn_reservation = insn->opdef->reservation;
     return insn_reservation;
@@ -1504,7 +1752,9 @@ static int cmp_bundling(const void *a, const void *b)
  *
  */
 
-static int find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
+__attribute__((unused))
+static int
+find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
   int hash = 0;
   int i;
   int canonical_ix;
@@ -1662,6 +1912,120 @@ k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     return 0;
 }
 
+/* Write in buf at most buf_size.
+   Returns the number of writen characters.
+ */
+static int
+insn_syntax(k1opc_t *op, char *buf, int buf_size) {
+  int chars = snprintf(buf, buf_size, "%s ",op->as_op);
+  int i;
+  char *fmtp = op->fmtstring;
+  char ch;
+
+  for (i = 0; op->format[i]; i++) {
+    int type  = op->format[i]->type;
+    char *type_name  = op->format[i]->tname;
+    int flags = op->format[i]->flags;
+    int width = op->format[i]->width;
+
+    /* Print characters in the format string up to the following
+     * % or nul. */
+    while((chars < buf_size) && (ch=*fmtp) && ch != '%') {
+      buf[chars++] = ch;
+      fmtp++;
+    }
+
+    /* Skip past %s */
+    if(ch == '%') {
+      ch=*fmtp++;
+      fmtp++;
+    }
+    
+    switch (type) {
+    case RegClass_k1_singleReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "grf");
+      break;
+    case RegClass_k1_pairedReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "prf");
+      break;
+    case RegClass_k1_systemReg:
+    case RegClass_k1_nopcpsReg:
+    case RegClass_k1_onlypsReg:
+    case RegClass_k1_onlyraReg:
+    case RegClass_k1_onlyfxReg:
+    case RegClass_k1b_systemReg:
+    case RegClass_k1b_nopcpsReg:
+    case RegClass_k1b_onlypsReg:
+    case RegClass_k1b_onlyraReg:
+    case RegClass_k1b_onlyfxReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "srf");
+      break;
+    case RegClass_k1_remoteReg:
+      chars += snprintf(&buf[chars], buf_size - chars, "nrf");
+      break;
+    case Immediate_k1_eventmask2:
+    case Immediate_k1_flagmask2:
+    case Immediate_k1_brknumber:
+    case Immediate_k1_sysnumber:
+    case Immediate_k1_signed5:
+    case Immediate_k1_signed10:
+    case Immediate_k1_signed11:
+    case Immediate_k1_signed16:
+    case Immediate_k1_signed27:
+    case Immediate_k1_signed32:
+    case Immediate_k1_signed32M:
+    case Immediate_k1_signed37:
+    case Immediate_k1_signed43:
+    case Immediate_k1_unsigned5:
+    case Immediate_k1_unsigned6:
+    case Immediate_k1_unsigned32:
+    case Immediate_k1_unsigned32L:
+    case Immediate_k1_pcrel17:
+    case Immediate_k1_pcrel18:
+    case Immediate_k1_pcrel27:
+      if(flags & k1SIGNED){
+	chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
+      }
+      else {
+	chars += snprintf(&buf[chars], buf_size - chars, "u%d",width);
+      }
+      break;
+    default:
+      fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
+      exit(-1);
+    }
+  }
+
+  /* Print trailing characters in the format string, if any */
+  while((chars < buf_size) && (ch=*fmtp)) {
+    buf[chars++] = ch;
+    fmtp++;
+  }
+  
+  if(chars < buf_size) {
+    buf[chars++] = '\0';
+  }
+  else {
+    buf[buf_size-1] = '\0';
+  }
+
+  return chars;
+}
+
+static void
+k1a_print_insn(k1opc_t *op) {
+  int asm_chars = 48;
+  char asm_str[asm_chars];
+  int chars = insn_syntax(op, asm_str, asm_chars);
+  int i;
+
+  for(i=chars-1; i<asm_chars-1; i++) {
+    asm_str[i] = '-';
+  }
+ 
+  printf("%s | syllables: %d\n", asm_str, op->codewords);
+}
+
 /* Reorder a bundle according to BCU, ALU0, ALU1, MAU, LSU, Tiny0, Tiny1  (7 slots)*/
 static void
 k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
@@ -1757,10 +2121,16 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                 }
 
                 // Tag EXU on IMMX
+                D(stderr, "bundle_insn[%d]->immx ? %d\n",j,bundle_insn[j]->immx);
                 if(bundle_insn[j]->immx != NOIMMX){
                     immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-                    D(stderr, "insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                    D(stderr, "insn : %#x (%s), immx : %#x (%d), tag %d\n",
+		      bundle_insn[j]->insn[0],
+		      bundle_insn[j]->opdef->as_op,immxbuf[bundle_insn[j]->immx].insn[0],
+		      bundle_insn[j]->immx,
+		      tag);
                 }
+                D(stderr, "bundle_insn[%d]->immx64 ? %d\n",j,bundle_insn[j]->immx64);
                 if(bundle_insn[j]->immx64 != NOIMMX){
                     immxbuf[bundle_insn[j]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
                 }
@@ -1793,7 +2163,10 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
             // Tag EXU on IMMX
             if(bundle_insn[j]->immx != NOIMMX){
                 immxbuf[bundle_insn[j]->immx].insn[0] |= (tag << 27);
-                D(stderr, "TINY : insn : %#llx (%s), immx : %#llx (%d), tag %d\n", bundle_insn[j]->insn[0],bundle_insn[j]->opdef->as_op, immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx, tag);
+                D(stderr, "TINY : insn : %#x (%s), immx : %#x (%d), tag %d\n",
+		  bundle_insn[j]->insn[0], bundle_insn[j]->opdef->as_op,
+		  immxbuf[bundle_insn[j]->immx].insn[0], bundle_insn[j]->immx,
+		  tag);
             }
         }
     }
@@ -1808,6 +2181,462 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     *bundle_insncnt_p = j;
 }
 
+static int is_mono_double(const k1opc_t *op) {
+  int reservation = op->reservation;
+  return (reservation == Reservation_k1_ALUD_LITE   ||
+	  reservation == Reservation_k1_ALUD_LITE_X ||
+	  reservation == Reservation_k1_ALUD_TINY   ||
+	  reservation == Reservation_k1_ALUD_TINY_X);
+}
+
+
+static int used_resources(const k1opc_t *op, int resource) {
+  int op_reservations = op->reservation;
+  int reservation = op_reservations  & 0xff;
+  const int *reservation_table = k1_reservation_table_table[reservation];
+
+  if(resource < 0 || resource > RESOURCE_MAX) {
+    as_fatal("Unknown resource ID");
+  }
+  return reservation_table[resource];
+}
+
+static int is_tiny(const k1opc_t *op) {
+  return used_resources(op,Resource_k1_TINY);
+}
+
+static int is_lite(const k1opc_t *op) {
+  return used_resources(op,Resource_k1_LITE);
+}
+
+__attribute__((unused))
+static int is_alud(const k1opc_t *op) {
+  return used_resources(op,Resource_k1_ALUD);
+}
+
+__attribute__((unused))
+static void
+bundle_resources(char string_buffer[], int buffer_size, int resource, const k1insn_t *shadow_bundle[], int bundle_size) {
+  int i;
+
+  if(buffer_size == 0) { return; }
+
+  string_buffer[0] = '\0';
+
+  for(i=0; i < bundle_size; i++){
+    if(shadow_bundle[i] != NULL){
+      char tmp_str[256];
+      int used_resources_val = used_resources(shadow_bundle[i]->opdef,resource);
+      if(resource == Resource_k1_TINY || resource == Resource_k1_LITE) {
+	if(shadow_bundle[i]->slots == (K1_ALU0 | K1_ALU1)) {
+	  used_resources_val++;
+	}
+      }
+      snprintf(tmp_str,256,"\t%s: %s slot(s) %d %s(s)\n",
+	       shadow_bundle[i]->opdef->as_op,
+	       k1_slots_name(shadow_bundle[i]),
+	       used_resources_val,
+	       k1_resource_names[resource]);
+      strncat(string_buffer,tmp_str,buffer_size);
+    }
+  }
+}
+
+__attribute__((unused))
+static char *
+k1b_insn_slot_type(const k1insn_t *insn) {
+  char *slot_type=k1_slots_name(insn);
+  
+  if(is_tiny(insn->opdef)) {
+    slot_type = "TINY";
+  }
+  if(is_lite(insn->opdef)) {
+    slot_type = "LITE";
+  }
+  if(is_mono_double(insn->opdef)) {
+    slot_type = "MONODOUBLE";
+    if(is_tiny(insn->opdef)) {
+      slot_type = "TINY MONODOUBLE";
+    }
+    if(is_lite(insn->opdef)) {
+      slot_type = "LITE MONODOUBLE";
+    }
+  }
+  
+  return slot_type;
+}
+
+enum exu_t {
+  bcu_e,
+  alu0_e,
+  alu1_e,
+  mau_e,
+  lsu_e,
+  last_exu,
+};
+
+const char *exu_names[] = {
+  "BCU",
+  "ALU0",
+  "ALU1",
+  "MAU",
+  "LSU",
+};
+
+typedef struct state_t {
+  int cur_insn;
+  int sched[last_exu];
+  int final;
+} sched_state_t;
+
+static sched_state_t*
+pop(sched_state_t **states, unsigned int *states_sz){
+  return states[--(*states_sz)];
+}
+
+static int
+push_state(sched_state_t *s,
+	   sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz){
+  if (*states == NULL){
+    *states = malloc(1024 * sizeof(struct state_t*));
+    *states_storage_sz = 1024;
+  } else if (*states_sz + 1 > *states_storage_sz) {
+    *states = realloc(*states, *states_storage_sz + 1024);
+    *states_storage_sz += 1024;
+  }
+  (*states)[(*states_sz)++] = s;
+  
+  return 0;
+}
+
+static sched_state_t*
+new_state(struct state_t *orig){
+  sched_state_t *s = malloc(sizeof(sched_state_t));
+  memcpy(s, orig, sizeof(sched_state_t));
+  return s;
+}
+
+#define PUSH_ALUD(s, states, states_sz, states_storage_sz)  do {	\
+    if (s->sched[alu0_e] == -1						\
+	&& s->sched[alu1_e] == -1){					\
+      sched_state_t *new_s = new_state(s);				\
+      new_s->sched[alu0_e] = new_s->sched[alu1_e] = new_s->cur_insn++;	\
+      push_state(new_s, states, states_sz, states_storage_sz);		\
+    }									\
+  } while(0)
+
+#define PUSH(exu,s, states, states_sz, states_storage_sz)	\
+  do {								\
+    if (s->sched[exu ## _e] == -1){				\
+      sched_state_t *new_s = new_state(s);			\
+      new_s->sched[exu ## _e] = new_s->cur_insn++;		\
+      push_state(new_s, states, states_sz, states_storage_sz);	\
+    }								\
+  } while(0)
+
+
+static int
+k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
+		  sched_state_t *state,
+		  sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz,
+		  sched_state_t **solutions, unsigned int *solutions_sz){
+
+  if (state->cur_insn == bundle_insncnt_p){
+    solutions[(*solutions_sz)++] = state;
+    state->final = 1;
+    return 1;
+  }
+  k1insn_t *cur_insn = bundle_insn[state->cur_insn];
+  switch(find_scheduling(cur_insn)){
+
+  case Reservation_k1_ALL:
+    as_fatal("ALL reservation encountered, should have been handled before");
+    break;
+
+    //  case Bundling_k1_ALU:
+    //  case Bundling_k1_ALU_X:
+  case Reservation_k1_ALU_FULL:
+  case Reservation_k1_ALU_FULL_X:
+  case Reservation_k1b_ALU_FULL:
+  case Reservation_k1b_ALU_FULL_X:
+    PUSH(alu1,state, states, states_sz, states_storage_sz);
+    PUSH(alu0,state, states, states_sz, states_storage_sz);
+    break;
+
+  case Reservation_k1_ALU_FULL_ODD:
+  case Reservation_k1b_ALU_FULL_ODD:
+    PUSH(alu0,state, states, states_sz, states_storage_sz);
+    break;
+
+  case Reservation_k1_BCU:
+  case Reservation_k1_BCU_TINY_TINY_MAU:
+    //  case Bundling_k1_BCU:
+    PUSH(bcu,state, states, states_sz, states_storage_sz);
+    break;
+
+    //  case Bundling_k1_ALUD:
+  case Reservation_k1_ALUD_OPX:
+  case Reservation_k1_ALUD_OPX_ODD:
+  case Reservation_k1_ALUD_FULL:
+  case Reservation_k1_ALUD_FULL_ODD:
+  case Reservation_k1b_ALUD_OPX:
+  case Reservation_k1b_ALUD_OPX_ODD:
+
+    //  case Bundling_k1_ALUD_Y:
+  case Reservation_k1_ALUD_OPX_Y:
+  case Reservation_k1b_ALUD_OPX_Y:
+
+    
+    //  case Bundling_k1_ALUD_Z:
+  case Reservation_k1_ALUD_OPX_Z:
+  case Reservation_k1b_ALUD_OPX_Z:
+
+    PUSH_ALUD(state, states, states_sz, states_storage_sz);
+    break;    
+
+    //  case Bundling_k1_MAU:
+  case Reservation_k1_MAU:
+  case Reservation_k1_MAU_ACC:
+  case Reservation_k1_MAU_ACC_1:
+  case Reservation_k1_MAU_ACC_ODD:
+  case Reservation_k1b_MAU:
+  case Reservation_k1b_MAU_ACC:
+  case Reservation_k1b_MAU_ACC_ODD:
+
+    //  case Bundling_k1_MAU_X:
+  case Reservation_k1_MAU_X:
+  case Reservation_k1_MAU_ACC_X:
+  case Reservation_k1b_MAU_X:
+  case Reservation_k1b_MAU_ACC_X:
+    PUSH(mau,state, states, states_sz, states_storage_sz);
+    break;
+
+    //  case Bundling_k1_LSU:
+  case Reservation_k1_LSU:
+  case Reservation_k1_LSU_ACC:
+
+    //  case Bundling_k1_LSU_X:
+  case Reservation_k1_LSU_X:
+  case Reservation_k1_LSU_ACC_X:
+    PUSH(lsu,state, states, states_sz, states_storage_sz);
+    break;
+
+    //  case Bundling_k1_TINY:
+  case Reservation_k1_ALU_TINY:
+  case Reservation_k1_ALU_LITE:
+  case Reservation_k1_ALUD_TINY:
+  case Reservation_k1_ALUD_LITE:
+
+
+    //  case Bundling_k1_TINY_X:
+  case Reservation_k1_ALU_TINY_X:
+  case Reservation_k1_ALU_LITE_X:
+  case Reservation_k1_ALUD_TINY_X:
+  case Reservation_k1_ALUD_LITE_X:
+
+    // FIXME : If we stick to scheduling class in the switch (was bundling class before),
+    // we can remove the is_* test and simply split in different cases.
+    if (is_lite(cur_insn->opdef)){
+      if (is_mono_double(cur_insn->opdef)){
+	// LITE MONODOUBLE
+	PUSH(mau,state, states, states_sz, states_storage_sz);
+	PUSH_ALUD(state, states, states_sz, states_storage_sz);
+      } else {
+	// LITE SINGLE
+	PUSH(mau,state, states, states_sz, states_storage_sz);
+	PUSH(alu1,state, states, states_sz, states_storage_sz);
+	PUSH(alu0,state, states, states_sz, states_storage_sz);
+      }
+    } else if (is_tiny(cur_insn->opdef)){
+      if (is_mono_double(cur_insn->opdef)){
+	// TINY MONODOUBLE
+	PUSH(lsu,state, states, states_sz, states_storage_sz);
+	PUSH(mau,state, states, states_sz, states_storage_sz);
+	PUSH_ALUD(state, states, states_sz, states_storage_sz);
+      } else {
+	// TINY SINGLE
+	PUSH(lsu,state, states, states_sz, states_storage_sz);
+	PUSH(mau,state, states, states_sz, states_storage_sz);
+	PUSH(alu1,state, states, states_sz, states_storage_sz);
+	PUSH(alu0,state, states, states_sz, states_storage_sz);
+      }
+    } else {
+        as_fatal("TINY instruction is neither a TINY or LITE\n");
+    }
+    break;
+  default:
+    as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
+	      cur_insn->opdef->as_op, find_scheduling(cur_insn));
+  }
+  return 0;
+}
+
+static void
+k1b_print_insn(k1opc_t *op) {
+  int asm_chars = 48;
+  char asm_str[asm_chars];
+  int chars = insn_syntax(op, asm_str, asm_chars);
+  int i;
+  char *insn_type = "UNKNOWN";
+  char *insn_mode = "";
+  
+  for(i=chars-1; i<asm_chars-1; i++) {
+    asm_str[i] = '-';
+  }
+ 
+  switch(op->bundlings){
+  case Bundling_k1_ALL:
+    insn_type="ALL            ";
+    break;
+  case Bundling_k1_ALU:
+  case Bundling_k1_ALU_X:
+    insn_type="ALU            ";
+    break;
+  case Bundling_k1_BCU:
+    insn_type="BCU            ";
+    break;
+
+  case Bundling_k1_ALUD:
+  case Bundling_k1_ALUD_Y:
+  case Bundling_k1_ALUD_Z:
+    insn_type="ALUD           ";
+    break;    
+
+  case Bundling_k1_MAU:
+  case Bundling_k1_MAU_X:
+    insn_type="MAU            ";
+    break;
+
+  case Bundling_k1_LSU:
+  case Bundling_k1_LSU_X:
+    insn_type="LSU            ";
+    break;
+
+  case Bundling_k1_TINY:
+  case Bundling_k1_TINY_X:
+    if (is_lite(op)){
+      if (is_mono_double(op)){
+	insn_type="LITE_MONODOUBLE";
+      } else {
+	insn_type="LITE           ";
+      }
+    } else if (is_tiny(op)){
+      if (is_mono_double(op)){
+	insn_type="TINY_MONODOUBLE";
+      } else {
+	insn_type="TINY           ";
+      }
+    } else {
+        as_fatal("TINY instruction is neither a TINY or LITE\n");
+    }
+    break;
+  }
+
+  if (op->codeword[0].flags & k1OPCODE_FLAG_MODE64 && 
+      op->codeword[0].flags & k1OPCODE_FLAG_MODE32) {
+    insn_mode = "32|64";
+  }
+  else if(op->codeword[0].flags & k1OPCODE_FLAG_MODE64) {
+    insn_mode = "64";
+  }
+  else if(op->codeword[0].flags & k1OPCODE_FLAG_MODE32) {
+    insn_mode = "32";
+  }
+  else {
+    as_fatal("Unknown instruction mode.\n");
+  }
+
+  printf("%s | syllables: %d | type: %s | mode: %s bits\n", asm_str, op->codewords, insn_type, insn_mode);
+}
+
+static void
+k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+  sched_state_t *first_state;
+  sched_state_t **states = NULL, *solutions[10];
+  unsigned int solutions_sz = 0;
+  unsigned int states_sz = 0, states_storage_sz = 0;
+  
+  int bidx;
+  for(bidx=0; bidx < *bundle_insncnt_p; bidx++){
+    if(find_bundling(bundle_insn[bidx]) == Bundling_k1_ALL){
+      if(*bundle_insncnt_p == 1) {
+       return;
+      }
+      else {
+	as_fatal("Too many ops in a single op bundle (%s):\n",bundle_insn[bidx]->opdef->as_op);
+      }
+    }
+  }
+
+  first_state = malloc(sizeof(sched_state_t));
+  first_state->cur_insn = 0;
+  first_state->final = 0;
+  first_state->sched[alu0_e] = first_state->sched[alu1_e] = first_state->sched[mau_e] = first_state->sched[lsu_e] = first_state->sched[bcu_e] = -1;
+  push_state(first_state, &states, &states_sz, &states_storage_sz);
+  
+  while(states_sz){
+    sched_state_t *cur_s = pop(states, &states_sz);
+
+    int ok = k1b_schedule_step(bundle_insn, *bundle_insncnt_p,
+			       cur_s,
+			       &states, &states_sz, &states_storage_sz,
+			       solutions, &solutions_sz);
+    if (!cur_s->final)
+      free(cur_s);
+
+    if(ok){
+      while(states_sz){
+	sched_state_t *to_free_s = pop(states, &states_sz);
+	free(to_free_s);
+      }
+      break;
+    }
+  }
+
+  if (solutions_sz){
+    k1insn_t *shadow[*bundle_insncnt_p];
+    int ii, jj=0;
+    
+    for (ii=0; ii<last_exu; ii++){
+      if (solutions[0]->sched[ii] != -1
+	  && (ii != alu1_e || solutions[0]->sched[alu0_e] != solutions[0]->sched[alu1_e])){
+	shadow[jj] = bundle_insn[solutions[0]->sched[ii]];
+
+	// Tag EXU on IMMX
+	if(shadow[jj]->immx != NOIMMX){
+	  int tag;
+	  switch(ii){
+	  case alu0_e:
+	    tag = Modifier_k1_exunum_ALU0;
+	    break;
+	  case alu1_e:
+	    tag = Modifier_k1_exunum_ALU1;
+	    break;
+	  case mau_e:
+	    tag = Modifier_k1_exunum_MAU;
+	    break;
+	  case lsu_e:
+	    tag = Modifier_k1_exunum_LSU;
+	    break;
+	  default:
+	    as_fatal("Unexpected EXU %d (%s)\n", ii, exu_names[ii]);
+	  }
+	  immxbuf[shadow[jj]->immx].insn[0] |= (tag << 27);
+	}
+	if(shadow[jj]->immx64 != NOIMMX){
+	  immxbuf[shadow[jj]->immx64].insn[0] |= (Modifier_k1_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
+	}
+	jj++;
+      }
+    }
+    memset(bundle_insn, 0, *bundle_insncnt_p * sizeof(k1insn_t*));
+    memcpy(bundle_insn, shadow, jj * sizeof(k1insn_t*));
+    free(solutions[0]);
+  } else {
+    as_fatal("Could not assemble bundle\n");
+  }
+  free(states);
+}
 
 /* called by core to assemble a single line */
 
@@ -1854,6 +2683,9 @@ md_assemble(char *s)
             int entry;
             int align_warn_done = 0; /* Alignment contraint warning already
              * raised for this bundle or not */
+
+            /* retain bundle start adress for error messages */
+	    //            start_bundle = get_byte_counter(now_seg);
 
 #ifdef OBJ_ELF
             /* Emit Dwarf debug line information */
@@ -1918,12 +2750,16 @@ md_assemble(char *s)
             for(i=0; i < 4; i++){
               for (j = 0; j < immxcnt; j++) {
                   if(k1_exunum2_fld(immxbuf[j].insn[0]) == i){
+		    assert(immxbuf[j].written == 0);
                       emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
                       immxbuf[j].written = 1;
                       entry++;
                   }
               }
             }
+	    if (entry != immxcnt){
+	      as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
+	    }
 
             // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
@@ -1948,6 +2784,8 @@ md_assemble(char *s)
 
         insncnt = 0;
         immxcnt = 0;
+	memset(immxbuf, 0, sizeof(immxbuf));
+
         return;
     }
 
@@ -1984,26 +2822,54 @@ md_assemble(char *s)
 static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
-      k1_core_info = &k1dp_core_info;
-      bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+      k1_core_info = &k1a_core_info;
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp)){
+	as_warn(_("could not set architecture and machine"));
+      }
   }
 
   if(!k1_registers) {
-    k1_registers = k1_k1dp_registers;
+    k1_registers = k1_k1a_registers;
   }
 
   if(!k1_regfiles) {
-    k1_regfiles = k1_k1dp_regfiles;
+    k1_regfiles = k1_k1a_regfiles;
   }
 
   switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_DP:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
+    print_insn = k1a_print_insn;
     break;
   case ELF_K1_CORE_IO:
-    bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io);
+    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io))
+      as_warn(_("could not set architecture and machine"));
     reorder_bundle = k1a_reorder_bundle;
+    print_insn = k1a_print_insn;
+    break;
+  case ELF_K1_CORE_B_DP:
+    if (k1_arch_size == 32) {
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp))
+	as_warn(_("could not set architecture and machine"));
+    } else if (k1_arch_size == 64) {
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp_64))
+	as_warn(_("could not set architecture and machine"));
+    }
+    reorder_bundle = k1b_reorder_bundle;
+    print_insn = k1b_print_insn;
+    break;
+  case ELF_K1_CORE_B_IO:
+    if (k1_arch_size == 32){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio))
+	as_warn(_("could not set architecture and machine"));
+    } else if ( k1_arch_size == 64){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio_64))
+	as_warn(_("could not set architecture and machine"));
+    }
+    reorder_bundle = k1b_reorder_bundle;
+    print_insn = k1b_print_insn;
     break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
@@ -2023,7 +2889,7 @@ static int k1op_compar(const void *a, const void *b)
 
 
 static void
-print_hash(const char *key, PTR val){
+print_hash(const char *key,  __attribute__((unused)) PTR val){
   printf("%s\n", key);
 }
  
@@ -2056,17 +2922,14 @@ md_begin()
     /* Each name should appear only once */
 
     k1_opcode_hash = hash_new();
- {
+    {
         k1opc_t *op;
         const char *name = 0;
         const char *retval = 0;
-        for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++)
- {
-
+        for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++) {
             /* enter in hash table if this is a new name */
 
-            if (!(STREQ(name, op->as_op)))
- {
+            if (!(STREQ(name, op->as_op))) {
                 name = op->as_op;
                 retval = hash_insert(k1_opcode_hash, name, (PTR) op);
                 if (retval)
@@ -2074,10 +2937,18 @@ md_begin()
                             name, retval);
             }
         }
- }
+    }
 
-    if(dump_table){
+    if(dump_table) {
       hash_traverse(k1_opcode_hash, print_hash);
+      exit(0);
+    }
+
+    if(dump_insn) {
+      k1opc_t *op;
+      for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++) {
+	print_insn(op);
+      }
       exit(0);
     }
 
@@ -2098,101 +2969,41 @@ md_begin()
      * &zero_address_frag);
      */
     pseudo_func[FUNC_GP_RELATIVE].u.sym =
-        symbol_create (".<gprel>", undefined_section, FUNC_GP_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gprel>", undefined_section, FUNC_GP_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GP_10_RELATIVE].u.sym =
-        symbol_create (".<gprel10>", undefined_section, FUNC_GP_10_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gprel10>", undefined_section, FUNC_GP_10_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GP_16_RELATIVE].u.sym =
-        symbol_create (".<gprel16>", undefined_section, FUNC_GP_16_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gprel16>", undefined_section, FUNC_GP_16_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOTOFF_RELATIVE].u.sym =
-        symbol_create (".<gotoff>", undefined_section, FUNC_GOT_RELATIVE,
-                       &zero_address_frag);
-
+      symbol_create (".<gotoff>", undefined_section, FUNC_GOTOFF_RELATIVE,
+		     &zero_address_frag);
+    pseudo_func[FUNC_GOTOFF64_RELATIVE].u.sym =
+      symbol_create (".<gotoff64>", undefined_section, FUNC_GOTOFF64_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOT_RELATIVE].u.sym =
-        symbol_create (".<got>", undefined_section, FUNC_GOT_RELATIVE,
-        &zero_address_frag);
-        
+      symbol_create (".<got>", undefined_section, FUNC_GOT_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_PLT_RELATIVE].u.sym =
-        symbol_create (".<plt>", undefined_section, FUNC_PLT_RELATIVE,
-        &zero_address_frag);
-        
+      symbol_create (".<plt>", undefined_section, FUNC_PLT_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOT_FDESC_RELATIVE].u.sym =
-        symbol_create (".<got.fdesc>", undefined_section, FUNC_GOT_FDESC_RELATIVE,
-        &zero_address_frag);
+      symbol_create (".<got.fdesc>", undefined_section, FUNC_GOT_FDESC_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_GOTOFF_FDESC_RELATIVE].u.sym =
-        symbol_create (".<gotoff.fdesc>", undefined_section, FUNC_GOTOFF_FDESC_RELATIVE,
-        &zero_address_frag);
+      symbol_create (".<gotoff.fdesc>", undefined_section, FUNC_GOTOFF_FDESC_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_FDESC_RELATIVE].u.sym =
-        symbol_create (".<fdesc>", undefined_section, FUNC_FDESC_RELATIVE,
-        &zero_address_frag);
-
-
-    /* pseudo_func[FUNC_GOTX_RELATIVE].u.sym =
-     * symbol_create (".<gotoffx>", undefined_section, FUNC_GOTX_RELATIVE,
-     * &zero_address_frag);
-     *
-     *
-     * pseudo_func[FUNC_SEG_RELATIVE].u.sym =
-     * symbol_create (".<segrel>", undefined_section, FUNC_SEG_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_LTV_RELATIVE].u.sym =
-     * symbol_create (".<ltv>", undefined_section, FUNC_LTV_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_FPTR_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.fptr>", undefined_section, FUNC_GOT_FPTR_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_IPLT_RELOC].u.sym =
-     * symbol_create (".<iplt>", undefined_section, FUNC_IPLT_RELOC,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_NEG_GP_RELATIVE].u.sym =
-     * symbol_create (".<neggprel>", undefined_section, FUNC_NEG_GP_RELATIVE,
-     * &zero_address_frag);
-     */
-    
+      symbol_create (".<fdesc>", undefined_section, FUNC_FDESC_RELATIVE,
+		     &zero_address_frag);
     pseudo_func[FUNC_TP_RELATIVE].u.sym =
-	symbol_create (".<tprel>", undefined_section, FUNC_TP_RELATIVE,
-		       &zero_address_frag);
-//     pseudo_func[FUNC_TP_RELATIVE].u.sym =
-//         symbol_create (".<pcrel>", undefined_section, FUNC_PC_RELATIVE,
-//                        &zero_address_frag);
-    /*
-     * pseudo_func[FUNC_DTP_RELATIVE].u.sym =
-     * symbol_create (".<dtprel>", undefined_section, FUNC_DTP_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_DTP_MODULE].u.sym =
-     * symbol_create (".<dtpmod>", undefined_section, FUNC_DTP_MODULE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_DTP_INDEX].u.sym =
-     * symbol_create (".<dtpndx>", undefined_section, FUNC_DTP_INDEX,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_DTP_LOAD_MODULE].u.sym =
-     * symbol_create (".<dtpldm>", undefined_section, FUNC_DTP_LOAD_MODULE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_TP_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.tprel>", undefined_section, FUNC_GOT_TP_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_DTP_INDEX_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.dtpndx>", undefined_section, FUNC_GOT_DTP_INDEX_RELATIVE,
-     * &zero_address_frag);
-     *
-     * pseudo_func[FUNC_GOT_DTP_LOAD_MODULE_RELATIVE].u.sym =
-     * symbol_create (".<gotoff.dtpldm>", undefined_section, FUNC_GOT_DTP_LOAD_MODULE_RELATIVE,
-     * &zero_address_frag);
-     */
+      symbol_create (".<tprel>", undefined_section, FUNC_TP_RELATIVE,
+		     &zero_address_frag);
+    pseudo_func[FUNC_TP64_RELATIVE].u.sym =
+      symbol_create (".<tprel64>", undefined_section, FUNC_TP64_RELATIVE,
+		     &zero_address_frag);
     /*  bfd_set_private_flags(stdoutput, 0); *//* default flags */
 }
 
@@ -2221,14 +3032,14 @@ md_apply_fix(fixS * fixP, valueT * valueP,
     //char *const fixpos2 = fixP->fx_frag->fr_literal + fixP->fx_where - 4;
     valueT value = *valueP;
     //valueT value2 = *valueP;
-    unsigned image;
+    valueT image;
     arelent *rel;
 
     rel = (arelent *)xmalloc(sizeof(arelent));
 
     rel->howto = bfd_reloc_type_lookup(stdoutput, fixP->fx_r_type);
     if(rel->howto == NULL){
-        as_fatal("[md_apply_fix] unsupported relocation type");
+        as_fatal("[md_apply_fix] unsupported relocation type (can't find howto)");
     }
 
     if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
@@ -2245,6 +3056,12 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             case BFD_RELOC_K1_TPREL_HI22:
             case BFD_RELOC_K1_TPREL_LO10:
             case BFD_RELOC_K1_TPREL_32:
+	      
+	  case BFD_RELOC_K1_TPREL64_EXTEND6 :
+	  case BFD_RELOC_K1_TPREL64_HI27 :
+	  case BFD_RELOC_K1_TPREL64_ELO10:
+	  case BFD_RELOC_K1_TPREL64_64:
+
 //             case BFD_RELOC_K1_GOTOFF_HI22:
 //             case BFD_RELOC_K1_GOTOFF_LO10:
                 S_SET_THREAD_LOCAL (fixP->fx_addsy);
@@ -2268,11 +3085,14 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_8:
         case BFD_RELOC_16:
         case BFD_RELOC_32:
+        case BFD_RELOC_K1_TPREL64_64:
+	case BFD_RELOC_64:
         case BFD_RELOC_K1_TPREL_32:
         case BFD_RELOC_K1_FUNCDESC:
         case BFD_RELOC_K1_GLOB_DAT:
         case BFD_RELOC_K1_GOT:
         case BFD_RELOC_K1_GOTOFF:
+        case BFD_RELOC_K1_GOTOFF64:
             //  case BFD_RELOC_32_PCREL:
             image = value;
             md_number_to_chars(fixpos, image, fixP->fx_size);
@@ -2287,12 +3107,23 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             md_number_to_chars(fixpos, image, fixP->fx_size);
             break;
         case BFD_RELOC_K1_HI22:
+        case BFD_RELOC_K1_HI27:
+        case BFD_RELOC_K1_TPREL64_HI27:
+        case BFD_RELOC_K1_TPREL64_EXTEND6:
         case BFD_RELOC_K1_TPREL_HI22:
 //         case BFD_RELOC_K1_PCREL_HI22:
         case BFD_RELOC_K1_GPREL_HI22:
 //    case BFD_RELOC_K1_NEG_GPREL_HI23:
         case BFD_RELOC_K1_GOTOFF_HI22:
+
+        case BFD_RELOC_K1_GOTOFF64_HI27:
+        case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+        case BFD_RELOC_K1_GOT64_HI27:
+        case BFD_RELOC_K1_GOT64_EXTEND6:
         case BFD_RELOC_K1_GOT_HI22:
+        case BFD_RELOC_K1_PLT64_HI27:
+        case BFD_RELOC_K1_PLT64_EXTEND6:
+	  
 //    case BFD_RELOC_K1_GOTOFFX_HI23:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
         case BFD_RELOC_K1_PLT_HI22:
@@ -2304,37 +3135,25 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_FUNCDESC_GOT_HI22:
 	case BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22:
 //
-            value = (((value >> rel->howto->rightshift)  << rel->howto->bitpos ) &  rel->howto->dst_mask);
-            image = (image & ~(rel->howto->dst_mask)) | value;
-/*
-            rel->howto = bfd_reloc_type_lookup(stdoutput, BFD_RELOC_K1_LO10);
-            if(rel->howto == NULL){
-                as_fatal("[md_apply_fix] unsupported relocation type");
-            }
-*/
-            /* Create a mask with the size of the (small) immediate
-            mask = (1 << rel->howto->bitsize) - 1;
-            value2 = (value2 & mask);
-            image2 = md_chars_to_number(fixpos2, fixP->fx_size);
 
-            image2 = image2 & (~((mask) << rel->howto->bitpos));
-            image2 = image2 | (value2 << rel->howto->bitpos);
-            image2 |= 0x80000000;
-            */
-            md_number_to_chars(fixpos, image, fixP->fx_size);
-
-            //md_number_to_chars(fixpos2, image2, fixP->fx_size);
-            break;
         case BFD_RELOC_K1_LO10:
+        case BFD_RELOC_K1_S37_LO10:
+        case BFD_RELOC_K1_S37_HI27:	  
+        case BFD_RELOC_K1_ELO10:
+        case BFD_RELOC_K1_EXTEND6:
+        case BFD_RELOC_K1_TPREL64_ELO10:
         case BFD_RELOC_K1_TPREL_LO10:
 //         case BFD_RELOC_K1_PCREL_LO10:
         case BFD_RELOC_K1_GPREL_LO10:
 //    case BFD_RELOC_K1_NEG_GPREL_LO9:
         case BFD_RELOC_K1_GOTOFF_LO10:
+        case BFD_RELOC_K1_GOTOFF64_LO10:
+        case BFD_RELOC_K1_GOT64_LO10:
         case BFD_RELOC_K1_GOT_LO10:
 //    case BFD_RELOC_K1_GOTOFFX_LO9:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
         case BFD_RELOC_K1_PLT_LO10:
+        case BFD_RELOC_K1_PLT64_LO10:
         case BFD_RELOC_K1_FUNCDESC_GOT_LO10:
 	case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10:
 //    case BFD_RELOC_K1_TPREL_LO9:
@@ -2344,11 +3163,12 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_K1_GOTOFF_DTPNDX_LO9:
         case BFD_RELOC_K1_10_GPREL:
         case BFD_RELOC_K1_16_GPREL:
+
             value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
             image = (image & ~(rel->howto->dst_mask)) | value;
             md_number_to_chars(fixpos, image, fixP->fx_size);
-
             break;
+
 //    case BFD_RELOC_K1_REL32:
 //    case BFD_RELOC_K1_FPTR32:
 //    case BFD_RELOC_K1_IPLT:
@@ -2360,7 +3180,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //    case BFD_RELOC_K1_TPREL32:
 //      break;
         default:
-            as_fatal("[md_apply_fix] unsupported relocation type");
+	  as_fatal("[md_apply_fix] unsupported relocation type (type not handled : %d)", fixP->fx_r_type);
     }
 }
 
@@ -2422,12 +3242,14 @@ k1_validate_sub_fix(fixS *fixP)
 /* This is called whenever some data item (not an instruction) needs a
  * fixup.  */
 void
-k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_code_real_type code)
+k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp)
  {
+    bfd_reloc_code_real_type code;
+
     if (exp->X_op == O_pseudo_fixup)
  {
         exp->X_op = O_symbol;
-        real_k1_reloc_type(exp->X_op_symbol, 0, 0, &code);
+        real_k1_reloc_type(exp->X_op_symbol, 0, 0, 0, &code);
         if (code == BFD_RELOC_UNUSED)
             as_bad("Unsupported relocation");
     }
@@ -2447,6 +3269,9 @@ k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_cod
             case 4:
                 code = BFD_RELOC_32;
                 break;
+            case 8:
+                code = BFD_RELOC_64;
+		break;
             default:
                 as_bad("unsupported BFD relocation size %u", nbytes);
                 code = BFD_RELOC_32;
@@ -2882,6 +3707,10 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "abi-k1dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
 	      { "abi-k1io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },
@@ -2937,9 +3766,7 @@ k1_check_resources(int f)
 static void
 k1_set_rta_flags(int f ATTRIBUTE_UNUSED)
  {
-    int param_value;
-
-    param_value = get_absolute_expression();
+   get_absolute_expression();
     /* Ignore .rta directive from know on. */
     /*  set_assume_param(&k1_abi, get_absolute_expression (), &k1_abi_set); */
 }
@@ -2955,7 +3782,12 @@ k1_end(void)
         k1_core = k1_core_info->elf_cores[subcore_id];
 
     /* (pp) the flags must be set at once */
-    newflags= k1_core | k1_cut | k1_abi | k1_pic_flags;
+    newflags = k1_core | k1_cut | k1_abi | k1_pic_flags;
+
+    if (k1_arch_size == 64) {
+      newflags |= ELF_K1_CORE_ADDR64_MASK;
+    }
+
     bfd_set_private_flags(stdoutput, newflags);
 
     i_ehdrp = elf_elfheader(stdoutput);
@@ -3121,7 +3953,6 @@ k1_align(int arg, int is_bytes)
  {
     char * saved_input_line_pointer = input_line_pointer;
     int align;
-    offsetT fill = 0;
     int max;
 
     if (is_code_section(now_seg))
@@ -3166,7 +3997,7 @@ k1_align(int arg, int is_bytes)
             ++input_line_pointer;
             if (*input_line_pointer != ',')
               {
-                fill = get_absolute_expression();
+                get_absolute_expression();
                 SKIP_WHITESPACE();
               }
             if (*input_line_pointer == ',')
@@ -3311,7 +4142,6 @@ static int proc_endp_status = 0;
 static void
 k1_endp(int start ATTRIBUTE_UNUSED)
  {
-    char * procname;
     char c;
 
 
@@ -3323,7 +4153,6 @@ k1_endp(int start ATTRIBUTE_UNUSED)
     while (1)
  {
         SKIP_WHITESPACE();
-        procname = input_line_pointer;
         c = get_symbol_end();
         *input_line_pointer = c;
         SKIP_WHITESPACE();
@@ -3441,13 +4270,11 @@ k1_endp(int start ATTRIBUTE_UNUSED)
 static void
 k1_proc(int start ATTRIBUTE_UNUSED)
  {
-    char * procname;
     char c;
     /* there may be several names separated by commas... */
     while (1)
  {
         SKIP_WHITESPACE();
-        procname = input_line_pointer;
         c = get_symbol_end();
         *input_line_pointer = c;
         SKIP_WHITESPACE();
@@ -3493,6 +4320,11 @@ k1_force_reloc(fixS * fixP)
 	    case BFD_RELOC_K1_GOTOFF:
             case BFD_RELOC_K1_GOTOFF_HI22:
             case BFD_RELOC_K1_GOTOFF_LO10:
+	    case BFD_RELOC_K1_GOTOFF64:
+            case BFD_RELOC_K1_GOTOFF64_HI27:
+            case BFD_RELOC_K1_GOTOFF64_LO10:
+            case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
 	    case BFD_RELOC_K1_GOT:
             case BFD_RELOC_K1_GOT_HI22:
             case BFD_RELOC_K1_GOT_LO10:
@@ -3546,6 +4378,12 @@ k1_force_reloc_sub_same(fixS * fixP, segT sec)
 	  case BFD_RELOC_K1_GOTOFF:
           case BFD_RELOC_K1_GOTOFF_HI22:
           case BFD_RELOC_K1_GOTOFF_LO10:
+
+	  case BFD_RELOC_K1_GOTOFF64:
+          case BFD_RELOC_K1_GOTOFF64_HI27:
+          case BFD_RELOC_K1_GOTOFF64_LO10:
+          case BFD_RELOC_K1_GOTOFF64_EXTEND6:
+
 	  case BFD_RELOC_K1_GOT:
           case BFD_RELOC_K1_GOT_HI22:
           case BFD_RELOC_K1_GOT_LO10:

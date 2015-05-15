@@ -30,7 +30,11 @@
 
 #define TC_K1
 #define TARGET_ARCH bfd_arch_k1
-#define TARGET_FORMAT "elf32-k1"
+//#define TARGET_FORMAT "elf64-k1"
+
+
+extern const char * k1_target_format (void);
+#define TARGET_FORMAT k1_target_format ()
 
 /* Uncomment this if the compiler prepends an _ to global names */
 /*
@@ -58,7 +62,7 @@ extern void k1_end (void);
 #define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
 
 #define tc_frob_label(sym) k1_frob_label(sym)
-extern void k1_frob_label (struct symbol *);
+extern void k1_frob_label PARAMS ((struct symbol *));
 /* listings */
 
 
@@ -90,7 +94,7 @@ extern void k1_md_start_line_hook (void);
 /* Values passed to md_apply_fix3 don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
 
-extern int k1_force_reloc (struct fix *);
+extern int k1_force_reloc PARAMS ((struct fix *));
 #define TC_FORCE_RELOCATION(fixP)			\
 		k1_force_reloc(fixP)
 
@@ -133,7 +137,7 @@ extern int emit_all_relocs;
        && S_IS_DEFINED ((FIX)->fx_addsy)			\
        && ! S_IS_COMMON ((FIX)->fx_addsy)))
 
-#define tc_fix_adjustable(fixP)                         \
+#define tc_fix_adjustable PARAMS ((fixP))		\
                 k1_fix_adjustable (fixP)
 extern int k1_fix_adjustable (struct fix *);
 
@@ -171,7 +175,7 @@ extern void k1_cons_fix_new (fragS *f, int where, int nbytes,
 /* AP: The following is not needed for K1 */
 #if 0
 #define HANDLE_ALIGN(fragp) k1_handle_align (fragp)
-extern void k1_handle_align (struct frag *);
+extern void k1_handle_align PARAMS ((struct frag *));
 
 #define md_do_align(N, FILL, LEN, MAX, LABEL)					\
   if (FILL == NULL && (N) != 0 && ! need_pass_2 && subseg_text_p (now_seg))	\
@@ -179,7 +183,7 @@ extern void k1_handle_align (struct frag *);
       k1_frag_align_code (N, MAX);						\
       goto LABEL;								\
     }
-extern void k1_frag_align_code (int, int);
+extern void k1_frag_align_code PARAMS ((int, int));
 #endif /* 0 */
 
 #ifdef OBJ_ELF
