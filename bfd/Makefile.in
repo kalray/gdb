@@ -962,6 +962,7 @@ BFD64_BACKENDS = \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
 	elf64-ia64-vms.lo \
+	elf64-k1.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
