@@ -274,12 +274,12 @@ k1_elf32_fdpic_elf_relocate_section
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
-				   r_symndx, symtab_hdr, sym_hashes,
-				   h, sec, relocation,
-				   unresolved_reloc, warned);
+							   r_symndx, symtab_hdr, sym_hashes,
+							   h, sec, relocation,
+							   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
           osec = sec;

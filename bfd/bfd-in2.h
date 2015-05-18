@@ -2273,6 +2273,10 @@ enum bfd_architecture
 #define bfd_mach_k1io                 1
 #define bfd_mach_k1bdp                2
 #define bfd_mach_k1bio                3
+#define bfd_mach_k1bdp_64             4
+#define bfd_mach_k1bio_64             5
+#define bfd_mach_k1bdp_usr            6
+#define bfd_mach_k1bio_usr            7
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -5501,6 +5505,10 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_K1_TPREL_32,
   BFD_RELOC_K1_GOTOFF_LO10,
   BFD_RELOC_K1_GOTOFF_HI22,
+  BFD_RELOC_K1_GOTOFF64_LO10,
+  BFD_RELOC_K1_GOTOFF64_HI27,
+  BFD_RELOC_K1_GOTOFF64_EXTEND6,
+  BFD_RELOC_K1_GOTOFF64,
   BFD_RELOC_K1_GOT_LO10,
   BFD_RELOC_K1_GOT_HI22,
   BFD_RELOC_K1_GLOB_DAT,
@@ -5519,6 +5527,24 @@ the dynamic object into the runtime process image.  */
   BFD_RELOC_K1_COPY,
   BFD_RELOC_K1_JMP_SLOT,
   BFD_RELOC_K1_RELATIVE,
+  BFD_RELOC_K1_EXTEND6,
+  BFD_RELOC_K1_ELO10,
+  BFD_RELOC_K1_HI27,
+  BFD_RELOC_K1_TPREL64_EXTEND6,
+  BFD_RELOC_K1_TPREL64_HI27,
+  BFD_RELOC_K1_TPREL64_ELO10,
+  BFD_RELOC_K1_TPREL64_64,
+  BFD_RELOC_K1_GOT64_HI27,
+  BFD_RELOC_K1_GOT64_LO10,
+  BFD_RELOC_K1_GOT64_EXTEND6,
+  BFD_RELOC_K1_GOT64,
+  BFD_RELOC_K1_GLOB_DAT64,
+  BFD_RELOC_K1_PLT64_HI27,
+  BFD_RELOC_K1_PLT64_LO10,
+  BFD_RELOC_K1_PLT64_EXTEND6,
+  BFD_RELOC_K1_S37_LO10,
+  BFD_RELOC_K1_S37_HI27,
+  BFD_RELOC_K1_JMP_SLOT64,
 
 /* Unused Reloc  */
   BFD_RELOC_MICROBLAZE_64_TLS,
