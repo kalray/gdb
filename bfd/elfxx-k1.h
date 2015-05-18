@@ -31,6 +31,8 @@
   (ELF32_R_INFO (s, t))
 #endif
 
+
+extern const bfd_target k1_linux_elf32_vec;
 bfd_boolean k1_merge_private_bfd_data (bfd *ibfd, bfd *obfd);
 
 bfd_boolean k1_adjust_dynamic_symbol (struct bfd_link_info *info,
@@ -75,7 +77,7 @@ bfd_boolean
 k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info);
 
 extern const bfd_target bfd_elf32_k1_linux_vec;
-#define IS_FDPIC(bfd) ((bfd)->xvec == &bfd_elf32_k1_linux_vec)
+#define IS_FDPIC(bfd) ((bfd)->xvec == &k1_linux_elf32_vec)
 
 bfd_boolean
 k1_elf_relocate_section

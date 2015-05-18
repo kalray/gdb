@@ -18,6 +18,8 @@
 #define PLT_MIN_ENTRY_SIZE      16
 #define PLT_FULL_ENTRY_SIZE     20
 
+extern const bfd_target k1_linux_elf32_vec;
+
 static const bfd_vma plt_small_entry_k1a[] =
   {
     /* get $r14 = $pc     ;; */      0x00700380,
@@ -2873,7 +2875,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 
 
 // #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM                       bfd_elf32_k1_vec
+#define TARGET_LITTLE_SYM                       k1_elf32_vec
 #define TARGET_LITTLE_NAME                      "elf32-k1"
 #define ELF_ARCH                                bfd_arch_k1
 // #endif//ELF_ARCH
@@ -2940,7 +2942,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
  */
 
 #undef TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM                    bfd_elf32_k1_linux_vec
+#define TARGET_LITTLE_SYM                    k1_linux_elf32_vec
 
 #undef TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME                   "elf32-k1-linux"

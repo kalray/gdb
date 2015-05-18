@@ -440,7 +440,7 @@ const pseudo_typeS md_pseudo_table[] =
      {"p2alignw", k1_align_ptwo, -2},
      {"p2alignl", k1_align_ptwo, -4},
 #ifdef OBJ_ELF
-     { "file", (void (*) PARAMS((int))) dwarf2_directive_file, 0},
+     { "file", (void (*) (int)) dwarf2_directive_file, 0},
      { "loc", dwarf2_directive_loc, 0},
 #endif
      {NULL, 0, 0}
@@ -1074,7 +1074,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_signed11:
             case Immediate_k1_signed16:
             case Immediate_k1_signed10:
-            case Immediate_k1_signed37:
             case Immediate_k1_signed32:
 		    case Immediate_k1_signed37:
 		    case Immediate_k1_signed43:
@@ -1082,7 +1081,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1_pcrel18:
             case Immediate_k1_pcrel27:
             case Immediate_k1_signed27:
-            case Immediate_k1_signed43:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
                 }
@@ -3242,10 +3240,8 @@ k1_validate_sub_fix(fixS *fixP)
 /* This is called whenever some data item (not an instruction) needs a
  * fixup.  */
 void
-k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp)
+k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_code_real_type code)
  {
-    bfd_reloc_code_real_type code;
-
     if (exp->X_op == O_pseudo_fixup)
  {
         exp->X_op = O_symbol;
