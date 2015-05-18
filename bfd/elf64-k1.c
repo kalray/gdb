@@ -826,7 +826,7 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 }
 
 // #ifndef ELF_ARCH
-#define TARGET_LITTLE_SYM                       bfd_elf64_k1_vec
+#define TARGET_LITTLE_SYM                       k1_elf64_vec
 #define TARGET_LITTLE_NAME                      "elf64-k1"
 #define ELF_ARCH                                bfd_arch_k1
 // #endif//ELF_ARCH
