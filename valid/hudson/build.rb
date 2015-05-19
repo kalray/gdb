@@ -299,8 +299,7 @@ b.target("package") do
   (version,buildID) = tools_version.split("-")
   release_info = b.release_info(version,buildID)
   pinfo = b.package_info(gdb_name, release_info,
-                         package_description, "/usr/local/#{arch}tools",
-                         workspace, depends)
+                         package_description, depends)
 
   b.create_package(tar_package, pinfo)
   b.run("rm #{tar_package}")
