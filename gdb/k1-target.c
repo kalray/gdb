@@ -119,7 +119,7 @@ is_current_k1b_user (void)
 	return ret;
 }
 
-static struct inferior_data*
+struct inferior_data*
 mppa_inferior_data (struct inferior *inf)
 {
     struct inferior_data *data;
