@@ -31,6 +31,7 @@
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
 #include "cli/cli-utils.h"
+#include "event-top.h"
 
 #ifndef MAX
   # define MAX(a, b) ((a < b) ? (b) : (a))
@@ -216,6 +217,7 @@ static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     struct observer *new_thread_observer;
     int print_thread_events_save = print_thread_events;
     char *host, *port, *tar_remote_cmd;
+    volatile struct gdb_exception ex;
 
     if (!args)
         args = "";
@@ -248,8 +250,6 @@ static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
     batch_silent = 1;
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
-
-    volatile struct gdb_exception ex;
 
     TRY_CATCH (ex, RETURN_MASK_ALL)
     {
@@ -524,6 +524,55 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
+static int get_str_sym_sect (char *elf_file, int offset, char **sret)
+{
+  asection *s;
+  int size_sret;
+  bfd *hbfd = bfd_openr (elf_file, NULL);
+  if (hbfd == NULL)
+    return 0;
+
+  size_sret = 200;
+  *sret = (char *) malloc (size_sret);
+  sprintf (*sret, "0x%08x ", offset);
+  
+  //check if the file is in format
+  if (!bfd_check_format (hbfd, bfd_object))
+  {
+    if (bfd_get_error () != bfd_error_file_ambiguously_recognized)
+    {
+      printf ("Incompatible file format %s\n", elf_file);
+      bfd_close (hbfd);
+      return 0;
+    }
+  }
+
+  for (s = hbfd->sections; s; s = s->next)
+  {
+    if (bfd_get_section_flags (hbfd, s) & SEC_ALLOC)
+    {
+      const char *sname = bfd_section_name (hbfd, s);
+      if (strlen (*sret) + strlen (sname) + 30 > size_sret)
+      {
+        size_sret += 100;
+        *sret = (char *) realloc (*sret, size_sret);
+      }
+      if (!strcmp (sname , ".text"))
+      {
+        sprintf (*sret, "0x%08x ",
+          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
+      }
+      else
+        sprintf (*sret + strlen (*sret), "-s %s 0x%08x ", sname,
+          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
+    }
+  }
+  
+  bfd_close (hbfd);
+
+  return 1;
+}
+
 static void
 attach_user_command (char *args, int from_tty)
 {
@@ -573,22 +622,30 @@ attach_user_command (char *args, int from_tty)
   {
     struct stat s;
     if (stat( file, &s) != 0)
-      printf ("Cannot load file %s: %s\n", file, strerror(errno));
+      printf ("Cannot find file %s: %s.\n", file, strerror(errno));
     else
     {
-      struct regcache *regc = get_thread_regcache (inferior_ptid);
-      CORE_ADDR pc = regcache_read_pc (regc);
-      sprintf (cmd, "add-symbol-file %s 0x%lx", file, pc);
-      TRY_CATCH (ex, RETURN_MASK_ALL)
+      char *ssect;
+      //struct regcache *regc = get_thread_regcache (inferior_ptid);
+      //CORE_ADDR pc = regcache_read_pc (regc);
+      if (get_str_sym_sect (file, 0x6000000, &ssect))
       {
-        execute_command (cmd, 0);
+        cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
+        sprintf (cmd, "add-symbol-file %s %s", file, ssect);
+        free (ssect);
+        TRY_CATCH (ex, RETURN_MASK_ALL)
+        {
+          execute_command (cmd, 0);
+        }
+        if (ex.reason < 0)
+        {
+          printf ("Error while trying to add symbol file %s (%s).\n",
+            file, ex.message ?: "");
+          goto end;
+        }
       }
-      if (ex.reason < 0)
-      {
-        printf ("Error while trying to add symbol file %s (%s).\n",
-          file, ex.message ?: "");
-        goto end;
-      }
+      else
+        printf ("Cannot load file %s.\n", file);
     }
   }
   
@@ -610,9 +667,9 @@ attach_mppa_command (char *args, int from_tty)
     struct osdata *osdata;
     struct osdata_item *last;
     struct osdata_item *item;
-    int ix_items;
+    int ix_items, cur_pid, bstopped, bcur_inf_stopped;
     struct inferior *cur_inf;
-    ptid_t cur_ptid;
+    ptid_t cur_ptid, stopped_ptid;
 
     dont_repeat ();
 
@@ -631,7 +688,7 @@ attach_mppa_command (char *args, int from_tty)
     cur_inf = current_inferior();
     set_inferior_data (cur_inf, k1_attached_inf_data, NULL);
     cur_ptid = inferior_ptid;
-    int cur_pid = cur_inf->pid;
+    cur_pid = cur_inf->pid;
 
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
@@ -654,8 +711,8 @@ attach_mppa_command (char *args, int from_tty)
         execute_command (attach_cmd, 0);
     }
 
-    int bstopped = 0, bcur_inf_stopped = 0;
-    ptid_t stopped_ptid;
+    bstopped = 0;
+    bcur_inf_stopped = 0;
     osdata = get_osdata (NULL);
 
     for (ix_items = 0;
@@ -663,6 +720,7 @@ attach_mppa_command (char *args, int from_tty)
                       ix_items, item);
          ix_items++) {
         char *endptr;
+        struct thread_info *live_th;
         unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
         const char *file = get_osdata_column (item, "command");
         const char *running = get_osdata_column (item, "running");
@@ -670,7 +728,7 @@ attach_mppa_command (char *args, int from_tty)
         if (strcmp (running, "yes"))
             continue;
 
-        struct thread_info *live_th = any_live_thread_of_process (pid);
+        live_th = any_live_thread_of_process (pid);
         if (live_th && !live_th->stop_requested)
             set_stop_requested (live_th->ptid, 1);
 
