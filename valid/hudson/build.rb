@@ -157,7 +157,7 @@ b.target("#{variant}_build") do
     end
     install_prefix = prefix
   
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --enable-64-bit-bfd --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)
@@ -299,8 +299,8 @@ b.target("package") do
   (version,buildID) = tools_version.split("-")
   release_info = b.release_info(version,buildID)
   pinfo = b.package_info(gdb_name, release_info,
-                         package_description, "/usr/local/#{arch}tools",
-                         workspace, depends)
+                         package_description,
+                         depends)
 
   b.create_package(tar_package, pinfo)
   b.run("rm #{tar_package}")
