@@ -27,6 +27,7 @@
 #include "arch-utils.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
+#include "cli/cli-utils.h"
 #include "event-top.h"
 #include "regcache.h"
 #include "event-loop.h"
@@ -105,7 +106,7 @@ is_current_k1b_user (void)
 {
 	int ret = 0;
   
-	struct gdbarch *arch = get_current_arch ();
+	struct gdbarch *arch = target_gdbarch ();
 	if (arch)
 		{
 			const struct bfd_arch_info *info = gdbarch_bfd_arch_info (arch);
@@ -125,7 +126,7 @@ mppa_inferior_data (struct inferior *inf)
     struct inferior_data *data;
 
     if (is_current_k1b_user ())
-		return NULL;
+      return NULL;
     
     data = inferior_data (inf, k1_attached_inf_data);
 
@@ -584,6 +585,9 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int re
   // first time we see a cluster, set the debug level
   inf = find_inferior_pid (inferior_ptid.pid);
   data = mppa_inferior_data (inf);
+  if (!data)
+    return;
+
   if (data->cluster_debug_level_postponed)
   {
     data->cluster_debug_level_postponed = 0;
