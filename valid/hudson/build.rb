@@ -216,9 +216,9 @@ b.target("#{variant}_post_build_valid") do
   b.logtitle = "Report for GDB  #{variant}_post_build_valid, arch = #{arch}"
   if (variant == "gdb")
     if( arch == "k1" )
-      # Dir.chdir build_path + "/gdb/testsuite"
-      # b.valid(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
-      # b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
+      Dir.chdir build_path + "/gdb/testsuite"
+      b.valid(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
     end
   end
 end
