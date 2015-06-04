@@ -14,7 +14,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "toolroot"      => "",
                         "k1debug_prefix"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
-                        "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
+                        "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :gdb], "default" => "elf", "help" => "Select build variant."},
                         "prefix"        => ["devimage", "Install prefix"],
                         "pkg_prefix"    => {"type" => "string", "default" => "", "help" => "Where to install software to build packages." },
                         "host"          => ["x86", "Host for the build"],
@@ -81,14 +81,6 @@ when "k1"
   case variant
   when "gdb" then
     build_target = "k1-elf"
-  when "linux" then
-    build_target = "k1-#{variant}"
-    program_prefix += "#{variant}-"
-    sysroot_option = "--with-sysroot="+options["sysroot"]
-    if(cores == "none") then
-      cores = "k1dp,k1io.k1bdp,k1bio"
-    end
-    mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "elf" then
     build_target = "k1-#{variant}"
     if(cores == "none") then
@@ -115,9 +107,6 @@ when "k1"
 when "k1nsim"
   build_target = "k1nsim-#{variant}"
   program_prefix += "#{variant}-" if variant != "elf"
-  if(variant == "linux") then
-    sysroot_option = "--with-sysroot="+options["sysroot"]
-  end
   if(cores == "none") then
     cores = "k1dp,k1io,k1bdp,k1bio"
   end
@@ -152,9 +141,6 @@ b.target("#{variant}_build") do
     version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
   
     build_host = ""
-    if (host == "k1-linux") then
-      build_host = "--host=k1-linux"
-    end
     install_prefix = prefix
   
     b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
@@ -226,7 +212,7 @@ end
 
 b.target("#{variant}_post_install_valid") do
   b.logtitle = "Report for Gbu #{variant}_post_install_valid, arch = #{arch}"
-  if (variant == "elf" || variant == "rtems" || variant == "nodeos" || variant == "linux")
+  if (variant == "elf" || variant == "rtems" || variant == "nodeos")
     gas = "#{build_path}/gas/as-new"
     objdump = "#{build_path}/binutils/objdump"
 
