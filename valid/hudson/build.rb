@@ -56,13 +56,13 @@ mds_path       = File.join(workspace,options["mds"])
 
 host       = options["host"]
 
-toolroot   = options["toolroot"]
-k1debug_prefix    = options["k1debug_prefix"].empty? ? toolroot : options["k1debug_prefix"]
+toolroot          = options["toolroot"]
+k1debug_prefix    = options.fetch("k1debug_prefix", toolroot)
 
-build_path         = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
-prefix             = options.fetch("prefix", "#{build_path}/release")
-pkg_prefix         = options.fetch("pkg_prefix",prefix)
-pkg_prefix_name    = options.fetch("pi-prefix-name","#{arch}-")
+build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
+prefix            = options.fetch("prefix", "#{build_path}/release")
+pkg_prefix        = options.fetch("pkg_prefix",prefix)
+pkg_prefix_name   = options.fetch("pi-prefix-name","#{arch}-")
 
 gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
 k1debug_prefix     = k1debug_prefix
