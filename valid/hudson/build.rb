@@ -60,8 +60,10 @@ toolroot   = options["toolroot"]
 k1debug_prefix    = options["k1debug_prefix"].empty? ? toolroot : options["k1debug_prefix"]
 
 build_path         = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
-prefix             = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
-pkg_prefix         = options["pkg_prefix"].empty? ? prefix : options["pkg_prefix"]
+prefix             = options.fetch("prefix", "#{build_path}/release")
+pkg_prefix         = options.fetch("pkg_prefix",prefix)
+pkg_prefix_name    = options.fetch("pi-prefix-name","#{arch}-")
+
 gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
 k1debug_prefix     = k1debug_prefix
 
@@ -157,7 +159,7 @@ b.target("#{variant}_build") do
     end
     install_prefix = prefix
   
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --enable-64-bit-bfd --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)
@@ -284,7 +286,7 @@ b.target("package") do
   # GDB package
   cd gdb_install_prefix
 
-  gdb_name = "#{arch}-gdb"
+  gdb_name = "#{pkg_prefix_name}gdb"
   gdb_tar  = "#{gdb_name}.tar"
   b.run("tar cf #{gdb_tar} ./*")
   tar_package = File.expand_path(gdb_tar)

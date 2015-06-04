@@ -30,26 +30,44 @@
 
 typedef union {
     struct {
-          unsigned rta : 4;  
+          unsigned rta : 4;
             } obj_compat;
       unsigned int f;
 } k1_bfd_flags;
 
+/* 
+ * Machine private data :
+ * - byte 0 = ABI specific (PIC, OS, ...)
+ * - byte 1 = Core info :
+ *   - bits 0..2 = V1/DP/IO
+ *   - bit  3    = arch version (a/b)
+ *   - bit  7    = 32/64 bits addressing
+ * - byte 2 = Cut info
+ */
+
 /* (pp) core */
-#define _ELF_K1_CORE_BIT        (8)                      /* 1st bit position in 
+#define _ELF_K1_CORE_BIT        (8)                      /* 1st bit position in
                                                             byte */
-#define ELF_K1_CORE_MASK        (0xff<<_ELF_K1_CORE_BIT)           /* mask */
+#define ELF_K1_CORE_MASK        (0x7f<<_ELF_K1_CORE_BIT)           /* mask */
 #define ELF_K1_CORE_V1          (0x0<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_DP          (0x1<<_ELF_K1_CORE_BIT)
 #define ELF_K1_CORE_IO          (0x2<<_ELF_K1_CORE_BIT)
+
 #define ELF_K1_CORE_B           (0x4<<_ELF_K1_CORE_BIT)
+
 #define ELF_K1_CORE_B_DP        (ELF_K1_CORE_B | ELF_K1_CORE_DP)
 #define ELF_K1_CORE_B_IO        (ELF_K1_CORE_B | ELF_K1_CORE_IO)
+
+/* Last bit in byte used for 64bits addressing */
+#define ELF_K1_CORE_ADDR64_MASK (0x80<<_ELF_K1_CORE_BIT)
+
 #define ELF_K1_CORE_UNDEF       (0x7<<_ELF_K1_CORE_BIT)
 #define _ELF_K1_CHECK_CORE(flags,m) (((flags) & ELF_K1_CORE_MASK)==(m))
 
+#define _ELF_K1_CHECK_ADDR64(flags) (((flags) & ELF_K1_CORE_ADDR64_MASK))
+
 /* (pp) cut */
-#define _ELF_K1_CUT_BIT (16)                             /* 1st bit position in 
+#define _ELF_K1_CUT_BIT (16)                             /* 1st bit position in
                                                             byte */
 #define ELF_K1_CUT_MASK         (0xf<<_ELF_K1_CUT_BIT)           /* mask */
 #define ELF_K1_CUT_0            (0x0<<_ELF_K1_CUT_BIT)
@@ -91,11 +109,11 @@ typedef union {
 
 /* compatibility with rta directive on solaris : rta bits where writen in the bi
  * ts 28:31 on Solaris */
-#define _ELF_K1_RTA_BIT (28)                             /* 1st bit position in 
+#define _ELF_K1_RTA_BIT (28)                             /* 1st bit position in
                                                             byte */
 
 /* (pp) code generation mode */
-#define _ELF_K1_MODE_BIT (7)                             /* 1st bit position in 
+#define _ELF_K1_MODE_BIT (7)                             /* 1st bit position in
                                                             byte */
 #define ELF_K1_MODE_MASK        (0x1<<_ELF_K1_MODE_BIT)           /* mask */
 #define ELF_K1_MODE_USER        (0x0<<_ELF_K1_MODE_BIT)
@@ -163,7 +181,38 @@ START_RELOC_NUMBERS (elf_k1_reloc_type)
         RELOC_NUMBER(R_K1_COPY, 31)
         RELOC_NUMBER(R_K1_JMP_SLOT, 32)
         RELOC_NUMBER(R_K1_RELATIVE, 33)
+
+        RELOC_NUMBER(R_K1_ELO10, 34)
+        RELOC_NUMBER(R_K1_HI27, 35)
+        RELOC_NUMBER(R_K1_EXTEND6, 36)
+ 
+        RELOC_NUMBER (R_K1_64,                   37)
+
+        RELOC_NUMBER(R_K1_TPREL64_EXTEND6, 38)
+        RELOC_NUMBER(R_K1_TPREL64_HI27, 39)
+        RELOC_NUMBER(R_K1_TPREL64_ELO10, 40)
+        RELOC_NUMBER(R_K1_TPREL64_64, 41)
+
+        RELOC_NUMBER(R_K1_GOTOFF64, 42)
+
+        RELOC_NUMBER(R_K1_GOTOFF64_LO10, 43)
+        RELOC_NUMBER(R_K1_GOTOFF64_HI27, 44)
+        RELOC_NUMBER(R_K1_GOTOFF64_EXTEND6, 45)
+
+        RELOC_NUMBER(R_K1_GOT64_LO10, 46)
+        RELOC_NUMBER(R_K1_GOT64_HI27, 47)
+        RELOC_NUMBER(R_K1_GOT64_EXTEND6, 48)
+        RELOC_NUMBER(R_K1_GOT64, 49 )
+
+        RELOC_NUMBER(R_K1_GLOB_DAT64, 50)
+
+        RELOC_NUMBER(R_K1_PLT64_LO10, 51)
+        RELOC_NUMBER(R_K1_PLT64_HI27, 52 )
+        RELOC_NUMBER(R_K1_PLT64_EXTEND6, 53)
+
+        RELOC_NUMBER(R_K1_S37_LO10, 54)
+        RELOC_NUMBER(R_K1_S37_HI27, 55 )
+        RELOC_NUMBER(R_K1_JMP_SLOT64, 56 )
   END_RELOC_NUMBERS (R_K1_max)
 
 #endif
-  
