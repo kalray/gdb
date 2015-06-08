@@ -915,7 +915,6 @@ attach_mppa_command (char *args, int from_tty)
     int ix_items,cur_pid, bstopped, bcur_inf_stopped;
     struct inferior *cur_inf;
     ptid_t cur_ptid, stopped_ptid;
-    int bcur_inf_stopped;
 
     dont_repeat ();
 
