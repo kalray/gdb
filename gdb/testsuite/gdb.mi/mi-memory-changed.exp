@@ -41,7 +41,7 @@ mi_gdb_test "set var C = 4" \
 
 # Write memory through MI commands shouldn't trigger MI notification.
 mi_gdb_test "-var-create var_c * C" \
-    "\\^done,name=\"var_c\",numchild=\"0\",value=\"4\",type=\"int\",thread-id=\"\[0-9\]*\",has_more=\"0\"" \
+    "\\^done,name=\"var_c\",numchild=\"0\",value=\"4\",type=\"int\",thread-id=\"\[0-9\]+\",has_more=\"0\"" \
     "create objvar for C"
 
 mi_gdb_test "-var-assign var_c 5" \
