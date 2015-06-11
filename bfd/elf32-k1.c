@@ -227,7 +227,7 @@ k1_elf32_fdpic_elf_relocate_section
       const char                   *name = NULL;
       int                          r_type;
       asection                     *osec;
-      struct k1fdpic_relocs_info   *picrel;
+      struct k1fdpic_relocs_info   *picrel = NULL;
       
       bfd_vma orig_addend = rel->r_addend;
       
@@ -279,9 +279,9 @@ k1_elf32_fdpic_elf_relocate_section
 	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
-							   r_symndx, symtab_hdr, sym_hashes,
-							   h, sec, relocation,
-							   unresolved_reloc, warned, ignored);
+				   r_symndx, symtab_hdr, sym_hashes,
+				   h, sec, relocation,
+				   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
           osec = sec;
