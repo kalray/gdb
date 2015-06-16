@@ -28,6 +28,7 @@
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
 #include "cli/cli-utils.h"
+
 #include "event-top.h"
 #include "regcache.h"
 #include "event-loop.h"
@@ -621,6 +622,57 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
+static int get_str_sym_sect (char *elf_file, int offset, char **sret)
+{
+  asection *s;
+  int size_sret;
+  bfd *hbfd = bfd_openr (elf_file, NULL);
+  if (hbfd == NULL)
+    return 0;
+
+  size_sret = 200;
+  *sret = (char *) malloc (size_sret);
+  sprintf (*sret, "0x%08x ", offset);
+  
+  //check if the file is in format
+  if (!bfd_check_format (hbfd, bfd_object))
+  {
+    if (bfd_get_error () != bfd_error_file_ambiguously_recognized)
+    {
+      printf ("Incompatible file format %s\n", elf_file);
+      bfd_close (hbfd);
+      return 0;
+    }
+  }
+
+  for (s = hbfd->sections; s; s = s->next)
+  {
+    if (bfd_get_section_flags (hbfd, s) & SEC_ALLOC)
+    {
+      const char *sname = bfd_section_name (hbfd, s);
+      if (strlen (*sret) + strlen (sname) + 30 > size_sret)
+      {
+        size_sret += 100;
+        *sret = (char *) realloc (*sret, size_sret);
+      }
+      if (!strcmp (sname , ".text"))
+      {
+        sprintf (*sret, "0x%08x ",
+          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
+      }
+      else
+        sprintf (*sret + strlen (*sret), "-s %s 0x%08x ", sname,
+          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
+    }
+  }
+  
+  bfd_close (hbfd);
+
+  return 1;
+}
+
+
+
 static int str_debug_level_to_idx (const char *slevel)
 {
   int level;
@@ -716,21 +768,36 @@ attach_user_command (char *args, int from_tty)
 		{
 			struct stat s;
 			if (stat( file, &s) != 0)
-				printf ("Cannot load file %s: %s\n", file, strerror(errno));
+				printf ("Cannot find file %s: %s.\n", file, strerror(errno));
 			else
 				{
-					struct regcache *regc = get_thread_regcache (inferior_ptid);
-					CORE_ADDR pc = regcache_read_pc (regc);
-					sprintf (cmd, "add-symbol-file %s 0x%lx", file, pc);
-					TRY_CATCH (ex, RETURN_MASK_ALL)
+
 						{
-							execute_command (cmd, 0);
-						}
-					if (ex.reason < 0)
-						{
-							printf ("Error while trying to add symbol file %s (%s).\n",
-									file, ex.message ?: "");
-							goto end;
+							char *ssect;
+							//struct regcache *regc = get_thread_regcache (inferior_ptid);
+							//CORE_ADDR pc = regcache_read_pc (regc);
+							if (get_str_sym_sect (file, 0x6000000, &ssect))
+								{
+									printf ("Error while trying to add symbol file %s (%s).\n",
+											file, ex.message ?: "");
+									goto end;
+									cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
+									sprintf (cmd, "add-symbol-file %s %s", file, ssect);
+									free (ssect);
+									TRY_CATCH (ex, RETURN_MASK_ALL)
+										{
+											execute_command (cmd, 0);
+										}
+									if (ex.reason < 0)
+										{
+											printf ("Error while trying to add symbol file %s (%s).\n",
+													file, ex.message ?: "");
+											goto end;
+										}
+								}
+							else
+								printf ("Cannot load file %s.\n", file);
+
 						}
 				}
 		}
@@ -845,10 +912,9 @@ attach_mppa_command (char *args, int from_tty)
     struct osdata *osdata;
     struct osdata_item *last;
     struct osdata_item *item;
-    int ix_items;
+    int ix_items,cur_pid, bstopped, bcur_inf_stopped;
     struct inferior *cur_inf;
     ptid_t cur_ptid, stopped_ptid;
-    int cur_pid, bstopped, bcur_inf_stopped;
 
     dont_repeat ();
 
@@ -864,6 +930,8 @@ attach_mppa_command (char *args, int from_tty)
     remote_hw_breakpoint_limit = 0;
     remote_hw_watchpoint_limit = 1;
 
+	bstopped = 0;
+	bcur_inf_stopped = 0;
     osdata = get_osdata (NULL);
     
     cur_inf = current_inferior();
