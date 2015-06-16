@@ -798,7 +798,8 @@ case "${targ}" in
 
   k1-*-*)
     targ_defvec=k1_elf32_vec
-    targ_selvecs=k1_linux_elf32_vec
+    targ_selvecs="k1_linux_elf32_vec k1_elf32_vec"
+	targ64_selvecs=k1_elf64_vec
     ;;
 
   k1nsim-*-*)

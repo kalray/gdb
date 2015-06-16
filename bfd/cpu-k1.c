@@ -13,6 +13,7 @@
 static const bfd_arch_info_type *
 compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 {
+	long amach =  a->mach, bmach =  b->mach;
   /* If a & b are for different architecture we can do nothing.  */
   if (a->arch != b->arch)
       return NULL;
@@ -20,6 +21,13 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   /* If a & b are for the same machine then all is well.  */
   if (a->mach == b->mach)
     return a;
+
+  if ((amach == bfd_mach_k1bio && bmach == bfd_mach_k1bio_usr) ||
+      (amach == bfd_mach_k1bdp && bmach == bfd_mach_k1bdp_usr))
+	  return b;
+  if ((bmach == bfd_mach_k1bio && amach == bfd_mach_k1bio_usr) ||
+      (bmach == bfd_mach_k1bdp && amach == bfd_mach_k1bdp_usr))
+	  return a;
 
   /* Otherwise if either a or b is the 'default' machine
      then it can be polymorphed into the other.  */
@@ -43,6 +51,10 @@ processors[] =
   { bfd_mach_k1io, "k1io"  },
   { bfd_mach_k1bdp, "k1bdp"  },
   { bfd_mach_k1bio, "k1bio"  },
+  { bfd_mach_k1bdp_64, "k1bdp64" },
+  { bfd_mach_k1bio_64, "k1bio64" },
+  { bfd_mach_k1bdp_usr, "k1bdp_usr"},
+  { bfd_mach_k1bio_usr, "k1bio_usr"},
 };
 
 static bfd_boolean
@@ -71,17 +83,35 @@ scan (const struct bfd_arch_info *info, const char *string)
   return FALSE;
 }
 
-#define N(number, print, default, next)  \
-{  32, 32, 8, bfd_arch_k1, number, "k1", print, 4, default, \
-  compatible, scan, bfd_arch_default_fill, next }
+#define N(addr_bits, machine, print, default, next)\
+	{\
+	32,/* 32 bits in a word.  */\
+		addr_bits,/* bits in an address.  */\
+		8,/* 8 bits in a byte.  */\
+		bfd_arch_k1,\
+		machine,/* Machine number.  */\
+		"k1",  /* Architecture name.   */\
+		print,/* Printable name.  */\
+		4,/* Section align power.  */\
+default,/* Is this the default ?  */\
+		compatible,\
+		scan,\
+		bfd_arch_default_fill,\
+		next\
+		}
+
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (bfd_mach_k1dp,      "k1dp",   FALSE, & arch_info_struct[1]),
-  N (bfd_mach_k1io,      "k1io",   FALSE, & arch_info_struct[2]),
-  N (bfd_mach_k1bdp,     "k1bdp",  FALSE, & arch_info_struct[3]),
-  N (bfd_mach_k1bio,     "k1bio",  FALSE, NULL),
+	N (32, bfd_mach_k1dp,       "k1:k1dp",      FALSE, & arch_info_struct[1]),
+	N (32, bfd_mach_k1io,       "k1:k1io",      FALSE, & arch_info_struct[2]),
+	N (32, bfd_mach_k1bdp,      "k1:k1bdp",     FALSE, & arch_info_struct[3]),
+	N (32, bfd_mach_k1bio,      "k1:k1bio",     FALSE, & arch_info_struct[4]),
+	N (64, bfd_mach_k1bdp_64,   "k1:k1bdp:64",  FALSE, & arch_info_struct[5]),
+	N (64, bfd_mach_k1bio_64,   "k1:k1bio:64",  FALSE, & arch_info_struct[6]),
+	N (32, bfd_mach_k1bdp_usr,  "k1:k1bdp_usr", FALSE, & arch_info_struct[7]),
+	N (32, bfd_mach_k1bio_usr,  "k1:k1bio_usr", FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =
-  N (bfd_mach_k1dp, "k1", TRUE, & arch_info_struct[0]);
+	N (32, bfd_mach_k1dp, "k1", TRUE, & arch_info_struct[0]);

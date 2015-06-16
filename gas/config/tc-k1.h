@@ -30,7 +30,11 @@
 
 #define TC_K1
 #define TARGET_ARCH bfd_arch_k1
-#define TARGET_FORMAT "elf32-k1"
+//#define TARGET_FORMAT "elf64-k1"
+
+
+extern const char * k1_target_format (void);
+#define TARGET_FORMAT k1_target_format ()
 
 /* Uncomment this if the compiler prepends an _ to global names */
 /*
@@ -133,8 +137,7 @@ extern int emit_all_relocs;
        && S_IS_DEFINED ((FIX)->fx_addsy)			\
        && ! S_IS_COMMON ((FIX)->fx_addsy)))
 
-#define tc_fix_adjustable(fixP)                         \
-                k1_fix_adjustable (fixP)
+#define tc_fix_adjustable(fixP) k1_fix_adjustable (fixP)
 extern int k1_fix_adjustable (struct fix *);
 
 /* This arranges for gas/write.c to not apply a relocation if

@@ -108,6 +108,8 @@ struct op_list {
 static enum K1_ARCH {
     K1_K1DP,
     K1_K1IO,
+	K1_K1BDP,
+	K1_K1BIO,
     K1_NUM_ARCHES
 } k1_current_arch = K1_NUM_ARCHES;
 
@@ -145,6 +147,10 @@ k1_arch (void)
             k1_current_arch = K1_K1DP; break;
         case ELF_K1_CORE_IO:
             k1_current_arch = K1_K1IO; break;
+        case ELF_K1_CORE_B_DP:
+            k1_current_arch = K1_K1BDP; break;
+        case ELF_K1_CORE_B_IO:
+            k1_current_arch = K1_K1BIO; break;
         default:
             error (_("The K1 binary is compiled for an unknown core."));
         }  
@@ -153,6 +159,11 @@ k1_arch (void)
             k1_current_arch = K1_K1DP;
         else if (tdesc_find_feature (desc, "eu.kalray.core.k1io"))
             k1_current_arch = K1_K1IO;
+        if (tdesc_find_feature (desc, "eu.kalray.core.k1bdp"))
+            k1_current_arch = K1_K1BDP;
+        else if (tdesc_find_feature (desc, "eu.kalray.core.k1bio"))
+            k1_current_arch = K1_K1BIO;
+
         else
             error ("unable to find the current k1 architecture.");
     }
@@ -250,6 +261,16 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 	{ sp_adjust_insns[K1_K1IO], 0 /* Dest register */},
 	{ sp_store_insns[K1_K1IO], 1 /* Base register */},
 	{ prologue_helper_insns[K1_K1IO], -1 /* unused */},
+        },
+        [K1_K1BIO] = {
+			{ sp_adjust_insns[K1_K1BIO], 0 /* Dest register */},
+			{ sp_store_insns[K1_K1BIO], 1 /* Base register */},
+			{ prologue_helper_insns[K1_K1BIO], -1 /* unused */},
+        },
+        [K1_K1BDP] = {
+			{ sp_adjust_insns[K1_K1BDP], 0 /* Dest register */},
+			{ sp_store_insns[K1_K1BDP], 1 /* Base register */},
+			{ prologue_helper_insns[K1_K1BDP], -1 /* unused */},
         },
     };
 
@@ -1193,7 +1214,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch_tdep *tdep;
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
-  int i, num_pseudos;
+  int i, num_pseudos,bis_k1b_user;
+  unsigned long mach;
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
   int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
 
@@ -1219,6 +1241,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   pc_name = k1_pc_name (gdbarch);
   sp_name = k1_sp_name (gdbarch);
+  mach = gdbarch_bfd_arch_info (gdbarch)->mach;
+  bis_k1b_user = (mach == bfd_mach_k1bdp_usr || mach == bfd_mach_k1bio_usr);
 
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
@@ -1275,10 +1299,13 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  error ("There's no '%s' register!", k1_local_name);
       if (has_ra < 0)
 	  error ("There's no '%s' register!", k1_ra_name);
-      if (has_spc < 0)
-	  error ("There's no '%s' register!", k1_spc_name);
-      if (has_ev < 0)
-	  error ("There's no '%s' register!", k1_ev_name);
+	  if (!bis_k1b_user)
+	  {
+		  if (has_spc < 0)
+			  error ("There's no '%s' register!", k1_spc_name);
+		  if (has_ev < 0)
+			  error ("There's no '%s' register!", k1_ev_name);
+	  }
 
       tdep->ev_regnum = has_ev;
       tdep->le_regnum = has_le;
@@ -1359,9 +1386,11 @@ static void k1_look_for_insns (void)
         k1opc_t *op;
         
         switch (i) {
-        case K1_K1DP: op = k1dp_k1optab; break;
-        case K1_K1IO: op = k1io_k1optab; break;
-        default: internal_error (__FILE__, __LINE__, "Unknozn arch id.");
+        case K1_K1DP: op = k1a_k1optab; break;
+        case K1_K1IO: op = k1a_k1optab; break;
+        case K1_K1BDP: op = k1b_k1optab; break;
+        case K1_K1BIO: op = k1b_k1optab; break;
+        default: internal_error (__FILE__, __LINE__, "Unknown arch id.");
         }
         
         while (op->as_op[0]) {
