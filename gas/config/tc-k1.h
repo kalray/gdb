@@ -30,7 +30,7 @@
 
 #define TC_K1
 #define TARGET_ARCH bfd_arch_k1
-//#define TARGET_FORMAT "elf64-k1"
+// #define TARGET_FORMAT "elf64-k1"
 
 
 extern const char * k1_target_format (void);
