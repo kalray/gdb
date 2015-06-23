@@ -2309,37 +2309,12 @@ k1fdpic_finish_dynamic_symbol
 
 
 bfd_boolean
-elf_k1_always_size_sections(bfd *output_bfd, struct bfd_link_info *info){
-  if (!info->relocatable)
-  {
-    struct elf_link_hash_entry *h;
-
-    /* Force a PT_GNU_STACK segment to be created.  */
-    if (! elf_stack_flags(output_bfd))
-      elf_stack_flags(output_bfd) = PF_R | PF_W | PF_X;
-
-    /* Define __stacksize if it's not defined yet.
-     * */
-    h = elf_link_hash_lookup (elf_hash_table (info), "__stacksize",
-        FALSE, FALSE, FALSE);
-    if (! h || h->root.type != bfd_link_hash_defined
-        || h->type != STT_OBJECT
-        || !h->def_regular)
-    {
-      struct bfd_link_hash_entry *bh = NULL;
-
-      if (!(_bfd_generic_link_add_one_symbol
-            (info, output_bfd, "__stacksize",
-             BSF_GLOBAL, bfd_abs_section_ptr, DEFAULT_STACK_SIZE,
-             (const char *) NULL, FALSE,
-             get_elf_backend_data (output_bfd)->collect, &bh)))
-        return FALSE;
-
-      h = (struct elf_link_hash_entry *) bh;
-      h->def_regular = 1;
-      h->type = STT_OBJECT;
-    }
-  }
+elf_k1_always_size_sections(bfd *output_bfd, struct bfd_link_info *info)
+{
+   if (!info->relocatable
+      && !bfd_elf_stack_segment_size (output_bfd, info,
+        "__stacksize", DEFAULT_STACK_SIZE))
+    return FALSE;
 
   return TRUE;
 }
