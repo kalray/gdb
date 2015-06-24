@@ -420,7 +420,7 @@ k1_inferior_created (struct target_ops *target, int from_tty)
     {
       //set global debug level if not set before attach and if we boot with gdb
       struct regcache *rc = get_current_regcache ();
-      if (rc && regcache_read_pc (rc) != 0)
+      if (rc && regcache_read_pc (rc) == 0)
       {
         struct inferior *inf = current_inferior ();
         int os_debug_level = get_os_supported_debug_levels (inf);
