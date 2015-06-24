@@ -56,12 +56,14 @@ mds_path       = File.join(workspace,options["mds"])
 
 host       = options["host"]
 
-toolroot   = options["toolroot"]
-k1debug_prefix    = options["k1debug_prefix"].empty? ? toolroot : options["k1debug_prefix"]
+toolroot          = options["toolroot"]
+k1debug_prefix    = options.fetch("k1debug_prefix", toolroot)
 
-build_path         = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
-prefix             = options["prefix"].empty? ? "#{build_path}/release" : options["prefix"]
-pkg_prefix         = options["pkg_prefix"].empty? ? prefix : options["pkg_prefix"]
+build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
+prefix            = options.fetch("prefix", "#{build_path}/release")
+pkg_prefix        = options.fetch("pkg_prefix",prefix)
+pkg_prefix_name   = options.fetch("pi-prefix-name","#{arch}-")
+
 gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
 k1debug_prefix     = k1debug_prefix
 
@@ -284,7 +286,7 @@ b.target("package") do
   # GDB package
   cd gdb_install_prefix
 
-  gdb_name = "#{arch}-gdb"
+  gdb_name = "#{pkg_prefix_name}gdb"
   gdb_tar  = "#{gdb_name}.tar"
   b.run("tar cf #{gdb_tar} ./*")
   tar_package = File.expand_path(gdb_tar)
@@ -299,8 +301,7 @@ b.target("package") do
   (version,buildID) = tools_version.split("-")
   release_info = b.release_info(version,buildID)
   pinfo = b.package_info(gdb_name, release_info,
-                         package_description,
-                         depends)
+                         package_description, depends)
 
   b.create_package(tar_package, pinfo)
   b.run("rm #{tar_package}")

@@ -77,7 +77,6 @@ struct k1_frame_cache
     CORE_ADDR saved_sp;
 };
 
-static __attribute__ ((unused)) char *bundling_names (Bundling bundling);
 extern const char *k1_pseudo_register_name (struct gdbarch *gdbarch,
 					    int regnr);
 extern struct type *k1_pseudo_register_type (struct gdbarch *gdbarch, 
@@ -108,8 +107,8 @@ struct op_list {
 static enum K1_ARCH {
     K1_K1DP,
     K1_K1IO,
-	K1_K1BDP,
-	K1_K1BIO,
+    K1_K1BDP,
+    K1_K1BIO,
     K1_NUM_ARCHES
 } k1_current_arch = K1_NUM_ARCHES;
 
@@ -159,7 +158,7 @@ k1_arch (void)
             k1_current_arch = K1_K1DP;
         else if (tdesc_find_feature (desc, "eu.kalray.core.k1io"))
             k1_current_arch = K1_K1IO;
-        if (tdesc_find_feature (desc, "eu.kalray.core.k1bdp"))
+        else if (tdesc_find_feature (desc, "eu.kalray.core.k1bdp"))
             k1_current_arch = K1_K1BDP;
         else if (tdesc_find_feature (desc, "eu.kalray.core.k1bio"))
             k1_current_arch = K1_K1BIO;
@@ -253,24 +252,24 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
     typedef struct op_list_desc prologue_ops[NUM_INSN_LISTS];
     prologue_ops prologue_insns_full[] = { 
         [K1_K1DP] = {
-        { sp_adjust_insns[K1_K1DP], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1DP], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1DP], -1 /* unused */},
+	  { sp_adjust_insns[K1_K1DP], 0 /* Dest register */},
+	  { sp_store_insns[K1_K1DP], 1 /* Base register */},
+	  { prologue_helper_insns[K1_K1DP], -1 /* unused */},
         },
         [K1_K1IO] = {
-	{ sp_adjust_insns[K1_K1IO], 0 /* Dest register */},
-	{ sp_store_insns[K1_K1IO], 1 /* Base register */},
-	{ prologue_helper_insns[K1_K1IO], -1 /* unused */},
+	  { sp_adjust_insns[K1_K1IO], 0 /* Dest register */},
+	  { sp_store_insns[K1_K1IO], 1 /* Base register */},
+	  { prologue_helper_insns[K1_K1IO], -1 /* unused */},
         },
         [K1_K1BIO] = {
-			{ sp_adjust_insns[K1_K1BIO], 0 /* Dest register */},
-			{ sp_store_insns[K1_K1BIO], 1 /* Base register */},
-			{ prologue_helper_insns[K1_K1BIO], -1 /* unused */},
+	  { sp_adjust_insns[K1_K1BIO], 0 /* Dest register */},
+	  { sp_store_insns[K1_K1BIO], 1 /* Base register */},
+	  { prologue_helper_insns[K1_K1BIO], -1 /* unused */},
         },
         [K1_K1BDP] = {
-			{ sp_adjust_insns[K1_K1BDP], 0 /* Dest register */},
-			{ sp_store_insns[K1_K1BDP], 1 /* Base register */},
-			{ prologue_helper_insns[K1_K1BDP], -1 /* unused */},
+	  { sp_adjust_insns[K1_K1BDP], 0 /* Dest register */},
+	  { sp_store_insns[K1_K1BDP], 1 /* Base register */},
+	  { prologue_helper_insns[K1_K1BDP], -1 /* unused */},
         },
     };
 
@@ -386,7 +385,7 @@ struct displaced_step_closure {
     /* Take into account that ALUs might have extensions. */
     uint32_t insn_words[8];
     int num_insn_words;
-    
+
     unsigned branchy      : 1; 
     unsigned scall_jump   : 1;
     unsigned rewrite_RA   : 1;
@@ -808,7 +807,7 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch,
 
     write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
     
-  inform_dsu_stepi_bkp ();
+    inform_dsu_stepi_bkp ();
 
     return dsc;
 }
@@ -850,21 +849,21 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
             (pc == to || (dsc->scall_jump && pc == dsc->dest))) {
             /* The branchy instruction jumped to its destination. */
             pc = dsc->dest;
-            
+
             /* Rewrite RA only if the brach executed correctly. */
             if (dsc->rewrite_RA) {
-                regcache_raw_write_unsigned (regs, tdep->ra_regnum, from + dsc->num_insn_words * 4);
-                if (debug_displaced) printf_filtered ("displaced: rewrite RA\n");
+	        regcache_raw_write_unsigned (regs, tdep->ra_regnum, from + dsc->num_insn_words * 4);
+	        if (debug_displaced) printf_filtered ("displaced: rewrite RA\n");
             }
     
             if (dsc->scall_jump) {
-                  regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
+	      regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
               if (debug_displaced) printf_filtered ("displaced: rewrite SPC\n");
             }
         } else {
             /* Uh oh... seems we've taken some exceptional condition. 
                This means interrupt or H/W trap. */
-              regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
+            regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
 	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%lx\n", 
 						  (unsigned long)spc);
               gdb_assert (spc == to);
@@ -1123,7 +1122,7 @@ k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
       && strncmp (gdbarch_register_name (gdbarch, regnum), "oce", 3) == 0)
     return 0;
 
-  return default_register_reggroup_p (gdbarch, regnum, group);   
+  return default_register_reggroup_p (gdbarch, regnum, group);
 }
 
 
@@ -1214,7 +1213,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch_tdep *tdep;
   const struct target_desc *tdesc;
   struct tdesc_arch_data *tdesc_data;
-  int i, num_pseudos,bis_k1b_user;
+  int i, num_pseudos, bis_k1b_user;
   unsigned long mach;
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
   int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
@@ -1283,44 +1282,44 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ev_name) == 0)
 	      has_ev = i;
       
-      if (has_pc < 0)
-	  error ("There's no '%s' register!", pc_name);
-      if (has_sp < 0)
-	  error ("There's no '%s' register!", sp_name);
-      if (has_le < 0)
-	  error ("There's no '%s' register!", k1_le_name);
-      if (has_ls < 0)
-	  error ("There's no '%s' register!", k1_ls_name);
-      if (has_lc < 0)
-	  error ("There's no '%s' register!", k1_lc_name);
-      if (has_ps < 0)
-	  error ("There's no '%s' register!", k1_ps_name);
-      if (has_local < 0)
-	  error ("There's no '%s' register!", k1_local_name);
-      if (has_ra < 0)
-	  error ("There's no '%s' register!", k1_ra_name);
+          if (has_pc < 0)
+	      error ("There's no '%s' register!", pc_name);
+	  if (has_sp < 0)
+	      error ("There's no '%s' register!", sp_name);
+	  if (has_le < 0)
+	      error ("There's no '%s' register!", k1_le_name);
+	  if (has_ls < 0)
+	      error ("There's no '%s' register!", k1_ls_name);
+	  if (has_lc < 0)
+	      error ("There's no '%s' register!", k1_lc_name);
+	  if (has_ps < 0)
+	      error ("There's no '%s' register!", k1_ps_name);
+	  if (has_local < 0)
+	      error ("There's no '%s' register!", k1_local_name);
+	  if (has_ra < 0)
+	      error ("There's no '%s' register!", k1_ra_name);
 	  if (!bis_k1b_user)
-	  {
-		  if (has_spc < 0)
-			  error ("There's no '%s' register!", k1_spc_name);
-		  if (has_ev < 0)
-			  error ("There's no '%s' register!", k1_ev_name);
-	  }
+	    {
+	      if (has_spc < 0)
+		  error ("There's no '%s' register!", k1_spc_name);
+	      if (has_ev < 0)
+		error ("There's no '%s' register!", k1_ev_name);
+	    }
 
-      tdep->ev_regnum = has_ev;
-      tdep->le_regnum = has_le;
-      tdep->ls_regnum = has_ls;
-      tdep->lc_regnum = has_lc;
-      tdep->ps_regnum = has_ps;
-      tdep->ra_regnum = has_ra;
-      tdep->spc_regnum = has_spc;
-      tdep->local_regnum = has_local;
-      set_gdbarch_pc_regnum (gdbarch, has_pc);
-      set_gdbarch_sp_regnum (gdbarch, has_sp);
+	  tdep->ev_regnum = has_ev;
+	  tdep->le_regnum = has_le;
+	  tdep->ls_regnum = has_ls;
+	  tdep->lc_regnum = has_lc;
+	  tdep->ps_regnum = has_ps;
+	  tdep->ra_regnum = has_ra;
+	  tdep->spc_regnum = has_spc;
+	  tdep->local_regnum = has_local;
+	  set_gdbarch_pc_regnum (gdbarch, has_pc);
+	  set_gdbarch_sp_regnum (gdbarch, has_sp);
   } else {
-      set_gdbarch_num_regs (gdbarch, 1);
-      set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
-      set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
+         set_gdbarch_num_regs (gdbarch, 1);
+         set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
+         set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
   }
 
   set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
