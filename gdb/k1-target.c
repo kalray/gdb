@@ -348,12 +348,19 @@ Use the \"file\" or \"exec-file\" command."));
 
     if (!no_mcore)
 	switch (core) {
+
+	case ELF_K1_CORE_B_DP:
+	    stub_args[argidx++] = "--mboard=mppa64";
 	case ELF_K1_CORE_DP:          
 	    stub_args[argidx++] = "--mcluster=node";
 	    break;
+
+	case ELF_K1_CORE_B_IO:
+	    stub_args[argidx++] = "--mboard=mppa64";
 	case ELF_K1_CORE_IO:
 	    stub_args[argidx++] = "--mcluster=ioddr";
 	    break;
+
 	default:
 	    error (_("The K1 binary is compiled for an unknown core."));
 	}
