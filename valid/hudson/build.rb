@@ -11,12 +11,8 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "build_type"    => ["Debug", "Can be Release or Debug." ],
-                        "toolroot"      => "",
-                        "k1debug_prefix"       => {"type" => "string", "default" => "", "help" => "Path to installed prefix where ISS is installed." },
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
-                        "prefix"        => ["devimage", "Install prefix"],
-                        "pkg_prefix"    => {"type" => "string", "default" => "", "help" => "Where to install software to build packages." },
                         "host"          => ["x86", "Host for the build"],
                         "sysroot"       => ["sysroot", "Sysroot directory"],
                         "execution_platform" => {"type" => "keywords",
@@ -40,7 +36,7 @@ install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
 copyright_check = Target.new("copyright_check", repo, [], [])
 
-package = Target.new("package", repo, [], [])
+package = Target.new("#{variant}_package", repo, [install], [])
 
 install.write_prefix()
 
@@ -56,18 +52,15 @@ mds_path       = File.join(workspace,options["mds"])
 
 host       = options["host"]
 
-toolroot          = options["toolroot"]
-k1debug_prefix    = options.fetch("k1debug_prefix", toolroot)
-
 build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
 prefix            = options.fetch("prefix", "#{build_path}/release")
-pkg_prefix        = options.fetch("pkg_prefix",prefix)
 pkg_prefix_name   = options.fetch("pi-prefix-name","#{arch}-")
 
-gdb_install_prefix = File.join(pkg_prefix,"gdb","devimage")
-k1debug_prefix     = k1debug_prefix
+gdb_install_prefix = File.join(prefix,"gdb","devimage")
+gbu_install_prefix = File.join(prefix,"gbu","devimage","gbu-#{variant}")
+toolroot           = options.fetch("toolroot","none")
 
-b.default_targets = [install]
+b.default_targets = [package]
 
 cores      = options["cores"]
 
@@ -77,6 +70,9 @@ family_prefix = "#{processor_path}/#{arch}-family"
 skip_build = false
 skip_valid = false
 skip_install = false
+
+#sysroot_option = "--with-sysroot=#{toolroot}"
+sysroot_option = ""
 
 case arch
 when "k1"
@@ -157,16 +153,15 @@ b.target("#{variant}_build") do
     if (host == "k1-linux") then
       build_host = "--host=k1-linux"
     end
-    install_prefix = prefix
   
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin ../configure --enable-64-bit-bfd --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
+    b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin ../configure --enable-64-bit-bfd --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{gbu_install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
         :skip=>skip_build)
 
     additional_flags = "CFLAGS=-g"
 
-    b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\" all",
+    b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\" all",
         :skip=>skip_build)
 
   end
@@ -188,18 +183,21 @@ b.target("#{variant}_install") do
       else
         b.run(:cmd => "make install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
       end
-      # Copy to k1debug.
-      b.run("mkdir -p #{k1debug_prefix}") unless File.exist?(k1debug_prefix)
-      b.run("rsync -av #{gdb_install_prefix}/* #{k1debug_prefix}")
+
+      # Copy to toolroot.
+      b.rsync(gdb_install_prefix,toolroot)
     end
   else
     cd build_path
     if ("#{build_type}" == "Release") then
-      b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
     else
-      b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
     end
-    b.run(:cmd=>"ls #{prefix}/bin/#{arch}-*", :skip=>skip_install)
+    b.run(:cmd=>"ls #{gbu_install_prefix}/bin/#{arch}-*", :skip=>skip_install)
+
+    # Copy to toolroot.
+    b.rsync(gbu_install_prefix,toolroot)
   end
 end
 
@@ -219,7 +217,7 @@ b.target("#{variant}_post_build_valid") do
   if (variant == "gdb")
     if( arch == "k1" )
       Dir.chdir build_path + "/gdb/testsuite"
-      b.valid(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
+      b.valid(:cmd => "LANG=C PATH=#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
     end
   end
@@ -270,7 +268,7 @@ b.target("gdb_long_valid") do
     b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
     b.run("make")
     cd "gdb/testsuite"
-    b.run(:cmd => "LANG=C PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
+    b.run(:cmd => "LANG=C PATH=#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
     b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
   end
 end
@@ -280,31 +278,56 @@ b.target("copyright_check") do
     #do nothing here
 end
 
-b.target("package") do
+b.target("#{variant}_package") do
   b.logtitle = "Report for GDB packaging, arch = #{arch}"
 
-  # GDB package
-  cd gdb_install_prefix
-
-  gdb_name = "#{pkg_prefix_name}gdb"
-  gdb_tar  = "#{gdb_name}.tar"
-  b.run("tar cf #{gdb_tar} ./*")
-  tar_package = File.expand_path(gdb_tar)
-
-  depends = []
-
-  package_description = "#{arch.upcase} GDB package.\n"
-  package_description += "This package provides GNU Debugger for MPPA."
-
-  tools_version = options["version"]
-
-  (version,buildID) = tools_version.split("-")
-  release_info = b.release_info(version,buildID)
-  pinfo = b.package_info(gdb_name, release_info,
-                         package_description, depends)
-
-  b.create_package(tar_package, pinfo)
-  b.run("rm #{tar_package}")
+  if( variant == "gdb") then
+    # GDB package
+    cd gdb_install_prefix
+    
+    gdb_name = "#{pkg_prefix_name}gdb"
+    gdb_tar  = "#{gdb_name}.tar"
+    b.run("tar cf #{gdb_tar} ./*")
+    tar_package = File.expand_path(gdb_tar)
+    
+    depends = []
+    
+    package_description = "#{arch.upcase} GDB package.\n"
+    package_description += "This package provides GNU Debugger for MPPA."
+    
+    tools_version = options["version"]
+    
+    (version,buildID) = tools_version.split("-")
+    release_info = b.release_info(version,buildID)
+    pinfo = b.package_info(gdb_name, release_info,
+                           package_description, depends)
+    
+    b.create_package(tar_package, pinfo)
+    b.run("rm #{tar_package}")
+  else
+    # GBU package
+    cd gbu_install_prefix
+    
+    gbu_name = "#{pkg_prefix_name}gbu-#{variant}"
+    gbu_tar  = "#{gbu_name}.tar"
+    b.run("tar cf #{gbu_tar} ./*")
+    tar_package = File.expand_path(gbu_tar)
+    
+    depends = []
+    
+    package_description = "#{arch.upcase} GBU #{variant} package.\n"
+    package_description += "This package provides Gnu Binary Utilities for MPPA for #{variant}."
+    
+    tools_version = options["version"]
+    
+    (version,buildID) = tools_version.split("-")
+    release_info = b.release_info(version,buildID)
+    pinfo = b.package_info(gbu_name, release_info,
+                           package_description, depends)
+    
+    b.create_package(tar_package, pinfo)
+    b.run("rm #{tar_package}")
+  end
 end
 
 b.launch
