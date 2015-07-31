@@ -292,9 +292,10 @@ b.target("gdb_long_valid") do
 
       extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board}'"
 
-      cd "gdb/testsuite"
+      Dir.chdir build_path + "/gdb/testsuite"
       b.valid(:cmd => "LANG=C " +
                     "PATH=#{k1debug_prefix}/bin:#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH " +
+                    "make check " +
                     "DEJAGNU=../../../gdb/testsuite/site.exp "+
                     "RUNTEST=runtest " +
                     "RUNTESTFLAGS=\"#{extra_flags} --tool_exec=k1-gdb --target_board=#{execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\" ; " +
