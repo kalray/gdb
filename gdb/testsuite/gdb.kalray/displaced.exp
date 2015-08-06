@@ -4,21 +4,13 @@ if $tracelevel then {
 }
 
 
-set link-flags "-e _start"
-set debug-flags "" 
-#"-gdwarf2"
-set asm-flags ""
+set CFLAGS_FOR_TARGET "$CFLAGS_FOR_TARGET -nostdlib"
 
 set testfile "displaced"
 set binfile ${objdir}/${subdir}/${testfile}
-set srcfile1 ${testfile}.s
+set srcfile1 ${testfile}.S
 
-if {[target_assemble ${srcdir}/${subdir}/${srcfile1} ${objdir}/${subdir}/${testfile}.o "${asm-flags} ${debug-flags}"] != ""} then {
-     untested asm-source.exp
-     return -1
-}
-
-if {[target_link ${objdir}/${subdir}/${testfile}.o "${binfile}" ${link-flags}] != "" } then {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}" executable {debug}] != "" } {
      untested asm-source.exp
      return -1
 }
