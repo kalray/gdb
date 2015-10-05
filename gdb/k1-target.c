@@ -306,7 +306,8 @@ static void k1_target_create_inferior (struct target_ops *ops,
     char **arg;
     int nb_args = 0, nb_da_args = 0;
     int pipefds[2];
-    int no_mcore = 0;
+    int no_march = 0;
+    int no_mcluster = 0;
     int port;
     int core;
     int argidx = 0;
@@ -338,25 +339,39 @@ Use the \"file\" or \"exec-file\" command."));
     if (nb_da_args && strlen (da_options)) {
 	arg = da_args;
 	while (*arg) {
-	    if (strncmp (*arg, "--mmppa=", 8) == 0
-		|| strncmp (*arg, "--mcluster=", 11) == 0)
-		no_mcore = 1;
+	    if (strncmp (*arg, "--mcluster=", 11) == 0)
+		no_mcluster = 1;
+	    if (strncmp (*arg, "--march=", 8) == 0)
+		no_march = 1;
+
 
 	    stub_args[argidx++] = *arg++;
 	}
     }
 
-    if (!no_mcore)
-	switch (core) {
+    if(!no_march)
+      switch(core) {
+	case ELF_K1_CORE_DP:          
+	case ELF_K1_CORE_IO:
+	    stub_args[argidx++] = "--march=andey";
+	    break;
 
 	case ELF_K1_CORE_B_DP:
-	    stub_args[argidx++] = "--mboard=mppa64";
+	case ELF_K1_CORE_B_IO:
+	    stub_args[argidx++] = "--march=bostan";
+	    break;
+	default:
+	    error (_("The K1 binary is compiled for an unknown core."));
+      }
+
+    if (!no_mcluster)
+	switch (core) {
+	case ELF_K1_CORE_B_DP:
 	case ELF_K1_CORE_DP:          
 	    stub_args[argidx++] = "--mcluster=node";
 	    break;
 
 	case ELF_K1_CORE_B_IO:
-	    stub_args[argidx++] = "--mboard=mppa64";
 	case ELF_K1_CORE_IO:
 	    stub_args[argidx++] = "--mcluster=ioddr";
 	    break;
