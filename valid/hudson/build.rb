@@ -155,7 +155,11 @@ b.target("#{variant}_build") do
     b.run(:cmd => "make clean",
         :skip=>skip_build)
 
-    additional_flags = "CFLAGS=-g"
+    if ("#{build_type}" == "Release") then
+      additional_flags = "CFLAGS=-O2"
+    else
+      additional_flags = "CFLAGS=-g"
+    end
 
     b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\" all",
         :skip=>skip_build)
@@ -190,7 +194,6 @@ b.target("#{variant}_install") do
     else
       b.run(:cmd => "PATH=\$PATH:#{prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
     end
-    b.run(:cmd=>"ls #{prefix}/bin/#{arch}-*", :skip=>skip_install)
   end
 end
 
