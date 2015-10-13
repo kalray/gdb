@@ -153,16 +153,18 @@ k1_arch (void)
         default:
             error (_("The K1 binary is compiled for an unknown core."));
         }  
-    } else if (desc) {
-        if (tdesc_find_feature (desc, "eu.kalray.core.k1dp"))
+    }
+    else if (desc && tdesc_architecture (desc))
+    {
+        const char *name = tdesc_architecture (desc)->printable_name;
+        if (!strcmp (name, "k1:k1dp") || !strcmp (name, "k1"))
             k1_current_arch = K1_K1DP;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1io"))
+        else if (!strcmp (name, "k1:k1io"))
             k1_current_arch = K1_K1IO;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1bdp"))
+        else if (!strcmp (name, "k1:k1bdp"))
             k1_current_arch = K1_K1BDP;
-        else if (tdesc_find_feature (desc, "eu.kalray.core.k1bio"))
+        else if (!strcmp (name, "k1:k1bio"))
             k1_current_arch = K1_K1BIO;
-
         else
             error ("unable to find the current k1 architecture.");
     }
@@ -419,7 +421,7 @@ k1_inferior_created (struct target_ops *target, int from_tty)
     {
       //set global debug level if not set before attach and if we boot with gdb
       struct regcache *rc = get_current_regcache ();
-      if (rc && regcache_read_pc (rc) != 0)
+      if (rc && regcache_read_pc (rc) == 0)
       {
         struct inferior *inf = current_inferior ();
         int os_debug_level = get_os_supported_debug_levels (inf);

@@ -7,10 +7,17 @@ _start:
   ;;
 	set $ev = $r0
 	;; 
+  #if defined(__k1a__) /* Enable H/W loops and traps */
   make $r1 = 0x2c0000
   ;;
-	hfxb $ps, $r1 /* Enable H/W loops and traps */
+	hfxb $ps, $r1
 	;;
+  #else /* __k1b__ */
+  make $r0 = 0x0020000C /* Enable H/W loops, clear PS.ET and PS.HTD */
+  ;;
+  hfxb $ps, $r0
+  ;;
+  #endif
 
 test_displaced1:
 	make $r0 = 5

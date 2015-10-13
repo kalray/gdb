@@ -7,7 +7,14 @@ include Metabuild
 
 options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "clone"         => ".",
-                        "cores"         => ["none", "List of family cores."],
+
+                        "board"      => {
+                          "type" => "keywords",
+                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2],
+                          "default" => "developer",
+                          "help" => "Target board (changing things at compilation)."
+                        },
+
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "build_type"    => ["Debug", "Can be Release or Debug." ],
@@ -15,8 +22,13 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
                         "host"          => ["x86", "Host for the build"],
                         "sysroot"       => ["sysroot", "Sysroot directory"],
-                        "execution_platform" => {"type" => "keywords",
- "keywords" => [:hw, :sim], "default" => "sim", "help" => "Execution platform: can be hardware (jtag) or simulation (k1-mppa, k1-cluster)." },
+                        "march_valid"   => ["k1a:k1dp,k1io::k1b:k1bio,k1bdp", "List of mppa_architectures to validate on execution_platform."],
+                        "execution_platform" => {
+                          "type" => "keywords",
+                          "keywords" => [:hw, :sim],
+                          "default" => "sim",
+                          "help" => "Execution platform: can be hardware (jtag) or simulation (k1-mppa, k1-cluster)."
+                        },
                       })
 
 workspace = options["workspace"]
@@ -31,7 +43,7 @@ repo = Git.new(gdb_clone,workspace)
 clean = CleanTarget.new("clean", repo, [])
 build = ParallelTarget.new("#{variant}_build", repo, [], [])
 build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [])
-install = Target.new("#{variant}_install", repo, [build_valid], [])
+install = Target.new("#{variant}_install", repo, [build], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build], [])
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
 copyright_check = Target.new("copyright_check", repo, [], [])
@@ -40,6 +52,10 @@ package = Target.new("#{variant}_package", repo, [install], [])
 
 install.write_prefix()
 
+march_valid_hash = Hash[*options["march_valid"].split(/::/).map{|tmp_arch| tmp_arch.split(/:/)}.flatten]
+
+march_valid_list    = march_valid_hash.keys
+board   = options['board'].to_s
 
 b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, package, copyright_check])
 
@@ -83,49 +99,24 @@ when "k1"
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
     sysroot_option = "--with-sysroot="+options["sysroot"]
-    if(cores == "none") then
-      cores = "k1dp,k1io.k1bdp,k1bio"
-    end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "elf" then
     build_target = "k1-#{variant}"
-    if(cores == "none") then
-      cores = "k1dp,k1io,k1bdp,k1bio"
-    end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "rtems" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    if(cores == "none") then
-      cores = "k1dp,k1io,k1bdp,k1bio"
-    end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "nodeos" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    if(cores == "none") then
-      cores = "k1dp,k1io,k1bdp,k1bio"
-    end
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   else
     raise "Unknown variant #{variant}"
   end
-when "k1nsim"
-  build_target = "k1nsim-#{variant}"
-  program_prefix += "#{variant}-" if variant != "elf"
-  if(variant == "linux") then
-    sysroot_option = "--with-sysroot="+options["sysroot"]
-  end
-  if(cores == "none") then
-    cores = "k1dp,k1io,k1bdp,k1bio"
-  end
-  family_prefix = "#{processor_path}/#{arch}-family"
-  mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
 else 
   raise "Unknown Target #{arch}"
 end
-
-core_list  = cores.split(/,/)
 
 build.add_result build_path
 
@@ -159,7 +150,11 @@ b.target("#{variant}_build") do
     b.run(:cmd => "make clean",
         :skip=>skip_build)
 
-    additional_flags = "CFLAGS=-g"
+    if ("#{build_type}" == "Release") then
+      additional_flags = "CFLAGS=-O2"
+    else
+      additional_flags = "CFLAGS=-g"
+    end
 
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\" all",
         :skip=>skip_build)
@@ -194,7 +189,6 @@ b.target("#{variant}_install") do
     else
       b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
     end
-    b.run(:cmd=>"ls #{gbu_install_prefix}/bin/#{arch}-*", :skip=>skip_install)
 
     # Copy to toolroot.
     b.rsync(gbu_install_prefix,toolroot)
@@ -204,21 +198,34 @@ end
 
 execution_platform = options['execution_platform'].to_s
 
-$execution_board = "k1-iss"
-$execution_ref = "gdb.sum.ref"
-
-if ( execution_platform == "hw" )
-  $execution_board = "k1-jtag-runner" 
-  $execution_ref = "gdb.sum.hw.ref"
-end
-
 b.target("#{variant}_post_build_valid") do
   b.logtitle = "Report for GDB  #{variant}_post_build_valid, arch = #{arch}"
-  if (variant == "gdb")
-    if( arch == "k1" )
-      Dir.chdir build_path + "/gdb/testsuite"
-      b.valid(:cmd => "LANG=C PATH=#{toolroot}/bin:$PATH make check DEJAGNU=../../../gdb/testsuite/site.exp RUNTEST=runtest RUNTESTFLAGS=\"--target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; true")
-      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref} gdb.sum")
+  march_valid_list.each do |march|
+    extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board}'"
+    if ( execution_platform == "hw" )
+      execution_board = "k1-jtag-runner"
+      execution_ref = "gdb.sum.hw.ref"
+    else
+      execution_board = "k1-iss"
+      execution_ref = "gdb.sum.iss.ref"
+    end
+
+    if (variant == "gdb")
+      if( arch == "k1" )
+        Dir.chdir build_path + "/gdb/testsuite"
+        
+        cmd = "LANG=C " +
+              "PATH=#{toolroot}/bin:$PATH " +
+              "make " +
+              "check " +
+              "DEJAGNU=../../../gdb/testsuite/site.exp " +
+              "RUNTEST=runtest " +
+              "RUNTESTFLAGS=\"#{extra_flags} --target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; " +
+              "true"
+
+        b.valid(:cmd => cmd)
+        b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
+      end
     end
   end
 end
@@ -237,22 +244,25 @@ b.target("#{variant}_post_install_valid") do
     end
 
     ["test"].each do |test|
-      core_list.each do |core|
-        asm_test= "#{mds_gbu_path}/#{core}/#{test}.s"
-        bin_test= "#{mds_gbu_path}/#{core}/#{test}.bin"
-        out_test= "#{build_path}/#{core}/#{test}.out"
-        obj_test= "#{build_path}/#{core}/#{test}.o"
+      march_valid_hash.each do |k,v|
+        v.split(/,/).each do |core|
 
-        mkdir_p "#{build_path}/#{core}"
-        b.run(:cmd=>"#{gas} -mcore #{core} -o #{obj_test} #{asm_test}",
-              :skip=>skip_valid)
-        b.run(:cmd=>"#{objdump} -d #{obj_test} > #{out_test}",
-              :skip=>skip_valid) 
-        puts "Diff between: #{out_test} #{bin_test}"
-        b.valid(:cmd => "diff -w -bu -I 'test\\.o: ' -I '^$' #{out_test} #{bin_test}", 
-                :fail_msg => "Get some diff between GAS output and ref #{test}.bin for #{core}.", 
-                :success_msg => "GBU : No diff, test OK",
-                :skip=>(skip_valid))
+          asm_test= "#{mds_gbu_path}/#{core}/#{test}.s"
+          bin_test= "#{mds_gbu_path}/#{core}/#{test}.bin"
+          out_test= "#{build_path}/#{core}/#{test}.out"
+          obj_test= "#{build_path}/#{core}/#{test}.o"
+
+          mkdir_p "#{build_path}/#{core}"
+          b.run(:cmd=>"#{gas} -mcore #{core} -o #{obj_test} #{asm_test}",
+                :skip=>skip_valid)
+          b.run(:cmd=>"#{objdump} -d #{obj_test} > #{out_test}",
+                :skip=>skip_valid)
+          puts "Diff between: #{out_test} #{bin_test}"
+          b.valid(:cmd => "diff -w -bu -I 'test\\.o: ' -I '^$' #{out_test} #{bin_test}",
+                  :fail_msg => "Get some diff between GAS output and ref #{test}.bin for #{core}.",
+                  :success_msg => "GBU : No diff, test OK",
+                  :skip=>(skip_valid))
+        end
       end
     end
   end
@@ -267,9 +277,31 @@ b.target("gdb_long_valid") do
     # Build native, just to create the build directories
     b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
     b.run("make")
-    cd "gdb/testsuite"
-    b.run(:cmd => "LANG=C PATH=#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH DEJAGNU=../../../gdb/testsuite/site.exp runtest --tool_exec=k1-gdb --target_board=k1-iss  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp; true")
-    b.valid(:cmd => "../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref gdb.sum")
+    march_valid_list.each do |march|
+      extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board}'"
+
+      if ( execution_platform == "hw" )
+        execution_board = "k1-jtag-runner"
+        execution_ref = "gdb.sum.hw.ref"
+      else
+        execution_board = "k1-iss"
+        execution_ref = "gdb.sum.iss.ref"
+      end
+
+      extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board}'"
+
+      Dir.chdir build_path + "/gdb/testsuite"
+
+
+      b.valid(:cmd => "LANG=C " +
+                    "PATH=#{toolroot}/bin:$PATH LD_LIBRARY_PATH=#{toolroot}/lib:$LD_LIBRARY_PATH " +
+                    "make check " +
+                    "DEJAGNU=../../../gdb/testsuite/site.exp "+
+                    "RUNTEST=runtest " +
+                    "RUNTESTFLAGS=\"#{extra_flags} --tool_exec=k1-gdb --target_board=#{execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\" ; " +
+                    "true")
+      b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
+    end
   end
 end
 
