@@ -220,7 +220,7 @@ b.target("#{variant}_post_build_valid") do
               "check " +
               "DEJAGNU=../../../gdb/testsuite/site.exp " +
               "RUNTEST=runtest " +
-              "RUNTESTFLAGS=\"#{extra_flags} --target_board=#{$execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; " +
+              "RUNTESTFLAGS=\"#{extra_flags} --target_board=#{execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\"; " +
               "true"
 
         b.valid(:cmd => cmd)
