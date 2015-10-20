@@ -1655,8 +1655,19 @@ k1_elf32_relocate_section
 	case R_K1_TPREL_LO10:
 	case R_K1_TPREL_HI22:
 	case R_K1_TPREL_32:
-	    relocation -=  htab->elf.tls_sec->vma;
-	    break;
+	  {
+	    asection *tls_sec = elf_hash_table (info)->tls_sec;
+	    if (tls_sec == NULL)
+	      {
+		(*_bfd_error_handler)
+		  (_("%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `%A'."),
+		   input_bfd, input_section, howto->name, name,
+		   rel->r_offset);
+		return FALSE;
+	      }
+	    relocation -=  tls_sec->vma;
+	  }
+	  break;
 	case R_K1_10_GPREL:
 	case R_K1_16_GPREL:
 	case R_K1_GPREL_LO10:
