@@ -102,7 +102,7 @@ mppa_init_inferior_data (struct inferior *inf)
     return data;
 }
 
-static int
+int
 is_current_k1b_user (void)
 {
 	int ret = 0;
@@ -605,6 +605,9 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int re
   remote_target = find_target_beneath (target);
   remote_target->to_fetch_registers (target, regcache, regnum);
 
+  if (is_current_k1b_user ())
+    return;
+
   // first time we see a cluster, set the debug level
   inf = find_inferior_pid (inferior_ptid.pid);
   data = mppa_inferior_data (inf);
@@ -712,6 +715,9 @@ static void apply_cluster_debug_level (struct inferior *inf)
   struct thread_info *th;
   ptid_t save_ptid, th_ptid;
 
+  if (is_current_k1b_user ())
+    return;
+
   level = get_debug_level (inf->pid);
   
   th = any_live_thread_of_process (inf->pid);
@@ -787,42 +793,33 @@ attach_user_command (char *args, int from_tty)
 	printf ("Attached to user debug using %s.\n", comm);
   
 	if (file)
-		{
-			struct stat s;
-			if (stat( file, &s) != 0)
-				printf ("Cannot find file %s: %s.\n", file, strerror(errno));
-			else
-				{
+	{
+    struct stat s;
+    if (stat( file, &s) != 0)
+    printf ("Cannot find file %s: %s.\n", file, strerror(errno));
+    else
+    {
+      char *ssect;
+      if (get_str_sym_sect (file, 0x6000000, &ssect))
+      {
+        cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
+        sprintf (cmd, "add-symbol-file %s %s", file, ssect);
+        free (ssect);
 
-						{
-							char *ssect;
-							//struct regcache *regc = get_thread_regcache (inferior_ptid);
-							//CORE_ADDR pc = regcache_read_pc (regc);
-							if (get_str_sym_sect (file, 0x6000000, &ssect))
-								{
-									printf ("Error while trying to add symbol file %s (%s).\n",
-											file, ex.message ?: "");
-									goto end;
-									cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
-									sprintf (cmd, "add-symbol-file %s %s", file, ssect);
-									free (ssect);
-									TRY_CATCH (ex, RETURN_MASK_ALL)
-										{
-											execute_command (cmd, 0);
-										}
-									if (ex.reason < 0)
-										{
-											printf ("Error while trying to add symbol file %s (%s).\n",
-													file, ex.message ?: "");
-											goto end;
-										}
-								}
-							else
-								printf ("Cannot load file %s.\n", file);
-
-						}
-				}
-		}
+        TRY_CATCH (ex, RETURN_MASK_ALL)
+        {
+          execute_command (cmd, 0);
+        }
+        if (ex.reason < 0)
+        {
+          printf ("Error while trying to add symbol file %s (%s).\n", file, ex.message ?: "");
+          goto end;
+        }
+      }
+      else
+        printf ("Cannot load file %s.\n", file);
+    }
+  }
   
  end:
 	batch_silent = saved_batch_silent;
@@ -835,7 +832,12 @@ attach_user_command (char *args, int from_tty)
 
 void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level)
 {
-  struct inferior_data *data = mppa_inferior_data (inf);
+  struct inferior_data *data;
+
+  if (is_current_k1b_user ())
+    return;
+
+  data = mppa_inferior_data (inf);
   data->cluster_debug_level = debug_level; 
   apply_cluster_debug_level (inf);
 }
@@ -847,6 +849,12 @@ static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_e
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("Cannot set debug level without a selected thread."));
+
+  if (is_current_k1b_user ())
+  {
+    printf ("Linux user mode does not have a debug level\n");
+    return;
+  }
 
   inf = current_inferior ();
   prev_level = get_cluster_debug_level (inf->pid);
@@ -875,6 +883,9 @@ static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
 
 void apply_global_debug_level (int level)
 {
+  if (is_current_k1b_user ())
+    return;
+
   idx_global_debug_level = level;
   if (have_inferiors ())
     iterate_over_inferiors (set_cluster_debug_level_iter, NULL);
@@ -886,7 +897,15 @@ void apply_global_debug_level (int level)
 
 static void set_global_debug_level (char *args, int from_tty, struct cmd_list_element *c)
 {
-  int new_level = str_debug_level_to_idx (sglobal_debug_level);
+  int new_level;
+
+  if (is_current_k1b_user ())
+  {
+    printf ("Linux user mode does not have a debug level\n");
+    return;
+  }
+
+  new_level = str_debug_level_to_idx (sglobal_debug_level);
   global_debug_level_set = 1;
   if (new_level != idx_global_debug_level) 
   {
@@ -907,6 +926,12 @@ show_cluster_debug_level (struct ui_file *file, int from_tty,
     return;
   }
 
+  if (is_current_k1b_user ())
+  {
+    printf ("Linux user mode does not have a debug level\n");
+    return;
+  }
+
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   
   level = get_cluster_debug_level (-1);
@@ -919,6 +944,12 @@ static void
 show_global_debug_level (struct ui_file *file, int from_tty, 
   struct cmd_list_element *c, const char *value)
 {
+  if (is_current_k1b_user ())
+  {
+    printf ("Linux user mode does not have a debug level\n");
+    return;
+  }
+
   fprintf_filtered (file, "The global debug level  is \"%s\".\n",
     scluster_debug_levels[idx_global_debug_level]);
 }
@@ -1062,6 +1093,9 @@ mppa_inferior_data_cleanup (struct inferior *inf, void *data)
 
 static void mppa_observer_breakpoint_created (struct breakpoint *b)
 {
+  if (is_current_k1b_user ())
+    return;
+
   if (b && b->addr_string && !strcmp (b->addr_string, "main"))
   {
     send_stop_at_main (0);
@@ -1071,6 +1105,9 @@ static void mppa_observer_breakpoint_created (struct breakpoint *b)
 
 static void mppa_observer_breakpoint_deleted (struct breakpoint *b)
 {
+  if (is_current_k1b_user ())
+    return;
+
   if (b && b->addr_string && !strcmp (b->addr_string, "main"))
   {
     send_stop_at_main (1);

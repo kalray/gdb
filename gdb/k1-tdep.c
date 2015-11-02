@@ -406,7 +406,7 @@ k1_inferior_created (struct target_ops *target, int from_tty)
   
   k1_current_arch = K1_NUM_ARCHES;
   
-  if (first)
+  if (first && !is_current_k1b_user ())
   {
     char cont_cmd[25];
     sprintf (cont_cmd, "c -a");
@@ -809,7 +809,8 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch,
 
     write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
     
-    inform_dsu_stepi_bkp ();
+    if (!is_current_k1b_user ())
+      inform_dsu_stepi_bkp ();
 
     return dsc;
 }
@@ -912,7 +913,7 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
     if (debug_displaced) 
 	printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
 
-  if (1)
+  if (!is_current_k1b_user ())
   {
     struct thread_info *th = find_thread_ptid (inferior_ptid);
     int cpu_level = get_cpu_exec_level ();
@@ -1508,7 +1509,7 @@ int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
   int debug_level;
   int th_mode_used;
 
-  if (!opt_hide_threads) //don't hide if option hide_threads is off
+  if (!opt_hide_threads || is_current_k1b_user ()) //don't hide if option hide_threads is off
     return 0;
   
   debug_level = get_debug_level (tp->ptid.pid);
