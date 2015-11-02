@@ -88,44 +88,14 @@ k1_store_gregset (struct regcache *regcache, const void *buf)
   supply_register_by_name (regcache, "ls", (char*) &rset[R_LS]);
 }
 
-/* K1 GNU/Linux PTRACE interface includes extended register set.  */
-#if 0
-static void
-k1_fill_xtregset (struct regcache *regcache, void *buf)
-{
-  const k1_regtable_t *ptr;
-
-  for (ptr = k1_regmap_table; ptr->name; ptr++)
-    {
-      collect_register_by_name (regcache, ptr->name,
-      (char*)buf + ptr->ptrace_offset);
-    }
-}
-
-static void
-k1_store_xtregset (struct regcache *regcache, const void *buf)
-{
-  const k1_regtable_t *ptr;
-
-  for (ptr = k1_regmap_table; ptr->name; ptr++)
-    {
-      supply_register_by_name (regcache, ptr->name,
-      (char*)buf + ptr->ptrace_offset);
-    }
-}
-#endif
-
 struct regset_info k1_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, sizeof (elf_gregset_t),
     GENERAL_REGS,
     k1_fill_gregset, k1_store_gregset },
-/*  { PTRACE_GETXTREGS, PTRACE_SETXTREGS, 0, XTENSA_ELF_XTREG_SIZE,
-    EXTENDED_REGS,
-    k1_fill_xtregset, k1_store_xtregset },*/
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
-#define K1_BREAKPOINT {0xF8,0x00, 0x10, 0x02}
+#define K1_BREAKPOINT {0xF9,0x00, 0x10, 0x02}
 
 static const unsigned char k1_breakpoint[] = K1_BREAKPOINT;
 #define k1_breakpoint_len 4
@@ -181,59 +151,55 @@ k1_regs_info (void)
   return &vregs_info;
 }
 
-static int k1_insert_point (char type, CORE_ADDR addr, int len)
+int k1_supports_z_point_type (char z_type)
 {
-  switch (type)
+  switch (z_type)
   {
-    case '0': // software breakpoint
-    {
-      int ret = prepare_to_access_memory ();
-      if (ret)
-        return -1;
-      ret = set_gdb_breakpoint_at (addr);
-      done_accessing_memory ();
-      return ret;
-    }
-    default:
-      // unsupported
-      return 1;
+  case Z_PACKET_SW_BP:
+    return 1;
   }
+
+  return 0;
 }
 
-static int k1_remove_point (char type, CORE_ADDR addr, int len)
+int k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 {
-  switch (type)
+  if (type == raw_bkpt_type_sw)
   {
-    case '0': // software breakpoint
-    {
-      int ret = prepare_to_access_memory ();
-      if (ret)
-        return -1;
-      ret = delete_gdb_breakpoint_at (addr);
-      done_accessing_memory ();
-      return ret;
-    }
-    default:
-      // unsupported
-      return 1;
+    return insert_memory_breakpoint (bp);
   }
+  
+  return 1;
+}
+
+int k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+{
+  if (type == raw_bkpt_type_sw)
+  {
+    return remove_memory_breakpoint (bp);
+  }
+  
+  return 1;
 }
 
 struct linux_target_ops the_low_target = {
-  k1_arch_setup,
-  k1_regs_info,
-  0,
-  0,
-  NULL, /* fetch_register */
-  k1_get_pc,
-  k1_set_pc,
-  k1_breakpoint,
-  k1_breakpoint_len,
-  NULL,
-  0,
-  k1_breakpoint_at,
-  k1_insert_point,
-  k1_remove_point,
+  k1_arch_setup, /* void (*arch_setup) (void) */
+  k1_regs_info, /* const struct regs_info *(*regs_info) (void) */
+  NULL, /* int (*cannot_fetch_register) (int) */
+  NULL, /* int (*cannot_store_register) (int) */
+  NULL, /* int (*fetch_register) (struct regcache *regcache, int regno) */
+  k1_get_pc, /* CORE_ADDR (*get_pc) (struct regcache *regcache) */
+  k1_set_pc, /* void (*set_pc) (struct regcache *regcache, CORE_ADDR newpc) */
+  k1_breakpoint, /* const unsigned char *breakpoint */
+  k1_breakpoint_len, /* int breakpoint_len */
+  NULL, /* CORE_ADDR (*breakpoint_reinsert_addr) (void) */
+  0, /* int decr_pc_after_break */
+  k1_breakpoint_at, /* int (*breakpoint_at) (CORE_ADDR pc) */
+  k1_supports_z_point_type, /* int (*supports_z_point_type) (char z_type) */
+  k1_insert_point, /* int (*insert_point) (enum raw_bkpt_type type, 
+                    *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
+  k1_remove_point, /* int (*remove_point) (enum raw_bkpt_type type,
+                    *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
 };
 
 static char *create_xml ()
