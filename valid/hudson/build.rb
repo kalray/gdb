@@ -10,7 +10,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
 
                         "board"      => {
                           "type" => "keywords",
-                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2],
+                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2, :tc3, :konic80],
                           "default" => "developer",
                           "help" => "Target board (changing things at compilation)."
                         },
