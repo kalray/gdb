@@ -18,6 +18,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "processor"     => "processor",
                         "mds"           => "mds",
                         "build_type"    => ["Debug", "Can be Release or Debug." ],
+                        "clang_dir"     => "",
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
                         "host"          => ["x86", "Host for the build"],
@@ -45,6 +46,7 @@ build = ParallelTarget.new("#{variant}_build", repo, [], [])
 build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [])
 install = Target.new("#{variant}_install", repo, [build], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build], [])
+build_valid_llvm = ParallelTarget.new("#{variant}_post_build_valid_llvm", repo, [build], [])
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
 copyright_check = Target.new("copyright_check", repo, [], [])
 
@@ -57,7 +59,7 @@ march_valid_hash = Hash[*options["march_valid"].split(/::/).map{|tmp_arch| tmp_a
 march_valid_list    = march_valid_hash.keys
 board   = options['board'].to_s
 
-b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, package, copyright_check])
+b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, package, copyright_check, build_valid_llvm])
 
 
 arch = options["target"]
@@ -75,7 +77,7 @@ pkg_prefix_name   = options.fetch("pi-prefix-name","#{arch}-")
 gdb_install_prefix = File.join(prefix,"gdb","devimage")
 gbu_install_prefix = File.join(prefix,"gbu","devimage","gbu-#{variant}")
 toolroot           = options.fetch("toolroot","none")
-
+clang_dir          = options["clang_dir"]
 b.default_targets = [package]
 
 cores      = options["cores"]
@@ -226,6 +228,17 @@ b.target("#{variant}_post_build_valid") do
         b.valid(:cmd => cmd)
         b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
       end
+    end
+  end
+end
+
+b.target("#{variant}_post_build_valid_llvm") do
+  b.logtitle = "Report for GDB  #{variant}_post_build_valid_llvm, arch = #{arch}"
+  if (variant == "gdb")
+    if( arch == "k1" )
+      Dir.chdir build_path + "/gdb/testsuite"
+      b.run(:cmd => "PATH=#{clang_dir}/bin/:#{toolroot}/bin:$PATH LANG=C  make check DEJAGNU=../../../gdb/testsuite/site.exp  RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss-clang -v gdb.kalray/*.exp gdb.base/interact.exp gdb.base/trace-commands.exp gdb.base/source.exp gdb.base/eval.exp gdb.base/ifelse.exp gdb.base/empty_exe.exp gdb.base/shell.exp gdb.base/alias.exp gdb.base/echo.exp gdb.base/whatis.exp gdb.base/ptype.exp gdb.base/nofield.exp gdb.base/page.exp gdb.base/varargs.exp gdb.base/dfp-exprs.exp gdb.base/help.exp gdb.base/sepsymtab.exp gdb.base/subst.exp\"; true")
+      b.run(:cmd => "PATH=#{clang_dir}/bin/:$PATH  ../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref}.clang gdb.sum")
     end
   end
 end
