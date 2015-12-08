@@ -234,6 +234,7 @@ end
 
 b.target("#{variant}_post_build_valid_llvm") do
   b.logtitle = "Report for GDB  #{variant}_post_build_valid_llvm, arch = #{arch}"
+
   if (variant == "gdb")
     if( arch == "k1" )
       Dir.chdir build_path + "/gdb/testsuite"
