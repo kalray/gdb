@@ -132,7 +132,7 @@ b.target("#{variant}_build") do
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
       b.run(:cmd => "echo #{machine_type}" )
-      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{gdb_install_prefix}")
+      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{build_path}/#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
       b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
@@ -239,7 +239,7 @@ b.target("#{variant}_post_build_valid_llvm") do
     if( arch == "k1" )
       Dir.chdir build_path + "/gdb/testsuite"
       b.run(:cmd => "PATH=#{clang_dir}/bin/:#{toolroot}/bin:$PATH LANG=C  make check DEJAGNU=../../../gdb/testsuite/site.exp  RUNTEST=runtest RUNTESTFLAGS=\"--target_board=k1-iss-clang -v gdb.kalray/*.exp gdb.base/interact.exp gdb.base/trace-commands.exp gdb.base/source.exp gdb.base/eval.exp gdb.base/ifelse.exp gdb.base/empty_exe.exp gdb.base/shell.exp gdb.base/alias.exp gdb.base/echo.exp gdb.base/whatis.exp gdb.base/ptype.exp gdb.base/nofield.exp gdb.base/page.exp gdb.base/varargs.exp gdb.base/dfp-exprs.exp gdb.base/help.exp gdb.base/sepsymtab.exp gdb.base/subst.exp\"; true")
-      b.run(:cmd => "PATH=#{clang_dir}/bin/:$PATH  ../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/#{$execution_ref}.clang gdb.sum")
+      b.run(:cmd => "PATH=#{clang_dir}/bin/:$PATH  ../../../gdb/testsuite/regtest.rb ../../../gdb/testsuite/gdb.sum.ref.clang gdb.sum")
     end
   end
 end
