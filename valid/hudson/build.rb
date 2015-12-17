@@ -132,7 +132,7 @@ b.target("#{variant}_build") do
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
       b.run(:cmd => "echo #{machine_type}" )
-      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{build_path}/#{gdb_install_prefix}")
+      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
       b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
