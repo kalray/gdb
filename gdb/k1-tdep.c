@@ -399,6 +399,22 @@ struct displaced_step_closure {
     int reg;
 };
 
+int get_is_hot_attached (struct inferior *inf)
+{
+  int ret;
+  char *buf = (char *) malloc (256);
+  long size = 256;
+
+  strcpy (buf, "ka");
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+
+  ret = *buf - '0';
+  free (buf);
+
+  return ret;
+}
+
 static void
 k1_inferior_created (struct target_ops *target, int from_tty)
 {
@@ -420,19 +436,23 @@ k1_inferior_created (struct target_ops *target, int from_tty)
     else if (!global_debug_level_set)
     {
       //set global debug level if not set before attach and if we boot with gdb
+      struct inferior *inf = current_inferior ();
       struct regcache *rc = get_current_regcache ();
-      if (rc && regcache_read_pc (rc) == 0)
+      int is_hot_attached = get_is_hot_attached (inf);
+      CORE_ADDR pc = regcache_read_pc (rc);
+
+      if (rc && !is_hot_attached)
       {
-        struct inferior *inf = current_inferior ();
         int os_debug_level = get_os_supported_debug_levels (inf);
         //printf ("os supported debug level = %d\n", os_debug_level);
         if (os_debug_level > DBG_LEVEL_SYSTEM)
         {
           apply_global_debug_level (os_debug_level);
-          //set_cluster_debug_level_no_check (inf, os_debug_level);
-
-          inf_created_change_th = 1;
-          execute_command (cont_cmd, 0);
+          if (pc == 0 || os_debug_level == DBG_LEVEL_USER)
+          {
+            inf_created_change_th = 1;
+            execute_command (cont_cmd, 0);
+          }
         }
       }
     } // !global_debug_level_set
