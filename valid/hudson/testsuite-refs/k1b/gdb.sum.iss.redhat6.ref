@@ -1,4 +1,4 @@
-Test Run By hudson on Tue Jan 12 10:31:28 2016
+Test Run By hudson on Tue Jan 12 16:54:13 2016
 Target is k1-unknown-elf
 Host   is i686-pc-linux-gnu
 
@@ -769,8 +769,8 @@ UNTESTED: gdb.mi/mi-solib.exp: mi-solib.exp
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
 UNSUPPORTED: gdb.mi/mi-nonstop.exp: Couldn't compile non-stop.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/dw2-ref-missing-frame.exp ...
-gdb compile failed, /tmp/cc9DuzJe.s: Assembler messages:
-/tmp/cc9DuzJe.s: Fatal error: [md_apply_fix] unsupported relocation type (can't find howto)
+gdb compile failed, /tmp/ccUY15xh.s: Assembler messages:
+/tmp/ccUY15xh.s: Fatal error: [md_apply_fix] unsupported relocation type (can't find howto)
 Running ../../../gdb/testsuite/gdb.mi/mi-breakpoint-changed.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-watch.exp ...
 PASS: gdb.mi/mi-watch.exp: hw watchpoints toggle (1)
@@ -1252,11 +1252,7 @@ PASS: gdb.mi/mi-memory-changed.exp: change C thru. varobj
 PASS: gdb.mi/mi-memory-changed.exp: change C thru. -data-write-memory-bytes
 PASS: gdb.mi/mi-memory-changed.exp: get address of main
 Running ../../../gdb/testsuite/gdb.mi/mi-var-child-f.exp ...
-PASS: gdb.mi/mi-var-child-f.exp: breakpoint at MAIN__
-PASS: gdb.mi/mi-var-child-f.exp: mi runto MAIN__
-PASS: gdb.mi/mi-var-child-f.exp: create local variable array
-PASS: gdb.mi/mi-var-child-f.exp: get children of array
-PASS: gdb.mi/mi-var-child-f.exp: get grandchildren of array (children of first element of second index)
+gdb compile failed, default_target_compile: Can't find k1-gfortran.
 Running ../../../gdb/testsuite/gdb.mi/mi-record-changed.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-reverse.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-async.exp ...
@@ -2035,8 +2031,8 @@ PASS: gdb.base/gnu_vector.exp: ptype float4
 PASS: gdb.base/gnu_vector.exp: ptype union_with_vector_1
 PASS: gdb.base/gnu_vector.exp: ptype struct_with_vector_1
 Running ../../../gdb/testsuite/gdb.base/sss-bp-on-user-bp-2.exp ...
-gdb compile failed, /tmp/cc0nmOLV.s: Assembler messages:
-/tmp/cc0nmOLV.s:23: Fatal error: Could not assemble bundle
+gdb compile failed, /tmp/ccaei7XE.s: Assembler messages:
+/tmp/ccaei7XE.s:23: Fatal error: Could not assemble bundle
 UNTESTED: gdb.base/sss-bp-on-user-bp-2.exp: failed to prepare
 Running ../../../gdb/testsuite/gdb.base/sepsymtab.exp ...
 PASS: gdb.base/sepsymtab.exp: info sym main
@@ -4188,12 +4184,12 @@ PASS: gdb.base/printcmds.exp: print invalid_SSS
 Running ../../../gdb/testsuite/gdb.base/nextoverexit.exp ...
 PASS: gdb.base/nextoverexit.exp: next over exit
 Running ../../../gdb/testsuite/gdb.base/stack-checking.exp ...
-gdb compile failed, /tmp/ccHw0Tyt.o: In function `medium_frame':
-/work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:35: undefined reference to `__stack_overflow_detected'
-/tmp/ccHw0Tyt.o: In function `big_frame':
-/work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:45: undefined reference to `__stack_overflow_detected'
-/tmp/ccHw0Tyt.o: In function `main':
-/work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:53: undefined reference to `__stack_overflow_detected'
+gdb compile failed, /tmp/ccqh9h08.o: In function `medium_frame':
+/work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:35: undefined reference to `__stack_overflow_detected'
+/tmp/ccqh9h08.o: In function `big_frame':
+/work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:45: undefined reference to `__stack_overflow_detected'
+/tmp/ccqh9h08.o: In function `main':
+/work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/stack-checking.c:53: undefined reference to `__stack_overflow_detected'
 collect2: error: ld returned 1 exit status
 UNTESTED: gdb.base/stack-checking.exp: stack-checking.exp
 Running ../../../gdb/testsuite/gdb.base/break-probes.exp ...
@@ -5336,8 +5332,8 @@ PASS: gdb.base/assign.exp: v_int+=double
 Running ../../../gdb/testsuite/gdb.base/async-shell.exp ...
 PASS: gdb.base/async-shell.exp: set non-stop on
 FAIL: gdb.base/async-shell.exp: run &
-FAIL: gdb.base/async-shell.exp: shell echo foo (timeout)
-PASS: gdb.base/async-shell.exp: interrupt
+PASS: gdb.base/async-shell.exp: shell echo foo
+FAIL: gdb.base/async-shell.exp: interrupt (GDB internal error)
 FAIL: gdb.base/async-shell.exp: process stopped (timeout)
 Running ../../../gdb/testsuite/gdb.base/funcargs.exp ...
 PASS: gdb.base/funcargs.exp: set print frame-arguments all
@@ -7205,7 +7201,7 @@ PASS: gdb.base/interrupt-noterm.exp: set confirm off
 PASS: gdb.base/interrupt-noterm.exp: delete
 PASS: gdb.base/interrupt-noterm.exp: set confirm on
 PASS: gdb.base/interrupt-noterm.exp: continue &
-PASS: gdb.base/interrupt-noterm.exp: interrupt
+FAIL: gdb.base/interrupt-noterm.exp: interrupt (the program exited)
 FAIL: gdb.base/interrupt-noterm.exp: inferior received SIGINT (timeout)
 Running ../../../gdb/testsuite/gdb.base/bigcore.exp ...
 UNTESTED: gdb.base/bigcore.exp: Remote system
@@ -8563,8 +8559,8 @@ Running ../../../gdb/testsuite/gdb.base/disp-step-syscall.exp ...
 Running ../../../gdb/testsuite/gdb.base/infoline.exp ...
 PASS: gdb.base/infoline.exp: info line infoline.c:18
 Running ../../../gdb/testsuite/gdb.base/gdb-sigterm.exp ...
-gdb compile failed, /work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/gdb.base/gdb-sigterm0.o: In function `main':
-/work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/gdb-sigterm.c:23: undefined reference to `alarm'
+gdb compile failed, /work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/gdb.base/gdb-sigterm0.o: In function `main':
+/work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../../gdb/testsuite/gdb.base/gdb-sigterm.c:23: undefined reference to `alarm'
 collect2: error: ld returned 1 exit status
 UNTESTED: gdb.base/gdb-sigterm.exp: gdb-sigterm.exp
 Running ../../../gdb/testsuite/gdb.base/solib.exp ...
@@ -9706,12 +9702,12 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		9145
-# of unexpected failures	38
+# of expected passes		9139
+# of unexpected failures	39
 # of unexpected successes	1
 # of expected failures		12
 # of known failures		28
 # of untested testcases		17
 # of unsupported tests		29
-/work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../gdb/gdb version  7.7.50.20140610-cvs -nw -nx -data-directory /work1/hudson/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../data-directory 
+/work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../../gdb/gdb version  7.7.50.20140610-cvs -nw -nx -data-directory /work1/hudson/workspace/_RDTools_valid/label/redhat6-64/rdtools/gdb/k1_build_gdb_x86/gdb/testsuite/../data-directory 
 
