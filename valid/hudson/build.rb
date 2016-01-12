@@ -207,7 +207,11 @@ b.target("#{variant}_post_build_valid") do
       execution_ref = "gdb.sum.hw.ref"
     else
       execution_board = "k1-iss"
-      execution_ref = "gdb.sum.iss.ref"
+      if(b.distrib_info.sname == "redhat6-64") then
+        execution_ref = "gdb.sum.iss.redhat6.ref"
+      else
+        execution_ref = "gdb.sum.iss.ref"
+      end
     end
 
     if (variant == "gdb")
