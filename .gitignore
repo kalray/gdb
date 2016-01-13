@@ -49,3 +49,4 @@ k1_build_elf_x86
 k1_build_gdb_x86
 k1_build_rtems_x86
 k1_build_nodeos_x86
+gdbstub/build
