@@ -7200,7 +7200,7 @@ PASS: gdb.base/interrupt-noterm.exp: set interactive-mode off
 PASS: gdb.base/interrupt-noterm.exp: set confirm off
 PASS: gdb.base/interrupt-noterm.exp: delete
 PASS: gdb.base/interrupt-noterm.exp: set confirm on
-PASS: gdb.base/interrupt-noterm.exp: continue &
+FAIL: gdb.base/interrupt-noterm.exp: continue & (timeout)
 FAIL: gdb.base/interrupt-noterm.exp: interrupt (the program exited)
 FAIL: gdb.base/interrupt-noterm.exp: inferior received SIGINT (timeout)
 Running ../../../gdb/testsuite/gdb.base/bigcore.exp ...
