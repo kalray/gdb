@@ -5332,7 +5332,7 @@ PASS: gdb.base/assign.exp: v_int+=double
 Running ../../../gdb/testsuite/gdb.base/async-shell.exp ...
 PASS: gdb.base/async-shell.exp: set non-stop on
 FAIL: gdb.base/async-shell.exp: run &
-PASS: gdb.base/async-shell.exp: shell echo foo
+FAIL: gdb.base/async-shell.exp: shell echo foo
 FAIL: gdb.base/async-shell.exp: interrupt (GDB internal error)
 FAIL: gdb.base/async-shell.exp: process stopped (timeout)
 Running ../../../gdb/testsuite/gdb.base/funcargs.exp ...
