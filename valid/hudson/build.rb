@@ -131,7 +131,7 @@ b.target("#{variant}_build") do
   b.logtitle = "Report for GDB #{variant}_build, arch = #{arch}"
   if( variant == "gdbstub")
     b.builder_infos.each do |builder_info|
-      b.run(:cmd => "make -C #{build_path} FAMDIR=#{family_prefix} ARCH=#{arch} TOOLCHAIN_DIR='#{toolroot}' INSTALL_LIB='#{builder_info.lib}' CFLAGS='#{builder_info.cflags}'")
+      b.run(:cmd => "make -C #{build_path} FAMDIR=#{family_prefix} TOOLS_DIR=#{workspace}  ARCH=#{arch} TOOLCHAIN_DIR='#{toolroot}' INSTALL_LIB='#{builder_info.lib}' CFLAGS='#{builder_info.cflags}'")
     end
   elsif( variant == "gdb")
     machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
