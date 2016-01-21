@@ -91,7 +91,7 @@ proc test { variant } {
 	    -re "\\*running.*\\*running.*\\*stopped" {
 		fail $msg
 	    }
-	    -re "\\^running\r\n\\*running,thread-id=\"all\"\r\n${mi_gdb_prompt}.*\\*stopped" {
+	    -re "\\^running\r\n\\*running,thread-id=\"(all|1)\"\r\n${mi_gdb_prompt}.*\\*stopped" {
 		pass $msg
 	    }
 	    timeout {

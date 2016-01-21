@@ -1110,11 +1110,6 @@ Running ../../../gdb/testsuite/gdb.mi/mi-reg-undefined.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-nonstop.exp ...
 UNSUPPORTED: gdb.mi/mi-nonstop.exp: Couldn't compile non-stop.c: unrecognized error
 Running ../../../gdb/testsuite/gdb.mi/mi-var-child-f.exp ...
-PASS: gdb.mi/mi-var-child-f.exp: breakpoint at MAIN__
-PASS: gdb.mi/mi-var-child-f.exp: mi runto MAIN__
-PASS: gdb.mi/mi-var-child-f.exp: create local variable array
-PASS: gdb.mi/mi-var-child-f.exp: get children of array
-PASS: gdb.mi/mi-var-child-f.exp: get grandchildren of array (children of first element of second index)
 Running ../../../gdb/testsuite/gdb.mi/mi-var-create-rtti.exp ...
 PASS: gdb.mi/mi-var-create-rtti.exp: breakpoint at main
 PASS: gdb.mi/mi-var-create-rtti.exp: mi runto main
@@ -5284,7 +5279,7 @@ PASS: gdb.base/sepdebug.exp: CRC mismatch is reported
 UNSUPPORTED: gdb.base/sepdebug.exp: build-id is not supported by the compiler
 Running ../../../gdb/testsuite/gdb.base/nostdlib.exp ...
 PASS: gdb.base/nostdlib.exp: stop at run
-PASS: gdb.base/nostdlib.exp: continue to marker
+FAIL: gdb.base/nostdlib.exp: continue to marker
 Running ../../../gdb/testsuite/gdb.base/info-os.exp ...
 UNSUPPORTED: gdb.base/info-os.exp: info-os.exp
 Running ../../../gdb/testsuite/gdb.base/call-strs.exp ...
@@ -9700,12 +9695,12 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		9146
-# of unexpected failures	37
+# of expected passes		9154
+# of unexpected failures	36
 # of unexpected successes	1
 # of expected failures		12
 # of known failures		28
 # of untested testcases		17
-# of unsupported tests		29
+# of unsupported tests		28
 /work1/friss/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../../gdb/gdb version  7.7.50.20140610-cvs -nw -nx -data-directory /work1/friss/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../data-directory 
 
