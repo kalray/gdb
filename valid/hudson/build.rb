@@ -10,7 +10,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
 
                         "board"      => {
                           "type" => "keywords",
-                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2, :tc3, :konic80],
+                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2, :tc3, :konic80, :ab04],
                           "default" => "developer",
                           "help" => "Target board (changing things at compilation)."
                         },
@@ -121,13 +121,13 @@ when "k1"
   else
     raise "Unknown variant #{variant}"
   end
-else 
+else
   raise "Unknown Target #{arch}"
 end
 
 build.add_result build_path
 
-b.target("#{variant}_build") do 
+b.target("#{variant}_build") do
   b.logtitle = "Report for GDB #{variant}_build, arch = #{arch}"
   if( variant == "gdbstub")
     b.builder_infos.each do |builder_info|
@@ -150,12 +150,12 @@ b.target("#{variant}_build") do
 
     version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
     version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
-  
+
     build_host = ""
     if (host == "k1-linux") then
       build_host = "--host=k1-linux"
     end
-  
+
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin ../configure --enable-64-bit-bfd --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{gbu_install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
         :skip=>skip_build)
     b.run(:cmd => "make clean",
@@ -173,7 +173,7 @@ b.target("#{variant}_build") do
   end
 end
 
-b.target("clean") do 
+b.target("clean") do
   b.logtitle = "Report for GDB clean, arch = #{arch}"
 
   b.run("rm -rf #{build_path}")
@@ -229,7 +229,7 @@ b.target("#{variant}_post_build_valid") do
     if (variant == "gdb")
       if( arch == "k1" )
         Dir.chdir build_path + "/gdb/testsuite"
-        
+
         cmd = "LANG=C " +
               "PATH=#{toolroot}/bin:$PATH " +
               "make " +
@@ -301,7 +301,7 @@ b.target("gdb_long_valid") do
   b.logtitle = "Report for GDB gdb_long_valid, arch = #{arch}"
   if( arch == "k1" )
     # Validation in the valid project
-    b.create_goto_dir! build_path 
+    b.create_goto_dir! build_path
     # Build native, just to create the build directories
     b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
     b.run("make")
@@ -346,47 +346,47 @@ b.target("#{variant}_package") do
   elsif( variant == "gdb") then
     # GDB package
     cd gdb_install_prefix
-    
+
     gdb_name = "#{pkg_prefix_name}gdb"
     gdb_tar  = "#{gdb_name}.tar"
     b.run("tar cf #{gdb_tar} ./*")
     tar_package = File.expand_path(gdb_tar)
-    
+
     depends = []
-    
+
     package_description = "#{arch.upcase} GDB package.\n"
     package_description += "This package provides GNU Debugger for MPPA."
-    
+
     tools_version = options["version"]
-    
+
     (version,buildID) = tools_version.split("-")
     release_info = b.release_info(version,buildID)
     pinfo = b.package_info(gdb_name, release_info,
                            package_description, depends)
-    
+
     b.create_package(tar_package, pinfo)
     b.run("rm #{tar_package}")
   else
     # GBU package
     cd gbu_install_prefix
-    
+
     gbu_name = "#{pkg_prefix_name}gbu-#{variant}"
     gbu_tar  = "#{gbu_name}.tar"
     b.run("tar cf #{gbu_tar} ./*")
     tar_package = File.expand_path(gbu_tar)
-    
+
     depends = []
-    
+
     package_description = "#{arch.upcase} GBU #{variant} package.\n"
     package_description += "This package provides Gnu Binary Utilities for MPPA for #{variant}."
-    
+
     tools_version = options["version"]
-    
+
     (version,buildID) = tools_version.split("-")
     release_info = b.release_info(version,buildID)
     pinfo = b.package_info(gbu_name, release_info,
                            package_description, depends)
-    
+
     b.create_package(tar_package, pinfo)
     b.run("rm #{tar_package}")
   end
