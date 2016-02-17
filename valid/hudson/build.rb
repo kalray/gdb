@@ -20,7 +20,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "build_type"    => ["Debug", "Can be Release or Debug." ],
                         "clang_dir"     => "",
                         "version"       => ["unknown", "Version of the delivered GDB."],
-                        "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb], "default" => "elf", "help" => "Select build variant."},
+                        "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb, :gdbstub], "default" => "elf", "help" => "Select build variant."},
                         "host"          => ["x86", "Host for the build"],
                         "sysroot"       => ["sysroot", "Sysroot directory"],
                         "march_valid"   => ["k1a:k1dp,k1io::k1b:k1bio,k1bdp", "List of mppa_architectures to validate on execution_platform."],
@@ -61,7 +61,6 @@ board   = options['board'].to_s
 
 b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, package, copyright_check, build_valid_llvm])
 
-
 arch = options["target"]
 b.logsession = arch
 
@@ -70,10 +69,14 @@ mds_path       = File.join(workspace,options["mds"])
 
 host       = options["host"]
 
-build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
+if( variant == "gdbstub")
+  build_path        = File.join(gdb_path, "gdbstub")
+else
+  build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
+end
+
 prefix            = options.fetch("prefix", "#{build_path}/release")
 pkg_prefix_name   = options.fetch("pi-prefix-name","#{arch}-")
-
 gdb_install_prefix = File.join(prefix,"gdb","devimage")
 gbu_install_prefix = File.join(prefix,"gbu","devimage","gbu-#{variant}")
 toolroot           = options.fetch("toolroot","none")
@@ -97,6 +100,8 @@ when "k1"
   case variant
   when "gdb" then
     build_target = "k1-elf"
+  when "gdbstub"
+    build_target = ""
   when "linux" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
@@ -124,7 +129,11 @@ build.add_result build_path
 
 b.target("#{variant}_build") do
   b.logtitle = "Report for GDB #{variant}_build, arch = #{arch}"
-  if( variant == "gdb")
+  if( variant == "gdbstub")
+    b.builder_infos.each do |builder_info|
+      b.run(:cmd => "make -C #{build_path} FAMDIR=#{family_prefix} TOOLS_DIR=#{workspace}  ARCH=#{arch} TOOLCHAIN_DIR='#{toolroot}' INSTALL_LIB='#{builder_info.lib}' CFLAGS='#{builder_info.cflags}'")
+    end
+  elsif( variant == "gdb")
     machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
     if( arch == "k1" )
       b.create_goto_dir! build_path
@@ -172,7 +181,12 @@ end
 
 b.target("#{variant}_install") do
   b.logtitle = "Report for GDB #{variant}_install, arch = #{arch}"
-  if( variant == "gdb")
+  if( variant == "gdbstub")
+    b.builder_infos.each do |builder_info|
+      b.run(:cmd => "make -C #{build_path} install TOOLCHAIN_DIR='#{toolroot}' TOOLS_PREFIX='#{gdb_install_prefix}' INSTALL_LIB='#{builder_info.lib}'")
+    end
+    b.rsync(gdb_install_prefix,toolroot)
+  elsif( variant == "gdb")
     if( arch == "k1" )
       cd build_path
       if ("#{build_type}" == "Release") then
@@ -327,7 +341,9 @@ end
 b.target("#{variant}_package") do
   b.logtitle = "Report for GDB packaging, arch = #{arch}"
 
-  if( variant == "gdb") then
+  if (variant == "gdbstub") then
+  #do nothing
+  elsif( variant == "gdb") then
     # GDB package
     cd gdb_install_prefix
 
