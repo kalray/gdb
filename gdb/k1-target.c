@@ -19,6 +19,7 @@
 #include "gdbcore.h"
 #include "gdbthread.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "observer.h"
 #include "osdata.h"
 #include "main.h"
@@ -48,7 +49,7 @@ static cmd_cfunc_ftype *real_run_command;
 static struct target_ops k1_target_ops;
 static char *da_options = NULL;
 
-static const char *simulation_vehicles[] = { "k1-cluster", "k1-runner", NULL };
+static const char *simulation_vehicles[] = { "k1-cluster", NULL };
 static const char *simulation_vehicle;
 static const char *scluster_debug_levels[] = {"system", "kernel-user", "user", "inherited", NULL};
 static const char *scluster_debug_level;
@@ -308,23 +309,16 @@ static void k1_target_create_inferior (struct target_ops *ops,
     int pipefds[2];
     int no_march = 0;
     int no_mcluster = 0;
-    int port;
     int core;
     int argidx = 0;
-    struct bound_minimal_symbol pthread_create_sym;
-    struct bound_minimal_symbol rtems_task_start_sym;
+    int saved_async_execution = !sync_execution;
 
     if (exec_file == NULL)
-	error (_("No executable file specified.\n\
-Use the \"file\" or \"exec-file\" command."));
+      error (_("No executable file specified.\nUse the \"file\" or \"exec-file\" command."));
 
-    pthread_create_sym = lookup_minimal_symbol_text ("pthread_create", NULL);
-    rtems_task_start_sym = lookup_minimal_symbol_text ("rtems_task_start", NULL);
-
-    if (pthread_create_sym.minsym || rtems_task_start_sym.minsym) {
-	execute_command (set_non_stop_cmd, 0);
-	execute_command (set_pagination_off_cmd, 0);
-    }
+    k1_push_arch_stratum (NULL, 0);
+    execute_command (set_non_stop_cmd, 0);
+    execute_command (set_pagination_off_cmd, 0);
 
     arg = argv_args;
     while (arg && *arg++) nb_args++;
@@ -424,17 +418,33 @@ Use the \"file\" or \"exec-file\" command."));
 
 	printf_unfiltered ("Could not find %s in you PATH\n", simulation_vehicle);
 	exit (1);
-    } else {
-	int port;
-	char cmd_port[10];
-	
-	close (pipefds[1]);
-	read (pipefds[0], &port, sizeof(port));
-	close (pipefds[0]);
-	
-	sprintf (cmd_port, "%i", port);
-	k1_target_attach (ops, cmd_port, from_tty);
+  }
+  else
+  {
+    int port;
+    char cmd_port[10];
+
+    close (pipefds[1]);
+    read (pipefds[0], &port, sizeof(port));
+    close (pipefds[0]);
+
+    sprintf (cmd_port, "%i", port);
+    k1_target_attach (ops, cmd_port, from_tty);
+    if (current_inferior ())
+    {
+      int gdb_do_one_event (void);
+      struct inferior *inf = current_inferior ();
+      int saved_stop_soon = inf->control.stop_soon;
+
+      inf->control.stop_soon = STOP_QUIETLY;
+      gdb_do_one_event ();
+      inf->control.stop_soon = saved_stop_soon;
+
+      set_stop_requested (minus_one_ptid, 0);
     }
+    if (saved_async_execution)
+      async_enable_stdin ();
+  }
 
 }
 

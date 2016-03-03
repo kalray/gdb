@@ -18,5 +18,5 @@
 int
 main (void)
 {
-  return sleep (600);
+  while (1) ;//return sleep (600);
 }

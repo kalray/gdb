@@ -20,7 +20,12 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "build_type"    => ["Debug", "Can be Release or Debug." ],
                         "clang_dir"     => "",
                         "version"       => ["unknown", "Version of the delivered GDB."],
-                        "variant"       => {"type" => "keywords", "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb, :gdbstub], "default" => "elf", "help" => "Select build variant."},
+                        "variant"       => {
+                          "type" => "keywords",
+                          "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb, :gdbstub],
+                          "default" => :elf,
+                          "help" => "Select build variant."
+                        },
                         "host"          => ["x86", "Host for the build"],
                         "sysroot"       => ["sysroot", "Sysroot directory"],
                         "march_valid"   => ["k1a:k1dp,k1io::k1b:k1bio,k1bdp", "List of mppa_architectures to validate on execution_platform."],
@@ -105,7 +110,7 @@ when "k1"
   when "linux" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    sysroot_option = "--with-sysroot="+options["sysroot"]
+    sysroot_option = "--with-sysroot=#{options['sysroot']} --with-build-sysroot=#{options['sysroot']} "
     mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
   when "elf" then
     build_target = "k1-#{variant}"
@@ -141,11 +146,22 @@ b.target("#{variant}_build") do
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
       b.run(:cmd => "echo #{machine_type}" )
-      b.run(:cmd => "../configure --target=#{build_target} --program-prefix=#{arch}- --disable-werror --without-gnu-as --without-gnu-ld --without-python --with-expat=yes --with-babeltrace=no --with-bugurl=no --prefix=#{gdb_install_prefix}")
+      b.run(:cmd => "../configure " +
+                    "--target=#{build_target} " +
+                    "--program-prefix=#{arch}- " +
+                    "--disable-werror " +
+                    "--without-gnu-as " +
+                    "--without-gnu-ld " +
+                    "--without-python " +
+                    "--with-expat=yes " +
+                    "--with-babeltrace=no " +
+                    "--with-bugurl=no " +
+                    "--prefix=#{gdb_install_prefix}")
+
       b.run(:cmd => "make clean")
       b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
-  else
+  else ## variant != gdb => binutils only
     b.create_goto_dir! build_path
 
     version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
@@ -155,11 +171,21 @@ b.target("#{variant}_build") do
     if (host == "k1-linux") then
       build_host = "--host=k1-linux"
     end
-
-    b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin ../configure --enable-64-bit-bfd --target=#{build_target} #{build_host} --program-prefix=#{program_prefix} --disable-gdb --without-gdb --disable-werror  --prefix=#{gbu_install_prefix} --with-expat=yes --with-babeltrace=no --with-bugurl=no #{sysroot_option}",
-        :skip=>skip_build)
-    b.run(:cmd => "make clean",
-        :skip=>skip_build)
+    b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +
+                  "../configure " +
+                  "--enable-64-bit-bfd " +
+                  "--target=#{build_target} " +
+                  "#{build_host} " +
+                  "--program-prefix=#{program_prefix} " +
+                  "--disable-gdb " +
+                  "--without-gdb " +
+                  "--disable-werror  " +
+                  "--prefix=#{gbu_install_prefix} " +
+                  "--with-expat=yes " +
+                  "--with-babeltrace=no " +
+                  "--with-bugurl=no " +
+                  "#{sysroot_option}",
+          :skip=>skip_build)
 
     if ("#{build_type}" == "Release") then
       additional_flags = "CFLAGS=-O2"
@@ -167,7 +193,13 @@ b.target("#{variant}_build") do
       additional_flags = "CFLAGS=-g"
     end
 
-    b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} #{additional_flags} KALRAY_VERSION=\"#{version}\" all",
+    b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +
+                  "make " +
+                  "FAMDIR='#{family_prefix}' " +
+                  "ARCH=#{arch} " +
+                  "#{additional_flags} " +
+                  "KALRAY_VERSION=\"#{version}\" " +
+                  "all",
         :skip=>skip_build)
 
   end
