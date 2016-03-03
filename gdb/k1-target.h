@@ -8,6 +8,7 @@ struct inferior_data
 {
   const char *cluster;
   int booted;
+  int sym_file_loaded;
   int cluster_debug_level;
   int cluster_debug_level_postponed;
   int os_supported_debug_level;
