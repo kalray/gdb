@@ -1055,7 +1055,7 @@ attach_mppa_command (char *args, int from_tty)
         }
 
         if (file && file[0]) {
-            switch_to_thread (any_thread_of_process (pid)->ptid);
+            switch_to_thread (any_live_thread_of_process (pid)->ptid);
             exec_file_attach ((char *) file, 0);
             symbol_file_add_main (file, 0);
         }
