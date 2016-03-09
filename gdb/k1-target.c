@@ -470,8 +470,8 @@ mppa_target_resume (struct target_ops *ops,
 {
     struct target_ops *remote_target = find_target_beneath(ops);
 
-    if (!after_first_resume && !is_current_k1b_user()) {
-        after_first_resume = 1;
+    if (after_first_resume < 2 && !is_current_k1b_user()) {
+        after_first_resume = 2;
         iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
     }
     
@@ -513,12 +513,26 @@ k1_target_wait (struct target_ops *target,
             const char *cluster = get_osdata_column (item, "cluster");
             int os_debug_level;
             struct inferior_data *data;
-         
+            
             if (pid != ptid_get_pid (res))
                 continue;
 
             data = mppa_inferior_data (inferior);
             data->booted = 1;
+            
+            if (after_first_resume == 1)
+            {
+              if (file && file[0] != 0 && !data->sym_file_loaded)
+              {
+                ptid_t save_ptid = inferior_ptid;
+                data->sym_file_loaded = 1;
+                switch_to_thread (res);
+                exec_file_attach ((char *) file, 0);
+                symbol_file_add_main (file, 0);
+                switch_to_thread (save_ptid);
+              }
+              break;
+            }
             
             //if os support a debug level, set it to the cluster
             os_debug_level = get_os_supported_debug_levels (inferior);
@@ -1027,6 +1041,7 @@ attach_mppa_command (char *args, int from_tty)
     bstopped = 0;
     bcur_inf_stopped = 0;
     osdata = get_osdata (NULL);
+    after_first_resume = 1;
 
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
@@ -1054,10 +1069,19 @@ attach_mppa_command (char *args, int from_tty)
             stopped_ptid = any_live_thread_of_process (pid)->ptid;
         }
 
-        if (file && file[0]) {
-            switch_to_thread (any_live_thread_of_process (pid)->ptid);
+        if (file && file[0])
+        {
+          struct inferior_data *data;
+          
+          switch_to_thread (any_live_thread_of_process (pid)->ptid);
+          data = mppa_inferior_data (current_inferior ());
+          if (!data->sym_file_loaded)
+          {
+            
+            data->sym_file_loaded = 1;
             exec_file_attach ((char *) file, 0);
             symbol_file_add_main (file, 0);
+          }
         }
     }
     if (!bstopped)
