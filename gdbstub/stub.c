@@ -1951,7 +1951,7 @@ static bool handle_vStopped (struct gdbstub *stub)
 
     prepare_to_answer (stub);
     stub->stopped_contexts_iter->notified = 1;
-    if (!append_stop_packet (stub, stub->stopped_contexts_iter, true)) {
+    if (!append_stop_packet (stub, stub->stopped_contexts_iter, false)) {
         stub->error = "Invalid context state in vStopped packet";
         return send_err (stub, 0) ;
     } 
