@@ -152,7 +152,7 @@ b.target("#{variant}_build") do
                     "--disable-werror " +
                     "--without-gnu-as " +
                     "--without-gnu-ld " +
-                    "--without-python " +
+                    "--with-python " +
                     "--with-expat=yes " +
                     "--with-babeltrace=no " +
                     "--with-bugurl=no " +
@@ -335,7 +335,7 @@ b.target("gdb_long_valid") do
     # Validation in the valid project
     b.create_goto_dir! build_path
     # Build native, just to create the build directories
-    b.run("../configure --without-gnu-as --without-gnu-ld --without-python")
+    b.run("../configure --without-gnu-as --without-gnu-ld --with-python")
     b.run("make")
     march_valid_list.each do |march|
       extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board}'"
