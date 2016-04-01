@@ -35,6 +35,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                           "default" => "sim",
                           "help" => "Execution platform: can be hardware (jtag) or simulation (k1-mppa, k1-cluster)."
                         },
+                        "artifacts"     => {"type" => "string", "default" => "", "help" => "Artifacts path given by Jenkins."}
                       })
 
 workspace = options["workspace"]
@@ -273,6 +274,11 @@ b.target("#{variant}_post_build_valid") do
 
         b.valid(:cmd => cmd)
         b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
+        
+        if( not options["artifacts"].empty? )
+          b.valid(:cmd => "cp gdb.log #{File.expand_path($options["artifacts"])}" )
+        end
+
       end
     end
   end
@@ -361,6 +367,11 @@ b.target("gdb_long_valid") do
                     "RUNTESTFLAGS=\"#{extra_flags} --tool_exec=k1-gdb --target_board=#{execution_board}  gdb.base/*.exp gdb.mi/*.exp gdb.kalray/*.exp\" ; " +
                     "true")
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
+
+      if( not options["artifacts"].empty? )
+        b.valid(:cmd => "cp gdb.log #{File.expand_path($options["artifacts"])}" )
+      end
+
     end
   end
 end

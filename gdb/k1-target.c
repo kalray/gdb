@@ -1073,7 +1073,7 @@ attach_mppa_command (char *args, int from_tty)
         {
           struct inferior_data *data;
           
-          switch_to_thread (any_thread_of_process (pid)->ptid);
+          switch_to_thread (any_live_thread_of_process (pid)->ptid);
           data = mppa_inferior_data (current_inferior ());
           if (!data->sym_file_loaded)
           {
