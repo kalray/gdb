@@ -604,6 +604,48 @@ static void inform_dsu_stepi_bkp (void)
   free (buf);
 }
 
+char *send_get_dev_list_string (const char *full_name)
+{
+  long size = 4096, len, result_size = 0;
+  char *result = strdup (""), *buf = (char *) malloc (size);
+
+  while (1)
+  {
+    sprintf (buf, "kl:%lx,%lx:%s", result_size, size - 4, full_name);
+    putpkt (buf);
+    getpkt (&buf, &size, 0);
+
+    len = strlen (buf);
+    if (len <= 1)
+      break;
+
+    result = realloc (result, result_size + len);
+    strcpy (result + result_size, buf + 1);
+    result_size += len - 1;
+  }
+
+  return result;
+}
+
+int send_set_kwatch (const char *full_name, int watch_type, int bset, char **err_msg)
+{
+  long len = strlen (full_name), size = len + 300;
+  char *buf = (char *) malloc (size);
+  int ret;
+
+  sprintf (buf, "kW%d%d:%s", watch_type, bset, full_name);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+
+  ret = strcmp (buf, "OK");
+  if (ret && err_msg)
+    *err_msg = strdup (buf + 3);
+
+  free (buf);
+
+  return ret;
+}
+
 #if 0
 static int get_intsys_handlers (CORE_ADDR *hsys, CORE_ADDR *hint, CORE_ADDR *hev)
 {

@@ -106,6 +106,9 @@ typedef errcode_t (*da_get_cpu_exec_level_t) (debug_agent_t *self, int vehicle, 
 typedef errcode_t (*da_set_stop_at_main_t) (debug_agent_t *self, int bstop);
 typedef int (*da_get_rm_idx_t) (debug_agent_t *self);
 typedef int (*is_hot_attached_t) (debug_agent_t *self);
+typedef char *(*da_get_device_list_t) (debug_agent_t *self, const char *device_full_name);
+typedef errcode_t (*da_set_kwatch_t) (debug_agent_t *da, const char *full_name, int watch_type,
+  int bset, char **err_msg);
 
 /**
  * @struct debug_agent_interface_t
@@ -163,6 +166,8 @@ typedef struct {
   da_set_stop_at_main_t set_stop_at_main;
   da_get_rm_idx_t get_rm_idx;
   is_hot_attached_t is_hot_attached;
+  da_get_device_list_t get_device_list;
+  da_set_kwatch_t set_kwatch;
 } debug_agent_interface_t;
 
 #ifdef	__cplusplus

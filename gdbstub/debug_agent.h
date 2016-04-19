@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include "debug_agent_interface.h"
 #include "debug_common.h"
 #include "mppa_multiloader.h"
@@ -329,6 +330,26 @@ static inline int debug_agent_is_hot_attached (debug_agent_t *da)
     return da->interface.is_hot_attached (da);
 
   return 0;
+}
+
+static inline char *debug_agent_get_device_list (debug_agent_t *da, const char *device_full_name)
+{
+  if (da->interface.get_device_list)
+    return da->interface.get_device_list (da, device_full_name);
+
+  return NULL;
+}
+
+static inline errcode_t debug_agent_set_kwatch (debug_agent_t *da, const char *full_name,
+  int watch_type, int bset, char **err_msg)
+{
+  if (da->interface.set_kwatch)
+    return da->interface.set_kwatch (da, full_name, watch_type, bset, err_msg);
+
+  if (err_msg)
+    *err_msg = strdup ("not implemented");
+
+  return RET_ABORT;
 }
 
 #ifdef	__cplusplus

@@ -35,6 +35,7 @@
 #include <poll.h>
 #include <ctype.h>
 #include <string.h>
+#include <readline/chardefs.h>
 
 #include "gdbstub.h"
 #include "debug_agent.h"
@@ -1245,6 +1246,58 @@ static bool kalray_get_intsys_handlers (struct gdbstub *stub)
   return send_answer (stub);
 }
 
+static bool kalray_get_device_list (struct gdbstub *stub)
+{
+  char *sep, *device_full_name, *list = NULL;
+  long offset = 0, length = 0;
+
+  offset = strtol (stub->payload + 3, &sep, 16); // format: kl:<ofs>,<size>:<device_full_name>
+  if (*sep != ',')
+    goto err;
+
+  length = strtol (sep + 1, &sep, 16);
+  if (*sep != ':')
+    goto err;
+
+  device_full_name = sep + 1;
+  sep = strchr (device_full_name, '#');
+  if (!sep)
+    goto err;
+  *sep = 0;
+
+  prepare_to_answer (stub);
+  list = debug_agent_get_device_list (stub->agents[0].agent, device_full_name);
+  if (!list || offset >= strlen (list))
+    nprintf_packet (stub, length, "l");
+  else
+    nprintf_packet (stub, length, "m%s", list + offset);
+
+  if (list)
+    free (list);
+
+  return send_answer (stub);
+
+err:
+  stub->error = "Invalid kl (get_device_list) packet!";
+  return send_err (stub, 0);
+}
+
+static bool kalray_set_kwatch (struct gdbstub *stub)
+{
+  int watch_type = stub->payload[2] - '0'; // format: kW<type><set>:<reg_full_name>
+  int bset = stub->payload[3] - '0';
+  char *full_name = stub->payload + 5, *err_msg = NULL;
+
+  if (!debug_agent_set_kwatch (stub->agents[0].agent, full_name, watch_type, bset, &err_msg))
+    return send_ok (stub);
+
+  prepare_to_answer (stub);
+  nprintf_packet (stub, 290, "E00%s", err_msg ? err_msg : "");
+  if (err_msg)
+    free (err_msg);
+  return send_answer (stub);
+}
+
 static bool kalray_get_vehicle_modes_seen (struct gdbstub *stub)
 {
   struct context ctxt;
@@ -2095,12 +2148,16 @@ bool handle_command (struct gdbstub *stub)
           return kalray_set_debug_level (stub);
         case 'h':
           return kalray_get_intsys_handlers (stub);
+        case 'l':
+          return kalray_get_device_list (stub);
         case 'm':
           return kalray_get_vehicle_modes_seen (stub);
         case 'P':
           return kalray_set_postponed_debug_level (stub);
         case 's':
           return kalray_set_stop_at_main (stub);
+        case 'W':
+          return kalray_set_kwatch (stub);
         default:
           goto unknown;
       }
