@@ -28,7 +28,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         },
                         "host"          => ["x86", "Host for the build"],
                         "sysroot"       => ["sysroot", "Sysroot directory"],
-                        "march_valid"   => ["k1a:k1dp,k1io::k1b:k1bio,k1bdp", "List of mppa_architectures to validate on execution_platform."],
+                        "march_valid"   => ["k1b:k1bio,k1bdp", "List of mppa_architectures to validate on execution_platform."],
                         "execution_platform" => {
                           "type" => "keywords",
                           "keywords" => [:hw, :sim],
