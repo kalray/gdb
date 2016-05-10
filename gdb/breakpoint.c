@@ -9136,9 +9136,15 @@ add_location_to_breakpoint (struct breakpoint *b,
   struct bp_location *loc, **tmp;
   CORE_ADDR adjusted_address;
   struct gdbarch *loc_gdbarch = get_sal_arch (*sal);
+  struct cleanup *cleanup = NULL;
 
   if (loc_gdbarch == NULL)
     loc_gdbarch = b->gdbarch;
+
+  // adjust_breakpoint_address may call target_read_memory. Make sure that it is called from the correct context
+  cleanup = save_current_space_and_thread ();
+  if (sal && sal->pspace)
+    switch_to_program_space_and_thread (sal->pspace);
 
   /* Adjust the breakpoint's address prior to allocating a location.
      Once we call allocate_bp_location(), that mostly uninitialized
@@ -9148,6 +9154,8 @@ add_location_to_breakpoint (struct breakpoint *b,
      location that's only been partially initialized.  */
   adjusted_address = adjust_breakpoint_address (loc_gdbarch,
 						sal->pc, b->type);
+  if (cleanup)
+    do_cleanups (cleanup);
 
   /* Sort the locations by their ADDRESS.  */
   loc = allocate_bp_location (b);
