@@ -69,6 +69,7 @@ typedef const char *(*da_get_core_t) (debug_agent_t *self);
 typedef char **   (*da_get_vehicles_t) (debug_agent_t *self);
 typedef const char *(*da_get_cluster_name_t) (debug_agent_t *da);
 typedef bool      (*da_is_async_t) (debug_agent_t *self);
+typedef bool      (*da_fake_pcie_spawn_t) (debug_agent_t *self);
 typedef core_register_descr_t *(*da_register_names_t) (debug_agent_t *self, int vehicle);
 typedef int       (*da_get_register_index_t) (debug_agent_t *self, int vehicle, char *reg_name);
 typedef errcode_t (*da_read_register_t) (debug_agent_t *self, int vehicle, int regnum, reg_t *buf);
@@ -127,6 +128,7 @@ typedef struct {
   da_get_cluster_name_t get_cluster_name;
   da_register_names_t register_names;
   da_is_async_t is_async;
+  da_fake_pcie_spawn_t fake_pcie_spawn;
 
   da_get_register_index_t get_register_index;
   da_read_register_t read_register;
