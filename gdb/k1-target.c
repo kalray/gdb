@@ -1148,6 +1148,192 @@ static void mppa_observer_breakpoint_deleted (struct breakpoint *b)
   }
 }
 
+struct k1_dev_list
+{
+  int loaded;
+  struct k1_dev_list *first_child;
+  char *full_name;
+  char *short_name; // points inside full_name, must not be freed
+  struct k1_dev_list *next;
+};
+struct k1_dev_list *head_k1_dev_list = NULL;
+
+static void
+k1_fill_dev_list (struct k1_dev_list *dev)
+{
+  char *s, *crt_text, *sep;
+  struct k1_dev_list **prev_dev, *crt_dev;
+  int len;
+
+  if (dev->loaded)
+    return;
+
+  s = send_get_dev_list_string (dev->full_name);
+  if (!s)
+    return;
+
+  dev->loaded = 1;
+  if (!*s)
+    return;
+
+  len = strlen (dev->full_name);
+  for (crt_text = s, prev_dev = &dev->first_child; crt_text; crt_text = sep + 1, prev_dev = &crt_dev->next)
+  {
+    sep = strchr (crt_text, ';');
+    if (sep)
+      *sep = 0;
+
+    crt_dev = (struct k1_dev_list *) calloc (1, sizeof (struct k1_dev_list));
+    crt_dev->full_name = (char *) malloc (len + 1 + strlen (crt_text) + 1);
+    if (len)
+    {
+      sprintf (crt_dev->full_name, "%s.%s", dev->full_name, crt_text);
+      crt_dev->short_name = crt_dev->full_name + len + 1;
+    }
+    else
+    {
+      strcpy (crt_dev->full_name, crt_text);
+      crt_dev->short_name = crt_dev->full_name;
+    }
+
+    *prev_dev = crt_dev;
+
+    if (!sep)
+      break;
+  }
+
+  free (s);
+}
+
+static void
+k1_rec_destroy_dev_list (struct k1_dev_list *dev)
+{
+  struct k1_dev_list *child, *next;
+
+  for (child = dev->first_child; child; child = next)
+  {
+    next = child->next; //get next child as the current child will be destroyed after the next line
+    k1_rec_destroy_dev_list (child);
+  }
+
+  free (dev->full_name);
+  free (dev);
+}
+
+static void
+k1_destroy_dev_list (void)
+{
+  if (head_k1_dev_list)
+    k1_rec_destroy_dev_list (head_k1_dev_list);
+  head_k1_dev_list = NULL;
+}
+
+static void
+kwatch_command (char *arg, int from_tty)
+{
+  char *err_msg = NULL;
+  int id = 1;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    error ("Cannot add a kalray watchpoint without being attached");
+    return;
+  }
+
+  if (send_set_kwatch (arg, 0 /*type=kwatch*/, 1 /*set*/, &err_msg))
+  {
+    printf ("Error adding kalray watchpoint %s: %s\n", arg, err_msg ? err_msg : "Unspecified error");
+    if (err_msg)
+      free (err_msg);
+    return;
+  }
+
+  printf ("kwatchpoint %d: %s\n", id, arg);
+}
+
+static VEC (char_ptr) *
+k1_dev_completer (struct cmd_list_element *ignore, const char *text, const char *word)
+{
+  VEC (char_ptr) *result = NULL;
+  struct k1_dev_list *crt_dev;
+  char *point_text, *copy_text, *crt_text, *stmp;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return NULL;
+
+  if (!strcmp (ignore->name, "kwatch"))
+    copy_text = strdup (text);
+  else
+  {
+    // if multiple devs accepted by the command
+    for (stmp = (char *) word; stmp > text && *stmp != ' ' && *stmp != '\t'; stmp--)
+      ;
+    if (stmp > text)
+      stmp++;
+    copy_text = strdup (stmp);
+  }
+  crt_text = copy_text;
+
+  if (!head_k1_dev_list)
+  {
+    head_k1_dev_list = (struct k1_dev_list *) calloc (1, sizeof (struct k1_dev_list));
+    head_k1_dev_list->full_name = head_k1_dev_list->short_name = strdup ("");
+  }
+  crt_dev = head_k1_dev_list;
+
+  do
+  {
+    k1_fill_dev_list (crt_dev);
+
+    point_text = strchr (crt_text, '.');
+    if (point_text)
+    {
+      *point_text = 0;
+      for (crt_dev = crt_dev->first_child; crt_dev && strcmp (crt_dev->short_name, crt_text); crt_dev = crt_dev->next)
+        ;
+      if (!crt_dev)
+        break;
+      crt_text = point_text + 1;
+    }
+    else
+    {
+      struct k1_dev_list *last_pushed_dev = NULL;
+      int len = strlen (crt_text);
+
+      for (crt_dev = crt_dev->first_child; crt_dev; crt_dev = crt_dev->next)
+      {
+        if (!strncmp (crt_dev->short_name, crt_text, len))
+        {
+          last_pushed_dev = crt_dev;
+          VEC_safe_push (char_ptr, result, strdup (crt_dev->short_name));
+        }
+      }
+
+      if (VEC_length (char_ptr, result) == 1)
+      {
+        k1_fill_dev_list (last_pushed_dev);
+        if (last_pushed_dev->first_child)
+        {
+          free (VEC_pop (char_ptr, result));
+          len = strlen (last_pushed_dev->short_name);
+          stmp = (char *) malloc (len + 3);
+          strcpy (stmp, last_pushed_dev->short_name);
+
+          strcpy (stmp + len, ".");
+          VEC_safe_push (char_ptr, result, strdup (stmp));
+          strcpy (stmp + len, ".X"); // prevent readline to add a space
+          VEC_safe_push (char_ptr, result, strdup (stmp));
+          free (stmp);
+        }
+      }
+    }
+  } while (point_text);
+
+  free (copy_text);
+
+  return result;
+}
+
 void
 _initialize__k1_target (void)
 {
@@ -1241,6 +1427,12 @@ Usage is `attach-mppa PORT'."));
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));
 
+  {
+    struct cmd_list_element *c = add_com ("kwatch", class_breakpoint, kwatch_command,
+      _("Set watchpoint for a device registry (currently implemented only for simulator)."));
+    set_cmd_completer (c, k1_dev_completer);
+    atexit (k1_destroy_dev_list);
+  }
 
     observer_attach_inferior_created (k1_push_arch_stratum);
     k1_attached_inf_data = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
