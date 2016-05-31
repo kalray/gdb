@@ -41,7 +41,7 @@
 #include "event-loop.h"
 
 #include "elf/k1b.h"
-#include "opcode/k1.h"
+#include "opcode/k1b.h"
 #include "k1-target.h"
 #include "gdbthread.h"
 
@@ -77,27 +77,27 @@ struct k1_frame_cache
     CORE_ADDR saved_sp;
 };
 
-extern const char *k1_pseudo_register_name (struct gdbarch *gdbarch,
+extern const char *k1b_pseudo_register_name (struct gdbarch *gdbarch,
 					    int regnr);
-extern struct type *k1_pseudo_register_type (struct gdbarch *gdbarch, 
+extern struct type *k1b_pseudo_register_type (struct gdbarch *gdbarch, 
 					     int reg_nr);
-extern int k1_pseudo_register_reggroup_p (struct gdbarch *gdbarch, 
+extern int k1b_pseudo_register_reggroup_p (struct gdbarch *gdbarch, 
 					  int regnum, 
 					  struct reggroup *reggroup);
 
-extern enum register_status k1_pseudo_register_read (struct gdbarch *gdbarch, 
+extern enum register_status k1b_pseudo_register_read (struct gdbarch *gdbarch, 
 				     struct regcache *regcache,
 				     int regnum, gdb_byte *buf);
 
-extern void k1_pseudo_register_write (struct gdbarch *gdbarch, 
+extern void k1b_pseudo_register_write (struct gdbarch *gdbarch, 
 				      struct regcache *regcache,
 				      int regnum, const gdb_byte *buf);
 
-extern int k1_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
+extern int k1b_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
 
-extern const int k1_num_pseudos (struct gdbarch *);
-extern const char *k1_pc_name (struct gdbarch *);
-extern const char *k1_sp_name (struct gdbarch *);
+extern const int k1b_num_pseudos (struct gdbarch *);
+extern const char *k1b_pc_name (struct gdbarch *);
+extern const char *k1b_sp_name (struct gdbarch *);
 
 struct op_list {
     k1opc_t        *op;
@@ -105,8 +105,6 @@ struct op_list {
 };
 
 static enum K1_ARCH {
-    K1_K1DP,
-    K1_K1IO,
     K1_K1BDP,
     K1_K1BIO,
     K1_NUM_ARCHES
@@ -153,11 +151,7 @@ k1_arch (void)
     else if (desc && tdesc_architecture (desc))
     {
         const char *name = tdesc_architecture (desc)->printable_name;
-        if (!strcmp (name, "k1:k1dp") || !strcmp (name, "k1"))
-            k1_current_arch = K1_K1DP;
-        else if (!strcmp (name, "k1:k1io"))
-            k1_current_arch = K1_K1IO;
-        else if (!strcmp (name, "k1:k1bdp"))
+        if (!strcmp (name, "k1:k1bdp"))
             k1_current_arch = K1_K1BDP;
         else if (!strcmp (name, "k1:k1bio"))
             k1_current_arch = K1_K1BIO;
@@ -249,16 +243,6 @@ static int k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 
     typedef struct op_list_desc prologue_ops[NUM_INSN_LISTS];
     prologue_ops prologue_insns_full[] = { 
-        [K1_K1DP] = {
-	  { sp_adjust_insns[K1_K1DP], 0 /* Dest register */},
-	  { sp_store_insns[K1_K1DP], 1 /* Base register */},
-	  { prologue_helper_insns[K1_K1DP], -1 /* unused */},
-        },
-        [K1_K1IO] = {
-	  { sp_adjust_insns[K1_K1IO], 0 /* Dest register */},
-	  { sp_store_insns[K1_K1IO], 1 /* Base register */},
-	  { prologue_helper_insns[K1_K1IO], -1 /* unused */},
-        },
         [K1_K1BIO] = {
 	  { sp_adjust_insns[K1_K1BIO], 0 /* Dest register */},
 	  { sp_store_insns[K1_K1BIO], 1 /* Base register */},
@@ -1299,8 +1283,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep = xzalloc (sizeof (struct gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
 
-  pc_name = k1_pc_name (gdbarch);
-  sp_name = k1_sp_name (gdbarch);
+  pc_name = k1b_pc_name (gdbarch);
+  sp_name = k1b_sp_name (gdbarch);
   mach = gdbarch_bfd_arch_info (gdbarch)->mach;
   bis_k1b_user = (mach == bfd_mach_k1bdp_usr || mach == bfd_mach_k1bio_usr);
 
@@ -1385,16 +1369,16 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
 
-  set_gdbarch_num_pseudo_regs (gdbarch, k1_num_pseudos (gdbarch));
+  set_gdbarch_num_pseudo_regs (gdbarch, k1b_num_pseudos (gdbarch));
 
-  set_tdesc_pseudo_register_name (gdbarch, k1_pseudo_register_name);
-  set_tdesc_pseudo_register_type (gdbarch, k1_pseudo_register_type);
+  set_tdesc_pseudo_register_name (gdbarch, k1b_pseudo_register_name);
+  set_tdesc_pseudo_register_type (gdbarch, k1b_pseudo_register_type);
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
-					k1_pseudo_register_reggroup_p);
+					k1b_pseudo_register_reggroup_p);
 
-  set_gdbarch_pseudo_register_read (gdbarch, k1_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, k1_pseudo_register_write);
-  set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1_dwarf2_reg_to_regnum);
+  set_gdbarch_pseudo_register_read (gdbarch, k1b_pseudo_register_read);
+  set_gdbarch_pseudo_register_write (gdbarch, k1b_pseudo_register_write);
+  set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1b_dwarf2_reg_to_regnum);
   dwarf2_frame_set_init_reg (gdbarch, k1_dwarf2_frame_init_reg);
 
   set_gdbarch_return_value (gdbarch, k1_return_value);
@@ -1446,10 +1430,8 @@ static void k1_look_for_insns (void)
         k1opc_t *op;
         
         switch (i) {
-        case K1_K1DP: op = k1a_k1optab; break;
-        case K1_K1IO: op = k1a_k1optab; break;
-        case K1_K1BDP: op = k1b_k1optab; break;
-        case K1_K1BIO: op = k1b_k1optab; break;
+        case K1_K1BDP: op = k1bdp_k1optab; break;
+        case K1_K1BIO: op = k1bio_k1optab; break;
         default: internal_error (__FILE__, __LINE__, "Unknown arch id.");
         }
         

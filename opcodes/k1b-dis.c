@@ -141,98 +141,6 @@ static bundle_t bundle_insn[MAXBUNDLESIZE];
 
 typedef int (*reassemble_bundle_t)(unsigned int *opcnt);
 
-static int k1a_reassemble_bundle(unsigned int *opcnt) {
-    unsigned int i;
-    unsigned int insncnt = 0;
-    unsigned int immxcnt = 0;
-    int seen[4];
-    int real_alu = 0;
-    unsigned int bundle_immx[MAXIMMX];
-    unsigned int opxd_mask   = 0x7803e000;
-    unsigned int opxd_opcode = 0x7803e000;
-    int has_opxd = 0;
-
-    for(i=0; i < 4; i++){
-        seen[i] = 0;
-    }
-
-    // First separate instructions and immx
-    for(i=0; i < *opcnt; i++){
-        if((GETSTEERING(bundle_ops[i]) == BCU_STEER) && (i > 0) && (immxcnt < MAXIMMX)){ // op has BCU steering and is not in slot 0 => IMMX
-            bundle_immx[immxcnt] = bundle_ops[i];
-            immxcnt++;
-        } else {
-            if((bundle_ops[i] & opxd_mask) == opxd_opcode){
-                if (insncnt == 0) /*something is wrong, probably we're in data section */
-                  return 1;
-                has_opxd = 1;
-                bundle_insn[insncnt - 1].insn[1] = bundle_ops[i];
-                bundle_insn[insncnt - 1].len = 2;
-            } else {
-                bundle_insn[insncnt].insn[0] = bundle_ops[i];
-                bundle_insn[insncnt].len = 1;
-                insncnt++;
-            }
-            seen[GETSTEERING(bundle_ops[i])]++;
-        }
-        if((bundle_ops[i] & 0x80000000) == 0){
-            break; // No more // bit, reached the end.
-        }
-    }
-
-    // Do some check. Useful if trying to disass data section, where bundles have no meaning
-    if(  (seen[BCU_STEER] > (MAXIMMX + 1))  // One BCU and MAXIMMX is the maximum BCU_STEER authorized
-       ||(seen[ALU_STEER] > 4)              // 2 ALU + 2 LITE
-       || (seen[MAU_STEER] > 1)             // 1 MAU
-       || (seen[LSU_STEER] > 1)){          // 1 LSU
-        return 1;
-    }
-
-    real_alu = (seen[ALU_STEER] > 2) ? 2 : seen[ALU_STEER]; // See how many real ALU are used
-    real_alu -= has_opxd;
-
-    // Get immx with their insn
-    for(i=0; i < immxcnt; i++){
-        switch(GETEXU(bundle_immx[i])){ // Get steering bit
-            case ALU0_EXU:
-                bundle_insn[seen[BCU_STEER]].insn[1 + has_opxd] = bundle_immx[i]; // If opxd, first slot is already taken by OPXD opcode
-                bundle_insn[seen[BCU_STEER]].len = 2 + has_opxd;
-                break;
-            case ALU1_EXU:
-                if(has_opxd){ // 128 insn for 64 bit immx
-                    bundle_insn[seen[BCU_STEER]].insn[3] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER]].len = 4;
-                } else {
-                    bundle_insn[seen[BCU_STEER] + 1].insn[1] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER] + 1].len = 2;
-                }
-                break;
-            case LSU_EXU:
-                if(seen[LSU_STEER]){
-                    // We know there is a LSU insn : find it
-                    bundle_insn[seen[BCU_STEER] + real_alu + seen[MAU_STEER]].insn[1] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER] + real_alu + seen[MAU_STEER]].len = 2;
-                } else { // LITE insn on LSU has to be the last ALU insn
-                    bundle_insn[seen[BCU_STEER] + seen[ALU_STEER] - 1 - has_opxd + seen[MAU_STEER]].insn[1] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER] + seen[ALU_STEER] - 1 - has_opxd + seen[MAU_STEER]].len = 2;
-                }
-                break;
-            case MAU_EXU:
-                if(seen[MAU_STEER]){
-                    bundle_insn[seen[BCU_STEER] + real_alu].insn[1] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER] + real_alu].len = 2;
-                } else { // LITE insn on MAU : 2 ALU are full, and insn is right after LSU (if present)
-                    bundle_insn[seen[BCU_STEER] + real_alu + seen[LSU_STEER]].insn[1] = bundle_immx[i];
-                    bundle_insn[seen[BCU_STEER] + real_alu + seen[LSU_STEER]].len = 2;
-                }
-                break;
-        }
-    }
-
-    *opcnt = insncnt;
-    return 0;
-}
-
 static int k1b_steering(unsigned int x) {
   return (((x) & 0x60000000) >> 29);
 }
@@ -564,30 +472,15 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   }
 
   switch (info->mach) {
-    case bfd_mach_k1dp:
-      opc_table = k1a_k1optab;
-      k1_regfiles = k1_k1a_regfiles;
-      k1_registers = k1_k1a_registers;
-      k1_dec_registers = k1_k1a_dec_registers;
-      reassemble_bundle = k1a_reassemble_bundle;
-      break;
-
-    case bfd_mach_k1io:
-      opc_table = k1a_k1optab;
-      k1_regfiles = k1_k1a_regfiles;
-      k1_registers = k1_k1a_registers;
-      k1_dec_registers = k1_k1a_dec_registers;
-      reassemble_bundle = k1a_reassemble_bundle;
-      break;
 
     case bfd_mach_k1bdp_64:
       k1_arch_size = 64;
     case bfd_mach_k1bdp_usr:
     case bfd_mach_k1bdp:
-      opc_table = k1b_k1optab;
-      k1_regfiles = k1_k1b_regfiles;
-      k1_registers = k1_k1b_registers;
-      k1_dec_registers = k1_k1b_dec_registers;
+      opc_table = k1bdp_k1optab;
+      k1_regfiles = k1_k1bdp_regfiles;
+      k1_registers = k1_k1bdp_registers;
+      k1_dec_registers = k1_k1bdp_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
 
@@ -595,10 +488,10 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
       k1_arch_size = 64;
     case bfd_mach_k1bio_usr:
     case bfd_mach_k1bio:
-      opc_table = k1b_k1optab;
-      k1_regfiles = k1_k1b_regfiles;
-      k1_registers = k1_k1b_registers;
-      k1_dec_registers = k1_k1b_dec_registers;
+      opc_table = k1bdp_k1optab;
+      k1_regfiles = k1_k1bio_regfiles;
+      k1_registers = k1_k1bio_registers;
+      k1_dec_registers = k1_k1bio_dec_registers;
       reassemble_bundle = k1b_reassemble_bundle;
       break;
 
@@ -638,7 +531,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               return -1;
           }
           opcnt++;
-      } while (k1_parallel_fld(bundle_ops[opcnt-1]) && opcnt < MAXBUNDLESIZE);
+      } while (k1b_parallel_fld(bundle_ops[opcnt-1]) && opcnt < MAXBUNDLESIZE);
       invalid_bundle = reassemble_bundle(&opcnt);
   }
   assert(opindex < MAXBUNDLESIZE);
