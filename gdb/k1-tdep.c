@@ -142,10 +142,6 @@ k1_arch (void)
 
     if (exec_bfd) {
         switch (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK) {
-        case ELF_K1_CORE_DP:
-            k1_current_arch = K1_K1DP; break;
-        case ELF_K1_CORE_IO:
-            k1_current_arch = K1_K1IO; break;
         case ELF_K1_CORE_B_DP:
             k1_current_arch = K1_K1BDP; break;
         case ELF_K1_CORE_B_IO:

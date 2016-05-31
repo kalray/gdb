@@ -345,11 +345,6 @@ static void k1_target_create_inferior (struct target_ops *ops,
 
     if(!no_march)
       switch(core) {
-	case ELF_K1_CORE_DP:          
-	case ELF_K1_CORE_IO:
-	    stub_args[argidx++] = "--march=andey";
-	    break;
-
 	case ELF_K1_CORE_B_DP:
 	case ELF_K1_CORE_B_IO:
 	    stub_args[argidx++] = "--march=bostan";
@@ -361,12 +356,10 @@ static void k1_target_create_inferior (struct target_ops *ops,
     if (!no_mcluster)
 	switch (core) {
 	case ELF_K1_CORE_B_DP:
-	case ELF_K1_CORE_DP:          
 	    stub_args[argidx++] = "--mcluster=node";
 	    break;
 
 	case ELF_K1_CORE_B_IO:
-	case ELF_K1_CORE_IO:
 	    stub_args[argidx++] = "--mcluster=ioddr";
 	    break;
 

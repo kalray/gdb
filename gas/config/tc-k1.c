@@ -1049,38 +1049,36 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	case RegClass_ ## core ## _onlyfxReg:
 
         switch (operand_type) {
-            case RegClass_k1_singleReg:
+            case RegClass_k1b_singleReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
-            case RegClass_k1_pairedReg:
+            case RegClass_k1b_pairedReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
-			SRF_REGCLASSES(k1)
 			SRF_REGCLASSES(k1b)
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
-            case RegClass_k1_remoteReg:
+            case RegClass_k1b_remoteReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
 
-            case Immediate_k1_flagmask2:
-            case Immediate_k1_brknumber:
-            case Immediate_k1_sysnumber:
-            case Immediate_k1_signed5:
-            case Immediate_k1_unsigned5:
-            case Immediate_k1_unsigned6:
-            case Immediate_k1_eventmask2:
-            case Immediate_k1_unsigned16:
-            case Immediate_k1_unsigned32:
-            case Immediate_k1_unsigned32L:
-            case Immediate_k1_signed32M:
-            case Immediate_k1_signed8:
-            case Immediate_k1_signed11:
-            case Immediate_k1_signed16:
-            case Immediate_k1_signed10:
-            case Immediate_k1_signed32:
-            case Immediate_k1_signed37:
-            case Immediate_k1_signed43:
-            case Immediate_k1_pcrel17:
-            case Immediate_k1_pcrel18:
-            case Immediate_k1_pcrel27:
-            case Immediate_k1_signed27:
+            case Immediate_k1b_flagmask2:
+            case Immediate_k1b_brknumber:
+            case Immediate_k1b_sysnumber:
+            case Immediate_k1b_signed5:
+            case Immediate_k1b_unsigned5:
+            case Immediate_k1b_unsigned6:
+            case Immediate_k1b_eventmask2:
+            case Immediate_k1b_unsigned16:
+            case Immediate_k1b_unsigned32:
+            case Immediate_k1b_unsigned32L:
+            case Immediate_k1b_signed32M:
+            case Immediate_k1b_signed8:
+            case Immediate_k1b_signed11:
+            case Immediate_k1b_signed16:
+            case Immediate_k1b_signed10:
+            case Immediate_k1b_signed32:
+            case Immediate_k1b_signed37:
+            case Immediate_k1b_signed43:
+            case Immediate_k1b_pcrel17:
+            case Immediate_k1b_pcrel27:
+            case Immediate_k1b_signed27:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
                 }
@@ -1267,32 +1265,26 @@ insert_operand(k1insn_t * insn,
             {
 	      switch (opdef->type)
                 {
-		case Immediate_k1_pcrel17:
+		case Immediate_k1b_pcrel17:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
-		case Immediate_k1_pcrel18:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_18_PCREL;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->nfixups = 1;
-		  break;
-		case Immediate_k1_pcrel27:
+		case Immediate_k1b_pcrel27:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
-		case Immediate_k1_signed27:
+		case Immediate_k1b_signed27:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1B */
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
 
-		case Immediate_k1_signed32:
+		case Immediate_k1b_signed32:
 
 		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
@@ -1309,7 +1301,7 @@ insert_operand(k1insn_t * insn,
 		  immx_ready = 1;
 		  // fallthough
 		  
-		case Immediate_k1_signed10:
+		case Immediate_k1b_signed10:
 		  /* if (k1_arch_size == 32){ */
 		  insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 		  insn->fixup[0].exp = *arg;
@@ -1318,7 +1310,7 @@ insert_operand(k1insn_t * insn,
 
 		  break;
 
-		case Immediate_k1_signed37:
+		case Immediate_k1b_signed37:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
@@ -1339,7 +1331,7 @@ insert_operand(k1insn_t * insn,
 		  immx_ready = 1;
 		  break;
 		  
-		case Immediate_k1_signed43:
+		case Immediate_k1b_signed43:
 		  /* } else { */
 		  insn->fixup[0].reloc = BFD_RELOC_K1_ELO10;
 		  insn->fixup[0].exp = *arg;
@@ -1874,32 +1866,32 @@ assemble_tokens(const char *opname,
 static int
 k1a_is_equivalent_bundle(Bundling b1, Bundling b2){
     switch(b1){
-        case Bundling_k1_BCU:
-            if(b2 == Bundling_k1_BCU){
+        case Bundling_k1b_BCU:
+            if(b2 == Bundling_k1b_BCU){
                 return 1;
             } else {
                 return 0;
             }
-        case Bundling_k1_ALU:
-            if(b2 == Bundling_k1_ALU || b2 == Bundling_k1_ALU_X){
+        case Bundling_k1b_ALU:
+            if(b2 == Bundling_k1b_ALU || b2 == Bundling_k1b_ALU_X){
                 return 1;
             } else {
                 return 0;
             }
-        case Bundling_k1_ALUD:
-            if(b2 == Bundling_k1_ALUD || b2 == Bundling_k1_ALUD_Z || b2 == Bundling_k1_ALUD_Y){
+        case Bundling_k1b_ALUD:
+            if(b2 == Bundling_k1b_ALUD || b2 == Bundling_k1b_ALUD_Z || b2 == Bundling_k1b_ALUD_Y){
                 return 1;
             } else {
                 return 0;
             }
-        case Bundling_k1_MAU:
-            if(b2 == Bundling_k1_MAU || b2 == Bundling_k1_MAU_X){
+        case Bundling_k1b_MAU:
+            if(b2 == Bundling_k1b_MAU || b2 == Bundling_k1b_MAU_X){
                 return 1;
             } else {
                 return 0;
             }
-        case Bundling_k1_LSU:
-            if(b2 == Bundling_k1_LSU || b2 == Bundling_k1_LSU_X){
+        case Bundling_k1b_LSU:
+            if(b2 == Bundling_k1b_LSU || b2 == Bundling_k1b_LSU_X){
                 return 1;
             } else {
                 return 0;
@@ -1940,17 +1932,17 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     }
     
     switch (type) {
-    case RegClass_k1_singleReg:
+    case RegClass_k1b_singleReg:
       chars += snprintf(&buf[chars], buf_size - chars, "grf");
       break;
-    case RegClass_k1_pairedReg:
+    case RegClass_k1b_pairedReg:
       chars += snprintf(&buf[chars], buf_size - chars, "prf");
       break;
-    case RegClass_k1_systemReg:
-    case RegClass_k1_nopcpsReg:
-    case RegClass_k1_onlypsReg:
-    case RegClass_k1_onlyraReg:
-    case RegClass_k1_onlyfxReg:
+    case RegClass_k1b_systemReg:
+    case RegClass_k1b_nopcpsReg:
+    case RegClass_k1b_onlypsReg:
+    case RegClass_k1b_onlyraReg:
+    case RegClass_k1b_onlyfxReg:
     case RegClass_k1b_systemReg:
     case RegClass_k1b_nopcpsReg:
     case RegClass_k1b_onlypsReg:
@@ -1958,29 +1950,28 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case RegClass_k1b_onlyfxReg:
       chars += snprintf(&buf[chars], buf_size - chars, "srf");
       break;
-    case RegClass_k1_remoteReg:
+    case RegClass_k1b_remoteReg:
       chars += snprintf(&buf[chars], buf_size - chars, "nrf");
       break;
-    case Immediate_k1_eventmask2:
-    case Immediate_k1_flagmask2:
-    case Immediate_k1_brknumber:
-    case Immediate_k1_sysnumber:
-    case Immediate_k1_signed5:
-    case Immediate_k1_signed10:
-    case Immediate_k1_signed11:
-    case Immediate_k1_signed16:
-    case Immediate_k1_signed27:
-    case Immediate_k1_signed32:
-    case Immediate_k1_signed32M:
-    case Immediate_k1_signed37:
-    case Immediate_k1_signed43:
-    case Immediate_k1_unsigned5:
-    case Immediate_k1_unsigned6:
-    case Immediate_k1_unsigned32:
-    case Immediate_k1_unsigned32L:
-    case Immediate_k1_pcrel17:
-    case Immediate_k1_pcrel18:
-    case Immediate_k1_pcrel27:
+    case Immediate_k1b_eventmask2:
+    case Immediate_k1b_flagmask2:
+    case Immediate_k1b_brknumber:
+    case Immediate_k1b_sysnumber:
+    case Immediate_k1b_signed5:
+    case Immediate_k1b_signed10:
+    case Immediate_k1b_signed11:
+    case Immediate_k1b_signed16:
+    case Immediate_k1b_signed27:
+    case Immediate_k1b_signed32:
+    case Immediate_k1b_signed32M:
+    case Immediate_k1b_signed37:
+    case Immediate_k1b_signed43:
+    case Immediate_k1b_unsigned5:
+    case Immediate_k1b_unsigned6:
+    case Immediate_k1b_unsigned32:
+    case Immediate_k1b_unsigned32L:
+    case Immediate_k1b_pcrel17:
+    case Immediate_k1b_pcrel27:
       if(flags & k1SIGNED){
 	chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
       }
@@ -2036,20 +2027,20 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     int num_LSU = 0;
     int num_TINY = 0;
     int tag = 0;
-    int priority[] = {Bundling_k1_BCU, Bundling_k1_ALUD, Bundling_k1_ALU, Bundling_k1_MAU, Bundling_k1_LSU};
+    int priority[] = {Bundling_k1b_BCU, Bundling_k1b_ALUD, Bundling_k1b_ALU, Bundling_k1b_MAU, Bundling_k1b_LSU};
     int bundle_type;
 
     int debug = 0;
 
     for(i=0; i<bundle_insncnt; i++){
-        if(find_bundling(bundle_insn[i]) == Bundling_k1_ALL){
+        if(find_bundling(bundle_insn[i]) == Bundling_k1b_ALL){
             if(bundle_insncnt == 1){
                 return;
             } else {
                 as_fatal("Too many ops in a single op bundle\n");
             }
         }
-        if(find_bundling(bundle_insn[i]) == Bundling_k1_TINY){
+        if(find_bundling(bundle_insn[i]) == Bundling_k1b_TINY){
             num_TINY++;
         }
     }
@@ -2064,8 +2055,8 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
         for(j=0; j < bundle_insncnt; j++){
             if(k1a_is_equivalent_bundle(bundle_type, find_bundling(bundle_insn[j]))){
                 switch(bundle_type){
-                    case Bundling_k1_ALU:
-                    case Bundling_k1_ALU_X:
+                    case Bundling_k1b_ALU:
+                    case Bundling_k1b_ALU_X:
                         if(num_ALU > 1){
                             as_fatal("Too many ALU op\n");
                         }
@@ -2076,9 +2067,9 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                         tag = Modifier_k1_exunum_ALU0 + num_ALU;
                         num_ALU++;
                         break;
-                    case Bundling_k1_ALUD:
-                    case Bundling_k1_ALUD_Y:
-                    case Bundling_k1_ALUD_Z:
+                    case Bundling_k1b_ALUD:
+                    case Bundling_k1b_ALUD_Y:
+                    case Bundling_k1b_ALUD_Z:
                         if(num_ALU > 0){
                             as_fatal("Too many ALU op\n");
                         }
@@ -2089,15 +2080,15 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                         num_ALU = 2;
                         tag = Modifier_k1_exunum_ALU0;
                         break;
-                    case Bundling_k1_BCU:
+                    case Bundling_k1b_BCU:
                         if(shadow_bundle[i] != NULL){
                             as_fatal("Wrong bundle\n");
                         }
                         shadow_bundle[i] = bundle_insn[j];
                         num_BCU++;
                         break;
-                    case Bundling_k1_MAU:
-                    case Bundling_k1_MAU_X:
+                    case Bundling_k1b_MAU:
+                    case Bundling_k1b_MAU_X:
                         if(shadow_bundle[i] != NULL){
                             as_fatal("Wrong bundle\n");
                         }
@@ -2105,8 +2096,8 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
                         tag = Modifier_k1_exunum_MAU;
                         num_MAU++;
                         break;
-                    case Bundling_k1_LSU:
-                    case Bundling_k1_LSU_X:
+                    case Bundling_k1b_LSU:
+                    case Bundling_k1b_LSU_X:
                         if(shadow_bundle[i] != NULL){
                             as_fatal("Wrong bundle\n");
                         }
@@ -2139,7 +2130,7 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     // Now handle the "TINY" problem : quite easy : put them in ALUs, or append at the end !
     num_TINY = 0;
     for(j=0; j < bundle_insncnt; j++){
-        if(find_bundling(bundle_insn[j]) == Bundling_k1_TINY || find_bundling(bundle_insn[j]) == Bundling_k1_TINY_X){
+        if(find_bundling(bundle_insn[j]) == Bundling_k1b_TINY || find_bundling(bundle_insn[j]) == Bundling_k1b_TINY_X){
             if(num_ALU < 2){
                 shadow_bundle[num_BCU + num_ALU] = bundle_insn[j]; // put in an ALU
 		tag = Modifier_k1_exunum_ALU0 + num_ALU;
@@ -2181,10 +2172,10 @@ k1a_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 
 static int is_mono_double(const k1opc_t *op) {
   int reservation = op->reservation;
-  return (reservation == Reservation_k1_ALUD_LITE   ||
-	  reservation == Reservation_k1_ALUD_LITE_X ||
-	  reservation == Reservation_k1_ALUD_TINY   ||
-	  reservation == Reservation_k1_ALUD_TINY_X);
+  return (reservation == Reservation_k1b_ALUD_LITE   ||
+	  reservation == Reservation_k1b_ALUD_LITE_X ||
+	  reservation == Reservation_k1b_ALUD_TINY   ||
+	  reservation == Reservation_k1b_ALUD_TINY_X);
 }
 
 
@@ -2347,90 +2338,90 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
   k1insn_t *cur_insn = bundle_insn[state->cur_insn];
   switch(find_scheduling(cur_insn)){
 
-  case Reservation_k1_ALL:
+  case Reservation_k1b_ALL:
     as_fatal("ALL reservation encountered, should have been handled before");
     break;
 
-    //  case Bundling_k1_ALU:
-    //  case Bundling_k1_ALU_X:
-  case Reservation_k1_ALU_FULL:
-  case Reservation_k1_ALU_FULL_X:
+    //  case Bundling_k1b_ALU:
+    //  case Bundling_k1b_ALU_X:
+  case Reservation_k1b_ALU_FULL:
+  case Reservation_k1b_ALU_FULL_X:
   case Reservation_k1b_ALU_FULL:
   case Reservation_k1b_ALU_FULL_X:
     PUSH(alu1,state, states, states_sz, states_storage_sz);
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1_ALU_FULL_ODD:
+  case Reservation_k1b_ALU_FULL_ODD:
   case Reservation_k1b_ALU_FULL_ODD:
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1_BCU:
-  case Reservation_k1_BCU_TINY_TINY_MAU:
-    //  case Bundling_k1_BCU:
+  case Reservation_k1b_BCU:
+  case Reservation_k1b_BCU_TINY_TINY_MAU:
+    //  case Bundling_k1b_BCU:
     PUSH(bcu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1_ALUD:
-  case Reservation_k1_ALUD_OPX:
-  case Reservation_k1_ALUD_OPX_ODD:
-  case Reservation_k1_ALUD_FULL:
-  case Reservation_k1_ALUD_FULL_ODD:
+    //  case Bundling_k1b_ALUD:
+  case Reservation_k1b_ALUD_OPX:
+  case Reservation_k1b_ALUD_OPX_ODD:
+  case Reservation_k1b_ALUD_FULL:
+  case Reservation_k1b_ALUD_FULL_ODD:
   case Reservation_k1b_ALUD_OPX:
   case Reservation_k1b_ALUD_OPX_ODD:
 
-    //  case Bundling_k1_ALUD_Y:
-  case Reservation_k1_ALUD_OPX_Y:
+    //  case Bundling_k1b_ALUD_Y:
+  case Reservation_k1b_ALUD_OPX_Y:
   case Reservation_k1b_ALUD_OPX_Y:
 
     
-    //  case Bundling_k1_ALUD_Z:
-  case Reservation_k1_ALUD_OPX_Z:
+    //  case Bundling_k1b_ALUD_Z:
+  case Reservation_k1b_ALUD_OPX_Z:
   case Reservation_k1b_ALUD_OPX_Z:
 
     PUSH_ALUD(state, states, states_sz, states_storage_sz);
     break;    
 
-    //  case Bundling_k1_MAU:
-  case Reservation_k1_MAU:
-  case Reservation_k1_MAU_ACC:
-  case Reservation_k1_MAU_ACC_1:
-  case Reservation_k1_MAU_ACC_ODD:
+    //  case Bundling_k1b_MAU:
+  case Reservation_k1b_MAU:
+  case Reservation_k1b_MAU_ACC:
+  case Reservation_k1b_MAU_ACC_1:
+  case Reservation_k1b_MAU_ACC_ODD:
   case Reservation_k1b_MAU:
   case Reservation_k1b_MAU_ACC:
   case Reservation_k1b_MAU_ACC_ODD:
 
-    //  case Bundling_k1_MAU_X:
-  case Reservation_k1_MAU_X:
-  case Reservation_k1_MAU_ACC_X:
+    //  case Bundling_k1b_MAU_X:
+  case Reservation_k1b_MAU_X:
+  case Reservation_k1b_MAU_ACC_X:
   case Reservation_k1b_MAU_X:
   case Reservation_k1b_MAU_ACC_X:
     PUSH(mau,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1_LSU:
-  case Reservation_k1_LSU:
-  case Reservation_k1_LSU_ACC:
+    //  case Bundling_k1b_LSU:
+  case Reservation_k1b_LSU:
+  case Reservation_k1b_LSU_ACC:
 
-    //  case Bundling_k1_LSU_X:
-  case Reservation_k1_LSU_X:
-  case Reservation_k1_LSU_ACC_X:
+    //  case Bundling_k1b_LSU_X:
+  case Reservation_k1b_LSU_X:
+  case Reservation_k1b_LSU_ACC_X:
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1_TINY:
-  case Reservation_k1_ALU_TINY:
-  case Reservation_k1_ALU_LITE:
-  case Reservation_k1_ALUD_TINY:
-  case Reservation_k1_ALUD_LITE:
+    //  case Bundling_k1b_TINY:
+  case Reservation_k1b_ALU_TINY:
+  case Reservation_k1b_ALU_LITE:
+  case Reservation_k1b_ALUD_TINY:
+  case Reservation_k1b_ALUD_LITE:
 
 
-    //  case Bundling_k1_TINY_X:
-  case Reservation_k1_ALU_TINY_X:
-  case Reservation_k1_ALU_LITE_X:
-  case Reservation_k1_ALUD_TINY_X:
-  case Reservation_k1_ALUD_LITE_X:
+    //  case Bundling_k1b_TINY_X:
+  case Reservation_k1b_ALU_TINY_X:
+  case Reservation_k1b_ALU_LITE_X:
+  case Reservation_k1b_ALUD_TINY_X:
+  case Reservation_k1b_ALUD_LITE_X:
 
     // FIXME : If we stick to scheduling class in the switch (was bundling class before),
     // we can remove the is_* test and simply split in different cases.
@@ -2483,35 +2474,35 @@ k1b_print_insn(k1opc_t *op) {
   }
  
   switch(op->bundlings){
-  case Bundling_k1_ALL:
+  case Bundling_k1b_ALL:
     insn_type="ALL            ";
     break;
-  case Bundling_k1_ALU:
-  case Bundling_k1_ALU_X:
+  case Bundling_k1b_ALU:
+  case Bundling_k1b_ALU_X:
     insn_type="ALU            ";
     break;
-  case Bundling_k1_BCU:
+  case Bundling_k1b_BCU:
     insn_type="BCU            ";
     break;
 
-  case Bundling_k1_ALUD:
-  case Bundling_k1_ALUD_Y:
-  case Bundling_k1_ALUD_Z:
+  case Bundling_k1b_ALUD:
+  case Bundling_k1b_ALUD_Y:
+  case Bundling_k1b_ALUD_Z:
     insn_type="ALUD           ";
     break;    
 
-  case Bundling_k1_MAU:
-  case Bundling_k1_MAU_X:
+  case Bundling_k1b_MAU:
+  case Bundling_k1b_MAU_X:
     insn_type="MAU            ";
     break;
 
-  case Bundling_k1_LSU:
-  case Bundling_k1_LSU_X:
+  case Bundling_k1b_LSU:
+  case Bundling_k1b_LSU_X:
     insn_type="LSU            ";
     break;
 
-  case Bundling_k1_TINY:
-  case Bundling_k1_TINY_X:
+  case Bundling_k1b_TINY:
+  case Bundling_k1b_TINY_X:
     if (is_lite(op)){
       if (is_mono_double(op)){
 	insn_type="LITE_MONODOUBLE";
@@ -2556,7 +2547,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   
   int bidx;
   for(bidx=0; bidx < *bundle_insncnt_p; bidx++){
-    if(find_bundling(bundle_insn[bidx]) == Bundling_k1_ALL){
+    if(find_bundling(bundle_insn[bidx]) == Bundling_k1b_ALL){
       if(*bundle_insncnt_p == 1) {
        return;
       }
@@ -2835,18 +2826,6 @@ k1_set_cpu(void) {
   }
 
   switch(k1_core_info->elf_cores[subcore_id]) {
-  case ELF_K1_CORE_DP:
-    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp))
-      as_warn(_("could not set architecture and machine"));
-    reorder_bundle = k1a_reorder_bundle;
-    print_insn = k1a_print_insn;
-    break;
-  case ELF_K1_CORE_IO:
-    if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1io))
-      as_warn(_("could not set architecture and machine"));
-    reorder_bundle = k1a_reorder_bundle;
-    print_insn = k1a_print_insn;
-    break;
   case ELF_K1_CORE_B_DP:
     if (k1_arch_size == 32) {
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp))

@@ -744,37 +744,36 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 			case RegClass_ ## core ## _onlyfxReg:
 
               switch (type) {
-                  case RegClass_k1_singleReg:
+                  case RegClass_k1b_singleReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_GRF,value)
                       break;
-                  case RegClass_k1_pairedReg:
+                  case RegClass_k1b_pairedReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
-		        SRF_REGCLASSES(k1)
 			SRF_REGCLASSES(k1b)
  		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
-                  case RegClass_k1_remoteReg:
+                  case RegClass_k1b_remoteReg:
  		      K1_PRINT_REG(K1_REGFILE_DEC_NRF,value)
                       break;
 
-                  case Immediate_k1_eventmask2:
-                  case Immediate_k1_flagmask2:
-                  case Immediate_k1_brknumber:
-                  case Immediate_k1_sysnumber:
-                  case Immediate_k1_signed5:
-                  case Immediate_k1_signed10:
-                  case Immediate_k1_signed11:
-                  case Immediate_k1_signed16:
-                  case Immediate_k1_signed27:
-                  case Immediate_k1_signed32:
-                  case Immediate_k1_signed32M:
-                  case Immediate_k1_signed37:
-                  case Immediate_k1_signed43:
-                  case Immediate_k1_unsigned5:
-                  case Immediate_k1_unsigned6:
-                  case Immediate_k1_unsigned32:
-                  case Immediate_k1_unsigned32L:
+                  case Immediate_k1b_eventmask2:
+                  case Immediate_k1b_flagmask2:
+                  case Immediate_k1b_brknumber:
+                  case Immediate_k1b_sysnumber:
+                  case Immediate_k1b_signed5:
+                  case Immediate_k1b_signed10:
+                  case Immediate_k1b_signed11:
+                  case Immediate_k1b_signed16:
+                  case Immediate_k1b_signed27:
+                  case Immediate_k1b_signed32:
+                  case Immediate_k1b_signed32M:
+                  case Immediate_k1b_signed37:
+                  case Immediate_k1b_signed43:
+                  case Immediate_k1b_unsigned5:
+                  case Immediate_k1b_unsigned6:
+                  case Immediate_k1b_unsigned32:
+                  case Immediate_k1b_unsigned32L:
                       value <<= rightshift;
                       if(flags & k1SIGNED){
                           if(width <= 32) {
@@ -792,9 +791,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                           }
                       }
                       break;
-                  case Immediate_k1_pcrel17:
-                  case Immediate_k1_pcrel18:
-                  case Immediate_k1_pcrel27:
+                  case Immediate_k1b_pcrel17:
+                  case Immediate_k1b_pcrel27:
                       (*info->print_address_func)((value << rightshift) + memaddr, info);
                       break;
                   default:
