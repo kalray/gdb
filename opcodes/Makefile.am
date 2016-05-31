@@ -57,7 +57,7 @@ BFD_H = ../bfd/bfd.h
 BUILD_LIBS = @BUILD_LIBS@
 BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 
-VPATH = @srcdir@:$(FAMDIR)/BE/GBU/$(ARCH)/opcodes
+VPATH = @srcdir@:$(FAMDIR)/BE/GBU/k1b/opcodes
 
 # Header files.
 HFILES = \
@@ -158,8 +158,8 @@ TARGET_LIBOPCODES_CFILES = \
 	iq2000-dis.c \
 	iq2000-ibld.c \
 	iq2000-opc.c \
-	k1-opc.c \
-	k1-dis.c \
+	k1b-opc.c \
+	k1b-dis.c \
 	lm32-asm.c \
 	lm32-desc.c \
 	lm32-dis.c \
@@ -303,7 +303,7 @@ OFILES = @BFD_MACHINES@
 CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/configure.in \
 	$(BFDDIR)/development.sh
 
-AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/BE/GBU/$(ARCH)/include
+AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/BE/GBU/k1b/include
 
 disassemble.lo: disassemble.c
 if am__fastdepCC

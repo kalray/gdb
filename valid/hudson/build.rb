@@ -112,18 +112,18 @@ when "k1"
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
     sysroot_option = "--with-sysroot=#{options['sysroot']} --with-build-sysroot=#{options['sysroot']} "
-    mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
+    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
   when "elf" then
     build_target = "k1-#{variant}"
-    mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
+    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
   when "rtems" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
+    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
   when "nodeos" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    mds_gbu_path = "#{family_prefix}/BE/GBU/#{arch}"
+    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
   else
     raise "Unknown variant #{variant}"
   end

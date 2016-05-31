@@ -32,7 +32,7 @@
 #include "obstack.h"
 #include "subsegs.h"
 #include "tc-k1.h"
-#include "opcode/k1.h"
+#include "opcode/k1b.h"
 #include "libiberty.h"
 
 #include <assert.h>
@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 #ifdef OBJ_ELF
-#include "elf/k1.h"
+#include "elf/k1b.h"
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
 #endif

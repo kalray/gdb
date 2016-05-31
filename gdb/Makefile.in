@@ -129,7 +129,7 @@ CC_LD=$(CC)
 # This is essentially the header file directory for the library
 # routines in libiberty.
 INCLUDE_DIR =  $(srcdir)/../include
-INCLUDE_CFLAGS = -I$(INCLUDE_DIR) -I$(FAMDIR)/BE/GBU/$(ARCH)/include
+INCLUDE_CFLAGS = -I$(INCLUDE_DIR) -I$(FAMDIR)/BE/GBU/k1b/include
 
 # Where is the "-liberty" library?  Typically in ../libiberty.
 LIBIBERTY = ../libiberty/libiberty.a

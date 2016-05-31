@@ -35,9 +35,9 @@
 #include "event-loop.h"
 
 #include "regcache.h"
-#include "elf/k1.h"
+#include "elf/k1b.h"
 
-#include "elf/k1.h"
+#include "elf/k1b.h"
 #include "k1-target.h"
 
 #ifndef MAX

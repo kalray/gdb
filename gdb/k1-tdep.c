@@ -40,7 +40,7 @@
 #include "remote.h"
 #include "event-loop.h"
 
-#include "elf/k1.h"
+#include "elf/k1b.h"
 #include "opcode/k1.h"
 #include "k1-target.h"
 #include "gdbthread.h"

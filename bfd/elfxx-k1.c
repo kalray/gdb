@@ -2,15 +2,15 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include <elf/k1.h>
+#include <elf/k1b.h>
 
 #include "elfxx-k1.h"
 
 /* void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *); */
 
-/* #define K1DP_K1IO_K1BDP_K1BIO */
-/* #include "elf32-k1.def" */
-/* #undef K1DP_K1IO_K1BDP_K1BIO */
+/* #define K1BDP_K1BIO */
+/* #include "elf32-k1b.def" */
+/* #undef K1BDP_K1BIO */
 
 #define DEFAULT_STACK_SIZE 0x20000
 

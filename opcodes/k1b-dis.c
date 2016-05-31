@@ -25,8 +25,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
-#include "elf/k1.h"
-#include "opcode/k1.h"
+#include "elf/k1b.h"
+#include "opcode/k1b.h"
 #include "dis-asm.h"
 
 #define MAXBUNDLESIZE 8
