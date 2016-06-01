@@ -2032,11 +2032,6 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
 	  unsigned int loc_plt_size;
           const bfd_vma *template;
 	  switch(output_bfd->arch_info->mach){
-	  case bfd_mach_k1dp:
-	  case bfd_mach_k1io:
-	    template = plt_small_entry_k1a;
-	    loc_plt_size = plt_entry_k1a_size;
-	    break;
 	  case bfd_mach_k1bdp:
 	  case bfd_mach_k1bio:
 	    template = plt_small_entry_k1b32;
@@ -2809,10 +2804,6 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
       int i;
       const bfd_vma *template;
       switch(output_bfd->arch_info->mach){
-        case bfd_mach_k1dp:
-        case bfd_mach_k1io:
-          template = fdpic_abi_plt_full_entry_k1a;
-          break;
         case bfd_mach_k1bdp:
         case bfd_mach_k1bio:
           template = fdpic_abi_plt_full_entry_k1b32;

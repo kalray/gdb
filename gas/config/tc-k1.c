@@ -2586,7 +2586,7 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1bdp_core_info;
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1dp)){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp)){
 	as_warn(_("could not set architecture and machine"));
       }
   }
@@ -3452,10 +3452,6 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "cut5", ELF_K1_CUT_5, &k1_cut, &k1_cut_set },
 	      { "no-abi", ELF_K1_ABI_NO, &k1_abi, &k1_abi_set },
 	      { "old-multiflow-abi", ELF_K1_ABI_MULTI, &k1_abi, &k1_abi_set },
-	      { "abi-k1dp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1dp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-	      { "abi-k1io-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1io-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
 	      { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },

@@ -188,8 +188,6 @@ k1_plt_sym_val (bfd_vma i, const asection *plt,
 {
   bfd *abfd = plt->owner;
   int is_64 = ABI_64_P(abfd);
-  int is_k1a = bfd_get_mach(abfd) == bfd_mach_k1dp
-    || bfd_get_mach(abfd) == bfd_mach_k1io;
 
   int is_k1b32 = bfd_get_mach(abfd) == bfd_mach_k1bdp
     || bfd_get_mach(abfd) == bfd_mach_k1bio;
@@ -201,9 +199,7 @@ k1_plt_sym_val (bfd_vma i, const asection *plt,
   unsigned int plt_header_size = 0;
   unsigned int plt_entry_size = 0;
 
-  if (is_k1a){
-    plt_entry_size = plt_entry_k1a_size;
-  } else if (is_k1b32) {
+  if (is_k1b32) {
       plt_entry_size = plt_entry_k1b32_size;
   } else if (is_k1b64) {
       plt_entry_size = plt_entry_k1b64_size;
@@ -1737,12 +1733,6 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
 
   fprintf (f, "\nK1 header:\n");
   switch(e_flags & K1_MACH_MASK) {
-  case bfd_mach_k1dp:
-    fprintf (f, "\nMachine     = k1dp\n");
-    break;
-  case bfd_mach_k1io:
-    fprintf (f, "\nMachine     = k1io\n");
-    break;
   case bfd_mach_k1bdp:
 	fprintf (f, "\nMachine     = k1bdp\n");
 	break;
@@ -1788,8 +1778,6 @@ elf_k1_final_write_processing (bfd *abfd,
 
   switch (mach = bfd_get_mach (abfd))
     {
-    case bfd_mach_k1dp:
-    case bfd_mach_k1io:
     case bfd_mach_k1bdp:
     case bfd_mach_k1bio:
     case bfd_mach_k1bdp_64:
@@ -1812,8 +1800,6 @@ elf_k1_object_p (bfd *abfd)
   int mach = elf_elfheader (abfd)->e_flags & K1_MACH_MASK;
 
   switch (mach) {
-    case bfd_mach_k1dp:
-    case bfd_mach_k1io:
     case bfd_mach_k1bdp:
     case bfd_mach_k1bio:
     case bfd_mach_k1bdp_64:

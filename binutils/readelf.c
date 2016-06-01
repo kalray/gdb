@@ -3042,11 +3042,7 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
       break;
 
 	case EM_K1:
-            if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_DP)
-                strcat (buf, ", k1dp");
-            else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_IO)
-                strcat (buf, ", k1io");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_DP)
+			if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_DP)
 			      strcat (buf, ", k1bdp");
 			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_IO)
 			      strcat (buf, ", k1bio");
