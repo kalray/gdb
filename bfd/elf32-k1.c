@@ -1368,7 +1368,6 @@ k1_elf32_fdpic_check_relocs (bfd * abfd,
         case R_K1_16:
         case R_K1_32:
         case R_K1_17_PCREL:
-        case R_K1_18_PCREL:
         case R_K1_32_PCREL:
         case R_K1_LO10:
         case R_K1_HI22:

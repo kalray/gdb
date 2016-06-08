@@ -698,7 +698,6 @@ build_vendor
 build_cpu
 build
 TOPLEVEL_CONFIGURE_ARGUMENTS
-KALRAY_VERSION
 target_alias
 host_alias
 build_alias
@@ -2264,9 +2263,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-KALRAY_VERSION="$KALRAY_VERSION"
-
-
 progname=$0
 # if PWD already has a value, it is probably wrong.
 if test -n "$PWD" ; then PWD=`${PWDCMD-pwd}`; fi
@@ -3743,6 +3739,9 @@ case "${target}" in
     ;;
   i[3456789]86-*-rdos*)
     noconfigdirs="$noconfigdirs gdb"
+    ;;
+  k1)
+    noconfigdirs="$noconfigdirs gas"
     ;;
   mmix-*-*)
     noconfigdirs="$noconfigdirs gdb"

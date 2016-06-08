@@ -2849,7 +2849,6 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             md_number_to_chars(fixpos, image, fixP->fx_size);
             break;
         case BFD_RELOC_K1_17_PCREL:
-        case BFD_RELOC_K1_18_PCREL:
         case BFD_RELOC_K1_27_PCREL:
             if (fixP->fx_pcrel || fixP->fx_addsy)
                 return;
