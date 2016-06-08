@@ -172,8 +172,13 @@ b.target("#{variant}_build") do
     if (host == "k1-linux") then
       build_host = "--host=k1-linux"
     end
+
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +
                   "../configure " +
+
+                  # uncomment the line below to enable the maintainer mode (generation of files)
+                  # "--enable-maintainer-mode " +
+
                   "--enable-64-bit-bfd " +
                   "--target=#{build_target} " +
                   "#{build_host} " +
