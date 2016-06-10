@@ -52,12 +52,12 @@ clean = CleanTarget.new("clean", repo, [])
 build = ParallelTarget.new("#{variant}_build", repo, [], [])
 build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [])
 install = Target.new("#{variant}_install", repo, [build], [])
-install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [build], [])
+install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [install], [])
 build_valid_llvm = ParallelTarget.new("#{variant}_post_build_valid_llvm", repo, [build], [])
 gdb_long_valid = Target.new("gdb_long_valid", repo, [], [])
 copyright_check = Target.new("copyright_check", repo, [], [])
 
-package = Target.new("#{variant}_package", repo, [install], [])
+package = Target.new("#{variant}_package", repo, [install_valid], [])
 
 install.write_prefix()
 
@@ -119,18 +119,18 @@ when "k1"
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
     sysroot_option = "--with-sysroot=#{options['sysroot']} --with-build-sysroot=#{options['sysroot']} "
-    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
+    mds_gbu_path = "#{family_prefix}/BE/GBU"
   when "elf" then
     build_target = "k1-#{variant}"
-    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
+    mds_gbu_path = "#{family_prefix}/BE/GBU"
   when "rtems" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
+    mds_gbu_path = "#{family_prefix}/BE/GBU"
   when "nodeos" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    mds_gbu_path = "#{family_prefix}/BE/GBU/k1b"
+    mds_gbu_path = "#{family_prefix}/BE/GBU"
   else
     raise "Unknown variant #{variant}"
   end
@@ -311,7 +311,7 @@ end
 
 b.target("#{variant}_post_install_valid") do
   b.logtitle = "Report for Gbu #{variant}_post_install_valid, arch = #{arch}"
-  if (variant == "elf" || variant == "rtems" || variant == "nodeos" || variant == "linux")
+  if (variant == "elf") then
     gas = "#{build_path}/gas/as-new"
     objdump = "#{build_path}/binutils/objdump"
 
@@ -322,22 +322,30 @@ b.target("#{variant}_post_install_valid") do
     end
 
     ["test"].each do |test|
-      march_valid_hash.each do |k,v|
-        v.split(/,/).each do |core|
-
-          asm_test= "#{mds_gbu_path}/#{core}/#{test}.s"
-          bin_test= "#{mds_gbu_path}/#{core}/#{test}.bin"
-          out_test= "#{build_path}/#{core}/#{test}.out"
-          obj_test= "#{build_path}/#{core}/#{test}.o"
-
-          mkdir_p "#{build_path}/#{core}"
-          b.run(:cmd=>"#{gas} -mcore #{core} -o #{obj_test} #{asm_test}",
+      march_valid_list.each do |arch|
+        asm_files = `find #{mds_gbu_path}/#{arch}/ -name "*.s"`.chomp().split()
+        b.run("echo \"No test file found in #{mds_gbu_path}/#{arch}\" && false") if(asm_files.size() == 0)
+        asm_files.each do |asm_test|
+          test = File.basename(asm_test,".s")
+          test_dir = b.diffdirs(File.dirname(asm_test), mds_gbu_path)
+          STDERR.puts "Test: #{test}, test dir: #{test_dir}"
+          bin_test= "#{mds_gbu_path}/#{test_dir}/#{test}.bin"
+          out_test= "#{build_path}/#{test_dir}/#{test}.out"
+          obj_test= "#{build_path}/#{test_dir}/#{test}.o"
+        
+          mkdir_p "#{build_path}/#{test_dir}"
+          core = `grep "\.assume" #{asm_test}`.split()[1].chomp()
+          option_line = `grep "Option: " #{asm_test}`.chomp()
+          option_line =~ /'(.*)'/
+          option = $1
+          STDERR.puts "Core: #{core}, option: '#{option}'"
+          b.run(:cmd=>"#{gas} -mcore #{core} #{option} -o #{obj_test} #{asm_test}",
                 :skip=>skip_valid)
           b.run(:cmd=>"#{objdump} -d #{obj_test} > #{out_test}",
                 :skip=>skip_valid)
           puts "Diff between: #{out_test} #{bin_test}"
-          b.valid(:cmd => "diff -w -bu -I 'test\\.o: ' -I '^$' #{out_test} #{bin_test}",
-                  :fail_msg => "Get some diff between GAS output and ref #{test}.bin for #{core}.",
+          b.valid(:cmd => "diff -w -bu -I '#{test}\\.o: ' -I '^$' #{out_test} #{bin_test}",
+                  :fail_msg => "Get some diff between GAS output and ref #{test}.bin for #{test_dir}.",
                   :success_msg => "GBU : No diff, test OK",
                   :skip=>(skip_valid))
         end
