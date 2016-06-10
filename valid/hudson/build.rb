@@ -28,6 +28,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         },
                         "host"          => ["x86", "Host for the build"],
                         "sysroot"       => ["sysroot", "Sysroot directory"],
+                        "march"         => ["k1b:k1bio,k1bdp", "List of mppa_architectures."],
                         "march_valid"   => ["k1b:k1bio,k1bdp", "List of mppa_architectures to validate on execution_platform."],
                         "execution_platform" => {
                           "type" => "keywords",
@@ -60,10 +61,16 @@ package = Target.new("#{variant}_package", repo, [install_valid], [])
 
 install.write_prefix()
 
+march_hash = Hash[*options["march"].split(/::/).map{|tmp_arch| tmp_arch.split(/:/)}.flatten]
 march_valid_hash = Hash[*options["march_valid"].split(/::/).map{|tmp_arch| tmp_arch.split(/:/)}.flatten]
 
+march_list    = march_hash.keys
 march_valid_list    = march_valid_hash.keys
 board   = options['board'].to_s
+
+# [PG]: march is used to get registers headers. The build works for now with
+# one architecture. With old version, k1a and k1b GDB registers headers was merged.
+raise "Multiple architecture not supported yet" if march_list.size != 1
 
 b = Builder.new("gdb", options, [clean, build, build_valid, install, install_valid, gdb_long_valid, package, copyright_check, build_valid_llvm])
 
@@ -137,7 +144,7 @@ b.target("#{variant}_build") do
   b.logtitle = "Report for GDB #{variant}_build, arch = #{arch}"
   if( variant == "gdbstub")
     b.builder_infos.each do |builder_info|
-      b.run(:cmd => "make -C #{build_path} FAMDIR=#{family_prefix} TOOLS_DIR=#{workspace}  ARCH=#{arch} TOOLCHAIN_DIR='#{toolroot}' INSTALL_LIB='#{builder_info.lib}' CFLAGS='#{builder_info.cflags}'")
+      b.run(:cmd => "make -C #{build_path} FAMDIR=#{family_prefix} TOOLS_DIR=#{workspace}  ARCH=#{march_list[0]} TOOLCHAIN_DIR='#{toolroot}' INSTALL_LIB='#{builder_info.lib}' CFLAGS='#{builder_info.cflags}'")
     end
   elsif( variant == "gdb")
     machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
