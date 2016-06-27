@@ -971,16 +971,15 @@ static bool handle_qSupported (struct gdbstub *stub)
 static void update_registers_xml (struct gdbstub *stub, struct agent *ag)
 {
   struct reg_desc *desc;
-  const char *arch, *core;
+  const char *core;
   int i, j;
   str_t str;
     
   if (ag->reg_desc_xml != NULL)
     return;
 
-  arch = debug_agent_get_architecture (ag->agent);
   core = debug_agent_get_core (ag->agent);
-  desc = get_register_descriptions (arch);
+  desc = get_register_descriptions (core);
   
   if (desc == NULL)
   {
@@ -990,17 +989,13 @@ static void update_registers_xml (struct gdbstub *stub, struct agent *ag)
   
   str = new_str ();
 
-  /*
-   * Here, this arch and core should be swapped.
-   * But easier to let them in the "wrong" order.
-   */
   str_printf (str, 
     "<?xml version=\"1.0\"?>\n"
     "<!DOCTYPE target SYSTEM \"gdb-target.dtd\">\n"
     "<target version=\"1.0\">\n"
     "    <architecture>%s</architecture>\n"
     "    <feature name=\"eu.kalray.core.%s\">\n",
-    core, arch);
+    core, core);
 
   for (i = 0; i < stub->nbregs; ++i)
   {
