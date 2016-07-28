@@ -1665,16 +1665,33 @@ static bool handle_H (struct gdbstub *stub)
 static bool handle_qC (struct gdbstub *stub)
 {
     struct context ctxt;
+    struct agent *ag;
+
     prepare_to_answer (stub);
 
-    if (!stub->stopped_contexts_tail 
-        || stub->agents[stub->stopped_contexts_tail->ctxt.agent].attached == 0) {
+    if (!stub->stopped_contexts_tail || stub->agents[stub->stopped_contexts_tail->ctxt.agent].attached == 0)
+    {
     	ctxt.agent = 0;
-		// ??????
-    	// ctxt.vehicle = stub->agents[0].nbvehicles-1;
     	ctxt.vehicle = 0;
-    } else {
-    	ctxt = stub->stopped_contexts_tail->ctxt;
+    }
+    else
+    {
+      ctxt = stub->stopped_contexts_tail->ctxt;
+      ag = &stub->agents[ctxt.agent];
+      if (ag->ddr_peer_united_io)
+      {
+        ctxt.agent = ag->ddr_peer_united_io->contexts[0].ctxt.agent;
+        if (stub->agents[ctxt.agent].attached)
+        {
+          //printf ("GDBSTUB handle_qC ioeth context -> ioddr\n");
+          ctxt.vehicle += ag->ddr_peer_united_io->nbvehicles;
+        }
+        else
+        {
+          ctxt.agent = 0;
+          ctxt.vehicle = 0;
+        }
+      }
     }
     
     printf_packet (stub, "QCp%x.%x", ctxt.agent+1, ctxt.vehicle+1);
@@ -2340,9 +2357,11 @@ static void *control_thread (void *void_stub)
 		EXIT_THREAD (stub, -1);
 	    }
 
-	    if (!add_stopped_context (stub, data.agent, data.vehicle)){
-		EXIT_THREAD (stub, 2);
-	    }
+    if (!add_stopped_context (stub, data.agent, data.vehicle))
+    {
+      printf ("GDBSTUB add_stopped_context error %s\n", stub->error);
+      //EXIT_THREAD (stub, 2);
+    }
 	}
 
 	if (pollfds[1].revents) {
