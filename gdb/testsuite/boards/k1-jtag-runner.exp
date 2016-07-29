@@ -42,6 +42,13 @@ proc gdb_target_cmd { targetname serialport } {
     
     set timeout 300
     send_gdb "set remotetimeout 200\r"
+    gdb_expect 30 {
+        -re "$gdb_prompt $" {}
+        timeout {
+            perror "Timeout while waiting for gdb prompt."
+            return 1
+        }
+    }
 
     for {set i 1} {$i <= 3} {incr i} {
 
