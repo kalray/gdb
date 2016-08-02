@@ -325,7 +325,7 @@ static void k1_target_create_inferior (struct target_ops *ops,
     arg = da_args;
     while (arg && *arg++) nb_da_args++;
 
-    stub_args = xmalloc ((nb_args+nb_da_args+6)*sizeof (char*));
+    stub_args = xmalloc ((nb_args+nb_da_args+7)*sizeof (char*));
     stub_args[argidx++] = (char *) simulation_vehicle;
 
     core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
