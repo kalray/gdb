@@ -167,7 +167,12 @@ b.target("#{variant}_build") do
                     "--prefix=#{gdb_install_prefix}")
 
       b.run(:cmd => "make clean")
-      b.run(:cmd => "make FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
+      if (build_type == "Release") then
+        additional_flags = "CFLAGS=-O2"
+      else
+        additional_flags = "CFLAGS=-g"
+      end
+      b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
   else ## variant != gdb => binutils only
     b.create_goto_dir! build_path
@@ -200,7 +205,7 @@ b.target("#{variant}_build") do
                   "#{sysroot_option}",
           :skip=>skip_build)
 
-    if ("#{build_type}" == "Release") then
+    if (build_type == "Release") then
       additional_flags = "CFLAGS=-O2"
     else
       additional_flags = "CFLAGS=-g"
