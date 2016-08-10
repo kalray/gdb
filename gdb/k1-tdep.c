@@ -217,7 +217,8 @@ k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
   int i = 0;
 
   adjusted &= ~3;
-  if (adjusted == 0) return adjusted;
+  if (adjusted == 0 || ptid_equal (inferior_ptid, null_ptid) || !is_stopped (inferior_ptid))
+    return adjusted;
 
   /* Look for the end of the bundle preceeding the requested address. */
   do {
