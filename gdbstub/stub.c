@@ -190,6 +190,8 @@ struct gdbstub {
     char *osdata;
     char *threads;
 
+    int              in_accept;
+    pthread_mutex_t  in_accept_lock;
     bool exited;
     int exit_value;
 
@@ -292,7 +294,7 @@ int gdbstub_listen(int port, int port_end, struct gdbstub *stub)
     return port;
 }
 
-void gdbstub_accept(struct gdbstub *stub)
+int gdbstub_accept(struct gdbstub *stub)
 {
     struct   sockaddr_in pin;
     socklen_t addrlen;
@@ -301,10 +303,19 @@ void gdbstub_accept(struct gdbstub *stub)
 
     /* wait for a client to talk to us */
     addrlen = sizeof(pin); 
+    /* 1 -> accept ongoing */
+    pthread_mutex_lock(&stub->in_accept_lock);
+    stub->in_accept = 1;
+    pthread_mutex_unlock(&stub->in_accept_lock);
     if ((sd_current = accept(stub->infd, 
 			     (struct sockaddr *)  &pin, &addrlen)) == -1) {
-	perror("accept");
+      if( stub->in_accept != 2) /* 2 -> kill accept thread */
+        perror("accept");
+      return 1;
     }
+    pthread_mutex_lock(&stub->in_accept_lock);
+    stub->in_accept = 0;
+    pthread_mutex_unlock(&stub->in_accept_lock);
     
     /* Enable TCP keep alive process. */
     tmp = 1;
@@ -318,6 +329,8 @@ void gdbstub_accept(struct gdbstub *stub)
 		(char *) &tmp, sizeof (tmp));
     
     stub->infd = stub->outfd = sd_current;
+
+    return 0;
 }
 
 static void notify_callback(debug_agent_t *da, int vehicle, void *notify_data)
@@ -486,6 +499,8 @@ struct gdbstub *gdbstub_init(debug_agent_t *agents)
 
     res = calloc (sizeof(*res), 1);
     res->skip_exit_when_stub_exited = false;
+
+    pthread_mutex_init(&res->in_accept_lock, NULL);
 
     while (it->next) {
         nb_agents++;
@@ -2319,10 +2334,21 @@ static void my_exit (struct gdbstub *stub, int val)
   }
 }
 
-void gdbstub_join (struct gdbstub *stub)
+void gdbstub_join (struct gdbstub *stub, pthread_t cthread )
 {
-  if (stub->control_thread)
-    pthread_join (stub->control_thread, NULL);
+  if(cthread == 0)
+    cthread = stub->control_thread;
+  if (cthread)
+  {
+    pthread_mutex_lock(&stub->in_accept_lock);
+    if(stub->in_accept)
+    {
+      stub->in_accept = 2; /* 2 -> kill accept thread */
+      shutdown(stub->infd,SHUT_RDWR);
+    }
+    pthread_mutex_unlock(&stub->in_accept_lock);
+    pthread_join (cthread, NULL);
+  }
   stub->control_thread = 0;
 }
 
