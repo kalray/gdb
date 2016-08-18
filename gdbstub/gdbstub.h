@@ -21,6 +21,7 @@
  */
 
 #include "debug_agent.h"
+#include "pthread.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,8 +34,8 @@ void gdbstub_start(struct gdbstub *, bool thread);
 
 void gdbstub_set_skip_exit_when_stub_exited(struct gdbstub *stub, bool v);
 int gdbstub_listen(int port_start, int port_end, struct gdbstub *stub); 
-void gdbstub_accept(struct gdbstub *stub); 
-void gdbstub_join (struct gdbstub *stub);
+int gdbstub_accept(struct gdbstub *stub); 
+void gdbstub_join (struct gdbstub *stub, pthread_t cthread);
 
 void gdbstub_notify_context_stop(struct gdbstub *, int agent, int vehicle);
 
