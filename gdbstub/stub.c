@@ -1325,6 +1325,27 @@ static bool kalray_get_vehicle_modes_seen (struct gdbstub *stub)
   return send_answer (stub);
 }
 
+static bool kalray_set_break_on_spawn (struct gdbstub *stub)
+{
+  struct context ctxt;
+  struct agent *ag;
+  int v;
+  
+  if (!stub->payload[2] || !parse_thread_id (stub, &ctxt, stub->payload + 3, NULL))
+  {
+    stub->error = "Malformed thread id in kS packet";
+    return send_err (stub, 0) ;
+  }
+  ag = &stub->agents[ctxt.agent];
+
+  v = stub->payload[2] != '0';
+  ag->agent->attributes.break_on_spawn = v;
+  if (ag->eth_peer_united_io)
+    ag->eth_peer_united_io->agent->attributes.break_on_spawn = v;
+
+  return send_ok (stub);
+}
+
 static bool kalray_set_stop_at_main (struct gdbstub *stub)
 {
   int bstop = stub->payload[2] - '0';
@@ -2183,6 +2204,8 @@ bool handle_command (struct gdbstub *stub)
           return kalray_set_postponed_debug_level (stub);
         case 's':
           return kalray_set_stop_at_main (stub);
+        case 'S':
+          return kalray_set_break_on_spawn (stub);
         case 'W':
           return kalray_set_kwatch (stub);
         default:

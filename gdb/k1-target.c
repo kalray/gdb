@@ -57,6 +57,7 @@ static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NU
 static const char *sglobal_debug_level;
 int idx_global_debug_level, global_debug_level_set;
 int opt_hide_threads = 1;
+int opt_break_on_spawn = 0;
 
 static pid_t server_pid;
 static int after_first_resume;
@@ -81,6 +82,7 @@ mppa_init_inferior_data (struct inferior *inf)
 
     data->cluster_debug_level = DBG_LEVEL_INHERITED;
     data->os_supported_debug_level = -1;
+    data->cluster_break_on_spawn = 0;
     set_inferior_data (inf, k1_attached_inf_data, data);
 
     /* Cluster name */
@@ -537,8 +539,22 @@ k1_target_wait (struct target_ops *target,
             //continue_if_os_supports_debug_level (inferior);
 
             if (file && file[0] != 0) {
-                status->kind = TARGET_WAITKIND_EXECD;
-                status->value.execd_pathname = (char *) file;
+                if (data->cluster_break_on_spawn)
+                {
+                  ptid_t save_ptid = inferior_ptid;
+                  data->sym_file_loaded = 1;
+                  switch_to_thread (res);
+                  exec_file_attach ((char *) file, 0);
+                  symbol_file_add_main (file, 0);
+                  switch_to_thread (save_ptid);
+                  status->kind = TARGET_WAITKIND_STOPPED;
+                  status->value.sig = GDB_SIGNAL_TRAP;
+                }
+                else
+                {
+                  status->kind = TARGET_WAITKIND_EXECD;
+                  status->value.execd_pathname = (char *) file;
+                }
             } else {
                 printf_filtered ("[ %s booted ]\n", cluster);
                 status->kind = TARGET_WAITKIND_SPURIOUS;
@@ -969,6 +985,49 @@ show_global_debug_level (struct ui_file *file, int from_tty,
 
   fprintf_filtered (file, "The global debug level  is \"%s\".\n",
     scluster_debug_levels[idx_global_debug_level]);
+}
+
+static void
+set_cluster_break_on_spawn (char *args, int from_tty, struct cmd_list_element *c)
+{
+  struct inferior *inf;
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    error (_("Cannot set break on reset without a selected thread."));
+
+  if (is_current_k1b_user ())
+  {
+    printf ("Linux user mode cannot break on reset\n");
+    return;
+  }
+
+  inf = current_inferior ();
+  data = mppa_inferior_data (inf);
+  data->cluster_break_on_spawn = opt_break_on_spawn;
+  send_cluster_break_on_spawn (inf, opt_break_on_spawn);
+}
+
+static void
+show_cluster_break_on_spawn (struct ui_file *file, int from_tty, 
+  struct cmd_list_element *c, const char *value)
+{
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf (_("Cannot show break on reset without a live selected thread."));
+    return;
+  }
+
+  if (is_current_k1b_user ())
+  {
+    printf ("Linux user mode cannot break on reset\n");
+    return;
+  }
+
+  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
+  fprintf_filtered (file, "The cluster break on reset is %d.\n", data->cluster_break_on_spawn);
 }
 
 extern int remote_hw_breakpoint_limit;
@@ -1409,6 +1468,10 @@ Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
     add_setshow_boolean_cmd ("hide_threads", class_maintenance, &opt_hide_threads,
       _("Set hide threads in debug level."), _("Show hide threads in debug level."),
       NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
+
+    add_setshow_boolean_cmd ("break_on_spawn", class_maintenance, &opt_break_on_spawn,
+      _("Set break on reset."), _("Show break on reset."),
+      NULL, set_cluster_break_on_spawn, show_cluster_break_on_spawn, &kalray_set_cmdlist, &kalray_show_cmdlist);
     
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\

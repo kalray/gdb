@@ -85,6 +85,7 @@ typedef struct {
   int fake_pcie_spawn;
   
   int os_supported_debug_mode;
+  int break_on_spawn;
   
   /* link between ddr and eth of bostan for a united presentation to gdb */
   struct debug_agent_         *da_ddr_peer_united_io;

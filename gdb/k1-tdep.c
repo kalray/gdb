@@ -521,6 +521,18 @@ void send_stop_at_main (int bstop)
   free (buf);
 }
 
+void send_cluster_break_on_spawn (struct inferior *inf, int v)
+{
+  char *buf;
+  long size = 256;
+
+  buf = (char *) malloc (size);
+  sprintf (buf, "kS%dp%x.1", v, inf->pid);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
 void send_cluster_debug_level (int level)
 {
   char *buf;
