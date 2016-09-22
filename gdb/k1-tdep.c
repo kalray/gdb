@@ -471,7 +471,7 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
     if (data->has_step_pad_area_lma_p) {
 	regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
 	/* MMU active ? */
-	if ((ps & (1 << 11)) == 0)
+	if ((ps & (1 << 11)) != 0)
 	    return data->step_pad_area_lma;
     }
 
@@ -858,9 +858,6 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch,
     if (((dsc->insn_words[0] >> 29) & 0x3) == 0)
 	patch_bcu_instruction (gdbarch, from, to, regs, dsc);
     store_unsigned_integer ((gdb_byte*)dsc->insn_words, 4, gdbarch_byte_order (gdbarch), dsc->insn_words[0]);
-
-    if (data->has_step_pad_area_lma_p && to == data->step_pad_area)
-	to = data->step_pad_area_lma;
 
     write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
     
