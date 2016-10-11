@@ -25450,7 +25450,7 @@ install-strip-readline: installdirs
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(HOST_EXPORTS) \
 	(cd $(HOST_SUBDIR)/readline && \
-	  $(MAKE) $(FLAGS_TO_PASS)  install-strip)
+	  $(MAKE) $(FLAGS_TO_PASS)  install)
 
 @endif readline
 
@@ -26332,7 +26332,7 @@ install-strip-sim: installdirs
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(HOST_EXPORTS) \
 	(cd $(HOST_SUBDIR)/sim && \
-	  $(MAKE) $(FLAGS_TO_PASS)  install-strip)
+	  $(MAKE) $(FLAGS_TO_PASS)  install)
 
 @endif sim
 
