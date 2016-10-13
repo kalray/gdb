@@ -21,7 +21,7 @@ AUTOMAKE_OPTIONS = 1.11 no-dist foreign
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 
 INCDIR = $(srcdir)/../include
-CSEARCH = -I. -I$(srcdir) -I$(INCDIR)
+CSEARCH = -I. -I$(srcdir) -I$(INCDIR) -I$(FAMDIR)/BE/GBU/k1b/bfd
 
 SUBDIRS = doc po
 
@@ -119,6 +119,7 @@ ALL_MACHINES = \
 	cpu-ia64.lo \
 	cpu-ip2k.lo \
 	cpu-iq2000.lo \
+	cpu-k1.lo \
 	cpu-lm32.lo \
 	cpu-m10200.lo \
 	cpu-m10300.lo \
@@ -343,6 +344,8 @@ BFD32_BACKENDS = \
 	elf32-i960.lo \
 	elf32-ip2k.lo \
 	elf32-iq2000.lo \
+	elf32-k1.lo \
+	elfxx-k1.lo \
 	elf32-lm32.lo \
 	elf32-m32c.lo \
 	elf32-m32r.lo \
@@ -535,6 +538,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-i960.c \
 	elf32-ip2k.c \
 	elf32-iq2000.c \
+	elf32-k1.c \
 	elf32-lm32.c \
 	elf32-m32c.c \
 	elf32-m32r.c \
@@ -578,6 +582,7 @@ BFD32_BACKENDS_CFILES = \
 	elflink.c \
 	elfxx-sparc.c \
 	elfxx-tilegx.c \
+	elfxx-k1.c \
 	epoc-pe-arm.c \
 	epoc-pei-arm.c \
 	hp300bsd.c \
@@ -671,6 +676,7 @@ BFD64_BACKENDS = \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
 	elf64-ia64-vms.lo \
+	elf64-k1.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
@@ -682,6 +688,7 @@ BFD64_BACKENDS = \
 	elf64.lo \
 	elfn32-mips.lo \
 	elfxx-ia64.lo \
+    elfxx-k1.lo \
 	elfxx-mips.lo \
 	mach-o-aarch64.lo \
 	mach-o-x86-64.lo \
@@ -709,6 +716,7 @@ BFD64_BACKENDS_CFILES = \
 	elf64-gen.c \
 	elf64-hppa.c \
 	elf64-ia64-vms.c \
+	elf64-k1.c \
 	elf64-mips.c \
 	elf64-mmix.c \
 	elf64-ppc.c \
@@ -721,6 +729,7 @@ BFD64_BACKENDS_CFILES = \
 	elfn32-mips.c \
 	elfxx-aarch64.c \
 	elfxx-ia64.c \
+	elfxx-k1.c \
 	elfxx-mips.c \
 	mach-o-aarch64.c \
 	mach-o-x86-64.c \

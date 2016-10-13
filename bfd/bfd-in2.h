@@ -2310,6 +2310,15 @@ enum bfd_architecture
   bfd_arch_lm32,      /* Lattice Mico32 */
 #define bfd_mach_lm32      1
   bfd_arch_microblaze,/* Xilinx MicroBlaze. */
+  bfd_arch_k1,        /* Kalray k1 */
+#define bfd_mach_k1dp                 0
+#define bfd_mach_k1io                 1
+#define bfd_mach_k1bdp                2
+#define bfd_mach_k1bio                3
+#define bfd_mach_k1bdp_64             4
+#define bfd_mach_k1bio_64             5
+#define bfd_mach_k1bdp_usr            6
+#define bfd_mach_k1bio_usr            7
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -5707,6 +5716,63 @@ to two words (uses imm instruction).  */
 /* This is a 64 bit reloc that stores 32-bit thread pointer relative offset
 to two words (uses imm instruction).  */
   BFD_RELOC_MICROBLAZE_64_TLSTPREL,
+
+/* Relocations for K1 processor  */
+  BFD_RELOC_K1_GOTOFF,
+  BFD_RELOC_K1_PLT_HI22,
+  BFD_RELOC_K1_PLT_LO10,
+  BFD_RELOC_K1_TPREL_32,
+  BFD_RELOC_K1_PLT64_EXTEND6,
+  BFD_RELOC_K1_PLT64_HI27,
+  BFD_RELOC_K1_PLT64_LO10,
+  BFD_RELOC_K1_JMP_SLOT64,
+  BFD_RELOC_K1_GOTOFF_HI22,
+  BFD_RELOC_K1_GOTOFF_LO10,
+  BFD_RELOC_K1_RELATIVE,
+  BFD_RELOC_K1_GOTOFF64_EXTEND6,
+  BFD_RELOC_K1_GOTOFF64_HI27,
+  BFD_RELOC_K1_GOTOFF64_LO10,
+  BFD_RELOC_K1_GOT64,
+  BFD_RELOC_K1_FUNCDESC_VALUE,
+  BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,
+  BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10,
+  BFD_RELOC_K1_EXTEND6,
+  BFD_RELOC_K1_HI27,
+  BFD_RELOC_K1_ELO10,
+  BFD_RELOC_K1_GOT,
+  BFD_RELOC_K1_COPY,
+  BFD_RELOC_K1_27_PCREL,
+  BFD_RELOC_K1_TPREL_HI22,
+  BFD_RELOC_K1_TPREL_LO10,
+  BFD_RELOC_K1_FUNCDESC_GOT_HI22,
+  BFD_RELOC_K1_FUNCDESC_GOT_LO10,
+  BFD_RELOC_K1_FUNCDESC,
+  BFD_RELOC_K1_10_GPREL,
+  BFD_RELOC_K1_GOT_HI22,
+  BFD_RELOC_K1_GOT_LO10,
+  BFD_RELOC_K1_GOTOFF64,
+  BFD_RELOC_K1_64,
+  BFD_RELOC_K1_TPREL64_64,
+  BFD_RELOC_K1_16_GPREL,
+  BFD_RELOC_K1_GPREL_HI22,
+  BFD_RELOC_K1_GPREL_LO10,
+  BFD_RELOC_K1_GLOB_DAT,
+  BFD_RELOC_K1_GLOB_DAT64,
+  BFD_RELOC_K1_GOT64_EXTEND6,
+  BFD_RELOC_K1_GOT64_HI27,
+  BFD_RELOC_K1_GOT64_LO10,
+  BFD_RELOC_K1_HI22,
+  BFD_RELOC_K1_LO10,
+  BFD_RELOC_K1_S37_HI27,
+  BFD_RELOC_K1_S37_LO10,
+  BFD_RELOC_K1_17_PCREL,
+  BFD_RELOC_K1_JMP_SLOT,
+  BFD_RELOC_K1_32_PCREL,
+  BFD_RELOC_K1_TPREL64_EXTEND6,
+  BFD_RELOC_K1_TPREL64_HI27,
+  BFD_RELOC_K1_TPREL64_ELO10,
+  BFD_RELOC_K1_32,
+  BFD_RELOC_K1_16,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is

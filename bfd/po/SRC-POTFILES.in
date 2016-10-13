@@ -190,6 +190,7 @@ elf32-i860.c
 elf32-i960.c
 elf32-ip2k.c
 elf32-iq2000.c
+elf32-k1.c
 elf32-lm32.c
 elf32-m32c.c
 elf32-m32r.c
@@ -238,6 +239,7 @@ elf64-gen.c
 elf64-hppa.c
 elf64-hppa.h
 elf64-ia64-vms.c
+elf64-k1.c
 elf64-mips.c
 elf64-mmix.c
 elf64-ppc.c
@@ -253,6 +255,8 @@ elflink.c
 elfn32-mips.c
 elfxx-aarch64.c
 elfxx-ia64.c
+elfxx-k1.c
+elfxx-k1.c
 elfxx-mips.c
 elfxx-sparc.c
 elfxx-tilegx.c
@@ -307,6 +311,7 @@ mach-o.h
 merge.c
 mipsbsd.c
 mmo.c
+netbsd-core.c
 netbsd.h
 newsos3.c
 nlm-target.h

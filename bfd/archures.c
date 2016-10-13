@@ -495,6 +495,16 @@ DESCRIPTION
 .  bfd_arch_lm32,      {* Lattice Mico32 *}
 .#define bfd_mach_lm32      1
 .  bfd_arch_microblaze,{* Xilinx MicroBlaze. *}
+.  bfd_arch_k1,        {* Kalray k1 *}
+.#define bfd_mach_k1dp                 0
+.#define bfd_mach_k1io                 1
+.#define bfd_mach_k1bdp                2
+.#define bfd_mach_k1bio                3
+.#define bfd_mach_k1bdp_64             4
+.#define bfd_mach_k1bio_64             5
+.#define bfd_mach_k1bdp_usr            6
+.#define bfd_mach_k1bio_usr            7
+
 .  bfd_arch_tilepro,   {* Tilera TILEPro *}
 .  bfd_arch_tilegx, {* Tilera TILE-Gx *}
 .#define bfd_mach_tilepro   1
@@ -580,6 +590,7 @@ extern const bfd_arch_info_type bfd_i960_arch;
 extern const bfd_arch_info_type bfd_ia64_arch;
 extern const bfd_arch_info_type bfd_ip2k_arch;
 extern const bfd_arch_info_type bfd_iq2000_arch;
+extern const bfd_arch_info_type bfd_k1_arch;
 extern const bfd_arch_info_type bfd_k1om_arch;
 extern const bfd_arch_info_type bfd_l1om_arch;
 extern const bfd_arch_info_type bfd_lm32_arch;
@@ -672,6 +683,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_ia64_arch,
     &bfd_ip2k_arch,
     &bfd_iq2000_arch,
+    &bfd_k1_arch,
     &bfd_k1om_arch,
     &bfd_l1om_arch,
     &bfd_lm32_arch,
