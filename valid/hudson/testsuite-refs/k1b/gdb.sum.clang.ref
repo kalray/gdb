@@ -1,0 +1,447 @@
+Test Run By rjodin on Mon Jun 22 14:47:38 2015
+Target is k1-unknown-elf
+Host   is i686-pc-linux-gnu
+
+		=== gdb tests ===
+
+Schedule of variations:
+    k1-iss-clang
+
+Running target k1-iss-clang
+Running ../../../gdb/testsuite/gdb.base/sepsymtab.exp ...
+UNSUPPORTED: gdb.base/sepsymtab.exp: cannot produce separate debug info files
+Running ../../../gdb/testsuite/gdb.base/ifelse.exp ...
+PASS: gdb.base/ifelse.exp: if 1 with empty body
+PASS: gdb.base/ifelse.exp: if 0 with empty body
+PASS: gdb.base/ifelse.exp: if true else false #1
+PASS: gdb.base/ifelse.exp: if 1 .. else with empty body
+PASS: gdb.base/ifelse.exp: if true else false #2
+PASS: gdb.base/ifelse.exp: if 0 .. else with empty body
+PASS: gdb.base/ifelse.exp: if true else false #3
+PASS: gdb.base/ifelse.exp: create define with empty else
+PASS: gdb.base/ifelse.exp: call original define
+PASS: gdb.base/ifelse.exp: replace define with if .. else with empty body
+PASS: gdb.base/ifelse.exp: call replacement define
+Running ../../../gdb/testsuite/gdb.base/shell.exp ...
+PASS: gdb.base/shell.exp: shell echo foo
+PASS: gdb.base/shell.exp: ! echo foo
+PASS: gdb.base/shell.exp: !echo foo
+Running ../../../gdb/testsuite/gdb.kalray/displaced.exp ...
+UNTESTED: gdb.kalray/displaced.exp: asm-source.exp
+Running ../../../gdb/testsuite/gdb.base/page.exp ...
+PASS: gdb.base/page.exp: set pagination off
+PASS: gdb.base/page.exp: pagination is off
+PASS: gdb.base/page.exp: unpaged help
+PASS: gdb.base/page.exp: set pagination on
+PASS: gdb.base/page.exp: pagination is on
+PASS: gdb.base/page.exp: set height 10
+PASS: gdb.base/page.exp: paged help
+PASS: gdb.base/page.exp: q
+Running ../../../gdb/testsuite/gdb.base/varargs.exp ...
+PASS: gdb.base/varargs.exp: set print sevenbit-strings
+PASS: gdb.base/varargs.exp: set print address off
+PASS: gdb.base/varargs.exp: set width 0
+Running ../../../gdb/testsuite/gdb.base/trace-commands.exp ...
+PASS: gdb.base/trace-commands.exp: show trace-commands says off
+PASS: gdb.base/trace-commands.exp: source -v
+PASS: gdb.base/trace-commands.exp: set trace-commands
+PASS: gdb.base/trace-commands.exp: show trace-commands says on
+PASS: gdb.base/trace-commands.exp: simple trace-commands test
+PASS: gdb.base/trace-commands.exp: nested trace-commands test
+PASS: gdb.base/trace-commands.exp: define user command
+PASS: gdb.base/trace-commands.exp: nested trace-commands test with source
+PASS: gdb.base/trace-commands.exp: depth resets on error part 1
+PASS: gdb.base/trace-commands.exp: depth resets on error part 2
+Running ../../../gdb/testsuite/gdb.base/echo.exp ...
+PASS: gdb.base/echo.exp: Echo test
+Running ../../../gdb/testsuite/gdb.base/eval.exp ...
+PASS: gdb.base/eval.exp: Initialize $a.
+PASS: gdb.base/eval.exp: First eval.
+PASS: gdb.base/eval.exp: Second eval.
+Running ../../../gdb/testsuite/gdb.base/empty_exe.exp ...
+PASS: gdb.base/empty_exe.exp: file ''
+PASS: gdb.base/empty_exe.exp: print 1
+Running ../../../gdb/testsuite/gdb.base/whatis.exp ...
+PASS: gdb.base/whatis.exp: whatis char
+PASS: gdb.base/whatis.exp: whatis signed char
+PASS: gdb.base/whatis.exp: whatis unsigned char
+PASS: gdb.base/whatis.exp: whatis short
+PASS: gdb.base/whatis.exp: whatis signed short
+PASS: gdb.base/whatis.exp: whatis unsigned short
+PASS: gdb.base/whatis.exp: whatis int
+PASS: gdb.base/whatis.exp: whatis signed int
+PASS: gdb.base/whatis.exp: whatis unsigned int
+PASS: gdb.base/whatis.exp: whatis long
+PASS: gdb.base/whatis.exp: whatis signed long
+PASS: gdb.base/whatis.exp: whatis unsigned long
+PASS: gdb.base/whatis.exp: whatis unsigned long long
+PASS: gdb.base/whatis.exp: whatis float
+PASS: gdb.base/whatis.exp: whatis double
+PASS: gdb.base/whatis.exp: whatis char array
+PASS: gdb.base/whatis.exp: whatis signed char array
+PASS: gdb.base/whatis.exp: whatis unsigned char array
+PASS: gdb.base/whatis.exp: whatis short array
+PASS: gdb.base/whatis.exp: whatis signed short array
+PASS: gdb.base/whatis.exp: whatis unsigned short array
+PASS: gdb.base/whatis.exp: whatis int array
+PASS: gdb.base/whatis.exp: whatis signed int array
+PASS: gdb.base/whatis.exp: whatis unsigned int array
+PASS: gdb.base/whatis.exp: whatis long array
+PASS: gdb.base/whatis.exp: whatis signed long array
+PASS: gdb.base/whatis.exp: whatis unsigned long array
+PASS: gdb.base/whatis.exp: whatis unsigned long array
+PASS: gdb.base/whatis.exp: whatis float array
+PASS: gdb.base/whatis.exp: whatis double array
+PASS: gdb.base/whatis.exp: whatis char pointer
+PASS: gdb.base/whatis.exp: whatis signed char pointer
+PASS: gdb.base/whatis.exp: whatis unsigned char pointer
+PASS: gdb.base/whatis.exp: whatis short pointer
+PASS: gdb.base/whatis.exp: whatis signed short pointer
+PASS: gdb.base/whatis.exp: whatis unsigned short pointer
+PASS: gdb.base/whatis.exp: whatis int pointer
+PASS: gdb.base/whatis.exp: whatis signed int pointer
+PASS: gdb.base/whatis.exp: whatis unsigned int pointer
+PASS: gdb.base/whatis.exp: whatis long pointer
+PASS: gdb.base/whatis.exp: whatis signed long pointer
+PASS: gdb.base/whatis.exp: whatis unsigned long pointer
+PASS: gdb.base/whatis.exp: whatis long long pointer
+PASS: gdb.base/whatis.exp: whatis signed long long pointer
+PASS: gdb.base/whatis.exp: whatis unsigned long long pointer
+PASS: gdb.base/whatis.exp: whatis float pointer
+PASS: gdb.base/whatis.exp: whatis double pointer
+PASS: gdb.base/whatis.exp: whatis named structure
+PASS: gdb.base/whatis.exp: whatis named structure using type name
+PASS: gdb.base/whatis.exp: whatis unnamed structure
+PASS: gdb.base/whatis.exp: whatis named union
+PASS: gdb.base/whatis.exp: whatis named union using type name
+PASS: gdb.base/whatis.exp: whatis unnamed union
+PASS: gdb.base/whatis.exp: whatis char function
+PASS: gdb.base/whatis.exp: whatis signed char function
+PASS: gdb.base/whatis.exp: whatis unsigned char function
+PASS: gdb.base/whatis.exp: whatis short function
+PASS: gdb.base/whatis.exp: whatis signed short function
+PASS: gdb.base/whatis.exp: whatis unsigned short function
+PASS: gdb.base/whatis.exp: whatis int function
+PASS: gdb.base/whatis.exp: whatis signed int function
+PASS: gdb.base/whatis.exp: whatis unsigned int function
+PASS: gdb.base/whatis.exp: whatis long function
+PASS: gdb.base/whatis.exp: whatis signed long function
+PASS: gdb.base/whatis.exp: whatis unsigned long function
+PASS: gdb.base/whatis.exp: whatis long long function
+PASS: gdb.base/whatis.exp: whatis signed long long function
+PASS: gdb.base/whatis.exp: whatis unsigned long long function
+PASS: gdb.base/whatis.exp: whatis float function
+PASS: gdb.base/whatis.exp: whatis double function
+PASS: gdb.base/whatis.exp: whatis complicated structure
+PASS: gdb.base/whatis.exp: whatis complicated union
+PASS: gdb.base/whatis.exp: whatis enumeration
+PASS: gdb.base/whatis.exp: whatis enumeration using type name
+PASS: gdb.base/whatis.exp: whatis outer structure
+PASS: gdb.base/whatis.exp: whatis outer structure member
+PASS: gdb.base/whatis.exp: whatis inner structure
+PASS: gdb.base/whatis.exp: whatis inner structure member
+PASS: gdb.base/whatis.exp: whatis inner union
+PASS: gdb.base/whatis.exp: whatis inner union member
+PASS: gdb.base/whatis.exp: whatis using typedef type name
+PASS: gdb.base/whatis.exp: whatis applied to variable defined by typedef
+PASS: gdb.base/whatis.exp: whatis applied to pointer to pointer to function
+PASS: gdb.base/whatis.exp: whatis applied to const pointer to pointer to function
+PASS: gdb.base/whatis.exp: whatis applied to pointer to const pointer to function
+PASS: gdb.base/whatis.exp: whatis applied to pointer to function returning pointer to int
+PASS: gdb.base/whatis.exp: whatis applied to pointer to pointer to function returning pointer to int
+PASS: gdb.base/whatis.exp: whatis applied to pointer to function returning pointer to array
+PASS: gdb.base/whatis.exp: whatis applied to pointer to function taking int,int and returning int
+PASS: gdb.base/whatis.exp: whatis applied to pointer to function taking const int ptr and varargs and returning int
+PASS: gdb.base/whatis.exp: whatis applied to function with types trailing 'void'
+PASS: gdb.base/whatis.exp: whatis applied to function with 'void' parameter type
+Running ../../../gdb/testsuite/gdb.base/subst.exp ...
+PASS: gdb.base/subst.exp: deactivate GDB's confirmation interface
+PASS: gdb.base/subst.exp: remove default substitution rules
+PASS: gdb.base/subst.exp: show substitute-path, no rule entered yet
+PASS: gdb.base/subst.exp: show substitute-path from, no rule entered yet
+PASS: gdb.base/subst.exp: show substitute-path, too many arguments
+PASS: gdb.base/subst.exp: unset substitute-path from, no rule entered yet
+PASS: gdb.base/subst.exp: unset substitute-path, no rule entered yet
+PASS: gdb.base/subst.exp: unset substitute-path from, no rule entered yet
+PASS: gdb.base/subst.exp: unset substitute-path, too many arguments
+PASS: gdb.base/subst.exp: set substitute-path, too many arguments
+PASS: gdb.base/subst.exp: set substitute-path, too few arguments
+PASS: gdb.base/subst.exp: set substitute-path, first argument is empty string
+PASS: gdb.base/subst.exp: add from -> to substitution rule
+PASS: gdb.base/subst.exp: add from1 -> to1 substitution rule
+PASS: gdb.base/subst.exp: add source -> destination substitution rule
+PASS: gdb.base/subst.exp: add depuis -> vers substitution rule
+PASS: gdb.base/subst.exp: add substitution rule to empty string
+PASS: gdb.base/subst.exp: show substitute-path after all paths added
+PASS: gdb.base/subst.exp: show substitute-path from, after all paths added
+PASS: gdb.base/subst.exp: show substitute-path depuis, after all paths added
+PASS: gdb.base/subst.exp: show substitute-path from/path, after all paths added
+PASS: gdb.base/subst.exp: show substitute-path from_a_bad_path, after all paths added
+PASS: gdb.base/subst.exp: show substitute-path garbage, after all paths added
+PASS: gdb.base/subst.exp: unset substitute-path from
+PASS: gdb.base/subst.exp: show substitute-path from, after unsetting it
+PASS: gdb.base/subst.exp: show substitute-path after from rule removed
+PASS: gdb.base/subst.exp: unset substitute-path from after the rule was removed
+PASS: gdb.base/subst.exp: unset substitute-path depuis (middle of list)
+PASS: gdb.base/subst.exp: show substitute-path after depuis rule removed
+PASS: gdb.base/subst.exp: unset substitute-path empty (end of list)
+PASS: gdb.base/subst.exp: show substitute-path after empty rule removed
+PASS: gdb.base/subst.exp: remove all remaining substitution rules
+PASS: gdb.base/subst.exp: show substitute-path after all remaining rules removed
+Running ../../../gdb/testsuite/gdb.base/help.exp ...
+PASS: gdb.base/help.exp: disable pagination
+PASS: gdb.base/help.exp: help aliases
+PASS: gdb.base/help.exp: help breakpoints
+PASS: gdb.base/help.exp: help data
+PASS: gdb.base/help.exp: help files
+PASS: gdb.base/help.exp: help internals
+PASS: gdb.base/help.exp: help obscure
+PASS: gdb.base/help.exp: help running
+PASS: gdb.base/help.exp: help stack
+PASS: gdb.base/help.exp: help status
+PASS: gdb.base/help.exp: help support
+PASS: gdb.base/help.exp: help tracepoints
+PASS: gdb.base/help.exp: help user-defined
+PASS: gdb.base/help.exp: help breakpoint "b" abbreviation
+PASS: gdb.base/help.exp: help breakpoint "br" abbreviation
+PASS: gdb.base/help.exp: help breakpoint "bre" abbreviation
+PASS: gdb.base/help.exp: help breakpoint "brea" abbreviation
+PASS: gdb.base/help.exp: help breakpoint "break" abbreviation
+PASS: gdb.base/help.exp: help backtrace "bt" abbreviation
+PASS: gdb.base/help.exp: help backtrace
+PASS: gdb.base/help.exp: help commands
+PASS: gdb.base/help.exp: help delete "d" abbreviation
+PASS: gdb.base/help.exp: help delete
+PASS: gdb.base/help.exp: help help "h" abbreviation
+PASS: gdb.base/help.exp: help help
+PASS: gdb.base/help.exp: help show copying
+PASS: gdb.base/help.exp: help show warranty
+PASS: gdb.base/help.exp: help show commands
+PASS: gdb.base/help.exp: help show confirm
+PASS: gdb.base/help.exp: help info bogus-gdb-command
+PASS: gdb.base/help.exp: help gotcha
+PASS: gdb.base/help.exp: apropos \(print[^ bsiedf\".-]\)
+PASS: gdb.base/help.exp: apropos handle signal
+PASS: gdb.base/help.exp: apropos apropos
+Running ../../../gdb/testsuite/gdb.base/dfp-exprs.exp ...
+PASS: gdb.base/dfp-exprs.exp: p 1.2df
+PASS: gdb.base/dfp-exprs.exp: p -1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.234567df
+PASS: gdb.base/dfp-exprs.exp: p -1.234567df
+PASS: gdb.base/dfp-exprs.exp: p 1234567.df
+PASS: gdb.base/dfp-exprs.exp: p -1234567.df
+PASS: gdb.base/dfp-exprs.exp: p 1.2E1df
+PASS: gdb.base/dfp-exprs.exp: p 1.2E10df
+PASS: gdb.base/dfp-exprs.exp: p 1.2E-10df
+PASS: gdb.base/dfp-exprs.exp: p 1.2E96df
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p -1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.234567890123456dd
+PASS: gdb.base/dfp-exprs.exp: p -1.234567890123456dd
+PASS: gdb.base/dfp-exprs.exp: p 1234567890123456.dd
+PASS: gdb.base/dfp-exprs.exp: p -1234567890123456.dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2E1dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2E10dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2E-10dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2E384dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl
+PASS: gdb.base/dfp-exprs.exp: p -1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.234567890123456789012345678901234dl
+PASS: gdb.base/dfp-exprs.exp: p -1.234567890123456789012345678901234dl
+PASS: gdb.base/dfp-exprs.exp: p 1234567890123456789012345678901234.dl
+PASS: gdb.base/dfp-exprs.exp: p -1234567890123456789012345678901234.dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2E1dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2E10dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2E-10dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2E6144dl
+PASS: gdb.base/dfp-exprs.exp: p 1.4df + 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.4df - 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.4df * 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.4df / 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.4dd + 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.4dd - 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.4dd * 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.4dd / 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.4dl + 1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.4dl - 1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.4dl * 1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.4dl / 1.2dl
+PASS: gdb.base/dfp-exprs.exp: ptype 2.df + 2.df
+PASS: gdb.base/dfp-exprs.exp: ptype 2.dd + 2.dd
+PASS: gdb.base/dfp-exprs.exp: ptype 2.dl + 2.dl
+PASS: gdb.base/dfp-exprs.exp: p 2.1df + 2.7dd
+PASS: gdb.base/dfp-exprs.exp: p 2.1dd + 2.7df
+PASS: gdb.base/dfp-exprs.exp: p 2.6df + 2.7dl
+PASS: gdb.base/dfp-exprs.exp: p 2.6dl + 2.7df
+PASS: gdb.base/dfp-exprs.exp: p 2.3dd + 2.2dl
+PASS: gdb.base/dfp-exprs.exp: p 2.3dl + 2.2dd
+PASS: gdb.base/dfp-exprs.exp: ptype 2.df + 2.dd
+PASS: gdb.base/dfp-exprs.exp: ptype 2.df + 2.dl
+PASS: gdb.base/dfp-exprs.exp: ptype 2.dd + 2.dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2df + 1
+PASS: gdb.base/dfp-exprs.exp: p 2 + 1.7dd
+PASS: gdb.base/dfp-exprs.exp: p 3 + 2.1dl
+PASS: gdb.base/dfp-exprs.exp: ptype 1.2df + 1
+PASS: gdb.base/dfp-exprs.exp: ptype 2 + 1.7dd
+PASS: gdb.base/dfp-exprs.exp: ptype 3 + 2.1dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2df + 2ll
+PASS: gdb.base/dfp-exprs.exp: p 1.2df + 1.2f
+PASS: gdb.base/dfp-exprs.exp: p !0.df
+PASS: gdb.base/dfp-exprs.exp: p !0.dd
+PASS: gdb.base/dfp-exprs.exp: p !0.dl
+PASS: gdb.base/dfp-exprs.exp: p !0.5df
+PASS: gdb.base/dfp-exprs.exp: p !0.5dd
+PASS: gdb.base/dfp-exprs.exp: p !0.5dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2df == 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.2df == 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2df == 1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd == 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd == 1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl == 1.2df
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl == 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2df == 1.3df
+PASS: gdb.base/dfp-exprs.exp: p 1.2df == 1.3dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2df == 1.3dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd == 1.3df
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd == 1.3dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl == 1.3df
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl == 1.3dd
+PASS: gdb.base/dfp-exprs.exp: p +1.2df
+PASS: gdb.base/dfp-exprs.exp: p +1.2dd
+PASS: gdb.base/dfp-exprs.exp: p +1.2dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2df < 1.3df
+PASS: gdb.base/dfp-exprs.exp: p 1.2df < 1.3dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl < 1.3df
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd < 1.3dd
+PASS: gdb.base/dfp-exprs.exp: p 1.2dd < 1.3dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl < 1.3dl
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl < 1.3df
+PASS: gdb.base/dfp-exprs.exp: p 1.2df > 1
+PASS: gdb.base/dfp-exprs.exp: p 1.2dl > 2
+PASS: gdb.base/dfp-exprs.exp: p 2 > 1.2dd
+PASS: gdb.base/dfp-exprs.exp: p 2 > 3.1dl
+PASS: gdb.base/dfp-exprs.exp: p (float) -0.1df
+PASS: gdb.base/dfp-exprs.exp: p (int) 8.3dd
+PASS: gdb.base/dfp-exprs.exp: p (_Decimal64) 3.1
+PASS: gdb.base/dfp-exprs.exp: p (_Decimal128) 3.7df
+PASS: gdb.base/dfp-exprs.exp: p (_Decimal32) 4
+Running ../../../gdb/testsuite/gdb.base/nofield.exp ...
+PASS: gdb.base/nofield.exp: ptype struct not_empty
+PASS: gdb.base/nofield.exp: ptype struct empty
+PASS: gdb.base/nofield.exp: ptype union empty_union
+Running ../../../gdb/testsuite/gdb.base/source.exp ...
+PASS: gdb.base/source.exp: script contains error
+PASS: gdb.base/source.exp: source -v
+PASS: gdb.base/source.exp: source after -v
+PASS: gdb.base/source.exp: set search directories
+PASS: gdb.base/source.exp: source -s
+PASS: gdb.base/source.exp: source -s -v
+PASS: gdb.base/source.exp: source -v -s
+PASS: gdb.base/source.exp: source for-sure-nonexistant-file
+PASS: gdb.base/source.exp: source source-nofile.gdb
+Running ../../../gdb/testsuite/gdb.base/interact.exp ...
+PASS: gdb.base/interact.exp: set interactive-mode auto
+PASS: gdb.base/interact.exp: source script with interactive-mode auto
+PASS: gdb.base/interact.exp: sanity check with interactive-mode auto
+PASS: gdb.base/interact.exp: show interactive-mode (auto)
+PASS: gdb.base/interact.exp: set interactive-mode on
+PASS: gdb.base/interact.exp: source script with interactive-mode on
+PASS: gdb.base/interact.exp: sanity check with interactive-mode on
+PASS: gdb.base/interact.exp: show interactive-mode (on)
+PASS: gdb.base/interact.exp: set interactive-mode off
+PASS: gdb.base/interact.exp: source script with interactive-mode off
+PASS: gdb.base/interact.exp: sanity check with interactive-mode off
+PASS: gdb.base/interact.exp: show interactive-mode (off)
+Running ../../../gdb/testsuite/gdb.base/alias.exp ...
+PASS: gdb.base/alias.exp: alias -a set2=set
+PASS: gdb.base/alias.exp: set2 print elements 42
+PASS: gdb.base/alias.exp: verify set2
+PASS: gdb.base/alias.exp: abbrev set2 not present in help command list
+PASS: gdb.base/alias.exp: alias -a set3= set
+PASS: gdb.base/alias.exp: set3 print elements 43
+PASS: gdb.base/alias.exp: verify set3
+PASS: gdb.base/alias.exp: abbrev set3 not present in help command list
+PASS: gdb.base/alias.exp: alias -a set4 =set
+PASS: gdb.base/alias.exp: set4 print elements 44
+PASS: gdb.base/alias.exp: verify set4
+PASS: gdb.base/alias.exp: abbrev set4 not present in help command list
+PASS: gdb.base/alias.exp: alias -a set5 = set
+PASS: gdb.base/alias.exp: set5 print elements 45
+PASS: gdb.base/alias.exp: verify set5
+PASS: gdb.base/alias.exp: abbrev set5 not present in help command list
+PASS: gdb.base/alias.exp: alias -a -- set6 = set
+PASS: gdb.base/alias.exp: set6 print elements 46
+PASS: gdb.base/alias.exp: verify set6
+PASS: gdb.base/alias.exp: abbrev set6 not present in help command list
+PASS: gdb.base/alias.exp: alias -a -- -a = set
+PASS: gdb.base/alias.exp: -a print elements 47
+PASS: gdb.base/alias.exp: verify -a
+PASS: gdb.base/alias.exp: abbrev -a not present in help command list
+PASS: gdb.base/alias.exp: alias set2=set
+PASS: gdb.base/alias.exp: alias foo=bar
+PASS: gdb.base/alias.exp: alias spe = set p elem
+PASS: gdb.base/alias.exp: spe 50
+PASS: gdb.base/alias.exp: verify spe
+PASS: gdb.base/alias.exp: alias set pr elms = set p elem
+PASS: gdb.base/alias.exp: set pr elms 51
+PASS: gdb.base/alias.exp: verify set pr elms
+PASS: gdb.base/alias.exp: help set print
+Running ../../../gdb/testsuite/gdb.base/ptype.exp ...
+PASS: gdb.base/ptype.exp: ptype unnamed enumeration member
+PASS: gdb.base/ptype.exp: ptype structure
+PASS: gdb.base/ptype.exp: ptype v_struct1.v_float_member
+PASS: gdb.base/ptype.exp: ptype v_struct1->v_float_member
+PASS: gdb.base/ptype.exp: ptype v_t_struct_p.v_float_member
+PASS: gdb.base/ptype.exp: ptype v_t_struct_p->v_float_member
+PASS: gdb.base/ptype.exp: ptype linked list structure
+PASS: gdb.base/ptype.exp: ptype union
+PASS: gdb.base/ptype.exp: ptype linked list union
+PASS: gdb.base/ptype.exp: ptype unnamed enumeration
+PASS: gdb.base/ptype.exp: ptype named enumeration
+PASS: gdb.base/ptype.exp: ptype unnamed typedef'd enumeration
+PASS: gdb.base/ptype.exp: list main
+PASS: gdb.base/ptype.exp: whatis unnamed typedef'd enum (compiler bug in IBM's xlc)
+PASS: gdb.base/ptype.exp: printing typedef'd struct
+PASS: gdb.base/ptype.exp: printing typedef'd union
+PASS: gdb.base/ptype.exp: ptype named typedef'd enumf'd enum
+PASS: gdb.base/ptype.exp: ptype misordered enumeration
+PASS: gdb.base/ptype.exp: ptype named enumeration member
+PASS: gdb.base/ptype.exp: ptype unnamed enumeration member #2
+PASS: gdb.base/ptype.exp: ptype short
+PASS: gdb.base/ptype.exp: ptype int
+PASS: gdb.base/ptype.exp: ptype t_char_array
+PASS: gdb.base/ptype.exp: ptype pv_char_array
+PASS: gdb.base/ptype.exp: ptype outer structure
+PASS: gdb.base/ptype.exp: ptype inner structure
+PASS: gdb.base/ptype.exp: ptype inner union
+PASS: gdb.base/ptype.exp: ptype nested structure
+PASS: gdb.base/ptype.exp: ptype outer int
+PASS: gdb.base/ptype.exp: ptype nested structure #2
+PASS: gdb.base/ptype.exp: ptype inner int
+PASS: gdb.base/ptype.exp: ptype nested union
+PASS: gdb.base/ptype.exp: ptype the_highest
+PASS: gdb.base/ptype.exp: ptype the_highest
+PASS: gdb.base/ptype.exp: ptype func_type
+PASS: gdb.base/ptype.exp: ptype old_fptr
+PASS: gdb.base/ptype.exp: ptype new_fptr
+PASS: gdb.base/ptype.exp: ptype fptr
+PASS: gdb.base/ptype.exp: ptype fptr2
+PASS: gdb.base/ptype.exp: ptype xptr
+PASS: gdb.base/ptype.exp: ptype ffptr
+PASS: gdb.base/ptype.exp: ptype fffptr
+PASS: gdb.base/ptype.exp: list intfoo
+PASS: gdb.base/ptype.exp: ptype foo typedef after first list of intfoo
+PASS: gdb.base/ptype.exp: list charfoo
+PASS: gdb.base/ptype.exp: ptype foo typedef after first list of charfoo
+PASS: gdb.base/ptype.exp: list intfoo
+PASS: gdb.base/ptype.exp: ptype foo typedef after second list of intfoo
+PASS: gdb.base/ptype.exp: list charfoo
+PASS: gdb.base/ptype.exp: ptype foo typedef after second list of charfoo
+
+		=== gdb Summary ===
+
+# of expected passes		408
+# of untested testcases		1
+# of unsupported tests		1
+/work1/rjodin/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../../gdb/gdb version  7.7.50.20140610-cvs -nw -nx -data-directory /work1/rjodin/tools/gdb/k1_build_gdb_x86/gdb/testsuite/../data-directory 
+

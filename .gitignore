@@ -1,3 +1,4 @@
+*_build
 *.diff
 *.patch
 *.orig
@@ -49,3 +50,16 @@ lost+found
 # ignore ./contrib/gcc_update output
 LAST_UPDATED
 REVISION
+
+# kalray specific ignore
+*.log
+*.sum
+k1_build_elf_x86
+k1_build_gdb_x86
+k1_build_rtems_x86
+k1_build_nodeos_x86
+gdbstub/build
+
+
+
+
