@@ -241,6 +241,8 @@ ALL_EMULATION_SOURCES = \
 	eelf32ip2k.c \
 	eelf32iq10.c \
 	eelf32iq2000.c \
+	eelf32k1.c \
+	eelf32k1_linux.c \
 	eelf32lm32.c \
 	eelf32lm32fd.c \
 	eelf32lppc.c \
@@ -485,6 +487,7 @@ ALL_64_EMULATION_SOURCES = \
 	eelf64lppc.c \
 	eelf64ltsmip.c \
 	eelf64ltsmip_fbsd.c \
+	eelf64k1.c \
 	eelf64mmix.c \
 	eelf64ppc.c \
 	eelf64ppc_fbsd.c \
@@ -1104,6 +1107,12 @@ eelf32iq10.c: $(srcdir)/emulparams/elf32iq10.sh \
 
 eelf32iq2000.c: $(srcdir)/emulparams/elf32iq2000.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/iq2000.sc ${GEN_DEPENDS}
+
+eelf32k1.c: $(srcdir)/emulparams/elf32k1.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
+eelf32k1_linux.c: $(srcdir)/emulparams/elf32k1_linux.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32l4300.c: $(srcdir)/emulparams/elf32l4300.sh \
   $(srcdir)/emulparams/elf32b4300.sh $(srcdir)/emulparams/elf32bmip.sh \
@@ -1932,6 +1941,9 @@ eelf64btsmip_fbsd.c: $(srcdir)/emulparams/elf64btsmip_fbsd.sh \
 eelf64hppa.c: $(srcdir)/emulparams/elf64hppa.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf64hppa.sc ${GEN_DEPENDS}
 
+eelf64k1.c: $(srcdir)/emulparams/elf64k1.sh \
+	$(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+
 eelf64lppc.c: $(srcdir)/emulparams/elf64lppc.sh \
   $(srcdir)/emulparams/elf64ppc.sh $(srcdir)/emultempl/ppc64elf.em \
   ldemul-list.h \
@@ -2183,7 +2195,7 @@ install-exec-local: ld-new$(EXEEXT) install-binPROGRAMS
 	if test "x$(install_as_default)" = "xyes"; then \
 	  ld=`echo ld | sed '$(transform)'`; \
 	  rm -f $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
-	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
+	  (cd $(DESTDIR)$(bindir) && ln -s $$n$(EXEEXT) $$ld$(EXEEXT) ) >/dev/null 2>/dev/null \
 	  || $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
 	  if test "$(bindir)" != "$(tooldir)/bin"; then \
 	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
