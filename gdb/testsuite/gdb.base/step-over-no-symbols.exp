@@ -18,6 +18,11 @@
 
 standard_testfile start.c
 
+if [istarget k1*-*-*] then {
+  unsupported "step-over-no-symbols.exp"
+  return 1
+}
+
 if { [build_executable "failed to build" ${testfile} $srcfile] } {
     return -1
 }

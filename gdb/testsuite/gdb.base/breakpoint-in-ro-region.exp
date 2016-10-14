@@ -17,6 +17,11 @@
 
 standard_testfile
 
+if [istarget k1*-*-*] then {
+  unsupported "breakpoint-in-ro-region.exp"
+  return 1
+}
+
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
     return -1
 }

@@ -333,11 +333,23 @@ proc mi_gdb_reinitialize_dir { subdir } {
 # config/monitor.exp:gdb_target_command.
 proc mi_gdb_target_cmd { targetname serialport } {
     global mi_gdb_prompt
+    global is_k1_server
 
     set serialport_re [string_to_regexp $serialport]
     for {set i 1} {$i <= 3} {incr i} {
-	send_gdb "47-target-select $targetname $serialport\n"
+
+    #kalray
+    if {[info exists is_k1_server] && $is_k1_server == 1} {
+    	send_gdb "attach-mppa $serialport\n"
+    } else {
+    	send_gdb "47-target-select $targetname $serialport\n"
+    }
+
 	gdb_expect 60 {
+        #kalray
+        -re ".stopped,.*" {
+            return 0
+        }
 	    -re "47\\^connected.*$mi_gdb_prompt" {
 		verbose "Set target to $targetname"
 		return 0

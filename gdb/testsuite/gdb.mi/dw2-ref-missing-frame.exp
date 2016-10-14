@@ -18,6 +18,11 @@ load_lib dwarf.exp
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
+if [istarget k1*-*-*] then {
+  unsupported "dw2-ref-missing-frame.exp"
+  return 1
+}
+
 if {![dwarf2_support]} {
     return 0
 }

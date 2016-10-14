@@ -25,6 +25,11 @@ if { [target_info exists use_gdb_stub] } then {
     return 0
 }
 
+if [istarget k1*-*-*] then {
+  unsupported "dprintf-detach.exp"
+  return 0
+}
+
 standard_testfile
 set escapedbinfile [string_to_regexp ${binfile}]
 

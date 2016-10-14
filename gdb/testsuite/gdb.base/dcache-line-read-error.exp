@@ -17,6 +17,12 @@
 
 standard_testfile
 
+
+if [istarget k1*-*-*] then {
+  unsupported "dcache-line-read-error.exp"
+  return 1
+}
+
 if { [prepare_for_testing "failed to prepare" ${testfile}] } {
     return -1
 }

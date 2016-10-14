@@ -33,6 +33,11 @@
 
 standard_testfile
 
+if [istarget k1*-*-*] then {
+  unsupported "sss-bp-on-user-bp-2.exp"
+  return 1
+}
+
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }

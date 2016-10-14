@@ -19,6 +19,11 @@
 
 standard_testfile
 
+if [istarget k1*-*-*] then {
+  unsupported "gcore-relro-pie.exp"
+  return 1
+}
+
 if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug additional_flags=-fpie "ldflags=-pie -Wl,-z,relro"}]} {
     return -1
 }

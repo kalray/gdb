@@ -17,6 +17,11 @@
 
 standard_testfile .c
 
+if [istarget k1*-*-*] then {
+  unsupported "watch-vfork.exp"
+  return 1
+}
+
 if { [build_executable ${testfile}.exp ${testfile} $srcfile {debug}] } {
     untested ${testfile}.exp
     return -1

@@ -19,6 +19,11 @@
 
 standard_testfile
 
+if [istarget k1*-*-*] then {
+  unsupported "bp-permanent.exp"
+  return 1
+}
+
 set options { debug }
 if { ![target_info exists gdb,nosignals] } {
     lappend options "additional_flags=-DSIGNALS"

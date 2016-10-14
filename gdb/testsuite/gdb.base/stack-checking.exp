@@ -16,6 +16,11 @@
 
 standard_testfile .c
 
+if [istarget k1*-*-*] then {
+  unsupported "stack-checking.exp"
+  return 1
+}
+
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [concat debug additional_flags=-fstack-check nowarnings]] != "" } {
      untested stack-checking.exp
      return -1
