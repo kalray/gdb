@@ -363,6 +363,11 @@ case "${target}" in
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			;;
+  k1*-*-linux*)
+			srv_regobj=reg-k1.o
+			srv_tgtobj="$srv_linux_obj linux-k1-low.o"
+			srv_linux_regsets=yes
+			;;
   tilegx-*-linux*)	srv_regobj=reg-tilegx.o
 			srv_regobj="${srv_regobj} reg-tilegx32.o"
 			srv_tgtobj="$srv_linux_obj linux-tile-low.o"

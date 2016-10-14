@@ -3831,6 +3831,7 @@ print_one_stopped_thread (struct thread_info *thread)
   observer_notify_normal_stop (NULL, 1);
 }
 
+int print_stopped_thread = 1; // allows to not print the initial stopped threads
 /* Process all initial stop replies the remote side sent in response
    to the ? packet.  These indicate threads that were already stopped
    on initial connection.  We mark these threads as stopped and print
@@ -3969,7 +3970,7 @@ process_initial_stop_replies (int from_tty)
 	  || thread->per_inf_num < lowest_stopped->per_inf_num)
 	lowest_stopped = thread;
 
-      if (non_stop)
+      if (non_stop && print_stopped_thread)
 	print_one_stopped_thread (thread);
     }
 

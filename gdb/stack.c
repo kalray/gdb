@@ -2536,8 +2536,8 @@ func_command (char *arg, int from_tty)
   if (arg == NULL)
     return;
 
-  frame = get_current_frame ();
   sals = decode_line_with_current_source (arg, DECODE_LINE_FUNFIRSTLINE);
+  frame = get_current_frame (); /* possible upstream bug "frame destroyed by decode_line_with_current_source" */
   cleanups = make_cleanup (xfree, sals.sals);
   func_bounds = XNEWVEC (struct function_bounds, sals.nelts);
   make_cleanup (xfree, func_bounds);

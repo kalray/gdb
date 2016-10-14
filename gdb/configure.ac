@@ -23,6 +23,7 @@ AC_INIT(main.c)
 AC_CONFIG_HEADER(config.h:config.in)
 AM_MAINTAINER_MODE
 
+AC_DEFINE_UNQUOTED(KALRAY_VERSION, "$KALRAY_VERSION", [The Kalray tools version.])
 # Set the 'development' global.
 . $srcdir/../bfd/development.sh
 
