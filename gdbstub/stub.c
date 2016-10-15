@@ -2298,6 +2298,9 @@ bool handle_command (struct gdbstub *stub)
 	case 'K':
 	    if (!starts_with ("vKill;", stub->payload)) goto unknown;
 	    return handle_vKill (stub);
+	case 'M':
+	    if (!starts_with ("vMustReplyEmpty", stub->payload)) goto unknown;
+	    return send_ok (stub);
 	case 'S':
 	    if (!starts_with ("vStopped", stub->payload)) goto unknown;
 	    return handle_vStopped (stub);
