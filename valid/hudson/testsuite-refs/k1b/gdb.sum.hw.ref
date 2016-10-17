@@ -1173,6 +1173,9 @@ PASS: gdb.mi/gdb701.exp: list children of fooPtr
 PASS: gdb.mi/gdb701.exp: list children of fooPtr.x
 PASS: gdb.mi/gdb701.exp: list children of fooPtr.y
 PASS: gdb.mi/gdb701.exp: list children of fooPtr.z
+Running ../../../gdb/testsuite/gdb.mi/mi-async-run.exp ...
+PASS: gdb.mi/mi-async-run.exp: send interrupt command
+PASS: gdb.mi/mi-async-run.exp: expect interrupt
 Running ../../../gdb/testsuite/gdb.mi/gdb792.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-pthreads.exp ...
 UNSUPPORTED: gdb.mi/mi-pthreads.exp: Couldn't compile pthreads.c: unrecognized error
@@ -11200,7 +11203,7 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		10592
+# of expected passes		10594
 # of unexpected failures	29
 # of expected failures		11
 # of known failures		28
