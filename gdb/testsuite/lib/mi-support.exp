@@ -992,6 +992,11 @@ proc mi_runto_helper {func run_or_continue} {
       mi_send_resuming_command "exec-continue" "$test"
   }
 
+  # K1 ISS: wait for breakpoint message
+  if {[istarget k1*-*-*] && [target_info gdb_protocol] != "remote"} {
+    after 200
+  }
+
   mi_expect_stop "breakpoint-hit" $func ".*" ".*" "\[0-9\]+" { "" "disp=\"del\"" } $test
 }
 
