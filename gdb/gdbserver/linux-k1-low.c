@@ -217,7 +217,7 @@ static char *create_xml (void)
   nr = tdesc_k1->num_registers;
   buf   = malloc (nr * 150 + 1000);
   strcpy (buf, "@<target><architecture>k1bio_usr</architecture>"
-    "<feature name=\"eu.kalray.core.k1b\">");
+    "<feature name=\"eu.kalray.core.k1bio\">");
   pos = strlen (buf);
   
   for (i = 0; i < nr; i++)
