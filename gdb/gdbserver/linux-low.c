@@ -6820,6 +6820,21 @@ linux_qxfer_libraries_svr4 (const char *annex, unsigned char *readbuf,
   char filename[PATH_MAX];
   int pid, is_elf64;
 
+#ifdef __k1__
+  #ifndef __FDPIC__
+    #error K1 offset implemented only for FDPIC
+  #endif
+  static const struct link_map_offsets lmo_32bit_offsets =
+    {    
+      0,     /* r_version offset. */
+      4,     /* r_debug.r_map offset.  */
+      0,     /* l_addr offset in link_map.  */
+      8,     /* l_name offset in link_map.  */
+      12,     /* l_ld offset in link_map.  */
+      16,    /* l_next offset in link_map.  */
+      20     /* l_prev offset in link_map.  */
+    };   
+#else
   static const struct link_map_offsets lmo_32bit_offsets =
     {
       0,     /* r_version offset. */
@@ -6830,6 +6845,7 @@ linux_qxfer_libraries_svr4 (const char *annex, unsigned char *readbuf,
       12,    /* l_next offset in link_map.  */
       16     /* l_prev offset in link_map.  */
     };
+#endif
 
   static const struct link_map_offsets lmo_64bit_offsets =
     {
