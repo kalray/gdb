@@ -111,33 +111,11 @@ mppa_init_inferior_data (struct inferior *inf)
     return data;
 }
 
-int
-is_current_k1b_user (void)
-{
-	int ret = 0;
-  
-	struct gdbarch *arch = target_gdbarch ();
-	if (arch)
-		{
-			const struct bfd_arch_info *info = gdbarch_bfd_arch_info (arch);
-			if (info)
-				{
-					int mach = info->mach;
-					ret = (mach == bfd_mach_k1bdp_usr || mach == bfd_mach_k1bio_usr);
-				}
-		}
-  
-	return ret;
-}
-
 struct inferior_data*
 mppa_inferior_data (struct inferior *inf)
 {
     struct inferior_data *data;
 
-    if (is_current_k1b_user ())
-      return NULL;
-    
     data = inferior_data (inf, k1_attached_inf_data);
 
     if (!data)
@@ -187,10 +165,6 @@ static void k1_target_create_inferior (struct target_ops *ops,
 static int 
 k1_region_ok_for_hw_watchpoint (struct target_ops *ops, CORE_ADDR addr, int len)
 {
-
-	if (is_current_k1b_user ())
-		return 0;
-
     return 1;
 }
 
@@ -211,7 +185,7 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
   struct thread_info *ti = find_thread_ptid (ptid);
   struct target_ops *remote_target = find_target_beneath (ops);
 
-  if (ti && !is_current_k1b_user())
+  if (ti)
   {
     const char *name = remote_target->to_thread_name (ops, ti);
 
@@ -470,7 +444,7 @@ mppa_target_resume (struct target_ops *ops,
 {
     struct target_ops *remote_target = find_target_beneath(ops);
 
-    if (!after_first_resume && !inf_created_change_th && !is_current_k1b_user()) {
+    if (!after_first_resume && !inf_created_change_th) {
         after_first_resume = 1;
         iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
     }
@@ -488,8 +462,6 @@ k1_target_wait (struct target_ops *target,
     int ix_items;
 
     res = remote_target->to_wait (remote_target, ptid, status, options);
-	if(is_current_k1b_user())
-		return res;
 
     inferior = find_inferior_pid (ptid_get_pid (res));
 
@@ -627,9 +599,6 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int re
   remote_target = find_target_beneath (target);
   remote_target->to_fetch_registers (target, regcache, regnum);
 
-  if (is_current_k1b_user ())
-    return;
-
   // first time we see a cluster, set the debug level
   inf = find_inferior_pid (inferior_ptid.pid);
   data = mppa_inferior_data (inf);
@@ -669,57 +638,6 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
-static int get_str_sym_sect (char *elf_file, int offset, char **sret)
-{
-  asection *s;
-  int size_sret;
-  bfd *hbfd = bfd_openr (elf_file, NULL);
-  if (hbfd == NULL)
-    return 0;
-
-  size_sret = 200;
-  *sret = (char *) malloc (size_sret);
-  sprintf (*sret, "0x%08x ", offset);
-  
-  //check if the file is in format
-  if (!bfd_check_format (hbfd, bfd_object))
-  {
-    if (bfd_get_error () != bfd_error_file_ambiguously_recognized)
-    {
-      printf ("Incompatible file format %s\n", elf_file);
-      bfd_close (hbfd);
-      return 0;
-    }
-  }
-
-  for (s = hbfd->sections; s; s = s->next)
-  {
-    if (bfd_get_section_flags (hbfd, s) & SEC_ALLOC)
-    {
-      const char *sname = bfd_section_name (hbfd, s);
-      if (strlen (*sret) + strlen (sname) + 30 > size_sret)
-      {
-        size_sret += 100;
-        *sret = (char *) realloc (*sret, size_sret);
-      }
-      if (!strcmp (sname , ".text"))
-      {
-        sprintf (*sret, "0x%08x ",
-          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
-      }
-      else
-        sprintf (*sret + strlen (*sret), "-s %s 0x%08x ", sname,
-          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
-    }
-  }
-  
-  bfd_close (hbfd);
-
-  return 1;
-}
-
-
-
 static int str_debug_level_to_idx (const char *slevel)
 {
   int level;
@@ -736,9 +654,6 @@ static void apply_cluster_debug_level (struct inferior *inf)
   int os_supported_level;
   struct thread_info *th;
   ptid_t save_ptid, th_ptid;
-
-  if (is_current_k1b_user ())
-    return;
 
   level = get_debug_level (inf->pid);
   
@@ -769,95 +684,9 @@ static void apply_cluster_debug_level (struct inferior *inf)
   set_general_thread (save_ptid);
 }
 
-static void
-attach_user_command (char *args, int from_tty)
-{
-	static const char *syntax = "Syntax: attach-user <comm> [<k1_user_mode_program>]\n";
-	char *file, *comm, *pargs, *cmd;
-	int print_thread_events_save = print_thread_events;
-
-	if (!ptid_equal (inferior_ptid, null_ptid))
-		{
-			printf ("Gdb already attached!\n");
-			return;
-		}
-  
-	pargs = args;
-	comm = extract_arg (&pargs);
-	if (!comm)
-		{
-			printf ("Error: the comm was not specified!\n%s", syntax);
-			return;
-		}
-	file = extract_arg (&pargs);
-
-	cmd = (char *) malloc (MAX (strlen (comm),
-								(file != NULL) ? strlen (file) : 0) + 100);
-  
-	execute_command ("set pagination off", 0);
-
-	sprintf (cmd, "target remote %s", comm);
-	print_thread_events_save = 0;
-  
-  TRY
-  {
-    execute_command (cmd, 0);
-  }
-  CATCH (ex, RETURN_MASK_ALL)
-  {
-    printf ("Error while trying to connect (%s).\n", ex.message ?: "");
-    goto end;
-  }
-  END_CATCH
-  
-	k1_push_arch_stratum (NULL, 0);
-	printf ("Attached to user debug using %s.\n", comm);
-  
-	if (file)
-	{
-    struct stat s;
-    if (stat( file, &s) != 0)
-    printf ("Cannot find file %s: %s.\n", file, strerror(errno));
-    else
-    {
-      char *ssect;
-      if (get_str_sym_sect (file, 0x6000000, &ssect))
-      {
-        cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
-        sprintf (cmd, "add-symbol-file %s %s", file, ssect);
-        free (ssect);
-
-        TRY
-        {
-          execute_command (cmd, 0);
-        }
-        CATCH (ex, RETURN_MASK_ALL)
-        if (ex.reason < 0)
-        {
-          printf ("Error while trying to add symbol file %s (%s).\n", file, ex.message ?: "");
-          goto end;
-        }
-        END_CATCH
-      }
-      else
-        printf ("Cannot load file %s.\n", file);
-    }
-  }
-  
- end:
-	print_thread_events = print_thread_events_save;
-	free (comm);
-	free (cmd);
-	if (file)
-		free (file);
-}
-
 void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level)
 {
   struct inferior_data *data;
-
-  if (is_current_k1b_user ())
-    return;
 
   data = mppa_inferior_data (inf);
   data->cluster_debug_level = debug_level; 
@@ -871,12 +700,6 @@ static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_e
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("Cannot set debug level without a selected thread."));
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
 
   inf = current_inferior ();
   prev_level = get_cluster_debug_level (inf->pid);
@@ -905,9 +728,6 @@ static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
 
 void apply_global_debug_level (int level)
 {
-  if (is_current_k1b_user ())
-    return;
-
   idx_global_debug_level = level;
   if (have_inferiors ())
     iterate_over_inferiors (set_cluster_debug_level_iter, NULL);
@@ -920,12 +740,6 @@ void apply_global_debug_level (int level)
 static void set_global_debug_level (char *args, int from_tty, struct cmd_list_element *c)
 {
   int new_level;
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
 
   new_level = str_debug_level_to_idx (sglobal_debug_level);
   global_debug_level_set = 1;
@@ -948,12 +762,6 @@ show_cluster_debug_level (struct ui_file *file, int from_tty,
     return;
   }
 
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
-
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   
   level = get_cluster_debug_level (-1);
@@ -966,12 +774,6 @@ static void
 show_global_debug_level (struct ui_file *file, int from_tty, 
   struct cmd_list_element *c, const char *value)
 {
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
-
   fprintf_filtered (file, "The global debug level  is \"%s\".\n",
     scluster_debug_levels[idx_global_debug_level]);
 }
@@ -984,12 +786,6 @@ set_cluster_break_on_spawn (char *args, int from_tty, struct cmd_list_element *c
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("Cannot set break on reset without a selected thread."));
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode cannot break on reset\n");
-    return;
-  }
 
   inf = current_inferior ();
   data = mppa_inferior_data (inf);
@@ -1006,12 +802,6 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty,
   if (ptid_equal (inferior_ptid, null_ptid))
   {
     printf (_("Cannot show break on reset without a live selected thread."));
-    return;
-  }
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode cannot break on reset\n");
     return;
   }
 
@@ -1172,9 +962,6 @@ static void mppa_observer_breakpoint_created (struct breakpoint *b)
 {
   const char *addr_string;
   
-  if (is_current_k1b_user ())
-    return;
-
   if (b && b->location)
   {
     addr_string = event_location_to_string (b->location);
@@ -1187,9 +974,6 @@ static void mppa_observer_breakpoint_created (struct breakpoint *b)
 static void mppa_observer_breakpoint_deleted (struct breakpoint *b)
 {
   const char *addr_string;
-
-  if (is_current_k1b_user ())
-    return;
 
   if (b && b->location)
   {
@@ -1477,9 +1261,6 @@ Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
 Usage is `attach-mppa PORT'."));
-    add_com ("attach-user", class_run, attach_user_command,
-			 _("Connect to gdbserver running on MPPA to make user mode debug.\n"
-			   "Usage is `attach-user <comm> [<k1_user_mode_program>]'."));
 
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));

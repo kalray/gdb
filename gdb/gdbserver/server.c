@@ -3891,6 +3891,13 @@ process_serial_event (void)
   int packet_len;
   int new_packet_len = -1;
 
+  /* Used to decide when gdbserver should exit in
+     multi-mode/remote.  */
+  static int have_ran = 0;
+
+  if (!have_ran)
+    have_ran = target_running ();
+
   disable_async_io ();
 
   response_needed = 0;
@@ -4330,6 +4337,21 @@ process_serial_event (void)
     putpkt (own_buf);
 
   response_needed = 0;
+
+  if (!extended_protocol && have_ran && !target_running ())
+    {
+      /* In non-stop, defer exiting until GDB had a chance to query
+	 the whole vStopped list (until it gets an OK).  */
+      if (QUEUE_is_empty (notif_event_p, notif_stop.queue))
+	{
+	  /* Be transparent when GDB is connected through stdio -- no
+	     need to spam GDB's console.  */
+	  if (!remote_connection_is_stdio ())
+	    fprintf (stderr, "GDBserver exiting\n");
+	  remote_close ();
+	  exit (0);
+	}
+    }
 
   if (exit_requested)
     return -1;

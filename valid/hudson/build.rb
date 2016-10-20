@@ -86,6 +86,7 @@ if( variant == "gdbstub")
   build_path        = File.join(gdb_path, "gdbstub")
 else
   build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
+  build_path_linux  = File.join(gdb_path, arch + "_build_linux_#{variant}_#{host}")
 end
 
 prefix            = options.fetch("prefix", "#{build_path}/release")
@@ -149,11 +150,18 @@ b.target("#{variant}_build") do
   elsif( variant == "gdb")
     machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
     if( arch == "k1" )
-      b.create_goto_dir! build_path
       version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
-
       b.run(:cmd => "echo #{machine_type}" )
+
+      if (build_type == "Release") then
+        additional_flags = "CFLAGS=-O2"
+      else
+        additional_flags = "CFLAGS=\"-g -O0\""
+      end
+
+      # k1-gdb
+      b.create_goto_dir! build_path
       b.run(:cmd => "../configure " +
                     "--target=#{build_target} " +
                     "--program-prefix=#{arch}- " +
@@ -165,13 +173,23 @@ b.target("#{variant}_build") do
                     "--with-babeltrace=no " +
                     "--with-bugurl=no " +
                     "--prefix=#{gdb_install_prefix}")
-
       b.run(:cmd => "make clean")
-      if (build_type == "Release") then
-        additional_flags = "CFLAGS=-O2"
-      else
-        additional_flags = "CFLAGS=-g"
-      end
+      b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
+
+      # k1-linux-gdb
+      b.create_goto_dir! build_path_linux
+      b.run(:cmd => "../configure " +
+                    "--target=#{arch}-linux " +
+                    "--program-prefix=#{arch}-linux- " +
+                    "--disable-werror " +
+                    "--without-gnu-as " +
+                    "--without-gnu-ld " +
+                    "--with-python " +
+                    "--with-expat=yes " +
+                    "--with-babeltrace=no " +
+                    "--with-bugurl=no " +
+                    "--prefix=#{gdb_install_prefix}")
+      b.run(:cmd => "make clean")
       b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
   else ## variant != gdb => binutils only
@@ -227,6 +245,7 @@ b.target("clean") do
   b.logtitle = "Report for GDB clean, arch = #{arch}"
 
   b.run("rm -rf #{build_path}")
+  b.run("rm -rf #{build_path_linux}")
 end
 
 b.target("#{variant}_install") do
@@ -238,11 +257,12 @@ b.target("#{variant}_install") do
     b.rsync(gdb_install_prefix,toolroot)
   elsif( variant == "gdb")
     if( arch == "k1" )
-      cd build_path
       if ("#{build_type}" == "Release") then
-        b.run(:cmd => "make install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+        b.run(:cmd => "make -C #{build_path} install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+        b.run(:cmd => "make -C #{build_path_linux} install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
       else
-        b.run(:cmd => "make install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+        b.run(:cmd => "make -C #{build_path} install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+        b.run(:cmd => "make -C #{build_path_linux} install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
       end
 
       # Copy to toolroot.

@@ -38,7 +38,6 @@ int get_os_supported_debug_levels (struct inferior *inf);
 void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level);
 void apply_global_debug_level (int level);
 void send_stop_at_main (int bstop);
-int is_current_k1b_user (void);
 void send_cluster_break_on_spawn (struct inferior *inf, int v);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);

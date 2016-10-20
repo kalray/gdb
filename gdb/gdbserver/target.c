@@ -227,8 +227,16 @@ mywait (ptid_t ptid, struct target_waitstatus *ourstatus, int options,
   if (!remote_connection_is_stdio ())
     {
       if (ourstatus->kind == TARGET_WAITKIND_EXITED)
-	fprintf (stderr,
-		 "\nChild exited with status %d\n", ourstatus->value.integer);
+      {
+      	fprintf (stderr, "\nChild exited with status %d\n", ourstatus->value.integer);
+        #if 0
+        {
+          volatile int ll=1;
+          while(ll)
+            ;
+        }
+        #endif
+      }
       else if (ourstatus->kind == TARGET_WAITKIND_SIGNALLED)
 	fprintf (stderr, "\nChild terminated with signal = 0x%x (%s)\n",
 		 gdb_signal_to_host (ourstatus->value.sig),
