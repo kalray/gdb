@@ -1063,7 +1063,7 @@ k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info)
       if (! k1fdpic_relocs_info (info))
         return FALSE;
 
-      s = bfd_make_section_with_flags (abfd, ".rel.got",
+      s = bfd_make_section_with_flags (abfd, ".rela.got",
                                        (flags | SEC_READONLY));
       if (s == NULL
           || ! bfd_set_section_alignment (abfd, s, 2))
@@ -1141,7 +1141,7 @@ k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info)
     }
 
   /* K1-specific: we want rel relocations for the plt.  */
-  s = bfd_make_section_with_flags (abfd, ".rel.plt", flags | SEC_READONLY);
+  s = bfd_make_section_with_flags (abfd, ".rela.plt", flags | SEC_READONLY);
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
     return FALSE;
@@ -1593,9 +1593,9 @@ k1_elf32_fdpic_add_dyn_reloc (bfd *output_bfd, asection *sreloc, bfd_vma offset,
   outrel.r_info = ELF32_R_INFO (dynindx, reloc_type);
   outrel.r_addend = addend;
 
-  reloc_offset = sreloc->reloc_count * sizeof (Elf32_External_Rel);
+  reloc_offset = sreloc->reloc_count * sizeof (Elf32_External_Rela);
   BFD_ASSERT (reloc_offset < sreloc->size);
-  bfd_elf32_swap_reloc_out (output_bfd, &outrel,
+  bfd_elf32_swap_reloca_out (output_bfd, &outrel,
                             sreloc->contents + reloc_offset);
   sreloc->reloc_count++;
 

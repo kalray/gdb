@@ -991,7 +991,7 @@ k1_elf32_fdpic_size_got_plt (bfd *output_bfd,
        relocations in the pltrel section.  */
     k1fdpic_gotrel_section (info)->size =
       (gpinfop->g.relocs - gpinfop->g.lzplt / LZPLT_NORMAL_SIZE)
-      * get_elf_backend_data (output_bfd)->s->sizeof_rel;
+      * get_elf_backend_data (output_bfd)->s->sizeof_rela;
   else
     BFD_ASSERT (gpinfop->g.relocs == 0);
   if (k1fdpic_gotrel_section (info)->size == 0)
@@ -1954,14 +1954,14 @@ k1_elf32_fdpic_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
           return FALSE;
       if (k1fdpic_pltrel_section (info)->size)
         if (!_bfd_elf_add_dynamic_entry (info, DT_PLTRELSZ, 0)
-            || !_bfd_elf_add_dynamic_entry (info, DT_PLTREL, DT_REL)
+            || !_bfd_elf_add_dynamic_entry (info, DT_PLTREL, DT_RELA)
             || !_bfd_elf_add_dynamic_entry (info, DT_JMPREL, 0))
           return FALSE;
       if (k1fdpic_gotrel_section (info)->size)
-        if (!_bfd_elf_add_dynamic_entry (info, DT_REL, 0)
-            || !_bfd_elf_add_dynamic_entry (info, DT_RELSZ, 0)
-            || !_bfd_elf_add_dynamic_entry (info, DT_RELENT,
-                                            sizeof (Elf32_External_Rel)))
+        if (!_bfd_elf_add_dynamic_entry (info, DT_RELA, 0)
+            || !_bfd_elf_add_dynamic_entry (info, DT_RELASZ, 0)
+            || !_bfd_elf_add_dynamic_entry (info, DT_RELAENT,
+                                            sizeof (Elf32_External_Rela)))
           return FALSE;
     }
 
@@ -2284,8 +2284,8 @@ k1_elf32_fdpic_finish_dynamic_sections (bfd *output_bfd,
   if (k1fdpic_got_section (info))
     {
       BFD_ASSERT (k1fdpic_gotrel_section (info)->size
-                  == (k1fdpic_gotrel_section (info)->reloc_count
-                      * sizeof (Elf32_External_Rel)));
+                  >= (k1fdpic_gotrel_section (info)->reloc_count
+                      * sizeof (Elf32_External_Rela)));
 
       if (k1fdpic_gotfixup_section (info))
         {
@@ -2310,7 +2310,7 @@ k1_elf32_fdpic_finish_dynamic_sections (bfd *output_bfd,
     {
       BFD_ASSERT (k1fdpic_pltrel_section (info)->size
                   == (k1fdpic_pltrel_section (info)->reloc_count
-                      * sizeof (Elf32_External_Rel)));
+                      * sizeof (Elf32_External_Rela)));
     }
 
   sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
@@ -2922,7 +2922,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #define elf_backend_object_p                    elf_k1_object_p
 
 
-#define elf_backend_may_use_rel_p       1
+#define elf_backend_may_use_rel_p       0
 #define elf_backend_may_use_rela_p      1
 
 #undef elf_backend_plt_sym_val
@@ -2948,6 +2948,9 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 
 #undef	elf32_bed
 #define	elf32_bed		elf32_k1_linux_bed
+
+#define elf_backend_may_use_rel_p       0
+#define elf_backend_may_use_rela_p      1
 
 #undef elf_backend_want_got_plt
 #define elf_backend_want_got_plt                1
@@ -2994,7 +2997,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #undef elf_backend_plt_sym_val
 #define elf_backend_plt_sym_val	 k1_elf32_fdpic_plt_sym_val
 
-#undef elf_backend_relplt_name
-#define elf_backend_relplt_name ".rel.dyn"
+/* #undef elf_backend_relplt_name */
+/* #define elf_backend_relplt_name ".rela.dyn" */
 
 #include "elf32-target.h"
