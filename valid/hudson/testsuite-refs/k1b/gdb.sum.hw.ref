@@ -350,6 +350,8 @@ Running ../../../gdb/testsuite/gdb.mi/mi-pending.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-dprintf-pending.exp ...
 Running ../../../gdb/testsuite/gdb.mi/mi-nsintrall.exp ...
 UNSUPPORTED: gdb.mi/mi-nsintrall.exp: Couldn't compile nsintrall.c: unrecognized error
+Running ../../../gdb/testsuite/gdb.mi/mi-threads-interrupt.exp ...
+UNSUPPORTED: gdb.mi/mi-threads-interrupt.exp: mi-threads-interrupt.exp
 Running ../../../gdb/testsuite/gdb.mi/mi-fill-memory.exp ...
 PASS: gdb.mi/mi-fill-memory.exp: breakpoint at main
 PASS: gdb.mi/mi-fill-memory.exp: mi runto main
@@ -8647,7 +8649,22 @@ Running ../../../gdb/testsuite/gdb.base/line-symtabs.exp ...
 PASS: gdb.base/line-symtabs.exp: continue to breakpoint: continue to breakpoint in header
 PASS: gdb.base/line-symtabs.exp: disas /m
 Running ../../../gdb/testsuite/gdb.base/step-sw-breakpoint-adjust-pc.exp ...
-UNSUPPORTED: gdb.base/step-sw-breakpoint-adjust-pc.exp: step-sw-breakpoint-adjust-pc.exp
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: set non-stop on
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: set displaced-stepping on
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: set breakpoint always-inserted off
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: user bp: continue to breakpoint: continue to breakpoint
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: user bp: si advances
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: step-resume: continue to breakpoint: continue to breakpoint
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: step-resume: next
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=off: step-resume: si advances
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: set non-stop on
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: set displaced-stepping on
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: set breakpoint always-inserted on
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: user bp: continue to breakpoint: continue to breakpoint
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: user bp: si advances
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: step-resume: continue to breakpoint: continue to breakpoint
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: step-resume: next
+PASS: gdb.base/step-sw-breakpoint-adjust-pc.exp: always_inserted=on: step-resume: si advances
 Running ../../../gdb/testsuite/gdb.base/call-ar-st.exp ...
 PASS: gdb.base/call-ar-st.exp: set print sevenbit-strings
 PASS: gdb.base/call-ar-st.exp: set print address off
@@ -11203,7 +11220,7 @@ PASS: gdb.kalray/displaced.exp: stepi to scall
 
 		=== gdb Summary ===
 
-# of expected passes		10594
+# of expected passes		10610
 # of unexpected failures	29
 # of expected failures		11
 # of known failures		28
