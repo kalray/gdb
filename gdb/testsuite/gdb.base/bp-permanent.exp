@@ -19,6 +19,7 @@
 
 standard_testfile
 
+# K1: incompatible dissamble output format
 if [istarget k1*-*-*] then {
   unsupported "bp-permanent.exp"
   return 1

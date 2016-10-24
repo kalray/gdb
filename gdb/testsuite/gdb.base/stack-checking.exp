@@ -16,6 +16,7 @@
 
 standard_testfile .c
 
+# K1: does not compile (undefined __stack_overflow_detected)
 if [istarget k1*-*-*] then {
   unsupported "stack-checking.exp"
   return 1

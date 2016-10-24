@@ -17,6 +17,7 @@
 
 standard_testfile
 
+# K1: different output for disassemble
 if [istarget k1*-*-*] then {
   unsupported "breakpoint-in-ro-region.exp"
   return 1

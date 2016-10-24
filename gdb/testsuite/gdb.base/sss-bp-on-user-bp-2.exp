@@ -33,6 +33,7 @@
 
 standard_testfile
 
+# K1: different output
 if [istarget k1*-*-*] then {
   unsupported "sss-bp-on-user-bp-2.exp"
   return 1

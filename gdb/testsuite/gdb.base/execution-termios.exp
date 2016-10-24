@@ -15,6 +15,7 @@
 
 standard_testfile
 
+# K1: does not compile (include sys/termios.h)
 if [istarget k1*-*-*] then {
   unsupported "execution-termios.exp"
   return 1

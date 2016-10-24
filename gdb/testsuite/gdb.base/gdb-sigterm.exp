@@ -17,6 +17,7 @@
 
 standard_testfile
 
+# K1: does not compile (alarm)
 if [istarget k1*-*-*] then {
   unsupported "gdb-sigterm.exp"
   return 1
