@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sys/stat.h>
 
 #include "environ.h"
 #include "gdbcmd.h"
@@ -452,6 +453,35 @@ mppa_target_resume (struct target_ops *ops,
     return remote_target->to_resume (remote_target, ptid, step, siggnal);
 }
 
+static void
+k1_change_file (const char *file_path)
+{
+  struct stat st;
+  if (stat (file_path, &st))
+  {
+    printf ("Cannot stat K1 executable file %s\n", file_path);
+    return;
+  }
+
+  if (st.st_mode & S_IFDIR)
+  {
+    printf ("%s is a directory, not a K1 executable!\n", file_path);
+    return;
+  }
+
+  TRY
+  {
+    current_inferior ()->symfile_flags |= SYMFILE_DEFER_BP_RESET;
+    exec_file_attach ((char *) file_path, 0);
+    symbol_file_add_main (file_path, 0);
+  }
+  CATCH (ex, RETURN_MASK_ALL)
+  {
+    // exception
+  }
+  END_CATCH
+}
+
 static ptid_t
 k1_target_wait (struct target_ops *target,
                 ptid_t ptid, struct target_waitstatus *status, int options)
@@ -494,8 +524,7 @@ k1_target_wait (struct target_ops *target,
               ptid_t save_ptid = inferior_ptid;
               data->sym_file_loaded = 1;
               switch_to_thread (res);
-              exec_file_attach ((char *) file, 0);
-              symbol_file_add_main (file, 0);
+              k1_change_file (file);
               switch_to_thread (save_ptid);
             }
             
@@ -909,8 +938,7 @@ attach_mppa_command (char *args, int from_tty)
           if (!data->sym_file_loaded)
           {
             data->sym_file_loaded = 1;
-            exec_file_attach ((char *) file, 0);
-            symbol_file_add_main (file, 0);
+            k1_change_file (file);
           }
         }
     }
