@@ -471,7 +471,6 @@ k1_change_file (const char *file_path)
 
   TRY
   {
-    current_inferior ()->symfile_flags |= SYMFILE_DEFER_BP_RESET;
     exec_file_attach ((char *) file_path, 0);
     symbol_file_add_main (file_path, 0);
   }
