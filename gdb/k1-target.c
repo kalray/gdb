@@ -833,7 +833,7 @@ attach_user_command (char *args, int from_tty)
     else
     {
       char *ssect;
-      if (get_str_sym_sect (file, 0x6000000, &ssect))
+      if (get_str_sym_sect (file, 0x10000000, &ssect))
       {
         cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
         sprintf (cmd, "add-symbol-file %s %s", file, ssect);
