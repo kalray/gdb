@@ -1963,6 +1963,12 @@ k1_elf32_fdpic_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
             || !_bfd_elf_add_dynamic_entry (info, DT_RELAENT,
                                             sizeof (Elf32_External_Rela)))
           return FALSE;
+
+      if (bfd_link_executable (info))
+        {
+          if (!_bfd_elf_add_dynamic_entry (info, DT_DEBUG, 0))
+            return FALSE;
+        }
     }
 
   s = bfd_get_section_by_name (dynobj, ".dynbss");
