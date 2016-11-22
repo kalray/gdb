@@ -431,6 +431,7 @@ b.target("#{variant}_package") do
     release_info = b.release_info(version,buildID)
     pinfo = b.package_info(gdb_name, release_info,
                            package_description, depends)
+    pinfo.license = "GPLv3+ and GPLv3+ with exceptions and GPLv2+ and GPLv2+ with exceptions and GPL+ and LGPLv2+ and BSD and Public Domain"
 
     b.create_package(tar_package, pinfo)
     b.run("rm #{tar_package}")
@@ -454,6 +455,7 @@ b.target("#{variant}_package") do
     release_info = b.release_info(version,buildID)
     pinfo = b.package_info(gbu_name, release_info,
                            package_description, depends)
+    pinfo.license = "GPLv3+"
 
     b.create_package(tar_package, pinfo)
     b.run("rm #{tar_package}")
