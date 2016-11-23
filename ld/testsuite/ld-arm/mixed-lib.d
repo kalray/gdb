@@ -1,6 +1,6 @@
 
 tmpdir/mixed-lib.so:     file format elf32-(little|big)arm
-architecture: armv4t, flags 0x00000150:
+architecture: arm.*, flags 0x00000150:
 HAS_SYMS, DYNAMIC, D_PAGED
 start address 0x.*
 
@@ -30,10 +30,4 @@ Disassembly of section .text:
 
 .* <lib_func2>:
  .*:	4770      	bx	lr
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
+#...

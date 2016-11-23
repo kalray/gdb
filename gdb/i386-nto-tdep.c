@@ -1,6 +1,6 @@
 /* Target-dependent code for QNX Neutrino x86.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -24,9 +24,6 @@
 #include "osabi.h"
 #include "regcache.h"
 #include "target.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "i386-tdep.h"
 #include "i387-tdep.h"

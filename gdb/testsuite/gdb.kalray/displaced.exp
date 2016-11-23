@@ -7,8 +7,9 @@ if $tracelevel then {
 set CFLAGS_FOR_TARGET "$CFLAGS_FOR_TARGET -nostdlib"
 
 set testfile "displaced"
-set binfile ${objdir}/${subdir}/${testfile}
+set binfile ${objdir}/outputs/${subdir}/${testfile}
 set srcfile1 ${testfile}.S
+file mkdir ${objdir}/outputs/${subdir}
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}" executable {debug}] != "" } {
      untested asm-source.exp
@@ -65,7 +66,7 @@ gdb_test "si" ".*in ev .*" "stepi into scall"
 gdb_test "si" ".*Breakpoint 10.*in test_displaced10 .*" "rfe 1"
 gdb_test "si" ".*Breakpoint 11.*in test_displaced11 .*" "stepi over make"
 if { ! [info exists is_k1_server] || $is_k1_server != 1} {
-    gdb_test "si" ".*Program received signal SIGILL.*" "stepi over undefined insn"
+    gdb_test "si" ".*received signal SIGILL.*" "stepi over undefined insn"
 }
 gdb_test "si" ".*in ev .*" "stepi to trap handler"
 gdb_test "si" ".*in ev .*" "stepi in trap handler"

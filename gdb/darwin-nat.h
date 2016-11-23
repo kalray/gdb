@@ -1,5 +1,5 @@
 /* Common things used by the various darwin files
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
 #define __DARWIN_NAT_H__
 
 #include <mach/mach.h>
-#include "common-utils.h" /* For FUNCTION_NAME.  */
 
 /* Describe the mach exception handling state for a task.  This state is saved
    before being changed and restored when a process is detached.

@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,8 +21,6 @@
 #include "gdbcore.h"
 #include "regcache.h"
 #include "target.h"
-
-#include "gdb_assert.h"
 
 #include "amd64-tdep.h"
 #include "amd64-nat.h"

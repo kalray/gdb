@@ -1,5 +1,5 @@
 /* GDB-friendly replacement for <assert.h>.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,6 @@
 
 #ifndef GDB_ASSERT_H
 #define GDB_ASSERT_H
-
-#include "common-utils.h" /* For FUNCTION_NAME.  */
 
 /* A static assertion.  This will cause a compile-time error if EXPR,
    which must be a compile-time constant, is false.  */

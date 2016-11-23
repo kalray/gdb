@@ -1,5 +1,5 @@
 /* Kalray MPPA generic disassembler support code.
-   Copyright (C) 2009-2014 Kalray SA.
+   Copyright (C) 2009-2016 Kalray SA.
 
    This file is part of libopcodes.
 
@@ -130,7 +130,6 @@ typedef struct {
 
 
 /* static unsigned int reordered_bundle[MAXBUNDLESIZE]; */
-
 static unsigned int bundle_ops[MAXBUNDLESIZE];
 
 /* FIXME: Why was it declared with ISSUES size when indexed
@@ -189,7 +188,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
   struct instr_s instr[MAX_INSTRS];
 
   // available resources
-  int bcu_taken = 0;
+  // int bcu_taken = 0;
   int alu0_taken = 0;
   int alu1_taken = 0;
   int alu2_taken = 0;
@@ -202,7 +201,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 
   int instr_idx = 0;
 
-  for(i=0; i < MAX_INSTRS; i++) {
+  for(i=0; i < (int) MAX_INSTRS; i++) {
     instr[i].valid = 0;
     instr[i].nb_syllables = 0;
     instr[i].opxd_valid = 0;
@@ -224,7 +223,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
     instr[bcu_idx].valid = 1;
     instr[bcu_idx].opcode = bundle_ops[0];
     instr[bcu_idx].nb_syllables = 1;
-    bcu_taken = 1;
+    // bcu_taken = 1;
     break;
 
   case MAU_STEER:
@@ -266,7 +265,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
         // immx syllable
       case BCU_STEER:
 	if (instr[immx_main_unit[k1b_substeering(bundle_ops[i])]].valid == 0) {
-	  for(j=0; j < MAX_INSTRS; j++) {
+	  for(j=0; j < (int) MAX_INSTRS; j++) {
 	    if(debug) fprintf(stderr,"Instr %d: valid? %d\n",j,instr[j].valid);
 	    if(instr[j].valid) {
 	      if(debug) fprintf(stderr,"\topcode: 0x%x -> %s\n",instr[j].opcode, get_steering_name(k1b_steering(instr[j].opcode)));
@@ -410,7 +409,7 @@ static int k1b_reassemble_bundle(unsigned int *_opcnt) {
 
   // Fill bundle_insn and count read syllables
   instr_idx = 0;
-  for (i = 0; i < MAX_INSTRS; i++) {
+  for (i = 0; i < (int) MAX_INSTRS; i++) {
     if (instr[i].valid == 1) {
       int syllable_idx = 0;
 
@@ -455,7 +454,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   int          *k1_regfiles = NULL;
   k1_Register  *k1_registers = NULL;
   int          *k1_dec_registers = NULL;
-  unsigned int  k1_max_registers = 0;
+  // unsigned int  k1_max_registers = 0;
   unsigned int  k1_max_dec_registers = 0;
   int k1_arch_size = 32;
   int readsofar = 0;
@@ -498,11 +497,11 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
     default:
       /* Core not supported */
       (*info->fprintf_func)(info->stream, "disassembling not supported for this K1 core! (core:%d)",
-			    info->mach);
+			    (int) info->mach);
       return -1;
   }
 
-  k1_max_registers = k1_regfiles[K1_REGFILE_REGISTERS];
+  // k1_max_registers = k1_regfiles[K1_REGFILE_REGISTERS];
   k1_max_dec_registers = k1_regfiles[K1_REGFILE_DEC_REGISTERS];
 
   if (opc_table == NULL) {

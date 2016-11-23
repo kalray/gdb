@@ -1,6 +1,6 @@
 /* Support functions for general registry objects.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,9 +19,6 @@
 
 #include "defs.h"
 #include "registry.h"
-#include "gdb_assert.h"
-#include <string.h>
-
 const struct registry_data *
 register_data_with_cleanup (struct registry_data_registry *registry,
 			    registry_data_callback save,

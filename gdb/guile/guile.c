@@ -1,6 +1,6 @@
 /* General GDB/Guile code.
 
-   Copyright (C) 2014 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
    conventions, et.al.  */
 
 #include "defs.h"
-#include <string.h>
 #include "breakpoint.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-script.h"
@@ -36,6 +35,7 @@
 #include "guile.h"
 #include "guile-internal.h"
 #endif
+#include <signal.h>
 
 /* The Guile version we're using.
    We *could* use the macros in libguile/version.h but that would preclude
@@ -71,13 +71,13 @@ const char *gdbscm_print_excp = gdbscm_print_excp_message;
 
 #ifdef HAVE_GUILE
 /* Forward decls, these are defined later.  */
-static const struct extension_language_script_ops guile_extension_script_ops;
-static const struct extension_language_ops guile_extension_ops;
+extern const struct extension_language_script_ops guile_extension_script_ops;
+extern const struct extension_language_ops guile_extension_ops;
 #endif
 
 /* The main struct describing GDB's interface to the Guile
    extension language.  */
-const struct extension_language_defn extension_language_guile =
+EXPORTED_CONST struct extension_language_defn extension_language_guile =
 {
   EXT_LANG_GUILE,
   "guile",
@@ -117,23 +117,24 @@ static SCM to_string_keyword;
 
 /* The name of the various modules (without the surrounding parens).  */
 const char gdbscm_module_name[] = "gdb";
-const char gdbscm_init_module_name[] = "gdb init";
+const char gdbscm_init_module_name[] = "gdb";
 
 /* The name of the bootstrap file.  */
 static const char boot_scm_filename[] = "boot.scm";
 
 /* The interface between gdb proper and loading of python scripts.  */
 
-static const struct extension_language_script_ops guile_extension_script_ops =
+const struct extension_language_script_ops guile_extension_script_ops =
 {
   gdbscm_source_script,
   gdbscm_source_objfile_script,
+  gdbscm_execute_objfile_script,
   gdbscm_auto_load_enabled
 };
 
 /* The interface between gdb proper and guile scripting.  */
 
-static const struct extension_language_ops guile_extension_ops =
+const struct extension_language_ops guile_extension_ops =
 {
   gdbscm_finish_initialization,
   gdbscm_initialized,
@@ -240,7 +241,7 @@ compute_scheme_string (struct command_line *l)
   for (iter = l; iter; iter = iter->next)
     size += strlen (iter->line) + 1;
 
-  script = xmalloc (size + 1);
+  script = (char *) xmalloc (size + 1);
   here = 0;
   for (iter = l; iter; iter = iter->next)
     {
@@ -301,7 +302,7 @@ gdbscm_source_script (const struct extension_language_defn *extlang,
     }
 }
 
-/* (execute string [#:from-tty boolean] [#:to-string boolean\
+/* (execute string [#:from-tty boolean] [#:to-string boolean])
    A Scheme function which evaluates a string using the gdb CLI.  */
 
 static SCM
@@ -309,11 +310,11 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
 {
   int from_tty_arg_pos = -1, to_string_arg_pos = -1;
   int from_tty = 0, to_string = 0;
-  volatile struct gdb_exception except;
   const SCM keywords[] = { from_tty_keyword, to_string_keyword, SCM_BOOL_F };
   char *command;
   char *result = NULL;
   struct cleanup *cleanups;
+  struct gdb_exception except = exception_none;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, keywords, "s#tt",
 			      command_scm, &command, rest,
@@ -324,7 +325,7 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
      executed.  */
   cleanups = make_cleanup (xfree, command);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       struct cleanup *inner_cleanups;
 
@@ -345,6 +346,12 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
 
       do_cleanups (inner_cleanups);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
   do_cleanups (cleanups);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
@@ -462,7 +469,7 @@ info_guile_command (char *args, int from_tty)
 {
   printf_unfiltered (_("\"info guile\" must be followed"
 		       " by the name of an info command.\n"));
-  help_list (info_guile_list, "info guile ", -1, gdb_stdout);
+  help_list (info_guile_list, "info guile ", all_commands, gdb_stdout);
 }
 
 /* Initialization.  */
@@ -471,7 +478,7 @@ info_guile_command (char *args, int from_tty)
 
 static const scheme_function misc_guile_functions[] =
 {
-  { "execute", 1, 0, 1, gdbscm_execute_gdb_command,
+  { "execute", 1, 0, 1, as_a_scm_t_subr (gdbscm_execute_gdb_command),
   "\
 Execute the given GDB command.\n\
 \n\
@@ -484,28 +491,134 @@ Execute the given GDB command.\n\
   Returns: The result of the command if #:to-string is true.\n\
     Otherwise returns unspecified." },
 
-  { "data-directory", 0, 0, 0, gdbscm_data_directory,
+  { "data-directory", 0, 0, 0, as_a_scm_t_subr (gdbscm_data_directory),
     "\
 Return the name of GDB's data directory." },
 
-  { "guile-data-directory", 0, 0, 0, gdbscm_guile_data_directory,
+  { "guile-data-directory", 0, 0, 0,
+    as_a_scm_t_subr (gdbscm_guile_data_directory),
     "\
 Return the name of the Guile directory within GDB's data directory." },
 
-  { "gdb-version", 0, 0, 0, gdbscm_gdb_version,
+  { "gdb-version", 0, 0, 0, as_a_scm_t_subr (gdbscm_gdb_version),
     "\
 Return GDB's version string." },
 
-  { "host-config", 0, 0, 0, gdbscm_host_config,
+  { "host-config", 0, 0, 0, as_a_scm_t_subr (gdbscm_host_config),
     "\
 Return the name of the host configuration." },
 
-  { "target-config", 0, 0, 0, gdbscm_target_config,
+  { "target-config", 0, 0, 0, as_a_scm_t_subr (gdbscm_target_config),
     "\
 Return the name of the target configuration." },
 
   END_FUNCTIONS
 };
+
+/* Load BOOT_SCM_FILE, the first Scheme file that gets loaded.  */
+
+static SCM
+boot_guile_support (void *boot_scm_file)
+{
+  /* Load boot.scm without compiling it (there's no need to compile it).
+     The other files should have been compiled already, and boot.scm is
+     expected to adjust '%load-compiled-path' accordingly.  If they haven't
+     been compiled, Guile will auto-compile them. The important thing to keep
+     in mind is that there's a >= 100x speed difference between compiled and
+     non-compiled files.  */
+  return scm_c_primitive_load ((const char *) boot_scm_file);
+}
+
+/* Return non-zero if ARGS has the "standard" format for throw args.
+   The standard format is:
+   (function format-string (format-string-args-list) ...).
+   FUNCTION is #f if no function was recorded.  */
+
+static int
+standard_throw_args_p (SCM args)
+{
+  if (gdbscm_is_true (scm_list_p (args))
+      && scm_ilength (args) >= 3)
+    {
+      /* The function in which the error occurred.  */
+      SCM arg0 = scm_list_ref (args, scm_from_int (0));
+      /* The format string.  */
+      SCM arg1 = scm_list_ref (args, scm_from_int (1));
+      /* The arguments of the format string.  */
+      SCM arg2 = scm_list_ref (args, scm_from_int (2));
+
+      if ((scm_is_string (arg0) || gdbscm_is_false (arg0))
+	  && scm_is_string (arg1)
+	  && gdbscm_is_true (scm_list_p (arg2)))
+	return 1;
+    }
+
+  return 0;
+}
+
+/* Print the error recorded in a "standard" throw args.  */
+
+static void
+print_standard_throw_error (SCM args)
+{
+  /* The function in which the error occurred.  */
+  SCM arg0 = scm_list_ref (args, scm_from_int (0));
+  /* The format string.  */
+  SCM arg1 = scm_list_ref (args, scm_from_int (1));
+  /* The arguments of the format string.  */
+  SCM arg2 = scm_list_ref (args, scm_from_int (2));
+
+  /* ARG0 is #f if no function was recorded.  */
+  if (gdbscm_is_true (arg0))
+    {
+      scm_simple_format (scm_current_error_port (),
+			 scm_from_latin1_string (_("Error in function ~s:~%")),
+			 scm_list_1 (arg0));
+    }
+  scm_simple_format (scm_current_error_port (), arg1, arg2);
+}
+
+/* Print the error message recorded in KEY, ARGS, the arguments to throw.
+   Normally we let Scheme print the error message.
+   This function is used when Scheme initialization fails.
+   We can still use the Scheme C API though.  */
+
+static void
+print_throw_error (SCM key, SCM args)
+{
+  /* IWBN to call gdbscm_print_exception_with_stack here, but Guile didn't
+     boot successfully so play it safe and avoid it.  The "format string" and
+     its args are embedded in ARGS, but the content of ARGS depends on KEY.
+     Make sure ARGS has the expected canonical content before trying to use
+     it.  */
+  if (standard_throw_args_p (args))
+    print_standard_throw_error (args);
+  else
+    {
+      scm_simple_format (scm_current_error_port (),
+			 scm_from_latin1_string (_("Throw to key `~a' with args `~s'.~%")),
+			 scm_list_2 (key, args));
+    }
+}
+
+/* Handle an exception thrown while loading BOOT_SCM_FILE.  */
+
+static SCM
+handle_boot_error (void *boot_scm_file, SCM key, SCM args)
+{
+  fprintf_unfiltered (gdb_stderr, ("Exception caught while booting Guile.\n"));
+
+  print_throw_error (key, args);
+
+  fprintf_unfiltered (gdb_stderr, "\n");
+  warning (_("Could not complete Guile gdb module initialization from:\n"
+	     "%s.\n"
+	     "Limited Guile support is available.\n"
+	     "Suggest passing --data-directory=/path/to/gdb/data-directory.\n"),
+	   (const char *) boot_scm_file);
+
+  return SCM_UNSPECIFIED;
+}
 
 /* Load gdb/boot.scm, the Scheme side of GDB/Guile support.
    Note: This function assumes it's called within the gdb module.  */
@@ -520,23 +633,8 @@ initialize_scheme_side (void)
   boot_scm_path = concat (guile_datadir, SLASH_STRING, "gdb",
 			  SLASH_STRING, boot_scm_filename, NULL);
 
-  /* While scm_c_primitive_load works, the loaded code is not compiled,
-     instead it is left to be interpreted.  Eh?
-     Anyways, this causes a ~100x slowdown, so we only use it to load
-     gdb/boot.scm, and then let boot.scm do the rest.  */
-  msg = gdbscm_safe_source_script (boot_scm_path);
-
-  if (msg != NULL)
-    {
-      fprintf_filtered (gdb_stderr, "%s", msg);
-      xfree (msg);
-      warning (_("\n"
-		 "Could not complete Guile gdb module initialization from:\n"
-		 "%s.\n"
-		 "Limited Guile support is available.\n"
-		 "Suggest passing --data-directory=/path/to/gdb/data-directory.\n"),
-	       boot_scm_path);
-    }
+  scm_c_catch (SCM_BOOL_T, boot_guile_support, boot_scm_path,
+	       handle_boot_error, boot_scm_path, NULL, NULL);
 
   xfree (boot_scm_path);
 }
@@ -606,6 +704,10 @@ call_initialize_gdb_module (void *data)
      It is called via scm_c_define_module so that the initialization is
      performed within the desired module.  */
   scm_c_define_module (gdbscm_module_name, initialize_gdb_module, NULL);
+
+#if HAVE_GUILE_MANUAL_FINALIZATION
+  scm_run_finalizers ();
+#endif
 
   return NULL;
 }
@@ -741,27 +843,53 @@ extern initialize_file_ftype _initialize_guile;
 void
 _initialize_guile (void)
 {
-  char *msg;
-
   install_gdb_commands ();
 
 #if HAVE_GUILE
-  /* The Python support puts the C side in module "_gdb", leaving the Python
-     side to define module "gdb" which imports "_gdb".  There is evidently no
-     similar convention in Guile so we skip this.  */
+  {
+#ifdef HAVE_SIGPROCMASK
+    sigset_t sigchld_mask, prev_mask;
+#endif
 
-  /* scm_with_guile is the most portable way to initialize Guile.
-     Plus we need to initialize the Guile support while in Guile mode
-     (e.g., called from within a call to scm_with_guile).  */
-  scm_with_guile (call_initialize_gdb_module, NULL);
+    /* The Python support puts the C side in module "_gdb", leaving the Python
+       side to define module "gdb" which imports "_gdb".  There is evidently no
+       similar convention in Guile so we skip this.  */
 
-  /* Set Guile's backtrace to match the "set guile print-stack" default.
-     [N.B. The two settings are still separate.]
-     But only do this after we've initialized Guile, it's nice to see a
-     backtrace if there's an error during initialization.
-     OTOH, if the error is that gdb/init.scm wasn't found because gdb is being
-     run from the build tree, the backtrace is more noise than signal.
-     Sigh.  */
-  gdbscm_set_backtrace (0);
+#if HAVE_GUILE_MANUAL_FINALIZATION
+    /* Our SMOB free functions are not thread-safe, as GDB itself is not
+       intended to be thread-safe.  Disable automatic finalization so that
+       finalizers aren't run in other threads.  */
+    scm_set_automatic_finalization_enabled (0);
+#endif
+
+#ifdef HAVE_SIGPROCMASK
+    /* Before we initialize Guile, block SIGCHLD.
+       This is done so that all threads created during Guile initialization
+       have SIGCHLD blocked.  PR 17247.
+       Really libgc and Guile should do this, but we need to work with
+       libgc 7.4.x.  */
+    sigemptyset (&sigchld_mask);
+    sigaddset (&sigchld_mask, SIGCHLD);
+    sigprocmask (SIG_BLOCK, &sigchld_mask, &prev_mask);
+#endif
+
+    /* scm_with_guile is the most portable way to initialize Guile.
+       Plus we need to initialize the Guile support while in Guile mode
+       (e.g., called from within a call to scm_with_guile).  */
+    scm_with_guile (call_initialize_gdb_module, NULL);
+
+#ifdef HAVE_SIGPROCMASK
+    sigprocmask (SIG_SETMASK, &prev_mask, NULL);
+#endif
+
+    /* Set Guile's backtrace to match the "set guile print-stack" default.
+       [N.B. The two settings are still separate.]
+       But only do this after we've initialized Guile, it's nice to see a
+       backtrace if there's an error during initialization.
+       OTOH, if the error is that gdb/init.scm wasn't found because gdb is
+       being run from the build tree, the backtrace is more noise than signal.
+       Sigh.  */
+    gdbscm_set_backtrace (0);
+  }
 #endif
 }

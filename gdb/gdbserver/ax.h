@@ -1,5 +1,5 @@
 /* Data structures and functions associated with agent expressions in GDB.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 #if !defined (AX_H)
 #define AX_H 1
 
-#include "server.h"
 #include "regcache.h"
 
 #ifdef IN_PROCESS_AGENT

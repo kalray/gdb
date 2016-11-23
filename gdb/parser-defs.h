@@ -1,6 +1,6 @@
 /* Parser definitions for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo.
@@ -67,11 +67,6 @@ extern CORE_ADDR expression_context_pc;
    we've encountered so far.  */
 extern const struct block *innermost_block;
 
-/* The block in which the most recently discovered symbol was found.
-   FIXME: Should be declared along with lookup_symbol in symtab.h; is not
-   related specifically to parsing.  */
-extern const struct block *block_found;
-
 /* Number of arguments seen so far in innermost function call.  */
 extern int arglist_len;
 
@@ -111,7 +106,7 @@ struct ttype
 struct symtoken
   {
     struct stoken stoken;
-    struct symbol *sym;
+    struct block_symbol sym;
     int is_a_field_of_this;
   };
 
@@ -119,7 +114,7 @@ struct objc_class_str
   {
     struct stoken stoken;
     struct type *type;
-    int class;
+    int theclass;
   };
 
 typedef struct type *type_ptr;
@@ -341,14 +336,14 @@ struct exp_descriptor
        the number of subexpressions it takes.  */
     void (*operator_length) (const struct expression*, int, int*, int *);
 
-    /* Call TYPE_FUNC and OBJFILE_FUNC for any TYPE and OBJFILE found being
-       referenced by the single operator of EXP at position POS.  Operator
-       parameters are located at positive (POS + number) offsets in EXP.
-       The functions should never be called with NULL TYPE or NULL OBJFILE.
-       Functions should get passed an arbitrary caller supplied DATA pointer.
-       If any of the functions returns non-zero value then (any other) non-zero
-       value should be immediately returned to the caller.  Otherwise zero
-       should be returned.  */
+    /* Call OBJFILE_FUNC for any objfile found being referenced by the
+       single operator of EXP at position POS.  Operator parameters are
+       located at positive (POS + number) offsets in EXP.  OBJFILE_FUNC
+       should never be called with NULL OBJFILE.  OBJFILE_FUNC should
+       get passed an arbitrary caller supplied DATA pointer.  If it
+       returns non-zero value then (any other) non-zero value should be
+       immediately returned to the caller.  Otherwise zero should be
+       returned.  */
     int (*operator_check) (struct expression *exp, int pos,
 			   int (*objfile_func) (struct objfile *objfile,
 						void *data),

@@ -1,6 +1,6 @@
 /* Target-dependent code for the i386.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -193,7 +193,7 @@ struct gdbarch_tdep
   const struct target_desc *tdesc;
 
   /* Register group function.  */
-  const void *register_reggroup_p;
+  gdbarch_register_reggroup_p_ftype *register_reggroup_p;
 
   /* Offset of saved PC in jmp_buf.  */
   int jb_pc_offset;
@@ -237,6 +237,9 @@ struct gdbarch_tdep
   int (*i386_sysenter_record) (struct regcache *regcache);
   /* Parse syscall args.  */
   int (*i386_syscall_record) (struct regcache *regcache);
+
+  /* Regsets. */
+  const struct regset *fpregset;
 };
 
 /* Floating-point registers.  */
@@ -325,6 +328,8 @@ enum record_i386_regnum
 /* Size of the largest register.  */
 #define I386_MAX_REGISTER_SIZE	64
 
+extern struct target_desc *tdesc_i386;
+
 /* Types for i386-specific registers.  */
 extern struct type *i387_ext_type (struct gdbarch *gdbarch);
 
@@ -387,12 +392,15 @@ extern void i386_supply_gregset (const struct regset *regset,
 /* General-purpose register set. */
 extern const struct regset i386_gregset;
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
-extern const struct regset *
-  i386_regset_from_core_section (struct gdbarch *gdbarch,
-				 const char *sect_name, size_t sect_size);
+/* Floating-point register set. */
+extern const struct regset i386_fpregset;
 
+/* Default iterator over core file register note sections.  */
+extern void
+  i386_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				     iterate_over_regset_sections_cb *cb,
+				     void *cb_data,
+				     const struct regcache *regcache);
 
 extern struct displaced_step_closure *i386_displaced_step_copy_insn
   (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
@@ -410,6 +418,7 @@ extern void i386_svr4_init_abi (struct gdbarch_info, struct gdbarch *);
 
 extern int i386_process_record (struct gdbarch *gdbarch,
                                 struct regcache *regcache, CORE_ADDR addr);
+extern const struct target_desc *i386_target_description (uint64_t xcr0);
 
 
 

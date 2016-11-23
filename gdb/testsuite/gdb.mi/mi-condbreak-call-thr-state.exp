@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +31,12 @@
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
+
+# K1: does not compile (pthread_barrier_t)
+if [istarget k1*-*-*] then {
+  unsupported "mi-condbreak-call-thr-state.exp"
+  return 1
+}
 
 # Run either the multi-threaded or the single-threaded variant of the
 # test, as determined by VARIANT.

@@ -1,5 +1,5 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -144,6 +144,7 @@ DESCRIPTION
 
 .enum bfd_flavour
 .{
+.  {* N.B. Update bfd_flavour_name if you change this.  *}
 .  bfd_target_unknown_flavour,
 .  bfd_target_aout_flavour,
 .  bfd_target_coff_flavour,
@@ -363,12 +364,12 @@ BFD_JUMP_TABLE macros.
 .  NAME##_make_empty_symbol, \
 .  NAME##_print_symbol, \
 .  NAME##_get_symbol_info, \
+.  NAME##_get_symbol_version_string, \
 .  NAME##_bfd_is_local_label_name, \
 .  NAME##_bfd_is_target_special_symbol, \
 .  NAME##_get_lineno, \
 .  NAME##_find_nearest_line, \
-.  _bfd_generic_find_nearest_line_discriminator, \
-.  _bfd_generic_find_line, \
+.  NAME##_find_line, \
 .  NAME##_find_inliner_info, \
 .  NAME##_bfd_make_debug_symbol, \
 .  NAME##_read_minisymbols, \
@@ -385,14 +386,14 @@ BFD_JUMP_TABLE macros.
 .  void        (*_bfd_get_symbol_info)
 .    (bfd *, struct bfd_symbol *, symbol_info *);
 .#define bfd_get_symbol_info(b,p,e) BFD_SEND (b, _bfd_get_symbol_info, (b,p,e))
+.  const char *(*_bfd_get_symbol_version_string)
+.    (bfd *, struct bfd_symbol *, bfd_boolean *);
+.#define bfd_get_symbol_version_string(b,s,h) BFD_SEND (b, _bfd_get_symbol_version_string, (b,s,h))
 .  bfd_boolean (*_bfd_is_local_label_name) (bfd *, const char *);
 .  bfd_boolean (*_bfd_is_target_special_symbol) (bfd *, asymbol *);
 .  alent *     (*_get_lineno) (bfd *, struct bfd_symbol *);
 .  bfd_boolean (*_bfd_find_nearest_line)
-.    (bfd *, struct bfd_section *, struct bfd_symbol **, bfd_vma,
-.     const char **, const char **, unsigned int *);
-.  bfd_boolean (*_bfd_find_nearest_line_discriminator)
-.    (bfd *, struct bfd_section *, struct bfd_symbol **, bfd_vma,
+.    (bfd *, struct bfd_symbol **, struct bfd_section *, bfd_vma,
 .     const char **, const char **, unsigned int *, unsigned int *);
 .  bfd_boolean (*_bfd_find_line)
 .    (bfd *, struct bfd_symbol **, struct bfd_symbol *,
@@ -446,7 +447,6 @@ BFD_JUMP_TABLE macros.
 .  NAME##_bfd_get_relocated_section_contents, \
 .  NAME##_bfd_relax_section, \
 .  NAME##_bfd_link_hash_table_create, \
-.  NAME##_bfd_link_hash_table_free, \
 .  NAME##_bfd_link_add_symbols, \
 .  NAME##_bfd_link_just_syms, \
 .  NAME##_bfd_copy_link_hash_symbol_type, \
@@ -473,16 +473,14 @@ BFD_JUMP_TABLE macros.
 .  struct bfd_link_hash_table *
 .              (*_bfd_link_hash_table_create) (bfd *);
 .
-.  {* Release the memory associated with the linker hash table.  *}
-.  void        (*_bfd_link_hash_table_free) (struct bfd_link_hash_table *);
-.
 .  {* Add symbols from this object file into the hash table.  *}
 .  bfd_boolean (*_bfd_link_add_symbols) (bfd *, struct bfd_link_info *);
 .
 .  {* Indicate that we are only retrieving symbol values from this section.  *}
 .  void        (*_bfd_link_just_syms) (asection *, struct bfd_link_info *);
 .
-.  {* Copy the symbol type of a linker hash table entry.  *}
+.  {* Copy the symbol type and other attributes for a linker script
+.     assignment of one symbol to another.  *}
 .#define bfd_copy_link_hash_symbol_type(b, t, f) \
 .  BFD_SEND (b, _bfd_copy_link_hash_symbol_type, (b, t, f))
 .  void (*_bfd_copy_link_hash_symbol_type)
@@ -570,7 +568,10 @@ to find an alternative output format that is suitable.
 extern const bfd_target aarch64_elf32_be_vec;
 extern const bfd_target aarch64_elf32_le_vec;
 extern const bfd_target aarch64_elf64_be_vec;
+extern const bfd_target aarch64_elf64_be_cloudabi_vec;
 extern const bfd_target aarch64_elf64_le_vec;
+extern const bfd_target aarch64_elf64_le_cloudabi_vec;
+extern const bfd_target aarch64_mach_o_vec;
 extern const bfd_target alpha_ecoff_le_vec;
 extern const bfd_target alpha_elf64_vec;
 extern const bfd_target alpha_elf64_fbsd_vec;
@@ -598,6 +599,7 @@ extern const bfd_target arm_elf32_symbian_be_vec;
 extern const bfd_target arm_elf32_symbian_le_vec;
 extern const bfd_target arm_elf32_vxworks_be_vec;
 extern const bfd_target arm_elf32_vxworks_le_vec;
+extern const bfd_target arm_mach_o_vec;
 extern const bfd_target arm_pe_be_vec;
 extern const bfd_target arm_pe_le_vec;
 extern const bfd_target arm_pe_epoc_be_vec;
@@ -634,6 +636,7 @@ extern const bfd_target frv_elf32_vec;
 extern const bfd_target frv_elf32_fdpic_vec;
 extern const bfd_target h8300_coff_vec;
 extern const bfd_target h8300_elf32_vec;
+extern const bfd_target h8300_elf32_linux_vec;
 extern const bfd_target h8500_coff_vec;
 extern const bfd_target hppa_elf32_vec;
 extern const bfd_target hppa_elf32_linux_vec;
@@ -665,6 +668,7 @@ extern const bfd_target i386_msdos_vec;
 extern const bfd_target i386_nlm32_vec;
 extern const bfd_target i386_pe_vec;
 extern const bfd_target i386_pei_vec;
+extern const bfd_target iamcu_elf32_vec;
 extern const bfd_target i860_coff_vec;
 extern const bfd_target i860_elf32_vec;
 extern const bfd_target i860_elf32_le_vec;
@@ -879,16 +883,19 @@ extern const bfd_target tilegx_elf64_le_vec;
 extern const bfd_target tilepro_elf32_vec;
 extern const bfd_target v800_elf32_vec;
 extern const bfd_target v850_elf32_vec;
+extern const bfd_target ft32_elf32_vec;
 extern const bfd_target vax_aout_1knbsd_vec;
 extern const bfd_target vax_aout_bsd_vec;
 extern const bfd_target vax_aout_nbsd_vec;
 extern const bfd_target vax_elf32_vec;
+extern const bfd_target visium_elf32_vec;
 extern const bfd_target w65_coff_vec;
 extern const bfd_target we32k_coff_vec;
 extern const bfd_target x86_64_coff_vec;
 extern const bfd_target x86_64_elf32_vec;
 extern const bfd_target x86_64_elf32_nacl_vec;
 extern const bfd_target x86_64_elf64_vec;
+extern const bfd_target x86_64_elf64_cloudabi_vec;
 extern const bfd_target x86_64_elf64_fbsd_vec;
 extern const bfd_target x86_64_elf64_nacl_vec;
 extern const bfd_target x86_64_elf64_sol2_vec;
@@ -938,7 +945,7 @@ static const bfd_target * const _bfd_target_vector[] =
 #endif
 	/* This list is alphabetized to make it easy to compare
 	   with other vector lists -- the decls above and
-	   the case statement in configure.in.
+	   the case statement in configure.ac.
 	   Try to keep it in order when adding new targets, and
 	   use a name of the form <cpu>_<format>_<other>_<endian>_vec.
 	   Note that sorting is done as if _<endian>_vec wasn't present.
@@ -949,7 +956,10 @@ static const bfd_target * const _bfd_target_vector[] =
 	&aarch64_elf32_be_vec,
 	&aarch64_elf32_le_vec,
 	&aarch64_elf64_be_vec,
+	&aarch64_elf64_be_cloudabi_vec,
 	&aarch64_elf64_le_vec,
+	&aarch64_elf64_le_cloudabi_vec,
+	&aarch64_mach_o_vec,
 #endif
 
 #ifdef BFD64
@@ -995,6 +1005,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&arm_elf32_symbian_le_vec,
 	&arm_elf32_vxworks_be_vec,
 	&arm_elf32_vxworks_le_vec,
+	&arm_mach_o_vec,
 	&arm_pe_be_vec,
 	&arm_pe_le_vec,
 	&arm_pe_epoc_be_vec,
@@ -1036,8 +1047,10 @@ static const bfd_target * const _bfd_target_vector[] =
 	   the file even if we don't recognize the machine type.  */
 	&elf32_be_vec,
 	&elf32_le_vec,
+#ifdef BFD64
 	&elf64_be_vec,
 	&elf64_le_vec,
+#endif
 
 	&epiphany_elf32_vec,
 
@@ -1048,13 +1061,16 @@ static const bfd_target * const _bfd_target_vector[] =
 
 	&h8300_coff_vec,
 	&h8300_elf32_vec,
+	&h8300_elf32_linux_vec,
 	&h8500_coff_vec,
 
 	&hppa_elf32_vec,
 	&hppa_elf32_linux_vec,
 	&hppa_elf32_nbsd_vec,
+#ifdef BFD64
 	&hppa_elf64_vec,
 	&hppa_elf64_linux_vec,
+#endif
 	&hppa_som_vec,
 
 	&i370_elf32_vec,
@@ -1092,6 +1108,8 @@ static const bfd_target * const _bfd_target_vector[] =
 	&i386_pe_vec,
 	&i386_pei_vec,
 
+	&iamcu_elf32_vec,
+
 	&i860_coff_vec,
 	&i860_elf32_vec,
 	&i860_elf32_le_vec,
@@ -1120,13 +1138,18 @@ static const bfd_target * const _bfd_target_vector[] =
 
 	&k1_elf32_vec,
 	&k1_linux_elf32_vec,
+
+#ifdef BFD64
 	&k1_elf64_vec,
 	&k1_linux_elf64_vec,
+#endif
 
+#ifdef BFD64
 	&k1om_elf64_vec,
 	&k1om_elf64_fbsd_vec,
 	&l1om_elf64_vec,
 	&l1om_elf64_fbsd_vec,
+#endif
 
 	&lm32_elf32_vec,
 
@@ -1383,6 +1406,8 @@ static const bfd_target * const _bfd_target_vector[] =
 #endif
 	&tilepro_elf32_vec,
 
+	&ft32_elf32_vec,
+
 	&v800_elf32_vec,
 	&v850_elf32_vec,
 
@@ -1390,6 +1415,8 @@ static const bfd_target * const _bfd_target_vector[] =
 	&vax_aout_bsd_vec,
 	&vax_aout_nbsd_vec,
 	&vax_elf32_vec,
+
+	&visium_elf32_vec,
 
 	&w65_coff_vec,
 
@@ -1400,6 +1427,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&x86_64_elf32_vec,
 	&x86_64_elf32_nacl_vec,
 	&x86_64_elf64_vec,
+	&x86_64_elf64_cloudabi_vec,
 	&x86_64_elf64_fbsd_vec,
 	&x86_64_elf64_nacl_vec,
 	&x86_64_elf64_sol2_vec,
@@ -1821,4 +1849,51 @@ bfd_search_for_target (int (*search_func) (const bfd_target *, void *),
       return *target;
 
   return NULL;
+}
+
+/*
+FUNCTION
+	bfd_flavour_name
+
+SYNOPSIS
+	const char *bfd_flavour_name (enum bfd_flavour flavour);
+
+DESCRIPTION
+	Return the string form of @var{flavour}.
+*/
+
+const char *
+bfd_flavour_name (enum bfd_flavour flavour)
+{
+  switch (flavour)
+    {
+    case bfd_target_unknown_flavour: return "unknown file format";
+    case bfd_target_aout_flavour: return "a.out";
+    case bfd_target_coff_flavour: return "COFF";
+    case bfd_target_ecoff_flavour: return "ECOFF";
+    case bfd_target_xcoff_flavour: return "XCOFF";
+    case bfd_target_elf_flavour: return "ELF";
+    case bfd_target_ieee_flavour: return "IEEE";
+    case bfd_target_nlm_flavour: return "NLM";
+    case bfd_target_oasys_flavour: return "Oasys";
+    case bfd_target_tekhex_flavour: return "Tekhex";
+    case bfd_target_srec_flavour: return "Srec";
+    case bfd_target_verilog_flavour: return "Verilog";
+    case bfd_target_ihex_flavour: return "Ihex";
+    case bfd_target_som_flavour: return "SOM";
+    case bfd_target_os9k_flavour: return "OS9K";
+    case bfd_target_versados_flavour: return "Versados";
+    case bfd_target_msdos_flavour: return "MSDOS";
+    case bfd_target_ovax_flavour: return "Ovax";
+    case bfd_target_evax_flavour: return "Evax";
+    case bfd_target_mmo_flavour: return "mmo";
+    case bfd_target_mach_o_flavour: return "MACH_O";
+    case bfd_target_pef_flavour: return "PEF";
+    case bfd_target_pef_xlib_flavour: return "PEF_XLIB";
+    case bfd_target_sym_flavour: return "SYM";
+    /* There is no "default" case here so that -Wswitch (part of -Wall)
+       catches missing entries.  */
+    }
+
+  abort ();
 }

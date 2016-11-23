@@ -1,6 +1,6 @@
 /* Some commonly-used VEC types.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifdef GDBSERVER
-#include "server.h"
-#else
-#include "defs.h"
-#endif
-
+#include "common-defs.h"
 #include "gdb_vecs.h"
 #include "host-defs.h"
 
@@ -54,7 +49,8 @@ delim_string_to_char_ptr_vec_append (VEC (char_ptr) **vecp,
   do
     {
       size_t this_len;
-      char *next_field, *this_field;
+      const char *next_field;
+      char *this_field;
 
       next_field = strchr (str, delimiter);
       if (next_field == NULL)
@@ -65,7 +61,7 @@ delim_string_to_char_ptr_vec_append (VEC (char_ptr) **vecp,
 	  next_field++;
 	}
 
-      this_field = xmalloc (this_len + 1);
+      this_field = (char *) xmalloc (this_len + 1);
       memcpy (this_field, str, this_len);
       this_field[this_len] = '\0';
       VEC_safe_push (char_ptr, *vecp, this_field);

@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +45,6 @@
 #include "symtab.h"
 #include "gdbcore.h"
 #include "objfiles.h"
-#include "exceptions.h"
 #include "gdbcmd.h"
 #include "target.h"
 #include "value.h"
@@ -181,27 +180,11 @@ struct symbol_file_add_from_memory_args
 static int
 symbol_file_add_from_memory_wrapper (struct ui_out *uiout, void *data)
 {
-  struct symbol_file_add_from_memory_args *args = data;
+  struct symbol_file_add_from_memory_args *args
+    = (struct symbol_file_add_from_memory_args *) data;
 
   symbol_file_add_from_memory (args->bfd, args->sysinfo_ehdr, args->size,
 			       args->name, args->from_tty);
-  return 0;
-}
-
-/* Rummage through mappings to find the vsyscall page size.  */
-
-static int
-find_vdso_size (CORE_ADDR vaddr, unsigned long size,
-		int read, int write, int exec, int modified,
-		void *data)
-{
-  struct symbol_file_add_from_memory_args *args = data;
-
-  if (vaddr == args->sysinfo_ehdr)
-    {
-      args->size = size;
-      return 1;
-    }
   return 0;
 }
 
@@ -211,10 +194,9 @@ find_vdso_size (CORE_ADDR vaddr, unsigned long size,
 static void
 add_vsyscall_page (struct target_ops *target, int from_tty)
 {
-  CORE_ADDR sysinfo_ehdr;
+  struct mem_range vsyscall_range;
 
-  if (target_auxv_search (target, AT_SYSINFO_EHDR, &sysinfo_ehdr) > 0
-      && sysinfo_ehdr != (CORE_ADDR) 0)
+  if (gdbarch_vsyscall_range (target_gdbarch (), &vsyscall_range))
     {
       struct bfd *bfd;
       struct symbol_file_add_from_memory_args args;
@@ -237,14 +219,11 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
 	  return;
 	}
       args.bfd = bfd;
-      args.sysinfo_ehdr = sysinfo_ehdr;
-      args.size = 0;
-      if (gdbarch_find_memory_regions_p (target_gdbarch ()))
-	(void) gdbarch_find_memory_regions (target_gdbarch (),
-					    find_vdso_size, &args);
+      args.sysinfo_ehdr = vsyscall_range.start;
+      args.size = vsyscall_range.length;
 
       args.name = xstrprintf ("system-supplied DSO at %s",
-			      paddress (target_gdbarch (), sysinfo_ehdr));
+			      paddress (target_gdbarch (), vsyscall_range.start));
       /* Pass zero for FROM_TTY, because the action of loading the
 	 vsyscall DSO was not triggered by the user, even if the user
 	 typed "run" at the TTY.  */

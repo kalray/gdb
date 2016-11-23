@@ -41,11 +41,11 @@ const size_t plt_entry_k1b64_size = PLT_SIZE(plt_small_entry_k1b64);
 
 static reloc_howto_type* k1_elf64_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 static reloc_howto_type* k1_elf64_reloc_name_lookup (bfd *, const char *);
+struct bfd_link_hash_table * k1_elf64_link_hash_table_create (bfd *abfd);
 
 K1_INFO_TO_HOWTO_DEF(64)
 K1_RELOC_NAME_LOOKUP_DEF(64)
 K1_RELOC_TYPE_LOOKUP_DEF(64)
-
 
 struct bfd_link_hash_table *
 k1_elf64_link_hash_table_create (bfd *abfd)
@@ -78,7 +78,6 @@ k1_elf64_relocate_section
      Elf_Internal_Sym *      local_syms,
      asection **             local_sections)
 {
-  bfd *dynobj;
   Elf_Internal_Shdr *           symtab_hdr;
   struct elf_link_hash_entry ** sym_hashes;
   Elf_Internal_Rela *           rel;
@@ -91,7 +90,6 @@ k1_elf64_relocate_section
   if (htab == NULL)
     return FALSE;
 
-  dynobj = htab->elf.dynobj;
   symtab_hdr = & elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
   relend     = relocs + input_section->reloc_count;
@@ -200,7 +198,7 @@ k1_elf64_relocate_section
           else if (info->unresolved_syms_in_objects == RM_IGNORE
                && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
             ;
-          else if (!info->relocatable && !gp_disp_p)
+          else if (!bfd_link_relocatable(info) && !gp_disp_p)
           {
             bfd_boolean err;
             err = (info->unresolved_syms_in_objects == RM_GENERATE_ERROR
@@ -221,7 +219,7 @@ k1_elf64_relocate_section
 	    continue;
 	}
 
-      if (info->relocatable)
+      if (bfd_link_relocatable(info))
 	continue;
 
       /* Finally, the sole K1-specific part.  */
@@ -231,11 +229,11 @@ k1_elf64_relocate_section
 	case R_K1_64:
           if ((input_section->flags & SEC_ALLOC) == 0)
             break;
-          if ((info->shared
+          if ((bfd_link_pic(info)
                && (h == NULL
                    || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
                    || h->root.type != bfd_link_hash_undefweak))
-              || (!info->shared
+              || (!bfd_link_pic(info)
                   && h != NULL
                   && h->dynindx != -1
                   && !h->non_got_ref
@@ -269,7 +267,7 @@ k1_elf64_relocate_section
                 memset (&outrel, 0, sizeof (outrel));
               else if (h != NULL
                        && h->dynindx != -1
-                       && (!info->shared
+                       && (!bfd_link_pic(info)
                            || !SYMBOLIC_BIND (info, h)
                            || !h->def_regular))
                 outrel.r_info = ELF64_R_INFO (h->dynindx, r_type);
@@ -402,7 +400,7 @@ k1_elf64_relocate_section
                 {
                   bfd_put_64 (output_bfd, relocation, 
                               htab->sgot->contents + off);
-                  if (info->shared)
+                  if (bfd_link_pic(info))
                     {
                       Elf_Internal_Rela outrel;
                       bfd_byte *loc;
@@ -428,8 +426,8 @@ k1_elf64_relocate_section
 		BFD_ASSERT (off != (bfd_vma) - 1);
 		dyn = htab->elf.dynamic_sections_created;
 
-		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared, h)
-		    || (info->shared
+		if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic(info), h)
+		    || (bfd_link_pic(info)
 			&& (info->symbolic
 			    || h->dynindx == -1
 			    || h->forced_local)
@@ -661,12 +659,10 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
   
   if (h->got.offset != (bfd_vma) - 1)
     {
-      bfd *dynobj;
       asection *sgot;
       asection *srela;
       Elf_Internal_Rela rela;
       bfd_byte *loc;
-      dynobj = htab->elf.dynobj;
 
       /* This symbol has an entry in the global offset table.
          Set it up.  */
@@ -683,7 +679,7 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
          the symbol was forced to be local because of a version file.
          The entry in the global offset table will already have been
          initialized in the relocate_section function.  */
-      if (info->shared
+      if (bfd_link_pic(info)
           && (info->symbolic
               || h->dynindx == -1 || h->forced_local) && h->def_regular)
         {
@@ -784,7 +780,7 @@ k1_elf32_finish_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
         {
           DPRINT("We shall fill the first PLT entry here");
           
-            if (info->shared)
+            if (bfd_link_pic(info))
             {
 //               memcpy (htab->elf.splt->contents, elf_i386_pic_plt0_entry,
 //                       sizeof (elf_i386_pic_plt0_entry));

@@ -18,7 +18,7 @@ esac
 rm -f e${EMULATION_NAME}.c
 (echo;echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
-/* Copyright (C) 2006-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Written by Kai Tietz, OneVision Software GmbH&CoKg.
 
    This file is part of the GNU Binutils.
@@ -147,7 +147,7 @@ static flagword real_flags = IMAGE_FILE_LARGE_ADDRESS_AWARE;
 static int support_old_code = 0;
 static lang_assignment_statement_type *image_base_statement = 0;
 static unsigned short pe_dll_characteristics = 0;
-static bfd_boolean insert_timestamp = FALSE;
+static bfd_boolean insert_timestamp = TRUE;
 static const char *emit_build_id;
 
 #ifdef DLL_SUPPORT
@@ -237,6 +237,7 @@ enum options
   OPTION_LEADING_UNDERSCORE,
   OPTION_ENABLE_LONG_SECTION_NAMES,
   OPTION_DISABLE_LONG_SECTION_NAMES,
+  OPTION_HIGH_ENTROPY_VA,
   OPTION_DYNAMIC_BASE,
   OPTION_FORCE_INTEGRITY,
   OPTION_NX_COMPAT,
@@ -245,6 +246,7 @@ enum options
   OPTION_NO_BIND,
   OPTION_WDM_DRIVER,
   OPTION_INSERT_TIMESTAMP,
+  OPTION_NO_INSERT_TIMESTAMP,
   OPTION_TERMINAL_SERVER_AWARE,
   OPTION_BUILD_ID
 };
@@ -313,6 +315,7 @@ gld${EMULATION_NAME}_add_options
 #endif
     {"enable-long-section-names", no_argument, NULL, OPTION_ENABLE_LONG_SECTION_NAMES},
     {"disable-long-section-names", no_argument, NULL, OPTION_DISABLE_LONG_SECTION_NAMES},
+    {"high-entropy-va", no_argument, NULL, OPTION_HIGH_ENTROPY_VA},
     {"dynamicbase",no_argument, NULL, OPTION_DYNAMIC_BASE},
     {"forceinteg", no_argument, NULL, OPTION_FORCE_INTEGRITY},
     {"nxcompat", no_argument, NULL, OPTION_NX_COMPAT},
@@ -322,6 +325,7 @@ gld${EMULATION_NAME}_add_options
     {"wdmdriver", no_argument, NULL, OPTION_WDM_DRIVER},
     {"tsaware", no_argument, NULL, OPTION_TERMINAL_SERVER_AWARE},
     {"insert-timestamp", no_argument, NULL, OPTION_INSERT_TIMESTAMP},
+    {"no-insert-timestamp", no_argument, NULL, OPTION_NO_INSERT_TIMESTAMP},
     {"build-id", optional_argument, NULL, OPTION_BUILD_ID},
     {NULL, no_argument, NULL, 0}
   };
@@ -409,7 +413,7 @@ gld_${EMULATION_NAME}_list_options (FILE *file)
   fprintf (file, _("  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n"));
   fprintf (file, _("  --support-old-code                 Support interworking with old code\n"));
   fprintf (file, _("  --[no-]leading-underscore          Set explicit symbol underscore prefix mode\n"));
-  fprintf (file, _("  --insert-timestamp                 Use a real timestamp rather than zero.\n"));
+  fprintf (file, _("  --[no-]insert-timestamp            Use a real timestamp rather than zero. (default)\n"));
   fprintf (file, _("                                     This makes binaries non-deterministic\n"));
 #ifdef DLL_SUPPORT
   fprintf (file, _("  --add-stdcall-alias                Export symbols with and without @nn\n"));
@@ -448,6 +452,8 @@ gld_${EMULATION_NAME}_list_options (FILE *file)
                                        executable image files\n"));
   fprintf (file, _("  --disable-long-section-names       Never use long COFF section names, even\n\
                                        in object files\n"));
+  fprintf (file, _("  --high-entropy-va                  Image is compatible with 64-bit address space\n\
+                                       layout randomization (ASLR)\n"));
   fprintf (file, _("  --dynamicbase			 Image base address may be relocated using\n\
 				       address space layout randomization (ASLR)\n"));
   fprintf (file, _("  --forceinteg		 Code integrity checks are enforced\n"));
@@ -509,7 +515,7 @@ set_entry_point (void)
   /* Entry point name for arbitrary subsystem numbers.  */
   static const char default_entry[] = "mainCRTStartup";
 
-  if (link_info.shared || dll)
+  if (bfd_link_pic (&link_info) || dll)
     {
       entry = "DllMainCRTStartup";
     }
@@ -721,6 +727,9 @@ gld${EMULATION_NAME}_handle_option (int optc)
     case OPTION_INSERT_TIMESTAMP:
       insert_timestamp = TRUE;
       break;
+    case OPTION_NO_INSERT_TIMESTAMP:
+      insert_timestamp = FALSE;
+      break;
 #ifdef DLL_SUPPORT
     case OPTION_OUT_DEF:
       pep_out_def_filename = xstrdup (optarg);
@@ -799,6 +808,9 @@ gld${EMULATION_NAME}_handle_option (int optc)
       pep_use_coff_long_section_names = 0;
       break;
     /*  Get DLLCharacteristics bits  */
+    case OPTION_HIGH_ENTROPY_VA:
+      pe_dll_characteristics |= IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA;
+      break;
     case OPTION_DYNAMIC_BASE:
       pe_dll_characteristics |= IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
       break;
@@ -891,9 +903,9 @@ gld_${EMULATION_NAME}_set_symbols (void)
 
   if (!init[IMAGEBASEOFF].inited)
     {
-      if (link_info.relocatable)
+      if (bfd_link_relocatable (&link_info))
 	init[IMAGEBASEOFF].value = 0;
-      else if (init[DLLOFF].value || (link_info.shared && !link_info.pie))
+      else if (init[DLLOFF].value || bfd_link_dll (&link_info))
 	{
 #ifdef DLL_SUPPORT
 	  init[IMAGEBASEOFF].value = (pep_enable_auto_image_base
@@ -909,7 +921,7 @@ gld_${EMULATION_NAME}_set_symbols (void)
     }
 
   /* Don't do any symbol assignments if this is a relocatable link.  */
-  if (link_info.relocatable)
+  if (bfd_link_relocatable (&link_info))
     return;
 
   /* Glue the assignments into the abs section.  */
@@ -1139,10 +1151,19 @@ pep_find_data_imports (void)
       if (undef->type == bfd_link_hash_undefined)
 	{
 	  /* C++ symbols are *long*.  */
-	  char buf[4096];
+#define BUF_SIZE 4096
+	  char buf[BUF_SIZE];
 
 	  if (pep_dll_extra_pe_debug)
 	    printf ("%s:%s\n", __FUNCTION__, undef->root.string);
+
+	  if (strlen (undef->root.string) > (BUF_SIZE - 6))
+	    {
+	      /* PR linker/18466.  */
+	      einfo (_("%P: internal error: symbol too long: %s\n"),
+		     undef->root.string);
+	      return;
+	    }
 
 	  sprintf (buf, "__imp_%s", undef->root.string);
 
@@ -1249,13 +1270,13 @@ write_build_id (bfd *abfd)
   bfd_size_type build_id_size;
   unsigned char *build_id;
 
-  /* Find the section the .build-id output section has been merged info.  */
+  /* Find the section the .buildid output section has been merged info.  */
   for (asec = abfd->sections; asec != NULL; asec = asec->next)
     {
       struct bfd_link_order *l = NULL;
       for (l = asec->map_head.link_order; l != NULL; l = l->next)
         {
-          if ((l->type == bfd_indirect_link_order))
+          if (l->type == bfd_indirect_link_order)
             {
               if (l->u.indirect.section == t->build_id.sec)
                 {
@@ -1271,7 +1292,7 @@ write_build_id (bfd *abfd)
 
   if (!link_order)
     {
-      einfo (_("%P: warning: .build-id section discarded,"
+      einfo (_("%P: warning: .buildid section discarded,"
                " --build-id ignored.\n"));
       return TRUE;
     }
@@ -1307,7 +1328,7 @@ write_build_id (bfd *abfd)
   if (bfd_seek (abfd, asec->filepos + link_order->offset, SEEK_SET) != 0)
     return 0;
 
-  if ((bfd_bwrite (contents, size, abfd) != size))
+  if (bfd_bwrite (contents, size, abfd) != size)
     return 0;
 
   /* Construct the CodeView record.  */
@@ -1335,7 +1356,7 @@ write_build_id (bfd *abfd)
   return TRUE;
 }
 
-/* Make .build-id section, and set up coff_tdata->build_id. */
+/* Make .buildid section, and set up coff_tdata->build_id. */
 static bfd_boolean
 setup_build_id (bfd *ibfd)
 {
@@ -1350,7 +1371,7 @@ setup_build_id (bfd *ibfd)
 
   flags = (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_IN_MEMORY
 	   | SEC_LINKER_CREATED | SEC_READONLY | SEC_DATA);
-  s = bfd_make_section_anyway_with_flags (ibfd, ".build-id", flags);
+  s = bfd_make_section_anyway_with_flags (ibfd, ".buildid", flags);
   if (s != NULL)
     {
       struct pe_tdata *t = pe_data (link_info.output_bfd);
@@ -1368,7 +1389,7 @@ setup_build_id (bfd *ibfd)
       return TRUE;
     }
 
-  einfo ("%P: warning: Cannot create .build-id section,"
+  einfo ("%P: warning: Cannot create .buildid section,"
 	 " --build-id ignored.\n");
   return FALSE;
 }
@@ -1391,7 +1412,7 @@ gld_${EMULATION_NAME}_after_open (void)
 	printf ("-%s\n", sym->root.string);
       bfd_hash_traverse (&link_info.hash->table, pr_sym, NULL);
 
-      for (a = link_info.input_bfds; a; a = a->link_next)
+      for (a = link_info.input_bfds; a; a = a->link.next)
 	printf ("*%s\n",a->filename);
     }
 #endif
@@ -1402,7 +1423,7 @@ gld_${EMULATION_NAME}_after_open (void)
 
       /* Find a COFF input.  */
       for (abfd = link_info.input_bfds;
-	   abfd != (bfd *) NULL; abfd = abfd->link_next)
+	   abfd != (bfd *) NULL; abfd = abfd->link.next)
 	if (bfd_get_flavour (abfd) == bfd_target_coff_flavour)
 	  break;
 
@@ -1438,7 +1459,7 @@ gld_${EMULATION_NAME}_after_open (void)
      find it, so enable it in that case.  */
   if (pep_use_coff_long_section_names < 0 && link_info.strip == strip_none)
     {
-      if (link_info.relocatable)
+      if (bfd_link_relocatable (&link_info))
 	pep_use_coff_long_section_names = 1;
       else
 	{
@@ -1474,9 +1495,9 @@ gld_${EMULATION_NAME}_after_open (void)
     pep_fixup_stdcalls ();
 
 #ifndef TARGET_IS_i386pep
-  if (link_info.shared)
+  if (bfd_link_pic (&link_info))
 #else
-  if (!link_info.relocatable)
+  if (!bfd_link_relocatable (&link_info))
 #endif
     pep_dll_build_sections (link_info.output_bfd, &link_info);
 
@@ -1768,7 +1789,7 @@ gld_${EMULATION_NAME}_unrecognized_file (lang_input_statement_type *entry ATTRIB
 
 	  /* def_file_print (stdout, pep_def_file); */
 	  if (pep_def_file->is_dll == 1)
-	    link_info.shared = 1;
+	    link_info.type = type_dll;
 
 	  if (pep_def_file->base_address != (bfd_vma)(-1))
 	    {
@@ -1825,8 +1846,9 @@ gld_${EMULATION_NAME}_finish (void)
   finish_default ();
 
 #ifdef DLL_SUPPORT
-  if (link_info.shared
-      || (!link_info.relocatable && pep_def_file->num_exports != 0))
+  if (bfd_link_pic (&link_info)
+      || (!bfd_link_relocatable (&link_info)
+	  && pep_def_file->num_exports != 0))
     {
       pep_dll_fill_sections (link_info.output_bfd, &link_info);
       if (pep_implib_filename)
@@ -1876,7 +1898,7 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
   lang_statement_union_type **pl;
 
   /* Look through the script to see where to place this section.  */
-  if (!link_info.relocatable
+  if (!bfd_link_relocatable (&link_info)
       && (dollar = strchr (secname, '\$')) != NULL)
     {
       size_t len = dollar - secname;
@@ -1958,6 +1980,8 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
       struct orphan_save *place;
       lang_output_section_statement_type *after;
       etree_type *address;
+      flagword flags;
+      asection *nexts;
 
       if (!orphan_init_done)
 	{
@@ -1975,14 +1999,26 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
       /* Try to put the new output section in a reasonable place based
 	 on the section name and section flags.  */
 
+      flags = s->flags;
+      nexts = s;
+      while ((nexts = bfd_get_next_section_by_name (nexts->owner, nexts)))
+	if (nexts->output_section == NULL
+	    && (nexts->flags & SEC_EXCLUDE) == 0
+	    && ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
+	    && (nexts->owner->flags & DYNAMIC) == 0
+	    && nexts->owner->usrdata != NULL
+	    && !(((lang_input_statement_type *) nexts->owner->usrdata)
+		 ->flags.just_syms))
+	  flags = (((flags ^ SEC_READONLY) | (nexts->flags ^ SEC_READONLY))
+		   ^ SEC_READONLY);
       place = NULL;
-      if ((s->flags & SEC_ALLOC) == 0)
+      if ((flags & SEC_ALLOC) == 0)
 	;
-      else if ((s->flags & (SEC_LOAD | SEC_HAS_CONTENTS)) == 0)
+      else if ((flags & (SEC_LOAD | SEC_HAS_CONTENTS)) == 0)
 	place = &hold[orphan_bss];
-      else if ((s->flags & SEC_READONLY) == 0)
+      else if ((flags & SEC_READONLY) == 0)
 	place = &hold[orphan_data];
-      else if ((s->flags & SEC_CODE) == 0)
+      else if ((flags & SEC_CODE) == 0)
 	{
 	  place = (!strncmp (secname, ".idata\$", 7) ? &hold[orphan_idata]
 						     : &hold[orphan_rodata]);
@@ -1997,7 +2033,8 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
 	    place->os = lang_output_section_find (place->name);
 	  after = place->os;
 	  if (after == NULL)
-	    after = lang_output_section_find_by_flags (s, &place->os, NULL);
+	    after = lang_output_section_find_by_flags (s, flags, &place->os,
+						       NULL);
 	  if (after == NULL)
 	    /* *ABS* is always the first output section statement.  */
 	    after = (&lang_output_section_statement.head
@@ -2010,7 +2047,7 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
       address = exp_unop (ALIGN_K, exp_nameop (NAME, "__section_alignment__"));
       os = lang_insert_orphan (s, secname, constraint, after, place, address,
 			       &add_child);
-      if (link_info.relocatable)
+      if (bfd_link_relocatable (&link_info))
 	{
 	  os->section_alignment = s->alignment_power;
 	  os->bfd_section->alignment_power = s->alignment_power;
@@ -2166,11 +2203,11 @@ fragment <<EOF
 {
   *isfile = 0;
 
-  if (link_info.relocatable && config.build_constructors)
+  if (bfd_link_relocatable (&link_info) && config.build_constructors)
     return
 EOF
 sed $sc ldscripts/${EMULATION_NAME}.xu			>> e${EMULATION_NAME}.c
-echo '  ; else if (link_info.relocatable) return'	>> e${EMULATION_NAME}.c
+echo '  ; else if (bfd_link_relocatable (&link_info)) return' >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xr			>> e${EMULATION_NAME}.c
 echo '  ; else if (!config.text_read_only) return'	>> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xbn			>> e${EMULATION_NAME}.c

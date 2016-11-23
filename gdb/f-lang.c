@@ -1,6 +1,6 @@
 /* Fortran language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -21,7 +21,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -144,7 +143,7 @@ static const struct op_print f_op_print_tab[] =
   {".LT.", BINOP_LESS, PREC_ORDER, 0},
   {"**", UNOP_IND, PREC_PREFIX, 0},
   {"@", BINOP_REPEAT, PREC_REPEAT, 0},
-  {NULL, 0, 0, 0}
+  {NULL, OP_NULL, PREC_REPEAT, 0}
 };
 
 enum f_primitive_types {
@@ -276,6 +275,8 @@ const struct language_defn f_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &default_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
 
@@ -342,7 +343,7 @@ static struct gdbarch_data *f_type_data;
 const struct builtin_f_type *
 builtin_f_type (struct gdbarch *gdbarch)
 {
-  return gdbarch_data (gdbarch, f_type_data);
+  return (const struct builtin_f_type *) gdbarch_data (gdbarch, f_type_data);
 }
 
 void

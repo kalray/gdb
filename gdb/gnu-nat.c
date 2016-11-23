@@ -1,5 +1,5 @@
 /* Interface GDB to the GNU Hurd.
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,12 +23,9 @@
 #include "defs.h"
 
 #include <ctype.h>
-#include <errno.h>
 #include <limits.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <stdio.h>
-#include <string.h>
 #include <sys/ptrace.h>
 
 #include <mach.h>
@@ -61,7 +58,6 @@
 #include "gdbcmd.h"
 #include "gdbcore.h"
 #include "gdbthread.h"
-#include "gdb_assert.h"
 #include "gdb_obstack.h"
 
 #include "gnu-nat.h"
@@ -543,7 +539,7 @@ make_proc (struct inf *inf, mach_port_t port, int tid)
 {
   error_t err;
   mach_port_t prev_port = MACH_PORT_NULL;
-  struct proc *proc = xmalloc (sizeof (struct proc));
+  struct proc *proc = XNEW (struct proc);
 
   proc->port = port;
   proc->tid = tid;
@@ -640,7 +636,7 @@ _proc_free (struct proc *proc)
 static struct inf *
 make_inf (void)
 {
-  struct inf *inf = xmalloc (sizeof (struct inf));
+  struct inf *inf = XNEW (struct inf);
 
   inf->task = 0;
   inf->threads = 0;
@@ -808,7 +804,8 @@ inf_validate_procinfo (struct inf *inf)
       inf->nomsg = !!(pi->state & PI_NOMSG);
       if (inf->nomsg)
 	inf->traced = !!(pi->state & PI_TRACED);
-      vm_deallocate (mach_task_self (), (vm_address_t) pi, pi_len);
+      vm_deallocate (mach_task_self (), (vm_address_t) pi,
+		     pi_len * sizeof (*(procinfo_t) 0));
       if (noise_len > 0)
 	vm_deallocate (mach_task_self (), (vm_address_t) noise, noise_len);
     }
@@ -848,9 +845,10 @@ inf_validate_task_sc (struct inf *inf)
 
   suspend_count = pi->taskinfo.suspend_count;
 
-  vm_deallocate (mach_task_self (), (vm_address_t) pi, pi_len);
+  vm_deallocate (mach_task_self (), (vm_address_t) pi,
+		 pi_len * sizeof (*(procinfo_t) 0));
   if (noise_len > 0)
-    vm_deallocate (mach_task_self (), (vm_address_t) pi, pi_len);
+    vm_deallocate (mach_task_self (), (vm_address_t) noise, noise_len);
 
   if (inf->task->cur_sc < suspend_count)
     {
@@ -985,6 +983,17 @@ inf_port_to_thread (struct inf *inf, mach_port_t port)
     else
       thread = thread->next;
   return 0;
+}
+
+/* See gnu-nat.h.  */
+
+void
+inf_threads (struct inf *inf, inf_threads_ftype *f, void *arg)
+{
+  struct proc *thread;
+
+  for (thread = inf->threads; thread; thread = thread->next)
+    f (thread, arg);
 }
 
 
@@ -2341,7 +2350,7 @@ gnu_write_inferior (task_t task, CORE_ADDR addr,
   char *errstr = "Bug in gnu_write_inferior";
 
   struct vm_region_list *region_element;
-  struct vm_region_list *region_head = (struct vm_region_list *) NULL;
+  struct vm_region_list *region_head = NULL;
 
   /* Get memory from inferior with page aligned addresses.  */
   err = vm_read (task,
@@ -2410,9 +2419,7 @@ gnu_write_inferior (task_t task, CORE_ADDR addr,
 	  }
 
 	/* Chain the regions for later use.  */
-	region_element =
-	  (struct vm_region_list *)
-	  obstack_alloc (&region_obstack, sizeof (struct vm_region_list));
+	region_element = XOBNEW (&region_obstack, struct vm_region_list);
 
 	region_element->protection = protection;
 	region_element->start = region_address;
@@ -3257,21 +3264,16 @@ This is the same as setting `task pause', `exceptions', and\n\
 	   &setlist);
 
   /* Commands to show information about the task's ports.  */
-  add_cmd ("send-rights", class_info, info_send_rights_cmd,
-	   _("Show information about the task's send rights"),
-	   &infolist);
-  add_cmd ("receive-rights", class_info, info_recv_rights_cmd,
-	   _("Show information about the task's receive rights"),
-	   &infolist);
-  add_cmd ("port-rights", class_info, info_port_rights_cmd,
-	   _("Show information about the task's port rights"),
-	   &infolist);
-  add_cmd ("port-sets", class_info, info_port_sets_cmd,
-	   _("Show information about the task's port sets"),
-	   &infolist);
-  add_cmd ("dead-names", class_info, info_dead_names_cmd,
-	   _("Show information about the task's dead names"),
-	   &infolist);
+  add_info ("send-rights", info_send_rights_cmd,
+	    _("Show information about the task's send rights"));
+  add_info ("receive-rights", info_recv_rights_cmd,
+	    _("Show information about the task's receive rights"));
+  add_info ("port-rights", info_port_rights_cmd,
+	    _("Show information about the task's port rights"));
+  add_info ("port-sets", info_port_sets_cmd,
+	    _("Show information about the task's port sets"));
+  add_info ("dead-names", info_dead_names_cmd,
+	    _("Show information about the task's dead names"));
   add_info_alias ("ports", "port-rights", 1);
   add_info_alias ("port", "port-rights", 1);
   add_info_alias ("psets", "port-sets", 1);

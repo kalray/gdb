@@ -12,6 +12,8 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	9b 67 df e0          	addr16 fstsw %ax
 [ 	]*[a-f0-9]+:	36 67 66 f3 a7       	repz cmpsw %es:\(%di\),%ss:\(%si\)
 [ 	]*[a-f0-9]+:	26 9b                	es fwait
+[ 	]*[a-f0-9]+:	9b                   	fwait
+[ 	]*[a-f0-9]+:	65 c7 05 00 00 00 00 00 00 00 00 	movl   \$0x0,%gs:0x0
 [ 	]*[a-f0-9]+:	66 f2 0f 38 17       	data16 \(bad\) 
 [ 	]*[a-f0-9]+:	f2 66 0f 54          	repnz \(bad\)
 [ 	]*[a-f0-9]+:	f2 0f 54             	repnz \(bad\)
@@ -61,4 +63,15 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	f3 f0 66 3e 36 90    	lock data16 ds ss pause 
 [ 	]*[a-f0-9]+:	f3 f2 67 3e 36 90    	repz repnz addr16 ds ss nop
 [ 	]*[a-f0-9]+:	f3 67 f2 66 3e 36 90 	repz addr16 repnz ds ss xchg %ax,%ax
+[ 	]*[a-f0-9]+:	f3 0f c7             	\(bad\)  
+[ 	]*[a-f0-9]+:	f8                   	clc    
+[ 	]*[a-f0-9]+:	90                   	nop
+[ 	]*[a-f0-9]+:	f3 0f c7             	\(bad\)  
+[ 	]*[a-f0-9]+:	f0 90                	lock nop
+[ 	]*[a-f0-9]+:	f2 0f c7             	\(bad\)  
+[ 	]*[a-f0-9]+:	f8                   	clc    
+[ 	]*[a-f0-9]+:	90                   	nop
+[ 	]*[a-f0-9]+:	f2 0f c7             	\(bad\)  
+[ 	]*[a-f0-9]+:	f0 90                	lock nop
+	...
 #pass

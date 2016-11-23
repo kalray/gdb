@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <sys/stat.h>
 
 #include "environ.h"
 #include "gdbcmd.h"
@@ -33,9 +34,11 @@
 #include "event-top.h"
 #include "regcache.h"
 #include "event-loop.h"
+#include "location.h"
 
 #include "regcache.h"
 #include "elf/k1b.h"
+#include "elf-bfd.h"
 
 #include "elf/k1b.h"
 #include "k1-target.h"
@@ -44,8 +47,11 @@
 # define MAX(a, b) ((a < b) ? (b) : (a))
 #endif
 
-static cmd_cfunc_ftype *real_run_command;
+extern int remote_hw_breakpoint_limit;
+extern int remote_hw_watchpoint_limit;
+extern int print_stopped_thread;
 
+static cmd_cfunc_ftype *real_run_command;
 static struct target_ops k1_target_ops;
 static char *da_options = NULL;
 
@@ -58,9 +64,10 @@ static const char *sglobal_debug_level;
 int idx_global_debug_level, global_debug_level_set;
 int opt_hide_threads = 1;
 int opt_break_on_spawn = 0;
+int in_info_thread = 0;
 
 static pid_t server_pid;
-static int after_first_resume;
+int after_first_resume = 0;
 int inf_created_change_th = 0;
 
 static const struct inferior_data *k1_attached_inf_data;
@@ -105,33 +112,11 @@ mppa_init_inferior_data (struct inferior *inf)
     return data;
 }
 
-int
-is_current_k1b_user (void)
-{
-	int ret = 0;
-  
-	struct gdbarch *arch = target_gdbarch ();
-	if (arch)
-		{
-			const struct bfd_arch_info *info = gdbarch_bfd_arch_info (arch);
-			if (info)
-				{
-					int mach = info->mach;
-					ret = (mach == bfd_mach_k1bdp_usr || mach == bfd_mach_k1bio_usr);
-				}
-		}
-  
-	return ret;
-}
-
 struct inferior_data*
 mppa_inferior_data (struct inferior *inf)
 {
     struct inferior_data *data;
 
-    if (is_current_k1b_user ())
-      return NULL;
-    
     data = inferior_data (inf, k1_attached_inf_data);
 
     if (!data)
@@ -152,28 +137,26 @@ static void
 k1_target_new_thread (struct thread_info *t)
 {
     if (!ptid_equal(inferior_ptid, null_ptid))
-        inferior_thread ()->step_multi = 1;
-
-    /* /\* When we attach, don't wait... the K1 is already stopped. *\/ */
-    /* current_target.to_attach_no_wait = 1; */
+      current_inferior ()->control.stop_soon = STOP_QUIETLY;
 
     k1_push_arch_stratum (NULL, 0);
 }
 
 static void k1_target_mourn_inferior (struct target_ops *target)
 {
-    struct target_ops *remote_target = find_target_beneath(target);
+  struct target_ops *remote_target = find_target_beneath(target);
 
-    gdb_assert (target == &k1_target_ops);
-    remote_target->to_mourn_inferior (remote_target);
-    /* Force disconnect even if we are in extended mode */
-    unpush_target (remote_target);
-    unpush_target (&k1_target_ops);
+  gdb_assert (target == &k1_target_ops);
+  remote_target->to_mourn_inferior (remote_target);
+  /* Force disconnect even if we are in extended mode */
+  unpush_target (remote_target);
+  unpush_target (&k1_target_ops);
 
-    if (server_pid) {
-	kill (server_pid, 9);
-        server_pid = 0;
-    }
+  if (server_pid)
+  {
+    kill (server_pid, 9);
+    server_pid = 0;
+  }
 }
 
 static void k1_target_create_inferior (struct target_ops *ops, 
@@ -183,15 +166,11 @@ static void k1_target_create_inferior (struct target_ops *ops,
 static int 
 k1_region_ok_for_hw_watchpoint (struct target_ops *ops, CORE_ADDR addr, int len)
 {
-
-	if (is_current_k1b_user ())
-		return 0;
-
     return 1;
 }
 
 static void 
-k1_target_open (char *name, int from_tty)
+k1_target_open (const char *name, int from_tty)
 {
 
 }
@@ -204,22 +183,23 @@ static void k1_target_close (struct target_ops *ops)
 static char *
 mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
-    struct inferior_data *data;
-    struct thread_info *ti;
-    struct target_ops *remote_target = find_target_beneath(ops);
+  struct thread_info *ti = find_thread_ptid (ptid);
+  struct target_ops *remote_target = find_target_beneath (ops);
 
-    ti = find_thread_ptid (ptid);
+  if (ti)
+  {
+    const char *name = remote_target->to_thread_name (ops, ti);
 
-    if (ti && !is_current_k1b_user()) {
-        const char *extra = remote_target->to_extra_thread_info (ops, ti);
-        data = mppa_inferior_data (find_inferior_pid (ptid_get_pid (ptid)));
+    if (in_info_thread)
+    {
+      in_info_thread = 0;
+      return (char *) "Thread";
+    }
 
-        if (!extra)
-            return xstrdup (data->cluster);
-        
-        return xstrprintf ("%s of %s", extra, data->cluster);
-    } else
-        return find_target_beneath (ops)->to_pid_to_str (find_target_beneath (ops), ptid);
+    return (char *) name;
+  }
+
+  return find_target_beneath (ops)->to_pid_to_str (find_target_beneath (ops), ptid);
 }
 
 static char *
@@ -231,11 +211,9 @@ mppa_threads_extra_info (struct target_ops *ops, struct thread_info *tp)
 static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 {
     const char tar_remote_str[] = "target extended-remote";
-    int saved_batch_silent = batch_silent;
     struct observer *new_thread_observer;
     int print_thread_events_save = print_thread_events;
     char *host, *port, *tar_remote_cmd;
-    volatile struct gdb_exception ex;
 
     if (!args)
         args = "";
@@ -260,26 +238,25 @@ static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
        course things aren't that simple because it's not meant to be
        used that way. One issue is that connecting to the gdb_stub
        will emit MI stop notifications and will print the initial
-       frame at the connection point. BATCH_SILENT removes the frame
-       display (see infrun.c) and the ugly hack with the observer
+       frame at the connection point. The observer
        makes infrun believe that we're in a series of steps and thus
        inhibits the emission of the new_thread observer notification
        that prints the initial MI *stopped message. */
-    batch_silent = 1;
     new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
     /* tar remote */
 
-    TRY_CATCH (ex, RETURN_MASK_ALL)
+    async_disable_stdin ();
+    TRY
     {
         execute_command (tar_remote_cmd, 0);
     }
-    if (ex.reason < 0)
+    CATCH (ex, RETURN_MASK_ALL)
     {
         observer_detach_new_thread (new_thread_observer);
-        batch_silent = saved_batch_silent;
         print_thread_events = print_thread_events_save;
         throw_exception (ex);
     }
+    END_CATCH
 
     /* We need to tell the debugger to fake a synchronous
        command. This has already been done at the upper level when the
@@ -291,8 +268,6 @@ static void k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 
     /* Remove hacks*/
     observer_detach_new_thread (new_thread_observer);
-    batch_silent = saved_batch_silent;
-    inferior_thread ()->step_multi = 0;
     current_inferior ()->control.stop_soon = NO_STOP_QUIETLY;
     print_thread_events = print_thread_events_save;
 }
@@ -321,13 +296,18 @@ static void k1_target_create_inferior (struct target_ops *ops,
     k1_push_arch_stratum (NULL, 0);
     execute_command (set_non_stop_cmd, 0);
     execute_command (set_pagination_off_cmd, 0);
+    remote_hw_breakpoint_limit = 0;
+    remote_hw_watchpoint_limit = 1;
 
     arg = argv_args;
     while (arg && *arg++) nb_args++;
+    if (nb_args && !*argv_args[nb_args - 1])
+      nb_args--;
+
     arg = da_args;
     while (arg && *arg++) nb_da_args++;
 
-    stub_args = xmalloc ((nb_args+nb_da_args+7)*sizeof (char*));
+    stub_args = xmalloc ((nb_args + nb_da_args + 7) * sizeof (char *));
     stub_args[argidx++] = (char *) simulation_vehicle;
 
     core = (elf_elfheader(exec_bfd)->e_flags & ELF_K1_CORE_MASK);
@@ -372,10 +352,15 @@ static void k1_target_create_inferior (struct target_ops *ops,
     stub_args[argidx++] = "--gdb";
     stub_args[argidx++] = "--";
     stub_args[argidx++] = exec_file;
-    memcpy (stub_args + argidx,  argv_args, (nb_args+1)*sizeof (char*));
+    if (nb_args)
+    {
+      memcpy (stub_args + argidx,  argv_args, nb_args * sizeof (char *));
+      argidx += nb_args;
+    }
+    stub_args[argidx++] = NULL;
 
     /* Check that we didn't overflow the allocation above. */
-    gdb_assert (argidx < nb_args+nb_da_args+6);
+    gdb_assert (argidx <= nb_args + nb_da_args + 7);
 
     if (server_pid != 0) {
 	kill (server_pid, 9);
@@ -424,19 +409,9 @@ static void k1_target_create_inferior (struct target_ops *ops,
     close (pipefds[0]);
 
     sprintf (cmd_port, "%i", port);
+    print_stopped_thread = 0;
     k1_target_attach (ops, cmd_port, from_tty);
-    if (current_inferior ())
-    {
-      int gdb_do_one_event (void);
-      struct inferior *inf = current_inferior ();
-      int saved_stop_soon = inf->control.stop_soon;
-
-      inf->control.stop_soon = STOP_QUIETLY;
-      gdb_do_one_event ();
-      inf->control.stop_soon = saved_stop_soon;
-
-      set_stop_requested (minus_one_ptid, 0);
-    }
+    print_stopped_thread = 1;
     if (saved_async_execution)
       async_enable_stdin ();
   }
@@ -446,8 +421,13 @@ static void k1_target_create_inferior (struct target_ops *ops,
 static int
 mppa_mark_clusters_booted (struct inferior *inf, void *_ptid)
 {
-    struct thread_info *thread = any_live_thread_of_process (inf->pid);
+    struct thread_info *thread;
     ptid_t *ptid = _ptid;
+
+    if (!inf->pid)
+      return 0;
+
+    thread = any_live_thread_of_process (inf->pid);
 
     /* Newer GDBs mark the thread as running before passing it to
        target_resume. However, if we are resuming the thread, it must
@@ -465,12 +445,40 @@ mppa_target_resume (struct target_ops *ops,
 {
     struct target_ops *remote_target = find_target_beneath(ops);
 
-    if (after_first_resume < 2 && !is_current_k1b_user()) {
-        after_first_resume = 2;
+    if (!after_first_resume && !inf_created_change_th) {
+        after_first_resume = 1;
         iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
     }
     
     return remote_target->to_resume (remote_target, ptid, step, siggnal);
+}
+
+static void
+k1_change_file (const char *file_path)
+{
+  struct stat st;
+  if (stat (file_path, &st))
+  {
+    printf ("Cannot stat K1 executable file %s\n", file_path);
+    return;
+  }
+
+  if (st.st_mode & S_IFDIR)
+  {
+    printf ("%s is a directory, not a K1 executable!\n", file_path);
+    return;
+  }
+
+  TRY
+  {
+    exec_file_attach ((char *) file_path, 0);
+    symbol_file_add_main (file_path, 0);
+  }
+  CATCH (ex, RETURN_MASK_ALL)
+  {
+    // exception
+  }
+  END_CATCH
 }
 
 static ptid_t
@@ -483,11 +491,6 @@ k1_target_wait (struct target_ops *target,
     int ix_items;
 
     res = remote_target->to_wait (remote_target, ptid, status, options);
-	if(is_current_k1b_user())
-		return res;
-
-    if (!after_first_resume)
-        return res;
 
     inferior = find_inferior_pid (ptid_get_pid (res));
 
@@ -514,52 +517,38 @@ k1_target_wait (struct target_ops *target,
 
             data = mppa_inferior_data (inferior);
             data->booted = 1;
-            
-            if (after_first_resume == 1)
-            {
-              if (file && file[0] != 0 && !data->sym_file_loaded)
-              {
-                ptid_t save_ptid = inferior_ptid;
-                data->sym_file_loaded = 1;
-                switch_to_thread (res);
-                exec_file_attach ((char *) file, 0);
-                symbol_file_add_main (file, 0);
-                switch_to_thread (save_ptid);
-              }
-              break;
-            }
-            
-            //if os support a debug level, set it to the cluster
-            os_debug_level = get_os_supported_debug_levels (inferior);
-            if (os_debug_level > DBG_LEVEL_SYSTEM && !global_debug_level_set &&
-              data->cluster_debug_level == DBG_LEVEL_INHERITED)
-            {
-              set_cluster_debug_level_no_check (inferior, os_debug_level);
-            }
-            //continue_if_os_supports_debug_level (inferior);
 
-            if (file && file[0] != 0) {
-                if (data->cluster_break_on_spawn)
-                {
-                  ptid_t save_ptid = inferior_ptid;
-                  data->sym_file_loaded = 1;
-                  switch_to_thread (res);
-                  exec_file_attach ((char *) file, 0);
-                  symbol_file_add_main (file, 0);
-                  switch_to_thread (save_ptid);
-                  status->kind = TARGET_WAITKIND_STOPPED;
-                  status->value.sig = GDB_SIGNAL_TRAP;
-                }
-                else
-                {
-                  status->kind = TARGET_WAITKIND_EXECD;
-                  status->value.execd_pathname = (char *) file;
-                }
-            } else {
-                printf_filtered ("[ %s booted ]\n", cluster);
-                status->kind = TARGET_WAITKIND_SPURIOUS;
+            if (file && file[0] != 0 && !data->sym_file_loaded)
+            {
+              ptid_t save_ptid = inferior_ptid;
+              data->sym_file_loaded = 1;
+              switch_to_thread (res);
+              k1_change_file (file);
+              switch_to_thread (save_ptid);
             }
             
+            if (!after_first_resume)
+            {
+              status->value.sig = GDB_SIGNAL_TRAP;
+            }
+            else
+            {
+              if (data->cluster_break_on_spawn)
+              {
+                status->kind = TARGET_WAITKIND_STOPPED;
+                status->value.sig = GDB_SIGNAL_TRAP;
+              }
+              else
+                status->kind = TARGET_WAITKIND_SPURIOUS;
+
+              //if os support a debug level, set it to the cluster
+              os_debug_level = get_os_supported_debug_levels (inferior);
+              if (os_debug_level > DBG_LEVEL_SYSTEM && !global_debug_level_set &&
+                data->cluster_debug_level == DBG_LEVEL_INHERITED)
+              {
+                set_cluster_debug_level_no_check (inferior, os_debug_level);
+              }
+            }
             break;                
         }
 
@@ -638,9 +627,6 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int re
   remote_target = find_target_beneath (target);
   remote_target->to_fetch_registers (target, regcache, regnum);
 
-  if (is_current_k1b_user ())
-    return;
-
   // first time we see a cluster, set the debug level
   inf = find_inferior_pid (inferior_ptid.pid);
   data = mppa_inferior_data (inf);
@@ -680,57 +666,6 @@ show_kalray_cmd (char *args, int from_tty)
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
 }
 
-static int get_str_sym_sect (char *elf_file, int offset, char **sret)
-{
-  asection *s;
-  int size_sret;
-  bfd *hbfd = bfd_openr (elf_file, NULL);
-  if (hbfd == NULL)
-    return 0;
-
-  size_sret = 200;
-  *sret = (char *) malloc (size_sret);
-  sprintf (*sret, "0x%08x ", offset);
-  
-  //check if the file is in format
-  if (!bfd_check_format (hbfd, bfd_object))
-  {
-    if (bfd_get_error () != bfd_error_file_ambiguously_recognized)
-    {
-      printf ("Incompatible file format %s\n", elf_file);
-      bfd_close (hbfd);
-      return 0;
-    }
-  }
-
-  for (s = hbfd->sections; s; s = s->next)
-  {
-    if (bfd_get_section_flags (hbfd, s) & SEC_ALLOC)
-    {
-      const char *sname = bfd_section_name (hbfd, s);
-      if (strlen (*sret) + strlen (sname) + 30 > size_sret)
-      {
-        size_sret += 100;
-        *sret = (char *) realloc (*sret, size_sret);
-      }
-      if (!strcmp (sname , ".text"))
-      {
-        sprintf (*sret, "0x%08x ",
-          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
-      }
-      else
-        sprintf (*sret + strlen (*sret), "-s %s 0x%08x ", sname,
-          (unsigned int) (bfd_section_lma (hbfd, s) + offset));
-    }
-  }
-  
-  bfd_close (hbfd);
-
-  return 1;
-}
-
-
-
 static int str_debug_level_to_idx (const char *slevel)
 {
   int level;
@@ -747,9 +682,6 @@ static void apply_cluster_debug_level (struct inferior *inf)
   int os_supported_level;
   struct thread_info *th;
   ptid_t save_ptid, th_ptid;
-
-  if (is_current_k1b_user ())
-    return;
 
   level = get_debug_level (inf->pid);
   
@@ -780,95 +712,9 @@ static void apply_cluster_debug_level (struct inferior *inf)
   set_general_thread (save_ptid);
 }
 
-static void
-attach_user_command (char *args, int from_tty)
-{
-	static const char *syntax = "Syntax: attach-user <comm> [<k1_user_mode_program>]\n";
-	char *file, *comm, *pargs, *cmd;
-	int saved_batch_silent = batch_silent;
-	int print_thread_events_save = print_thread_events;
-	volatile struct gdb_exception ex;
-
-	if (!ptid_equal (inferior_ptid, null_ptid))
-		{
-			printf ("Gdb already attached!\n");
-			return;
-		}
-  
-	pargs = args;
-	comm = extract_arg (&pargs);
-	if (!comm)
-		{
-			printf ("Error: the comm was not specified!\n%s", syntax);
-			return;
-		}
-	file = extract_arg (&pargs);
-
-	cmd = (char *) malloc (MAX (strlen (comm),
-								(file != NULL) ? strlen (file) : 0) + 100);
-  
-	execute_command ("set pagination off", 0);
-
-	sprintf (cmd, "target remote %s", comm);
-	batch_silent = 1;
-	print_thread_events_save = 0;
-  
-	TRY_CATCH (ex, RETURN_MASK_ALL)
-		{
-			execute_command (cmd, 0);
-		}
-	if (ex.reason < 0)
-		{
-			printf ("Error while trying to connect (%s).\n", ex.message ?: "");
-			goto end;
-		}
-	k1_push_arch_stratum (NULL, 0);
-	printf ("Attached to user debug using %s.\n", comm);
-  
-	if (file)
-	{
-    struct stat s;
-    if (stat( file, &s) != 0)
-    printf ("Cannot find file %s: %s.\n", file, strerror(errno));
-    else
-    {
-      char *ssect;
-      if (get_str_sym_sect (file, 0x10000000, &ssect))
-      {
-        cmd = (char *) realloc (cmd, strlen (cmd) + strlen (ssect) + 100);
-        sprintf (cmd, "add-symbol-file %s %s", file, ssect);
-        free (ssect);
-
-        TRY_CATCH (ex, RETURN_MASK_ALL)
-        {
-          execute_command (cmd, 0);
-        }
-        if (ex.reason < 0)
-        {
-          printf ("Error while trying to add symbol file %s (%s).\n", file, ex.message ?: "");
-          goto end;
-        }
-      }
-      else
-        printf ("Cannot load file %s.\n", file);
-    }
-  }
-  
- end:
-	batch_silent = saved_batch_silent;
-	print_thread_events = print_thread_events_save;
-	free (comm);
-	free (cmd);
-	if (file)
-		free (file);
-}
-
 void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level)
 {
   struct inferior_data *data;
-
-  if (is_current_k1b_user ())
-    return;
 
   data = mppa_inferior_data (inf);
   data->cluster_debug_level = debug_level; 
@@ -882,12 +728,6 @@ static void set_cluster_debug_level (char *args, int from_tty, struct cmd_list_e
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("Cannot set debug level without a selected thread."));
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
 
   inf = current_inferior ();
   prev_level = get_cluster_debug_level (inf->pid);
@@ -916,9 +756,6 @@ static int set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
 
 void apply_global_debug_level (int level)
 {
-  if (is_current_k1b_user ())
-    return;
-
   idx_global_debug_level = level;
   if (have_inferiors ())
     iterate_over_inferiors (set_cluster_debug_level_iter, NULL);
@@ -931,12 +768,6 @@ void apply_global_debug_level (int level)
 static void set_global_debug_level (char *args, int from_tty, struct cmd_list_element *c)
 {
   int new_level;
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
 
   new_level = str_debug_level_to_idx (sglobal_debug_level);
   global_debug_level_set = 1;
@@ -959,12 +790,6 @@ show_cluster_debug_level (struct ui_file *file, int from_tty,
     return;
   }
 
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
-
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   
   level = get_cluster_debug_level (-1);
@@ -977,12 +802,6 @@ static void
 show_global_debug_level (struct ui_file *file, int from_tty, 
   struct cmd_list_element *c, const char *value)
 {
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode does not have a debug level\n");
-    return;
-  }
-
   fprintf_filtered (file, "The global debug level  is \"%s\".\n",
     scluster_debug_levels[idx_global_debug_level]);
 }
@@ -995,12 +814,6 @@ set_cluster_break_on_spawn (char *args, int from_tty, struct cmd_list_element *c
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_("Cannot set break on reset without a selected thread."));
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode cannot break on reset\n");
-    return;
-  }
 
   inf = current_inferior ();
   data = mppa_inferior_data (inf);
@@ -1017,12 +830,6 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty,
   if (ptid_equal (inferior_ptid, null_ptid))
   {
     printf (_("Cannot show break on reset without a live selected thread."));
-    return;
-  }
-
-  if (is_current_k1b_user ())
-  {
-    printf ("Linux user mode cannot break on reset\n");
     return;
   }
 
@@ -1044,6 +851,7 @@ attach_mppa_command (char *args, int from_tty)
     int ix_items,cur_pid, bstopped, bcur_inf_stopped;
     struct inferior *cur_inf;
     ptid_t cur_ptid, stopped_ptid;
+    int saved_async_execution = !sync_execution;    
 
     dont_repeat ();
 
@@ -1063,8 +871,7 @@ attach_mppa_command (char *args, int from_tty)
 	bcur_inf_stopped = 0;
     osdata = get_osdata (NULL);
     
-    cur_inf = current_inferior();
-    set_inferior_data (cur_inf, k1_attached_inf_data, NULL);
+    cur_inf = current_inferior();    
     cur_ptid = inferior_ptid;
     cur_pid = cur_inf->pid;
 
@@ -1087,13 +894,13 @@ attach_mppa_command (char *args, int from_tty)
         set_current_program_space (inf->pspace);
         sprintf (attach_cmd, "attach %li&", pid);
         execute_command (attach_cmd, 0);
-		inf->control.stop_soon = NO_STOP_QUIETLY;
+        inf->control.stop_soon = NO_STOP_QUIETLY;
+        inf->removable = 1;
     }
 
     bstopped = 0;
     bcur_inf_stopped = 0;
     osdata = get_osdata (NULL);
-    after_first_resume = 1;
 
     for (ix_items = 0;
          VEC_iterate (osdata_item_s, osdata->items,
@@ -1129,10 +936,8 @@ attach_mppa_command (char *args, int from_tty)
           data = mppa_inferior_data (current_inferior ());
           if (!data->sym_file_loaded)
           {
-            
             data->sym_file_loaded = 1;
-            exec_file_attach ((char *) file, 0);
-            symbol_file_add_main (file, 0);
+            k1_change_file (file);
           }
         }
     }
@@ -1154,6 +959,9 @@ attach_mppa_command (char *args, int from_tty)
     {
       apply_global_debug_level (idx_global_debug_level);
     }
+    
+  if (saved_async_execution)
+    async_enable_stdin ();
 }
 
 static void
@@ -1179,24 +987,26 @@ mppa_inferior_data_cleanup (struct inferior *inf, void *data)
 
 static void mppa_observer_breakpoint_created (struct breakpoint *b)
 {
-  if (is_current_k1b_user ())
-    return;
-
-  if (b && b->addr_string && !strcmp (b->addr_string, "main"))
+  const char *addr_string;
+  
+  if (b && b->location)
   {
-    send_stop_at_main (0);
+    addr_string = event_location_to_string (b->location);
+    if (b && addr_string && !strcmp (addr_string, "main"))
+      send_stop_at_main (0);
   }
 
 }
 
 static void mppa_observer_breakpoint_deleted (struct breakpoint *b)
 {
-  if (is_current_k1b_user ())
-    return;
+  const char *addr_string;
 
-  if (b && b->addr_string && !strcmp (b->addr_string, "main"))
+  if (b && b->location)
   {
-    send_stop_at_main (1);
+    addr_string = event_location_to_string (b->location);
+    if (b && addr_string && !strcmp (addr_string, "main"))
+      send_stop_at_main (1);
   }
 }
 
@@ -1425,6 +1235,8 @@ _initialize__k1_target (void)
     
     add_target (&k1_target_ops);
 
+    print_stopped_thread = 1;
+    
     {
       extern int (*p_kalray_hide_thread) (struct thread_info *tp, ptid_t crt_ptid);
       p_kalray_hide_thread = kalray_hide_thread;
@@ -1476,9 +1288,6 @@ Show the simulation vehicle to use for execution."), NULL, NULL, NULL,
     add_com ("attach-mppa", class_run, attach_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it.\n\
 Usage is `attach-mppa PORT'."));
-    add_com ("attach-user", class_run, attach_user_command,
-			 _("Connect to gdbserver running on MPPA to make user mode debug.\n"
-			   "Usage is `attach-user <comm> [<k1_user_mode_program>]'."));
 
     add_com ("run-mppa", class_run, run_mppa_command, _("\
 Connect to a MPPA TLM platform and start debugging it."));

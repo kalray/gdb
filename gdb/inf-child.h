@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,7 +34,7 @@ extern void store_waitstatus (struct target_waitstatus *, int);
    the target, in case it need to override to_open.  */
 
 extern void inf_child_open_target (struct target_ops *target,
-				   char *arg, int from_tty);
+				   const char *arg, int from_tty);
 
 /* To be called by the native target's to_mourn_inferior routine.  */
 

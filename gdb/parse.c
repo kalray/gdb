@@ -1,6 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo, 1991.
@@ -32,7 +32,6 @@
 #include "defs.h"
 #include <ctype.h>
 #include "arch-utils.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "frame.h"
@@ -46,11 +45,9 @@
 #include "symfile.h"		/* for overlay functions */
 #include "inferior.h"
 #include "doublest.h"
-#include "gdb_assert.h"
 #include "block.h"
 #include "source.h"
 #include "objfiles.h"
-#include "exceptions.h"
 #include "user-regs.h"
 
 /* Standard set of definitions for printing, dumping, prefixifying,
@@ -143,13 +140,13 @@ static struct funcall *funcall_chain;
 void
 start_arglist (void)
 {
-  struct funcall *new;
+  struct funcall *newobj;
 
-  new = (struct funcall *) xmalloc (sizeof (struct funcall));
-  new->next = funcall_chain;
-  new->arglist_len = arglist_len;
+  newobj = XNEW (struct funcall);
+  newobj->next = funcall_chain;
+  newobj->arglist_len = arglist_len;
   arglist_len = 0;
-  funcall_chain = new;
+  funcall_chain = newobj;
 }
 
 /* Return the number of arguments in a function call just terminated,
@@ -192,8 +189,9 @@ initialize_expout (struct parser_state *ps, size_t initial_size,
 {
   ps->expout_size = initial_size;
   ps->expout_ptr = 0;
-  ps->expout = xmalloc (sizeof (struct expression)
-			+ EXP_ELEM_TO_BYTES (ps->expout_size));
+  ps->expout
+    = (struct expression *) xmalloc (sizeof (struct expression)
+				     + EXP_ELEM_TO_BYTES (ps->expout_size));
   ps->expout->language_defn = lang;
   ps->expout->gdbarch = gdbarch;
 }
@@ -586,10 +584,9 @@ mark_completion_tag (enum type_code tag, const char *ptr, int length)
 	      && expout_last_struct == -1);
   gdb_assert (tag == TYPE_CODE_UNION
 	      || tag == TYPE_CODE_STRUCT
-	      || tag == TYPE_CODE_CLASS
 	      || tag == TYPE_CODE_ENUM);
   expout_tag_completion_type = tag;
-  expout_completion_name = xmalloc (length + 1);
+  expout_completion_name = (char *) xmalloc (length + 1);
   memcpy (expout_completion_name, ptr, length);
   expout_completion_name[length] = '\0';
 }
@@ -619,7 +616,7 @@ mark_completion_tag (enum type_code tag, const char *ptr, int length)
 void
 write_dollar_variable (struct parser_state *ps, struct stoken str)
 {
-  struct symbol *sym = NULL;
+  struct block_symbol sym;
   struct bound_minimal_symbol msym;
   struct internalvar *isym = NULL;
 
@@ -676,11 +673,11 @@ write_dollar_variable (struct parser_state *ps, struct stoken str)
 
   sym = lookup_symbol (copy_name (str), (struct block *) NULL,
 		       VAR_DOMAIN, NULL);
-  if (sym)
+  if (sym.symbol)
     {
       write_exp_elt_opcode (ps, OP_VAR_VALUE);
-      write_exp_elt_block (ps, block_found);	/* set by lookup_symbol */
-      write_exp_elt_sym (ps, sym);
+      write_exp_elt_block (ps, sym.block);
+      write_exp_elt_sym (ps, sym.symbol);
       write_exp_elt_opcode (ps, OP_VAR_VALUE);
       return;
     }
@@ -799,7 +796,7 @@ copy_name (struct stoken token)
   if (namecopy_size < token.length + 1)
     {
       namecopy_size = token.length + 1;
-      namecopy = xrealloc (namecopy, token.length + 1);
+      namecopy = (char *) xrealloc (namecopy, token.length + 1);
     }
       
   memcpy (namecopy, token.ptr, token.length);
@@ -1009,8 +1006,9 @@ operator_length_standard (const struct expression *expr, int endpos,
 
     case OP_F90_RANGE:
       oplen = 3;
+      range_type = (enum f90_range_type)
+	longest_to_int (expr->elts[endpos - 2].longconst);
 
-      range_type = longest_to_int (expr->elts[endpos - 2].longconst);
       switch (range_type)
 	{
 	case LOW_BOUND_DEFAULT:
@@ -1137,7 +1135,6 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
 			const struct block *block,
 			int comma, int void_context_p, int *out_subexp)
 {
-  volatile struct gdb_exception except;
   struct cleanup *old_chain, *inner_chain;
   const struct language_defn *lang = NULL;
   struct parser_state ps;
@@ -1178,7 +1175,8 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
       struct symtab_and_line cursal = get_current_source_symtab_and_line ();
       if (cursal.symtab)
 	expression_context_block
-	  = BLOCKVECTOR_BLOCK (BLOCKVECTOR (cursal.symtab), STATIC_BLOCK);
+	  = BLOCKVECTOR_BLOCK (SYMTAB_BLOCKVECTOR (cursal.symtab),
+			       STATIC_BLOCK);
       if (expression_context_block)
 	expression_context_pc = BLOCK_START (expression_context_block);
     }
@@ -1218,12 +1216,12 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
   inner_chain = make_cleanup_restore_current_language ();
   set_language (lang->la_language);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       if (lang->la_parser (&ps))
         lang->la_error (NULL);
     }
-  if (except.reason < 0)
+  CATCH (except, RETURN_MASK_ALL)
     {
       if (! parse_completion)
 	{
@@ -1231,6 +1229,7 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
 	  throw_exception (except);
 	}
     }
+  END_CATCH
 
   reallocate_expout (&ps);
 
@@ -1271,6 +1270,28 @@ parse_expression (const char *string)
   return exp;
 }
 
+/* Same as parse_expression, but using the given language (LANG)
+   to parse the expression.  */
+
+struct expression *
+parse_expression_with_language (const char *string, enum language lang)
+{
+  struct cleanup *old_chain = NULL;
+  struct expression *expr;
+
+  if (current_language->la_language != lang)
+    {
+      old_chain = make_cleanup_restore_current_language ();
+      set_language (lang);
+    }
+
+  expr = parse_expression (string);
+
+  if (old_chain != NULL)
+    do_cleanups (old_chain);
+  return expr;
+}
+
 /* Parse STRING as an expression.  If parsing ends in the middle of a
    field reference, return the type of the left-hand-side of the
    reference; furthermore, if the parsing ends in the field name,
@@ -1286,15 +1307,20 @@ parse_expression_for_completion (const char *string, char **name,
   struct expression *exp = NULL;
   struct value *val;
   int subexp;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ERROR)
+  TRY
     {
       parse_completion = 1;
       exp = parse_exp_in_context (&string, 0, 0, 0, 0, &subexp);
     }
+  CATCH (except, RETURN_MASK_ERROR)
+    {
+      /* Nothing, EXP remains NULL.  */
+    }
+  END_CATCH
+
   parse_completion = 0;
-  if (except.reason < 0 || ! exp)
+  if (exp == NULL)
     return NULL;
 
   if (expout_tag_completion_type != TYPE_CODE_UNDEF)
@@ -1348,7 +1374,7 @@ parse_float (const char *p, int len, DOUBLEST *d, const char **suffix)
   char *copy;
   int n, num;
 
-  copy = xmalloc (len + 1);
+  copy = (char *) xmalloc (len + 1);
   memcpy (copy, p, len);
   copy[len] = 0;
 
@@ -1414,8 +1440,8 @@ type_stack_reserve (struct type_stack *stack, int howmuch)
       stack->size *= 2;
       if (stack->size < howmuch)
 	stack->size = howmuch;
-      stack->elements = xrealloc (stack->elements,
-				  stack->size * sizeof (union type_stack_elt));
+      stack->elements = XRESIZEVEC (union type_stack_elt, stack->elements,
+				    stack->size);
     }
 }
 
@@ -1595,7 +1621,7 @@ get_type_stack (void)
 void
 type_stack_cleanup (void *arg)
 {
-  struct type_stack *stack = arg;
+  struct type_stack *stack = (struct type_stack *) arg;
 
   xfree (stack->elements);
   xfree (stack);
@@ -1813,7 +1839,7 @@ operator_check_standard (struct expression *exp, int pos,
 
 	/* Check objfile where the variable itself is placed.
 	   SYMBOL_OBJ_SECTION (symbol) may be NULL.  */
-	if ((*objfile_func) (SYMBOL_SYMTAB (symbol)->objfile, data))
+	if ((*objfile_func) (symbol_objfile (symbol), data))
 	  return 1;
 
 	/* Check objfile where is placed the code touching the variable.  */
@@ -1835,12 +1861,12 @@ operator_check_standard (struct expression *exp, int pos,
   return 0;
 }
 
-/* Call OBJFILE_FUNC for any TYPE and OBJFILE found being referenced by EXP.
-   The functions are never called with NULL OBJFILE.  Functions get passed an
-   arbitrary caller supplied DATA pointer.  If any of the functions returns
-   non-zero value then (any other) non-zero value is immediately returned to
-   the caller.  Otherwise zero is returned after iterating through whole EXP.
-   */
+/* Call OBJFILE_FUNC for any objfile found being referenced by EXP.
+   OBJFILE_FUNC is never called with NULL OBJFILE.  OBJFILE_FUNC get
+   passed an arbitrary caller supplied DATA pointer.  If OBJFILE_FUNC
+   returns non-zero value then (any other) non-zero value is immediately
+   returned to the caller.  Otherwise zero is returned after iterating
+   through whole EXP.  */
 
 static int
 exp_iterate (struct expression *exp,
@@ -1872,7 +1898,7 @@ exp_iterate (struct expression *exp,
 static int
 exp_uses_objfile_iter (struct objfile *exp_objfile, void *objfile_voidp)
 {
-  struct objfile *objfile = objfile_voidp;
+  struct objfile *objfile = (struct objfile *) objfile_voidp;
 
   if (exp_objfile->separate_debug_objfile_backlink)
     exp_objfile = exp_objfile->separate_debug_objfile_backlink;

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014 Free Software Foundation, Inc.
+   Copyright 2014-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -100,6 +100,7 @@ vla_factory (int n)
   size_t bar_size        = sizeof(bar_vla);
   size_t vla_struct_object_size = sizeof(vla_struct_object);
   size_t vla_union_object_size = sizeof(vla_union_object);
+  size_t inner_vla_struct_object_size = sizeof(inner_vla_struct_object);
 
   return;                                 /* break_end_of_vla_factory */
 }

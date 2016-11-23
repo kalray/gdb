@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,10 +24,7 @@
 #include "terminal.h"
 #include "gdbcore.h"
 #include "regcache.h"
-
-#include "gdb_assert.h"
-#include <string.h>
-#include "gdb_ptrace.h"
+#include "nat/gdb_ptrace.h"
 #include "gdb_wait.h"
 #include <signal.h>
 
@@ -39,60 +36,37 @@
 
 #ifdef PT_GET_PROCESS_STATE
 
+/* Target hook for follow_fork.  On entry and at return inferior_ptid is
+   the ptid of the followed inferior.  */
+
 static int
 inf_ptrace_follow_fork (struct target_ops *ops, int follow_child,
 			int detach_fork)
 {
-  pid_t pid, fpid;
-  ptrace_state_t pe;
-
-  pid = ptid_get_pid (inferior_ptid);
-
-  if (ptrace (PT_GET_PROCESS_STATE, pid,
-	       (PTRACE_TYPE_ARG3)&pe, sizeof pe) == -1)
-    perror_with_name (("ptrace"));
-
-  gdb_assert (pe.pe_report_event == PTRACE_FORK);
-  fpid = pe.pe_other_pid;
-
-  if (follow_child)
+  if (!follow_child)
     {
-      struct inferior *parent_inf, *child_inf;
-      struct thread_info *tp;
+      struct thread_info *tp = inferior_thread ();
+      pid_t child_pid = ptid_get_pid (tp->pending_follow.value.related_pid);
 
-      parent_inf = find_inferior_pid (pid);
-
-      /* Add the child.  */
-      child_inf = add_inferior (fpid);
-      child_inf->attach_flag = parent_inf->attach_flag;
-      copy_terminal_info (child_inf, parent_inf);
-      child_inf->pspace = parent_inf->pspace;
-      child_inf->aspace = parent_inf->aspace;
-
-      /* Before detaching from the parent, remove all breakpoints from
-	 it.  */
-      remove_breakpoints ();
-
-      if (ptrace (PT_DETACH, pid, (PTRACE_TYPE_ARG3)1, 0) == -1)
-	perror_with_name (("ptrace"));
-
-      /* Switch inferior_ptid out of the parent's way.  */
-      inferior_ptid = pid_to_ptid (fpid);
-
-      /* Delete the parent.  */
-      detach_inferior (pid);
-
-      add_thread_silent (inferior_ptid);
-    }
-  else
-    {
       /* Breakpoints have already been detached from the child by
 	 infrun.c.  */
 
-      if (ptrace (PT_DETACH, fpid, (PTRACE_TYPE_ARG3)1, 0) == -1)
+      if (ptrace (PT_DETACH, child_pid, (PTRACE_TYPE_ARG3)1, 0) == -1)
 	perror_with_name (("ptrace"));
     }
 
+  return 0;
+}
+
+static int
+inf_ptrace_insert_fork_catchpoint (struct target_ops *self, int pid)
+{
+  return 0;
+}
+
+static int
+inf_ptrace_remove_fork_catchpoint (struct target_ops *self, int pid)
+{
   return 0;
 }
 
@@ -314,10 +288,10 @@ inf_ptrace_kill (struct target_ops *ops)
   target_mourn_inferior ();
 }
 
-/* Stop the inferior.  */
+/* Interrupt the inferior.  */
 
 static void
-inf_ptrace_stop (struct target_ops *self, ptid_t ptid)
+inf_ptrace_interrupt (struct target_ops *self, ptid_t ptid)
 {
   /* Send a SIGINT to the process group.  This acts just like the user
      typed a ^C on the controlling terminal.  Note that using a
@@ -325,6 +299,22 @@ inf_ptrace_stop (struct target_ops *self, ptid_t ptid)
      BSD interface is killpg().  However, all modern BSDs support the
      System V interface too.  */
   kill (-inferior_process_group (), SIGINT);
+}
+
+/* Return which PID to pass to ptrace in order to observe/control the
+   tracee identified by PTID.  */
+
+pid_t
+get_ptrace_pid (ptid_t ptid)
+{
+  pid_t pid;
+
+  /* If we have an LWPID to work with, use it.  Otherwise, we're
+     dealing with a non-threaded program/target.  */
+  pid = ptid_get_lwp (ptid);
+  if (pid == 0)
+    pid = ptid_get_pid (ptid);
+  return pid;
 }
 
 /* Resume execution of thread PTID, or all threads if PTID is -1.  If
@@ -335,13 +325,15 @@ static void
 inf_ptrace_resume (struct target_ops *ops,
 		   ptid_t ptid, int step, enum gdb_signal signal)
 {
-  pid_t pid = ptid_get_pid (ptid);
+  pid_t pid;
   int request;
 
-  if (pid == -1)
+  if (ptid_equal (minus_one_ptid, ptid))
     /* Resume all threads.  Traditionally ptrace() only supports
        single-threaded processes, so simply resume the inferior.  */
     pid = ptid_get_pid (inferior_ptid);
+  else
+    pid = get_ptrace_pid (ptid);
 
   if (catch_syscall_enabled () > 0)
     request = PT_SYSCALL;
@@ -686,13 +678,15 @@ inf_ptrace_target (void)
   t->to_create_inferior = inf_ptrace_create_inferior;
 #ifdef PT_GET_PROCESS_STATE
   t->to_follow_fork = inf_ptrace_follow_fork;
+  t->to_insert_fork_catchpoint = inf_ptrace_insert_fork_catchpoint;
+  t->to_remove_fork_catchpoint = inf_ptrace_remove_fork_catchpoint;
   t->to_post_startup_inferior = inf_ptrace_post_startup_inferior;
   t->to_post_attach = inf_ptrace_post_attach;
 #endif
   t->to_mourn_inferior = inf_ptrace_mourn_inferior;
   t->to_thread_alive = inf_ptrace_thread_alive;
   t->to_pid_to_str = inf_ptrace_pid_to_str;
-  t->to_stop = inf_ptrace_stop;
+  t->to_interrupt = inf_ptrace_interrupt;
   t->to_xfer_partial = inf_ptrace_xfer_partial;
 #if defined (PT_IO) && defined (PIOD_READ_AUXV)
   t->to_auxv_parse = inf_ptrace_auxv_parse;
@@ -734,7 +728,7 @@ inf_ptrace_fetch_register (struct regcache *regcache, int regnum)
 
   size = register_size (gdbarch, regnum);
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
-  buf = alloca (size);
+  buf = (PTRACE_TYPE_RET *) alloca (size);
 
   /* Read the register contents from the inferior a chunk at a time.  */
   for (i = 0; i < size / sizeof (PTRACE_TYPE_RET); i++)
@@ -792,7 +786,7 @@ inf_ptrace_store_register (const struct regcache *regcache, int regnum)
 
   size = register_size (gdbarch, regnum);
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
-  buf = alloca (size);
+  buf = (PTRACE_TYPE_RET *) alloca (size);
 
   /* Write the register contents into the inferior a chunk at a time.  */
   regcache_raw_collect (regcache, regnum, buf);

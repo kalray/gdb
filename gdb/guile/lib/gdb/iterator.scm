@@ -1,7 +1,7 @@
 ;; Iteration utilities.
 ;; Anything in this file can change or disappear.
 ;;
-;; Copyright (C) 2014 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GDB.
 ;;
@@ -19,11 +19,12 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gdb iterator)
-  #:use-module (gdb))
+  #:use-module (gdb)
+  #:use-module (gdb support))
 
 (define-public (make-list-iterator l)
   "Return a <gdb:iterator> object for a list."
-  (%assert-type (list? l) l SCM_ARG1 'make-list-iterator)
+  (assert-type (list? l) l SCM_ARG1 'make-list-iterator "list")
   (let ((next! (lambda (iter)
 		 (let ((l (iterator-progress iter)))
 		   (if (eq? l '())

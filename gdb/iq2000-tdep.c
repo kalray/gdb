@@ -1,7 +1,7 @@
 /* Target-dependent code for the IQ2000 architecture, for GDB, the GNU
    Debugger.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -28,7 +28,6 @@
 #include "gdbtypes.h"
 #include "value.h"
 #include "dis-asm.h"
-#include <string.h>
 #include "arch-utils.h"
 #include "regcache.h"
 #include "osabi.h"
@@ -373,15 +372,13 @@ iq2000_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct iq2000_frame_cache *) *this_cache;
 
   cache = FRAME_OBSTACK_ZALLOC (struct iq2000_frame_cache);
   iq2000_init_frame_cache (cache);
   *this_cache = cache;
 
   cache->base = get_frame_register_unsigned (this_frame, E_FP_REGNUM);
-  //if (cache->base == 0)
-    //return cache;
 
   current_pc = get_frame_pc (this_frame);
   find_pc_partial_function (current_pc, NULL, &cache->pc, NULL);
@@ -540,7 +537,7 @@ iq2000_use_struct_convention (struct type *type)
 
 static void
 iq2000_extract_return_value (struct type *type, struct regcache *regcache,
-			     void *valbuf)
+			     gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -567,7 +564,7 @@ iq2000_extract_return_value (struct type *type, struct regcache *regcache,
 	  regcache_cooked_read_unsigned (regcache, regno++, &tmp);
 	  store_unsigned_integer (valbuf, size, byte_order, tmp);
 	  len -= size;
-	  valbuf = ((char *) valbuf) + size;
+	  valbuf += size;
 	}
     }
   else

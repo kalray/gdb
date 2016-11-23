@@ -97,7 +97,7 @@ struct regset_info k1_regsets[] = {
 
 #define K1_BREAKPOINT {0xF9,0x00, 0x10, 0x02}
 
-static const unsigned char k1_breakpoint[] = K1_BREAKPOINT;
+static const gdb_byte k1_breakpoint[] = K1_BREAKPOINT;
 #define k1_breakpoint_len 4
 
 static CORE_ADDR
@@ -182,6 +182,12 @@ int k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct r
   return 1;
 }
 
+static const gdb_byte * k1_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = k1_breakpoint_len;
+  return k1_breakpoint;
+}
+
 struct linux_target_ops the_low_target = {
   k1_arch_setup, /* void (*arch_setup) (void) */
   k1_regs_info, /* const struct regs_info *(*regs_info) (void) */
@@ -190,9 +196,9 @@ struct linux_target_ops the_low_target = {
   NULL, /* int (*fetch_register) (struct regcache *regcache, int regno) */
   k1_get_pc, /* CORE_ADDR (*get_pc) (struct regcache *regcache) */
   k1_set_pc, /* void (*set_pc) (struct regcache *regcache, CORE_ADDR newpc) */
-  k1_breakpoint, /* const unsigned char *breakpoint */
-  k1_breakpoint_len, /* int breakpoint_len */
-  NULL, /* CORE_ADDR (*breakpoint_reinsert_addr) (void) */
+  NULL, /* int (*breakpoint_kind_from_pc) (CORE_ADDR *pcptr) */
+  k1_sw_breakpoint_from_kind, /* const gdb_byte *(*sw_breakpoint_from_kind) (int kind, int *size) */
+  NULL, /* VEC (CORE_ADDR) *(*get_next_pcs) (struct regcache *regcache) */
   0, /* int decr_pc_after_break */
   k1_breakpoint_at, /* int (*breakpoint_at) (CORE_ADDR pc) */
   k1_supports_z_point_type, /* int (*supports_z_point_type) (char z_type) */
@@ -202,7 +208,7 @@ struct linux_target_ops the_low_target = {
                     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
 };
 
-static char *create_xml ()
+static char *create_xml (void)
 {
   char *ret, *buf, reg_type[50];
   struct reg *r;

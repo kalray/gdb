@@ -1,5 +1,5 @@
 /* Motorola 68HC12-specific support for 32-bit ELF
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
@@ -107,8 +107,8 @@ static reloc_howto_type elf_m68hc11_howto_table[] = {
   /* This reloc does nothing.  */
   HOWTO (R_M68HC11_NONE,	/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont,/* complain_on_overflow */
@@ -504,7 +504,11 @@ m68hc11_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_M68HC11_max);
+  if (r_type >= (unsigned int) R_M68HC11_max)
+    {
+      _bfd_error_handler (_("%B: invalid M68HC12 reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &elf_m68hc11_howto_table[r_type];
 }
 
@@ -655,8 +659,6 @@ static const struct bfd_elf_special_section elf32_m68hc12_special_sections[] =
 
 #define bfd_elf32_bfd_link_hash_table_create \
                                 m68hc12_elf_bfd_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_free \
-				m68hc11_elf_bfd_link_hash_table_free
 #define bfd_elf32_bfd_merge_private_bfd_data \
 					_bfd_m68hc11_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_set_private_flags	_bfd_m68hc11_elf_set_private_flags

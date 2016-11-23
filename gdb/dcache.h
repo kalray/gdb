@@ -1,7 +1,7 @@
 /* Declarations for caching.  Typically used by remote back ends for
    caching remote memory.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,8 @@
 
 #ifndef DCACHE_H
 #define DCACHE_H
+
+#include "target.h"	/* for enum target_xfer_status */
 
 typedef struct dcache_struct DCACHE;
 

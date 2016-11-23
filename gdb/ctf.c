@@ -1,6 +1,6 @@
 /* CTF format support.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Hui Zhu <hui_zhu@mentor.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -98,6 +98,11 @@ struct trace_write_handler
 };
 
 /* Write metadata in FORMAT.  */
+
+static void
+ctf_save_write_metadata (struct trace_write_handler *handler,
+			 const char *format, ...)
+  ATTRIBUTE_PRINTF (2, 3);
 
 static void
 ctf_save_write_metadata (struct trace_write_handler *handler,
@@ -623,11 +628,6 @@ ctf_write_definition_end (struct trace_file_writer *self)
   self->ops->frame_ops->end (self);
 }
 
-/* The minimal file size of data stream.  It is required by
-   babeltrace.  */
-
-#define CTF_FILE_MIN_SIZE		4096
-
 /* This is the implementation of trace_file_write_ops method
    end.  */
 
@@ -637,50 +637,6 @@ ctf_end (struct trace_file_writer *self)
   struct ctf_trace_file_writer *writer = (struct ctf_trace_file_writer *) self;
 
   gdb_assert (writer->tcs.content_size == 0);
-  /* The babeltrace requires or assumes that the size of datastream
-     file is greater than 4096 bytes.  If we don't generate enough
-     packets and events, create a fake packet which has zero event,
-      to use up the space.  */
-  if (writer->tcs.packet_start < CTF_FILE_MIN_SIZE)
-    {
-      uint32_t u32;
-
-      /* magic.  */
-      u32 = CTF_MAGIC;
-      ctf_save_write_uint32 (&writer->tcs, u32);
-
-      /* content_size.  */
-      u32 = 0;
-      ctf_save_write_uint32 (&writer->tcs, u32);
-
-      /* packet_size.  */
-      u32 = 12;
-      if (writer->tcs.packet_start + u32 < CTF_FILE_MIN_SIZE)
-	u32 = CTF_FILE_MIN_SIZE - writer->tcs.packet_start;
-
-      u32 *= TARGET_CHAR_BIT;
-      ctf_save_write_uint32 (&writer->tcs, u32);
-
-      /* tpnum.  */
-      u32 = 0;
-      ctf_save_write (&writer->tcs, (gdb_byte *) &u32, 2);
-
-      /* Enlarge the file to CTF_FILE_MIN_SIZE is it is still less
-	 than that.  */
-      if (CTF_FILE_MIN_SIZE
-	  > (writer->tcs.packet_start + writer->tcs.content_size))
-	{
-	  gdb_byte b = 0;
-
-	  /* Fake the content size to avoid assertion failure in
-	     ctf_save_fseek.  */
-	  writer->tcs.content_size = (CTF_FILE_MIN_SIZE
-				      - 1 - writer->tcs.packet_start);
-	  ctf_save_fseek (&writer->tcs, CTF_FILE_MIN_SIZE - 1,
-			  SEEK_SET);
-	  ctf_save_write (&writer->tcs, &b, 1);
-	}
-    }
 }
 
 /* This is the implementation of trace_frame_write_ops method
@@ -854,8 +810,7 @@ static const struct trace_file_write_ops ctf_write_ops =
 struct trace_file_writer *
 ctf_trace_file_writer_new (void)
 {
-  struct ctf_trace_file_writer *writer
-    = xmalloc (sizeof (struct ctf_trace_file_writer));
+  struct ctf_trace_file_writer *writer = XNEW (struct ctf_trace_file_writer);
 
   writer->base.ops = &ctf_write_ops;
 
@@ -904,7 +859,7 @@ ctf_destroy (void)
 /* Open CTF trace data in DIRNAME.  */
 
 static void
-ctf_open_dir (char *dirname)
+ctf_open_dir (const char *dirname)
 {
   struct bt_iter_pos begin_pos;
   struct bt_iter_pos *pos;
@@ -959,6 +914,12 @@ ctf_open_dir (char *dirname)
 							   (SCOPE),	\
 							   #FIELD))
 
+#define SET_ENUM_FIELD(EVENT, SCOPE, VAR, TYPE, FIELD)			\
+  (VAR)->FIELD = (TYPE) bt_ctf_get_int64 (bt_ctf_get_field ((EVENT),	\
+							    (SCOPE),	\
+							    #FIELD))
+
+
 /* EVENT is the "status" event and TS is filled in.  */
 
 static void
@@ -967,7 +928,7 @@ ctf_read_status (struct bt_ctf_event *event, struct trace_status *ts)
   const struct bt_definition *scope
     = bt_ctf_get_top_level_scope (event, BT_EVENT_FIELDS);
 
-  SET_INT32_FIELD (event, scope, ts, stop_reason);
+  SET_ENUM_FIELD (event, scope, ts, enum trace_stop_reason, stop_reason);
   SET_INT32_FIELD (event, scope, ts, stopping_tracepoint);
   SET_INT32_FIELD (event, scope, ts, traceframe_count);
   SET_INT32_FIELD (event, scope, ts, traceframes_created);
@@ -1103,7 +1064,7 @@ ctf_read_tp (struct uploaded_tp **uploaded_tps)
       SET_INT32_FIELD (event, scope, utp, step);
       SET_INT32_FIELD (event, scope, utp, pass);
       SET_INT32_FIELD (event, scope, utp, hit_count);
-      SET_INT32_FIELD (event, scope, utp, type);
+      SET_ENUM_FIELD (event, scope, utp, enum bptype, type);
 
       /* Read 'cmd_strings'.  */
       SET_ARRAY_FIELD (event, scope, utp, cmd_num, cmd_strings);
@@ -1127,7 +1088,7 @@ ctf_read_tp (struct uploaded_tp **uploaded_tps)
    second packet which contains events on trace blocks.  */
 
 static void
-ctf_open (char *dirname, int from_tty)
+ctf_open (const char *dirname, int from_tty)
 {
   struct bt_ctf_event *event;
   uint32_t event_id;
@@ -1318,7 +1279,7 @@ ctf_xfer_partial (struct target_ops *ops, enum target_object object,
 {
   /* We're only doing regular memory for now.  */
   if (object != TARGET_OBJECT_MEMORY)
-    return -1;
+    return TARGET_XFER_E_IO;
 
   if (readbuf == NULL)
     error (_("ctf_xfer_partial: trace file is read-only"));
@@ -1383,7 +1344,7 @@ ctf_xfer_partial (struct target_ops *ops, enum target_object object,
 	      gdb_byte *contents;
 	      int k;
 
-	      contents = xmalloc (mlen);
+	      contents = (gdb_byte *) xmalloc (mlen);
 
 	      for (k = 0; k < mlen; k++)
 		{

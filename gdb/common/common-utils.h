@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,6 @@
 #ifndef COMMON_UTILS_H
 #define COMMON_UTILS_H
 
-#include "config.h"
-#include "ansidecl.h"
-#include <stddef.h>
-#include <stdarg.h>
-
 /* If possible, define FUNCTION_NAME, a macro containing the name of
    the function being defined.  Since this macro may not always be
    defined, all uses must be protected by appropriate macro definition
@@ -42,10 +37,6 @@
 #define FUNCTION_NAME		__func__  /* ARI: func */
 #endif
 #endif
-
-extern void malloc_failure (long size) ATTRIBUTE_NORETURN;
-extern void internal_error (const char *file, int line, const char *, ...)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (3, 4);
 
 /* xmalloc(), xrealloc() and xcalloc() have already been declared in
    "libiberty.h". */
@@ -70,5 +61,40 @@ int xsnprintf (char *str, size_t size, const char *format, ...)
    Uses malloc to get the space.  Returns the address of the copy.  */
 
 char *savestring (const char *ptr, size_t len);
+
+/* The strerror() function can return NULL for errno values that are
+   out of range.  Provide a "safe" version that always returns a
+   printable string.  */
+
+extern char *safe_strerror (int);
+
+/* Return non-zero if the start of STRING matches PATTERN, zero
+   otherwise.  */
+
+static inline int
+startswith (const char *string, const char *pattern)
+{
+  return strncmp (string, pattern, strlen (pattern)) == 0;
+}
+
+ULONGEST strtoulst (const char *num, const char **trailer, int base);
+
+/* Skip leading whitespace characters in INP, returning an updated
+   pointer.  If INP is NULL, return NULL.  */
+
+extern char *skip_spaces (char *inp);
+
+/* A const-correct version of the above.  */
+
+extern const char *skip_spaces_const (const char *inp);
+
+/* Skip leading non-whitespace characters in INP, returning an updated
+   pointer.  If INP is NULL, return NULL.  */
+
+#define skip_to_space(INP) ((char *) skip_to_space_const (INP))
+
+/* A const-correct version of the above.  */
+
+extern const char *skip_to_space_const (const char *inp);
 
 #endif

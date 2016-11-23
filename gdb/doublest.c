@@ -1,6 +1,6 @@
 /* Floating point routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,6 @@
 #include "defs.h"
 #include "doublest.h"
 #include "floatformat.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "gdbtypes.h"
 #include <math.h>		/* ldexp */
 
@@ -185,7 +183,7 @@ convert_floatformat_to_doublest (const struct floatformat *fmt,
   /* For non-numbers, reuse libiberty's logic to find the correct
      format.  We do not lose any precision in this case by passing
      through a double.  */
-  kind = floatformat_classify (fmt, from);
+  kind = floatformat_classify (fmt, (const bfd_byte *) from);
   if (kind == float_infinite || kind == float_nan)
     {
       double dto;

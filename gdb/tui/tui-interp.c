@@ -1,6 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,6 @@
 #include "tui/tui-win.h"
 #include "tui/tui.h"
 #include "tui/tui-io.h"
-#include "exceptions.h"
 #include "infrun.h"
 #include "observer.h"
 
@@ -52,12 +51,21 @@ tui_exit (void)
   tui_disable ();
 }
 
-/* True if TUI is the top-level interpreter.  */
-static int tui_is_toplevel = 0;
-
 /* Observers for several run control events.  If the interpreter is
    quiet (i.e., another interpreter is being run with
    interpreter-exec), print nothing.  */
+
+/* Observer for the normal_stop notification.  */
+
+static void
+tui_on_normal_stop (struct bpstats *bs, int print_frame)
+{
+  if (!interp_quiet_p (tui_interp))
+    {
+      if (print_frame)
+	print_stop_event (tui_ui_out (tui_interp));
+    }
+}
 
 /* Observer for the signal_received notification.  */
 
@@ -127,8 +135,6 @@ tui_on_command_error (void)
 static void *
 tui_init (struct interp *self, int top_level)
 {
-  tui_is_toplevel = top_level;
-
   /* Install exit handler to leave the screen in a good shape.  */
   atexit (tui_exit);
 
@@ -140,6 +146,7 @@ tui_init (struct interp *self, int top_level)
     tui_initialize_readline ();
 
   /* If changing this, remember to update cli-interp.c as well.  */
+  observer_attach_normal_stop (tui_on_normal_stop);
   observer_attach_signal_received (tui_on_signal_received);
   observer_attach_end_stepping_range (tui_on_end_stepping_range);
   observer_attach_signal_exited (tui_on_signal_exited);
@@ -149,18 +156,6 @@ tui_init (struct interp *self, int top_level)
   observer_attach_command_error (tui_on_command_error);
 
   return NULL;
-}
-
-/* True if enabling the TUI is allowed.  Example, if the top level
-   interpreter is MI, enabling curses will certainly lose.  */
-
-int
-tui_allowed_p (void)
-{
-  /* Only if TUI is the top level interpreter.  Also don't try to
-     setup curses (and print funny control characters) if we're not
-     outputting to a terminal.  */
-  return tui_is_toplevel && ui_file_isatty (gdb_stdout);
 }
 
 static int

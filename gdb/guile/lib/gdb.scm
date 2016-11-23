@@ -1,6 +1,6 @@
 ;; Scheme side of the gdb module.
 ;;
-;; Copyright (C) 2014 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GDB.
 ;;
@@ -212,6 +212,7 @@
  frame-older
  frame-newer
  frame-sal
+ frame-read-register
  frame-read-var
  frame-select
  newest-frame
@@ -271,6 +272,7 @@
  objfile?
  objfile-valid?
  objfile-filename
+ objfile-progspace
  objfile-pretty-printers
  set-objfile-pretty-printers!
  current-objfile
@@ -319,6 +321,8 @@
  set-pretty-printer-enabled!
  make-pretty-printer-worker
  pretty-printer-worker?
+ pretty-printers
+ set-pretty-printers!
 
  ;; scm-progspace.c
 
@@ -492,11 +496,11 @@
 
 ;; Load the rest of the Scheme side.
 
-(use-modules ((gdb init)))
+(include "gdb/init.scm")
 
 ;; These come from other files, but they're really part of this module.
 
-(re-export
+(export
 
  ;; init.scm
  orig-input-port

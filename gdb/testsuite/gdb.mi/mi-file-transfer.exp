@@ -1,5 +1,5 @@
 # This testcase is part of GDB, the GNU debugger.
-# Copyright 2007-2014 Free Software Foundation, Inc.
+# Copyright 2007-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,12 @@
 load_lib gdbserver-support.exp
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
+
+# K1: file transfer not implemented by our gdbserver
+if [istarget k1*-*-*] then {
+  unsupported "mi-file-transfer.exp"
+  return 1
+}
 
 if { [skip_gdbserver_tests] } {
     return 0

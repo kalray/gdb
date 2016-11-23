@@ -1,5 +1,5 @@
 /* version.c -- binutils version information
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -32,7 +32,7 @@ print_version (const char *name)
   /* xgettext:c-format */
   printf ("GNU %s %s\n", name, BFD_VERSION_STRING);
   printf (_("Kalray %s version %s\n"), name, KALRAY_VERSION);
-  printf (_("Copyright (C) 2014 Free Software Foundation, Inc.\n"));
+  printf (_("Copyright (C) 2016 Free Software Foundation, Inc.\n"));
   printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or (at your option) any later version.\n\

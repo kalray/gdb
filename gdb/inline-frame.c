@@ -1,6 +1,6 @@
 /* Inline frame unwinder for GDB.
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,8 +27,6 @@
 #include "symtab.h"
 #include "vec.h"
 #include "frame.h"
-
-#include "gdb_assert.h"
 
 /* We need to save a few variables for every thread stopped at the
    virtual call site of an inlined function.  If there was always a
@@ -209,7 +207,7 @@ inline_frame_sniffer (const struct frame_unwind *self,
 		      void **this_cache)
 {
   CORE_ADDR this_pc;
-  struct block *frame_block, *cur_block;
+  const struct block *frame_block, *cur_block;
   int depth;
   struct frame_info *next_frame;
   struct inline_state *state = find_inline_frame_state (inferior_ptid);
@@ -227,6 +225,8 @@ inline_frame_sniffer (const struct frame_unwind *self,
     {
       if (block_inlined_p (cur_block))
 	depth++;
+      else if (BLOCK_FUNCTION (cur_block) != NULL)
+	break;
 
       cur_block = BLOCK_SUPERBLOCK (cur_block);
     }
@@ -274,16 +274,16 @@ const struct frame_unwind inline_frame_unwind = {
    before it).  */
 
 static int
-block_starting_point_at (CORE_ADDR pc, struct block *block)
+block_starting_point_at (CORE_ADDR pc, const struct block *block)
 {
-  struct blockvector *bv;
+  const struct blockvector *bv;
   struct block *new_block;
 
   bv = blockvector_for_pc (pc, NULL);
   if (BLOCKVECTOR_MAP (bv) == NULL)
     return 0;
 
-  new_block = addrmap_find (BLOCKVECTOR_MAP (bv), pc - 1);
+  new_block = (struct block *) addrmap_find (BLOCKVECTOR_MAP (bv), pc - 1);
   if (new_block == NULL)
     return 1;
 
@@ -304,7 +304,7 @@ void
 skip_inline_frames (ptid_t ptid)
 {
   CORE_ADDR this_pc;
-  struct block *frame_block, *cur_block;
+  const struct block *frame_block, *cur_block;
   struct symbol *last_sym = NULL;
   int skip_count = 0;
   struct inline_state *state;
@@ -333,6 +333,9 @@ skip_inline_frames (ptid_t ptid)
 	      else
 		break;
 	    }
+	  else if (BLOCK_FUNCTION (cur_block) != NULL)
+	    break;
+
 	  cur_block = BLOCK_SUPERBLOCK (cur_block);
 	}
     }

@@ -1,5 +1,5 @@
 /* PowerPC64-specific support for 64-bit ELF.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -34,7 +34,7 @@ struct ppc64_elf_params
   bfd_signed_vma group_size;
 
   /* Whether to use a special call stub for __tls_get_addr.  */
-  int no_tls_get_addr_opt;
+  int tls_get_addr_opt;
 
   /* Whether to allow multiple toc sections.  */
   int no_multi_toc;
@@ -57,6 +57,9 @@ struct ppc64_elf_params
 
   /* Whether to generate out-of-line register save/restore for gcc -Os code.  */
   int save_restore_funcs;
+
+  /* Set when a potential variable is detected in .toc.  */
+  int object_in_toc;
 };
 
 bfd_boolean ppc64_elf_init_stub_bfd
@@ -72,7 +75,7 @@ bfd_boolean ppc64_elf_edit_toc
 bfd_boolean ppc64_elf_has_small_toc_reloc
   (asection *);
 bfd_vma ppc64_elf_set_toc
-(struct bfd_link_info *, bfd *);
+  (struct bfd_link_info *, bfd *);
 int ppc64_elf_setup_section_lists
   (struct bfd_link_info *);
 void ppc64_elf_start_multitoc_partition

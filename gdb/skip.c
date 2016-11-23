@@ -1,6 +1,6 @@
 /* Skipping uninteresting files and functions while stepping.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 #include "value.h"
 #include "valprint.h"
 #include "ui-out.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbcmd.h"
 #include "command.h"
@@ -30,7 +29,6 @@
 #include "arch-utils.h"
 #include "linespec.h"
 #include "objfiles.h"
-#include "exceptions.h"
 #include "breakpoint.h" /* for get_sal_arch () */
 #include "source.h"
 #include "filenames.h"
@@ -133,7 +131,7 @@ skip_function_command (char *arg, int from_tty)
     }
   else
     {
-      if (lookup_symbol (arg, NULL, VAR_DOMAIN, NULL) == NULL)
+      if (lookup_symbol (arg, NULL, VAR_DOMAIN, NULL).symbol == NULL)
         {
 	  fprintf_filtered (gdb_stderr,
 			    _("No function found named %s.\n"), arg);

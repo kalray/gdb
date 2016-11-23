@@ -1,5 +1,5 @@
 /* This file is tc-pj.h
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    Contributed by Steve Chamberlain of Transmeta, sac@pobox.com
 
@@ -36,7 +36,7 @@ void pj_cons_fix_new_pj (struct frag *, int, int, expressionS *,
 arelent *tc_gen_reloc (asection *, struct fix *);
 
 #define md_section_align(SEGMENT, SIZE)     (SIZE)
-#define md_convert_frag(B, S, F)            (as_fatal (_("convert_frag\n")), 0)
+#define md_convert_frag(B, S, F)            as_fatal (_("convert_frag\n"))
 #define md_estimate_size_before_relax(A, B) (as_fatal (_("estimate size\n")),0)
 #define md_undefined_symbol(NAME)           0
 

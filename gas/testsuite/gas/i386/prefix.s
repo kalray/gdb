@@ -4,6 +4,9 @@
 
  es fwait
 
+	fwait
+	movl $0,%gs:fpu_owner_task
+
 	.byte 0x66
 	.byte 0xf2
 	.byte 0x0f
@@ -355,6 +358,38 @@
 	.byte 0x3e
 	.byte 0x36
 	.byte 0x90
+
+# repz; rdseed %eax
+	.byte 0xf3
+	.byte 0x0f
+	.byte 0xc7
+	.byte 0xf8
+
+	nop
+
+# repz; rdrand %eax
+	.byte 0xf3
+	.byte 0x0f
+	.byte 0xc7
+	.byte 0xf0
+
+	nop
+
+# repnz; rdseed %eax
+	.byte 0xf2
+	.byte 0x0f
+	.byte 0xc7
+	.byte 0xf8
+
+	nop
+
+# repnz; rdrand %eax
+	.byte 0xf2
+	.byte 0x0f
+	.byte 0xc7
+	.byte 0xf0
+
+	nop
 
 # Get a good alignment.
  .p2align	4,0

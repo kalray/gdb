@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -392,6 +392,7 @@ bfd_hash_table_init_n (struct bfd_hash_table *table,
       objalloc_alloc ((struct objalloc *) table->memory, alloc);
   if (table->table == NULL)
     {
+      bfd_hash_table_free (table);
       bfd_set_error (bfd_error_no_memory);
       return FALSE;
     }

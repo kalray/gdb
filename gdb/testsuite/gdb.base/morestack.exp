@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,12 @@ if {$gcc_compiled == 0} {
 }
 
 standard_testfile
+
+# K1: does not compile (-fsplit-stack not supported)
+if [istarget k1*-*-*] then {
+  unsupported "more-stack.exp"
+  return 1
+}
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile {additional_flags=-fsplit-stack}] } {
     return -1

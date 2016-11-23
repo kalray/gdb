@@ -1,5 +1,5 @@
 /* ldlang.h - linker command language support
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -55,8 +55,10 @@ typedef struct memory_region_struct
 {
   lang_memory_region_name name_list;
   struct memory_region_struct *next;
+  union etree_union *origin_exp;
   bfd_vma origin;
   bfd_size_type length;
+  union etree_union *length_exp;
   bfd_vma current;
   union lang_statement_union *last_os;
   flagword flags;
@@ -272,6 +274,9 @@ struct lang_input_statement_flags
   /* Set if the file does not exist.  */
   unsigned int missing_file : 1;
 
+  /* Set if reloading an archive or --as-needed lib.  */
+  unsigned int reload : 1;
+
 #ifdef ENABLE_PLUGINS
   /* Set if the file was claimed by a plugin.  */
   unsigned int claimed : 1;
@@ -279,9 +284,12 @@ struct lang_input_statement_flags
   /* Set if the file was claimed from an archive.  */
   unsigned int claim_archive : 1;
 
-  /* Set if reloading an --as-needed lib.  */
-  unsigned int reload : 1;
+  /* Set if added by the lto plugin add_input_file callback.  */
+  unsigned int lto_output : 1;
 #endif /* ENABLE_PLUGINS */
+
+  /* Head of list of pushed flags.  */
+  struct lang_input_statement_flags *pushed;
 };
 
 typedef struct lang_input_statement_struct
@@ -467,17 +475,6 @@ struct unique_sections
   const char *name;
 };
 
-/* This structure records symbols for which we need to keep track of
-   definedness for use in the DEFINED () test.  */
-
-struct lang_definedness_hash_entry
-{
-  struct bfd_hash_entry root;
-  unsigned int by_object : 1;
-  unsigned int by_script : 1;
-  unsigned int iteration : 1;
-};
-
 /* Used by place_orphan to keep track of orphan sections and statements.  */
 
 struct orphan_save
@@ -595,7 +592,7 @@ extern void lang_process
 extern void ldlang_add_file
   (lang_input_statement_type *);
 extern lang_output_section_statement_type *lang_output_section_find_by_flags
-  (const asection *, lang_output_section_statement_type **,
+  (const asection *, flagword, lang_output_section_statement_type **,
    lang_match_sec_type_func);
 extern lang_output_section_statement_type *lang_insert_orphan
   (asection *, const char *, int, lang_output_section_statement_type *,
@@ -612,6 +609,8 @@ extern lang_output_section_statement_type *next_matching_output_section_statemen
   (lang_output_section_statement_type *, int);
 extern void ldlang_add_undef
   (const char *const, bfd_boolean);
+extern void ldlang_add_require_defined
+  (const char *const);
 extern void lang_add_output_format
   (const char *, const char *, const char *, int);
 extern void lang_list_init
@@ -632,6 +631,8 @@ extern void lang_for_each_statement_worker
 extern void *stat_alloc
   (size_t);
 extern void strip_excluded_output_sections
+  (void);
+extern void lang_clear_os_map
   (void);
 extern void dprint_statement
   (lang_statement_union_type *, int);
@@ -678,10 +679,6 @@ extern void lang_add_unique
   (const char *);
 extern const char *lang_get_output_target
   (void);
-extern struct lang_definedness_hash_entry *lang_symbol_defined (const char *);
-extern void lang_update_definedness
-  (const char *, struct bfd_link_hash_entry *);
-
 extern void add_excluded_libs (const char *);
 extern bfd_boolean load_symbols
   (lang_input_statement_type *, lang_statement_list_type *);
@@ -692,5 +689,8 @@ ldlang_override_segment_assignment
 
 extern void
 lang_ld_feature (char *);
+
+extern void
+lang_print_memory_usage (void);
 
 #endif

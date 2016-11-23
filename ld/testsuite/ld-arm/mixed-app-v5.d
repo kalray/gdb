@@ -1,6 +1,6 @@
 
 tmpdir/mixed-app-v5:     file format elf32-(little|big)arm
-architecture: armv4t, flags 0x00000112:
+architecture: arm.*, flags 0x00000112:
 EXEC_P, HAS_SYMS, D_PAGED
 start address 0x.*
 
@@ -53,6 +53,4 @@ Disassembly of section .text:
  .*:	f7ff efc. 	blx	.* <lib_func2@plt>
  .*:	bd00      	pop	{pc}
  .*:	4770      	bx	lr
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
- .*:	46c0      	nop			; \(mov r8, r8\)
+#...

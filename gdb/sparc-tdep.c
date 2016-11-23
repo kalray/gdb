@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,9 +34,6 @@
 #include "regcache.h"
 #include "target.h"
 #include "value.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "sparc-tdep.h"
 #include "sparc-ravenscar-thread.h"
@@ -455,10 +452,10 @@ sparc32_pseudo_register_write (struct gdbarch *gdbarch,
   regcache_raw_write (regcache, regnum + 1, buf + 4);
 }
 
-/* Implement "in_function_epilogue_p".  */
+/* Implement the stack_frame_destroyed_p gdbarch method.  */
 
 int
-sparc_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+sparc_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   /* This function must return true if we are one instruction after an
      instruction that destroyed the stack frame of the current
@@ -1103,7 +1100,7 @@ sparc_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct sparc_frame_cache *cache;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_alloc_frame_cache ();
   *this_cache = cache;
@@ -1161,7 +1158,7 @@ sparc32_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct symbol *sym;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
 
@@ -1648,22 +1645,18 @@ sparc_write_pc (struct regcache *regcache, CORE_ADDR pc)
 }
 
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
+/* Iterate over core file register note sections.  */
 
-static const struct regset *
-sparc_regset_from_core_section (struct gdbarch *gdbarch,
-				const char *sect_name, size_t sect_size)
+static void
+sparc_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				    iterate_over_regset_sections_cb *cb,
+				    void *cb_data,
+				    const struct regcache *regcache)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  if (strcmp (sect_name, ".reg") == 0 && sect_size >= tdep->sizeof_gregset)
-    return tdep->gregset;
-
-  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= tdep->sizeof_fpregset)
-    return tdep->fpregset;
-
-  return NULL;
+  cb (".reg", tdep->sizeof_gregset, tdep->gregset, NULL, cb_data);
+  cb (".reg2", tdep->sizeof_fpregset, tdep->fpregset, NULL, cb_data);
 }
 
 
@@ -1743,8 +1736,8 @@ sparc32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* If we have register sets, enable the generic core file support.  */
   if (tdep->gregset)
-    set_gdbarch_regset_from_core_section (gdbarch,
-					  sparc_regset_from_core_section);
+    set_gdbarch_iterate_over_regset_sections
+      (gdbarch, sparc_iterate_over_regset_sections);
 
   register_sparc_ravenscar_ops (gdbarch);
 
@@ -1902,7 +1895,7 @@ sparc32_supply_gregset (const struct sparc_gregmap *gregmap,
 			struct regcache *regcache,
 			int regnum, const void *gregs)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   gdb_byte zero[4] = { 0 };
   int i;
 
@@ -1967,7 +1960,7 @@ sparc32_collect_gregset (const struct sparc_gregmap *gregmap,
 			 const struct regcache *regcache,
 			 int regnum, void *gregs)
 {
-  gdb_byte *regs = gregs;
+  gdb_byte *regs = (gdb_byte *) gregs;
   int i;
 
   if (regnum == SPARC32_PSR_REGNUM || regnum == -1)
@@ -2022,7 +2015,7 @@ sparc32_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			 struct regcache *regcache,
 			 int regnum, const void *fpregs)
 {
-  const gdb_byte *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *) fpregs;
   int i;
 
   for (i = 0; i < 32; i++)
@@ -2042,7 +2035,7 @@ sparc32_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 			  const struct regcache *regcache,
 			  int regnum, void *fpregs)
 {
-  gdb_byte *regs = fpregs;
+  gdb_byte *regs = (gdb_byte *) fpregs;
   int i;
 
   for (i = 0; i < 32; i++)

@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB. 
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,12 +38,11 @@
 
 #include <fcntl.h>
 #include "readline/readline.h"
-#include <string.h>
-
 #include "gdbcore.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
+#include "solist.h"
 
 void (*deprecated_file_changed_hook) (char *);
 
@@ -61,10 +60,7 @@ void _initialize_exec (void);
 
 /* The target vector for executable files.  */
 
-struct target_ops exec_ops;
-
-/* True if the exec target is pushed on the stack.  */
-static int using_exec_ops;
+static struct target_ops exec_ops;
 
 /* Whether to open exec and core files read-only or read-write.  */
 
@@ -79,7 +75,7 @@ show_write_files (struct ui_file *file, int from_tty,
 
 
 static void
-exec_open (char *args, int from_tty)
+exec_open (const char *args, int from_tty)
 {
   target_preopen (from_tty);
   exec_file_attach (args, from_tty);
@@ -115,22 +111,18 @@ exec_close (void)
 static void
 exec_close_1 (struct target_ops *self)
 {
-  using_exec_ops = 0;
+  struct program_space *ss;
+  struct cleanup *old_chain;
 
+  old_chain = save_current_program_space ();
+  ALL_PSPACES (ss)
   {
-    struct program_space *ss;
-    struct cleanup *old_chain;
-
-    old_chain = save_current_program_space ();
-    ALL_PSPACES (ss)
-    {
-      set_current_program_space (ss);
-      clear_section_table (current_target_sections);
-      exec_close ();
-    }
-
-    do_cleanups (old_chain);
+    set_current_program_space (ss);
+    clear_section_table (current_target_sections);
+    exec_close ();
   }
+
+  do_cleanups (old_chain);
 }
 
 void
@@ -141,6 +133,45 @@ exec_file_clear (int from_tty)
 
   if (from_tty)
     printf_unfiltered (_("No executable file now.\n"));
+}
+
+/* See gdbcore.h.  */
+
+void
+exec_file_locate_attach (int pid, int from_tty)
+{
+  char *exec_file, *full_exec_path = NULL;
+
+  /* Do nothing if we already have an executable filename.  */
+  exec_file = (char *) get_exec_file (0);
+  if (exec_file != NULL)
+    return;
+
+  /* Try to determine a filename from the process itself.  */
+  exec_file = target_pid_to_exec_file (pid);
+  if (exec_file == NULL)
+    return;
+
+  /* If gdb_sysroot is not empty and the discovered filename
+     is absolute then prefix the filename with gdb_sysroot.  */
+  if (*gdb_sysroot != '\0' && IS_ABSOLUTE_PATH (exec_file))
+    full_exec_path = exec_file_find (exec_file, NULL);
+
+  if (full_exec_path == NULL)
+    {
+      /* It's possible we don't have a full path, but rather just a
+	 filename.  Some targets, such as HP-UX, don't provide the
+	 full path, sigh.
+
+	 Attempt to qualify the filename against the source path.
+	 (If that fails, we'll just fall back on the original
+	 filename.  Not much more we can do...)  */
+      if (!source_full_path_of (exec_file, &full_exec_path))
+	full_exec_path = xstrdup (exec_file);
+    }
+
+  exec_file_attach (full_exec_path, from_tty);
+  symbol_file_add_main (full_exec_path, from_tty);
 }
 
 /* Set FILENAME as the new exec file.
@@ -161,7 +192,7 @@ exec_file_clear (int from_tty)
    we're supplying the exec pathname late for good reason.)  */
 
 void
-exec_file_attach (char *filename, int from_tty)
+exec_file_attach (const char *filename, int from_tty)
 {
   struct cleanup *cleanups;
 
@@ -185,36 +216,66 @@ exec_file_attach (char *filename, int from_tty)
     }
   else
     {
+      int load_via_target = 0;
       char *scratch_pathname, *canonical_pathname;
       int scratch_chan;
       struct target_section *sections = NULL, *sections_end = NULL;
       char **matching;
 
-      scratch_chan = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, filename,
-		   write_files ? O_RDWR | O_BINARY : O_RDONLY | O_BINARY,
-			    &scratch_pathname);
-#if defined(__GO32__) || defined(_WIN32) || defined(__CYGWIN__)
-      if (scratch_chan < 0)
+      if (is_target_filename (filename))
 	{
-	  char *exename = alloca (strlen (filename) + 5);
-
-	  strcat (strcpy (exename, filename), ".exe");
-	  scratch_chan = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST, exename,
-	     write_files ? O_RDWR | O_BINARY : O_RDONLY | O_BINARY,
-	     &scratch_pathname);
+	  if (target_filesystem_is_local ())
+	    filename += strlen (TARGET_SYSROOT_PREFIX);
+	  else
+	    load_via_target = 1;
 	}
+
+      if (load_via_target)
+	{
+	  /* gdb_bfd_fopen does not support "target:" filenames.  */
+	  if (write_files)
+	    warning (_("writing into executable files is "
+		       "not supported for %s sysroots"),
+		     TARGET_SYSROOT_PREFIX);
+
+	  scratch_pathname = xstrdup (filename);
+	  make_cleanup (xfree, scratch_pathname);
+
+	  scratch_chan = -1;
+
+	  canonical_pathname = scratch_pathname;
+	}
+      else
+	{
+	  scratch_chan = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST,
+				filename, write_files ?
+				O_RDWR | O_BINARY : O_RDONLY | O_BINARY,
+				&scratch_pathname);
+#if defined(__GO32__) || defined(_WIN32) || defined(__CYGWIN__)
+	  if (scratch_chan < 0)
+	    {
+	      char *exename = (char *) alloca (strlen (filename) + 5);
+
+	      strcat (strcpy (exename, filename), ".exe");
+	      scratch_chan = openp (getenv ("PATH"), OPF_TRY_CWD_FIRST,
+				    exename, write_files ?
+				    O_RDWR | O_BINARY
+				    : O_RDONLY | O_BINARY,
+				    &scratch_pathname);
+	    }
 #endif
-      if (scratch_chan < 0)
-	perror_with_name (filename);
+	  if (scratch_chan < 0)
+	    perror_with_name (filename);
 
-      make_cleanup (xfree, scratch_pathname);
+	  make_cleanup (xfree, scratch_pathname);
 
-      /* gdb_bfd_open (and its variants) prefers canonicalized pathname for
-	 better BFD caching.  */
-      canonical_pathname = gdb_realpath (scratch_pathname);
-      make_cleanup (xfree, canonical_pathname);
+	  /* gdb_bfd_open (and its variants) prefers canonicalized
+	     pathname for better BFD caching.  */
+	  canonical_pathname = gdb_realpath (scratch_pathname);
+	  make_cleanup (xfree, canonical_pathname);
+	}
 
-      if (write_files)
+      if (write_files && !load_via_target)
 	exec_bfd = gdb_bfd_fopen (canonical_pathname, gnutarget,
 				  FOPEN_RUB, scratch_chan);
       else
@@ -222,12 +283,17 @@ exec_file_attach (char *filename, int from_tty)
 
       if (!exec_bfd)
 	{
-	  error (_("\"%s\": could not open as an executable file: %s"),
+	  error (_("\"%s\": could not open as an executable file: %s."),
 		 scratch_pathname, bfd_errmsg (bfd_get_error ()));
 	}
 
+      /* gdb_realpath_keepfile resolves symlinks on the local
+	 filesystem and so cannot be used for "target:" files.  */
       gdb_assert (exec_filename == NULL);
-      exec_filename = gdb_realpath_keepfile (scratch_pathname);
+      if (load_via_target)
+	exec_filename = xstrdup (bfd_get_filename (exec_bfd));
+      else
+	exec_filename = gdb_realpath_keepfile (scratch_pathname);
 
       if (!bfd_check_format_matches (exec_bfd, bfd_object, &matching))
 	{
@@ -387,8 +453,8 @@ resize_section_table (struct target_section_table *table, int adjustment)
 
   if (new_count)
     {
-      table->sections = xrealloc (table->sections,
-				  sizeof (struct target_section) * new_count);
+      table->sections = XRESIZEVEC (struct target_section, table->sections,
+				    new_count);
       table->sections_end = table->sections + new_count;
     }
   else
@@ -409,7 +475,7 @@ build_section_table (struct bfd *some_bfd, struct target_section **start,
   count = bfd_count_sections (some_bfd);
   if (*start)
     xfree (* start);
-  *start = (struct target_section *) xmalloc (count * sizeof (**start));
+  *start = XNEWVEC (struct target_section, count);
   *end = *start;
   bfd_map_over_sections (some_bfd, add_to_section_table, (char *) end);
   if (*end > *start + count)
@@ -445,11 +511,8 @@ add_target_sections (void *owner,
 
       /* If these are the first file sections we can provide memory
 	 from, push the file_stratum target.  */
-      if (!using_exec_ops)
-	{
-	  using_exec_ops = 1;
-	  push_target (&exec_ops);
-	}
+      if (!target_is_pushed (&exec_ops))
+	push_target (&exec_ops);
     }
 }
 
@@ -951,7 +1014,11 @@ exec_has_memory (struct target_ops *ops)
 	  != current_target_sections->sections_end);
 }
 
-static char *exec_make_note_section (struct target_ops *self, bfd *, int *);
+static char *
+exec_make_note_section (struct target_ops *self, bfd *obfd, int *note_size)
+{
+  error (_("Can't create a corefile"));
+}
 
 /* Fill in the exec file target vector.  Very few entries need to be
    defined.  */
@@ -1018,10 +1085,4 @@ Show writing into executable and core files."), NULL,
 			   &setlist, &showlist);
 
   add_target_with_completer (&exec_ops, filename_completer);
-}
-
-static char *
-exec_make_note_section (struct target_ops *self, bfd *obfd, int *note_size)
-{
-  error (_("Can't create a corefile"));
 }

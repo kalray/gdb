@@ -1009,12 +1009,11 @@ match_operands(const k1opc_t * op, const expressionS * tok,
       return MATCH_NOT_FOUND;						\
     }
 
-    int immediate_bits = 0;
     /* Now check for compatiblility of each operand. */
     for (jj = 0; jj < ntok; jj++) {
         int operand_type = op->format[jj]->type;
         char *operand_type_name = op->format[jj]->tname;
-	int has_relocation = (op->format[jj]->reloc_nb > 0);
+	// int has_relocation = (op->format[jj]->reloc_nb > 0);
 	int is_immediate = (op->format[jj]->reg_nb == 0);
 
         opdef = op->format[jj];
@@ -1182,7 +1181,7 @@ insert_operand(k1insn_t * insn,
     //    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
-        return;			/* syntactic sugar ? */
+        return 0;			/* syntactic sugar ? */
 
     /* try to resolve the value */
 
@@ -1552,7 +1551,7 @@ int is_constant_expression(expressionS* exp)
 void
 md_operand(expressionS *e) {
    enum pseudo_type pseudo_type;
-   const char *name;
+   char *name = NULL;
    size_t len;
    int ch, i;
 
@@ -1627,8 +1626,9 @@ md_operand(expressionS *e) {
 	  break;
 
 	default:
-	  name = input_line_pointer - 1;
-	  get_symbol_end ();
+	  /* name = input_line_pointer - 1; */
+	  /* get_symbol_end (); */
+	  get_symbol_name (&name);
 	  as_bad ("Unknown pseudo function `%s'", name);
 	  goto err;
 	}
@@ -1871,7 +1871,7 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
   int chars = snprintf(buf, buf_size, "%s ",op->as_op);
   int i;
   char *fmtp = op->fmtstring;
-  char ch;
+  char ch = 0;
 
   for (i = 0; op->format[i]; i++) {
     int type  = op->format[i]->type;
@@ -3801,12 +3801,13 @@ k1_type(int start ATTRIBUTE_UNUSED)
     char *name;
     char c;
     int type;
-    const char *typename;
+    char *typename = NULL;
     symbolS *sym;
     elf_symbol_type *elfsym;
 
-    name = input_line_pointer;
-    c = get_symbol_end();
+    /* name = input_line_pointer; */
+    /* c = get_symbol_end(); */
+    c = get_symbol_name(&name);
     sym = symbol_find_or_make(name);
     elfsym = (elf_symbol_type *) symbol_get_bfdsym(sym);
     *input_line_pointer = c;
@@ -3822,8 +3823,9 @@ k1_type(int start ATTRIBUTE_UNUSED)
             || *input_line_pointer == '%')
         ++input_line_pointer;
 
-    typename = input_line_pointer;
-    c = get_symbol_end();
+    /* typename = input_line_pointer; */
+    /* c = get_symbol_end(); */
+    c = get_symbol_name(&typename);
 
     type = 0;
     if (strcmp(typename, "function") == 0
@@ -3887,7 +3889,7 @@ static void
 k1_endp(int start ATTRIBUTE_UNUSED)
  {
     char c;
-
+    char *name;
 
     if(inside_bundle){
       as_warn(".endp directive inside a bundle.");
@@ -3897,8 +3899,10 @@ k1_endp(int start ATTRIBUTE_UNUSED)
     while (1)
  {
         SKIP_WHITESPACE();
-        c = get_symbol_end();
-        *input_line_pointer = c;
+	c = get_symbol_name(&name);
+	(void)restore_line_pointer(c);
+        /* c = get_symbol_end(); */
+        /* *input_line_pointer = c; */
         SKIP_WHITESPACE();
         if (*input_line_pointer != ',')
             break;
@@ -4015,12 +4019,16 @@ static void
 k1_proc(int start ATTRIBUTE_UNUSED)
  {
     char c;
+    char *name;
     /* there may be several names separated by commas... */
     while (1)
  {
         SKIP_WHITESPACE();
-        c = get_symbol_end();
-        *input_line_pointer = c;
+	c = get_symbol_name(&name);
+	(void)restore_line_pointer(c);
+
+        /* c = get_symbol_end(); */
+        /* *input_line_pointer = c; */
         SKIP_WHITESPACE();
         if (*input_line_pointer != ',')
             break;
@@ -4038,7 +4046,7 @@ k1_proc(int start ATTRIBUTE_UNUSED)
 
     /* this code emit a global symbol to mark the end of each function    */
     /* the symbol emitted has a name formed by the original function name */
-    /* cocatenated with $endproc so if _foo is a function name the symbol */
+    /* concatenated with $endproc so if _foo is a function name the symbol */
     /* marking the end of it is _foo$endproc                              */
     /* It is also required for generation of .size directive in k1_endp() */
 

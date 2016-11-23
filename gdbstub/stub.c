@@ -378,6 +378,7 @@ static void gdbstub_build_thread_list (struct gdbstub *stub)
 {
   str_t str;
   int i, j, rm_idx;
+  const char *cluster_name, *cluster_desc;
 
   str = new_str ();
   str_printf (str, "<?xml version=\"1.0\"?>\n<threads>\n");
@@ -387,26 +388,32 @@ static void gdbstub_build_thread_list (struct gdbstub *stub)
     if (stub->agents[i].attached == 0 || stub->agents[i].ddr_peer_united_io)
       continue;
 
+    cluster_name = debug_agent_get_cluster_name (stub->agents[i].agent);
+    cluster_desc = debug_agent_get_desc (stub->agents[i].agent) ?: "";
+    
     /* Make the resource manager the first in the list. */
     rm_idx = debug_agent_get_rm_idx (stub->agents[i].agent);
 
-    str_printf (str, "<thread id =\"p%x.%x\">%s</thread>\n",
-      i + 1, rm_idx + 1, stub->agents[i].vehicles[rm_idx]);
+    str_printf (str, "<thread id =\"p%x.%x\" name=\"%s of %s %s\">%s</thread>\n",
+      i + 1, rm_idx + 1, stub->agents[i].vehicles[rm_idx], cluster_name, cluster_desc,
+      stub->agents[i].vehicles[rm_idx]);
     
     for (j = 0; j < stub->agents[i].nbvehicles; j++)
       if (j != rm_idx)
-        str_printf (str, "<thread id =\"p%x.%x\">%s</thread>\n",
-          i + 1, j + 1, stub->agents[i].vehicles[j]);
+        str_printf (str, "<thread id =\"p%x.%x\" name=\"%s of %s %s\">%s</thread>\n",
+          i + 1, j + 1, stub->agents[i].vehicles[j], cluster_name, cluster_desc, stub->agents[i].vehicles[j]);
     
     if (stub->agents[i].eth_peer_united_io)
     {
       struct agent *eth = stub->agents[i].eth_peer_united_io;
       for (j = 0; j < eth->nbvehicles; j++)
-        str_printf (str, "<thread id =\"p%x.%x\">%s</thread>\n", 
-          i + 1, j + stub->agents[i].nbvehicles + 1, eth->vehicles[j]);
+        str_printf (str, "<thread id =\"p%x.%x\" name=\"%s of %s %s\">%s</thread>\n", 
+          i + 1, j + stub->agents[i].nbvehicles + 1, eth->vehicles[j], cluster_name, cluster_desc, eth->vehicles[j]);
     }
   }
   str_printf (str, "</threads>");
+  if (stub->threads)
+    free (stub->threads);
   stub->threads = strdup (str->buf);
 
   delete_str (str);
@@ -1860,7 +1867,7 @@ static errcode_t run_in_thread (struct gdbstub *stub, int agent, int vehicle,
 
 static errcode_t debug_agent_interrupt (debug_agent_t *da, int vehicle) 
 {
-    return debug_agent_stop (da, vehicle, EXEC_SIGNALED, 5);
+    return debug_agent_stop (da, vehicle, EXEC_SIGNALED, 2);
 }
 
 static bool context_matches (struct context *c1, struct context *c2)
@@ -2291,6 +2298,9 @@ bool handle_command (struct gdbstub *stub)
 	case 'K':
 	    if (!starts_with ("vKill;", stub->payload)) goto unknown;
 	    return handle_vKill (stub);
+	case 'M':
+	    if (!starts_with ("vMustReplyEmpty", stub->payload)) goto unknown;
+	    return send_ok (stub);
 	case 'S':
 	    if (!starts_with ("vStopped", stub->payload)) goto unknown;
 	    return handle_vStopped (stub);

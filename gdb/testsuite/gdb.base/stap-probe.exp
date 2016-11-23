@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2014 Free Software Foundation, Inc.
+# Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,12 @@
 
 standard_testfile
 
+# K1: does not compile (include sys/sdt.h)
+if [istarget k1*-*-*] then {
+  unsupported "stap-probe.exp"
+  return 1
+}
+
 # Run the tests.  We run the tests two different ways: once with a
 # plain probe, and once with a probe that has an associated semaphore.
 # This returns -1 on failure to compile or start, 0 otherwise.
@@ -30,7 +36,7 @@ proc stap_test {exec_name {arg ""}} {
 	return -1
     }
 
-    gdb_test "print \$_probe_argc" "No SystemTap probe at PC $hex" \
+    gdb_test "print \$_probe_argc" "No probe at PC $hex" \
 	"check argument not at probe point"
 
     gdb_test "info probes stap" \

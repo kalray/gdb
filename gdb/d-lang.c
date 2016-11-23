@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,8 @@
 #include "varobj.h"
 #include "d-lang.h"
 #include "c-lang.h"
-#include "parser-defs.h"
-#include "gdb_obstack.h"
+#include "demangle.h"
+#include "cp-support.h"
 
 /* The name of the symbol to use to get the name of the main subprogram.  */
 static const char D_MAIN[] = "D main";
@@ -52,37 +52,7 @@ d_main_name (void)
 char *
 d_demangle (const char *symbol, int options)
 {
-  struct obstack tempbuf;
-  char *result;
-
-  if ((symbol == NULL) || (*symbol == '\0'))
-    return NULL;
-  else if (strcmp (symbol, "_Dmain") == 0)
-    return xstrdup ("D main");
-
-  obstack_init (&tempbuf);
-
-  if (strncmp (symbol, "_D", 2) == 0)
-    symbol += 2;
-  else
-    {
-      obstack_free (&tempbuf, NULL);
-      return NULL;
-    }
-
-  if (d_parse_symbol (&tempbuf, symbol) != NULL)
-    {
-      obstack_grow_str0 (&tempbuf, "");
-      result = xstrdup (obstack_finish (&tempbuf));
-      obstack_free (&tempbuf, NULL);
-    }
-  else
-    {
-      obstack_free (&tempbuf, NULL);
-      return NULL;
-    }
-
-  return result;
+  return gdb_demangle (symbol, options | DMGL_DLANG);
 }
 
 /* Table mapping opcodes into strings for printing operators
@@ -96,8 +66,8 @@ static const struct op_print d_op_print_tab[] =
   {"|", BINOP_BITWISE_IOR, PREC_BITWISE_IOR, 0},
   {"^", BINOP_BITWISE_XOR, PREC_BITWISE_XOR, 0},
   {"&", BINOP_BITWISE_AND, PREC_BITWISE_AND, 0},
-  {"==", BINOP_EQUAL, PREC_EQUAL, 0},
-  {"!=", BINOP_NOTEQUAL, PREC_EQUAL, 0},
+  {"==", BINOP_EQUAL, PREC_ORDER, 0},
+  {"!=", BINOP_NOTEQUAL, PREC_ORDER, 0},
   {"<=", BINOP_LEQ, PREC_ORDER, 0},
   {">=", BINOP_GEQ, PREC_ORDER, 0},
   {">", BINOP_GTR, PREC_ORDER, 0},
@@ -106,9 +76,11 @@ static const struct op_print d_op_print_tab[] =
   {"<<", BINOP_LSH, PREC_SHIFT, 0},
   {"+", BINOP_ADD, PREC_ADD, 0},
   {"-", BINOP_SUB, PREC_ADD, 0},
+  {"~", BINOP_CONCAT, PREC_ADD, 0},
   {"*", BINOP_MUL, PREC_MUL, 0},
   {"/", BINOP_DIV, PREC_MUL, 0},
   {"%", BINOP_REM, PREC_MUL, 0},
+  {"^^", BINOP_EXP, PREC_REPEAT, 0},
   {"@", BINOP_REPEAT, PREC_REPEAT, 0},
   {"-", UNOP_NEG, PREC_PREFIX, 0},
   {"!", UNOP_LOGICAL_NOT, PREC_PREFIX, 0},
@@ -118,7 +90,7 @@ static const struct op_print d_op_print_tab[] =
   {"sizeof ", UNOP_SIZEOF, PREC_PREFIX, 0},
   {"++", UNOP_PREINCREMENT, PREC_PREFIX, 0},
   {"--", UNOP_PREDECREMENT, PREC_PREFIX, 0},
-  {NULL, 0, 0, 0}
+  {NULL, OP_NULL, PREC_PREFIX, 0}
 };
 
 /* Mapping of all D basic data types into the language vector.  */
@@ -228,8 +200,8 @@ static const struct language_defn d_language_defn =
   array_row_major,
   macro_expansion_no,
   &exp_descriptor_c,
-  c_parse,
-  c_error,
+  d_parse,
+  d_error,
   null_post_parser,
   c_printchar,			/* Print a character constant.  */
   c_printstr,			/* Function to print string constant.  */
@@ -242,7 +214,7 @@ static const struct language_defn d_language_defn =
   default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline.  */
   "this",
-  basic_lookup_symbol_nonlocal, 
+  d_lookup_symbol_nonlocal,
   basic_lookup_transparent_type,
   d_demangle,			/* Language specific symbol demangler.  */
   NULL,				/* Language specific
@@ -259,6 +231,8 @@ static const struct language_defn d_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &default_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
 
@@ -348,7 +322,7 @@ static struct gdbarch_data *d_type_data;
 const struct builtin_d_type *
 builtin_d_type (struct gdbarch *gdbarch)
 {
-  return gdbarch_data (gdbarch, d_type_data);
+  return (const struct builtin_d_type *) gdbarch_data (gdbarch, d_type_data);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

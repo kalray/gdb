@@ -1,5 +1,5 @@
 /* Debugging routines for the remote server for GDB.
-   Copyright (C) 2014 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
-#include <sys/time.h>
+#include "gdb_sys_time.h"
 
 /* Enable miscellaneous debugging output.  The name is historical - it
    was originally used to debug LinuxThreads support.  */
@@ -33,10 +33,9 @@ int debug_timestamp;
    previous call ended with "\n".  */
 
 void
-debug_printf (const char *msg, ...)
+debug_vprintf (const char *format, va_list ap)
 {
-  va_list args;
-#if defined (HAVE_GETTIMEOFDAY) && !defined (IN_PROCESS_AGENT)
+#if !defined (IN_PROCESS_AGENT)
   /* N.B. Not thread safe, and can't be used, as is, with IPA.  */
   static int new_line = 1;
 
@@ -53,13 +52,11 @@ debug_printf (const char *msg, ...)
     }
 #endif
 
-  va_start (args, msg);
-  vfprintf (stderr, msg, args);
-  va_end (args);
+  vfprintf (stderr, format, ap);
 
-#if defined (HAVE_GETTIMEOFDAY) && !defined (IN_PROCESS_AGENT)
-  if (*msg)
-    new_line = msg[strlen (msg) - 1] == '\n';
+#if !defined (IN_PROCESS_AGENT)
+  if (*format)
+    new_line = format[strlen (format) - 1] == '\n';
 #endif
 }
 

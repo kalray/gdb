@@ -1,5 +1,5 @@
 /* MI Command Set for GDB, the GNU debugger.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -21,7 +21,6 @@
 #include "defs.h"
 #include "top.h"
 #include "mi-cmds.h"
-#include <string.h>
 #include "mi-main.h"
 
 extern void _initialize_mi_cmds (void);

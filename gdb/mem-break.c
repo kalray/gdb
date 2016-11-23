@@ -1,6 +1,6 @@
 /* Simulate breakpoints by patching locations in the target system, for GDB.
 
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -24,9 +24,6 @@
 #include "breakpoint.h"
 #include "inferior.h"
 #include "target.h"
-#include <string.h>
-
-
 /* Insert a breakpoint on targets that don't have any better
    breakpoint support.  We read the contents of the target location
    and stash it, then overwrite it with a breakpoint instruction.
@@ -40,27 +37,38 @@ int
 default_memory_insert_breakpoint (struct gdbarch *gdbarch,
 				  struct bp_target_info *bp_tgt)
 {
-  int val;
+  CORE_ADDR addr = bp_tgt->reqstd_address;
   const unsigned char *bp;
   gdb_byte *readbuf;
+  int bplen;
+  int val;
 
   /* Determine appropriate breakpoint contents and size for this address.  */
-  bp = gdbarch_breakpoint_from_pc
-       (gdbarch, &bp_tgt->placed_address, &bp_tgt->placed_size);
+  bp = gdbarch_breakpoint_from_pc (gdbarch, &addr, &bplen);
   if (bp == NULL)
     error (_("Software breakpoints not implemented for this target."));
 
+  bp_tgt->placed_address = addr;
+  bp_tgt->placed_size = bplen;
+
   /* Save the memory contents in the shadow_contents buffer and then
      write the breakpoint instruction.  */
-  bp_tgt->shadow_len = bp_tgt->placed_size;
-  readbuf = alloca (bp_tgt->placed_size);
-  val = target_read_memory (bp_tgt->placed_address, readbuf,
-			    bp_tgt->placed_size);
+  readbuf = (gdb_byte *) alloca (bplen);
+  val = target_read_memory (addr, readbuf, bplen);
   if (val == 0)
     {
-      memcpy (bp_tgt->shadow_contents, readbuf, bp_tgt->placed_size);
-      val = target_write_raw_memory (bp_tgt->placed_address, bp,
-				     bp_tgt->placed_size);
+      /* These must be set together, either before or after the shadow
+	 read, so that if we're "reinserting" a breakpoint that
+	 doesn't have a shadow yet, the breakpoint masking code inside
+	 target_read_memory doesn't mask out this breakpoint using an
+	 unfilled shadow buffer.  The core may be trying to reinsert a
+	 permanent breakpoint, for targets that support breakpoint
+	 conditions/commands on the target side for some types of
+	 breakpoints, such as target remote.  */
+      bp_tgt->shadow_len = bplen;
+      memcpy (bp_tgt->shadow_contents, readbuf, bplen);
+
+      val = target_write_raw_memory (addr, bp, bplen);
     }
 
   return val;

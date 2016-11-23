@@ -2,7 +2,7 @@
    Written by Fred Fish <fnf@cygnus.com>
    Rewritten by Jim Blandy <jimb@cygnus.com>
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +22,6 @@
 #include "defs.h"
 #include "gdb_obstack.h"
 #include "bcache.h"
-#include <string.h>		/* For memcpy declaration */
-#include "gdb_assert.h"
-
-#include <stddef.h>
-#include <stdlib.h>
 
 /* The type used to hold a single bcache string.  The user data is
    stored in d.data.  Since it can be any type, it needs to have the
@@ -269,14 +264,15 @@ bcache_full (const void *addr, int length, struct bcache *bcache, int *added)
 
   /* The user's string isn't in the list.  Insert it after *ps.  */
   {
-    struct bstring *new
-      = obstack_alloc (&bcache->cache, BSTRING_SIZE (length));
+    struct bstring *newobj
+      = (struct bstring *) obstack_alloc (&bcache->cache,
+					  BSTRING_SIZE (length));
 
-    memcpy (&new->d.data, addr, length);
-    new->length = length;
-    new->next = bcache->bucket[hash_index];
-    new->half_hash = half_hash;
-    bcache->bucket[hash_index] = new;
+    memcpy (&newobj->d.data, addr, length);
+    newobj->length = length;
+    newobj->next = bcache->bucket[hash_index];
+    newobj->half_hash = half_hash;
+    bcache->bucket[hash_index] = newobj;
 
     bcache->unique_count++;
     bcache->unique_size += length;
@@ -285,7 +281,7 @@ bcache_full (const void *addr, int length, struct bcache *bcache, int *added)
     if (added)
       *added = 1;
 
-    return &new->d.data;
+    return &newobj->d.data;
   }
 }
 

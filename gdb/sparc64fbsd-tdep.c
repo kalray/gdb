@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,10 +27,8 @@
 #include "target.h"
 #include "trad-frame.h"
 
-#include "gdb_assert.h"
-#include <string.h>
-
 #include "sparc64-tdep.h"
+#include "fbsd-tdep.h"
 #include "solib-svr4.h"
 
 /* From <machine/reg.h>.  */
@@ -99,7 +97,7 @@ sparc64fbsd_sigtramp_frame_cache (struct frame_info *this_frame,
   int regnum;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
   gdb_assert (cache == *this_cache);
@@ -223,6 +221,9 @@ static void
 sparc64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  /* Generic FreeBSD support. */
+  fbsd_init_abi (info, gdbarch);
 
   tdep->gregset = &sparc64fbsd_gregset;
   tdep->sizeof_gregset = 256;

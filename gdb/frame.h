@@ -1,6 +1,6 @@
 /* Definitions for dealing with stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,6 +68,8 @@
    stack *address, ...
 
    */
+
+#include "language.h"
 
 struct symtab_and_line;
 struct frame_unwind;
@@ -665,8 +667,8 @@ extern void *frame_obstack_zalloc (unsigned long size);
 /* Create a regcache, and copy the frame's registers into it.  */
 struct regcache *frame_save_as_regcache (struct frame_info *this_frame);
 
-extern struct block *get_frame_block (struct frame_info *,
-                                      CORE_ADDR *addr_in_block);
+extern const struct block *get_frame_block (struct frame_info *,
+					    CORE_ADDR *addr_in_block);
 
 /* Return the `struct block' that belongs to the selected thread's
    selected frame.  If the inferior has no state, return NULL.
@@ -694,7 +696,7 @@ extern struct block *get_frame_block (struct frame_info *,
    it occurs in the CLI code and makes it possible for commands to
    work, even when the inferior has no state.  */
 
-extern struct block *get_selected_block (CORE_ADDR *addr_in_block);
+extern const struct block *get_selected_block (CORE_ADDR *addr_in_block);
 
 extern struct symbol *get_frame_function (struct frame_info *);
 
@@ -763,8 +765,6 @@ extern void args_info (char *, int);
 
 extern void locals_info (char *, int);
 
-extern void (*deprecated_selected_frame_level_changed_hook) (int);
-
 extern void return_command (char *, int);
 
 /* Set FRAME's unwinder temporarily, so that we can call a sniffer.
@@ -815,5 +815,15 @@ extern struct frame_info *create_new_frame (CORE_ADDR base, CORE_ADDR pc);
 
 extern int frame_unwinder_is (struct frame_info *fi,
 			      const struct frame_unwind *unwinder);
+
+/* Return the language of FRAME.  */
+
+extern enum language get_frame_language (struct frame_info *frame);
+
+/* Return the first non-tailcall frame above FRAME or FRAME if it is not a
+   tailcall frame.  Return NULL if FRAME is the start of a tailcall-only
+   chain.  */
+
+extern struct frame_info *skip_tailcall_frames (struct frame_info *frame);
 
 #endif /* !defined (FRAME_H)  */

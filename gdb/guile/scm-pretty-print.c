@@ -1,6 +1,6 @@
 /* GDB/Scheme pretty-printing.
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,6 @@
 
 #include "defs.h"
 #include "charset.h"
-#include "gdb_assert.h"
 #include "symtab.h" /* Needed by language.h.  */
 #include "language.h"
 #include "objfiles.h"
@@ -111,11 +110,8 @@ static const char pretty_printer_worker_smob_name[] =
 static scm_t_bits pretty_printer_smob_tag;
 static scm_t_bits pretty_printer_worker_smob_tag;
 
-/* Global list of pretty-printers.  */
-static const char pretty_printer_list_name[] = "*pretty-printers*";
-
-/* The *pretty-printer* variable.  */
-static SCM pretty_printer_list_var;
+/* The global pretty-printer list.  */
+static SCM pretty_printer_list;
 
 /* gdb:pp-type-error.  */
 static SCM pp_type_error_symbol;
@@ -236,6 +232,29 @@ gdbscm_set_pretty_printer_enabled_x (SCM self, SCM enabled)
     = ppscm_get_pretty_printer_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
 
   pp_smob->enabled = scm_from_bool (gdbscm_is_true (enabled));
+
+  return SCM_UNSPECIFIED;
+}
+
+/* (pretty-printers) -> list
+   Returns the list of global pretty-printers.  */
+
+static SCM
+gdbscm_pretty_printers (void)
+{
+  return pretty_printer_list;
+}
+
+/* (set-pretty-printers! list) -> unspecified
+   Set the global pretty-printers list.  */
+
+static SCM
+gdbscm_set_pretty_printers_x (SCM printers)
+{
+  SCM_ASSERT_TYPE (gdbscm_is_true (scm_list_p (printers)), printers,
+		   SCM_ARG1, FUNC_NAME, _("list"));
+
+  pretty_printer_list = printers;
 
   return SCM_UNSPECIFIED;
 }
@@ -457,11 +476,8 @@ ppscm_find_pretty_printer_from_progspace (SCM value)
 static SCM
 ppscm_find_pretty_printer_from_gdb (SCM value)
 {
-  SCM pp_list, pp;
+  SCM pp = ppscm_search_pp_list (pretty_printer_list, value);
 
-  /* Fetch the global pretty printer list.  */
-  pp_list = scm_variable_ref (pretty_printer_list_var);
-  pp = ppscm_search_pp_list (pp_list, value);
   return pp;
 }
 
@@ -513,11 +529,10 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
 			      struct gdbarch *gdbarch,
 			      const struct language_defn *language)
 {
-  volatile struct gdb_exception except;
   SCM result = SCM_BOOL_F;
 
   *out_value = NULL;
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       int rc;
       pretty_printer_worker_smob *w_smob
@@ -552,6 +567,10 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
 	    (_("invalid result from pretty-printer to-string"), result);
 	}
     }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+    }
+  END_CATCH
 
   return result;
 }
@@ -952,7 +971,7 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
   struct value *value;
   enum display_hint hint;
   struct cleanup *cleanups;
-  int result = EXT_LANG_RC_NOP;
+  enum ext_lang_rc result = EXT_LANG_RC_NOP;
   enum string_repr_result print_result;
 
   /* No pretty-printer support for unavailable values.  */
@@ -1036,7 +1055,8 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
 
 static const scheme_function pretty_printer_functions[] =
 {
-  { "make-pretty-printer", 2, 0, 0, gdbscm_make_pretty_printer,
+  { "make-pretty-printer", 2, 0, 0,
+    as_a_scm_t_subr (gdbscm_make_pretty_printer),
     "\
 Create a <gdb:pretty-printer> object.\n\
 \n\
@@ -1045,21 +1065,23 @@ Create a <gdb:pretty-printer> object.\n\
     lookup: a procedure:\n\
       (pretty-printer <gdb:value>) -> <gdb:pretty-printer-worker> | #f." },
 
-  { "pretty-printer?", 1, 0, 0, gdbscm_pretty_printer_p,
+  { "pretty-printer?", 1, 0, 0, as_a_scm_t_subr (gdbscm_pretty_printer_p),
     "\
 Return #t if the object is a <gdb:pretty-printer> object." },
 
-  { "pretty-printer-enabled?", 1, 0, 0, gdbscm_pretty_printer_enabled_p,
+  { "pretty-printer-enabled?", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_pretty_printer_enabled_p),
     "\
 Return #t if the pretty-printer is enabled." },
 
   { "set-pretty-printer-enabled!", 2, 0, 0,
-    gdbscm_set_pretty_printer_enabled_x,
+    as_a_scm_t_subr (gdbscm_set_pretty_printer_enabled_x),
     "\
 Set the enabled flag of the pretty-printer.\n\
 Returns \"unspecified\"." },
 
-  { "make-pretty-printer-worker", 3, 0, 0, gdbscm_make_pretty_printer_worker,
+  { "make-pretty-printer-worker", 3, 0, 0,
+    as_a_scm_t_subr (gdbscm_make_pretty_printer_worker),
     "\
 Create a <gdb:pretty-printer-worker> object.\n\
 \n\
@@ -1070,9 +1092,19 @@ Create a <gdb:pretty-printer-worker> object.\n\
     children:     either #f or a procedure:\n\
       (pretty-printer) -> <gdb:iterator>" },
 
-  { "pretty-printer-worker?", 1, 0, 0, gdbscm_pretty_printer_worker_p,
+  { "pretty-printer-worker?", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_pretty_printer_worker_p),
     "\
 Return #t if the object is a <gdb:pretty-printer-worker> object." },
+
+  { "pretty-printers", 0, 0, 0, as_a_scm_t_subr (gdbscm_pretty_printers),
+    "\
+Return the list of global pretty-printers." },
+
+  { "set-pretty-printers!", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_set_pretty_printers_x),
+    "\
+Set the list of global pretty-printers." },
 
   END_FUNCTIONS
 };
@@ -1094,12 +1126,7 @@ gdbscm_initialize_pretty_printers (void)
 
   gdbscm_define_functions (pretty_printer_functions, 1);
 
-  scm_c_define (pretty_printer_list_name, SCM_EOL);
-
-  pretty_printer_list_var
-    = scm_c_private_variable (gdbscm_module_name,
-			      pretty_printer_list_name);
-  gdb_assert (!gdbscm_is_false (pretty_printer_list_var));
+  pretty_printer_list = SCM_EOL;
 
   pp_type_error_symbol = scm_from_latin1_symbol ("gdb:pp-type-error");
 

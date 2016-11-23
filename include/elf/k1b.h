@@ -1,6 +1,6 @@
 /* K1 ELF support for BFD.
  * 
- * Copyright (C) 2009-2014 Kalray SA.
+ * Copyright (C) 2009-2016 Kalray SA.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
 #ifndef _ELF_K1_H
 #define _ELF_K1_H
 
-#include "bfd.h"
-#include "elf-bfd.h"
+//#include "bfd.h"
+//#include "elf-bfd.h"
 
 #include "elf/reloc-macros.h"
 
@@ -120,13 +120,13 @@ typedef union {
 #define ELF_K1_MODE_KERNEL      (0x1<<_ELF_K1_MODE_BIT)
 #define _ELF_K1_CHECK_MODE(flags,m) (((flags) & ELF_K1_MODE_MASK)==(m))
 
-const char * core_printable_name(flagword flags);
-const char * cut_printable_name(flagword flags);
-const char * abi_printable_name(flagword flags, Elf_Internal_Ehdr * i_ehdrp);
-const char * osabi_printable_name(Elf_Internal_Ehdr * i_ehdrp);
-const char * code_generation_mode_printable_name(Elf_Internal_Ehdr * i_ehdrp);
-flagword k1_elf_get_private_flags (bfd* abfd);
-void k1_elf_dump_target_info(bfd *abfd, FILE *writer);
+/* const char * core_printable_name(flagword flags); */
+/* const char * cut_printable_name(flagword flags); */
+/* const char * abi_printable_name(flagword flags, Elf_Internal_Ehdr * i_ehdrp); */
+/* const char * osabi_printable_name(Elf_Internal_Ehdr * i_ehdrp); */
+/* const char * code_generation_mode_printable_name(Elf_Internal_Ehdr * i_ehdrp); */
+/* flagword k1_elf_get_private_flags (bfd* abfd); */
+/* void k1_elf_dump_target_info(bfd *abfd, FILE *writer); */
 
 #if 0
 /* FIXME: Do we need that? */

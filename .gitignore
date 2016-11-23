@@ -33,6 +33,11 @@ POTFILES
 TAGS
 TAGS.sub
 
+.local.vimrc
+.lvimrc
+
+.clang-format
+
 .gdbinit
 .gdb_history
 
@@ -42,11 +47,20 @@ core
 
 lost+found
 
+# ignore ./contrib/gcc_update output
+LAST_UPDATED
+REVISION
+
+# kalray specific ignore
 *.log
 *.sum
-
 k1_build_elf_x86
 k1_build_gdb_x86
 k1_build_rtems_x86
 k1_build_nodeos_x86
 gdbstub/build
+k1_build_linux_gdb_x86
+gdb/gdbserver/build-gnulib-gdbserver
+gdb/gdbserver/build-libiberty-gdbserver
+gdb/gdbserver/Makefile
+

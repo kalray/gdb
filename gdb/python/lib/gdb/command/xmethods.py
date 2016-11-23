@@ -1,5 +1,5 @@
 # Xmethod commands.
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,8 +87,11 @@ def get_method_matchers_in_loci(loci, locus_re, matcher_re):
 
     Arguments:
         loci: The list of loci to lookup matching xmethods in.
-        locus_re: Xmethod matchers will be looked up in a particular locus
-                  only if its filename matches the regular expression LOCUS_RE.
+        locus_re: If a locus is an objfile, then xmethod matchers will be
+                  looked up in it only if its filename matches the regular
+                  expression LOCUS_RE.  If a locus is the current progspace,
+                  then xmethod matchers will be looked up in it only if the
+                  string "progspace" matches LOCUS_RE.
         matcher_re: The regular expression to match the xmethod matcher
                     names.
 
@@ -99,8 +102,7 @@ def get_method_matchers_in_loci(loci, locus_re, matcher_re):
     xm_dict = {}
     for locus in loci:
         if isinstance(locus, gdb.Progspace):
-            if (not locus_re.match(locus.filename) and
-                not locus_re.match('progspace')):
+            if not locus_re.match('progspace'):
                 continue
             locus_type = "progspace"
         else:
@@ -115,7 +117,7 @@ def get_method_matchers_in_loci(loci, locus_re, matcher_re):
 
 def print_xm_info(xm_dict, name_re):
     """Print a dictionary of xmethods."""
-    def get_status_string(method):
+    def get_status_string(m):
         if not m.enabled:
             return " [disabled]"
         else:
@@ -128,7 +130,7 @@ def print_xm_info(xm_dict, name_re):
             continue
         print ("Xmethods in %s:" % locus_str)
         for matcher in xm_dict[locus_str]:
-            print ("  %s" % matcher.name)
+            print ("  %s%s" % (matcher.name, get_status_string(matcher)))
             if not matcher.methods:
                 continue
             for m in matcher.methods:
@@ -138,7 +140,7 @@ def print_xm_info(xm_dict, name_re):
 
 def set_xm_status1(xm_dict, name_re, status):
     """Set the status (enabled/disabled) of a dictionary of xmethods."""
-    for locus_str, matchers in xm_dict.iteritems():
+    for locus_str, matchers in xm_dict.items():
         for matcher in matchers:
             if not name_re:
                 # If the name regex is missing, then set the status of the

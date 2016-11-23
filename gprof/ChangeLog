@@ -1,24 +1,14 @@
-2014-06-05  Joel Brobecker  <brobecker@adacore.com>
+2016-01-17  Alan Modra  <amodra@gmail.com>
 
-	* Makefile.am (CONFIG_STATUS_DEPENDENCIES): Add dependency on
-	bfd's development.sh.
-	* Makefile.in, configure: Regenerate.
+	* configure: Regenerate.
 
-2014-03-12  Alan Modra  <amodra@gmail.com>
+2016-01-01  Alan Modra  <amodra@gmail.com>
 
-	* Makefile.in: Regenerate.
+	Update year range in copyright notice of all files.
 
-2014-03-05  Alan Modra  <amodra@gmail.com>
-
-	Update copyright years.
-
-2014-02-10  Alan Modra  <amodra@gmail.com>
-
-	* po/gprof.pot: Regenerate.
-
-For older changes see ChangeLog-2013
+For older changes see ChangeLog-2015
 
-Copyright (C) 2014 Free Software Foundation, Inc.
+Copyright (C) 2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

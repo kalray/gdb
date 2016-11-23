@@ -551,7 +551,7 @@ extern const int k1_reloc_map_len;
 
 #define K1_RELOC_NAME_LOOKUP_DEF(size) \
 static reloc_howto_type* k1_elf ## size ## _reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name){ \
-  unsigned int i; \
+  int i; \
   for (i = 0; i < k1_reloc_map_len; i++){ \
     if (elf ## size ## _k1_howto_table[i].name != NULL \
         && strcasecmp (elf ## size ## _k1_howto_table[i].name, r_name) == 0){ \
@@ -564,7 +564,7 @@ static reloc_howto_type* k1_elf ## size ## _reloc_name_lookup (bfd *abfd ATTRIBU
 #define K1_RELOC_TYPE_LOOKUP_DEF(size) \
   static reloc_howto_type* k1_elf ## size ##_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED, \
                  bfd_reloc_code_real_type code){ \
-  unsigned int i; \
+  int i; \
   for (i = 0; i < k1_reloc_map_len; i++){ \
     if (k1_reloc_map[i].bfd_reloc_val == code){ \
       return & elf ## size ##_k1_howto_table[k1_reloc_map[i].k1_reloc_val]; \

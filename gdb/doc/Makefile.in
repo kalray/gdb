@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2014 Free Software Foundation, Inc.
+##Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -29,6 +29,8 @@ htmldir = @htmldir@
 mandir = @mandir@
 man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
+
+transform = @program_transform_name@
 
 SHELL = @SHELL@
 
@@ -141,7 +143,9 @@ GDB_DOC_FILES = \
 # Stabs manual: All files
 STABS_DOC_SOURCE_INCLUDES = \
 	$(srcdir)/fdl.texi
-STABS_DOC_BUILD_INCLUDES =
+STABS_DOC_BUILD_INCLUDES = \
+	gdb-cfg.texi \
+	GDBvn.texi
 STABS_DOC_FILES = \
 	$(srcdir)/stabs.texinfo \
 	$(STABS_DOC_SOURCE_INCLUDES) \
@@ -308,7 +312,7 @@ install-man1: $(MAN1S)
 	    continue; \
 	  fi; \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=`echo $$p | sed -e 's|^.*/||'`; \
+	  f=`echo $$p | sed -e 's|^.*/||' -e '$(transform)'`; \
 	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man1dir)/$$f'"; \
 	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(man1dir)/$$f"; \
 	done
@@ -317,7 +321,7 @@ install-man5: $(MAN5S)
 	test -z "$(man5dir)" || $(mkinstalldirs) "$(DESTDIR)$(man5dir)"
 	@list='$(MAN5S)'; for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=`echo $$p | sed -e 's|^.*/||'`; \
+	  f=`echo $$p | sed -e 's|^.*/||' -e '$(transform)'`; \
 	  echo " $(INSTALL_DATA) '$$d$$p' '$(DESTDIR)$(man5dir)/$$f'"; \
 	  $(INSTALL_DATA) "$$d$$p" "$(DESTDIR)$(man5dir)/$$f"; \
 	done

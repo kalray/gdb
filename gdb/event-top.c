@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -29,7 +29,6 @@
 #include "event-top.h"
 #include "interps.h"
 #include <signal.h>
-#include "exceptions.h"
 #include "cli/cli-script.h"     /* for reset_command_nest_depth */
 #include "main.h"
 #include "gdbthread.h"
@@ -120,6 +119,11 @@ int exec_done_display_p = 0;
    read commands from.  */
 int input_fd;
 
+/* Used by the stdin event handler to compensate for missed stdin events.
+   Setting this to a non-zero value inside an stdin callback makes the callback
+   run again.  */
+int call_stdin_event_handler_again_p;
+
 /* Signal handling variables.  */
 /* Each of these is a pointer to a function that the event loop will
    invoke if the corresponding signal has received.  The real signal
@@ -206,12 +210,63 @@ change_line_handler (void)
   else
     {
       /* Turn off editing by using gdb_readline2.  */
-      rl_callback_handler_remove ();
+      gdb_rl_callback_handler_remove ();
       call_readline = gdb_readline2;
 
       /* Set up the command handler as well, in case we are called as
          first thing from .gdbinit.  */
       input_handler = command_line_handler;
+    }
+}
+
+/* The functions below are wrappers for rl_callback_handler_remove and
+   rl_callback_handler_install that keep track of whether the callback
+   handler is installed in readline.  This is necessary because after
+   handling a target event of a background execution command, we may
+   need to reinstall the callback handler if it was removed due to a
+   secondary prompt.  See gdb_readline_wrapper_line.  We don't
+   unconditionally install the handler for every target event because
+   that also clears the line buffer, thus installing it while the user
+   is typing would lose input.  */
+
+/* Whether we've registered a callback handler with readline.  */
+static int callback_handler_installed;
+
+/* See event-top.h, and above.  */
+
+void
+gdb_rl_callback_handler_remove (void)
+{
+  rl_callback_handler_remove ();
+  callback_handler_installed = 0;
+}
+
+/* See event-top.h, and above.  Note this wrapper doesn't have an
+   actual callback parameter because we always install
+   INPUT_HANDLER.  */
+
+void
+gdb_rl_callback_handler_install (const char *prompt)
+{
+  /* Calling rl_callback_handler_install resets readline's input
+     buffer.  Calling this when we were already processing input
+     therefore loses input.  */
+  gdb_assert (!callback_handler_installed);
+
+  rl_callback_handler_install (prompt, input_handler);
+  callback_handler_installed = 1;
+}
+
+/* See event-top.h, and above.  */
+
+void
+gdb_rl_callback_handler_reinstall (void)
+{
+  if (!callback_handler_installed)
+    {
+      /* Passing NULL as prompt argument tells readline to not display
+	 a prompt.  */
+      gdb_rl_callback_handler_install (NULL);
     }
 }
 
@@ -233,7 +288,7 @@ change_line_handler (void)
    3. On prompting for pagination.  */
 
 void
-display_gdb_prompt (char *new_prompt)
+display_gdb_prompt (const char *new_prompt)
 {
   char *actual_gdb_prompt = NULL;
   struct cleanup *old_chain;
@@ -268,7 +323,7 @@ display_gdb_prompt (char *new_prompt)
 	     the above two functions.  Calling
 	     rl_callback_handler_remove(), does the job.  */
 
-	  rl_callback_handler_remove ();
+	  gdb_rl_callback_handler_remove ();
 	  do_cleanups (old_chain);
 	  return;
 	}
@@ -283,8 +338,8 @@ display_gdb_prompt (char *new_prompt)
 
   if (async_command_editing_p)
     {
-      rl_callback_handler_remove ();
-      rl_callback_handler_install (actual_gdb_prompt, input_handler);
+      gdb_rl_callback_handler_remove ();
+      gdb_rl_callback_handler_install (actual_gdb_prompt);
     }
   /* new_prompt at this point can be the top of the stack or the one
      passed in.  It can't be NULL.  */
@@ -342,7 +397,7 @@ top_level_prompt (void)
     }
 
   prompt_length = strlen (prefix) + strlen (prompt) + strlen (suffix);
-  composed_prompt = xmalloc (prompt_length + 1);
+  composed_prompt = (char *) xmalloc (prompt_length + 1);
 
   strcpy (composed_prompt, prefix);
   strcat (composed_prompt, prompt);
@@ -364,13 +419,17 @@ stdin_event_handler (int error, gdb_client_data client_data)
     {
       printf_unfiltered (_("error detected on stdin\n"));
       delete_file_handler (input_fd);
-      discard_all_continuations ();
-      discard_all_intermediate_continuations ();
       /* If stdin died, we may as well kill gdb.  */
       quit_command ((char *) 0, stdin == instream);
     }
   else
-    (*call_readline) (client_data);
+    {
+      do
+	{
+	  call_stdin_event_handler_again_p = 0;
+	  (*call_readline) (client_data);
+	} while (call_stdin_event_handler_again_p != 0);
+    }
 }
 
 /* Re-enable stdin after the end of an execution command in
@@ -410,11 +469,10 @@ async_disable_stdin (void)
 static void
 command_handler (char *command)
 {
-  int stdin_is_tty = ISATTY (stdin);
   struct cleanup *stat_chain;
 
   clear_quit_flag ();
-  if (instream == stdin && stdin_is_tty)
+  if (instream == stdin)
     reinitialize_more_filter ();
 
   /* If readline returned a NULL command, it means that the connection
@@ -468,6 +526,7 @@ command_line_handler (char *rl)
     {
       linelength = 80;
       linebuffer = (char *) xmalloc (linelength);
+      linebuffer[0] = '\0';
     }
 
   p = linebuffer;
@@ -605,7 +664,7 @@ command_line_handler (char *rl)
 
   /* Add line to history if appropriate.  */
   if (*linebuffer && input_from_terminal_p ())
-    add_history (linebuffer);
+    gdb_add_history (linebuffer);
 
   /* Note: lines consisting solely of comments are added to the command
      history.  This is useful when you type a command, and then
@@ -621,7 +680,8 @@ command_line_handler (char *rl)
     {
       if (linelength > saved_command_line_size)
 	{
-	  saved_command_line = xrealloc (saved_command_line, linelength);
+	  saved_command_line
+	    = (char *) xrealloc (saved_command_line, linelength);
 	  saved_command_line_size = linelength;
 	}
       strcpy (saved_command_line, linebuffer);
@@ -814,15 +874,10 @@ handle_sigterm (int sig)
 {
   signal (sig, handle_sigterm);
 
-  /* Call quit_force in a signal safe way.
-     quit_force itself is not signal safe.  */
-  if (target_can_async_p ())
-    mark_async_signal_handler (async_sigterm_token);
-  else
-    {
-      sync_quit_force_run = 1;
-      set_quit_flag ();
-    }
+  sync_quit_force_run = 1;
+  set_quit_flag ();
+
+  mark_async_signal_handler (async_sigterm_token);
 }
 
 /* Do the quit.  All the checks have been done by the caller.  */
@@ -873,24 +928,28 @@ handle_sighup (int sig)
 static void
 async_disconnect (gdb_client_data arg)
 {
-  volatile struct gdb_exception exception;
 
-  TRY_CATCH (exception, RETURN_MASK_ALL)
+  TRY
     {
       quit_cover ();
     }
 
-  if (exception.reason < 0)
+  CATCH (exception, RETURN_MASK_ALL)
     {
       fputs_filtered ("Could not kill the program being debugged",
 		      gdb_stderr);
       exception_print (gdb_stderr, exception);
     }
+  END_CATCH
 
-  TRY_CATCH (exception, RETURN_MASK_ALL)
+  TRY
     {
       pop_all_targets ();
     }
+  CATCH (exception, RETURN_MASK_ALL)
+    {
+    }
+  END_CATCH
 
   signal (SIGHUP, SIG_DFL);	/*FIXME: ???????????  */
   raise (SIGHUP);
@@ -1040,6 +1099,6 @@ gdb_disable_readline (void)
   gdb_stdtargerr = NULL;
 #endif
 
-  rl_callback_handler_remove ();
+  gdb_rl_callback_handler_remove ();
   delete_file_handler (input_fd);
 }

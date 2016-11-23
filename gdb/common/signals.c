@@ -1,5 +1,5 @@
 /* Target signal translation functions for GDB.
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.
@@ -17,19 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifdef GDBSERVER
-#include "server.h"
-#else
-#include "defs.h"
-#include <string.h>
-#endif
+#include "common-defs.h"
 
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
 
 #include "gdb_signals.h"
-#include "gdb_assert.h"
 
 struct gdbarch;
 

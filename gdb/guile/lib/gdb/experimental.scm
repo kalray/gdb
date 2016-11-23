@@ -1,7 +1,7 @@
 ;; Various experimental utilities.
 ;; Anything in this file can change or disappear.
 ;;
-;; Copyright (C) 2014 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GDB.
 ;;
@@ -22,8 +22,7 @@
 ;; E.g., (gdb experimental ports), etc.
 
 (define-module (gdb experimental)
-  #:use-module (gdb)
-  #:use-module (gdb init))
+  #:use-module (gdb))
 
 ;; These are defined in C.
 (define-public with-gdb-output-to-port (@@ (gdb) %with-gdb-output-to-port))

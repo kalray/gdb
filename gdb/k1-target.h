@@ -19,6 +19,8 @@ extern int idx_global_debug_level;
 extern int global_debug_level_set;
 extern int inf_created_change_th;
 extern int opt_hide_threads;
+extern int in_info_thread;
+extern int after_first_resume;
 
 void _initialize__k1_target (void);
 void send_cluster_debug_level (int level);
@@ -36,7 +38,6 @@ int get_os_supported_debug_levels (struct inferior *inf);
 void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level);
 void apply_global_debug_level (int level);
 void send_stop_at_main (int bstop);
-int is_current_k1b_user (void);
 void send_cluster_break_on_spawn (struct inferior *inf, int v);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);

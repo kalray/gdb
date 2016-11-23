@@ -1,5 +1,5 @@
 /* Main function for CLI gdb.  
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
 
 #include "defs.h"
 #include "main.h"
-#include <string.h>
 #include "interps.h"
 
 int

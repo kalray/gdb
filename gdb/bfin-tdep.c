@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -20,7 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "inferior.h"
 #include "gdbcore.h"
 #include "arch-utils.h"
@@ -30,7 +29,6 @@
 #include "frame-base.h"
 #include "trad-frame.h"
 #include "dis-asm.h"
-#include "gdb_assert.h"
 #include "sim-regno.h"
 #include "gdb/sim-bfin.h"
 #include "dwarf2-frame.h"
@@ -294,7 +292,7 @@ bfin_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct bfin_frame_cache *) *this_cache;
 
   cache = bfin_alloc_frame_cache ();
   *this_cache = cache;
@@ -533,7 +531,7 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
       int container_len = (TYPE_LENGTH (value_type) + 3) & ~3;
 
       sp -= container_len;
-      write_memory (sp, value_contents_writeable (args[i]), container_len);
+      write_memory (sp, value_contents (args[i]), container_len);
     }
 
   /* Initialize R0, R1, and R2 to the first 3 words of parameters.  */
@@ -568,8 +566,8 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
 static int
 bfin_reg_to_regnum (struct gdbarch *gdbarch, int reg)
 {
-  if (reg > ARRAY_SIZE (map_gcc_gdb))
-    return 0;
+  if (reg < 0 || reg >= ARRAY_SIZE (map_gcc_gdb))
+    return -1;
 
   return map_gcc_gdb[reg];
 }

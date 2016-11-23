@@ -1,5 +1,5 @@
 /* subsegs.h -> subsegs.c
-   Copyright (C) 1987-2014 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -89,6 +89,9 @@ typedef struct segment_info_struct {
   /* NULL, or pointer to the gas symbol that is the section symbol for
      this section.  sym->bsym and bfd_section->symbol should be the same.  */
   symbolS *sym;
+
+  /* Used by dwarf2dbg.c for this section's line table entries.  */
+  void *dwarf2_line_seg;
 
   union {
     /* Current size of section holding stabs strings.  */

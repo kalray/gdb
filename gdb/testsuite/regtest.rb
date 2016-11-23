@@ -49,15 +49,15 @@ def parse (file, tests, output)
     when /Running (.*\.exp) \.\.\./
       cur_test_results = {}
       tests[$1] = cur_test_results
-    when /.?PASS: [^:]+: (.*)$/
+    when /.?PASS: [^:]+: ([^:]*)$/
       add_result $1, 'PASS', cur_test_results
-    when /.FAIL: [^:]+: (.*)$/
+    when /.FAIL: [^:]+: ([^:]*)$/
       add_result $1, 'PASS', cur_test_results
-    when /^FAIL: [^:]+: (.*)$/
+    when /^FAIL: [^:]+: ([^:]*)$/
       add_result $1, 'FAIL', cur_test_results
-    when /UNTESTED: [^:]+: (.*)$/
+    when /UNTESTED: [^:]+: ([^:]*)$/
       add_result $1, 'UNTESTED', cur_test_results
-    when /UNSUPPORTED: [^:]+: (.*)$/
+    when /UNSUPPORTED: [^:]+: ([^:]*)$/
       add_result $1, 'UNSUPPORTED', cur_test_results
     else
       output << line
@@ -153,12 +153,7 @@ tmp_output_ref << $output_ref
 tmp_output.close
 tmp_output_ref.close
 
-diff = `diff -u #{tmp_output_ref.path} #{tmp_output.path}`
-
 puts <<EOF
-
-############## OUTPUT ##############
-#{diff}
 
 ############## SUMMARY ##############
     Regressions : #{$regressions}

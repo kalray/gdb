@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,6 @@
 #include "regcache.h"
 #include "symtab.h"
 #include "trad-frame.h"
-
-#include "gdb_assert.h"
 
 #include "obsd-tdep.h"
 #include "sparc-tdep.h"
@@ -76,7 +74,7 @@ sparc32obsd_sigtramp_frame_cache (struct frame_info *this_frame,
   CORE_ADDR addr;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
   gdb_assert (cache == *this_cache);

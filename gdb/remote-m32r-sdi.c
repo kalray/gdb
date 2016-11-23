@@ -1,6 +1,6 @@
 /* Remote debugging interface for M32R/SDI.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    Contributed by Renesas Technology Co.
    Written by Kei Sakamoto <sakamoto.kei@renesas.com>.
@@ -27,7 +27,6 @@
 #include "infrun.h"
 #include "target.h"
 #include "regcache.h"
-#include <string.h>
 #include "gdbthread.h"
 #include <ctype.h>
 #include <signal.h>
@@ -37,11 +36,11 @@
 #include <netinet/in.h>
 #endif
 #include <sys/types.h>
-#include <sys/time.h>
+#include "gdb_sys_time.h"
 #include <time.h>
 #include "gdb_bfd.h"
 #include "cli/cli-utils.h"
-
+#include "symfile.h"
 #include "serial.h"
 
 /* Descriptor for I/O to remote machine.  */
@@ -340,7 +339,7 @@ m32r_create_inferior (struct target_ops *ops, char *execfile,
   /* The "process" (board) is already stopped awaiting our commands, and
      the program is already downloaded.  We just set its PC and go.  */
 
-  clear_proceed_status ();
+  clear_proceed_status (0);
 
   /* Tell wait_for_inferior that we've started a new process.  */
   init_wait_for_inferior ();
@@ -359,11 +358,12 @@ m32r_create_inferior (struct target_ops *ops, char *execfile,
    NAME is the filename used for communication.  */
 
 static void
-m32r_open (char *args, int from_tty)
+m32r_open (const char *args, int from_tty)
 {
   struct hostent *host_ent;
   struct sockaddr_in server_addr;
-  char *port_str, hostname[256];
+  char hostname[256];
+  const char *port_str;
   int port;
   int i, n;
   int yes = 1;
@@ -701,7 +701,7 @@ static ptid_t
 m32r_wait (struct target_ops *ops,
 	   ptid_t ptid, struct target_waitstatus *status, int options)
 {
-  static RETSIGTYPE (*prev_sigint) ();
+  static sighandler_t prev_sigint;
   unsigned long bp_addr, pc_addr;
   int ib_breakpoints;
   long i;
@@ -1081,7 +1081,7 @@ m32r_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
 	      if (remote_debug)
 		fprintf_unfiltered (gdb_stdlog,
 				    "m32r_xfer_memory() failed\n");
-	      return 0;
+	      return TARGET_XFER_EOF;
 	    }
 	  ret = send_data (writebuf, len);
 	}
@@ -1095,7 +1095,7 @@ m32r_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
 	{
 	  if (remote_debug)
 	    fprintf_unfiltered (gdb_stdlog, "m32r_xfer_memory() failed\n");
-	  return 0;
+	  return TARGET_XFER_EOF;
 	}
 
       c = serial_readchar (sdi_desc, SDI_TIMEOUT);
@@ -1103,7 +1103,7 @@ m32r_xfer_memory (gdb_byte *readbuf, const gdb_byte *writebuf,
 	{
 	  if (remote_debug)
 	    fprintf_unfiltered (gdb_stdlog, "m32r_xfer_memory() failed\n");
-	  return 0;
+	  return TARGET_XFER_EOF;
 	}
 
       ret = recv_data (readbuf, len);
@@ -1173,7 +1173,7 @@ m32r_insert_breakpoint (struct target_ops *ops,
 			struct gdbarch *gdbarch,
 			struct bp_target_info *bp_tgt)
 {
-  CORE_ADDR addr = bp_tgt->placed_address;
+  CORE_ADDR addr = bp_tgt->placed_address = bp_tgt->reqstd_address;
   int ib_breakpoints;
   unsigned char buf[13];
   int i, c;
@@ -1238,9 +1238,9 @@ m32r_remove_breakpoint (struct target_ops *ops,
 }
 
 static void
-m32r_load (struct target_ops *self, char *args, int from_tty)
+m32r_load (struct target_ops *self, const char *args, int from_tty)
 {
-  struct cleanup *old_chain;
+  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
   asection *section;
   bfd *pbfd;
   bfd_vma entry;
@@ -1249,7 +1249,7 @@ m32r_load (struct target_ops *self, char *args, int from_tty)
   int nostart;
   struct timeval start_time, end_time;
   unsigned long data_count;	/* Number of bytes transferred to memory.  */
-  static RETSIGTYPE (*prev_sigint) ();
+  static sighandler_t prev_sigint;
 
   /* for direct tcp connections, we can do a fast binary download.  */
   quiet = 0;
@@ -1258,23 +1258,17 @@ m32r_load (struct target_ops *self, char *args, int from_tty)
 
   while (*args != '\000')
     {
-      char *arg;
+      char *arg = extract_arg_const (&args);
 
-      args = skip_spaces (args);
-
-      arg = args;
-
-      while ((*args != '\000') && !isspace (*args))
-	args++;
-
-      if (*args != '\000')
-	*args++ = '\000';
+      if (arg == NULL)
+	break;
+      make_cleanup (xfree, arg);
 
       if (*arg != '-')
 	filename = arg;
-      else if (strncmp (arg, "-quiet", strlen (arg)) == 0)
+      else if (startswith ("-quiet", arg))
 	quiet = 1;
-      else if (strncmp (arg, "-nostart", strlen (arg)) == 0)
+      else if (startswith ("-nostart", arg))
 	nostart = 1;
       else
 	error (_("Unknown option `%s'"), arg);
@@ -1285,11 +1279,8 @@ m32r_load (struct target_ops *self, char *args, int from_tty)
 
   pbfd = gdb_bfd_open (filename, gnutarget, -1);
   if (pbfd == NULL)
-    {
-      perror_with_name (filename);
-      return;
-    }
-  old_chain = make_cleanup_bfd_unref (pbfd);
+    perror_with_name (filename);
+  make_cleanup_bfd_unref (pbfd);
 
   if (!bfd_check_format (pbfd, bfd_object))
     error (_("\"%s\" is not an object file: %s"), filename,
@@ -1416,10 +1407,10 @@ m32r_load (struct target_ops *self, char *args, int from_tty)
 }
 
 static void
-m32r_stop (struct target_ops *self, ptid_t ptid)
+m32r_interrupt (struct target_ops *self, ptid_t ptid)
 {
   if (remote_debug)
-    fprintf_unfiltered (gdb_stdlog, "m32r_stop()\n");
+    fprintf_unfiltered (gdb_stdlog, "m32r_interrupt()\n");
 
   send_cmd (SDI_STOP_CPU);
 
@@ -1433,7 +1424,8 @@ m32r_stop (struct target_ops *self, ptid_t ptid)
 
 static int
 m32r_can_use_hw_watchpoint (struct target_ops *self,
-			    int type, int cnt, int othertype)
+			    enum bptype type,
+			    int cnt, int othertype)
 {
   return sdi_desc != NULL && cnt < max_access_breaks;
 }
@@ -1444,7 +1436,7 @@ m32r_can_use_hw_watchpoint (struct target_ops *self,
 
 static int
 m32r_insert_watchpoint (struct target_ops *self,
-			CORE_ADDR addr, int len, int type,
+			CORE_ADDR addr, int len, enum target_hw_bp_type type,
 			struct expression *cond)
 {
   int i;
@@ -1469,9 +1461,8 @@ m32r_insert_watchpoint (struct target_ops *self,
 }
 
 static int
-m32r_remove_watchpoint (struct target_ops *self,
-			CORE_ADDR addr, int len, int type,
-			struct expression *cond)
+m32r_remove_watchpoint (struct target_ops *self, CORE_ADDR addr, int len,
+			enum target_hw_bp_type type, struct expression *cond)
 {
   int i;
 
@@ -1673,7 +1664,7 @@ init_m32r_ops (void)
   m32r_ops.to_load = m32r_load;
   m32r_ops.to_create_inferior = m32r_create_inferior;
   m32r_ops.to_mourn_inferior = m32r_mourn_inferior;
-  m32r_ops.to_stop = m32r_stop;
+  m32r_ops.to_interrupt = m32r_interrupt;
   m32r_ops.to_log_command = serial_log_command;
   m32r_ops.to_thread_alive = m32r_thread_alive;
   m32r_ops.to_pid_to_str = m32r_pid_to_str;
