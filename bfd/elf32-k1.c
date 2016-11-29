@@ -3003,7 +3003,7 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
 #undef elf_backend_plt_sym_val
 #define elf_backend_plt_sym_val	 k1_elf32_fdpic_plt_sym_val
 
-/* #undef elf_backend_relplt_name */
-/* #define elf_backend_relplt_name ".rela.dyn" */
+#undef elf_backend_relplt_name
+#define elf_backend_relplt_name ".rela.dyn"
 
 #include "elf32-target.h"
