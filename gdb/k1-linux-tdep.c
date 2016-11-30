@@ -233,7 +233,7 @@ attach_user_command (char *args, int from_tty)
     // set sysroot
     strcpy (file_dir, file);
     dirname (file_dir);
-    while (*file_dir && (file_dir[0] != '.' || file_dir[1] != 0))
+    while (*file_dir && ((file_dir[0] != '.' && file_dir[0] != '/') || file_dir[1] != 0))
     {
       strcpy (file_base, file_dir);
       if (strcmp (basename (file_base), "target") == 0)
