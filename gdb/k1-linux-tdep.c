@@ -195,8 +195,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 static void
 attach_user_command (char *args, int from_tty)
 {
-	static const char *syntax = "Syntax: attach-user <comm> [<path_in_initrd_k1_linux_program>]\n";
-	char *file, *comm, *pargs;
+  static const char *syntax = "Syntax: attach-user <comm> [<path_in_initrd_k1_linux_program>]\n";
+  char *file, *comm, *pargs;
   struct stat vstat;
 
   if (!ptid_equal (inferior_ptid, null_ptid))
@@ -204,18 +204,18 @@ attach_user_command (char *args, int from_tty)
     fprintf (stderr, "Gdb already attached!\n");
     return;
   }
-  
-	pargs = args;
-	comm = extract_arg (&pargs);
-	if (!comm)
+
+  pargs = args;
+  comm = extract_arg (&pargs);
+  if (!comm)
   {
     fprintf (stderr, "Error: the comm was not specified!\n%s", syntax);
     return;
   }
-	file = extract_arg (&pargs);
+  file = extract_arg (&pargs);
 
   execute_command ("set pagination off", 0);
-  
+
   if (file)
   {
     int file_len = strlen (file);
@@ -225,11 +225,11 @@ attach_user_command (char *args, int from_tty)
       fprintf (stderr, "Error: Cannot find file %s!\n", file);
       return;
     }
-    
+
     // set file
     sprintf (cmd, "file %s", file);
     execute_command (cmd, 0);
-    
+
     // set sysroot
     strcpy (file_dir, file);
     dirname (file_dir);
@@ -251,7 +251,7 @@ attach_user_command (char *args, int from_tty)
       dirname (file_dir);
     }
   }
-  
+
   TRY
   {
     char cmd[strlen (comm) + 20];
@@ -264,8 +264,8 @@ attach_user_command (char *args, int from_tty)
     return;
   }
   END_CATCH
-  
-	fprintf (stderr, "Attached to K1 linux user debug using %s.\n", comm);
+
+  fprintf (stderr, "Attached to K1 linux user debug using %s.\n", comm);
 }
 
 static void

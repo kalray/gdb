@@ -34,11 +34,29 @@
 #include "gdbthread.h"
 #include "k1-common-tdep.h"
 
-struct k1_inferior_data {
-    CORE_ADDR step_pad_area;
-    CORE_ADDR step_pad_area_lma;
-    int has_step_pad_area_p;
-    int has_step_pad_area_lma_p;
+struct k1_inferior_data
+{
+  CORE_ADDR step_pad_area;
+  CORE_ADDR step_pad_area_lma;
+  int has_step_pad_area_p;
+  int has_step_pad_area_lma_p;
+};
+
+struct displaced_step_closure
+{
+  /* Take into account that ALUs might have extensions. */
+  uint32_t insn_words[8];
+  int num_insn_words;
+
+  unsigned branchy : 1;
+  unsigned scall_jump : 1;
+  unsigned rewrite_RA : 1;
+  unsigned rewrite_LE : 1;
+  unsigned rewrite_reg : 1;
+
+  /* The destination address when the branch is taken. */
+  unsigned long long dest;
+  int reg;
 };
 
 static const struct k1_inferior_data *_k1_inferior_data;
@@ -47,43 +65,26 @@ static const struct inferior_data *k1_inferior_data_token;
 static struct k1_inferior_data*
 k1_inferior_data (struct inferior *inf)
 {
-    struct k1_inferior_data *res;
+  struct k1_inferior_data *res;
 
-    res = inferior_data (inf, k1_inferior_data_token);
-    if (!res) {
-        res = xcalloc (1, sizeof(*res));
-        set_inferior_data (inf, k1_inferior_data_token, res);
-    }
+  res = inferior_data (inf, k1_inferior_data_token);
+  if (!res)
+  {
+    res = xcalloc (1, sizeof (*res));
+    set_inferior_data (inf, k1_inferior_data_token, res);
+  }
 
-    return res;
+  return res;
 }
 
 static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
 {
-    struct regcache *regs = get_current_regcache ();
-    ULONGEST val;
+  struct regcache *regs = get_current_regcache ();
+  ULONGEST val;
 
-    regcache_raw_read_unsigned (regs,
-				gdbarch_tdep (target_gdbarch())->local_regnum, 
-				&val);
-    return val;
+  regcache_raw_read_unsigned (regs, gdbarch_tdep (target_gdbarch ())->local_regnum, &val);
+  return val;
 }
-
-struct displaced_step_closure {
-    /* Take into account that ALUs might have extensions. */
-    uint32_t insn_words[8];
-    int num_insn_words;
-
-    unsigned branchy      : 1; 
-    unsigned scall_jump   : 1;
-    unsigned rewrite_RA   : 1;
-    unsigned rewrite_LE   : 1;
-    unsigned rewrite_reg  : 1;
-
-    /* The destination address when the branch is taken. */
-    unsigned long long dest;
-    int reg;
-};
 
 int
 get_is_hot_attached (struct inferior *inf)
@@ -109,17 +110,17 @@ k1_inferior_created (struct target_ops *target, int from_tty)
   struct inferior *inf;
 
   k1_current_arch = K1_NUM_ARCHES;
-  
+
   if (after_first_resume)
     return;
-  
+
   if (!(inf = current_inferior ()))
     return;
 
   os_debug_level = get_os_supported_debug_levels (inf);
   if (os_debug_level == DBG_LEVEL_SYSTEM)
     return;
-  
+
   if (idx_global_debug_level)
   {
     set_cluster_debug_level_no_check (inf, idx_global_debug_level);
@@ -139,7 +140,7 @@ k1_inferior_created (struct target_ops *target, int from_tty)
         cont = 1;
     }
   } // !global_debug_level_set
-  
+
   if (cont)
   {
     inf_created_change_th = 1;
@@ -150,73 +151,75 @@ k1_inferior_created (struct target_ops *target, int from_tty)
 static CORE_ADDR
 k1_displaced_step_location (struct gdbarch *gdbarch)
 {
-    struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-    struct k1_inferior_data *data = k1_inferior_data (current_inferior());
-    struct regcache *regs = get_current_regcache ();
-    ULONGEST ps;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  struct k1_inferior_data *data = k1_inferior_data (current_inferior ());
+  struct regcache *regs = get_current_regcache ();
+  ULONGEST ps;
 
-    if (!data->has_step_pad_area_p) {
-	struct bound_minimal_symbol msym = lookup_minimal_symbol ("_debug_start", 
-							     NULL, NULL);
-	if (msym.minsym == NULL)
-	    error ("Can not locate a suitable step pad area.");
-	if (BMSYMBOL_VALUE_ADDRESS(msym) % 4)
-	    warning ("Step pad area is not 4-byte aligned.");
-	data->step_pad_area = (BMSYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
-        data->has_step_pad_area_p = 1;
+  if (!data->has_step_pad_area_p)
+  {
+    struct bound_minimal_symbol msym = lookup_minimal_symbol ("_debug_start", NULL, NULL);
+    if (msym.minsym == NULL)
+      error ("Can not locate a suitable step pad area.");
+    if (BMSYMBOL_VALUE_ADDRESS (msym) % 4)
+      warning ("Step pad area is not 4-byte aligned.");
+    data->step_pad_area = (BMSYMBOL_VALUE_ADDRESS (msym) + 3) & ~0x3;
+    data->has_step_pad_area_p = 1;
 
-	msym = lookup_minimal_symbol ("_debug_start_lma", 
-							     NULL, NULL);
-	if (msym.minsym != NULL) {
-	    if (BMSYMBOL_VALUE_ADDRESS(msym) % 4)
-		warning ("Physical step pad area is not 4-byte aligned.");
-	    data->step_pad_area_lma = (BMSYMBOL_VALUE_ADDRESS(msym)+3) & ~0x3;
-	    data->has_step_pad_area_lma_p = 1;
-	}
+    msym = lookup_minimal_symbol ("_debug_start_lma", NULL, NULL);
+    if (msym.minsym != NULL)
+    {
+      if (BMSYMBOL_VALUE_ADDRESS (msym) % 4)
+        warning ("Physical step pad area is not 4-byte aligned.");
+      data->step_pad_area_lma = (BMSYMBOL_VALUE_ADDRESS (msym) + 3) & ~0x3;
+      data->has_step_pad_area_lma_p = 1;
     }
+  }
 
-    if (data->has_step_pad_area_lma_p) {
-	regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
-	/* MMU active ? */
-	if ((ps & (1 << 11)) != 0)
-	    return data->step_pad_area_lma;
-    }
+  if (data->has_step_pad_area_lma_p)
+  {
+    regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
+    /* MMU active ? */
+    if ((ps & (1 << 11)) != 0)
+      return data->step_pad_area_lma;
+  }
 
-    return data->step_pad_area;
+  return data->step_pad_area;
 }
 
 static int
 extract_mds_bitfield (k1opc_t *op, uint32_t syllab, int bitfield)
 {
-    k1_bitfield_t *bfield;
-    int res;
+  k1_bitfield_t *bfield;
+  int res;
 
-    bfield = &op->format[bitfield]->bfield[0];
-    res = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
+  bfield = &op->format[bitfield]->bfield[0];
+  res = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
 
-    if (res & (1<<(bfield->size-1)))
-        res |= (0xffffffff << bfield->size);
+  if (res & (1 << (bfield->size - 1)))
+    res |= (0xffffffff << bfield->size);
 
-    return res;
+  return res;
 }
 
 static void
 patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
 {
-    k1_bitfield_t *bfield;
-    uint32_t mask;
-    
-    bfield = &op->format[bitfield]->bfield[0];
-    mask = ~(((1 << bfield->size) - 1) << bfield->to_offset);
-    *syllab &= mask;
-    *syllab |= (value << bfield->to_offset) & ~mask;
+  k1_bitfield_t *bfield;
+  uint32_t mask;
+
+  bfield = &op->format[bitfield]->bfield[0];
+  mask = ~(((1 << bfield->size) - 1) << bfield->to_offset);
+  *syllab &= mask;
+  *syllab |= (value << bfield->to_offset) & ~mask;
 }
 
-void send_stop_at_main (int bstop)
+void
+send_stop_at_main (int bstop)
 {
   char *buf;
   long size;
-  
+
   if (ptid_equal (inferior_ptid, null_ptid))
     return;
 
@@ -228,7 +231,8 @@ void send_stop_at_main (int bstop)
   free (buf);
 }
 
-void send_cluster_break_on_spawn (struct inferior *inf, int v)
+void
+send_cluster_break_on_spawn (struct inferior *inf, int v)
 {
   char *buf;
   long size = 256;
@@ -240,11 +244,12 @@ void send_cluster_break_on_spawn (struct inferior *inf, int v)
   free (buf);
 }
 
-void send_cluster_debug_level (int level)
+void
+send_cluster_debug_level (int level)
 {
   char *buf;
   long size;
-  
+
   if (ptid_equal (inferior_ptid, null_ptid))
     return;
 
@@ -256,11 +261,12 @@ void send_cluster_debug_level (int level)
   free (buf);
 }
 
-void send_cluster_postponed_debug_level (struct inferior *inf, int level)
+void
+send_cluster_postponed_debug_level (struct inferior *inf, int level)
 {
   char *buf;
   long size;
-  
+
   size = 256;
   buf = (char *) malloc (size);
   sprintf (buf, "kP%dp%x.1", level, inf->pid);
@@ -269,10 +275,11 @@ void send_cluster_postponed_debug_level (struct inferior *inf, int level)
   free (buf);
 }
 
-int get_os_supported_debug_levels (struct inferior *inf)
+int
+get_os_supported_debug_levels (struct inferior *inf)
 {
   char *buf = (char *) malloc (256);
-  long size = 256;  
+  long size = 256;
   struct inferior_data *data = mppa_inferior_data (inf);
   int ret = data->os_supported_debug_level;
 
@@ -294,7 +301,8 @@ int get_os_supported_debug_levels (struct inferior *inf)
   return ret;
 }
 
-static void inform_dsu_stepi_bkp (void)
+static void
+inform_dsu_stepi_bkp (void)
 {
   char *buf = (char *) malloc (256);
   long size = 256;
@@ -304,7 +312,8 @@ static void inform_dsu_stepi_bkp (void)
   free (buf);
 }
 
-char *send_get_dev_list_string (const char *full_name)
+char *
+send_get_dev_list_string (const char *full_name)
 {
   long size = 4096, len, result_size = 0;
   char *result = strdup (""), *buf = (char *) malloc (size);
@@ -327,7 +336,8 @@ char *send_get_dev_list_string (const char *full_name)
   return result;
 }
 
-int send_set_kwatch (const char *full_name, int watch_type, int bset, char **err_msg)
+int
+send_set_kwatch (const char *full_name, int watch_type, int bset, char **err_msg)
 {
   long len = strlen (full_name), size = len + 300;
   char *buf = (char *) malloc (size);
@@ -346,7 +356,8 @@ int send_set_kwatch (const char *full_name, int watch_type, int bset, char **err
   return ret;
 }
 
-int get_cluster_debug_level (int pid)
+int
+get_cluster_debug_level (int pid)
 {
   struct inferior *inf;
   int ret;
@@ -355,12 +366,13 @@ int get_cluster_debug_level (int pid)
     inf = current_inferior ();
   else
     inf = find_inferior_pid (pid);
-  
+
   ret = mppa_inferior_data (inf)->cluster_debug_level;
   return ret;
 }
 
-int get_debug_level (int pid)
+int
+get_debug_level (int pid)
 {
   int ret = get_cluster_debug_level (pid);
 
@@ -371,170 +383,193 @@ int get_debug_level (int pid)
 }
 
 static void
-patch_bcu_instruction (struct gdbarch *gdbarch, 
-		       CORE_ADDR from, CORE_ADDR to, struct regcache *regs,
-		       struct displaced_step_closure *dsc)
+patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, struct regcache *regs,
+  struct displaced_step_closure *dsc)
 {
-    struct op_list *insn = branch_insns[k1_arch ()];
-    struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  struct op_list *insn = branch_insns[k1_arch ()];
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (debug_displaced)
+    printf_filtered ("displaced: Looking at BCU instruction\n");
+
+  /* In order to limit side effects, we patch every instruction or
+     register in order to make branches target the step pad. This
+     way we have a simple way to check if branches were taken or
+     not. 'scalls' are an exception to this rule, because we don't
+     want to change the 'ev' register that might influence other
+     things than syscalls.
+   */
+
+  while (insn)
+  {
+    k1opc_t *op = insn->op;
+
+    if ((dsc->insn_words[0] & op->codeword[0].mask) != op->codeword[0].opcode)
+    {
+      insn = insn->next;
+      continue;
+    }
 
     if (debug_displaced)
-	printf_filtered ("displaced: Looking at BCU instruction\n");
+      printf_filtered ("displaced: found branchy BCU insn: %s\n", op->as_op);
 
-    /* In order to limit side effects, we patch every instruction or
-       register in order to make branches target the step pad. This
-       way we have a simple way to check if branches were taken or
-       not. 'scalls' are an exception to this rule, because we don't
-       want to change the 'ev' register that might influence other
-       things than syscalls. */ 
+    dsc->branchy = 1;
 
-    while (insn) {
-        k1opc_t *op = insn->op;
-
-        if ((dsc->insn_words[0] & op->codeword[0].mask) != op->codeword[0].opcode) {
-            insn = insn->next;
-            continue;
-        }
-
-	if (debug_displaced) printf_filtered ("displaced: found branchy BCU insn: %s\n", op->as_op);
-
-        dsc->branchy = 1;
-
-        if (strcmp ("call", op->as_op) == 0) {
-            dsc->rewrite_RA = 1;
-            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
-            patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
-        } else if (strcmp ("goto", op->as_op) == 0) {
-            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
-            patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
-        } else if (strncmp ("cjl.", op->as_op, 4) == 0) {
-            ULONGEST ra;
-
-            dsc->rewrite_RA = 1;
-	    regcache_raw_read_unsigned (regs, tdep->ra_regnum, &ra);
-            dsc->dest = ra;
-            regcache_raw_write_unsigned (regs, tdep->ra_regnum, to);
-        } else if (strncmp ("cb.", op->as_op, 3) == 0) {
-            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
-            patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
-        } else if (strcmp ("icall", op->as_op) == 0) {
-            ULONGEST reg_value;
-
-            dsc->rewrite_RA = 1;
-            dsc->rewrite_reg = 1;
-            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
-	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
-            dsc->dest = reg_value;
-            regcache_raw_write_unsigned (regs, dsc->reg, to);
-        } else if (strcmp ("igoto", op->as_op) == 0) {
-            ULONGEST reg_value;
-
-            dsc->rewrite_reg = 1;
-            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
-	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
-            dsc->dest = reg_value;
-            regcache_raw_write_unsigned (regs, dsc->reg, to);
-        } else if (strcmp ("ret", op->as_op) == 0) {
-            ULONGEST reg_value;
-
-            dsc->rewrite_reg = 1;
-            dsc->reg = tdep->ra_regnum;
-	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
-            dsc->dest = reg_value;
-            regcache_raw_write_unsigned (regs, dsc->reg, to);
-        } else if (strcmp ("rfe", op->as_op) == 0) {
-            ULONGEST reg_value;
-
-            dsc->rewrite_reg = 1;
-            dsc->reg = tdep->spc_regnum;
-	    regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
-            dsc->dest = reg_value;
-            regcache_raw_write_unsigned (regs, dsc->reg, to);
-        } else if (strcmp ("scall", op->as_op) == 0
-                   || strcmp ("trapa", op->as_op) == 0
-                   || strcmp ("trapo", op->as_op) == 0) {
-            ULONGEST reg_value;
-
-            dsc->scall_jump = 1;
-            regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
-            dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF)<<1) | (reg_value & 0xFFF);
-        } else if (strcmp ("loopdo", op->as_op) == 0
-                   || strcmp ("loopgtz", op->as_op) == 0
-                   || strcmp ("loopnez", op->as_op) == 0) {
-            ULONGEST reg_value;
-
-            dsc->rewrite_LE = 1;
-            dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
-            patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
-        } else if (strcmp ("get", op->as_op) == 0
-                   && op->format[1]->reg_nb != 64) {
-            /* get version with immediate */
-            if (extract_mds_bitfield (op, dsc->insn_words[0], 1) != (gdbarch_pc_regnum (gdbarch) - 64))
-                break;
-
-            dsc->branchy = 0;
-            dsc->rewrite_reg = 1;
-            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
-            dsc->dest = from;
-        } else if (strcmp ("get", op->as_op) == 0) {
-            ULONGEST reg;
-
-            /* indirect get instruction */
-            reg = extract_mds_bitfield (op, dsc->insn_words[0], 1);
-	    regcache_raw_read_unsigned (regs, reg, &reg);
-
-            if (reg != (gdbarch_pc_regnum (gdbarch) - 64))
-                break;
-
-            dsc->branchy = 0;
-            dsc->rewrite_reg = 1;
-            dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
-            dsc->dest = from;
-        } else {
-            internal_error (__FILE__, __LINE__, "Unknwon BCU insn");
-        }
-        
-        break;
+    if (strcmp ("call", op->as_op) == 0)
+    {
+      dsc->rewrite_RA = 1;
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
+      patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
     }
+    else if (strcmp ("goto", op->as_op) == 0)
+    {
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
+      patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
+    }
+    else if (strncmp ("cjl.", op->as_op, 4) == 0)
+    {
+      ULONGEST ra;
+
+      dsc->rewrite_RA = 1;
+      regcache_raw_read_unsigned (regs, tdep->ra_regnum, &ra);
+      dsc->dest = ra;
+      regcache_raw_write_unsigned (regs, tdep->ra_regnum, to);
+    }
+    else if (strncmp ("cb.", op->as_op, 3) == 0)
+    {
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
+      patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
+    }
+    else if (strcmp ("icall", op->as_op) == 0)
+    {
+      ULONGEST reg_value;
+
+      dsc->rewrite_RA = 1;
+      dsc->rewrite_reg = 1;
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
+      regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+      dsc->dest = reg_value;
+      regcache_raw_write_unsigned (regs, dsc->reg, to);
+    }
+    else if (strcmp ("igoto", op->as_op) == 0)
+    {
+      ULONGEST reg_value;
+
+      dsc->rewrite_reg = 1;
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
+      regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+      dsc->dest = reg_value;
+      regcache_raw_write_unsigned (regs, dsc->reg, to);
+    }
+    else if (strcmp ("ret", op->as_op) == 0)
+    {
+      ULONGEST reg_value;
+
+      dsc->rewrite_reg = 1;
+      dsc->reg = tdep->ra_regnum;
+      regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+      dsc->dest = reg_value;
+      regcache_raw_write_unsigned (regs, dsc->reg, to);
+    }
+    else if (strcmp ("rfe", op->as_op) == 0)
+    {
+      ULONGEST reg_value;
+
+      dsc->rewrite_reg = 1;
+      dsc->reg = tdep->spc_regnum;
+      regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
+      dsc->dest = reg_value;
+      regcache_raw_write_unsigned (regs, dsc->reg, to);
+    }
+    else if (strcmp ("scall", op->as_op) == 0 || strcmp ("trapa", op->as_op) == 0 || strcmp ("trapo", op->as_op) == 0)
+    {
+      ULONGEST reg_value;
+
+      dsc->scall_jump = 1;
+      regcache_raw_read_unsigned (regs, tdep->ev_regnum, &reg_value);
+      dsc->dest = (reg_value & ~0xFFF) | ((reg_value & 0xFFF) << 1) | (reg_value & 0xFFF);
+    }
+    else if (strcmp ("loopdo", op->as_op) == 0 || strcmp ("loopgtz", op->as_op) == 0
+      || strcmp ("loopnez", op->as_op) == 0)
+    {
+      ULONGEST reg_value;
+
+      dsc->rewrite_LE = 1;
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
+      patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
+    }
+    else if (strcmp ("get", op->as_op) == 0 && op->format[1]->reg_nb != 64)
+    {
+      /* get version with immediate */
+      if (extract_mds_bitfield (op, dsc->insn_words[0], 1) != (gdbarch_pc_regnum (gdbarch) - 64))
+        break;
+
+      dsc->branchy = 0;
+      dsc->rewrite_reg = 1;
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
+      dsc->dest = from;
+    }
+    else if (strcmp ("get", op->as_op) == 0)
+    {
+      ULONGEST reg;
+
+      /* indirect get instruction */
+      reg = extract_mds_bitfield (op, dsc->insn_words[0], 1);
+      regcache_raw_read_unsigned (regs, reg, &reg);
+
+      if (reg != (gdbarch_pc_regnum (gdbarch) - 64))
+        break;
+
+      dsc->branchy = 0;
+      dsc->rewrite_reg = 1;
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
+      dsc->dest = from;
+    }
+    else
+    {
+      internal_error (__FILE__, __LINE__, "Unknwon BCU insn");
+    }
+
+    break;
+  }
 }
 
 static struct displaced_step_closure *
-k1_displaced_step_copy_insn (struct gdbarch *gdbarch, 
-			     CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
+k1_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
 {
-    struct displaced_step_closure *dsc
-	= xzalloc (sizeof (struct displaced_step_closure));
-    struct k1_inferior_data *data = k1_inferior_data (current_inferior());
+  struct displaced_step_closure *dsc = xzalloc (sizeof (struct displaced_step_closure));
+  struct k1_inferior_data *data = k1_inferior_data (current_inferior ());
 
-    if (debug_displaced)
-	printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
+  if (debug_displaced)
+    printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
 
-    do {
-	read_memory (from + dsc->num_insn_words*4,
-		     (gdb_byte*)(dsc->insn_words + dsc->num_insn_words), 4);
-    } while (dsc->insn_words[dsc->num_insn_words++] & (1<<31));
-    
-    if (debug_displaced) {
-	int i;
-	printf_filtered ("displaced: copied a %i word(s)\n", dsc->num_insn_words);
-	for (i = 0; i < dsc->num_insn_words; ++i)
-	    printf_filtered ("displaced: insn[%i] = %08x\n", 
-			     i, dsc->insn_words[i]);
-    }
+  do
+  {
+    read_memory (from + dsc->num_insn_words * 4, (gdb_byte*) (dsc->insn_words + dsc->num_insn_words), 4);
+  } while (dsc->insn_words[dsc->num_insn_words++] & (1 << 31));
 
-    dsc->insn_words[0] = extract_unsigned_integer ((const gdb_byte*)dsc->insn_words, 4, gdbarch_byte_order (gdbarch));
-    if (((dsc->insn_words[0] >> 29) & 0x3) == 0)
-	patch_bcu_instruction (gdbarch, from, to, regs, dsc);
-    store_unsigned_integer ((gdb_byte*)dsc->insn_words, 4, gdbarch_byte_order (gdbarch), dsc->insn_words[0]);
+  if (debug_displaced)
+  {
+    int i;
+    printf_filtered ("displaced: copied a %i word(s)\n", dsc->num_insn_words);
+    for (i = 0; i < dsc->num_insn_words; ++i)
+      printf_filtered ("displaced: insn[%i] = %08x\n", i, dsc->insn_words[i]);
+  }
 
-    write_memory (to, (gdb_byte*)dsc->insn_words, dsc->num_insn_words*4);
-    
+  dsc->insn_words[0] = extract_unsigned_integer ((const gdb_byte*) dsc->insn_words, 4, gdbarch_byte_order (gdbarch));
+  if (((dsc->insn_words[0] >> 29) & 0x3) == 0)
+    patch_bcu_instruction (gdbarch, from, to, regs, dsc);
+  store_unsigned_integer ((gdb_byte*) dsc->insn_words, 4, gdbarch_byte_order (gdbarch), dsc->insn_words[0]);
+
+  write_memory (to, (gdb_byte*) dsc->insn_words, dsc->num_insn_words * 4);
+
   inform_dsu_stepi_bkp ();
 
-    return dsc;
+  return dsc;
 }
 
-static void stepi_to_skip_pm_cb (void *context)
+static void
+stepi_to_skip_pm_cb (void *context)
 {
   char si_cmd[25];
   strcpy (si_cmd, "si");
@@ -542,95 +577,114 @@ static void stepi_to_skip_pm_cb (void *context)
 }
 
 static void
-k1_displaced_step_fixup (struct gdbarch *gdbarch, 
-			 struct displaced_step_closure *dsc, 
-			 CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
+k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure *dsc,
+  CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
 {
-    ULONGEST ps, lc, le, pc;
-    struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-    int branched = 0;
-    int exception = 0;
+  ULONGEST ps, lc, le, pc;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int branched = 0;
+  int exception = 0;
 
-    if (debug_displaced) printf_filtered ("displaced: Fixup\n");
+  if (debug_displaced)
+    printf_filtered ("displaced: Fixup\n");
 
-    regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);    
-    pc = regcache_read_pc (regs);
+  regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
+  pc = regcache_read_pc (regs);
+  if (debug_displaced)
+    printf_filtered ("displaced: new pc %s\n", paddress (gdbarch, pc));
+  if (pc - to == dsc->num_insn_words * 4)
+  {
+    pc = from + (pc - to);
     if (debug_displaced)
-	printf_filtered ("displaced: new pc %s\n", paddress (gdbarch, pc));
-    if (pc - to == dsc->num_insn_words * 4) {
-	pc = from + (pc - to);
-	if (debug_displaced) printf_filtered ("displaced: Didn't branch\n");
-    } else {
-	ULONGEST spc;
+      printf_filtered ("displaced: Didn't branch\n");
+  }
+  else
+  {
+    ULONGEST spc;
 
-	/* We branched. */
-        branched = 1;
-	if (debug_displaced) printf_filtered ("displaced: we branched (predicted dest: %llx) \n",
-                                              dsc->dest);
-        if (dsc->branchy && 
-            (pc == to || (dsc->scall_jump && pc == dsc->dest))) {
-            /* The branchy instruction jumped to its destination. */
-            pc = dsc->dest;
+    /* We branched. */
+    branched = 1;
+    if (debug_displaced)
+      printf_filtered ("displaced: we branched (predicted dest: %llx) \n", dsc->dest);
+    if (dsc->branchy && (pc == to || (dsc->scall_jump && pc == dsc->dest)))
+    {
+      /* The branchy instruction jumped to its destination. */
+      pc = dsc->dest;
 
-            /* Rewrite RA only if the brach executed correctly. */
-            if (dsc->rewrite_RA) {
-	        regcache_raw_write_unsigned (regs, tdep->ra_regnum, from + dsc->num_insn_words * 4);
-	        if (debug_displaced) printf_filtered ("displaced: rewrite RA\n");
-            }
-    
-            if (dsc->scall_jump) {
-	      regcache_raw_write_unsigned (regs, tdep->spc_regnum, from+dsc->num_insn_words * 4);
-              if (debug_displaced) printf_filtered ("displaced: rewrite SPC\n");
-            }
-        } else {
-            /* Uh oh... seems we've taken some exceptional condition. 
-               This means interrupt or H/W trap. */
-            regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
-	    if (debug_displaced) printf_filtered ("displaced: trapped SPC=%lx\n", 
-						  (unsigned long)spc);
-              gdb_assert (spc == to);
-	      spc = from;
-	      regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
-            exception = 1;
-        }
+      /* Rewrite RA only if the brach executed correctly. */
+      if (dsc->rewrite_RA)
+      {
+        regcache_raw_write_unsigned (regs, tdep->ra_regnum, from + dsc->num_insn_words * 4);
+        if (debug_displaced)
+          printf_filtered ("displaced: rewrite RA\n");
+      }
+
+      if (dsc->scall_jump)
+      {
+        regcache_raw_write_unsigned (regs, tdep->spc_regnum, from + dsc->num_insn_words * 4);
+        if (debug_displaced)
+          printf_filtered ("displaced: rewrite SPC\n");
+      }
+    }
+    else
+    {
+      // Uh oh... seems we've taken some exceptional condition. This means interrupt or H/W trap
+      regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
+      if (debug_displaced)
+        printf_filtered ("displaced: trapped SPC=%lx\n", (unsigned long) spc);
+      gdb_assert (spc == to);
+      spc = from;
+      regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
+      exception = 1;
+    }
+  }
+
+  /* Rewrite a patched reg unconditionnaly */
+  if (dsc->rewrite_reg)
+  {
+    regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
+    if (debug_displaced)
+      printf_filtered ("displaced: rewrite %i with %llx\n", dsc->reg, dsc->dest);
+  }
+
+  if (((ps >> 5) & 1) /* HLE */)
+  {
+
+    /* The loop setup is done only if H/W loops are actually
+       enabled. */
+    if (!exception && dsc->rewrite_LE)
+    {
+      regcache_raw_write_unsigned (regs, tdep->le_regnum, dsc->dest);
+      regcache_raw_write_unsigned (regs, tdep->ls_regnum, from + dsc->num_insn_words * 4);
+      if (debug_displaced)
+        printf_filtered ("displaced: rewrite LE\n");
     }
 
-    /* Rewrite a patched reg unconditionnaly */
-    if (dsc->rewrite_reg) {
-        regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
-        if (debug_displaced) printf_filtered ("displaced: rewrite %i with %llx\n", dsc->reg, dsc->dest);
+    if (!branched)
+    {
+      regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
+      if (debug_displaced)
+        printf_filtered ("displaced: active loop pc(%llx) le(%llx)\n",
+          (unsigned long long) pc, (unsigned long long) le);
+
+      if (pc == le)
+      {
+        if (debug_displaced)
+          printf_filtered ("displaced: at loop end\n");
+        regcache_raw_read_unsigned (regs, tdep->lc_regnum, &lc);
+        if (lc - 1 == 0)
+          regcache_raw_read_unsigned (regs, tdep->le_regnum, &pc);
+        else
+          regcache_raw_read_unsigned (regs, tdep->ls_regnum, &pc);
+        if (lc != 0)
+          regcache_raw_write_unsigned (regs, tdep->lc_regnum, lc - 1);
+      }
     }
+  }
 
-    if (((ps >> 5)&1) /* HLE */) {
-
-        /* The loop setup is done only if H/W loops are actually
-           enabled. */
-        if (!exception && dsc->rewrite_LE) {
-            regcache_raw_write_unsigned (regs, tdep->le_regnum, dsc->dest);
-            regcache_raw_write_unsigned (regs, tdep->ls_regnum, from + dsc->num_insn_words*4);
-            if (debug_displaced) printf_filtered ("displaced: rewrite LE\n");
-        }
-
-        if (!branched) {
-            regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
-            if (debug_displaced) 
-                printf_filtered ("displaced: active loop pc(%llx) le(%llx)\n", (unsigned long long)pc, (unsigned long long)le);
-            if (pc == le) {
-                if (debug_displaced) printf_filtered ("displaced: at loop end\n");
-                regcache_raw_read_unsigned (regs, tdep->lc_regnum, &lc);
-                if (lc - 1 == 0)
-                    regcache_raw_read_unsigned (regs, tdep->le_regnum, &pc);
-                else
-                    regcache_raw_read_unsigned (regs, tdep->ls_regnum, &pc);
-                if (lc != 0)
-                    regcache_raw_write_unsigned (regs, tdep->lc_regnum, lc - 1);
-            }
-        }
-    }
-	
-    regcache_write_pc (regs, pc);
-    if (debug_displaced) 
-	printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
+  regcache_write_pc (regs, pc);
+  if (debug_displaced)
+    printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
 
   struct thread_info *th = find_thread_ptid (inferior_ptid);
   int cpu_level = get_cpu_exec_level ();
@@ -641,30 +695,27 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
     if (th->control.step_range_start == 1 || th->control.step_range_end == 1)
     {
       printf ("[Schedule stepi after breakpoint to skip PM, exec_level = %s"
-        ", debug_level = %s]\n", get_str_debug_level (cpu_level),
-        get_str_debug_level (debug_level));
+        ", debug_level = %s]\n", get_str_debug_level (cpu_level), get_str_debug_level (debug_level));
+
       create_timer (0, stepi_to_skip_pm_cb, NULL);
     }
   }
 }
 
-static void 
-k1_displaced_step_free_closure (struct gdbarch *gdbarch, 
-				struct displaced_step_closure *closure)
+static void
+k1_displaced_step_free_closure (struct gdbarch *gdbarch, struct displaced_step_closure *closure)
 {
-    xfree (closure);
+  xfree (closure);
 }
 
 static int
-k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-			struct reggroup *group)
+k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *group)
 {
-  if (gdbarch_register_name (gdbarch, regnum) == NULL
-      || *gdbarch_register_name (gdbarch, regnum) == '\0')
+  if (gdbarch_register_name (gdbarch, regnum) == NULL || *gdbarch_register_name (gdbarch, regnum) == '\0')
     return 0;
 
   if ((group == save_reggroup || group == restore_reggroup || group == all_reggroup)
-      && strncmp (gdbarch_register_name (gdbarch, regnum), "oce", 3) == 0)
+    && strncmp (gdbarch_register_name (gdbarch, regnum), "oce", 3) == 0)
     return 0;
 
   return default_register_reggroup_p (gdbarch, regnum, group);
@@ -718,68 +769,73 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Get the k1 target description from INFO.  */
   tdesc = info.target_desc;
-  if (tdesc_has_registers (tdesc)) {
-      set_gdbarch_num_regs (gdbarch, 0);
-      tdesc_data = tdesc_data_alloc ();
-      tdesc_use_registers (gdbarch, tdesc, tdesc_data);
+  if (tdesc_has_registers (tdesc))
+  {
+    set_gdbarch_num_regs (gdbarch, 0);
+    tdesc_data = tdesc_data_alloc ();
+    tdesc_use_registers (gdbarch, tdesc, tdesc_data);
 
-      for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
-	  if (strcmp (tdesc_register_name(gdbarch, i), pc_name) == 0)
-	      has_pc = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), sp_name) == 0)
-	      has_sp = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_le_name) == 0)
-	      has_le = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ls_name) == 0)
-	      has_ls = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ps_name) == 0)
-	      has_ps = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_lc_name) == 0)
-	      has_lc = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_local_name) == 0)
-	      has_local = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ra_name) == 0)
-	      has_ra = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_spc_name) == 0)
-	      has_spc = i;
-	  else if (strcmp (tdesc_register_name(gdbarch, i), k1_ev_name) == 0)
-	      has_ev = i;
-      
-          if (has_pc < 0)
-	      error ("There's no '%s' register!", pc_name);
-	  if (has_sp < 0)
-	      error ("There's no '%s' register!", sp_name);
-	  if (has_le < 0)
-	      error ("There's no '%s' register!", k1_le_name);
-	  if (has_ls < 0)
-	      error ("There's no '%s' register!", k1_ls_name);
-	  if (has_lc < 0)
-	      error ("There's no '%s' register!", k1_lc_name);
-	  if (has_ps < 0)
-	      error ("There's no '%s' register!", k1_ps_name);
-	  if (has_local < 0)
-	      error ("There's no '%s' register!", k1_local_name);
-	  if (has_ra < 0)
-	      error ("There's no '%s' register!", k1_ra_name);
+    for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
+    {
+      if (strcmp (tdesc_register_name (gdbarch, i), pc_name) == 0)
+        has_pc = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), sp_name) == 0)
+        has_sp = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_le_name) == 0)
+        has_le = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ls_name) == 0)
+        has_ls = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ps_name) == 0)
+        has_ps = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_lc_name) == 0)
+        has_lc = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_local_name) == 0)
+        has_local = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ra_name) == 0)
+        has_ra = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_spc_name) == 0)
+        has_spc = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ev_name) == 0)
+        has_ev = i;
+    }
+
+    if (has_pc < 0)
+      error ("There's no '%s' register!", pc_name);
+    if (has_sp < 0)
+      error ("There's no '%s' register!", sp_name);
+    if (has_le < 0)
+      error ("There's no '%s' register!", k1_le_name);
+    if (has_ls < 0)
+      error ("There's no '%s' register!", k1_ls_name);
+    if (has_lc < 0)
+      error ("There's no '%s' register!", k1_lc_name);
+    if (has_ps < 0)
+      error ("There's no '%s' register!", k1_ps_name);
+    if (has_local < 0)
+      error ("There's no '%s' register!", k1_local_name);
+    if (has_ra < 0)
+      error ("There's no '%s' register!", k1_ra_name);
     if (has_spc < 0)
       error ("There's no '%s' register!", k1_spc_name);
     if (has_ev < 0)
       error ("There's no '%s' register!", k1_ev_name);
 
-	  tdep->ev_regnum = has_ev;
-	  tdep->le_regnum = has_le;
-	  tdep->ls_regnum = has_ls;
-	  tdep->lc_regnum = has_lc;
-	  tdep->ps_regnum = has_ps;
-	  tdep->ra_regnum = has_ra;
-	  tdep->spc_regnum = has_spc;
-	  tdep->local_regnum = has_local;
-	  set_gdbarch_pc_regnum (gdbarch, has_pc);
-	  set_gdbarch_sp_regnum (gdbarch, has_sp);
-  } else {
-         set_gdbarch_num_regs (gdbarch, 1);
-         set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
-         set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
+    tdep->ev_regnum = has_ev;
+    tdep->le_regnum = has_le;
+    tdep->ls_regnum = has_ls;
+    tdep->lc_regnum = has_lc;
+    tdep->ps_regnum = has_ps;
+    tdep->ra_regnum = has_ra;
+    tdep->spc_regnum = has_spc;
+    tdep->local_regnum = has_local;
+    set_gdbarch_pc_regnum (gdbarch, has_pc);
+    set_gdbarch_sp_regnum (gdbarch, has_sp);
+  }
+  else
+  {
+    set_gdbarch_num_regs (gdbarch, 1);
+    set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
+    set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
   }
 
   set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
@@ -789,7 +845,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_tdesc_pseudo_register_name (gdbarch, k1b_pseudo_register_name);
   set_tdesc_pseudo_register_type (gdbarch, k1b_pseudo_register_type);
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
-					k1b_pseudo_register_reggroup_p);
+    k1b_pseudo_register_reggroup_p);
 
   set_gdbarch_pseudo_register_read (gdbarch, k1b_pseudo_register_read);
   set_gdbarch_pseudo_register_write (gdbarch, k1b_pseudo_register_write);
@@ -806,11 +862,11 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   frame_unwind_append_unwinder (gdbarch, &k1_frame_unwind);
 
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
-					     k1_fetch_tls_load_module_address);
+    k1_fetch_tls_load_module_address);
 
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
-  set_gdbarch_adjust_breakpoint_address (gdbarch, 
-					 k1_adjust_breakpoint_address);
+  set_gdbarch_adjust_breakpoint_address (gdbarch,
+    k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_print_insn (gdbarch, k1_print_insn);
@@ -820,19 +876,21 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_displaced_step_fixup (gdbarch, k1_displaced_step_fixup);
   set_gdbarch_displaced_step_free_closure (gdbarch, k1_displaced_step_free_closure);
   set_gdbarch_displaced_step_location (gdbarch, k1_displaced_step_location);
-  set_gdbarch_max_insn_length (gdbarch, 8*4);
+  set_gdbarch_max_insn_length (gdbarch, 8 * 4);
 
   set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
 
   return gdbarch;
 }
 
-static void k1_cleanup_inferior_data (struct inferior *inf, void *data)
+static void
+k1_cleanup_inferior_data (struct inferior *inf, void *data)
 {
-    xfree (data);
+  xfree (data);
 }
 
 extern initialize_file_ftype _initialize_k1_tdep;
+
 void
 _initialize_k1_tdep (void)
 {
@@ -840,11 +898,12 @@ _initialize_k1_tdep (void)
   gdbarch_register (bfd_arch_k1, k1_gdbarch_init, NULL);
 
   observer_attach_inferior_created (k1_inferior_created);
-  
+
   k1_inferior_data_token = register_inferior_data_with_cleanup (NULL, k1_cleanup_inferior_data);
 }
 
-int get_thread_mode_used_for_ptid (ptid_t ptid)
+int
+get_thread_mode_used_for_ptid (ptid_t ptid)
 {
   int ret;
   char *buf = (char *) malloc (256);
@@ -858,7 +917,8 @@ int get_thread_mode_used_for_ptid (ptid_t ptid)
   return ret;
 }
 
-int get_cpu_exec_level (void)
+int
+get_cpu_exec_level (void)
 {
   int ret;
   char *buf = (char *) malloc (256);
@@ -872,7 +932,8 @@ int get_cpu_exec_level (void)
   return ret;
 }
 
-int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
+int
+kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
 {
   int debug_level;
   int th_mode_used;
@@ -882,10 +943,10 @@ int kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
     in_info_thread = 1;
     return 0;
   }
-  
+
   debug_level = get_debug_level (tp->ptid.pid);
   th_mode_used = get_thread_mode_used_for_ptid (tp->ptid);
-  
+
   // don't hide a stopped thread and the current thread
   if (tp->state != THREAD_STOPPED && !ptid_equal (tp->ptid, crt_ptid))
   {
