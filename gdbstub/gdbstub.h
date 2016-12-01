@@ -30,6 +30,7 @@ extern "C" {
 struct gdbstub;
 
 struct gdbstub *gdbstub_init(debug_agent_t *agents);
+void gdbstub_rt_add_agent (struct gdbstub *stub, debug_agent_t *da);
 void gdbstub_start(struct gdbstub *, bool thread);
 
 void gdbstub_set_skip_exit_when_stub_exited(struct gdbstub *stub, bool v);

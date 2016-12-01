@@ -194,6 +194,10 @@ handle_accept_event (int err, gdb_client_data client_data)
   delete_file_handler (listen_desc);
 
   /* Convert IP address to string.  */
+  // K1 specific
+  #ifdef __k1__
+  if (getenv ("NO_MUX"))
+  #endif
   fprintf (stderr, "Remote debugging from host %s\n",
 	   inet_ntoa (sockaddr.sin_addr));
 
@@ -273,6 +277,28 @@ remote_prepare (char *name)
   sockaddr.sin_port = htons (port);
   sockaddr.sin_addr.s_addr = INADDR_ANY;
 
+  // K1 specific
+  #ifdef __k1__
+  if (!getenv ("NO_MUX"))
+  {
+    int port_end;
+    for (port_end = port + 100; port < port_end; port++)
+    {
+      sockaddr.sin_port = htons (port);
+      if (!bind (listen_desc, (struct sockaddr *) &sockaddr, sizeof (sockaddr))
+        && !listen (listen_desc, 1))
+      {
+        extern int mux_set_gdb_port (int port, int fd);
+        if (mux_set_gdb_port (port, listen_desc) < 0)
+          exit (1);
+        break;
+      }
+    }
+    if (port >= port_end)
+      perror_with_name ("Can't bind address");
+  }
+  else
+  #endif
   if (bind (listen_desc, (struct sockaddr *) &sockaddr, sizeof (sockaddr))
       || listen (listen_desc, 1))
     perror_with_name ("Can't bind address");
@@ -389,6 +415,10 @@ remote_open (char *name)
 	perror_with_name ("Can't determine port");
       port = ntohs (sockaddr.sin_port);
 
+      // K1 specific
+      #ifdef __k1__
+      if (getenv ("NO_MUX"))
+      #endif
       fprintf (stderr, "Listening on port %d\n", port);
       fflush (stderr);
 

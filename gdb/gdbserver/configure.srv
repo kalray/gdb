@@ -365,7 +365,7 @@ case "${target}" in
 			;;
   k1*-*-linux*)
 			srv_regobj=reg-k1.o
-			srv_tgtobj="$srv_linux_obj linux-k1-low.o"
+			srv_tgtobj="$srv_linux_obj linux-k1-low.o linux-k1-clusters.o"
 			srv_linux_regsets=yes
 			;;
   tilegx-*-linux*)	srv_regobj=reg-tilegx.o

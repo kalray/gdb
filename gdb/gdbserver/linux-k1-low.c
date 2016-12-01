@@ -22,10 +22,21 @@
 #include "linux-low.h"
 #include "regdef.h"
 #include "tdesc.h"
+#include "linux-k1-low.h"
 
 #include <sys/ptrace.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mppa_debug_server_lib.h>
+
+#ifndef PTRACE_SET_DEBUG_SPAWNED
+#define PTRACE_SET_DEBUG_SPAWNED  111
+#endif
 
 static const char *xmltarget_k1_linux = 0;
+static int debug_spawned_clusters = 0;
 
 void init_registers_k1 (void);
 extern const struct target_desc *tdesc_k1;
@@ -151,7 +162,8 @@ k1_regs_info (void)
   return &vregs_info;
 }
 
-int k1_supports_z_point_type (char z_type)
+int
+k1_supports_z_point_type (char z_type)
 {
   switch (z_type)
   {
@@ -162,30 +174,40 @@ int k1_supports_z_point_type (char z_type)
   return 0;
 }
 
-int k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+int
+k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 {
   if (type == raw_bkpt_type_sw)
   {
     return insert_memory_breakpoint (bp);
   }
-  
+
   return 1;
 }
 
-int k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+int
+k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 {
   if (type == raw_bkpt_type_sw)
   {
     return remove_memory_breakpoint (bp);
   }
-  
+
   return 1;
 }
 
-static const gdb_byte * k1_sw_breakpoint_from_kind (int kind, int *size)
+static const gdb_byte *
+k1_sw_breakpoint_from_kind (int kind, int *size)
 {
   *size = k1_breakpoint_len;
   return k1_breakpoint;
+}
+
+static void
+k1_new_thread (struct lwp_info *lwp)
+{
+  if (debug_spawned_clusters)
+    ptrace (PTRACE_SET_DEBUG_SPAWNED, lwpid_of (lwp->thread), NULL, (PTRACE_TYPE_ARG4) debug_spawned_clusters);
 }
 
 struct linux_target_ops the_low_target = {
@@ -202,13 +224,21 @@ struct linux_target_ops the_low_target = {
   0, /* int decr_pc_after_break */
   k1_breakpoint_at, /* int (*breakpoint_at) (CORE_ADDR pc) */
   k1_supports_z_point_type, /* int (*supports_z_point_type) (char z_type) */
-  k1_insert_point, /* int (*insert_point) (enum raw_bkpt_type type, 
+  k1_insert_point, /* int (*insert_point) (enum raw_bkpt_type type,
                     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
   k1_remove_point, /* int (*remove_point) (enum raw_bkpt_type type,
                     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
+  NULL, /* stopped_by_watchpoint */
+  NULL, /* stopped_data_address */
+  NULL, /* collect_ptrace_register */
+  NULL, /* supply_ptrace_register */
+  NULL, /* siginfo_fixup*/
+  NULL, /* new_process */
+  k1_new_thread, /* void (*new_thread) (struct lwp_info *) */
 };
 
-static char *create_xml (void)
+static char *
+create_xml (void)
 {
   char *ret, *buf, reg_type[50];
   struct reg *r;
@@ -219,7 +249,7 @@ static char *create_xml (void)
   strcpy (buf, "@<target><architecture>k1bio_usr</architecture>"
     "<feature name=\"eu.kalray.core.k1bio\">");
   pos = strlen (buf);
-  
+
   for (i = 0; i < nr; i++)
   {
     r = &tdesc_k1->reg_defs[i];
@@ -251,16 +281,111 @@ static char *create_xml (void)
     pos += sprintf (buf + pos,
       "<reg name=\"%s\" regnum=\"%d\" bitsize=\"%d\" type=\"%s\"/>",
       r->name, i, r->size, reg_type);
-  } 
+  }
 
   strcpy (buf + pos, "</feature></target>");
 
   ret = strdup (buf);
   free (buf);
-  
+
   return ret;
 }
 
+static void
+set_inf_debug_spawned_clusters (struct inferior_list_entry *inf, void *arg)
+{
+  struct thread_info *thread = (struct thread_info *) inf;
+  int *global_res = (int *) arg;
+  if (*global_res)
+    return;
+
+  *global_res = ptrace (PTRACE_SET_DEBUG_SPAWNED, lwpid_of (thread), NULL,
+    (PTRACE_TYPE_ARG4) debug_spawned_clusters);
+}
+
+void
+set_debug_spawned_clusters (int val, char *own_buf)
+{
+  int res = 0;
+  int save_debug_spawned = debug_spawned_clusters;
+
+  debug_spawned_clusters = val;
+  for_each_inferior_with_data (&all_threads, set_inf_debug_spawned_clusters, &res);
+
+  if (res)
+  {
+    debug_spawned_clusters = save_debug_spawned;
+    if (res == -1)
+      strcpy (own_buf, "spawned by JTAG");
+    else
+      strcpy (own_buf, "unknown error on MPPA");
+  }
+  else
+    write_ok (own_buf);
+}
+
+void
+list_spawned_clusters (char *opt, char *own_buf)
+{
+  struct k1lds_cluster_list spawned_clusters;
+  struct k1lds_cluster_list_item *it;
+  int ofs;
+
+  if (fd_clusters == -1)
+  {
+    strcpy (own_buf, "the debug server driver file is not opened");
+    return;
+  }
+
+  if ((ofs = ioctl (fd_clusters, K1LDS_GET_SPAWNED_CLUSTERS, &spawned_clusters)) != 0)
+  {
+    sprintf (own_buf, "cannot get the list of spawned clusters from debug server driver (ret=%d)", ofs);
+    return;
+  }
+
+  write_ok (own_buf);
+  ofs = 2;
+  ofs += sprintf (own_buf + ofs, "%d", getpid ());
+  for (it = spawned_clusters.cl; it->cluster_id != -1; it++)
+    ofs += sprintf (own_buf + ofs, ":%d %d %d %d", it->cluster_id, it->pid_spawner, it->pid_gdbserver, it->own);
+}
+
+void
+start_debug_spawned_cluster (char *opt, char *own_buf)
+{
+  int ret, cluster_id = strtol (opt, NULL, 10);
+  if (fd_clusters == -1)
+  {
+    strcpy (own_buf, "the debug server driver file is not opened");
+    return;
+  }
+
+  if ((ret = ioctl (fd_clusters, K1LDS_START_DEBUG_SPAWNED_CLUSTER, &cluster_id)) != 0)
+  {
+    sprintf (own_buf, "cannot start debug spawned cluster %d (ret=%d)", cluster_id, ret);
+    return;
+  }
+
+  write_ok (own_buf);
+}
+
+void
+custom_k1_command (char *own_buf)
+{
+  const char *k1_query_cmd = "Qk1.";
+  char *cmd = own_buf + strlen (k1_query_cmd);
+  char *opt = strchr (cmd, ':') + 1;
+
+  if (startswith (cmd, "spawn_debug:"))
+  {
+    int val = (*opt == '1');
+    set_debug_spawned_clusters (val, own_buf);
+  }
+  else if (startswith (cmd, "spawned_list:"))
+    list_spawned_clusters (opt, own_buf);
+  else if (startswith (cmd, "start_debug:"))
+    start_debug_spawned_cluster (opt, own_buf);
+}
 
 void
 initialize_low_arch (void)

@@ -572,6 +572,18 @@ handle_btrace_conf_general_set (char *own_buf)
 static void
 handle_general_set (char *own_buf)
 {
+  // K1: debug spawned
+  #ifdef __k1__
+  {
+    extern void custom_k1_command (char *own_buf);
+    if (startswith (own_buf, "Qk1."))
+    {
+      custom_k1_command (own_buf);
+      return;
+    }
+  }
+  #endif
+
   if (startswith (own_buf, "QPassSignals:"))
     {
       int numsigs = (int) GDB_SIGNAL_LAST, i;
@@ -3599,6 +3611,18 @@ captured_main (int argc, char *argv[])
     }
 
   port = *next_arg;
+
+  // K1 specific
+  #ifdef __k1__
+  if (!getenv ("NO_MUX"))
+  {
+    extern int mux_open_host_connection (char **name);
+    run_once = 1;
+    if (mux_open_host_connection (&port))
+      exit (1);
+  }
+  #endif
+
   next_arg++;
   if (port == NULL || (!attach && !multi_mode && *next_arg == NULL))
     {

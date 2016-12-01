@@ -272,7 +272,7 @@ iq2000-*-*)
 
 k1*-*-linux*)
 	gdb_target_obs="k1-linux-tdep.o k1-common-tdep.o k1b-mds-tdep.o\
-		solib-svr4.o symfile-mem.o linux-tdep.o"
+		k1-linux-mux.o solib-svr4.o symfile-mem.o linux-tdep.o"
 	;;
 
 k1-*-*)

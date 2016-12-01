@@ -74,6 +74,8 @@ int idx_global_debug_level, global_debug_level_set;
 int opt_hide_threads = 1;
 int opt_break_on_spawn = 0;
 int in_info_thread = 0;
+int in_attach_mppa = 0;
+int new_attach_requested = 0;
 static pid_t server_pid;
 int after_first_resume = 0;
 int inf_created_change_th = 0;
@@ -94,7 +96,6 @@ mppa_init_inferior_data (struct inferior *inf)
   struct inferior_data *data = xcalloc (1, sizeof (struct inferior_data));
   char *endptr;
   struct osdata *osdata;
-  struct osdata_item *last;
   struct osdata_item *item;
   int ix_items;
 
@@ -499,6 +500,61 @@ k1_change_file (const char *file_path)
   END_CATCH
 }
 
+static void
+k1_new_inferiors_cb (void *arg)
+{
+  struct osdata_item *item;
+  int ix_items, found_new;
+  char attach_cmd[25], *endptr;
+  struct inferior *inf;
+  struct osdata *osdata;
+  struct cleanup *old_chain;
+
+  do
+  {
+    in_attach_mppa = 1;
+    old_chain = make_cleanup (null_cleanup, NULL);
+    new_attach_requested = 0;
+    found_new = 0;
+
+    save_current_space_and_thread ();
+
+    osdata = get_osdata (NULL);
+    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
+    {
+      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+
+      if (find_inferior_pid (pid))
+        continue;
+
+      found_new = 1;
+      inf = add_inferior_with_spaces ();
+      set_current_inferior (inf);
+      switch_to_thread (null_ptid);
+      set_current_program_space (inf->pspace);
+      sprintf (attach_cmd, "attach %li&", pid);
+      execute_command (attach_cmd, 0);
+      inf->control.stop_soon = NO_STOP_QUIETLY;
+      inf->removable = 1;
+    }
+
+    do_cleanups (old_chain);
+    in_attach_mppa = 0;
+  } while (new_attach_requested || found_new);
+}
+
+void custom_notification_cb (char *arg);
+void
+custom_notification_cb (char *arg)
+{
+  if (remote_timeout < 10)
+    remote_timeout = 10;
+  if (in_attach_mppa)
+    new_attach_requested = 1;
+  else
+    create_timer (0, &k1_new_inferiors_cb, NULL);
+}
+
 static ptid_t
 k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus *status, int options)
 {
@@ -853,9 +909,8 @@ attach_mppa_command (char *args, int from_tty)
   char set_non_stop_cmd[] = "set non-stop";
   char set_pagination_off_cmd[] = "set pagination off";
   struct osdata *osdata;
-  struct osdata_item *last;
   struct osdata_item *item;
-  int ix_items, cur_pid, bstopped, bcur_inf_stopped;
+  int ix_items, cur_pid, bstopped, bcur_inf_stopped, new_attached;
   struct inferior *cur_inf;
   ptid_t cur_ptid, stopped_ptid;
   int saved_async_execution = !sync_execution;
@@ -864,6 +919,7 @@ attach_mppa_command (char *args, int from_tty)
 
   print_thread_events = 0;
   after_first_resume = 0;
+  in_attach_mppa = 1;
 
   k1_push_arch_stratum (NULL, 0);
   execute_command (set_non_stop_cmd, 0);
@@ -882,66 +938,74 @@ attach_mppa_command (char *args, int from_tty)
   cur_ptid = inferior_ptid;
   cur_pid = cur_inf->pid;
 
-  for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
+  for (new_attached = 1; new_attached;)
   {
-    char *endptr;
-    unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-    struct inferior *inf;
-    char attach_cmd[25];
-
-    if (pid == cur_inf->pid)
+    new_attached = 0;
+    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
     {
-      continue;
+      char *endptr;
+      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+      struct inferior *inf;
+      char attach_cmd[25];
+
+      if (pid == cur_inf->pid || find_inferior_pid (pid))
+        continue;
+
+      inf = add_inferior_with_spaces ();
+      set_current_inferior (inf);
+      switch_to_thread (null_ptid);
+      set_current_program_space (inf->pspace);
+      sprintf (attach_cmd, "attach %li&", pid);
+      execute_command (attach_cmd, 0);
+      inf->control.stop_soon = NO_STOP_QUIETLY;
+      inf->removable = 1;
     }
 
-    inf = add_inferior_with_spaces ();
-    set_current_inferior (inf);
-    switch_to_thread (null_ptid);
-    set_current_program_space (inf->pspace);
-    sprintf (attach_cmd, "attach %li&", pid);
-    execute_command (attach_cmd, 0);
-    inf->control.stop_soon = NO_STOP_QUIETLY;
-    inf->removable = 1;
-  }
+    bstopped = 0;
+    bcur_inf_stopped = 0;
+    osdata = get_osdata (NULL);
 
-  bstopped = 0;
-  bcur_inf_stopped = 0;
-  osdata = get_osdata (NULL);
-
-  for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
-  {
-    char *endptr;
-    struct thread_info *live_th;
-    unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-    const char *file = get_osdata_column (item, "command");
-    const char *running = get_osdata_column (item, "running");
-
-    if (strcmp (running, "yes"))
-      continue;
-
-    live_th = any_live_thread_of_process (pid);
-    if (live_th && !live_th->stop_requested)
-      set_stop_requested (live_th->ptid, 1);
-
-    if (pid == cur_pid)
-      bcur_inf_stopped = 1;
-
-    if (!bstopped)
+    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
     {
-      bstopped = 1;
-      stopped_ptid = any_live_thread_of_process (pid)->ptid;
-    }
+      char *endptr;
+      struct thread_info *live_th;
+      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+      const char *file = get_osdata_column (item, "command");
+      const char *running = get_osdata_column (item, "running");
 
-    if (file && file[0])
-    {
-      struct inferior_data *data;
+      if (strcmp (running, "yes"))
+        continue;
 
-      switch_to_thread (any_live_thread_of_process (pid)->ptid);
-      data = mppa_inferior_data (current_inferior ());
-      if (!data->sym_file_loaded)
+      if (!find_inferior_pid (pid)) // new cluster not attached yet
       {
-        data->sym_file_loaded = 1;
-        k1_change_file (file);
+        new_attached = 1;
+        continue;
+      }
+
+      live_th = any_live_thread_of_process (pid);
+      if (live_th && !live_th->stop_requested)
+        set_stop_requested (live_th->ptid, 1);
+
+      if (pid == cur_pid)
+        bcur_inf_stopped = 1;
+
+      if (!bstopped)
+      {
+        bstopped = 1;
+        stopped_ptid = any_live_thread_of_process (pid)->ptid;
+      }
+
+      if (file && file[0])
+      {
+        struct inferior_data *data;
+
+        switch_to_thread (any_live_thread_of_process (pid)->ptid);
+        data = mppa_inferior_data (current_inferior ());
+        if (!data->sym_file_loaded)
+        {
+          data->sym_file_loaded = 1;
+          k1_change_file (file);
+        }
       }
     }
   }
@@ -964,6 +1028,10 @@ attach_mppa_command (char *args, int from_tty)
 
   if (saved_async_execution)
     async_enable_stdin ();
+
+  in_attach_mppa = 0;
+  if (new_attach_requested)
+    k1_new_inferiors_cb (NULL);
 }
 
 static void

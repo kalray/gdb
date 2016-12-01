@@ -144,6 +144,7 @@ struct agent {
     char **vehicles;
     int    nbvehicles;
     int    attached;
+    int    rt_added;
 
     char  *reg_desc_xml;
 
@@ -495,6 +496,60 @@ static int compare_da_ids (const void *e1, const void *e2)
     return debug_agent_get_id (a1->agent) - debug_agent_get_id (a2->agent);
 }
 
+void gdbstub_rt_add_agent (struct gdbstub *stub, debug_agent_t *da)
+{
+  int i, n = stub->nb_agents;
+  struct agent *ag = &stub->agents[n];
+  char **vehicle;
+
+  da->attributes.notify_stop = notify_callback;
+  da->attributes.notify_cpu_level_seen = notify_cpu_level_seen_callback;
+  da->attributes.notify_data = stub;
+
+  ag->id = n;
+  ag->agent = da;
+  ag->vehicles = debug_agent_get_vehicles (da);
+  ag->attached = 0;
+  ag->rt_added = 1;
+  ag->reg_desc_xml = NULL;
+  ag->ddr_peer_united_io = NULL;
+  ag->eth_peer_united_io = NULL;
+  memset (&ag->vehicles_modes_seen, 0, sizeof (ag->vehicles_modes_seen));
+
+  vehicle = ag->vehicles;
+  while (*vehicle)
+    ++vehicle;
+  ag->nbvehicles = vehicle - ag->vehicles;
+  ag->contexts = calloc (ag->nbvehicles, sizeof (struct stopped_context));
+
+  if (da->attributes.da_eth_peer_united_io || da->attributes.da_ddr_peer_united_io)
+  {
+    for (i = 0; i < n; i++)
+    {
+      if (stub->agents[i].agent == da->attributes.da_eth_peer_united_io)
+      {
+        ag->eth_peer_united_io = &stub->agents[i];
+        stub->agents[i].ddr_peer_united_io = ag;
+        break;
+      }
+      else if (stub->agents[i].agent == da->attributes.da_ddr_peer_united_io)
+      {
+        ag->ddr_peer_united_io = &stub->agents[i];
+        stub->agents[i].eth_peer_united_io = ag;
+        break;
+      }
+    }
+  }
+
+  for (i = 0; i < ag->nbvehicles; i++)
+  {
+    ag->contexts[i].ctxt.agent = n;
+    ag->contexts[i].ctxt.vehicle = i;
+  }
+
+  stub->nb_agents++;
+}
+
 struct gdbstub *gdbstub_init(debug_agent_t *agents)
 {
     core_register_descr_t *reg;
@@ -514,7 +569,7 @@ struct gdbstub *gdbstub_init(debug_agent_t *agents)
         it = it->next;
     }
 
-    res->agents = malloc (sizeof(*res->agents) * nb_agents);
+    res->agents = malloc (sizeof(*res->agents) * ((nb_agents < 20) ? 20 : nb_agents));
     res->nb_agents = nb_agents;
 
     for (i = 0, it = agents; i < nb_agents; ++i, it = it->next) {
@@ -524,6 +579,7 @@ struct gdbstub *gdbstub_init(debug_agent_t *agents)
   res->agents[i].reg_desc_xml = NULL;
 	vehicle = debug_agent_get_vehicles (it);
 	res->agents[i].attached = 0;
+  res->agents[i].rt_added = 0;
   res->agents[i].ddr_peer_united_io = NULL;
   res->agents[i].eth_peer_united_io = NULL;
 
@@ -2078,6 +2134,17 @@ static bool add_stopped_context (struct gdbstub *stub, int agent, int vehicle)
     {
 	    stub->error = "Context wasn't stopped";
 	    return false;
+    }
+
+    if (!stub->agents[agent].attached && stub->agents[agent].rt_added)
+    {
+      // printf ("send unattached context %d %d\n", ctxt->ctxt.agent, ctxt->ctxt.vehicle);
+      stub->agents[agent].rt_added = 0;
+
+      prepare_to_answer (stub);
+      stub->header = '%';
+      printf_packet (stub, "custom:");
+      return send_answer (stub);
     }
 
     if (ctxt->notified || !stub->agents[agent].attached)

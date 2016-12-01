@@ -584,6 +584,8 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int branched = 0;
   int exception = 0;
+  struct thread_info *th;
+  int cpu_level, debug_level;
 
   if (debug_displaced)
     printf_filtered ("displaced: Fixup\n");
@@ -686,9 +688,9 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
   if (debug_displaced)
     printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
 
-  struct thread_info *th = find_thread_ptid (inferior_ptid);
-  int cpu_level = get_cpu_exec_level ();
-  int debug_level = get_debug_level (inferior_ptid.pid);
+  th = find_thread_ptid (inferior_ptid);
+  cpu_level = get_cpu_exec_level ();
+  debug_level = get_debug_level (inferior_ptid.pid);
 
   if (debug_level > cpu_level)
   {
