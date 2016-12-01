@@ -23,6 +23,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
+#include <stdlib.h>
 
 #include "k1-common-tdep.h"
 #include "osabi.h"
@@ -218,9 +220,9 @@ attach_user_command (char *args, int from_tty)
 
   if (file)
   {
-    int file_len = strlen (file);
-    char cmd[file_len + 50], file_dir[file_len + 1], file_base[file_len + 1];
-    if (stat (file, &vstat))
+    char cmd[PATH_MAX + 50], file_dir[PATH_MAX];
+
+    if (stat (file, &vstat) || S_ISDIR (vstat.st_mode))
     {
       fprintf (stderr, "Error: Cannot find file %s!\n", file);
       return;
@@ -231,24 +233,25 @@ attach_user_command (char *args, int from_tty)
     execute_command (cmd, 0);
 
     // set sysroot
-    strcpy (file_dir, file);
-    dirname (file_dir);
-    while (*file_dir && ((file_dir[0] != '.' && file_dir[0] != '/') || file_dir[1] != 0))
+    if (realpath (file, file_dir) == NULL)
     {
-      strcpy (file_base, file_dir);
-      if (strcmp (basename (file_base), "target") == 0)
+      fprintf (stderr, "Error: Cannot get realpath of file %s!\n", file);
+      return;
+    }
+    strcpy (file_dir, dirname (file_dir));
+    while (*file_dir && (file_dir[0] != '/' || file_dir[1] != 0))
+    {
+      sprintf (cmd, "%s/etc/inittab", file_dir);
+      if (stat (cmd, &vstat) == 0)
       {
-        sprintf (cmd, "%s/THIS_IS_NOT_YOUR_ROOT_FILESYSTEM", file_dir);
-        if (stat (file, &vstat) == 0)
-        {
-          // found the root of k1 filesystem
-          sprintf (cmd, "set sysroot %s", file_dir);
-          fprintf (stderr, "Set sysroot to %s\n", file_dir);
-          execute_command (cmd, 0);
-          break;
-        }
+        // found the root of k1 filesystem
+        sprintf (cmd, "set sysroot %s", file_dir);
+        fprintf (stderr, "Set sysroot to %s\n", file_dir);
+        execute_command (cmd, 0);
+        break;
       }
-      dirname (file_dir);
+
+      strcpy (file_dir, dirname (file_dir));
     }
   }
 
