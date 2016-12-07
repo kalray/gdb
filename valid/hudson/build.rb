@@ -22,7 +22,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"       => {
                           "type" => "keywords",
-                          "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb, :gdbstub],
+                          "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb, :gdblinux, :gdbstub],
                           "default" => :elf,
                           "help" => "Select build variant."
                         },
@@ -86,7 +86,6 @@ if( variant == "gdbstub")
   build_path        = File.join(gdb_path, "gdbstub")
 else
   build_path        = File.join(gdb_path, arch + "_build_#{variant}_#{host}")
-  build_path_linux  = File.join(gdb_path, arch + "_build_linux_#{variant}_#{host}")
 end
 
 prefix            = options.fetch("prefix", "#{build_path}/release")
@@ -114,6 +113,9 @@ when "k1"
   case variant
   when "gdb" then
     build_target = "k1-elf"
+  when "gdblinux" then
+    build_target = "k1-linux"
+    program_prefix = "#{arch}-linux-"
   when "gdbstub"
     build_target = ""
   when "linux" then
@@ -147,7 +149,7 @@ b.target("#{variant}_build") do
     b.builder_infos.each do |builder_info|
       b.run(:cmd => "make -C #{build_path} FAMDIR=#{family_prefix} TOOLS_DIR=#{workspace}  ARCH=#{march_list[0]} TOOLCHAIN_DIR='#{toolroot}' INSTALL_LIB='#{builder_info.lib}' CFLAGS='#{builder_info.cflags}'")
     end
-  elsif( variant == "gdb")
+  elsif( variant == "gdb" or variant == "gdblinux")
     machine_type = `uname -m`.chomp() == "x86_64" ? "64" : "32"
     if( arch == "k1" )
       version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
@@ -160,35 +162,18 @@ b.target("#{variant}_build") do
         additional_flags = "CFLAGS=\"-g -O0\""
       end
 
-      # k1-gdb
       b.create_goto_dir! build_path
       b.run(:cmd => "../configure " +
-                    "--target=#{build_target} " +
-                    "--program-prefix=#{arch}- " +
-                    "--disable-werror " +
-                    "--without-gnu-as " +
-                    "--without-gnu-ld " +
-                    "--with-python " +
-                    "--with-expat=yes " +
-                    "--with-babeltrace=no " +
-                    "--with-bugurl=no " +
-                    "--prefix=#{gdb_install_prefix}")
-      b.run(:cmd => "make clean")
-      b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
-
-      # k1-linux-gdb
-      b.create_goto_dir! build_path_linux
-      b.run(:cmd => "../configure " +
-                    "--target=#{arch}-linux " +
-                    "--program-prefix=#{arch}-linux- " +
-                    "--disable-werror " +
-                    "--without-gnu-as " +
-                    "--without-gnu-ld " +
-                    "--with-python " +
-                    "--with-expat=yes " +
-                    "--with-babeltrace=no " +
-                    "--with-bugurl=no " +
-                    "--prefix=#{gdb_install_prefix}")
+            "--target=#{build_target} " +
+            "--program-prefix=#{program_prefix} " +
+            "--disable-werror " +
+            "--without-gnu-as " +
+            "--without-gnu-ld " +
+            "--with-python " +
+            "--with-expat=yes " +
+            "--with-babeltrace=no " +
+            "--with-bugurl=no " +
+            "--prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
       b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
@@ -245,7 +230,6 @@ b.target("clean") do
   b.logtitle = "Report for GDB clean, arch = #{arch}"
 
   b.run("rm -rf #{build_path}")
-  b.run("rm -rf #{build_path_linux}")
 end
 
 b.target("#{variant}_install") do
@@ -255,14 +239,12 @@ b.target("#{variant}_install") do
       b.run(:cmd => "make -C #{build_path} install TOOLCHAIN_DIR='#{toolroot}' TOOLS_PREFIX='#{gdb_install_prefix}' INSTALL_LIB='#{builder_info.lib}'")
     end
     b.rsync(gdb_install_prefix,toolroot)
-  elsif( variant == "gdb")
+  elsif( variant == "gdb" or variant == "gdblinux")
     if( arch == "k1" )
       if ("#{build_type}" == "Release") then
         b.run(:cmd => "make -C #{build_path} install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
-        b.run(:cmd => "make -C #{build_path_linux} install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
       else
         b.run(:cmd => "make -C #{build_path} install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
-        b.run(:cmd => "make -C #{build_path_linux} install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
       end
 
       # Copy to toolroot.
@@ -298,7 +280,7 @@ b.target("#{variant}_post_build_valid") do
     end
     extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board} #{extra_extra}'"
 
-    if (variant == "gdb")
+    if (variant == "gdb" or variant == "gdblinux")
       if( arch == "k1" )
         Dir.chdir build_path + "/gdb/testsuite"
 
@@ -432,7 +414,7 @@ b.target("#{variant}_package") do
 
   if (variant == "gdbstub") then
   #do nothing
-  elsif( variant == "gdb") then
+  elsif( variant == "gdb" or variant == "gdblinux") then
     # GDB package
     cd gdb_install_prefix
 
