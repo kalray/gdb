@@ -209,6 +209,9 @@ b.target("#{variant}_build") do
                   # uncomment the line below to enable the maintainer mode (generation of files)
                   # "--enable-maintainer-mode " +
 
+                  # we only supports .ctor/.dtor sections.
+                  "--disable-initfini-array " +
+
                   "--enable-64-bit-bfd " +
                   "--target=#{build_target} " +
                   "#{build_host} " +
