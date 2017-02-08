@@ -696,7 +696,7 @@ static bool get_message (struct gdbstub *stub)
     if (len <= 0) {
 	stub->error = "Connection closed";
 	return false;
-    } else if (len == 1 && stub->raw_data[0] == '+') {
+    } else if (len == 1 && (stub->raw_data[0] == '+' || stub->raw_data[0] == '-')) {
 	goto again;
     } else if (len == 1 && stub->raw_data[0] == '\003') {
 	return true;
