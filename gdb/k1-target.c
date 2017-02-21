@@ -626,6 +626,15 @@ k1_target_can_run (struct target_ops *ops)
   return 1;
 }
 
+static enum target_xfer_status
+k1_target_xfer_partial (struct target_ops *ops, enum target_object object, const char *annex, gdb_byte *readbuf,
+  const gdb_byte *writebuf, ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+{
+  if (!ops->beneath)
+    error (_("Don't know how to xfer.  Try \"help target\"."));
+  return ops->beneath->to_xfer_partial (ops->beneath, object, annex, readbuf, writebuf, offset, len, xfered_len);
+}
+
 static int
 k1_target_supports_non_stop (struct target_ops *ops)
 {
@@ -1267,6 +1276,7 @@ _initialize__k1_target (void)
   k1_target_ops.to_supports_non_stop = k1_target_supports_non_stop;
   k1_target_ops.to_can_async_p = k1_target_can_async;
   k1_target_ops.to_can_run = k1_target_can_run;
+  k1_target_ops.to_xfer_partial = k1_target_xfer_partial;
   k1_target_ops.to_attach_no_wait = 0;
   k1_target_ops.to_region_ok_for_hw_watchpoint = k1_region_ok_for_hw_watchpoint;
 
