@@ -2129,8 +2129,6 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     as_fatal("ALL reservation encountered, should have been handled before");
     break;
 
-    //  case Bundling_k1b_ALU:
-    //  case Bundling_k1b_ALU_X:
   case Reservation_k1b_ALU_FULL:
   case Reservation_k1b_ALU_FULL_X:
     PUSH(alu1,state, states, states_sz, states_storage_sz);
@@ -2252,7 +2250,6 @@ k1b_print_insn(k1opc_t *op) {
     insn_type="ALL            ";
     break;
   case Bundling_k1b_ALU:
-  case Bundling_k1b_ALU_X:
     insn_type="ALU            ";
     break;
   case Bundling_k1b_BCU:
