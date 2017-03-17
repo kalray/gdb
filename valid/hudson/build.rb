@@ -61,11 +61,8 @@ package = Target.new("#{variant}_package", repo, [install_valid], [])
 
 install.write_prefix()
 
-march_hash = Hash[*options["march"].split(/::/).map{|tmp_arch| tmp_arch.split(/:/)}.flatten]
-march_valid_hash = Hash[*options["march_valid"].split(/::/).map{|tmp_arch| tmp_arch.split(/:/)}.flatten]
-
-march_list    = march_hash.keys
-march_valid_list    = march_valid_hash.keys
+march_list    = march_list(options["march"]).keys
+march_valid_list    = march_list(options["march_valid"]).keys
 board   = options['board'].to_s
 
 # [PG]: march is used to get registers headers. The build works for now with
@@ -100,6 +97,7 @@ cores      = options["cores"]
 
 program_prefix = "#{arch}-"
 family_prefix = "#{processor_path}/#{arch}-family"
+gbu_family_prefix = File.join(family_prefix,"BE","GBU",march_list[0])
 
 skip_build = false
 skip_valid = false
@@ -219,7 +217,7 @@ b.target("#{variant}_build") do
 
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +
                   "make " +
-                  "FAMDIR='#{family_prefix}' " +
+                  "FAMDIR='#{gbu_family_prefix}' " +
                   "ARCH=#{arch} " +
                   "#{additional_flags} " +
                   "KALRAY_VERSION=\"#{version}\" " +
@@ -256,9 +254,9 @@ b.target("#{variant}_install") do
   else
     cd build_path
     if ("#{build_type}" == "Release") then
-      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{gbu_family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
     else
-      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{gbu_family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
     end
 
     # Copy to toolroot.

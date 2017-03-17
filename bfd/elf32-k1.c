@@ -6,12 +6,12 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include <elf/k1b.h>
+#include <elf/k1c.h>
 
 #include "elfxx-k1.h"
-#define K1BIO_K1BDP
-#include "elf32-k1b.def"
-#undef K1BIO_K1BDP
+#define K1RM_K1PE
+#include "elf32-k1c.def"
+#undef K1RM_K1PE
 
 /* The size in bytes of an entry in the procedure linkage table FDPIC */
 #define PLT_HEADER_SIZE         32
@@ -2803,8 +2803,8 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
       int i;
       const bfd_vma *template;
       switch(output_bfd->arch_info->mach){
-        case bfd_mach_k1bdp:
-        case bfd_mach_k1bio:
+        case bfd_mach_k1cpe:
+        case bfd_mach_k1crm:
           template = fdpic_abi_plt_full_entry_k1b32;
           break;
         default:

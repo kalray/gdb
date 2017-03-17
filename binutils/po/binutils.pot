@@ -8,11 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2016-10-11 16:54+0200\n"
+"POT-Creation-Date: 2017-03-17 11:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -3348,8 +3347,8 @@ msgstr ""
 #: dwarf.c:7375
 #, c-format
 msgid ""
-"Attempt to allocate a zero'ed array with an excessive number of elements: 0x"
-"%lx\n"
+"Attempt to allocate a zero'ed array with an excessive number of elements: 0x%"
+"lx\n"
 msgstr ""
 
 #: dwarf.c:7484 dwarf.c:7554

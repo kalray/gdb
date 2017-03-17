@@ -57,7 +57,7 @@ BFD_H = ../bfd/bfd.h
 BUILD_LIBS = @BUILD_LIBS@
 BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 
-VPATH = @srcdir@:$(FAMDIR)/BE/GBU/k1b/opcodes
+VPATH = @srcdir@:$(FAMDIR)/opcodes
 
 # Header files.
 HFILES = \
@@ -160,8 +160,8 @@ TARGET_LIBOPCODES_CFILES = \
 	iq2000-dis.c \
 	iq2000-ibld.c \
 	iq2000-opc.c \
-	k1b-opc.c \
-	k1b-dis.c \
+	k1c-opc.c \
+	k1c-dis.c \
 	lm32-asm.c \
 	lm32-desc.c \
 	lm32-dis.c \
@@ -305,7 +305,7 @@ OFILES = @BFD_MACHINES@
 # development.sh is used to determine -Werror default.
 CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
 
-AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/BE/GBU/k1b/include
+AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/include
 
 disassemble.lo: disassemble.c
 if am__fastdepCC

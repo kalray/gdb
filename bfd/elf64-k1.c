@@ -6,12 +6,12 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include <elf/k1b.h>
+#include <elf/k1c.h>
 
 #include "elfxx-k1.h"
-#define K1BIO_K1BDP
-#include "elf64-k1b.def"
-#undef K1BIO_K1BDP
+#define K1RM_K1PE
+#include "elf64-k1c.def"
+#undef K1RM_K1PE
 
 /* The size in bytes of an entry in the procedure linkage table FDPIC */
 /* #define PLT_HEADER_SIZE         32 */

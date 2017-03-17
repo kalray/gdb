@@ -8,11 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2016-10-11 16:54+0200\n"
+"POT-Creation-Date: 2017-03-17 11:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1520,8 +1519,8 @@ msgstr ""
 
 #: elf32-arm.c:18229
 msgid ""
-"error: Source object %B has EABI version %d, but target %B has EABI version "
-"%d"
+"error: Source object %B has EABI version %d, but target %B has EABI version %"
+"d"
 msgstr ""
 
 #: elf32-arm.c:18245
@@ -1621,12 +1620,12 @@ msgstr ""
 msgid "%B: unsupported relocation type %i"
 msgstr ""
 
-#: elf32-bfin.c:4998 elf32-frv.c:6607 elfxx-k1.c:658
+#: elf32-bfin.c:4998 elf32-frv.c:6607 elfxx-k1.c:654
 #, c-format
 msgid "%s: cannot link non-fdpic object file into fdpic executable"
 msgstr ""
 
-#: elf32-bfin.c:5002 elf32-frv.c:6611 elfxx-k1.c:662
+#: elf32-bfin.c:5002 elf32-frv.c:6611 elfxx-k1.c:658
 #, c-format
 msgid "%s: cannot link fdpic object file into non-fdpic executable"
 msgstr ""
@@ -1913,8 +1912,8 @@ msgstr ""
 #: elf32-frv.c:6586
 #, c-format
 msgid ""
-"%s: uses different unknown e_flags (0x%lx) fields than previous modules (0x"
-"%lx)"
+"%s: uses different unknown e_flags (0x%lx) fields than previous modules (0x%"
+"lx)"
 msgstr ""
 
 #: elf32-gen.c:68 elf64-gen.c:68
@@ -2066,8 +2065,8 @@ msgstr ""
 #: elf32-k1.c:319 elf32-k1.c:1658 elf64-ia64-vms.c:3942 elf64-k1.c:344
 #: elf32-ia64.c:4469 elf64-ia64.c:4469
 msgid ""
-"%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `"
-"%A'."
+"%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `%"
+"A'."
 msgstr ""
 
 #: elf32-k1.c:337 elf32-k1.c:401 elf32-k1.c:591
@@ -2178,8 +2177,8 @@ msgstr ""
 #: elf32-m68hc1x.c:1194
 #, c-format
 msgid ""
-"reference to a banked address [%lx:%04lx] in the normal address space at "
-"%04lx"
+"reference to a banked address [%lx:%04lx] in the normal address space at %"
+"04lx"
 msgstr ""
 
 #: elf32-m68hc1x.c:1241
@@ -2516,8 +2515,8 @@ msgstr ""
 #: elf32-nds32.c:15499
 #, c-format
 msgid ""
-"%s: warning: unaligned small data access. For entry: {%d, %d, %d}, addr = 0x"
-"%x, align = 0x%x."
+"%s: warning: unaligned small data access. For entry: {%d, %d, %d}, addr = 0x%"
+"x, align = 0x%x."
 msgstr ""
 
 #: elf32-nds32.c:15532
@@ -2714,8 +2713,8 @@ msgstr ""
 
 #: elf32-ppc.c:9022 elf32-ppc.c:9052 elf32-ppc.c:9136
 msgid ""
-"%P: %B: the target (%s) of a %s relocation is in the wrong output section "
-"(%s)\n"
+"%P: %B: the target (%s) of a %s relocation is in the wrong output section (%"
+"s)\n"
 msgstr ""
 
 #: elf32-ppc.c:9230
@@ -2821,6 +2820,11 @@ msgstr ""
 
 #: elf32-rx.c:671
 msgid "%B:%A: Warning: deprecated Red Hat reloc "
+msgstr ""
+
+#: elf32-rx.c:671
+#, c-format
+msgid " detected against: %s."
 msgstr ""
 
 #. Check for unsafe relocs in PID mode.  These are any relocs where
@@ -3505,7 +3509,7 @@ msgstr ""
 msgid "internal inconsistency in size of .got.loc section"
 msgstr ""
 
-#: elf32-xtensa.c:3495 elfxx-k1.c:648
+#: elf32-xtensa.c:3495 elfxx-k1.c:644
 msgid "%B: incompatible machine type. Output is 0x%x. Input is 0x%x"
 msgstr ""
 
@@ -3591,6 +3595,11 @@ msgstr ""
 
 #: elf64-hppa.c:3288
 msgid "%B(%A+0x%"
+msgstr ""
+
+#: elf64-hppa.c:3288
+#, c-format
+msgid "x): cannot reach %s"
 msgstr ""
 
 #: elf64-ia64-vms.c:586 elf32-ia64.c:619 elf64-ia64.c:619
@@ -3704,8 +3713,8 @@ msgstr ""
 #, c-format
 msgid ""
 "%s: Internal inconsistency error for value for\n"
-" linker-allocated global register: linked: 0x%lx%08lx != relaxed: 0x%lx"
-"%08lx\n"
+" linker-allocated global register: linked: 0x%lx%08lx != relaxed: 0x%lx%"
+"08lx\n"
 msgstr ""
 
 #: elf64-mmix.c:1264
@@ -3991,14 +4000,14 @@ msgstr ""
 
 #: elf64-x86-64.c:4678
 msgid ""
-"%B: addend -0x%x in relocation %s against symbol `%s' at 0x%lx in section `"
-"%A' is out of range"
+"%B: addend -0x%x in relocation %s against symbol `%s' at 0x%lx in section `%"
+"A' is out of range"
 msgstr ""
 
 #: elf64-x86-64.c:4686
 msgid ""
-"%B: addend 0x%x in relocation %s against symbol `%s' at 0x%lx in section `"
-"%A' is out of range"
+"%B: addend 0x%x in relocation %s against symbol `%s' at 0x%lx in section `%"
+"A' is out of range"
 msgstr ""
 
 #: elf64-x86-64.c:5481
@@ -4272,8 +4281,8 @@ msgstr ""
 
 #: elfxx-mips.c:10092
 msgid ""
-"%B: Can't find matching LO16 reloc against `%s' for %s at 0x%lx in section `"
-"%A'"
+"%B: Can't find matching LO16 reloc against `%s' for %s at 0x%lx in section `%"
+"A'"
 msgstr ""
 
 #: elfxx-mips.c:10231
@@ -4692,8 +4701,8 @@ msgstr ""
 #: mach-o.c:3702
 #, c-format
 msgid ""
-"bfd_mach_o_read_symtab_symbol: symbol \"%s\" specified invalid type field 0x"
-"%x: setting to undefined"
+"bfd_mach_o_read_symtab_symbol: symbol \"%s\" specified invalid type field 0x%"
+"x: setting to undefined"
 msgstr ""
 
 #: mach-o.c:3776
@@ -4828,8 +4837,8 @@ msgstr ""
 #: mmo.c:2959
 #, c-format
 msgid ""
-"%s: Bad symbol definition: `Main' set to %s rather than the start address "
-"%s\n"
+"%s: Bad symbol definition: `Main' set to %s rather than the start address %"
+"s\n"
 msgstr ""
 
 #: mmo.c:3057
@@ -4862,8 +4871,8 @@ msgstr ""
 #: mmo.c:3216
 #, c-format
 msgid ""
-"%s: invalid start address for initialized registers of length %ld: 0x%lx"
-"%08lx\n"
+"%s: invalid start address for initialized registers of length %ld: 0x%lx%"
+"08lx\n"
 msgstr ""
 
 #: oasys.c:879

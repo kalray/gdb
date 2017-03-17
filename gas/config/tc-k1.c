@@ -32,7 +32,7 @@
 #include "obstack.h"
 #include "subsegs.h"
 #include "tc-k1.h"
-#include "opcode/k1b.h"
+#include "opcode/k1c.h"
 #include "libiberty.h"
 
 #include <assert.h>
@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 #ifdef OBJ_ELF
-#include "elf/k1b.h"
+#include "elf/k1c.h"
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
 #endif
@@ -656,13 +656,13 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_MCORE:
     mcore = strdup(arg);
     i = 0;
-    while(i < K1B_NCORES && ! find_core) {
+    while(i < K1C_NCORES && ! find_core) {
       subcore_id = 0;
-      while(k1b_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
-	if (strcasecmp(mcore, k1b_core_info_table[i]->names[subcore_id]) == 0
-	    && k1b_core_info_table[i]->supported){
+      while(k1c_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
+	if (strcasecmp(mcore, k1c_core_info_table[i]->names[subcore_id]) == 0
+	    && k1c_core_info_table[i]->supported){
 
-	  k1_core_info = k1b_core_info_table[i];
+	  k1_core_info = k1c_core_info_table[i];
 	  k1_registers = k1_registers_table[i];
 	  k1_regfiles = k1_regfiles_table[i];
 	
@@ -675,7 +675,7 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
       if(find_core) { break; }
       i++;
     }
-    if (i == K1B_NCORES){
+    if (i == K1C_NCORES){
       char buf[100];
       supported_cores(buf, sizeof(buf));
       as_fatal("Core specified not supported [%s]", buf);
@@ -819,18 +819,18 @@ real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo,
 static void supported_cores(char buf[], size_t buflen) {
   int i, j;
   buf[0] = '\0';
-  for (i = 0; i < K1B_NCORES; i++) {
+  for (i = 0; i < K1C_NCORES; i++) {
     j = 0;
-    while(k1b_core_info_table[i]->elf_cores[j] != -1) {
-      if (k1b_core_info_table[i]->supported) {
+    while(k1c_core_info_table[i]->elf_cores[j] != -1) {
+      if (k1c_core_info_table[i]->supported) {
 	if (buf[0] == '\0') {
-	  strcpy(buf, k1b_core_info_table[i]->names[j]);
+	  strcpy(buf, k1c_core_info_table[i]->names[j]);
 	}
 	else {
 	  int l = strlen(buf);
-	  if ((l + 1 + strlen(k1b_core_info_table[i]->names[j]) + 1) < buflen) {
+	  if ((l + 1 + strlen(k1c_core_info_table[i]->names[j]) + 1) < buflen) {
 	    strcat(buf, "|");
-	    strcat(buf, k1b_core_info_table[i]->names[j]);
+	    strcat(buf, k1c_core_info_table[i]->names[j]);
 	  }
 	}
       }
@@ -1048,36 +1048,36 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	case RegClass_ ## core ## _onlyfxReg:
 
         switch (operand_type) {
-            case RegClass_k1b_singleReg:
+            case RegClass_k1c_singleReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
-            case RegClass_k1b_pairedReg:
+            case RegClass_k1c_pairedReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
-			SRF_REGCLASSES(k1b)
+			SRF_REGCLASSES(k1c)
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
-            case RegClass_k1b_remoteReg:
+            case RegClass_k1c_remoteReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
 
-            case Immediate_k1b_flagmask2:
-            case Immediate_k1b_brknumber:
-            case Immediate_k1b_sysnumber:
-            case Immediate_k1b_signed5:
-            case Immediate_k1b_unsigned5:
-            case Immediate_k1b_unsigned6:
-            case Immediate_k1b_eventmask2:
-            case Immediate_k1b_unsigned16:
-            case Immediate_k1b_unsigned32:
-            case Immediate_k1b_unsigned32L:
-            case Immediate_k1b_signed32M:
-            case Immediate_k1b_signed8:
-            case Immediate_k1b_signed11:
-            case Immediate_k1b_signed16:
-            case Immediate_k1b_signed10:
-            case Immediate_k1b_signed32:
-            case Immediate_k1b_signed37:
-            case Immediate_k1b_signed43:
-            case Immediate_k1b_pcrel17:
-            case Immediate_k1b_pcrel27:
-            case Immediate_k1b_signed27:
+            case Immediate_k1c_flagmask2:
+            case Immediate_k1c_brknumber:
+            case Immediate_k1c_sysnumber:
+            case Immediate_k1c_signed5:
+            case Immediate_k1c_unsigned5:
+            case Immediate_k1c_unsigned6:
+            case Immediate_k1c_eventmask2:
+            case Immediate_k1c_unsigned16:
+            case Immediate_k1c_unsigned32:
+            case Immediate_k1c_unsigned32L:
+            case Immediate_k1c_signed32M:
+            case Immediate_k1c_signed8:
+            case Immediate_k1c_signed11:
+            case Immediate_k1c_signed16:
+            case Immediate_k1c_signed10:
+            case Immediate_k1c_signed32:
+            case Immediate_k1c_signed37:
+            case Immediate_k1c_signed43:
+            case Immediate_k1c_pcrel17:
+            case Immediate_k1c_pcrel27:
+            case Immediate_k1c_signed27:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
                 }
@@ -1264,26 +1264,26 @@ insert_operand(k1insn_t * insn,
             {
 	      switch (opdef->type)
                 {
-		case Immediate_k1b_pcrel17:
+		case Immediate_k1c_pcrel17:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
-		case Immediate_k1b_pcrel27:
+		case Immediate_k1c_pcrel27:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
-		case Immediate_k1b_signed27:
+		case Immediate_k1c_signed27:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1B */
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
 
-		case Immediate_k1b_signed32:
+		case Immediate_k1c_signed32:
 
 		  insn->immx = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
@@ -1300,7 +1300,7 @@ insert_operand(k1insn_t * insn,
 		  immx_ready = 1;
 		  // fallthough
 		  
-		case Immediate_k1b_signed10:
+		case Immediate_k1c_signed10:
 		  /* if (k1_arch_size == 32){ */
 		  insn->fixup[0].reloc = BFD_RELOC_K1_LO10;
 		  insn->fixup[0].exp = *arg;
@@ -1309,7 +1309,7 @@ insert_operand(k1insn_t * insn,
 
 		  break;
 
-		case Immediate_k1b_signed37:
+		case Immediate_k1c_signed37:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
@@ -1330,7 +1330,7 @@ insert_operand(k1insn_t * insn,
 		  immx_ready = 1;
 		  break;
 		  
-		case Immediate_k1b_signed43:
+		case Immediate_k1c_signed43:
 		  /* } else { */
 		  insn->fixup[0].reloc = BFD_RELOC_K1_ELO10;
 		  insn->fixup[0].exp = *arg;
@@ -1893,41 +1893,41 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     }
     
     switch (type) {
-    case RegClass_k1b_singleReg:
+    case RegClass_k1c_singleReg:
       chars += snprintf(&buf[chars], buf_size - chars, "grf");
       break;
-    case RegClass_k1b_pairedReg:
+    case RegClass_k1c_pairedReg:
       chars += snprintf(&buf[chars], buf_size - chars, "prf");
       break;
-    case RegClass_k1b_systemReg:
-    case RegClass_k1b_nopcpsReg:
-    case RegClass_k1b_onlypsReg:
-    case RegClass_k1b_onlyraReg:
-    case RegClass_k1b_onlyfxReg:
+    case RegClass_k1c_systemReg:
+    case RegClass_k1c_nopcpsReg:
+    case RegClass_k1c_onlypsReg:
+    case RegClass_k1c_onlyraReg:
+    case RegClass_k1c_onlyfxReg:
       chars += snprintf(&buf[chars], buf_size - chars, "srf");
       break;
-    case RegClass_k1b_remoteReg:
+    case RegClass_k1c_remoteReg:
       chars += snprintf(&buf[chars], buf_size - chars, "nrf");
       break;
-    case Immediate_k1b_eventmask2:
-    case Immediate_k1b_flagmask2:
-    case Immediate_k1b_brknumber:
-    case Immediate_k1b_sysnumber:
-    case Immediate_k1b_signed5:
-    case Immediate_k1b_signed10:
-    case Immediate_k1b_signed11:
-    case Immediate_k1b_signed16:
-    case Immediate_k1b_signed27:
-    case Immediate_k1b_signed32:
-    case Immediate_k1b_signed32M:
-    case Immediate_k1b_signed37:
-    case Immediate_k1b_signed43:
-    case Immediate_k1b_unsigned5:
-    case Immediate_k1b_unsigned6:
-    case Immediate_k1b_unsigned32:
-    case Immediate_k1b_unsigned32L:
-    case Immediate_k1b_pcrel17:
-    case Immediate_k1b_pcrel27:
+    case Immediate_k1c_eventmask2:
+    case Immediate_k1c_flagmask2:
+    case Immediate_k1c_brknumber:
+    case Immediate_k1c_sysnumber:
+    case Immediate_k1c_signed5:
+    case Immediate_k1c_signed10:
+    case Immediate_k1c_signed11:
+    case Immediate_k1c_signed16:
+    case Immediate_k1c_signed27:
+    case Immediate_k1c_signed32:
+    case Immediate_k1c_signed32M:
+    case Immediate_k1c_signed37:
+    case Immediate_k1c_signed43:
+    case Immediate_k1c_unsigned5:
+    case Immediate_k1c_unsigned6:
+    case Immediate_k1c_unsigned32:
+    case Immediate_k1c_unsigned32L:
+    case Immediate_k1c_pcrel17:
+    case Immediate_k1c_pcrel27:
       if(flags & k1SIGNED){
 	chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
       }
@@ -1959,17 +1959,17 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
 
 static int is_mono_double(const k1opc_t *op) {
   int reservation = op->reservation;
-  return (reservation == Reservation_k1b_ALUD_LITE   ||
-	  reservation == Reservation_k1b_ALUD_LITE_X ||
-	  reservation == Reservation_k1b_ALUD_TINY   ||
-	  reservation == Reservation_k1b_ALUD_TINY_X);
+  return (reservation == Reservation_k1c_ALUD_LITE   ||
+	  reservation == Reservation_k1c_ALUD_LITE_X ||
+	  reservation == Reservation_k1c_ALUD_TINY   ||
+	  reservation == Reservation_k1c_ALUD_TINY_X);
 }
 
 
 static int used_resources(const k1opc_t *op, int resource) {
   int op_reservations = op->reservation;
   int reservation = op_reservations  & 0xff;
-  const int *reservation_table = k1b_reservation_table_table[reservation];
+  const int *reservation_table = k1c_reservation_table_table[reservation];
 
   if(resource < 0 || resource > RESOURCE_MAX) {
     as_fatal("Unknown resource ID");
@@ -1978,16 +1978,16 @@ static int used_resources(const k1opc_t *op, int resource) {
 }
 
 static int is_tiny(const k1opc_t *op) {
-  return used_resources(op,Resource_k1b_TINY);
+  return used_resources(op,Resource_k1c_TINY);
 }
 
 static int is_lite(const k1opc_t *op) {
-  return used_resources(op,Resource_k1b_LITE);
+  return used_resources(op,Resource_k1c_LITE);
 }
 
 __attribute__((unused))
 static int is_alud(const k1opc_t *op) {
-  return used_resources(op,Resource_k1b_ALUD);
+  return used_resources(op,Resource_k1c_ALUD);
 }
 
 __attribute__((unused))
@@ -2003,7 +2003,7 @@ bundle_resources(char string_buffer[], int buffer_size, int resource, const k1in
     if(shadow_bundle[i] != NULL){
       char tmp_str[256];
       int used_resources_val = used_resources(shadow_bundle[i]->opdef,resource);
-      if(resource == Resource_k1b_TINY || resource == Resource_k1b_LITE) {
+      if(resource == Resource_k1c_TINY || resource == Resource_k1c_LITE) {
 	if(shadow_bundle[i]->slots == (K1_ALU0 | K1_ALU1)) {
 	  used_resources_val++;
 	}
@@ -2012,7 +2012,7 @@ bundle_resources(char string_buffer[], int buffer_size, int resource, const k1in
 	       shadow_bundle[i]->opdef->as_op,
 	       k1_slots_name(shadow_bundle[i]),
 	       used_resources_val,
-	       k1b_resource_names[resource]);
+	       k1c_resource_names[resource]);
       strncat(string_buffer,tmp_str,buffer_size);
     }
   }
@@ -2125,75 +2125,75 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
   k1insn_t *cur_insn = bundle_insn[state->cur_insn];
   switch(find_scheduling(cur_insn)){
 
-  case Reservation_k1b_ALL:
+  case Reservation_k1c_ALL:
     as_fatal("ALL reservation encountered, should have been handled before");
     break;
 
-  case Reservation_k1b_ALU_FULL:
-  case Reservation_k1b_ALU_FULL_X:
+  case Reservation_k1c_ALU_FULL:
+  case Reservation_k1c_ALU_FULL_X:
     PUSH(alu1,state, states, states_sz, states_storage_sz);
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1b_ALU_FULL_ODD:
+  case Reservation_k1c_ALU_FULL_ODD:
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1b_BCU:
-  case Reservation_k1b_BCU_TINY_TINY_MAU:
-    //  case Bundling_k1b_BCU:
+  case Reservation_k1c_BCU:
+  case Reservation_k1c_BCU_TINY_TINY_MAU:
+    //  case Bundling_k1c_BCU:
     PUSH(bcu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1b_ALUD:
-  case Reservation_k1b_ALUD_FULL:
-  case Reservation_k1b_ALUD_FULL_ODD:
-  case Reservation_k1b_ALUD_OPX:
-  case Reservation_k1b_ALUD_OPX_ODD:
+    //  case Bundling_k1c_ALUD:
+  case Reservation_k1c_ALUD_FULL:
+  case Reservation_k1c_ALUD_FULL_ODD:
+  case Reservation_k1c_ALUD_OPX:
+  case Reservation_k1c_ALUD_OPX_ODD:
 
-    //  case Bundling_k1b_ALUD_Y:
-  case Reservation_k1b_ALUD_OPX_Y:
+    //  case Bundling_k1c_ALUD_Y:
+  case Reservation_k1c_ALUD_OPX_Y:
 
     
-    //  case Bundling_k1b_ALUD_Z:
-  case Reservation_k1b_ALUD_OPX_Z:
+    //  case Bundling_k1c_ALUD_Z:
+  case Reservation_k1c_ALUD_OPX_Z:
 
     PUSH_ALUD(state, states, states_sz, states_storage_sz);
     break;    
 
-    //  case Bundling_k1b_MAU:
-  case Reservation_k1b_MAU:
-  case Reservation_k1b_MAU_ACC:
-  case Reservation_k1b_MAU_ACC_ODD:
+    //  case Bundling_k1c_MAU:
+  case Reservation_k1c_MAU:
+  case Reservation_k1c_MAU_ACC:
+  case Reservation_k1c_MAU_ACC_ODD:
 
-    //  case Bundling_k1b_MAU_X:
-  case Reservation_k1b_MAU_X:
-  case Reservation_k1b_MAU_ACC_X:
+    //  case Bundling_k1c_MAU_X:
+  case Reservation_k1c_MAU_X:
+  case Reservation_k1c_MAU_ACC_X:
     PUSH(mau,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1b_LSU:
-  case Reservation_k1b_LSU:
-  case Reservation_k1b_LSU_ACC:
+    //  case Bundling_k1c_LSU:
+  case Reservation_k1c_LSU:
+  case Reservation_k1c_LSU_ACC:
 
-    //  case Bundling_k1b_LSU_X:
-  case Reservation_k1b_LSU_X:
-  case Reservation_k1b_LSU_ACC_X:
+    //  case Bundling_k1c_LSU_X:
+  case Reservation_k1c_LSU_X:
+  case Reservation_k1c_LSU_ACC_X:
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1b_TINY:
-  case Reservation_k1b_ALU_TINY:
-  case Reservation_k1b_ALU_LITE:
-  case Reservation_k1b_ALUD_TINY:
-  case Reservation_k1b_ALUD_LITE:
+    //  case Bundling_k1c_TINY:
+  case Reservation_k1c_ALU_TINY:
+  case Reservation_k1c_ALU_LITE:
+  case Reservation_k1c_ALUD_TINY:
+  case Reservation_k1c_ALUD_LITE:
 
 
-    //  case Bundling_k1b_TINY_X:
-  case Reservation_k1b_ALU_TINY_X:
-  case Reservation_k1b_ALU_LITE_X:
-  case Reservation_k1b_ALUD_TINY_X:
-  case Reservation_k1b_ALUD_LITE_X:
+    //  case Bundling_k1c_TINY_X:
+  case Reservation_k1c_ALU_TINY_X:
+  case Reservation_k1c_ALU_LITE_X:
+  case Reservation_k1c_ALUD_TINY_X:
+  case Reservation_k1c_ALUD_LITE_X:
 
     // FIXME : If we stick to scheduling class in the switch (was bundling class before),
     // we can remove the is_* test and simply split in different cases.
@@ -2246,34 +2246,34 @@ k1b_print_insn(k1opc_t *op) {
   }
  
   switch(op->bundlings){
-  case Bundling_k1b_ALL:
+  case Bundling_k1c_ALL:
     insn_type="ALL            ";
     break;
-  case Bundling_k1b_ALU:
+  case Bundling_k1c_ALU:
     insn_type="ALU            ";
     break;
-  case Bundling_k1b_BCU:
+  case Bundling_k1c_BCU:
     insn_type="BCU            ";
     break;
 
-  case Bundling_k1b_ALUD:
-  case Bundling_k1b_ALUD_Y:
-  case Bundling_k1b_ALUD_Z:
+  case Bundling_k1c_ALUD:
+  case Bundling_k1c_ALUD_Y:
+  case Bundling_k1c_ALUD_Z:
     insn_type="ALUD           ";
     break;    
 
-  case Bundling_k1b_MAU:
-  case Bundling_k1b_MAU_X:
+  case Bundling_k1c_MAU:
+  case Bundling_k1c_MAU_X:
     insn_type="MAU            ";
     break;
 
-  case Bundling_k1b_LSU:
-  case Bundling_k1b_LSU_X:
+  case Bundling_k1c_LSU:
+  case Bundling_k1c_LSU_X:
     insn_type="LSU            ";
     break;
 
-  case Bundling_k1b_TINY:
-  case Bundling_k1b_TINY_X:
+  case Bundling_k1c_TINY:
+  case Bundling_k1c_TINY_X:
     if (is_lite(op)){
       if (is_mono_double(op)){
 	insn_type="LITE_MONODOUBLE";
@@ -2318,7 +2318,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   
   int bidx;
   for(bidx=0; bidx < *bundle_insncnt_p; bidx++){
-    if(find_bundling(bundle_insn[bidx]) == Bundling_k1b_ALL){
+    if(find_bundling(bundle_insn[bidx]) == Bundling_k1c_ALL){
       if(*bundle_insncnt_p == 1) {
        return;
       }
@@ -2367,16 +2367,16 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  int tag;
 	  switch(ii){
 	  case alu0_e:
-	    tag = Modifier_k1b_exunum_ALU0;
+	    tag = Modifier_k1c_exunum_ALU0;
 	    break;
 	  case alu1_e:
-	    tag = Modifier_k1b_exunum_ALU1;
+	    tag = Modifier_k1c_exunum_ALU1;
 	    break;
 	  case mau_e:
-	    tag = Modifier_k1b_exunum_MAU;
+	    tag = Modifier_k1c_exunum_MAU;
 	    break;
 	  case lsu_e:
-	    tag = Modifier_k1b_exunum_LSU;
+	    tag = Modifier_k1c_exunum_LSU;
 	    break;
 	  default:
 	    as_fatal("Unexpected EXU %d (%s)\n", ii, exu_names[ii]);
@@ -2384,7 +2384,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  immxbuf[shadow[jj]->immx].insn[0] |= (tag << 27);
 	}
 	if(shadow[jj]->immx64 != NOIMMX){
-	  immxbuf[shadow[jj]->immx64].insn[0] |= (Modifier_k1b_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
+	  immxbuf[shadow[jj]->immx64].insn[0] |= (Modifier_k1c_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
 	}
 	jj++;
       }
@@ -2472,7 +2472,7 @@ md_assemble(char *s)
              * We check only for a single bundle, so resources that are used
              * in multiple cycles will not be fully checked. */
             if (check_resource_usage) {
-                const int reservation_table_len = (k1b_reservation_table_lines * k1b_resource_max);
+                const int reservation_table_len = (k1c_reservation_table_lines * k1c_resource_max);
                 const int *resources = k1_core_info->resources;
                 int *resources_used;
 
@@ -2482,14 +2482,14 @@ md_assemble(char *s)
                 for (i = 0; i < bundle_insn_cnt; i++) {
                     int insn_reservations = bundle_insn[i]->opdef->reservation;
                     int reservation = insn_reservations  & 0xff;
-                    const int *reservation_table = k1b_reservation_table_table[reservation];
+                    const int *reservation_table = k1c_reservation_table_table[reservation];
                     for (j = 0; j < reservation_table_len; j++)
                         resources_used[j] += reservation_table[j];
                 }
-                for (i = 0; i < k1b_reservation_table_lines; i++) {
-                    for (j = 0; j < k1b_resource_max; j++)
-                        if (resources_used[(i * k1b_resource_max) + j] > resources[j]) {
-                            as_bad("Resource %s over-used in bundle: %d used, %d available", k1b_resource_names[j], resources_used[(i * k1b_resource_max) + j], resources[j]);
+                for (i = 0; i < k1c_reservation_table_lines; i++) {
+                    for (j = 0; j < k1c_resource_max; j++)
+                        if (resources_used[(i * k1c_resource_max) + j] > resources[j]) {
+                            as_bad("Resource %s over-used in bundle: %d used, %d available", k1c_resource_names[j], resources_used[(i * k1c_resource_max) + j], resources[j]);
                         }
                 }
             }
@@ -2509,7 +2509,7 @@ md_assemble(char *s)
             entry = 0;
             for(i=0; i < 4; i++){
               for (j = 0; j < immxcnt; j++) {
-                  if(k1b_exunum2_fld(immxbuf[j].insn[0]) == i){
+                  if(k1c_exunum2_fld(immxbuf[j].insn[0]) == i){
 		    assert(immxbuf[j].written == 0);
                       emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
                       immxbuf[j].written = 1;
@@ -2582,38 +2582,38 @@ md_assemble(char *s)
 static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
-      k1_core_info = &k1bdp_core_info;
+      k1_core_info = &k1pe_core_info;
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp)){
 	as_warn(_("could not set architecture and machine"));
       }
   }
 
   if(!k1_registers) {
-    k1_registers = k1_k1bdp_registers;
+    k1_registers = k1_k1pe_registers;
   }
 
   if(!k1_regfiles) {
-    k1_regfiles = k1_k1bdp_regfiles;
+    k1_regfiles = k1_k1pe_regfiles;
   }
 
   switch(k1_core_info->elf_cores[subcore_id]) {
-  case ELF_K1_CORE_B_DP:
+  case ELF_K1_CORE_C_PE:
     if (k1_arch_size == 32) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe))
 	as_warn(_("could not set architecture and machine"));
     } else if (k1_arch_size == 64) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp_64))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe_64))
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1b_reorder_bundle;
     print_insn = k1b_print_insn;
     break;
-  case ELF_K1_CORE_B_IO:
+  case ELF_K1_CORE_C_RM:
     if (k1_arch_size == 32){
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1crm))
 	as_warn(_("could not set architecture and machine"));
     } else if ( k1_arch_size == 64){
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bio_64))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1crm_64))
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1b_reorder_bundle;
@@ -3418,14 +3418,14 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
         SKIP_WHITESPACE();
 
         /* core */
-        for (i = 0; i < K1B_NCORES; i++) {
+        for (i = 0; i < K1C_NCORES; i++) {
 	  j=0;
-	  while(k1b_core_info_table[i]->elf_cores[j] != -1) {
-            if (is_assume_param(&input_line_pointer, k1b_core_info_table[i]->names[j])) {
-                set_assume_param(&k1_core, k1b_core_info_table[i]->elf_cores[subcore_id], &k1_core_set);
-                if (k1_core_info != k1b_core_info_table[i])
+	  while(k1c_core_info_table[i]->elf_cores[j] != -1) {
+            if (is_assume_param(&input_line_pointer, k1c_core_info_table[i]->names[j])) {
+                set_assume_param(&k1_core, k1c_core_info_table[i]->elf_cores[subcore_id], &k1_core_set);
+                if (k1_core_info != k1c_core_info_table[i])
                     as_fatal("assume machine '%s' is inconsistent with current machine '%s'",
-                            k1b_core_info_table[i]->names[j], target_name);
+                            k1c_core_info_table[i]->names[j], target_name);
                 found = TRUE;
                 break;
             }

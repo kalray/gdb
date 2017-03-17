@@ -22,11 +22,11 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   if (amach == bmach)
     return a;
 
-  if ((amach == bfd_mach_k1bio && bmach == bfd_mach_k1bio_usr) ||
-      (amach == bfd_mach_k1bdp && bmach == bfd_mach_k1bdp_usr))
+  if ((amach == bfd_mach_k1crm && bmach == bfd_mach_k1crm_usr) ||
+      (amach == bfd_mach_k1cpe && bmach == bfd_mach_k1cpe_usr))
     return b;
-  if ((bmach == bfd_mach_k1bio && amach == bfd_mach_k1bio_usr) ||
-      (bmach == bfd_mach_k1bdp && amach == bfd_mach_k1bdp_usr))
+  if ((bmach == bfd_mach_k1crm && amach == bfd_mach_k1crm_usr) ||
+      (bmach == bfd_mach_k1cpe && amach == bfd_mach_k1cpe_usr))
     return a;
 
   /* Otherwise if either a or b is the 'default' machine
@@ -47,12 +47,12 @@ static struct
 }
 processors[] =
 {
-  { bfd_mach_k1bdp, "k1bdp"  },
-  { bfd_mach_k1bio, "k1bio"  },
-  { bfd_mach_k1bdp_64, "k1bdp64" },
-  { bfd_mach_k1bio_64, "k1bio64" },
-  { bfd_mach_k1bdp_usr, "k1bdp_usr"},
-  { bfd_mach_k1bio_usr, "k1bio_usr"},
+  { bfd_mach_k1cpe, "k1cpe"  },
+  { bfd_mach_k1crm, "k1crm"  },
+  { bfd_mach_k1cpe_64, "k1cpe64" },
+  { bfd_mach_k1crm_64, "k1crm64" },
+  { bfd_mach_k1cpe_usr, "k1cpe_usr"},
+  { bfd_mach_k1crm_usr, "k1crm_usr"},
 };
 
 static bfd_boolean
@@ -100,13 +100,13 @@ scan (const struct bfd_arch_info *info, const char *string)
  
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (32, bfd_mach_k1bdp,      "k1:k1bdp",     FALSE, & arch_info_struct[1]),
-  N (32, bfd_mach_k1bio,      "k1:k1bio",     FALSE, & arch_info_struct[2]),
-  N (64, bfd_mach_k1bdp_64,   "k1:k1bdp:64",  FALSE, & arch_info_struct[3]),
-  N (64, bfd_mach_k1bio_64,   "k1:k1bio:64",  FALSE, & arch_info_struct[4]),
-  N (32, bfd_mach_k1bdp_usr,  "k1:k1bdp_usr", FALSE, & arch_info_struct[5]),
-  N (32, bfd_mach_k1bio_usr,  "k1:k1bio_usr", FALSE, NULL),
+  N (32, bfd_mach_k1cpe,      "k1:k1cpe",     FALSE, & arch_info_struct[1]),
+  N (32, bfd_mach_k1crm,      "k1:k1crm",     FALSE, & arch_info_struct[2]),
+  N (64, bfd_mach_k1cpe_64,   "k1:k1cpe:64",  FALSE, & arch_info_struct[3]),
+  N (64, bfd_mach_k1crm_64,   "k1:k1crm:64",  FALSE, & arch_info_struct[4]),
+  N (32, bfd_mach_k1cpe_usr,  "k1:k1cpe_usr", FALSE, & arch_info_struct[5]),
+  N (32, bfd_mach_k1crm_usr,  "k1:k1crm_usr", FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =
-  N (32, bfd_mach_k1bdp, "k1b", TRUE, & arch_info_struct[0]);
+  N (32, bfd_mach_k1cpe, "k1c", TRUE, & arch_info_struct[0]);

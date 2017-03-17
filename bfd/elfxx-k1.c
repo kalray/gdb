@@ -2,15 +2,11 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include <elf/k1b.h>
+#include <elf/k1c.h>
 
 #include "elfxx-k1.h"
 
 /* void k1_elf_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *); */
-
-/* #define K1BDP_K1BIO */
-/* #include "elf32-k1b.def" */
-/* #undef K1BDP_K1BIO */
 
 #define DEFAULT_STACK_SIZE 0x20000
 
@@ -192,19 +188,19 @@ k1_plt_sym_val (bfd_vma i, const asection *plt,
 {
   bfd *abfd = plt->owner;
 
-  int is_k1b32 = bfd_get_mach(abfd) == bfd_mach_k1bdp
-    || bfd_get_mach(abfd) == bfd_mach_k1bio;
+  int is_k1c32 = bfd_get_mach(abfd) == bfd_mach_k1cpe
+    || bfd_get_mach(abfd) == bfd_mach_k1crm;
 
-  int is_k1b64 = bfd_get_mach(abfd) == bfd_mach_k1bdp_64
-    || bfd_get_mach(abfd) == bfd_mach_k1bio_64;
+  int is_k1c64 = bfd_get_mach(abfd) == bfd_mach_k1cpe_64
+    || bfd_get_mach(abfd) == bfd_mach_k1crm_64;
 
-  bfd_reloc_code_real_type plt_jmp_slot_type = is_k1b64 ? R_K1_JMP_SLOT64 : R_K1_JMP_SLOT;
+  bfd_reloc_code_real_type plt_jmp_slot_type = is_k1c64 ? R_K1_JMP_SLOT64 : R_K1_JMP_SLOT;
   unsigned int plt_header_size = 0;
   unsigned int plt_entry_size = 0;
 
-  if (is_k1b32) {
+  if (is_k1c32) {
       plt_entry_size = plt_entry_k1b32_size;
-  } else if (is_k1b64) {
+  } else if (is_k1c64) {
       plt_entry_size = plt_entry_k1b64_size;
   }
 
@@ -1734,23 +1730,23 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
 
   fprintf (f, "\nK1 header:\n");
   switch(e_flags & K1_MACH_MASK) {
-  case bfd_mach_k1bdp:
-	fprintf (f, "\nMachine     = k1bdp\n");
+  case bfd_mach_k1cpe:
+	fprintf (f, "\nMachine     = k1cpe\n");
 	break;
-  case bfd_mach_k1bio:
-	fprintf (f, "\nMachine     = k1bio\n");
+  case bfd_mach_k1crm:
+	fprintf (f, "\nMachine     = k1crm\n");
 	break;
-  case bfd_mach_k1bdp_64:
-	fprintf (f, "\nMachine     = k1bdp:64\n");
+  case bfd_mach_k1cpe_64:
+	fprintf (f, "\nMachine     = k1cpe:64\n");
 	break;
-  case bfd_mach_k1bio_64:
-	fprintf (f, "\nMachine     = k1bio:64\n");
+  case bfd_mach_k1crm_64:
+	fprintf (f, "\nMachine     = k1crm:64\n");
 	break;
-  case bfd_mach_k1bdp_usr:
-	fprintf (f, "\nMachine     = k1bdp_usr\n");
+  case bfd_mach_k1cpe_usr:
+	fprintf (f, "\nMachine     = k1cpe_usr\n");
 	break;
-  case bfd_mach_k1bio_usr:
-	fprintf (f, "\nMachine     = k1bio_usr\n");
+  case bfd_mach_k1crm_usr:
+	fprintf (f, "\nMachine     = k1crm_usr\n");
 	break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
@@ -1779,10 +1775,10 @@ elf_k1_final_write_processing (bfd *abfd,
 
   switch (mach = bfd_get_mach (abfd))
     {
-    case bfd_mach_k1bdp:
-    case bfd_mach_k1bio:
-    case bfd_mach_k1bdp_64:
-    case bfd_mach_k1bio_64:
+    case bfd_mach_k1cpe:
+    case bfd_mach_k1crm:
+    case bfd_mach_k1cpe_64:
+    case bfd_mach_k1crm_64:
       val = mach;
       break;
     default:
@@ -1801,10 +1797,10 @@ elf_k1_object_p (bfd *abfd)
   int mach = elf_elfheader (abfd)->e_flags & K1_MACH_MASK;
 
   switch (mach) {
-    case bfd_mach_k1bdp:
-    case bfd_mach_k1bio:
-    case bfd_mach_k1bdp_64:
-    case bfd_mach_k1bio_64:
+    case bfd_mach_k1cpe:
+    case bfd_mach_k1crm:
+    case bfd_mach_k1cpe_64:
+    case bfd_mach_k1crm_64:
       break;
     default:
       return FALSE;
