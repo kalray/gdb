@@ -2018,30 +2018,6 @@ bundle_resources(char string_buffer[], int buffer_size, int resource, const k1in
   }
 }
 
-__attribute__((unused))
-static char *
-k1b_insn_slot_type(const k1insn_t *insn) {
-  char *slot_type=k1_slots_name(insn);
-  
-  if(is_tiny(insn->opdef)) {
-    slot_type = "TINY";
-  }
-  if(is_lite(insn->opdef)) {
-    slot_type = "LITE";
-  }
-  if(is_mono_double(insn->opdef)) {
-    slot_type = "MONODOUBLE";
-    if(is_tiny(insn->opdef)) {
-      slot_type = "TINY MONODOUBLE";
-    }
-    if(is_lite(insn->opdef)) {
-      slot_type = "LITE MONODOUBLE";
-    }
-  }
-  
-  return slot_type;
-}
-
 enum exu_t {
   bcu_e,
   alu0_e,
@@ -2112,7 +2088,7 @@ new_state(struct state_t *orig){
 
 
 static int
-k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
+k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 		  sched_state_t *state,
 		  sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz,
 		  sched_state_t **solutions, unsigned int *solutions_sz){
@@ -2233,7 +2209,7 @@ k1b_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 }
 
 static void
-k1b_print_insn(k1opc_t *op) {
+k1c_print_insn(k1opc_t *op) {
   int asm_chars = 48;
   char asm_str[asm_chars];
   int chars = insn_syntax(op, asm_str, asm_chars);
@@ -2310,7 +2286,7 @@ k1b_print_insn(k1opc_t *op) {
 }
 
 static void
-k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   sched_state_t *first_state;
   sched_state_t **states = NULL, *solutions[10];
   unsigned int solutions_sz = 0;
@@ -2337,7 +2313,7 @@ k1b_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
   while(states_sz){
     sched_state_t *cur_s = pop(states, &states_sz);
 
-    int ok = k1b_schedule_step(bundle_insn, *bundle_insncnt_p,
+    int ok = k1c_schedule_step(bundle_insn, *bundle_insncnt_p,
 			       cur_s,
 			       &states, &states_sz, &states_storage_sz,
 			       solutions, &solutions_sz);
@@ -2583,7 +2559,7 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1pe_core_info;
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1bdp)){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe)){
 	as_warn(_("could not set architecture and machine"));
       }
   }
@@ -2605,8 +2581,8 @@ k1_set_cpu(void) {
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe_64))
 	as_warn(_("could not set architecture and machine"));
     }
-    reorder_bundle = k1b_reorder_bundle;
-    print_insn = k1b_print_insn;
+    reorder_bundle = k1c_reorder_bundle;
+    print_insn = k1c_print_insn;
     break;
   case ELF_K1_CORE_C_RM:
     if (k1_arch_size == 32){
@@ -2616,8 +2592,8 @@ k1_set_cpu(void) {
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1crm_64))
 	as_warn(_("could not set architecture and machine"));
     }
-    reorder_bundle = k1b_reorder_bundle;
-    print_insn = k1b_print_insn;
+    reorder_bundle = k1c_reorder_bundle;
+    print_insn = k1c_print_insn;
     break;
   default:
     as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
@@ -3448,10 +3424,10 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "cut5", ELF_K1_CUT_5, &k1_cut, &k1_cut_set },
 	      { "no-abi", ELF_K1_ABI_NO, &k1_abi, &k1_abi_set },
 	      { "old-multiflow-abi", ELF_K1_ABI_MULTI, &k1_abi, &k1_abi_set },
-	      { "abi-k1bdp-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1bdp-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-	      { "abi-k1bio-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1bio-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1pe-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1pe-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1rm-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1rm-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },
