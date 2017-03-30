@@ -3,12 +3,12 @@
 
 #include "dwarf2-frame.h"
 #include "dis-asm.h"
-#include "opcode/k1b.h"
+#include "opcode/k1c.h"
 
 enum K1_ARCH
 {
-  K1_K1BDP,
-  K1_K1BIO,
+  K1_K1PE,
+  K1_K1RM,
   K1_NUM_ARCHES
 };
 
@@ -37,17 +37,17 @@ extern struct op_list *branch_insns[K1_NUM_ARCHES];
 
 enum K1_ARCH k1_arch (void);
 void k1_look_for_insns (void);
-const char *k1b_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
-struct type *k1b_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
-int k1b_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *reggroup);
-enum register_status k1b_pseudo_register_read (struct gdbarch *gdbarch,
+const char *k1c_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
+struct type *k1c_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
+int k1c_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *reggroup);
+enum register_status k1c_pseudo_register_read (struct gdbarch *gdbarch,
   struct regcache *regcache, int regnum, gdb_byte *buf);
-void k1b_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+void k1c_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     int regnum, const gdb_byte *buf);
-int k1b_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
-const int k1b_num_pseudos (struct gdbarch *);
-const char *k1b_pc_name (struct gdbarch *);
-const char *k1b_sp_name (struct gdbarch *);
+int k1c_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
+const int k1c_num_pseudos (struct gdbarch *);
+const char *k1c_pc_name (struct gdbarch *);
+const char *k1c_sp_name (struct gdbarch *);
 const char *k1_dummy_register_name (struct gdbarch *gdbarch, int regno);
 struct type *k1_dummy_register_type (struct gdbarch *gdbarch, int regno);
 void k1_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,

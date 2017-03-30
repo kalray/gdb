@@ -57,7 +57,7 @@ BFD_H = ../bfd/bfd.h
 BUILD_LIBS = @BUILD_LIBS@
 BUILD_LIB_DEPS = @BUILD_LIB_DEPS@
 
-VPATH = @srcdir@:$(FAMDIR)/opcodes
+VPATH = @srcdir@:$(FAMDIR)/BE/GBU/k1c/opcodes
 
 # Header files.
 HFILES = \
@@ -305,7 +305,7 @@ OFILES = @BFD_MACHINES@
 # development.sh is used to determine -Werror default.
 CONFIG_STATUS_DEPENDENCIES = $(BFDDIR)/development.sh
 
-AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/include
+AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(INCDIR) -I$(BFDDIR) @HDEFINES@ @INCINTL@ -I $(FAMDIR)/BE/GBU/k1c/include
 
 disassemble.lo: disassemble.c
 if am__fastdepCC

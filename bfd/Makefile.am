@@ -21,7 +21,7 @@ AUTOMAKE_OPTIONS = 1.11 no-dist foreign
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 
 INCDIR = $(srcdir)/../include
-CSEARCH = -I. -I$(srcdir) -I$(INCDIR) -I$(FAMDIR)/bfd
+CSEARCH = -I. -I$(srcdir) -I$(INCDIR) -I$(FAMDIR)/BE/GBU/k1c/bfd
 
 SUBDIRS = doc po
 

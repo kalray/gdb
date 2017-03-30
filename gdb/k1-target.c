@@ -36,9 +36,9 @@
 #include "location.h"
 #include "regcache.h"
 
-#include "elf/k1b.h"
+#include "elf/k1c.h"
 #include "elf-bfd.h"
-#include "elf/k1b.h"
+#include "elf/k1c.h"
 #include "k1-target.h"
 
 #ifndef MAX

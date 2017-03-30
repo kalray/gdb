@@ -271,12 +271,12 @@ iq2000-*-*)
 	;;
 
 k1*-*-linux*)
-	gdb_target_obs="k1-linux-tdep.o k1-common-tdep.o k1b-mds-tdep.o\
+	gdb_target_obs="k1-linux-tdep.o k1-common-tdep.o k1c-mds-tdep.o\
 		k1-linux-mux.o solib-svr4.o symfile-mem.o linux-tdep.o"
 	;;
 
 k1-*-*)
-	gdb_target_obs="k1b-mds-tdep.o k1-common-tdep.o k1-tdep.o k1-target.o"
+	gdb_target_obs="k1c-mds-tdep.o k1-common-tdep.o k1-tdep.o k1-target.o"
 	;;
 
 lm32-*-*)		

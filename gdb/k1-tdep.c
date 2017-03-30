@@ -755,8 +755,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep = xzalloc (sizeof (struct gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
 
-  pc_name = k1b_pc_name (gdbarch);
-  sp_name = k1b_sp_name (gdbarch);
+  pc_name = k1c_pc_name (gdbarch);
+  sp_name = k1c_sp_name (gdbarch);
   mach = gdbarch_bfd_arch_info (gdbarch)->mach;
 
   /* This could (should?) be extracted from MDS */
@@ -842,16 +842,16 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
 
-  set_gdbarch_num_pseudo_regs (gdbarch, k1b_num_pseudos (gdbarch));
+  set_gdbarch_num_pseudo_regs (gdbarch, k1c_num_pseudos (gdbarch));
 
-  set_tdesc_pseudo_register_name (gdbarch, k1b_pseudo_register_name);
-  set_tdesc_pseudo_register_type (gdbarch, k1b_pseudo_register_type);
+  set_tdesc_pseudo_register_name (gdbarch, k1c_pseudo_register_name);
+  set_tdesc_pseudo_register_type (gdbarch, k1c_pseudo_register_type);
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
-    k1b_pseudo_register_reggroup_p);
+    k1c_pseudo_register_reggroup_p);
 
-  set_gdbarch_pseudo_register_read (gdbarch, k1b_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, k1b_pseudo_register_write);
-  set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1b_dwarf2_reg_to_regnum);
+  set_gdbarch_pseudo_register_read (gdbarch, k1c_pseudo_register_read);
+  set_gdbarch_pseudo_register_write (gdbarch, k1c_pseudo_register_write);
+  set_gdbarch_dwarf2_reg_to_regnum (gdbarch, k1c_dwarf2_reg_to_regnum);
   dwarf2_frame_set_init_reg (gdbarch, k1_dwarf2_frame_init_reg);
 
   set_gdbarch_return_value (gdbarch, k1_return_value);

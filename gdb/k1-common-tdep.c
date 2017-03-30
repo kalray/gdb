@@ -27,8 +27,8 @@
 #include "elf-bfd.h"
 #include "gdbthread.h"
 
-#include "elf/k1b.h"
-#include "opcode/k1b.h"
+#include "elf/k1c.h"
+#include "opcode/k1c.h"
 #include "k1-common-tdep.h"
 
 struct k1_frame_cache
@@ -59,10 +59,10 @@ k1_arch (void)
     switch (elf_elfheader (exec_bfd)->e_flags & ELF_K1_CORE_MASK)
     {
       case ELF_K1_CORE_B_DP:
-        k1_current_arch = K1_K1BDP;
+        k1_current_arch = K1_K1PE;
         break;
       case ELF_K1_CORE_B_IO:
-        k1_current_arch = K1_K1BIO;
+        k1_current_arch = K1_K1RM;
         break;
       default:
         error (_ ("The K1 binary is compiled for an unknown core."));
@@ -71,10 +71,10 @@ k1_arch (void)
   else if (desc && tdesc_architecture (desc))
   {
     const char *name = tdesc_architecture (desc)->printable_name;
-    if (!strcmp (name, "k1:k1bdp"))
-      k1_current_arch = K1_K1BDP;
-    else if (!strcmp (name, "k1:k1bio"))
-      k1_current_arch = K1_K1BIO;
+    if (!strcmp (name, "k1:k1pe"))
+      k1_current_arch = K1_K1PE;
+    else if (!strcmp (name, "k1:k1rm"))
+      k1_current_arch = K1_K1RM;
     else
       error ("unable to find the current k1 architecture.");
   }
@@ -156,17 +156,17 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
   typedef struct op_list_desc prologue_ops[NUM_INSN_LISTS];
   prologue_ops prologue_insns_full[] =
   {
-    [K1_K1BIO] =
+    [K1_K1RM] =
     {
-      { sp_adjust_insns[K1_K1BIO], 0 /* Dest register */},
-      { sp_store_insns[K1_K1BIO], 1 /* Base register */},
-      { prologue_helper_insns[K1_K1BIO], -1 /* unused */},
+      { sp_adjust_insns[K1_K1RM], 0 /* Dest register */},
+      { sp_store_insns[K1_K1RM], 1 /* Base register */},
+      { prologue_helper_insns[K1_K1RM], -1 /* unused */},
     },
-    [K1_K1BDP] =
+    [K1_K1PE] =
     {
-      { sp_adjust_insns[K1_K1BDP], 0 /* Dest register */},
-      { sp_store_insns[K1_K1BDP], 1 /* Base register */},
-      { prologue_helper_insns[K1_K1BDP], -1 /* unused */},
+      { sp_adjust_insns[K1_K1PE], 0 /* Dest register */},
+      { sp_store_insns[K1_K1PE], 1 /* Base register */},
+      { prologue_helper_insns[K1_K1PE], -1 /* unused */},
     },
   };
 
@@ -545,9 +545,9 @@ k1_look_for_insns (void)
 
     switch (i)
     {
-      case K1_K1BDP: op = k1bdp_k1optab;
+      case K1_K1PE: op = k1pe_k1optab;
         break;
-      case K1_K1BIO: op = k1bio_k1optab;
+      case K1_K1RM: op = k1rm_k1optab;
         break;
       default:
         internal_error (__FILE__, __LINE__, "Unknown arch id.");

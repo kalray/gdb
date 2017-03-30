@@ -97,7 +97,6 @@ cores      = options["cores"]
 
 program_prefix = "#{arch}-"
 family_prefix = "#{processor_path}/#{arch}-family"
-gbu_family_prefix = File.join(family_prefix,"BE","GBU",march_list[0])
 
 skip_build = false
 skip_valid = false
@@ -217,7 +216,7 @@ b.target("#{variant}_build") do
 
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +
                   "make " +
-                  "FAMDIR='#{gbu_family_prefix}' " +
+                  "FAMDIR='#{family_prefix}' " +
                   "ARCH=#{arch} " +
                   "#{additional_flags} " +
                   "KALRAY_VERSION=\"#{version}\" " +
@@ -254,9 +253,9 @@ b.target("#{variant}_install") do
   else
     cd build_path
     if ("#{build_type}" == "Release") then
-      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{gbu_family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
     else
-      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{gbu_family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
     end
 
     # Copy to toolroot.

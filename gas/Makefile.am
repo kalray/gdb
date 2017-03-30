@@ -394,7 +394,7 @@ INCDIR = $(BASEDIR)/include
 # subdirectory rather than in the source directory.
 AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(srcdir)/config \
 	-I$(INCDIR) -I$(srcdir)/.. -I$(BFDDIR) @INCINTL@ \
-	-DLOCALEDIR="\"$(datadir)/locale\"" -I $(FAMDIR)/include
+	-DLOCALEDIR="\"$(datadir)/locale\"" -I $(FAMDIR)/BE/GBU/k1c/include
 
 # How to link with both our special library facilities
 # and the system's installed libraries.
