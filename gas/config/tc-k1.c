@@ -975,8 +975,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     int jj;
     int nop;
     k1bfield *opdef;
-    long long min, max;
-    unsigned long long mask;
+    volatile long long min, max;
+    volatile unsigned long long mask;
 
     /* First check that number of operands are the same. */
     for (nop = 0; op && op->format[nop]; nop++);
