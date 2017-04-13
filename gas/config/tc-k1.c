@@ -164,8 +164,8 @@ struct k1insn_s {
   int written;		                /* written out ?                           */
   const k1opc_t *opdef;	                /* Opcode table entry for this insn        */
   unsigned len;		                /* length of instruction in words (1 or 2) */
-  int immx;                             /* insn is extended */
-  int immx64;                           /* only used for 64 immx */
+  int immx0;                            /* insn is extended */
+  int immx1;                            /* only used for 64 immx */
   unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
   int nfixups;		                /* the number of fixups [0,2]              */
   k1_fixup_t fixup[2];	                /* the actual fixups                       */
@@ -1057,27 +1057,28 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_remoteReg:
 	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
 
-            case Immediate_k1c_flagmask2:
             case Immediate_k1c_brknumber:
-            case Immediate_k1c_sysnumber:
-            case Immediate_k1c_signed5:
-            case Immediate_k1c_unsigned5:
-            case Immediate_k1c_unsigned6:
             case Immediate_k1c_eventmask2:
+            case Immediate_k1c_flagmask2:
+            case Immediate_k1c_pcrel17:
+            case Immediate_k1c_pcrel27:
+            case Immediate_k1c_signed10:
+            case Immediate_k1c_signed11:
+            case Immediate_k1c_signed16:
+            case Immediate_k1c_signed27:
+            case Immediate_k1c_signed32:
+            case Immediate_k1c_signed32M:
+            case Immediate_k1c_signed37:
+            case Immediate_k1c_signed43:
+            case Immediate_k1c_signed5:
+   	    case Immediate_k1c_signed64:
+	    case Immediate_k1c_signed8:
+            case Immediate_k1c_sysnumber:
             case Immediate_k1c_unsigned16:
             case Immediate_k1c_unsigned32:
             case Immediate_k1c_unsigned32L:
-            case Immediate_k1c_signed32M:
-            case Immediate_k1c_signed8:
-            case Immediate_k1c_signed11:
-            case Immediate_k1c_signed16:
-            case Immediate_k1c_signed10:
-            case Immediate_k1c_signed32:
-            case Immediate_k1c_signed37:
-            case Immediate_k1c_signed43:
-            case Immediate_k1c_pcrel17:
-            case Immediate_k1c_pcrel27:
-            case Immediate_k1c_signed27:
+            case Immediate_k1c_unsigned5:
+            case Immediate_k1c_unsigned6:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
                     break;
                 }
@@ -1228,7 +1229,7 @@ insert_operand(k1insn_t * insn,
 	      }
 			
 
-	      insn->immx = immxcnt;
+	      insn->immx0 = immxcnt;
 	      immxbuf[immxcnt].insn[0] = 0;
 	      immxbuf[immxcnt].fixup[0].reloc = reloc_hi;
 	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
@@ -1285,7 +1286,7 @@ insert_operand(k1insn_t * insn,
 
 		case Immediate_k1c_signed32:
 
-		  insn->immx = immxcnt;
+		  insn->immx0 = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1315,7 +1316,7 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 
-		  insn->immx = immxcnt;
+		  insn->immx0 = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_HI27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1340,7 +1341,7 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[1].where = 0;
 		  insn->nfixups = 2;
 		  /* } */
-		  insn->immx = immxcnt;
+		  insn->immx0 = immxcnt;
 		  immxbuf[immxcnt].insn[0] = insn->insn[1];
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
@@ -1402,8 +1403,8 @@ assemble_insn( const k1opc_t * opcode,
         insn->insn[i] = (unsigned int)opcode->codeword[i].opcode;
         insn->len += 1;
     }
-    insn->immx = NOIMMX;
-    insn->immx64 = NOIMMX;
+    insn->immx0 = NOIMMX;
+    insn->immx1 = NOIMMX;
     for (argidx = 0; argidx < ntok; argidx++){
         int ret = insert_operand(insn, opcode->format[argidx], &tok[argidx]);
 	immx_ready |= ret;
@@ -1413,7 +1414,7 @@ assemble_insn( const k1opc_t * opcode,
     if (!immx_ready){
       for(i=0; i < opcode->codewords; i++){
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX0){
-	  insn->immx = immxcnt;
+	  insn->immx0 = immxcnt;
 	  immxbuf[immxcnt].insn[0] = insn->insn[i];
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
@@ -1421,7 +1422,7 @@ assemble_insn( const k1opc_t * opcode,
 	  immxcnt++;
         }
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX1){
-	  insn->immx64 = immxcnt;
+	  insn->immx1 = immxcnt;
 	  immxbuf[immxcnt].insn[0] = insn->insn[i];
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
@@ -1430,7 +1431,6 @@ assemble_insn( const k1opc_t * opcode,
         }
       }
     }
-//    printf("Insert instruction: len = %d, insn[0] = 0x%x, insn[1] = 0x%x, immx : %d (%#x), immx64 = %d\n",insn->len,insn->insn[0],insn->insn[1], insn->immx, immxbuf[insn->immx].insn[0], insn->immx64);
     return;
 }
 
@@ -1909,11 +1909,11 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case RegClass_k1c_remoteReg:
       chars += snprintf(&buf[chars], buf_size - chars, "nrf");
       break;
+    case Immediate_k1c_brknumber:
     case Immediate_k1c_eventmask2:
     case Immediate_k1c_flagmask2:
-    case Immediate_k1c_brknumber:
-    case Immediate_k1c_sysnumber:
-    case Immediate_k1c_signed5:
+    case Immediate_k1c_pcrel17:
+    case Immediate_k1c_pcrel27:
     case Immediate_k1c_signed10:
     case Immediate_k1c_signed11:
     case Immediate_k1c_signed16:
@@ -1922,12 +1922,15 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case Immediate_k1c_signed32M:
     case Immediate_k1c_signed37:
     case Immediate_k1c_signed43:
-    case Immediate_k1c_unsigned5:
-    case Immediate_k1c_unsigned6:
+    case Immediate_k1c_signed5:
+    case Immediate_k1c_signed64:
+    case Immediate_k1c_signed8:
+    case Immediate_k1c_sysnumber:
+    case Immediate_k1c_unsigned16:
     case Immediate_k1c_unsigned32:
     case Immediate_k1c_unsigned32L:
-    case Immediate_k1c_pcrel17:
-    case Immediate_k1c_pcrel27:
+    case Immediate_k1c_unsigned5:
+    case Immediate_k1c_unsigned6:
       if(flags & k1SIGNED){
 	chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
       }
@@ -1957,15 +1960,6 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
   return chars;
 }
 
-static int is_mono_double(const k1opc_t *op) {
-  int reservation = op->reservation;
-  return (reservation == Reservation_k1c_ALUD_LITE   ||
-	  reservation == Reservation_k1c_ALUD_LITE_X ||
-	  reservation == Reservation_k1c_ALUD_TINY   ||
-	  reservation == Reservation_k1c_ALUD_TINY_X);
-}
-
-
 static int used_resources(const k1opc_t *op, int resource) {
   int op_reservations = op->reservation;
   int reservation = op_reservations  & 0xff;
@@ -1983,11 +1977,6 @@ static int is_tiny(const k1opc_t *op) {
 
 static int is_lite(const k1opc_t *op) {
   return used_resources(op,Resource_k1c_LITE);
-}
-
-__attribute__((unused))
-static int is_alud(const k1opc_t *op) {
-  return used_resources(op,Resource_k1c_ALUD);
 }
 
 __attribute__((unused))
@@ -2068,15 +2057,6 @@ new_state(struct state_t *orig){
   return s;
 }
 
-#define PUSH_ALUD(s, states, states_sz, states_storage_sz)  do {	\
-    if (s->sched[alu0_e] == -1						\
-	&& s->sched[alu1_e] == -1){					\
-      sched_state_t *new_s = new_state(s);				\
-      new_s->sched[alu0_e] = new_s->sched[alu1_e] = new_s->cur_insn++;	\
-      push_state(new_s, states, states_sz, states_storage_sz);		\
-    }									\
-  } while(0)
-
 #define PUSH(exu,s, states, states_sz, states_storage_sz)	\
   do {								\
     if (s->sched[exu ## _e] == -1){				\
@@ -2107,6 +2087,7 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 
   case Reservation_k1c_ALU_FULL:
   case Reservation_k1c_ALU_FULL_X:
+  case Reservation_k1c_ALU_FULL_Y:
     PUSH(alu1,state, states, states_sz, states_storage_sz);
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
@@ -2121,22 +2102,6 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     PUSH(bcu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1c_ALUD:
-  case Reservation_k1c_ALUD_FULL:
-  case Reservation_k1c_ALUD_FULL_ODD:
-  case Reservation_k1c_ALUD_OPX:
-  case Reservation_k1c_ALUD_OPX_ODD:
-
-    //  case Bundling_k1c_ALUD_Y:
-  case Reservation_k1c_ALUD_OPX_Y:
-
-    
-    //  case Bundling_k1c_ALUD_Z:
-  case Reservation_k1c_ALUD_OPX_Z:
-
-    PUSH_ALUD(state, states, states_sz, states_storage_sz);
-    break;    
-
     //  case Bundling_k1c_MAU:
   case Reservation_k1c_MAU:
   case Reservation_k1c_MAU_ACC:
@@ -2145,6 +2110,11 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     //  case Bundling_k1c_MAU_X:
   case Reservation_k1c_MAU_X:
   case Reservation_k1c_MAU_ACC_X:
+
+    //  case Bundling_k1c_MAU_Y:
+  case Reservation_k1c_MAU_Y:
+  case Reservation_k1c_MAU_ACC_Y:
+
     PUSH(mau,state, states, states_sz, states_storage_sz);
     break;
 
@@ -2161,42 +2131,29 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     //  case Bundling_k1c_TINY:
   case Reservation_k1c_ALU_TINY:
   case Reservation_k1c_ALU_LITE:
-  case Reservation_k1c_ALUD_TINY:
-  case Reservation_k1c_ALUD_LITE:
 
 
     //  case Bundling_k1c_TINY_X:
   case Reservation_k1c_ALU_TINY_X:
   case Reservation_k1c_ALU_LITE_X:
-  case Reservation_k1c_ALUD_TINY_X:
-  case Reservation_k1c_ALUD_LITE_X:
+
+    //  case Bundling_k1c_TINY_Y:
+  case Reservation_k1c_ALU_TINY_Y:
+  case Reservation_k1c_ALU_LITE_Y:
 
     // FIXME : If we stick to scheduling class in the switch (was bundling class before),
     // we can remove the is_* test and simply split in different cases.
     if (is_lite(cur_insn->opdef)){
-      if (is_mono_double(cur_insn->opdef)){
-	// LITE MONODOUBLE
-	PUSH(mau,state, states, states_sz, states_storage_sz);
-	PUSH_ALUD(state, states, states_sz, states_storage_sz);
-      } else {
-	// LITE SINGLE
-	PUSH(mau,state, states, states_sz, states_storage_sz);
-	PUSH(alu1,state, states, states_sz, states_storage_sz);
-	PUSH(alu0,state, states, states_sz, states_storage_sz);
-      }
+      // LITE SINGLE
+      PUSH(mau,state, states, states_sz, states_storage_sz);
+      PUSH(alu1,state, states, states_sz, states_storage_sz);
+      PUSH(alu0,state, states, states_sz, states_storage_sz);
     } else if (is_tiny(cur_insn->opdef)){
-      if (is_mono_double(cur_insn->opdef)){
-	// TINY MONODOUBLE
-	PUSH(lsu,state, states, states_sz, states_storage_sz);
-	PUSH(mau,state, states, states_sz, states_storage_sz);
-	PUSH_ALUD(state, states, states_sz, states_storage_sz);
-      } else {
-	// TINY SINGLE
-	PUSH(lsu,state, states, states_sz, states_storage_sz);
-	PUSH(mau,state, states, states_sz, states_storage_sz);
-	PUSH(alu1,state, states, states_sz, states_storage_sz);
-	PUSH(alu0,state, states, states_sz, states_storage_sz);
-      }
+      // TINY SINGLE
+      PUSH(lsu,state, states, states_sz, states_storage_sz);
+      PUSH(mau,state, states, states_sz, states_storage_sz);
+      PUSH(alu1,state, states, states_sz, states_storage_sz);
+      PUSH(alu0,state, states, states_sz, states_storage_sz);
     } else {
         as_fatal("TINY instruction is neither a TINY or LITE\n");
     }
@@ -2226,42 +2183,33 @@ k1c_print_insn(k1opc_t *op) {
     insn_type="ALL            ";
     break;
   case Bundling_k1c_ALU:
+  case Bundling_k1c_ALU_X:
+  case Bundling_k1c_ALU_Y:
     insn_type="ALU            ";
     break;
   case Bundling_k1c_BCU:
     insn_type="BCU            ";
     break;
 
-  case Bundling_k1c_ALUD:
-  case Bundling_k1c_ALUD_Y:
-  case Bundling_k1c_ALUD_Z:
-    insn_type="ALUD           ";
-    break;    
-
   case Bundling_k1c_MAU:
   case Bundling_k1c_MAU_X:
+  case Bundling_k1c_MAU_Y:
     insn_type="MAU            ";
     break;
 
   case Bundling_k1c_LSU:
   case Bundling_k1c_LSU_X:
+  case Bundling_k1c_LSU_Y:
     insn_type="LSU            ";
     break;
 
   case Bundling_k1c_TINY:
   case Bundling_k1c_TINY_X:
+  case Bundling_k1c_TINY_Y:
     if (is_lite(op)){
-      if (is_mono_double(op)){
-	insn_type="LITE_MONODOUBLE";
-      } else {
-	insn_type="LITE           ";
-      }
+      insn_type="LITE           ";
     } else if (is_tiny(op)){
-      if (is_mono_double(op)){
-	insn_type="TINY_MONODOUBLE";
-      } else {
-	insn_type="TINY           ";
-      }
+      insn_type="TINY           ";
     } else {
         as_fatal("TINY instruction is neither a TINY or LITE\n");
     }
@@ -2339,8 +2287,9 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	shadow[jj] = bundle_insn[solutions[0]->sched[ii]];
 
 	// Tag EXU on IMMX
-	if(shadow[jj]->immx != NOIMMX){
-	  int tag;
+	int tag;
+	if(shadow[jj]->immx0 != NOIMMX || 
+	   shadow[jj]->immx1 != NOIMMX ){
 	  switch(ii){
 	  case alu0_e:
 	    tag = Modifier_k1c_exunum_ALU0;
@@ -2357,10 +2306,12 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
 	  default:
 	    as_fatal("Unexpected EXU %d (%s)\n", ii, exu_names[ii]);
 	  }
-	  immxbuf[shadow[jj]->immx].insn[0] |= (tag << 27);
-	}
-	if(shadow[jj]->immx64 != NOIMMX){
-	  immxbuf[shadow[jj]->immx64].insn[0] |= (Modifier_k1c_exunum_ALU1 << 27); // immx64 only exist on ALU1 slots
+	  if(shadow[jj]->immx0 != NOIMMX) {
+	    immxbuf[shadow[jj]->immx0].insn[0] |= (tag << 27);
+	  }
+	  if(shadow[jj]->immx1 != NOIMMX){
+	    immxbuf[shadow[jj]->immx1].insn[0] |= (tag << 27);
+	  }
 	}
 	jj++;
       }
