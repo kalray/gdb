@@ -339,30 +339,27 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
   {
     switch (core)
     {
-      case ELF_K1_CORE_B_DP:
-      case ELF_K1_CORE_B_IO:
-        stub_args[argidx++] = "--march=bostan";
+      case ELF_K1_CORE_C_RM:
+      case ELF_K1_CORE_C_PE:
+        stub_args[argidx++] = "--march=coolidge";
         break;
       default:
         error (_ ("The K1 binary is compiled for an unknown core."));
     }
   }
 
-  if (!no_mcluster)
+  switch (core)
   {
-    switch (core)
-    {
-      case ELF_K1_CORE_B_DP:
-        stub_args[argidx++] = "--mcluster=node";
-        break;
+    case ELF_K1_CORE_C_PE:
+      stub_args[argidx++] = "--mcore=k1pe";
+      break;
 
-      case ELF_K1_CORE_B_IO:
-        stub_args[argidx++] = "--mcluster=ioddr";
-        break;
+    case ELF_K1_CORE_C_RM:
+      stub_args[argidx++] = "--mcore=k1rm";
+      break;
 
-      default:
-        error (_ ("The K1 binary is compiled for an unknown core."));
-    }
+    default:
+      error (_ ("The K1 binary is compiled for an unknown core."));
   }
 
   stub_args[argidx++] = "--gdb";

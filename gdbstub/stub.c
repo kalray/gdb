@@ -147,6 +147,7 @@ struct agent {
     int    rt_added;
 
     char  *reg_desc_xml;
+    int   *reg_size;
 
     struct stopped_context *contexts;
     unsigned char vehicles_modes_seen[17];
@@ -209,6 +210,97 @@ static void *control_thread (void *void_stub);
 static bool printf_packet(struct gdbstub *stub, char *fmt, ...)
     __attribute__((format(printf, 2, 3)));  /* 2=format 3=params */
 
+static void assert_str_hexa (char *s, int l)
+{
+  char *p = s;
+  int il = l;
+  while (l)
+  {
+    char c = *p;
+    if (!isxdigit (c))
+    {
+      char t[il + 1];
+      strncpy (t, s, il);
+      t[il] = 0;
+      fprintf (stderr, "Invalid hexa character %c in string %s.\n", c, t);
+      exit (1);
+    }
+    p++;
+    l--;
+  }
+}
+
+static void printf_reg_to_packet (struct gdbstub *stub, reg_t *reg, int idx_reg)
+{
+  if (stub->agents[stub->data_context.agent].reg_size[idx_reg] != 64)
+  {
+    unsigned char *c = (unsigned char *) &reg->u32;
+    printf_packet(stub, "%c%c%c%c%c%c%c%c",
+      tohex[c[0] >> 4], tohex[c[0] & 0xf],
+      tohex[c[1] >> 4], tohex[c[1] & 0xf],
+      tohex[c[2] >> 4], tohex[c[2] & 0xf],
+      tohex[c[3] >> 4], tohex[c[3] & 0xf]);
+  }
+  else
+  {
+    unsigned char *c = (unsigned char *) &reg->u64;
+    printf_packet(stub, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+      tohex[c[0] >> 4], tohex[c[0] & 0xf],
+      tohex[c[1] >> 4], tohex[c[1] & 0xf],
+      tohex[c[2] >> 4], tohex[c[2] & 0xf],
+      tohex[c[3] >> 4], tohex[c[3] & 0xf],
+      tohex[c[4] >> 4], tohex[c[4] & 0xf],
+      tohex[c[5] >> 4], tohex[c[5] & 0xf],
+      tohex[c[6] >> 4], tohex[c[6] & 0xf],
+      tohex[c[7] >> 4], tohex[c[7] & 0xf]);
+  }
+}
+
+static int fromhex_helper (char c)
+{
+  if (c <= '9')
+    return c - '0';
+  if (c <= 'F')
+    return c - 'A' + 10;
+  return c - 'a' + 10;
+}
+
+static int fromhex(char *c)
+{
+  int c1, c2;
+  c1 = fromhex_helper (c[0]);
+  c2 = fromhex_helper (c[1]);
+  return (c1 << 4) | c2;
+}
+
+static char *read_reg_from_packet (struct gdbstub *stub, reg_t *reg, int idx_reg, char *buf_in)
+{
+  char *buf;
+
+  if (stub->agents[stub->data_context.agent].reg_size[idx_reg] != 64)
+  {
+    buf = (char *) &reg->u32;
+    reg->u64 = 0;
+    assert_str_hexa (buf_in, 8);
+    buf[0] = fromhex (buf_in + 0);
+    buf[1] = fromhex (buf_in + 2);
+    buf[2] = fromhex (buf_in + 4);
+    buf[3] = fromhex (buf_in + 6);
+    return buf_in + 8;
+  }
+
+  buf = (char *) &reg->u64;
+  assert_str_hexa (buf_in, 16);
+  buf[0] = fromhex (buf_in +  0);
+  buf[1] = fromhex (buf_in +  2);
+  buf[2] = fromhex (buf_in +  4);
+  buf[3] = fromhex (buf_in +  6);
+  buf[4] = fromhex (buf_in +  8);
+  buf[5] = fromhex (buf_in + 10);
+  buf[6] = fromhex (buf_in + 12);
+  buf[7] = fromhex (buf_in + 14);
+  return buf_in + 16;
+}
 
 static struct stopped_context *insert_stopped_context (struct gdbstub *stub, 
 						       int agent, int vehicle) {
@@ -779,21 +871,6 @@ static int starts_with (char *pattern, char *string) {
     return ! strncmp (pattern, string, strlen (pattern));
 }
 
-static int fromhex_helper (char c) {
-    if (c <= '9') return c - '0';
-    if (c <= 'F') return c - 'A' + 10;
-    return c - 'a' + 10;
-}
-
-static int fromhex(char *c) {
-    int c1, c2;
-    
-    c1 = fromhex_helper (c[0]);
-    c2 = fromhex_helper (c[1]);
-    
-    return (c1 << 4) | c2;
-}
-
 static void prepare_to_answer(struct gdbstub *stub) 
 {
     stub->data_len = 1;
@@ -948,12 +1025,7 @@ static bool handle_g (struct gdbstub *stub)
 
     for (i = 0 ; i < stub->nbregs; ++i){
       if (stub->registers[i].name[0] != '\0'){
-	unsigned char *c = (unsigned char*)&(buf[i].u32);
-	printf_packet(stub, "%c%c%c%c%c%c%c%c", 
-		      tohex[c[0] >> 4], tohex[c[0] & 0xf], 
-		      tohex[c[1] >> 4], tohex[c[1] & 0xf], 
-		      tohex[c[2] >> 4], tohex[c[2] & 0xf], 
-		      tohex[c[3] >> 4], tohex[c[3] & 0xf]); 
+        printf_reg_to_packet (stub, &buf[i], i);
       }
     }
     return send_answer(stub);
@@ -964,7 +1036,6 @@ static bool handle_p (struct gdbstub *stub)
     errcode_t err;
     char *endptr;
     reg_t reg_buf;
-    char  *buf = (char*)&(reg_buf.u32);
 
     int i;
 
@@ -982,13 +1053,9 @@ static bool handle_p (struct gdbstub *stub)
     }
     
     prepare_to_answer(stub);
-    
-    printf_packet(stub, "%c%c%c%c%c%c%c%c", 
-		  tohex[buf[0] >> 4], tohex[buf[0] & 0xf], 
-		  tohex[buf[1] >> 4], tohex[buf[1] & 0xf], 
-		  tohex[buf[2] >> 4], tohex[buf[2] & 0xf], 
-		  tohex[buf[3] >> 4], tohex[buf[3] & 0xf]); 
-    
+
+    printf_reg_to_packet (stub, &reg_buf, stub->all_reg_ids[i]);
+
     return send_answer(stub);
 }
 
@@ -998,7 +1065,6 @@ static bool handle_P (struct gdbstub *stub)
     char *endptr, *val;
     unsigned int reg;
     reg_t reg_buf;
-    char  *buf = (char*)&(reg_buf.u32);
 
     NEED_REAL_D_CONTEXT;
     reg = strtol((char*)stub->payload + 1, &val, 16);
@@ -1013,12 +1079,7 @@ static bool handle_P (struct gdbstub *stub)
 		return send_err (stub, 0) ;
     }
 
-    reg_buf.u64 = 0;
-    buf[0] = fromhex(val+1);
-    buf[1] = fromhex(val+3);
-    buf[2] = fromhex(val+5);
-    buf[3] = fromhex(val+7);
-
+    read_reg_from_packet (stub, &reg_buf, stub->all_reg_ids[reg], val + 1);
     err = debug_agent_write_register(D_CONTEXT, stub->all_reg_ids[reg], reg_buf);
     
     if (err != RET_OK) {
@@ -1058,7 +1119,8 @@ static void update_registers_xml (struct gdbstub *stub, struct agent *ag)
 
   core = debug_agent_get_core (ag->agent);
   desc = get_register_descriptions (core);
-  
+  ag->reg_size = get_register_sizes (core);
+
   if (desc == NULL)
   {
     fprintf (stderr, "Unable to find register description for core %s.", core);
@@ -1197,41 +1259,38 @@ static bool handle_qXfer_threads_read (struct gdbstub *stub)
 static bool handle_G (struct gdbstub *stub)
 {
   reg_t reg_buf;
-  char *buf = (char*)&(reg_buf.u32);
+  char *buf_in;
+  int i, j;
+  errcode_t err;
 
-    int i, j;
-    errcode_t err;
+  NEED_REAL_D_CONTEXT;
+  for (i = 0, j = 0; i < stub->nbregs; ++i)
+  {
+    if (stub->registers[i].name[0] == 0)
+      continue;
 
-    NEED_REAL_D_CONTEXT;
-    for (i = 0, j = 0; i < stub->nbregs; ++i) {
-		if (stub->registers[i].name[0] == 0) continue;
-		reg_buf.u64 = 0;
-		buf[0] = fromhex (stub->payload + 1 + 0 + j*8);
-		buf[1] = fromhex (stub->payload + 1 + 2 + j*8);
-		buf[2] = fromhex (stub->payload + 1 + 4 + j*8);
-		buf[3] = fromhex (stub->payload + 1 + 6 + j*8);
-
-		err = debug_agent_write_register(D_CONTEXT, i, reg_buf);
-		++j;
-		if (err != RET_OK) {
-			prepare_to_answer (stub);
-			return send_err (stub, 0) ;
-		}
-
+    buf_in = read_reg_from_packet (stub, &reg_buf, j, buf_in);
+    err = debug_agent_write_register(D_CONTEXT, i, reg_buf);
+    ++j;
+    if (err != RET_OK)
+    {
+      prepare_to_answer (stub);
+      return send_err (stub, 0) ;
     }
+  }
 
-    prepare_to_answer (stub);
-    return send_ok (stub);
+  prepare_to_answer (stub);
+  return send_ok (stub);
 }
 
-static errcode_t read_memory(debug_agent_t *da,
-			     int vehicle, unsigned int addr, void *buf, int buf_size) {
-    return debug_agent_read_dcache (da, vehicle, addr, buf, buf_size);
+static errcode_t read_memory(debug_agent_t *da, int vehicle, unsigned int addr, void *buf, int buf_size)
+{
+  return debug_agent_read_dcache (da, vehicle, addr, buf, buf_size);
 }
 
-static errcode_t write_memory(debug_agent_t *da,
-			      int vehicle, unsigned int addr, void *buf, int buf_size) {
-    return debug_agent_write_dcache (da, vehicle, addr, buf, buf_size);
+static errcode_t write_memory(debug_agent_t *da, int vehicle, unsigned int addr, void *buf, int buf_size)
+{
+  return debug_agent_write_dcache (da, vehicle, addr, buf, buf_size);
 }
 
 static bool kalray_is_hot_attached (struct gdbstub *stub)

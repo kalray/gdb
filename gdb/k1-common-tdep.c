@@ -58,10 +58,10 @@ k1_arch (void)
   {
     switch (elf_elfheader (exec_bfd)->e_flags & ELF_K1_CORE_MASK)
     {
-      case ELF_K1_CORE_B_DP:
+      case ELF_K1_CORE_C_PE:
         k1_current_arch = K1_K1PE;
         break;
-      case ELF_K1_CORE_B_IO:
+      case ELF_K1_CORE_C_RM:
         k1_current_arch = K1_K1RM;
         break;
       default:

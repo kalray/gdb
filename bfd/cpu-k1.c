@@ -47,12 +47,12 @@ static struct
 }
 processors[] =
 {
-  { bfd_mach_k1cpe, "k1cpe"  },
-  { bfd_mach_k1crm, "k1crm"  },
-  { bfd_mach_k1cpe_64, "k1cpe64" },
-  { bfd_mach_k1crm_64, "k1crm64" },
-  { bfd_mach_k1cpe_usr, "k1cpe_usr"},
-  { bfd_mach_k1crm_usr, "k1crm_usr"},
+  { bfd_mach_k1cpe, "k1pe"  },
+  { bfd_mach_k1crm, "k1rm"  },
+  { bfd_mach_k1cpe_64, "k1pe64" },
+  { bfd_mach_k1crm_64, "k1rm64" },
+  { bfd_mach_k1cpe_usr, "k1pe_usr"},
+  { bfd_mach_k1crm_usr, "k1rm_usr"},
 };
 
 static bfd_boolean
@@ -100,12 +100,12 @@ scan (const struct bfd_arch_info *info, const char *string)
  
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (32, bfd_mach_k1cpe,      "k1:k1cpe",     FALSE, & arch_info_struct[1]),
-  N (32, bfd_mach_k1crm,      "k1:k1crm",     FALSE, & arch_info_struct[2]),
-  N (64, bfd_mach_k1cpe_64,   "k1:k1cpe:64",  FALSE, & arch_info_struct[3]),
-  N (64, bfd_mach_k1crm_64,   "k1:k1crm:64",  FALSE, & arch_info_struct[4]),
-  N (32, bfd_mach_k1cpe_usr,  "k1:k1cpe_usr", FALSE, & arch_info_struct[5]),
-  N (32, bfd_mach_k1crm_usr,  "k1:k1crm_usr", FALSE, NULL),
+  N (32, bfd_mach_k1cpe,      "k1:k1pe",     FALSE, & arch_info_struct[1]),
+  N (32, bfd_mach_k1crm,      "k1:k1rm",     FALSE, & arch_info_struct[2]),
+  N (64, bfd_mach_k1cpe_64,   "k1:k1pe:64",  FALSE, & arch_info_struct[3]),
+  N (64, bfd_mach_k1crm_64,   "k1:k1rm:64",  FALSE, & arch_info_struct[4]),
+  N (32, bfd_mach_k1cpe_usr,  "k1:k1pe_usr", FALSE, & arch_info_struct[5]),
+  N (32, bfd_mach_k1crm_usr,  "k1:k1rm_usr", FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =

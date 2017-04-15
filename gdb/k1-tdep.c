@@ -767,7 +767,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
   set_gdbarch_long_double_bit (gdbarch, 64);
-  set_gdbarch_ptr_bit (gdbarch, 32);
+  set_gdbarch_ptr_bit (gdbarch, 64);
 
   /* Get the k1 target description from INFO.  */
   tdesc = info.target_desc;
@@ -843,7 +843,6 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_register_reggroup_p (gdbarch, k1_register_reggroup_p);
 
   set_gdbarch_num_pseudo_regs (gdbarch, k1c_num_pseudos (gdbarch));
-
   set_tdesc_pseudo_register_name (gdbarch, k1c_pseudo_register_name);
   set_tdesc_pseudo_register_type (gdbarch, k1c_pseudo_register_type);
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
