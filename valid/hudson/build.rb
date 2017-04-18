@@ -121,6 +121,7 @@ when "k1"
     sysroot_option = "--with-sysroot=#{options['sysroot']} --with-build-sysroot=#{options['sysroot']} "
     mds_gbu_path = "#{family_prefix}/BE/GBU"
   when "elf" then
+    program_prefix += "#{variant}-"
     build_target = "k1-#{variant}"
     mds_gbu_path = "#{family_prefix}/BE/GBU"
   when "rtems" then
