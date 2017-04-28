@@ -493,34 +493,32 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
    (*info->fprintf_func) (info->stream, "$??");				\
  }
 
-#define SRF_REGCLASSES(core)                           \
-			case RegClass_ ## core ## _systemReg:      \
-			case RegClass_ ## core ##_nopcpsReg:       \
-			case RegClass_ ## core ## _onlypsReg:      \
-			case RegClass_ ## core ## _onlyraReg:      \
-			case RegClass_ ## core ## _onlyfxReg:
+#define CASE_SRF_REGCLASSES(core)                           \
+        case RegClass_ ## core ## _systemReg:      \
+        case RegClass_ ## core ##_nopcpsReg:       \
+        case RegClass_ ## core ## _onlypsReg:      \
+        case RegClass_ ## core ## _onlyraReg:      \
+        case RegClass_ ## core ## _onlyfxReg
 
               switch (type) {
                   case RegClass_k1c_singleReg:
- 		      K1_PRINT_REG(K1_REGFILE_DEC_GRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_GRF,value)
                       break;
                   case RegClass_k1c_pairedReg:
- 		      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
                       break;
-			SRF_REGCLASSES(k1c)
- 		      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
+                  CASE_SRF_REGCLASSES(k1c):
+                      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1c_remoteReg:
- 		      K1_PRINT_REG(K1_REGFILE_DEC_NRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_NRF,value)
                       break;
 
                   case Immediate_k1c_eventmask2:
                   case Immediate_k1c_flagmask2:
                   case Immediate_k1c_brknumber:
                   case Immediate_k1c_sysnumber:
-                  case Immediate_k1c_signed5:
                   case Immediate_k1c_signed10:
-                  case Immediate_k1c_signed11:
                   case Immediate_k1c_signed16:
                   case Immediate_k1c_signed27:
                   case Immediate_k1c_signed32:
@@ -559,7 +557,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               };
 
 #undef K1_PRINT_REG     
-#undef SRF_REGCLASSES
+#undef CASE_SRF_REGCLASSES
           }
 
           /* Print trailing characters in the format string, if any */

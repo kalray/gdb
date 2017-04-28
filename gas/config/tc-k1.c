@@ -1040,22 +1040,22 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	}
 
 
-#define SRF_REGCLASSES(core)					       \
-	case RegClass_ ## core ## _systemReg:			       \
+#define CASE_SRF_REGCLASSES(core)					       \
+        case RegClass_ ## core ## _systemReg:			       \
         case RegClass_ ## core ## _nopcpsReg:			       \
         case RegClass_ ## core ## _onlypsReg:			       \
         case RegClass_ ## core ## _onlyraReg:			       \
-	case RegClass_ ## core ## _onlyfxReg:
+        case RegClass_ ## core ## _onlyfxReg
 
         switch (operand_type) {
             case RegClass_k1c_singleReg:
-	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
             case RegClass_k1c_pairedReg:
-	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
-			SRF_REGCLASSES(k1c)
-	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
+            CASE_SRF_REGCLASSES(k1c):
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1c_remoteReg:
-	      MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
 
             case Immediate_k1c_brknumber:
             case Immediate_k1c_eventmask2:
@@ -1063,16 +1063,14 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1c_pcrel17:
             case Immediate_k1c_pcrel27:
             case Immediate_k1c_signed10:
-            case Immediate_k1c_signed11:
             case Immediate_k1c_signed16:
             case Immediate_k1c_signed27:
             case Immediate_k1c_signed32:
             case Immediate_k1c_signed32M:
             case Immediate_k1c_signed37:
             case Immediate_k1c_signed43:
-            case Immediate_k1c_signed5:
-   	    case Immediate_k1c_signed64:
-	    case Immediate_k1c_signed8:
+            case Immediate_k1c_signed64:
+            case Immediate_k1c_signed8:
             case Immediate_k1c_sysnumber:
             case Immediate_k1c_unsigned16:
             case Immediate_k1c_unsigned32:
@@ -1133,7 +1131,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 #undef IS_K1_REGFILE_SRF
 #undef IS_K1_REGFILE_NRF
 #undef MATCH_K1_REGFILE
-#undef SRF_REGCLASSES
+#undef CASE_SRF_REGCLASSES
 }
 
 /*
@@ -1915,14 +1913,12 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case Immediate_k1c_pcrel17:
     case Immediate_k1c_pcrel27:
     case Immediate_k1c_signed10:
-    case Immediate_k1c_signed11:
     case Immediate_k1c_signed16:
     case Immediate_k1c_signed27:
     case Immediate_k1c_signed32:
     case Immediate_k1c_signed32M:
     case Immediate_k1c_signed37:
     case Immediate_k1c_signed43:
-    case Immediate_k1c_signed5:
     case Immediate_k1c_signed64:
     case Immediate_k1c_signed8:
     case Immediate_k1c_sysnumber:
