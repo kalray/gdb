@@ -1070,7 +1070,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1c_signed37:
             case Immediate_k1c_signed43:
             case Immediate_k1c_signed64:
-            case Immediate_k1c_signed8:
             case Immediate_k1c_sysnumber:
             case Immediate_k1c_unsigned16:
             case Immediate_k1c_unsigned32:
@@ -1920,7 +1919,6 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case Immediate_k1c_signed37:
     case Immediate_k1c_signed43:
     case Immediate_k1c_signed64:
-    case Immediate_k1c_signed8:
     case Immediate_k1c_sysnumber:
     case Immediate_k1c_unsigned16:
     case Immediate_k1c_unsigned32:
