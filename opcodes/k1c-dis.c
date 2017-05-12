@@ -522,14 +522,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1c_signed16:
                   case Immediate_k1c_signed27:
                   case Immediate_k1c_signed32:
-                  case Immediate_k1c_signed32M:
                   case Immediate_k1c_signed37:
                   case Immediate_k1c_signed43:
                   case Immediate_k1c_signed64:
                   case Immediate_k1c_unsigned5:
                   case Immediate_k1c_unsigned6:
                   case Immediate_k1c_unsigned32:
-                  case Immediate_k1c_unsigned32L:
                       value <<= rightshift;
                       if(flags & k1SIGNED){
                           if(width <= 32) {

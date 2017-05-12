@@ -1066,14 +1066,12 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1c_signed16:
             case Immediate_k1c_signed27:
             case Immediate_k1c_signed32:
-            case Immediate_k1c_signed32M:
             case Immediate_k1c_signed37:
             case Immediate_k1c_signed43:
             case Immediate_k1c_signed64:
             case Immediate_k1c_sysnumber:
             case Immediate_k1c_unsigned16:
             case Immediate_k1c_unsigned32:
-            case Immediate_k1c_unsigned32L:
             case Immediate_k1c_unsigned5:
             case Immediate_k1c_unsigned6:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){
@@ -1915,14 +1913,12 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case Immediate_k1c_signed16:
     case Immediate_k1c_signed27:
     case Immediate_k1c_signed32:
-    case Immediate_k1c_signed32M:
     case Immediate_k1c_signed37:
     case Immediate_k1c_signed43:
     case Immediate_k1c_signed64:
     case Immediate_k1c_sysnumber:
     case Immediate_k1c_unsigned16:
     case Immediate_k1c_unsigned32:
-    case Immediate_k1c_unsigned32L:
     case Immediate_k1c_unsigned5:
     case Immediate_k1c_unsigned6:
       if(flags & k1SIGNED){
