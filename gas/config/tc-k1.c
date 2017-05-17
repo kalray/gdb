@@ -2118,36 +2118,23 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1c_TINY:
-  case Reservation_k1c_ALU_TINY:
   case Reservation_k1c_ALU_LITE:
-
-
-    //  case Bundling_k1c_TINY_X:
-  case Reservation_k1c_ALU_TINY_X:
   case Reservation_k1c_ALU_LITE_X:
-
-    //  case Bundling_k1c_TINY_Y:
-  case Reservation_k1c_ALU_TINY_Y:
   case Reservation_k1c_ALU_LITE_Y:
+      PUSH(mau,state, states, states_sz, states_storage_sz);
+      PUSH(alu1,state, states, states_sz, states_storage_sz);
+      PUSH(alu0,state, states, states_sz, states_storage_sz);
+      break;
 
-    // FIXME : If we stick to scheduling class in the switch (was bundling class before),
-    // we can remove the is_* test and simply split in different cases.
-    if (is_lite(cur_insn->opdef)){
-      // LITE SINGLE
-      PUSH(mau,state, states, states_sz, states_storage_sz);
-      PUSH(alu1,state, states, states_sz, states_storage_sz);
-      PUSH(alu0,state, states, states_sz, states_storage_sz);
-    } else if (is_tiny(cur_insn->opdef)){
-      // TINY SINGLE
-      PUSH(lsu,state, states, states_sz, states_storage_sz);
-      PUSH(mau,state, states, states_sz, states_storage_sz);
-      PUSH(alu1,state, states, states_sz, states_storage_sz);
-      PUSH(alu0,state, states, states_sz, states_storage_sz);
-    } else {
-        as_fatal("TINY instruction is neither a TINY or LITE\n");
-    }
+  case Reservation_k1c_ALU_TINY:
+  case Reservation_k1c_ALU_TINY_X:
+  case Reservation_k1c_ALU_TINY_Y:
+    PUSH(lsu,state, states, states_sz, states_storage_sz);
+    PUSH(mau,state, states, states_sz, states_storage_sz);
+    PUSH(alu1,state, states, states_sz, states_storage_sz);
+    PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
+
   default:
     as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
 	      cur_insn->opdef->as_op, find_scheduling(cur_insn));
@@ -2500,7 +2487,7 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1pe_core_info;
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe)){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1pe)){
 	as_warn(_("could not set architecture and machine"));
       }
   }
@@ -2516,10 +2503,10 @@ k1_set_cpu(void) {
   switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_C_PE:
     if (k1_arch_size == 32) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1pe))
 	as_warn(_("could not set architecture and machine"));
     } else if (k1_arch_size == 64) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1cpe_64))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1pe_64))
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1c_reorder_bundle;
@@ -2527,10 +2514,10 @@ k1_set_cpu(void) {
     break;
   case ELF_K1_CORE_C_RM:
     if (k1_arch_size == 32){
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1crm))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1rm))
 	as_warn(_("could not set architecture and machine"));
     } else if ( k1_arch_size == 64){
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1crm_64))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1rm_64))
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1c_reorder_bundle;

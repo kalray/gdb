@@ -601,7 +601,7 @@ extern initialize_file_ftype _initialize_k1_linux_tdep;
 void
 _initialize_k1_linux_tdep (void)
 {
-  gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1cpe_usr, GDB_OSABI_LINUX, k1_linux_init_abi);
+  gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1c_k1pe_usr, GDB_OSABI_LINUX, k1_linux_init_abi);
   add_k1_commands ();
 }
 

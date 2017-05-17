@@ -1,5 +1,5 @@
 /* K1 ELF support for BFD.
- * 
+ *
  * Copyright (C) 2009-2016 Kalray SA.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,8 +34,12 @@ typedef union {
             } obj_compat;
       unsigned int f;
 } k1_bfd_flags;
+/* 	 16.15 	  8.7  4.3  0 */
+/* +----------------------------+ */
+/* |      CUT | CORE  |PIC |ABI | */
+/* +----------------------------+ */
 
-/* 
+/*
  * Machine private data :
  * - byte 0 = ABI specific (PIC, OS, ...)
  * - byte 1 = Core info :
@@ -86,6 +90,7 @@ typedef union {
 #define _ELF_K1_CHECK_CUT(flags,m) (((flags) & ELF_K1_CUT_MASK)==(m))
 
 /* (pp) abi */
+/* 4 bits bitfield */
 #define _ELF_K1_ABI_BIT (0)                             /* 1st bit position in b
                                                            yte */
 #define ELF_K1_ABI_MASK         (0xf<<_ELF_K1_ABI_BIT)           /* mask */
@@ -107,7 +112,7 @@ typedef union {
 /* (FD)PIC specific */
 #define _ELF_K1_PIC_BIT (4)
 
-#define ELF_K1_PIC_MASK          (0x3)
+#define ELF_K1_PIC_MASK          (0x3<<_ELF_K1_PIC_BIT)
 #define ELF_K1_NOPIC             (0x0<<_ELF_K1_PIC_BIT)
 #define ELF_K1_PIC               (0x1<<_ELF_K1_PIC_BIT) /* -fpic   */
 #define ELF_K1_FDPIC             (0x2<<_ELF_K1_PIC_BIT) /* -mfdpic */

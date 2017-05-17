@@ -3422,6 +3422,29 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 			      strcat (buf, ", k1bdp");
 			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_IO)
 			      strcat (buf, ", k1bio");
+			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_PE)
+			      strcat (buf, ", Coolidge (k1c) k1pe");
+			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_RM)
+			      strcat (buf, ", Coolidge (k1c) k1rm");
+
+			if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_NO)
+			      strcat (buf, ", NO ABI");
+			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_MULTI)
+			      strcat (buf, ", Multi ABI");
+			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_GCC)
+			      strcat (buf, ", GCC ABI");
+			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_EMBED)
+			      strcat (buf, ", Embed ABI");
+			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_PIC)
+			      strcat (buf, ", PIC ABI");
+
+			if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_NOPIC)
+			      strcat (buf, ", NO PIC");
+			else if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_PIC)
+			      strcat (buf, ", PIC");
+			else if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_FDPIC)
+			      strcat (buf, ", FDPIC");
+
             else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_V1)
                 strcat (buf, ", k1v1");
 	  break;

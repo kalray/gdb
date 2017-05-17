@@ -2803,8 +2803,8 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
       int i;
       const bfd_vma *template;
       switch(output_bfd->arch_info->mach){
-        case bfd_mach_k1cpe:
-        case bfd_mach_k1crm:
+        case bfd_mach_k1c_k1pe:
+        case bfd_mach_k1c_k1rm:
           template = fdpic_abi_plt_full_entry_k1b32;
           break;
         default:
