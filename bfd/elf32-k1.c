@@ -2465,6 +2465,8 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
                                         bfd_vma addend)
 
 {
+  BFD_ASSERT (0); // FDPIC should burn in hell
+
   // bfd_vma fd_lazy_rel_offset = (bfd_vma)-1;
   int dynindx = -1;
 
@@ -2775,13 +2777,9 @@ k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
       int i;
       const bfd_vma *template;
       switch(output_bfd->arch_info->mach){
-        case bfd_mach_k1c_k1pe:
-        case bfd_mach_k1c_k1rm:
-          template = fdpic_abi_plt_full_entry_k1b32;
-          break;
         default:
           (*_bfd_error_handler)
-            ("can't make a plt entry for unknown mach: %d", output_bfd->arch_info->mach);
+            ("can't make a FDPIC plt entry for unknown mach: %d", output_bfd->arch_info->mach);
           return FALSE;
       }
            
