@@ -20,45 +20,14 @@
 
 extern const bfd_target k1_linux_elf32_vec;
 
-static const bfd_vma plt_small_entry_k1a[] =
-  {
-    /* get $r14 = $pc     ;; */      0x00700380,
-    /* lw $r9 = 0[$r14]   ;; */      0xa424000e,
-                                     0x18000000,
-    /* igoto $r9          ;; */      0x00114009,
-  };
-const size_t plt_entry_k1a_size = PLT_SIZE(plt_small_entry_k1a);
-
-const bfd_vma plt_small_entry_k1b32[] = 
+const bfd_vma plt_small_entry_k1c_32[] =
   {
     /* get $r14 = $pc     ;; */      0x01000380,
-    /* lw $r9 = 0[$r14]   ;; */      0xac24000e,
-                                     0x18000000,
+    /* lwz $r9 = 0[$r14]  ;; */      0xa824000e,
+                                     0x00000000,
     /* igoto $r9          ;; */      0x00114009,
   };
-const size_t plt_entry_k1b32_size = PLT_SIZE(plt_small_entry_k1b32);
-
-/* PLT templates for (FD)PIC ABI */
-static const bfd_vma fdpic_abi_plt_full_entry_k1a[PLT_FULL_ENTRY_SIZE] =
-  {
-    /* add $r14 = $r14, 0 ;; */ 0xe238000e,
-                                0x00000000,
-    /* lw $r9 = 0[$r14]   ;; */ 0x2424000e,
-    /* lw $r14 = 4[$r14]  ;; */ 0x2438010e,
-    /* igoto $r9          ;; */ 0x00114009,
-  };
-
-/* PLT templates for (FD)PIC ABI */
-static const bfd_vma fdpic_abi_plt_full_entry_k1b32[PLT_FULL_ENTRY_SIZE] =
-  {
-    /* add $r14 = $r14, 0 ;; */ 0xe138000e,
-                                0x00000000,
-    /* lw $r9 = 0[$r14]   ;; */ 0x2c24000e,
-    /* lw $r14 = 4[$r14]  ;; */ 0x2c38010e,
-    /* igoto $r9          ;; */ 0x00114009,
-  };
-
-
+const size_t plt_entry_k1c_32_size = PLT_SIZE(plt_small_entry_k1c_32);
 
 static bfd_boolean
 k1_elf32_fdpic_emit_got_relocs_plt_entries (struct k1fdpic_relocs_info *entry,
@@ -87,11 +56,8 @@ k1_elf32_link_hash_table_create (bfd *abfd)
     return NULL;
 
   ret->bytes_per_rela = sizeof (Elf32_External_Rela);
-  ret->plt_entry_size = plt_entry_k1a_size;
+  ret->plt_entry_size = plt_entry_k1c_32_size;
   ret->bytes_per_address = 4;
-
-  /* if the PLTs differ, then we should check the machine */
-  BFD_ASSERT(plt_entry_k1a_size == plt_entry_k1b32_size);
 
   return &ret->elf.root;
 }
@@ -2033,11 +1999,17 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
 	  unsigned int loc_plt_size;
           const bfd_vma *template;
 	  switch(output_bfd->arch_info->mach){
-	  case bfd_mach_k1bdp:
-	  case bfd_mach_k1bio:
-	    template = plt_small_entry_k1b32;
-	    loc_plt_size = plt_entry_k1b32_size;
+	  case bfd_mach_k1c_k1pe:
+	  case bfd_mach_k1c_k1rm:
+	    template = plt_small_entry_k1c_32;
+	    loc_plt_size = plt_entry_k1c_32_size;
 	    break;
+	  case bfd_mach_k1c_k1rm_64:
+	  case bfd_mach_k1c_k1pe_64:
+	    (*_bfd_error_handler)
+	      ("64bits PLT not yet ready for machine: %d", output_bfd->arch_info->mach);
+	    return FALSE;
+
 	  default:
 	    (*_bfd_error_handler)
 	      ("can't make a plt entry for unknown mach: %d", output_bfd->arch_info->mach);

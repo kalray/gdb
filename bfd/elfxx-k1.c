@@ -22,13 +22,12 @@
 /*
  * Defined in elf32-k1.c
  */
-extern const size_t plt_entry_k1a_size;
-extern const size_t plt_entry_k1b32_size;
+extern const size_t plt_entry_k1c_32_size;
 
 /*
  * Defined in elf64-k1.c
  */
-extern const size_t plt_entry_k1b64_size;
+extern const size_t plt_entry_k1c_64_size;
 
 const struct k1_reloc_map k1_reloc_map[]=
 {
@@ -152,17 +151,15 @@ k1_elfxx_link_hash_table_create (bfd *abfd)
   if (ABI_64_P (abfd))
     {
       ret->bytes_per_rela = sizeof (Elf64_External_Rela);
-      ret->plt_entry_size = plt_entry_k1b64_size;
+      ret->plt_entry_size = plt_entry_k1c_64_size;
       ret->bytes_per_address = 8;
     }
   else
 #endif
     {
       ret->bytes_per_rela = sizeof (Elf32_External_Rela);
-      ret->plt_entry_size = plt_entry_k1a_size;
+      ret->plt_entry_size = plt_entry_k1c_32_size;
       ret->bytes_per_address = 4;
-      // if the PLTs differ, then we should check the machine
-      BFD_ASSERT(plt_entry_k1a_size == plt_entry_k1b32_size);
     }
 
   // first PLT slot is reserved.
@@ -199,9 +196,9 @@ k1_plt_sym_val (bfd_vma i, const asection *plt,
   unsigned int plt_entry_size = 0;
 
   if (is_k1c32) {
-      plt_entry_size = plt_entry_k1b32_size;
+      plt_entry_size = plt_entry_k1c_32_size;
   } else if (is_k1c64) {
-      plt_entry_size = plt_entry_k1b64_size;
+      plt_entry_size = plt_entry_k1c_64_size;
   }
 
   plt_header_size = plt_entry_size;
