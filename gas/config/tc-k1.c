@@ -998,8 +998,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_PRF]))
 #define IS_K1_REGFILE_SRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_SRF]) \
 				 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_SRF]))
-#define IS_K1_REGFILE_NRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_NRF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_NRF]))
+#define IS_K1_REGFILE_ARF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_ARF]) \
+				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_ARF]))
 
 #define MATCH_K1_REGFILE(tok,is_regfile)				\
     if (((tok).X_op == O_register) && (is_regfile(tok))) {		\
@@ -1054,8 +1054,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
             CASE_SRF_REGCLASSES(k1c):
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
-            case RegClass_k1c_remoteReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_NRF)
+            case RegClass_k1c_accelReg:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_ARF)
 
             case Immediate_k1c_brknumber:
             case Immediate_k1c_eventmask2:
@@ -1126,7 +1126,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 #undef IS_K1_REGFILE_GRF
 #undef IS_K1_REGFILE_PRF
 #undef IS_K1_REGFILE_SRF
-#undef IS_K1_REGFILE_NRF
+#undef IS_K1_REGFILE_ARF
 #undef MATCH_K1_REGFILE
 #undef CASE_SRF_REGCLASSES
 }
@@ -1901,7 +1901,7 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case RegClass_k1c_onlyfxReg:
       chars += snprintf(&buf[chars], buf_size - chars, "srf");
       break;
-    case RegClass_k1c_remoteReg:
+    case RegClass_k1c_accelReg:
       chars += snprintf(&buf[chars], buf_size - chars, "nrf");
       break;
     case Immediate_k1c_brknumber:
