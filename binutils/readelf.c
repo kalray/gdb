@@ -3422,10 +3422,8 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 			      strcat (buf, ", k1bdp");
 			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_IO)
 			      strcat (buf, ", k1bio");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_PE)
-			      strcat (buf, ", Coolidge (k1c) k1pe");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_RM)
-			      strcat (buf, ", Coolidge (k1c) k1rm");
+			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_C)
+			      strcat (buf, ", Coolidge (k1c) k1c");
 
 			if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_NO)
 			      strcat (buf, ", NO ABI");

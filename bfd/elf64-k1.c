@@ -9,9 +9,9 @@
 #include <elf/k1c.h>
 
 #include "elfxx-k1.h"
-#define K1RM_K1PE
+#define K1C
 #include "elf64-k1c.def"
-#undef K1RM_K1PE
+#undef K1C
 
 /* The size in bytes of an entry in the procedure linkage table FDPIC */
 /* #define PLT_HEADER_SIZE         32 */

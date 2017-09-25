@@ -9,9 +9,9 @@
 #include <elf/k1c.h>
 
 #include "elfxx-k1.h"
-#define K1RM_K1PE
+#define K1C
 #include "elf32-k1c.def"
-#undef K1RM_K1PE
+#undef K1C
 
 /* The size in bytes of an entry in the procedure linkage table FDPIC */
 #define PLT_HEADER_SIZE         32
@@ -1999,13 +1999,11 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
 	  unsigned int loc_plt_size;
           const bfd_vma *template;
 	  switch(output_bfd->arch_info->mach){
-	  case bfd_mach_k1c_k1pe:
-	  case bfd_mach_k1c_k1rm:
+	  case bfd_mach_k1c_k1c:
 	    template = plt_small_entry_k1c_32;
 	    loc_plt_size = plt_entry_k1c_32_size;
 	    break;
-	  case bfd_mach_k1c_k1rm_64:
-	  case bfd_mach_k1c_k1pe_64:
+	  case bfd_mach_k1c_k1c_64:
 	    (*_bfd_error_handler)
 	      ("64bits PLT not yet ready for machine: %d", output_bfd->arch_info->mach);
 	    return FALSE;

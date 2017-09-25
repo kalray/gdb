@@ -22,11 +22,9 @@ compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   if (amach == bmach)
     return a;
 
-  if ((amach == bfd_mach_k1c_k1rm && bmach == bfd_mach_k1c_k1rm_usr) ||
-      (amach == bfd_mach_k1c_k1pe && bmach == bfd_mach_k1c_k1pe_usr))
+  if ((amach == bfd_mach_k1c_k1c && bmach == bfd_mach_k1c_k1c_usr))
     return b;
-  if ((bmach == bfd_mach_k1c_k1rm && amach == bfd_mach_k1c_k1rm_usr) ||
-      (bmach == bfd_mach_k1c_k1pe && amach == bfd_mach_k1c_k1pe_usr))
+  if ((bmach == bfd_mach_k1c_k1c && amach == bfd_mach_k1c_k1c_usr))
     return a;
 
   /* Otherwise if either a or b is the 'default' machine
@@ -47,12 +45,9 @@ static struct
 }
 processors[] =
 {
-  { bfd_mach_k1c_k1pe, "k1pe" },
-  { bfd_mach_k1c_k1rm, "k1rm" },
-  { bfd_mach_k1c_k1pe_64, "k1pe_64" },
-  { bfd_mach_k1c_k1rm_64, "k1rm_64" },
-  { bfd_mach_k1c_k1pe_usr, "k1pe_usr"},
-  { bfd_mach_k1c_k1rm_usr, "k1rm_usr"},
+  { bfd_mach_k1c_k1c, "k1c" },
+  { bfd_mach_k1c_k1c_64, "k1c_64" },
+  { bfd_mach_k1c_k1c_usr, "k1c_usr"},
 };
 
 static bfd_boolean
@@ -100,13 +95,10 @@ scan (const struct bfd_arch_info *info, const char *string)
  
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (32, bfd_mach_k1c_k1pe,      "k1:k1pe",     FALSE, & arch_info_struct[1]),
-  N (32, bfd_mach_k1c_k1rm,      "k1:k1rm",     FALSE, & arch_info_struct[2]),
-  N (64, bfd_mach_k1c_k1pe_64,   "k1:k1pe:64",  FALSE, & arch_info_struct[3]),
-  N (64, bfd_mach_k1c_k1rm_64,   "k1:k1rm:64",  FALSE, & arch_info_struct[4]),
-  N (32, bfd_mach_k1c_k1pe_usr,  "k1:k1pe:usr", FALSE, & arch_info_struct[5]),
-  N (32, bfd_mach_k1c_k1rm_usr,  "k1:k1rm:usr", FALSE, NULL),
+  N (32, bfd_mach_k1c_k1c,      "k1:k1c",     FALSE, & arch_info_struct[1]),
+  N (64, bfd_mach_k1c_k1c_64,   "k1:k1c:64",  FALSE, & arch_info_struct[2]),
+  N (32, bfd_mach_k1c_k1c_usr,  "k1:k1c:usr", FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_k1_arch =
-  N (32, bfd_mach_k1c_k1pe, "k1c", TRUE, & arch_info_struct[0]);
+  N (32, bfd_mach_k1c_k1c, "k1c", TRUE, & arch_info_struct[0]);

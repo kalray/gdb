@@ -339,8 +339,7 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
   {
     switch (core)
     {
-      case ELF_K1_CORE_C_RM:
-      case ELF_K1_CORE_C_PE:
+      case ELF_K1_CORE_C_C:
         stub_args[argidx++] = "--march=coolidge";
         break;
       default:
@@ -350,12 +349,8 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
 
   switch (core)
   {
-    case ELF_K1_CORE_C_PE:
-      stub_args[argidx++] = "--mcore=k1pe";
-      break;
-
-    case ELF_K1_CORE_C_RM:
-      stub_args[argidx++] = "--mcore=k1rm";
+    case ELF_K1_CORE_C_C:
+      stub_args[argidx++] = "--mcore=k1c";
       break;
 
     default:

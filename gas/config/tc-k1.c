@@ -2482,45 +2482,34 @@ md_assemble(char *s)
 static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
-      k1_core_info = &k1pe_core_info;
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1pe)){
+      k1_core_info = &k1c_core_info;
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c)){
 	as_warn(_("could not set architecture and machine"));
       }
   }
 
   if(!k1_registers) {
-    k1_registers = k1_k1pe_registers;
+    k1_registers = k1_k1c_registers;
   }
 
   if(!k1_regfiles) {
-    k1_regfiles = k1_k1pe_regfiles;
+    k1_regfiles = k1_k1c_regfiles;
   }
 
   switch(k1_core_info->elf_cores[subcore_id]) {
-  case ELF_K1_CORE_C_PE:
+  case ELF_K1_CORE_C_C:
     if (k1_arch_size == 32) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1pe))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c))
 	as_warn(_("could not set architecture and machine"));
     } else if (k1_arch_size == 64) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1pe_64))
-	as_warn(_("could not set architecture and machine"));
-    }
-    reorder_bundle = k1c_reorder_bundle;
-    print_insn = k1c_print_insn;
-    break;
-  case ELF_K1_CORE_C_RM:
-    if (k1_arch_size == 32){
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1rm))
-	as_warn(_("could not set architecture and machine"));
-    } else if ( k1_arch_size == 64){
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1rm_64))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c_64))
 	as_warn(_("could not set architecture and machine"));
     }
     reorder_bundle = k1c_reorder_bundle;
     print_insn = k1c_print_insn;
     break;
   default:
-    as_fatal("Unknown elf core: %d\n",k1_core_info->elf_cores[subcore_id]);
+    as_fatal("Unknown elf core: 0x%x\n",k1_core_info->elf_cores[subcore_id]);
   }
 }
 
@@ -3348,10 +3337,8 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 	      { "cut5", ELF_K1_CUT_5, &k1_cut, &k1_cut_set },
 	      { "no-abi", ELF_K1_ABI_NO, &k1_abi, &k1_abi_set },
 	      { "old-multiflow-abi", ELF_K1_ABI_MULTI, &k1_abi, &k1_abi_set },
-	      { "abi-k1pe-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1pe-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-	      { "abi-k1rm-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1rm-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+	      { "abi-k1c-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+	      { "abi-k1c-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
 	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
 	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
 	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },

@@ -7,8 +7,7 @@
 
 enum K1_ARCH
 {
-  K1_K1PE,
-  K1_K1RM,
+  K1_K1C,
   K1_NUM_ARCHES
 };
 

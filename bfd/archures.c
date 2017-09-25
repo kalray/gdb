@@ -505,12 +505,9 @@ DESCRIPTION
 .#define bfd_mach_k1bdp_usr            6
 .#define bfd_mach_k1bio_usr            7
 
-.#define bfd_mach_k1c_k1pe                8
-.#define bfd_mach_k1c_k1rm                9
-.#define bfd_mach_k1c_k1pe_64             10
-.#define bfd_mach_k1c_k1rm_64             11
-.#define bfd_mach_k1c_k1pe_usr            12
-.#define bfd_mach_k1c_k1rm_usr            13
+.#define bfd_mach_k1c_k1c                8
+.#define bfd_mach_k1c_k1c_64             9
+.#define bfd_mach_k1c_k1c_usr            10
 
 .  bfd_arch_tilepro,   {* Tilera TILEPro *}
 .  bfd_arch_tilegx, {* Tilera TILE-Gx *}

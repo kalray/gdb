@@ -185,11 +185,9 @@ k1_plt_sym_val (bfd_vma i, const asection *plt,
 {
   bfd *abfd = plt->owner;
 
-  int is_k1c32 = bfd_get_mach(abfd) == bfd_mach_k1c_k1pe
-    || bfd_get_mach(abfd) == bfd_mach_k1c_k1rm;
+  int is_k1c32 = bfd_get_mach(abfd) == bfd_mach_k1c_k1c;
 
-  int is_k1c64 = bfd_get_mach(abfd) == bfd_mach_k1c_k1pe_64
-    || bfd_get_mach(abfd) == bfd_mach_k1c_k1rm_64;
+  int is_k1c64 = bfd_get_mach(abfd) == bfd_mach_k1c_k1c_64;
 
   bfd_reloc_code_real_type plt_jmp_slot_type = is_k1c64 ? R_K1_JMP_SLOT64 : R_K1_JMP_SLOT;
   unsigned int plt_header_size = 0;
@@ -1727,23 +1725,14 @@ elf_k1_print_private_bfd_data (bfd *abfd, void *farg)
 
   fprintf (f, "\nK1 header:\n");
   switch(e_flags & K1_MACH_MASK) {
-  case bfd_mach_k1c_k1pe:
-	fprintf (f, "\nMachine     = k1cpe\n");
+  case bfd_mach_k1c_k1c:
+	fprintf (f, "\nMachine     = k1c\n");
 	break;
-  case bfd_mach_k1c_k1rm:
-	fprintf (f, "\nMachine     = k1crm\n");
+  case bfd_mach_k1c_k1c_64:
+	fprintf (f, "\nMachine     = k1c:64\n");
 	break;
-  case bfd_mach_k1c_k1pe_64:
-	fprintf (f, "\nMachine     = k1cpe:64\n");
-	break;
-  case bfd_mach_k1c_k1rm_64:
-	fprintf (f, "\nMachine     = k1crm:64\n");
-	break;
-  case bfd_mach_k1c_k1pe_usr:
-	fprintf (f, "\nMachine     = k1cpe_usr\n");
-	break;
-  case bfd_mach_k1c_k1rm_usr:
-	fprintf (f, "\nMachine     = k1crm_usr\n");
+  case bfd_mach_k1c_k1c_usr:
+	fprintf (f, "\nMachine     = k1c_usr\n");
 	break;
   default:
     fprintf (f, "\nMachine Id  = 0x%x\n", e_flags & K1_MACH_MASK);
@@ -1772,10 +1761,8 @@ elf_k1_final_write_processing (bfd *abfd,
 
   switch (mach = bfd_get_mach (abfd))
     {
-    case bfd_mach_k1c_k1pe:
-    case bfd_mach_k1c_k1rm:
-    case bfd_mach_k1c_k1pe_64:
-    case bfd_mach_k1c_k1rm_64:
+    case bfd_mach_k1c_k1c:
+    case bfd_mach_k1c_k1c_64:
       val = mach;
       break;
     default:
@@ -1794,10 +1781,8 @@ elf_k1_object_p (bfd *abfd)
   int mach = elf_elfheader (abfd)->e_flags & K1_MACH_MASK;
 
   switch (mach) {
-    case bfd_mach_k1c_k1pe:
-    case bfd_mach_k1c_k1rm:
-    case bfd_mach_k1c_k1pe_64:
-    case bfd_mach_k1c_k1rm_64:
+    case bfd_mach_k1c_k1c:
+    case bfd_mach_k1c_k1c_64:
       break;
     default:
       return FALSE;

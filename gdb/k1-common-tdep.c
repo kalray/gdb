@@ -58,11 +58,8 @@ k1_arch (void)
   {
     switch (elf_elfheader (exec_bfd)->e_flags & ELF_K1_CORE_MASK)
     {
-      case ELF_K1_CORE_C_PE:
-        k1_current_arch = K1_K1PE;
-        break;
-      case ELF_K1_CORE_C_RM:
-        k1_current_arch = K1_K1RM;
+      case ELF_K1_CORE_C_C:
+        k1_current_arch = K1_K1C;
         break;
       default:
         error (_ ("The K1 binary is compiled for an unknown core."));
@@ -71,10 +68,8 @@ k1_arch (void)
   else if (desc && tdesc_architecture (desc))
   {
     const char *name = tdesc_architecture (desc)->printable_name;
-    if (!strcmp (name, "k1:k1pe"))
-      k1_current_arch = K1_K1PE;
-    else if (!strcmp (name, "k1:k1rm"))
-      k1_current_arch = K1_K1RM;
+    if (!strcmp (name, "k1:k1c"))
+      k1_current_arch = K1_K1C;
     else
       error ("unable to find the current k1 architecture.");
   }
@@ -156,17 +151,11 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
   typedef struct op_list_desc prologue_ops[NUM_INSN_LISTS];
   prologue_ops prologue_insns_full[] =
   {
-    [K1_K1RM] =
+    [K1_K1C] =
     {
-      { sp_adjust_insns[K1_K1RM], 0 /* Dest register */},
-      { sp_store_insns[K1_K1RM], 1 /* Base register */},
-      { prologue_helper_insns[K1_K1RM], -1 /* unused */},
-    },
-    [K1_K1PE] =
-    {
-      { sp_adjust_insns[K1_K1PE], 0 /* Dest register */},
-      { sp_store_insns[K1_K1PE], 1 /* Base register */},
-      { prologue_helper_insns[K1_K1PE], -1 /* unused */},
+      { sp_adjust_insns[K1_K1C], 0 /* Dest register */},
+      { sp_store_insns[K1_K1C], 1 /* Base register */},
+      { prologue_helper_insns[K1_K1C], -1 /* unused */},
     },
   };
 
@@ -545,9 +534,7 @@ k1_look_for_insns (void)
 
     switch (i)
     {
-      case K1_K1PE: op = k1pe_k1optab;
-        break;
-      case K1_K1RM: op = k1rm_k1optab;
+      case K1_K1C: op = k1c_k1optab;
         break;
       default:
         internal_error (__FILE__, __LINE__, "Unknown arch id.");

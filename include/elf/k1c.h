@@ -65,8 +65,7 @@ typedef union {
 #define ELF_K1_CORE_B_DP        (ELF_K1_CORE_B | ELF_K1_CORE_DP)
 #define ELF_K1_CORE_B_IO        (ELF_K1_CORE_B | ELF_K1_CORE_IO)
 
-#define ELF_K1_CORE_C_RM        (ELF_K1_CORE_C | ELF_K1_CORE_RM)
-#define ELF_K1_CORE_C_PE        (ELF_K1_CORE_C | ELF_K1_CORE_PE)
+#define ELF_K1_CORE_C_C         (ELF_K1_CORE_C | ELF_K1_CORE_RM)
 
 /* Last bit in byte used for 64bits addressing */
 #define ELF_K1_CORE_ADDR64_MASK (0x80<<_ELF_K1_CORE_BIT)
