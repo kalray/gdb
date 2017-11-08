@@ -347,16 +347,6 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
     }
   }
 
-  switch (core)
-  {
-    case ELF_K1_CORE_C_C:
-      stub_args[argidx++] = "--mcore=k1c";
-      break;
-
-    default:
-      error (_ ("The K1 binary is compiled for an unknown core."));
-  }
-
   stub_args[argidx++] = "--gdb";
   stub_args[argidx++] = "--";
   stub_args[argidx++] = exec_file;
