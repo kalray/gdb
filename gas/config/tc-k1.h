@@ -20,8 +20,8 @@
   THIS FILE HAS BEEN MODIFIED OR ADDED BY STMicroelectronics, Inc. 1999-2003
 */
 
-#define K1MAXSYLLABLES 8
-#define K1MAXIMMX 4
+#define K1MAXSYLLABLES 9
+#define K1MAXIMMX 8
 #define NOIMMX -1
 
 /* Author Jeff Brown */

@@ -199,6 +199,14 @@ static int insncnt = 0;
 static k1insn_t immxbuf[K1MAXIMMX];
 static int immxcnt = 0;
 
+static void incr_immxcnt()
+{
+  immxcnt++;
+  if(immxcnt >= K1MAXIMMX) {
+    as_bad("Max immx number exceeded: %d",immxcnt);
+  }
+}
+
 #define K1LANEALIGNMENT 3 /* Minimal section alignment required to handle
 correctly odd/even constraints at link time.
 2**3 = 8 */
@@ -1231,7 +1239,7 @@ insert_operand(k1insn_t * insn,
 	      immxbuf[immxcnt].len = 1;
 
 	      insn->len -= 1;
-	      immxcnt++;
+	      incr_immxcnt();
 	      immx_ready = 1;
 	    }
 	  }
@@ -1290,7 +1298,7 @@ insert_operand(k1insn_t * insn,
 		  // decrement insn->len: immx part handled separately
 		  // from insn and must not be emited twice
 		  insn->len -= 1;
-		  immxcnt++;
+		  incr_immxcnt();
 		  immx_ready = 1;
 		  // fallthough
 		  
@@ -1320,7 +1328,7 @@ insert_operand(k1insn_t * insn,
 		  // decrement insn->len: immx part handled separately
 		  // from insn and must not be emited twice
 		  insn->len -= 1;
-		  immxcnt++;
+		  incr_immxcnt();
 		  immx_ready = 1;
 		  break;
 		  
@@ -1344,7 +1352,7 @@ insert_operand(k1insn_t * insn,
 
 		  // decrement insn->len: immx part handled separately
 		  // from insn and must not be emited twice
-		  immxcnt++;
+		  incr_immxcnt();
 		  insn->len -= 1;
 		  immx_ready = 1;
 		  break;
@@ -1412,7 +1420,7 @@ assemble_insn( const k1opc_t * opcode,
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
 	  insn->len -= 1; 
-	  immxcnt++;
+	  incr_immxcnt();
         }
         if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX1){
 	  insn->immx1 = immxcnt;
@@ -1420,7 +1428,7 @@ assemble_insn( const k1opc_t * opcode,
 	  immxbuf[immxcnt].nfixups = 0;
 	  immxbuf[immxcnt].len = 1;
 	  insn->len -= 1;
-	  immxcnt++;
+	  incr_immxcnt();
         }
       }
     }
