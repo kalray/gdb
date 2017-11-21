@@ -302,6 +302,13 @@ attach_user_command (char *args, int from_tty)
   if (ret)
     return;
 
+  signal_stop_update (GDB_SIGNAL_REALTIME_32, 0);
+  signal_print_update (GDB_SIGNAL_REALTIME_32, 0);
+  signal_pass_update (GDB_SIGNAL_REALTIME_32, 1);
+  signal_stop_update (GDB_SIGNAL_REALTIME_33, 0);
+  signal_print_update (GDB_SIGNAL_REALTIME_33, 0);
+  signal_pass_update (GDB_SIGNAL_REALTIME_33, 1);
+
   fprintf (stderr, "Attached to K1 linux user debug using %s.\n", k1_comm);
 }
 
