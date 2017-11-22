@@ -2119,11 +2119,13 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
   case Reservation_k1c_ALU_LITE:
   case Reservation_k1c_ALU_LITE_X:
   case Reservation_k1c_ALU_LITE_Y:
-      PUSH(mau,state, states, states_sz, states_storage_sz);
-      PUSH(alu1,state, states, states_sz, states_storage_sz);
-      PUSH(alu0,state, states, states_sz, states_storage_sz);
-      break;
+    PUSH(mau,state, states, states_sz, states_storage_sz);
+    PUSH(alu1,state, states, states_sz, states_storage_sz);
+    PUSH(alu0,state, states, states_sz, states_storage_sz);
+    break;
 
+  case Reservation_k1c_ALU_NOP:
+    /* FIXME! NOP only uses Issue slots, no ALUs. */
   case Reservation_k1c_ALU_TINY:
   case Reservation_k1c_ALU_TINY_X:
   case Reservation_k1c_ALU_TINY_Y:
@@ -2135,7 +2137,7 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 
   default:
     as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
-	      cur_insn->opdef->as_op, find_scheduling(cur_insn));
+              cur_insn->opdef->as_op, find_scheduling(cur_insn));
   }
   return 0;
 }
