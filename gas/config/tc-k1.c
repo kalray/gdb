@@ -1065,9 +1065,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_accelReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_ARF)
 
-            case Immediate_k1c_brknumber:
-            case Immediate_k1c_eventmask2:
-            case Immediate_k1c_flagmask2:
             case Immediate_k1c_pcrel17:
             case Immediate_k1c_pcrel27:
             case Immediate_k1c_signed10:
@@ -1910,9 +1907,6 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case RegClass_k1c_accelReg:
       chars += snprintf(&buf[chars], buf_size - chars, "nrf");
       break;
-    case Immediate_k1c_brknumber:
-    case Immediate_k1c_eventmask2:
-    case Immediate_k1c_flagmask2:
     case Immediate_k1c_pcrel17:
     case Immediate_k1c_pcrel27:
     case Immediate_k1c_signed10:

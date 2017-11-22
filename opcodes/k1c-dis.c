@@ -503,9 +503,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       K1_PRINT_REG(K1_REGFILE_DEC_ARF,value)
                       break;
 
-                  case Immediate_k1c_eventmask2:
-                  case Immediate_k1c_flagmask2:
-                  case Immediate_k1c_brknumber:
                   case Immediate_k1c_sysnumber:
                   case Immediate_k1c_signed10:
                   case Immediate_k1c_signed16:
