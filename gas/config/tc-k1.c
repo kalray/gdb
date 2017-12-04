@@ -1073,6 +1073,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1c_signed32:
             case Immediate_k1c_signed37:
             case Immediate_k1c_signed43:
+            case Immediate_k1c_signed54:
             case Immediate_k1c_signed64:
             case Immediate_k1c_sysnumber:
             case Immediate_k1c_unsigned5:
@@ -1269,12 +1270,14 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
+
 		case Immediate_k1c_pcrel27:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
+
 		case Immediate_k1c_signed27:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1B */
 		  insn->fixup[0].exp = *arg;
@@ -1283,7 +1286,6 @@ insert_operand(k1insn_t * insn,
 		  break;
 
 		case Immediate_k1c_signed32:
-
 		  insn->immx0 = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_HI22;
@@ -1305,7 +1307,6 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
-
 		  break;
 
 		case Immediate_k1c_signed37:
@@ -1351,6 +1352,27 @@ insert_operand(k1insn_t * insn,
 		  // from insn and must not be emited twice
 		  incr_immxcnt();
 		  insn->len -= 1;
+		  immx_ready = 1;
+		  break;
+
+		case Immediate_k1c_signed54:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1C */
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+
+		  insn->immx0 = immxcnt;
+		  immxbuf[immxcnt].insn[0] = 0;
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /* PLEASE FIXME K1C */
+		  immxbuf[immxcnt].fixup[0].exp = *arg;
+		  immxbuf[immxcnt].fixup[0].where = 0;
+		  immxbuf[immxcnt].nfixups = 1;
+		  immxbuf[immxcnt].len = 1;
+
+		  // decrement insn->len: immx part handled separately
+		  // from insn and must not be emited twice
+		  insn->len -= 1;
+		  incr_immxcnt();
 		  immx_ready = 1;
 		  break;
 
@@ -2098,21 +2120,21 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     //  case Bundling_k1c_MAU_X:
   case Reservation_k1c_MAU_X:
   case Reservation_k1c_MAU_ACC_X:
-
     //  case Bundling_k1c_MAU_Y:
   case Reservation_k1c_MAU_Y:
   case Reservation_k1c_MAU_ACC_Y:
-
     PUSH(mau,state, states, states_sz, states_storage_sz);
     break;
 
     //  case Bundling_k1c_LSU:
   case Reservation_k1c_LSU:
   case Reservation_k1c_LSU_ACC:
-
     //  case Bundling_k1c_LSU_X:
   case Reservation_k1c_LSU_X:
   case Reservation_k1c_LSU_ACC_X:
+    //  case Bundling_k1c_LSU_Y:
+  case Reservation_k1c_LSU_Y:
+  case Reservation_k1c_LSU_ACC_Y:
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     break;
 
