@@ -9,9 +9,6 @@
 #include <elf/k1c.h>
 
 #include "elfxx-k1.h"
-#define K1C
-#include "elf64-k1c.def"
-#undef K1C
 
 /* The size in bytes of an entry in the procedure linkage table FDPIC */
 /* #define PLT_HEADER_SIZE         32 */
@@ -114,7 +111,7 @@ k1_elf64_relocate_section
 
       r_symndx = ELF64_R_SYM (rel->r_info);
 
-      howto  = elf64_k1_howto_table + r_type;
+      howto  = elf_k1_howto_table + r_type;
       h      = NULL;
       sym    = NULL;
       sec    = NULL;
@@ -293,12 +290,12 @@ k1_elf64_relocate_section
                 break;
 
 	    /* Handle K1 specific things here */
-        case R_K1_HI22:
-        case R_K1_LO10:
+        case R_K1_S37_UP27:
+        case R_K1_S37_LO10:
 
-        case R_K1_HI27:
-        case R_K1_EXTEND6:
-        case R_K1_ELO10:
+        case R_K1_S43_UP27:
+        case R_K1_S43_EX6:
+        case R_K1_S43_LO10:
 
           if (gp_disp_p)
           {
@@ -318,20 +315,21 @@ k1_elf64_relocate_section
              * start address, not our (the instruction word)
              * address, hence the +4 and +8
              */
-            if (r_type == R_K1_LO10 || r_type == R_K1_ELO10 || r_type == R_K1_EXTEND6)
+	    /* FIXME AUTO: may need to add R_K1_S64_ relocs here */
+            if (r_type == R_K1_S37_LO10 || r_type == R_K1_S43_LO10 || r_type == R_K1_S43_EX6)
               relocation = got_value - p + 4;
             else
               relocation = got_value - p + 8;
           }
           break;
 
-	case R_K1_TPREL_LO10:
-	case R_K1_TPREL_HI22:
+	case R_K1_TPREL_S37_LO10:
+	case R_K1_TPREL_S37_UP27:
 	case R_K1_TPREL_32:
 
-	case R_K1_TPREL64_EXTEND6:
-	case R_K1_TPREL64_ELO10:
-	case R_K1_TPREL64_HI27:
+	case R_K1_TPREL64_EX6:
+	case R_K1_TPREL64_LO10:
+	case R_K1_TPREL64_UP27:
 	case R_K1_TPREL64_64:
 	  {
 	    asection *tls_sec = elf_hash_table (info)->tls_sec;
@@ -348,20 +346,13 @@ k1_elf64_relocate_section
 	  }
 	  break;
 
-	case R_K1_10_GPREL:
-	case R_K1_16_GPREL:
-	case R_K1_GPREL_LO10:
-	case R_K1_GPREL_HI22:
-            relocation -=  k1_gp_base (output_bfd, info);
-	    break;
-
 	case R_K1_GOTOFF:
-	case R_K1_GOTOFF_HI22:
+	case R_K1_GOTOFF_UP27:
 	case R_K1_GOTOFF_LO10:
 
         case R_K1_GOTOFF64:
-        case R_K1_GOTOFF64_HI27:
-        case R_K1_GOTOFF64_EXTEND6:
+        case R_K1_GOTOFF64_UP27:
+        case R_K1_GOTOFF64_EX6:
         case R_K1_GOTOFF64_LO10:
 
 	  BFD_ASSERT (htab->sgotplt != NULL);
@@ -370,11 +361,11 @@ k1_elf64_relocate_section
 	  break;
 
 	case R_K1_GOT:
-	case R_K1_GOT_HI22:
+	case R_K1_GOT_UP27:
 	case R_K1_GOT_LO10:
 
         case R_K1_GOT64:
-        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_UP27:
         case R_K1_GOT64_LO10:
         case R_K1_GLOB_DAT64:
 
@@ -459,12 +450,12 @@ k1_elf64_relocate_section
       }
 	  break;
           
-        case R_K1_PLT_HI22:
+        case R_K1_PLT_UP27:
         case R_K1_PLT_LO10:
 
-        case R_K1_PLT64_HI27:
+        case R_K1_PLT64_UP27:
         case R_K1_PLT64_LO10:
-        case R_K1_PLT64_EXTEND6:
+        case R_K1_PLT64_EX6:
 
         case R_K1_27_PCREL:
           /* Relocation is to the entry for this symbol in the
@@ -601,15 +592,16 @@ k1_elf32_finish_dynamic_symbol (bfd * output_bfd,
           for (i = 0; i < (plt_entry_k1c_64_size / 4); ++i)
             bfd_put_32(output_bfd, template[i], plt->contents + h->plt.offset + (4*i));
           
-          _bfd_final_link_relocate (elf64_k1_howto_table + R_K1_ELO10,
+	  /* FIXME AUTO: check if needed to do something for R_K1_S64_* */
+          _bfd_final_link_relocate (elf_k1_howto_table + R_K1_S43_LO10,
 				    output_bfd, plt,
 				    plt->contents + h->plt.offset + 4,
 				    0, pcgotoffset, 0);
-          _bfd_final_link_relocate (elf64_k1_howto_table + R_K1_EXTEND6,
+          _bfd_final_link_relocate (elf_k1_howto_table + R_K1_S43_EX6,
 				    output_bfd, plt,
 				    plt->contents + h->plt.offset + 4,
 				    0, pcgotoffset, 0);
-	  _bfd_final_link_relocate (elf64_k1_howto_table + R_K1_HI27,
+	  _bfd_final_link_relocate (elf_k1_howto_table + R_K1_S43_UP27,
 				    output_bfd, plt,
 				    plt->contents + h->plt.offset + 8,
 				    0, pcgotoffset, 0);

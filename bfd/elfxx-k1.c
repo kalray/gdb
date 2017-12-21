@@ -36,70 +36,69 @@ const struct k1_reloc_map k1_reloc_map[]=
   { BFD_RELOC_32,            R_K1_32 },
   { BFD_RELOC_K1_17_PCREL,   R_K1_17_PCREL },
   { BFD_RELOC_K1_27_PCREL,   R_K1_27_PCREL },
-  { BFD_RELOC_K1_32_PCREL,   R_K1_32_PCREL },
-  { BFD_RELOC_K1_LO10,       R_K1_LO10 },
-  { BFD_RELOC_K1_HI22,       R_K1_HI22 },
-  { BFD_RELOC_K1_GPREL_LO10, R_K1_GPREL_LO10 },
-  { BFD_RELOC_K1_GPREL_HI22, R_K1_GPREL_HI22 },
+
+  { BFD_RELOC_K1_S37_LO10,       R_K1_S37_LO10 },
+  { BFD_RELOC_K1_S37_UP27,       R_K1_S37_UP27 },
   
-  { BFD_RELOC_K1_TPREL_LO10, R_K1_TPREL_LO10 },
-  { BFD_RELOC_K1_TPREL_HI22, R_K1_TPREL_HI22 },
+  { BFD_RELOC_K1_TPREL_S37_LO10, R_K1_TPREL_S37_LO10 },
+  { BFD_RELOC_K1_TPREL_S37_UP27, R_K1_TPREL_S37_UP27 },
+
   { BFD_RELOC_K1_TPREL_32,   R_K1_TPREL_32 },
   
   { BFD_RELOC_K1_GOTOFF_LO10,R_K1_GOTOFF_LO10 },
-  { BFD_RELOC_K1_GOTOFF_HI22,R_K1_GOTOFF_HI22 },
+  { BFD_RELOC_K1_GOTOFF_UP27,R_K1_GOTOFF_UP27 },
 
   { BFD_RELOC_K1_GOT_LO10,   R_K1_GOT_LO10 },
-  { BFD_RELOC_K1_GOT_HI22,   R_K1_GOT_HI22 },
+  { BFD_RELOC_K1_GOT_UP27,   R_K1_GOT_UP27 },
+
   { BFD_RELOC_K1_GLOB_DAT,   R_K1_GLOB_DAT },
+
   { BFD_RELOC_K1_PLT_LO10,   R_K1_PLT_LO10 },
-  { BFD_RELOC_K1_PLT_HI22,   R_K1_PLT_HI22 },
-  { BFD_RELOC_K1_FUNCDESC,   R_K1_FUNCDESC },
-  { BFD_RELOC_K1_FUNCDESC_GOT_LO10,   R_K1_FUNCDESC_GOT_LO10 },
-  { BFD_RELOC_K1_FUNCDESC_GOT_HI22,   R_K1_FUNCDESC_GOT_HI22 },
-  { BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10,   R_K1_FUNCDESC_GOTOFF_LO10 },
-  { BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22,   R_K1_FUNCDESC_GOTOFF_HI22 },
-  { BFD_RELOC_K1_FUNCDESC_VALUE,    R_K1_FUNCDESC_VALUE },
+  { BFD_RELOC_K1_PLT_UP27,   R_K1_PLT_UP27 },
+
   { BFD_RELOC_K1_GOTOFF,     R_K1_GOTOFF },
   { BFD_RELOC_K1_GOT,        R_K1_GOT },
-  { BFD_RELOC_K1_10_GPREL,   R_K1_10_GPREL },
-  { BFD_RELOC_K1_16_GPREL,   R_K1_16_GPREL },
+
   { BFD_RELOC_K1_COPY,       R_K1_COPY },
+
   { BFD_RELOC_K1_JMP_SLOT,   R_K1_JMP_SLOT },
   { BFD_RELOC_K1_RELATIVE,   R_K1_RELATIVE },
-  { BFD_RELOC_K1_ELO10,      R_K1_ELO10 },
-  { BFD_RELOC_K1_HI27,       R_K1_HI27 },
-  { BFD_RELOC_K1_EXTEND6,    R_K1_EXTEND6 },
+
+  { BFD_RELOC_K1_S43_LO10,      R_K1_S43_LO10 },
+  { BFD_RELOC_K1_S43_UP27,       R_K1_S43_UP27 },
+  { BFD_RELOC_K1_S43_EX6,    R_K1_S43_EX6 },
 
   { BFD_RELOC_64,            R_K1_64 },
 
-  { BFD_RELOC_K1_TPREL64_ELO10,      R_K1_TPREL64_ELO10 },
-  { BFD_RELOC_K1_TPREL64_HI27,       R_K1_TPREL64_HI27 },
-  { BFD_RELOC_K1_TPREL64_EXTEND6,    R_K1_TPREL64_EXTEND6 },
+  { BFD_RELOC_K1_TPREL64_LO10,      R_K1_TPREL64_LO10 },
+  { BFD_RELOC_K1_TPREL64_UP27,       R_K1_TPREL64_UP27 },
+  { BFD_RELOC_K1_TPREL64_EX6,    R_K1_TPREL64_EX6 },
 
   { BFD_RELOC_K1_TPREL64_64,            R_K1_TPREL64_64 },
   { BFD_RELOC_K1_GOTOFF64, R_K1_GOTOFF64 },
 
-
   { BFD_RELOC_K1_GOTOFF64_LO10, R_K1_GOTOFF64_LO10 },
-  { BFD_RELOC_K1_GOTOFF64_HI27, R_K1_GOTOFF64_HI27 },
-  { BFD_RELOC_K1_GOTOFF64_EXTEND6, R_K1_GOTOFF64_EXTEND6 },
+  { BFD_RELOC_K1_GOTOFF64_UP27, R_K1_GOTOFF64_UP27 },
+  { BFD_RELOC_K1_GOTOFF64_EX6, R_K1_GOTOFF64_EX6 },
 
   { BFD_RELOC_K1_GOT64_LO10, R_K1_GOT64_LO10 },
-  { BFD_RELOC_K1_GOT64_HI27, R_K1_GOT64_HI27 },
-  { BFD_RELOC_K1_GOT64_EXTEND6, R_K1_GOT64_EXTEND6 },
+  { BFD_RELOC_K1_GOT64_UP27, R_K1_GOT64_UP27 },
+  { BFD_RELOC_K1_GOT64_EX6, R_K1_GOT64_EX6 },
 
   { BFD_RELOC_K1_GOT64,        R_K1_GOT64 },
 
   { BFD_RELOC_K1_GLOB_DAT64,        R_K1_GLOB_DAT64 },
 
   { BFD_RELOC_K1_PLT64_LO10,   R_K1_PLT64_LO10 },
-  { BFD_RELOC_K1_PLT64_HI27,   R_K1_PLT64_HI27 },
-  { BFD_RELOC_K1_PLT64_EXTEND6, R_K1_PLT64_EXTEND6 },
+  { BFD_RELOC_K1_PLT64_UP27,   R_K1_PLT64_UP27 },
+  { BFD_RELOC_K1_PLT64_EX6, R_K1_PLT64_EX6 },
 
-  { BFD_RELOC_K1_S37_LO10, R_K1_S37_LO10},
-  { BFD_RELOC_K1_S37_HI27, R_K1_S37_HI27},
   { BFD_RELOC_K1_JMP_SLOT64, R_K1_JMP_SLOT64},
+
+  { BFD_RELOC_K1_S64_LO10,   R_K1_S64_LO10 },
+  { BFD_RELOC_K1_S64_UP27,   R_K1_S64_UP27 },
+  { BFD_RELOC_K1_S64_EX27, R_K1_S64_EX27 },
+
 /*  { BFD_RELOC_K1_PCREL_LO10, R_K1_PCREL_LO10 },
   { BFD_RELOC_K1_PCREL_HI22, R_K1_PCREL_HI22 }, */
 };
@@ -265,14 +264,19 @@ k1_elfxx_check_relocs (bfd * abfd,
 
       switch (r_type)
 	{
-	  /* 32bits */
-	case R_K1_LO10:
-	case R_K1_HI22:
+	  /* 32bits (37 effective) */
+	case R_K1_S37_LO10:
+	case R_K1_S37_UP27:
+
+	  /* 43 bits */
+	case R_K1_S43_EX6:
+	case R_K1_S43_UP27:
+	case R_K1_S43_LO10:
 
 	  /* 64 bits */
-	case R_K1_EXTEND6:
-	case R_K1_HI27:
-	case R_K1_ELO10:
+	case R_K1_S64_EX27:
+	case R_K1_S64_UP27:
+	case R_K1_S64_LO10:
 
 	  /*
 	   * if some reloc uses special symbol named "_gp_disp" and
@@ -288,23 +292,23 @@ k1_elfxx_check_relocs (bfd * abfd,
 	  break;
 
         case R_K1_GOTOFF:
-        case R_K1_GOTOFF_HI22:
+        case R_K1_GOTOFF_UP27:
         case R_K1_GOTOFF_LO10:
 
         case R_K1_GOTOFF64:
-        case R_K1_GOTOFF64_HI27:
-        case R_K1_GOTOFF64_EXTEND6:
+        case R_K1_GOTOFF64_UP27:
+        case R_K1_GOTOFF64_EX6:
         case R_K1_GOTOFF64_LO10:
 
           htab->needs_got = TRUE;
           /*fallthrough */
         case R_K1_GOT:
-        case R_K1_GOT_HI22:
+        case R_K1_GOT_UP27:
         case R_K1_GOT_LO10:
         case R_K1_GLOB_DAT:
 
         case R_K1_GOT64:
-        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_UP27:
         case R_K1_GOT64_LO10:
         case R_K1_GLOB_DAT64:
 
@@ -323,11 +327,11 @@ k1_elfxx_check_relocs (bfd * abfd,
       switch (r_type)
         {
         case R_K1_GOT:
-        case R_K1_GOT_HI22:
+        case R_K1_GOT_UP27:
         case R_K1_GOT_LO10:
 
         case R_K1_GOT64:
-        case R_K1_GOT64_HI27:
+        case R_K1_GOT64_UP27:
         case R_K1_GOT64_LO10:
           if (h != NULL)
 	    h->got.refcount += 1;
@@ -351,12 +355,12 @@ k1_elfxx_check_relocs (bfd * abfd,
             }
 	  break;
 
-        case R_K1_PLT_HI22:
+        case R_K1_PLT_UP27:
         case R_K1_PLT_LO10:
 
-        case R_K1_PLT64_HI27:
+        case R_K1_PLT64_UP27:
         case R_K1_PLT64_LO10:
-        case R_K1_PLT64_EXTEND6:
+        case R_K1_PLT64_EX6:
 
         case R_K1_27_PCREL:
           /* If this is a local symbol, we resolve it directly without
@@ -642,19 +646,19 @@ k1_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
     return FALSE;
   }
 
-  if (((in_flags & ELF_K1_FDPIC) == 0) != (! IS_FDPIC (obfd)))
-    {
-      if (IS_FDPIC (obfd))
-        (*_bfd_error_handler)
-          (_("%s: cannot link non-fdpic object file into fdpic executable"),
-            bfd_get_filename (ibfd));
-      else
-        (*_bfd_error_handler)
-          (_("%s: cannot link fdpic object file into non-fdpic executable"),
-            bfd_get_filename (ibfd));
-      bfd_set_error (bfd_error_bad_value);
-      return FALSE;
-    }
+  /* if (((in_flags & ELF_K1_FDPIC) == 0) != (! IS_FDPIC (obfd))) */
+  /*   { */
+  /*     if (IS_FDPIC (obfd)) */
+  /*       (*_bfd_error_handler) */
+  /*         (_("%s: cannot link non-fdpic object file into fdpic executable"), */
+  /*           bfd_get_filename (ibfd)); */
+  /*     else */
+  /*       (*_bfd_error_handler) */
+  /*         (_("%s: cannot link fdpic object file into non-fdpic executable"), */
+  /*           bfd_get_filename (ibfd)); */
+  /*     bfd_set_error (bfd_error_bad_value); */
+  /*     return FALSE; */
+  /*   } */
 
   return TRUE;
 }
@@ -982,165 +986,165 @@ k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
   return TRUE;
 }
 
-bfd_boolean
-k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info)
-{
-  flagword flags, pltflags;
-  asection *s;
-  struct elf_link_hash_entry *h;
-  struct bfd_link_hash_entry *bh;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
-  int ptralign;
-  int offset;
+/* bfd_boolean */
+/* k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info) */
+/* { */
+/*   flagword flags, pltflags; */
+/*   asection *s; */
+/*   struct elf_link_hash_entry *h; */
+/*   struct bfd_link_hash_entry *bh; */
+/*   const struct elf_backend_data *bed = get_elf_backend_data (abfd); */
+/*   int ptralign; */
+/*   int offset; */
 
 
-  /* This function may be called more than once.  */
-  s = bfd_get_section_by_name (abfd, ".got");
-  if (s != NULL && (s->flags & SEC_LINKER_CREATED) != 0)
-    return TRUE;
+/*   /\* This function may be called more than once.  *\/ */
+/*   s = bfd_get_section_by_name (abfd, ".got"); */
+/*   if (s != NULL && (s->flags & SEC_LINKER_CREATED) != 0) */
+/*     return TRUE; */
 
-  /* Machine specific: although pointers are 32-bits wide, we want the
-     GOT to be aligned to a 64-bit boundary, such that function
-     descriptors in it can be accessed with 64-bit loads and
-     stores.  */
-  ptralign = 3;
+/*   /\* Machine specific: although pointers are 32-bits wide, we want the */
+/*      GOT to be aligned to a 64-bit boundary, such that function */
+/*      descriptors in it can be accessed with 64-bit loads and */
+/*      stores.  *\/ */
+/*   ptralign = 3; */
 
-  flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY
-           | SEC_LINKER_CREATED);
-  pltflags = flags;
+/*   flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY */
+/*            | SEC_LINKER_CREATED); */
+/*   pltflags = flags; */
 
-  s = bfd_make_section_with_flags (abfd, ".got", flags);
-  if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, ptralign))
-    return FALSE;
+/*   s = bfd_make_section_with_flags (abfd, ".got", flags); */
+/*   if (s == NULL */
+/*       || !bfd_set_section_alignment (abfd, s, ptralign)) */
+/*     return FALSE; */
 
-  if (bed->want_got_plt)
-    {
-      s = bfd_make_section_with_flags (abfd, ".got.plt", flags);
-      if (s == NULL
-          || !bfd_set_section_alignment (abfd, s, ptralign))
-        return FALSE;
-    }
+/*   if (bed->want_got_plt) */
+/*     { */
+/*       s = bfd_make_section_with_flags (abfd, ".got.plt", flags); */
+/*       if (s == NULL */
+/*           || !bfd_set_section_alignment (abfd, s, ptralign)) */
+/*         return FALSE; */
+/*     } */
 
-  if (bed->want_got_sym)
-    {
-      /* Define the symbol _GLOBAL_OFFSET_TABLE_ at the start of the .got
-         (or .got.plt) section.  We don't do this in the linker script
-         because we don't want to define the symbol if we are not creating
-         a global offset table.  */
-      h = _bfd_elf_define_linkage_sym (abfd, info, s, "_GLOBAL_OFFSET_TABLE_");
-      elf_hash_table (info)->hgot = h;
-      if (h == NULL)
-        return FALSE;
+/*   if (bed->want_got_sym) */
+/*     { */
+/*       /\* Define the symbol _GLOBAL_OFFSET_TABLE_ at the start of the .got */
+/*          (or .got.plt) section.  We don't do this in the linker script */
+/*          because we don't want to define the symbol if we are not creating */
+/*          a global offset table.  *\/ */
+/*       h = _bfd_elf_define_linkage_sym (abfd, info, s, "_GLOBAL_OFFSET_TABLE_"); */
+/*       elf_hash_table (info)->hgot = h; */
+/*       if (h == NULL) */
+/*         return FALSE; */
 
-      /* Machine-specific: we want the symbol for executables as
-         well.  */
-      if (! bfd_elf_link_record_dynamic_symbol (info, h))
-        return FALSE;
-    }
+/*       /\* Machine-specific: we want the symbol for executables as */
+/*          well.  *\/ */
+/*       if (! bfd_elf_link_record_dynamic_symbol (info, h)) */
+/*         return FALSE; */
+/*     } */
 
-  /* The first bit of the global offset table is the header.  */
-      s->size += bed->got_header_size;
+/*   /\* The first bit of the global offset table is the header.  *\/ */
+/*       s->size += bed->got_header_size; */
 
-  /* This is the machine-specific part.  Create and initialize section
-     data for the got.  */
-   if (IS_FDPIC (abfd))
-    {
-      k1fdpic_got_section (info) = s;
-      k1fdpic_relocs_info (info) = htab_try_create (1,
-                                                      k1fdpic_relocs_info_hash,
-                                                      k1fdpic_relocs_info_eq,
-                                                      (htab_del) NULL);
-      if (! k1fdpic_relocs_info (info))
-        return FALSE;
+/*   /\* This is the machine-specific part.  Create and initialize section */
+/*      data for the got.  *\/ */
+/*    if (IS_FDPIC (abfd)) */
+/*     { */
+/*       k1fdpic_got_section (info) = s; */
+/*       k1fdpic_relocs_info (info) = htab_try_create (1, */
+/*                                                       k1fdpic_relocs_info_hash, */
+/*                                                       k1fdpic_relocs_info_eq, */
+/*                                                       (htab_del) NULL); */
+/*       if (! k1fdpic_relocs_info (info)) */
+/*         return FALSE; */
 
-      s = bfd_make_section_with_flags (abfd, ".rela.got",
-                                       (flags | SEC_READONLY));
-      if (s == NULL
-          || ! bfd_set_section_alignment (abfd, s, 2))
-        return FALSE;
+/*       s = bfd_make_section_with_flags (abfd, ".rela.got", */
+/*                                        (flags | SEC_READONLY)); */
+/*       if (s == NULL */
+/*           || ! bfd_set_section_alignment (abfd, s, 2)) */
+/*         return FALSE; */
 
-      k1fdpic_gotrel_section (info) = s;
+/*       k1fdpic_gotrel_section (info) = s; */
 
-      /* Machine-specific.  */
-      s = bfd_make_section_with_flags (abfd, ".rofixup",
-                                       (flags | SEC_READONLY));
-      if (s == NULL
-          || ! bfd_set_section_alignment (abfd, s, 2))
-        return FALSE;
+/*       /\* Machine-specific.  *\/ */
+/*       s = bfd_make_section_with_flags (abfd, ".rofixup", */
+/*                                        (flags | SEC_READONLY)); */
+/*       if (s == NULL */
+/*           || ! bfd_set_section_alignment (abfd, s, 2)) */
+/*         return FALSE; */
 
-      k1fdpic_gotfixup_section (info) = s;
-      offset = -2048;
-      flags = BSF_GLOBAL;
-    }
-  else
-    {
-      offset = 2048;
-      flags = BSF_GLOBAL | BSF_WEAK;
-    }
+/*       k1fdpic_gotfixup_section (info) = s; */
+/*       offset = -2048; */
+/*       flags = BSF_GLOBAL; */
+/*     } */
+/*   else */
+/*     { */
+/*       offset = 2048; */
+/*       flags = BSF_GLOBAL | BSF_WEAK; */
+/*     } */
 
-      /* Define _gp in .rofixup, for FDPIC.  If it
-     turns out that we're linking with a different linker script, the
-     linker script will override it.  */
-  bh = NULL;
-  if (!(_bfd_generic_link_add_one_symbol
-        (info, abfd, "_gp", flags, s, offset, (const char *) NULL, FALSE,
-         bed->collect, &bh)))
-    return FALSE;
-  h = (struct elf_link_hash_entry *) bh;
-  h->def_regular = 1;
-  h->type = STT_OBJECT;
-  h->other = STV_HIDDEN;
+/*       /\* Define _gp in .rofixup, for FDPIC.  If it */
+/*      turns out that we're linking with a different linker script, the */
+/*      linker script will override it.  *\/ */
+/*   bh = NULL; */
+/*   if (!(_bfd_generic_link_add_one_symbol */
+/*         (info, abfd, "_gp", flags, s, offset, (const char *) NULL, FALSE, */
+/*          bed->collect, &bh))) */
+/*     return FALSE; */
+/*   h = (struct elf_link_hash_entry *) bh; */
+/*   h->def_regular = 1; */
+/*   h->type = STT_OBJECT; */
+/*   h->other = STV_HIDDEN; */
 
-  /* Machine-specific: we want the symbol for executables as well.  */
-  if (IS_FDPIC (abfd) && ! bfd_elf_link_record_dynamic_symbol (info, h))
-    return FALSE;
+/*   /\* Machine-specific: we want the symbol for executables as well.  *\/ */
+/*   if (IS_FDPIC (abfd) && ! bfd_elf_link_record_dynamic_symbol (info, h)) */
+/*     return FALSE; */
 
-//   if (!IS_FDPIC (abfd))
-//     return TRUE;
+/* //   if (!IS_FDPIC (abfd)) */
+/* //     return TRUE; */
 
-  pltflags |= SEC_CODE;
-  if (bed->plt_not_loaded)
-    pltflags &= ~ (SEC_CODE | SEC_LOAD | SEC_HAS_CONTENTS);
-  if (bed->plt_readonly)
-    pltflags |= SEC_READONLY;
+/*   pltflags |= SEC_CODE; */
+/*   if (bed->plt_not_loaded) */
+/*     pltflags &= ~ (SEC_CODE | SEC_LOAD | SEC_HAS_CONTENTS); */
+/*   if (bed->plt_readonly) */
+/*     pltflags |= SEC_READONLY; */
 
-  s = bfd_make_section_with_flags (abfd, ".plt", pltflags);
-  if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
-    return FALSE;
-  /* K1-specific: remember it.  */
-  k1fdpic_plt_section (info) = s;
+/*   s = bfd_make_section_with_flags (abfd, ".plt", pltflags); */
+/*   if (s == NULL */
+/*       || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment)) */
+/*     return FALSE; */
+/*   /\* K1-specific: remember it.  *\/ */
+/*   k1fdpic_plt_section (info) = s; */
 
-  if (bed->want_plt_sym)
-    {
-      /* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the
-         .plt section.  */
-      bh = NULL;
+/*   if (bed->want_plt_sym) */
+/*     { */
+/*       /\* Define the symbol _PROCEDURE_LINKAGE_TABLE_ at the start of the */
+/*          .plt section.  *\/ */
+/*       bh = NULL; */
 
-      if (! (_bfd_generic_link_add_one_symbol
-             (info, abfd, "_PROCEDURE_LINKAGE_TABLE_", BSF_GLOBAL, s, 0, NULL,
-              FALSE, get_elf_backend_data (abfd)->collect, &bh)))
-        return FALSE;
-      h = (struct elf_link_hash_entry *) bh;
-      h->def_regular = 1;
-      h->type = STT_OBJECT;
+/*       if (! (_bfd_generic_link_add_one_symbol */
+/*              (info, abfd, "_PROCEDURE_LINKAGE_TABLE_", BSF_GLOBAL, s, 0, NULL, */
+/*               FALSE, get_elf_backend_data (abfd)->collect, &bh))) */
+/*         return FALSE; */
+/*       h = (struct elf_link_hash_entry *) bh; */
+/*       h->def_regular = 1; */
+/*       h->type = STT_OBJECT; */
 
-      if (! bfd_link_executable(info)
-          && ! bfd_elf_link_record_dynamic_symbol (info, h))
-        return FALSE;
-    }
+/*       if (! bfd_link_executable(info) */
+/*           && ! bfd_elf_link_record_dynamic_symbol (info, h)) */
+/*         return FALSE; */
+/*     } */
 
-  /* K1-specific: we want rel relocations for the plt.  */
-  s = bfd_make_section_with_flags (abfd, ".rela.plt", flags | SEC_READONLY);
-  if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
-    return FALSE;
-  /* K1-specific: remember it.  */
-  k1fdpic_pltrel_section (info) = s;
+/*   /\* K1-specific: we want rel relocations for the plt.  *\/ */
+/*   s = bfd_make_section_with_flags (abfd, ".rela.plt", flags | SEC_READONLY); */
+/*   if (s == NULL */
+/*       || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align)) */
+/*     return FALSE; */
+/*   /\* K1-specific: remember it.  *\/ */
+/*   k1fdpic_pltrel_section (info) = s; */
 
-  return TRUE;
-}
+/*   return TRUE; */
+/* } */
 
 
 bfd_vma
@@ -1154,23 +1158,23 @@ k1_gp_base (bfd *output_bfd, struct bfd_link_info *info)
     
     if (res) return res;
 
-    if (IS_FDPIC(output_bfd))
-      {
-        gp = elf_link_hash_lookup (elf_hash_table (info), "_gp", FALSE, FALSE, TRUE);
-        if (gp)
-          gp_val = gp->root.u.def.value
-                 + gp->root.u.def.section->output_section->vma
-                 + gp->root.u.def.section->output_offset;
-      }
-    else
-      {
+    /* if (IS_FDPIC(output_bfd)) */
+    /*   { */
+    /*     gp = elf_link_hash_lookup (elf_hash_table (info), "_gp", FALSE, FALSE, TRUE); */
+    /*     if (gp) */
+    /*       gp_val = gp->root.u.def.value */
+    /*              + gp->root.u.def.section->output_section->vma */
+    /*              + gp->root.u.def.section->output_offset; */
+    /*   } */
+    /* else */
+    /*   { */
         gp = elf_link_hash_lookup (elf_hash_table (info), "_data_start", FALSE,
                                  FALSE, FALSE);
         if (gp)
           gp_val = gp->root.u.def.value
                  + gp->root.u.def.section->output_section->vma
                  + gp->root.u.def.section->output_offset;
-      }
+      /* } */
 
     _bfd_set_gp_value (output_bfd, gp_val);
     return gp_val;

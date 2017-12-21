@@ -1,6 +1,10 @@
 #include "elf/common.h"
 #include "elf/internal.h"
 
+#define K1C
+#include "elfxx-k1c.def"
+#undef K1C
+
 #if 0
 #define DPRINT(X) fprintf(stderr, "==> " X "\n")
 #else
@@ -73,11 +77,11 @@ bfd_boolean
 k1_size_dynamic_sections (bfd * output_bfd,
 			  struct bfd_link_info *info);
 
-bfd_boolean
-k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info);
+/* bfd_boolean */
+/* k1_elf32_fdpic_create_got_section (bfd *abfd, struct bfd_link_info *info); */
 
-extern const bfd_target bfd_elf32_k1_linux_vec;
-#define IS_FDPIC(bfd) ((bfd)->xvec == &k1_linux_elf32_vec)
+/* extern const bfd_target bfd_elf32_k1_linux_vec; */
+/* #define IS_FDPIC(bfd) ((bfd)->xvec == &k1_linux_elf32_vec) */
 
 bfd_boolean
 k1_elf_relocate_section
@@ -553,9 +557,9 @@ extern const int k1_reloc_map_len;
 static reloc_howto_type* k1_elf ## size ## _reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name){ \
   int i; \
   for (i = 0; i < k1_reloc_map_len; i++){ \
-    if (elf ## size ## _k1_howto_table[i].name != NULL \
-        && strcasecmp (elf ## size ## _k1_howto_table[i].name, r_name) == 0){ \
-      return &elf ## size ## _k1_howto_table[i]; \
+    if (elf_k1_howto_table[i].name != NULL \
+        && strcasecmp (elf_k1_howto_table[i].name, r_name) == 0){ \
+      return &elf_k1_howto_table[i]; \
     } \
   } \
   return NULL; \
@@ -567,7 +571,7 @@ static reloc_howto_type* k1_elf ## size ## _reloc_name_lookup (bfd *abfd ATTRIBU
   int i; \
   for (i = 0; i < k1_reloc_map_len; i++){ \
     if (k1_reloc_map[i].bfd_reloc_val == code){ \
-      return & elf ## size ##_k1_howto_table[k1_reloc_map[i].k1_reloc_val]; \
+      return & elf_k1_howto_table[k1_reloc_map[i].k1_reloc_val]; \
     } \
   } \
   return NULL; \
@@ -580,7 +584,7 @@ static void k1_elf ## size ## _info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, \
   unsigned int r; \
   r = ELF## size ##_R_TYPE (dst->r_info); \
   BFD_ASSERT (r < (unsigned int) R_K1_max);		\
-  cache_ptr->howto = &elf ## size ##_k1_howto_table[r]; \
+  cache_ptr->howto = &elf_k1_howto_table[r]; \
 }
 
 bfd_vma k1_gp_base (bfd *output_bfd, struct bfd_link_info *info);

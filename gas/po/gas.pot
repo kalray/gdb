@@ -8,10 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-03-17 10:57+0100\n"
+"POT-Creation-Date: 2017-12-21 15:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -983,7 +984,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1958 config/tc-k1.c:3845
+#: config/obj-elf.c:1958 config/tc-k1.c:3918
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -1600,10 +1601,6 @@ msgstr ""
 
 #: config/tc-aarch64.c:3774
 msgid "immediate value out of range "
-msgstr ""
-
-#: config/tc-aarch64.c:3775
-msgid " to "
 msgstr ""
 
 #: config/tc-aarch64.c:4282
@@ -2518,11 +2515,11 @@ msgstr ""
 #: config/tc-h8300.c:100 config/tc-h8300.c:110 config/tc-h8300.c:120
 #: config/tc-h8300.c:131 config/tc-h8300.c:248 config/tc-hppa.c:6834
 #: config/tc-hppa.c:6840 config/tc-hppa.c:6846 config/tc-hppa.c:6852
-#: config/tc-hppa.c:8252 config/tc-k1.c:2587 config/tc-k1.c:2603
-#: config/tc-k1.c:2606 config/tc-k1.c:2614 config/tc-k1.c:2617
-#: config/tc-lm32.c:197 config/tc-mips.c:3475 config/tc-mips.c:3985
-#: config/tc-mn10300.c:938 config/tc-mn10300.c:943 config/tc-mn10300.c:2440
-#: config/tc-xc16x.c:79 config/tc-xc16x.c:86 config/tc-xc16x.c:93
+#: config/tc-hppa.c:8252 config/tc-k1.c:2652 config/tc-k1.c:2668
+#: config/tc-k1.c:2671 config/tc-lm32.c:197 config/tc-mips.c:3475
+#: config/tc-mips.c:3985 config/tc-mn10300.c:938 config/tc-mn10300.c:943
+#: config/tc-mn10300.c:2440 config/tc-xc16x.c:79 config/tc-xc16x.c:86
+#: config/tc-xc16x.c:93
 msgid "could not set architecture and machine"
 msgstr ""
 
@@ -2810,10 +2807,6 @@ msgstr ""
 
 #: config/tc-arm.c:785
 msgid "using "
-msgstr ""
-
-#: config/tc-arm.c:785
-msgid " results in unpredictable behaviour"
 msgstr ""
 
 #: config/tc-arm.c:992
@@ -4849,7 +4842,6 @@ msgid "Failed to create property section `%s'\n"
 msgstr ""
 
 #: config/tc-bfin.c:95 config/tc-frv.c:1604 config/tc-frv.c:1614
-#: config/tc-k1.c:3379
 msgid "missing ')'"
 msgstr ""
 
@@ -9068,11 +9060,11 @@ msgid "missing `.end'"
 msgstr ""
 
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:3182
+#: config/tc-k1.c:3257
 msgid "floating-point literals are not supported"
 msgstr ""
 
-#: config/tc-k1.c:3659
+#: config/tc-k1.c:3732
 msgid "alignments greater than 32 bytes not supported in .text sections."
 msgstr ""
 
