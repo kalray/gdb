@@ -37,6 +37,9 @@ const struct k1_reloc_map k1_reloc_map[]=
   { BFD_RELOC_K1_17_PCREL,   R_K1_17_PCREL },
   { BFD_RELOC_K1_27_PCREL,   R_K1_27_PCREL },
 
+  { BFD_RELOC_K1_S32_LO5,       R_K1_S32_LO5 },
+  { BFD_RELOC_K1_S32_UP27,       R_K1_S32_UP27 },
+
   { BFD_RELOC_K1_S37_LO10,       R_K1_S37_LO10 },
   { BFD_RELOC_K1_S37_UP27,       R_K1_S37_UP27 },
   

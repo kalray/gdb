@@ -1425,9 +1425,14 @@ insert_operand(k1insn_t * insn,
 		/*   break; */
 
 		case Immediate_k1c_signed32:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_S32_LO5;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
+		  insn->nfixups = 1;
+
 		  insn->immx0 = immxcnt;
 		  immxbuf[immxcnt].insn[0] = 0;
-		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_UP27;
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S32_UP27;
 		  immxbuf[immxcnt].fixup[0].exp = *arg;
 		  immxbuf[immxcnt].fixup[0].where = 0;
 		  immxbuf[immxcnt].nfixups = 1;
@@ -1438,7 +1443,7 @@ insert_operand(k1insn_t * insn,
 		  insn->len -= 1;
 		  incr_immxcnt();
 		  immx_ready = 1;
-		  // fallthough
+		  break;
 		  
 		case Immediate_k1c_signed10:
 		  /* if (k1_arch_size == 32){ */
@@ -2925,6 +2930,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             md_number_to_chars(fixpos, image, fixP->fx_size);
             break;
 
+        case BFD_RELOC_K1_S32_UP27:
         case BFD_RELOC_K1_S37_UP27:
         case BFD_RELOC_K1_S43_UP27:
         case BFD_RELOC_K1_TPREL64_UP27:
@@ -2956,6 +2962,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 //
 
         /* case BFD_RELOC_K1_LO10: */
+        case BFD_RELOC_K1_S32_LO5:
         case BFD_RELOC_K1_S37_LO10:
         case BFD_RELOC_K1_S43_LO10:
         case BFD_RELOC_K1_S43_EX6:
