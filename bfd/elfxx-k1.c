@@ -43,21 +43,21 @@ const struct k1_reloc_map k1_reloc_map[]=
   { BFD_RELOC_K1_S37_LO10,       R_K1_S37_LO10 },
   { BFD_RELOC_K1_S37_UP27,       R_K1_S37_UP27 },
   
-  { BFD_RELOC_K1_TPREL_S37_LO10, R_K1_TPREL_S37_LO10 },
-  { BFD_RELOC_K1_TPREL_S37_UP27, R_K1_TPREL_S37_UP27 },
+  { BFD_RELOC_K1_S37_TPREL_LO10, R_K1_S37_TPREL_LO10 },
+  { BFD_RELOC_K1_S37_TPREL_UP27, R_K1_S37_TPREL_UP27 },
 
   { BFD_RELOC_K1_TPREL_32,   R_K1_TPREL_32 },
   
-  { BFD_RELOC_K1_GOTOFF_LO10,R_K1_GOTOFF_LO10 },
-  { BFD_RELOC_K1_GOTOFF_UP27,R_K1_GOTOFF_UP27 },
+  { BFD_RELOC_K1_S37_GOTOFF_LO10,R_K1_S37_GOTOFF_LO10 },
+  { BFD_RELOC_K1_S37_GOTOFF_UP27,R_K1_S37_GOTOFF_UP27 },
 
-  { BFD_RELOC_K1_GOT_LO10,   R_K1_GOT_LO10 },
-  { BFD_RELOC_K1_GOT_UP27,   R_K1_GOT_UP27 },
+  { BFD_RELOC_K1_S37_GOT_LO10,   R_K1_S37_GOT_LO10 },
+  { BFD_RELOC_K1_S37_GOT_UP27,   R_K1_S37_GOT_UP27 },
 
   { BFD_RELOC_K1_GLOB_DAT,   R_K1_GLOB_DAT },
 
-  { BFD_RELOC_K1_PLT_LO10,   R_K1_PLT_LO10 },
-  { BFD_RELOC_K1_PLT_UP27,   R_K1_PLT_UP27 },
+  { BFD_RELOC_K1_S37_PLT_LO10,   R_K1_S37_PLT_LO10 },
+  { BFD_RELOC_K1_S37_PLT_UP27,   R_K1_S37_PLT_UP27 },
 
   { BFD_RELOC_K1_GOTOFF,     R_K1_GOTOFF },
   { BFD_RELOC_K1_GOT,        R_K1_GOT },
@@ -73,28 +73,32 @@ const struct k1_reloc_map k1_reloc_map[]=
 
   { BFD_RELOC_64,            R_K1_64 },
 
-  { BFD_RELOC_K1_TPREL64_LO10,      R_K1_TPREL64_LO10 },
-  { BFD_RELOC_K1_TPREL64_UP27,       R_K1_TPREL64_UP27 },
-  { BFD_RELOC_K1_TPREL64_EX6,    R_K1_TPREL64_EX6 },
+  { BFD_RELOC_K1_S43_TPREL64_LO10,      R_K1_S43_TPREL64_LO10 },
+  { BFD_RELOC_K1_S43_TPREL64_UP27,       R_K1_S43_TPREL64_UP27 },
+  { BFD_RELOC_K1_S43_TPREL64_EX6,    R_K1_S43_TPREL64_EX6 },
+
+  { BFD_RELOC_K1_S64_TPREL64_LO10,      R_K1_S64_TPREL64_LO10 },
+  { BFD_RELOC_K1_S64_TPREL64_UP27,       R_K1_S64_TPREL64_UP27 },
+  { BFD_RELOC_K1_S64_TPREL64_EX27,    R_K1_S64_TPREL64_EX27 },
 
   { BFD_RELOC_K1_TPREL64_64,            R_K1_TPREL64_64 },
   { BFD_RELOC_K1_GOTOFF64, R_K1_GOTOFF64 },
 
-  { BFD_RELOC_K1_GOTOFF64_LO10, R_K1_GOTOFF64_LO10 },
-  { BFD_RELOC_K1_GOTOFF64_UP27, R_K1_GOTOFF64_UP27 },
-  { BFD_RELOC_K1_GOTOFF64_EX6, R_K1_GOTOFF64_EX6 },
+  { BFD_RELOC_K1_S43_GOTOFF64_LO10, R_K1_S43_GOTOFF64_LO10 },
+  { BFD_RELOC_K1_S43_GOTOFF64_UP27, R_K1_S43_GOTOFF64_UP27 },
+  { BFD_RELOC_K1_S43_GOTOFF64_EX6, R_K1_S43_GOTOFF64_EX6 },
 
-  { BFD_RELOC_K1_GOT64_LO10, R_K1_GOT64_LO10 },
-  { BFD_RELOC_K1_GOT64_UP27, R_K1_GOT64_UP27 },
-  { BFD_RELOC_K1_GOT64_EX6, R_K1_GOT64_EX6 },
+  { BFD_RELOC_K1_S43_GOT64_LO10, R_K1_S43_GOT64_LO10 },
+  { BFD_RELOC_K1_S43_GOT64_UP27, R_K1_S43_GOT64_UP27 },
+  { BFD_RELOC_K1_S43_GOT64_EX6, R_K1_S43_GOT64_EX6 },
 
   { BFD_RELOC_K1_GOT64,        R_K1_GOT64 },
 
   { BFD_RELOC_K1_GLOB_DAT64,        R_K1_GLOB_DAT64 },
 
-  { BFD_RELOC_K1_PLT64_LO10,   R_K1_PLT64_LO10 },
-  { BFD_RELOC_K1_PLT64_UP27,   R_K1_PLT64_UP27 },
-  { BFD_RELOC_K1_PLT64_EX6, R_K1_PLT64_EX6 },
+  { BFD_RELOC_K1_S43_PLT64_LO10,   R_K1_S43_PLT64_LO10 },
+  { BFD_RELOC_K1_S43_PLT64_UP27,   R_K1_S43_PLT64_UP27 },
+  { BFD_RELOC_K1_S43_PLT64_EX6, R_K1_S43_PLT64_EX6 },
 
   { BFD_RELOC_K1_JMP_SLOT64, R_K1_JMP_SLOT64},
 
@@ -295,24 +299,24 @@ k1_elfxx_check_relocs (bfd * abfd,
 	  break;
 
         case R_K1_GOTOFF:
-        case R_K1_GOTOFF_UP27:
-        case R_K1_GOTOFF_LO10:
+        case R_K1_S37_GOTOFF_UP27:
+        case R_K1_S37_GOTOFF_LO10:
 
         case R_K1_GOTOFF64:
-        case R_K1_GOTOFF64_UP27:
-        case R_K1_GOTOFF64_EX6:
-        case R_K1_GOTOFF64_LO10:
+        case R_K1_S43_GOTOFF64_UP27:
+        case R_K1_S43_GOTOFF64_EX6:
+        case R_K1_S43_GOTOFF64_LO10:
 
           htab->needs_got = TRUE;
           /*fallthrough */
         case R_K1_GOT:
-        case R_K1_GOT_UP27:
-        case R_K1_GOT_LO10:
+        case R_K1_S37_GOT_UP27:
+        case R_K1_S37_GOT_LO10:
         case R_K1_GLOB_DAT:
 
         case R_K1_GOT64:
-        case R_K1_GOT64_UP27:
-        case R_K1_GOT64_LO10:
+        case R_K1_S43_GOT64_UP27:
+        case R_K1_S43_GOT64_LO10:
         case R_K1_GLOB_DAT64:
 
           if (htab->sgot == NULL)
@@ -330,12 +334,12 @@ k1_elfxx_check_relocs (bfd * abfd,
       switch (r_type)
         {
         case R_K1_GOT:
-        case R_K1_GOT_UP27:
-        case R_K1_GOT_LO10:
+        case R_K1_S37_GOT_UP27:
+        case R_K1_S37_GOT_LO10:
 
         case R_K1_GOT64:
-        case R_K1_GOT64_UP27:
-        case R_K1_GOT64_LO10:
+        case R_K1_S43_GOT64_UP27:
+        case R_K1_S43_GOT64_LO10:
           if (h != NULL)
 	    h->got.refcount += 1;
           else
@@ -358,12 +362,12 @@ k1_elfxx_check_relocs (bfd * abfd,
             }
 	  break;
 
-        case R_K1_PLT_UP27:
-        case R_K1_PLT_LO10:
+        case R_K1_S37_PLT_UP27:
+        case R_K1_S37_PLT_LO10:
 
-        case R_K1_PLT64_UP27:
-        case R_K1_PLT64_LO10:
-        case R_K1_PLT64_EX6:
+        case R_K1_S43_PLT64_UP27:
+        case R_K1_S43_PLT64_LO10:
+        case R_K1_S43_PLT64_EX6:
 
         case R_K1_27_PCREL:
           /* If this is a local symbol, we resolve it directly without

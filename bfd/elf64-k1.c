@@ -323,13 +323,18 @@ k1_elf64_relocate_section
           }
           break;
 
-	case R_K1_TPREL_S37_LO10:
-	case R_K1_TPREL_S37_UP27:
+	case R_K1_S37_TPREL_LO10:
+	case R_K1_S37_TPREL_UP27:
 	case R_K1_TPREL_32:
 
-	case R_K1_TPREL64_EX6:
-	case R_K1_TPREL64_LO10:
-	case R_K1_TPREL64_UP27:
+	case R_K1_S43_TPREL64_EX6:
+	case R_K1_S43_TPREL64_LO10:
+	case R_K1_S43_TPREL64_UP27:
+
+	case R_K1_S64_TPREL64_EX27:
+	case R_K1_S64_TPREL64_LO10:
+	case R_K1_S64_TPREL64_UP27:
+
 	case R_K1_TPREL64_64:
 	  {
 	    asection *tls_sec = elf_hash_table (info)->tls_sec;
@@ -347,13 +352,13 @@ k1_elf64_relocate_section
 	  break;
 
 	case R_K1_GOTOFF:
-	case R_K1_GOTOFF_UP27:
-	case R_K1_GOTOFF_LO10:
+	case R_K1_S37_GOTOFF_UP27:
+	case R_K1_S37_GOTOFF_LO10:
 
         case R_K1_GOTOFF64:
-        case R_K1_GOTOFF64_UP27:
-        case R_K1_GOTOFF64_EX6:
-        case R_K1_GOTOFF64_LO10:
+        case R_K1_S43_GOTOFF64_UP27:
+        case R_K1_S43_GOTOFF64_EX6:
+        case R_K1_S43_GOTOFF64_LO10:
 
 	  BFD_ASSERT (htab->sgotplt != NULL);
 	  relocation -= htab->sgotplt->output_section->vma
@@ -361,12 +366,12 @@ k1_elf64_relocate_section
 	  break;
 
 	case R_K1_GOT:
-	case R_K1_GOT_UP27:
-	case R_K1_GOT_LO10:
+	case R_K1_S37_GOT_UP27:
+	case R_K1_S37_GOT_LO10:
 
         case R_K1_GOT64:
-        case R_K1_GOT64_UP27:
-        case R_K1_GOT64_LO10:
+        case R_K1_S43_GOT64_UP27:
+        case R_K1_S43_GOT64_LO10:
         case R_K1_GLOB_DAT64:
 
           if (htab->sgot == NULL)
@@ -450,12 +455,12 @@ k1_elf64_relocate_section
       }
 	  break;
           
-        case R_K1_PLT_UP27:
-        case R_K1_PLT_LO10:
+        case R_K1_S37_PLT_UP27:
+        case R_K1_S37_PLT_LO10:
 
-        case R_K1_PLT64_UP27:
-        case R_K1_PLT64_LO10:
-        case R_K1_PLT64_EX6:
+        case R_K1_S43_PLT64_UP27:
+        case R_K1_S43_PLT64_LO10:
+        case R_K1_S43_PLT64_EX6:
 
         case R_K1_27_PCREL:
           /* Relocation is to the entry for this symbol in the

@@ -468,6 +468,7 @@ struct k1_pseudo_relocs {
   int bitsize;
   bfd_reloc_code_real_type reloc_lo10, reloc_up27, reloc_ex;
   bfd_reloc_code_real_type single;
+  k1_reloc_t *kreloc;
 };
 
 struct pseudo_func_s
@@ -486,9 +487,10 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_GOTOFF_LO10,
-    .reloc_up27 = BFD_RELOC_K1_GOTOFF_UP27,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S37_GOTOFF_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S37_GOTOFF_UP27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_gotoff_reloc,
    }
   },
   {
@@ -497,7 +499,8 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 32,
     .reloc_type = S32,
-    .single = BFD_RELOC_K1_GOTOFF
+    .single = BFD_RELOC_K1_GOTOFF,
+    .kreloc = &k1c_gotoff32_reloc,
    }
   },
   {
@@ -506,9 +509,10 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_GOT_LO10,
-    .reloc_up27 = BFD_RELOC_K1_GOT_UP27,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S37_GOT_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S37_GOT_UP27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_got_reloc,
    }
   },
   {
@@ -517,7 +521,8 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 32,
     .reloc_type = S32,
-    .single = BFD_RELOC_K1_GOT
+    .single = BFD_RELOC_K1_GOT,
+    .kreloc = &k1c_got32_reloc,
    }
   },
   {
@@ -526,36 +531,35 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_PLT_LO10,
-    .reloc_up27 = BFD_RELOC_K1_PLT_UP27,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S37_PLT_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S37_PLT_UP27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_signed37_plt_reloc,
    }
   },
-  /* Code would need some refactoring to handle more pseudo func.
-     ATM, limit each pf to 1 multiple relocs and/or 1 single reloc.
-     Having multiple multiple relocs won't work. Do not uncomment until refactored 
-  */
-  /* { */
-  /*  .name = "tprel", */
-  /*  .pseudo_relocs = */
-  /*  { */
-  /*   .bitsize = 37, */
-  /*   .reloc_type = S37_LO10_UP27, */
-  /*   .reloc_lo10 = BFD_RELOC_K1_TPREL_S37_LO10, */
-  /*   .reloc_up27 = BFD_RELOC_K1_TPREL_S37_UP27, */
-  /*   .single = BFD_RELOC_UNUSED */
-  /*  } */
-  /* }, */
+  {
+   .name = "tprel",
+   .pseudo_relocs =
+   {
+    .bitsize = 37,
+    .reloc_type = S37_LO10_UP27,
+    .reloc_lo10 = BFD_RELOC_K1_S37_TPREL_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S37_TPREL_UP27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_signed37_tprel_reloc,
+   }
+  },
   { /* reusing the tprel64 for 32bits tprel for 'make' insn */
    .name = "tprel",
    .pseudo_relocs =
    {
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_TPREL64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_TPREL64_UP27,
-    .reloc_ex = BFD_RELOC_K1_TPREL64_EX6,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S43_TPREL64_UP27,
+    .reloc_ex = BFD_RELOC_K1_S43_TPREL64_EX6,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_signed43_tprel64_reloc,
    }
   },
 
@@ -565,7 +569,8 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 32,
     .reloc_type = S32,
-    .single = BFD_RELOC_K1_TPREL_32
+    .single = BFD_RELOC_K1_TPREL_32,
+    .kreloc = &k1c_tprel_rel32_reloc,
    }
   },
   {
@@ -574,10 +579,24 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_TPREL64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_TPREL64_UP27,
-    .reloc_ex = BFD_RELOC_K1_TPREL64_EX6,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S43_TPREL64_UP27,
+    .reloc_ex = BFD_RELOC_K1_S43_TPREL64_EX6,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_signed43_tprel64_reloc,
+   }
+  },
+  {
+   .name = "tprel64",
+   .pseudo_relocs =
+   {
+    .bitsize = 64,
+    .reloc_type = S64_LO10_UP27_EX27,
+    .reloc_lo10 = BFD_RELOC_K1_S64_TPREL64_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S64_TPREL64_UP27,
+    .reloc_ex = BFD_RELOC_K1_S64_TPREL64_EX27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_signed64_tprel64_reloc,
    }
   },
   {
@@ -586,7 +605,8 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 64,
     .reloc_type = S64,
-    .single = BFD_RELOC_K1_TPREL64_64
+    .single = BFD_RELOC_K1_TPREL64_64,
+    .kreloc = &k1c_tprel_rel64_reloc,
    }
   },
   {
@@ -595,10 +615,11 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_GOTOFF64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_GOTOFF64_UP27,
-    .reloc_ex = BFD_RELOC_K1_GOTOFF64_EX6,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S43_GOTOFF64_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S43_GOTOFF64_UP27,
+    .reloc_ex = BFD_RELOC_K1_S43_GOTOFF64_EX6,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_gotoff_64_reloc,
    }
   },
   {
@@ -607,7 +628,8 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 64,
     .reloc_type = S64,
-    .single = BFD_RELOC_K1_GOTOFF64
+    .single = BFD_RELOC_K1_GOTOFF64,
+    .kreloc = &k1c_gotoff64_reloc,
    }
   },
   {
@@ -616,10 +638,11 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_GOT64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_GOT64_UP27,
-    .reloc_ex = BFD_RELOC_K1_GOT64_EX6,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S43_GOT64_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S43_GOT64_UP27,
+    .reloc_ex = BFD_RELOC_K1_S43_GOT64_EX6,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_got64_reloc,
    }
   },
   {
@@ -628,7 +651,8 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 64,
     .reloc_type = S64,
-    .single = BFD_RELOC_K1_GOT64
+    .single = BFD_RELOC_K1_GOT64,
+    .kreloc = &k1c_got64_64_reloc,
    }
   },
   {
@@ -637,10 +661,11 @@ static struct pseudo_func_s pseudo_func[] =
    {
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_PLT64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_PLT64_UP27,
-    .reloc_ex = BFD_RELOC_K1_PLT64_EX6,
-    .single = BFD_RELOC_UNUSED
+    .reloc_lo10 = BFD_RELOC_K1_S43_PLT64_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S43_PLT64_UP27,
+    .reloc_ex = BFD_RELOC_K1_S43_PLT64_EX6,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_signed64_plt_reloc,
    }
   },
 };
@@ -853,72 +878,41 @@ valueT md_chars_to_number(char *buf, int n){
     return val;
 }
 
-static int
-k1_reloc_size_insn(symbolS *sym) {
-  int i;
-  int size = 0;
-  for (i = 0; i < NELEMS(pseudo_func); i++){
-    if (sym == pseudo_func[i].sym){
-      size = pseudo_func[i].pseudo_relocs.bitsize;
-      /* if (pseudo_func[i].reloc_lo != BFD_RELOC_UNUSED){ */
-      /* 	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_lo); */
-      /* 	size += howto->bitsize; */
-      /* } */
-      /* if (pseudo_func[i].reloc_hi != BFD_RELOC_UNUSED){ */
-      /* 	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_hi); */
-      /* 	size += howto->bitsize; */
-      /* } */
-      /* if (pseudo_func[i].reloc_extend != BFD_RELOC_UNUSED){ */
-      /* 	howto = bfd_reloc_type_lookup(stdoutput, pseudo_func[i].reloc_extend); */
-      /* 	size += howto->bitsize; */
-      /* } */
-      return size;
-    }
-  }
-  as_bad("[Relocation] : bad symbol.\n");
-  return -1;
-}
-
-/* Returns the corresponding pseudo function matching SYM.  If
-   SINGLE_RELOC is non-zero, only match pseudo function with a single
-   relocation (usually meaning relocating some data section) */
+/* Returns the corresponding pseudo function matching SYM and to be
+   used for data section */
 static struct pseudo_func_s*
-k1_get_pseudo_func(symbolS *sym, int single_reloc) {
+k1_get_pseudo_func_data_scn(symbolS *sym) {
   int i;
 
   for (i = 0; i < NELEMS(pseudo_func); i++)
     if (sym == pseudo_func[i].sym
-	&& (!single_reloc || (pseudo_func[i].pseudo_relocs.single != BFD_RELOC_UNUSED)))
+	&& pseudo_func[i].pseudo_relocs.single != BFD_RELOC_UNUSED) {
       return &pseudo_func[i];
+    }
   return NULL;
 }
 
-/* static void */
-/* real_k1_reloc_type(symbolS *sym, bfd_reloc_code_real_type *reloc_lo, */
-/*         bfd_reloc_code_real_type *reloc_hi, */
-/*         bfd_reloc_code_real_type *reloc_extend, */
-/*         bfd_reloc_code_real_type *reloc_32) */
-/*  { */
-/*     int i; */
+/* Returns the corresponding pseudo function matching SYM and operand
+   format OPND */
+static struct pseudo_func_s*
+k1_get_pseudo_func2(symbolS *sym, k1bfield *opnd) {
+  int i;
 
-/*     for (i = 0; i < NELEMS(pseudo_func); i++) */
-/*         if (sym == pseudo_func[i].sym) */
-/*  { */
-/*             if (reloc_lo) */
-/*                 *reloc_lo = pseudo_func[i].reloc_lo; */
-/*             if (reloc_hi) */
-/*                 *reloc_hi = pseudo_func[i].reloc_hi; */
-/*             if (reloc_extend) */
-/*                 *reloc_extend = pseudo_func[i].reloc_extend; */
-/*             if (reloc_32) */
-/*                 *reloc_32 = pseudo_func[i].reloc_32; */
-/*             break; */
-/*         } */
-/*     if (i == NELEMS(pseudo_func)) */
-/*         abort(); */
-/* } */
+  for (i = 0; i < NELEMS(pseudo_func); i++)
+    if (sym == pseudo_func[i].sym) {
+      int relidx;
+      for(relidx=0; relidx < opnd->reloc_nb; relidx++) {
+	if(opnd->relocs[relidx] == pseudo_func[i].pseudo_relocs.kreloc) {
+	  return &pseudo_func[i];
+	}
+      }
+    }
 
-static void supported_cores(char buf[], size_t buflen) {
+  return NULL;
+}
+
+static void
+supported_cores(char buf[], size_t buflen) {
   int i, j;
   buf[0] = '\0';
   for (i = 0; i < K1C_NCORES; i++) {
@@ -1139,7 +1133,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	    unsigned int i;
 	    for (i = 0; i < NELEMS(pseudo_func); i++){
 	      if (tok[jj].X_op_symbol == pseudo_func[i].sym){
-		if(has_relocation_of_size( op->format[jj], 0, pseudo_func[i].pseudo_relocs.bitsize)) {
+		if (k1_get_pseudo_func2(pseudo_func[i].sym, op->format[jj]) != NULL) {
 		  break;
 		}
 	      }
@@ -1265,7 +1259,7 @@ find_format(const k1opc_t * opcode,
 
 
 /*
- * Insert an operand into the instruction INSN.
+ * Insert ARG into the operand described by OPDEF in instruction INSN
  * Returns 1 if the immediate extension (IMMX) has been
  * handled along with relocation, 0 if not.
  */
@@ -1295,16 +1289,11 @@ insert_operand(k1insn_t * insn,
       case O_pseudo_fixup:
 	if (insn->nfixups == 0)
 	  {
-	    /* bfd_reloc_code_real_type reloc_lo, reloc_hi, reloc_extend; */
 	    expressionS reloc_arg;
-		    
-	    /* real_k1_reloc_type(arg->X_op_symbol, &reloc_lo, &reloc_hi, &reloc_extend, 0); */
-	    
 	    reloc_arg = *arg;
 	    reloc_arg.X_op = O_symbol;
+	    struct pseudo_func_s *pf = k1_get_pseudo_func2(arg->X_op_symbol, opdef);
 
-	    struct pseudo_func_s *pf = k1_get_pseudo_func(arg->X_op_symbol, 0);
-	    insn->nfixups = 0;
 	    switch (pf->pseudo_relocs.reloc_type) {
 	    case S64_LO10_UP27_EX27:
 	    case S43_LO10_UP27_EX6:
@@ -1833,19 +1822,19 @@ fixS *fix;
              * case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
              */
 	case BFD_RELOC_K1_GOTOFF:
-        case BFD_RELOC_K1_GOTOFF_UP27:
-        case BFD_RELOC_K1_GOTOFF_LO10:
+        case BFD_RELOC_K1_S37_GOTOFF_UP27:
+        case BFD_RELOC_K1_S37_GOTOFF_LO10:
 
 	case BFD_RELOC_K1_GOTOFF64:
-        case BFD_RELOC_K1_GOTOFF64_UP27:
-        case BFD_RELOC_K1_GOTOFF64_LO10:
-        case BFD_RELOC_K1_GOTOFF64_EX6:
+        case BFD_RELOC_K1_S43_GOTOFF64_UP27:
+        case BFD_RELOC_K1_S43_GOTOFF64_LO10:
+        case BFD_RELOC_K1_S43_GOTOFF64_EX6:
 
 	case BFD_RELOC_K1_GOT:
-        case BFD_RELOC_K1_GOT_UP27:
-        case BFD_RELOC_K1_GOT_LO10:
-        case BFD_RELOC_K1_PLT_UP27:
-        case BFD_RELOC_K1_PLT_LO10:
+        case BFD_RELOC_K1_S37_GOT_UP27:
+        case BFD_RELOC_K1_S37_GOT_LO10:
+        case BFD_RELOC_K1_S37_PLT_UP27:
+        case BFD_RELOC_K1_S37_PLT_LO10:
         /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
         /* case BFD_RELOC_K1_FUNCDESC_GOT_UP27: */
         /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
@@ -2877,13 +2866,18 @@ md_apply_fix(fixS * fixP, valueT * valueP,
  {
         switch (fixP->fx_r_type)
           {
-            case BFD_RELOC_K1_TPREL_S37_UP27:
-            case BFD_RELOC_K1_TPREL_S37_LO10:
+            case BFD_RELOC_K1_S37_TPREL_UP27:
+            case BFD_RELOC_K1_S37_TPREL_LO10:
             case BFD_RELOC_K1_TPREL_32:
 	      
-	  case BFD_RELOC_K1_TPREL64_EX6 :
-	  case BFD_RELOC_K1_TPREL64_UP27 :
-	  case BFD_RELOC_K1_TPREL64_LO10:
+	  case BFD_RELOC_K1_S43_TPREL64_EX6 :
+	  case BFD_RELOC_K1_S43_TPREL64_UP27 :
+	  case BFD_RELOC_K1_S43_TPREL64_LO10:
+
+	  case BFD_RELOC_K1_S64_TPREL64_EX27 :
+	  case BFD_RELOC_K1_S64_TPREL64_UP27 :
+	  case BFD_RELOC_K1_S64_TPREL64_LO10:
+
 	  case BFD_RELOC_K1_TPREL64_64:
 
 //             case BFD_RELOC_K1_GOTOFF_HI22:
@@ -2933,25 +2927,31 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_S32_UP27:
         case BFD_RELOC_K1_S37_UP27:
         case BFD_RELOC_K1_S43_UP27:
-        case BFD_RELOC_K1_TPREL64_UP27:
-        case BFD_RELOC_K1_TPREL64_EX6:
-        case BFD_RELOC_K1_TPREL_S37_UP27:
+
+        case BFD_RELOC_K1_S43_TPREL64_UP27:
+        case BFD_RELOC_K1_S43_TPREL64_EX6:
+
+        case BFD_RELOC_K1_S37_TPREL_UP27:
+
+        case BFD_RELOC_K1_S64_TPREL64_UP27:
+        case BFD_RELOC_K1_S64_TPREL64_EX27:
+
 //         case BFD_RELOC_K1_PCREL_HI22:
         /* case BFD_RELOC_K1_GPREL_UP27: */
 //    case BFD_RELOC_K1_NEG_GPREL_HI23:
-        case BFD_RELOC_K1_GOTOFF_UP27:
+        case BFD_RELOC_K1_S37_GOTOFF_UP27:
 
-        case BFD_RELOC_K1_GOTOFF64_UP27:
-        case BFD_RELOC_K1_GOTOFF64_EX6:
-        case BFD_RELOC_K1_GOT64_UP27:
-        case BFD_RELOC_K1_GOT64_EX6:
-        case BFD_RELOC_K1_GOT_UP27:
-        case BFD_RELOC_K1_PLT64_UP27:
-        case BFD_RELOC_K1_PLT64_EX6:
+        case BFD_RELOC_K1_S43_GOTOFF64_UP27:
+        case BFD_RELOC_K1_S43_GOTOFF64_EX6:
+        case BFD_RELOC_K1_S43_GOT64_UP27:
+        case BFD_RELOC_K1_S43_GOT64_EX6:
+        case BFD_RELOC_K1_S37_GOT_UP27:
+        case BFD_RELOC_K1_S43_PLT64_UP27:
+        case BFD_RELOC_K1_S43_PLT64_EX6:
 	  
 //    case BFD_RELOC_K1_GOTOFFX_HI23:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
-        case BFD_RELOC_K1_PLT_UP27:
+        case BFD_RELOC_K1_S37_PLT_UP27:
 //    case BFD_RELOC_K1_TPREL_HI23:
 //    case BFD_RELOC_K1_GOTOFF_TPREL_HI23:
 //    case BFD_RELOC_K1_GOTOFF_DTPLDM_HI23:
@@ -2966,19 +2966,20 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_S37_LO10:
         case BFD_RELOC_K1_S43_LO10:
         case BFD_RELOC_K1_S43_EX6:
-        case BFD_RELOC_K1_TPREL64_LO10:
-        case BFD_RELOC_K1_TPREL_S37_LO10:
+        case BFD_RELOC_K1_S43_TPREL64_LO10:
+        case BFD_RELOC_K1_S64_TPREL64_LO10:
+        case BFD_RELOC_K1_S37_TPREL_LO10:
 //         case BFD_RELOC_K1_PCREL_LO10:
         /* case BFD_RELOC_K1_GPREL_LO10: */
 //    case BFD_RELOC_K1_NEG_GPREL_LO9:
-        case BFD_RELOC_K1_GOTOFF_LO10:
-        case BFD_RELOC_K1_GOTOFF64_LO10:
-        case BFD_RELOC_K1_GOT64_LO10:
-        case BFD_RELOC_K1_GOT_LO10:
+        case BFD_RELOC_K1_S37_GOTOFF_LO10:
+        case BFD_RELOC_K1_S43_GOTOFF64_LO10:
+        case BFD_RELOC_K1_S43_GOT64_LO10:
+        case BFD_RELOC_K1_S37_GOT_LO10:
 //    case BFD_RELOC_K1_GOTOFFX_LO9:
 //    case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
-        case BFD_RELOC_K1_PLT_LO10:
-        case BFD_RELOC_K1_PLT64_LO10:
+        case BFD_RELOC_K1_S37_PLT_LO10:
+        case BFD_RELOC_K1_S43_PLT64_LO10:
         /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
 	/* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
 //    case BFD_RELOC_K1_TPREL_LO9:
@@ -3073,7 +3074,7 @@ k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_cod
  {
         exp->X_op = O_symbol;
         /* real_k1_reloc_type(exp->X_op_symbol, 0, 0, 0, &code); */
-	struct pseudo_func_s *pf = k1_get_pseudo_func(exp->X_op_symbol, 1);
+	struct pseudo_func_s *pf = k1_get_pseudo_func_data_scn(exp->X_op_symbol);
 	assert(pf != NULL);
 	code = pf->pseudo_relocs.single;
 
@@ -4147,20 +4148,20 @@ k1_force_reloc(fixS * fixP)
         switch (fixP->fx_r_type)
           {
 	    case BFD_RELOC_K1_GOTOFF:
-            case BFD_RELOC_K1_GOTOFF_UP27:
-            case BFD_RELOC_K1_GOTOFF_LO10:
+            case BFD_RELOC_K1_S37_GOTOFF_UP27:
+            case BFD_RELOC_K1_S37_GOTOFF_LO10:
 	    case BFD_RELOC_K1_GOTOFF64:
-            case BFD_RELOC_K1_GOTOFF64_UP27:
-            case BFD_RELOC_K1_GOTOFF64_LO10:
-            case BFD_RELOC_K1_GOTOFF64_EX6:
+            case BFD_RELOC_K1_S43_GOTOFF64_UP27:
+            case BFD_RELOC_K1_S43_GOTOFF64_LO10:
+            case BFD_RELOC_K1_S43_GOTOFF64_EX6:
 
 	    case BFD_RELOC_K1_GOT:
-            case BFD_RELOC_K1_GOT_UP27:
-            case BFD_RELOC_K1_GOT_LO10:
+            case BFD_RELOC_K1_S37_GOT_UP27:
+            case BFD_RELOC_K1_S37_GOT_LO10:
 //             case BFD_RELOC_K1_PCREL_HI22:
 //             case BFD_RELOC_K1_PCREL_LO10:
-            case BFD_RELOC_K1_PLT_UP27:
-            case BFD_RELOC_K1_PLT_LO10:
+            case BFD_RELOC_K1_S37_PLT_UP27:
+            case BFD_RELOC_K1_S37_PLT_LO10:
             /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
             /* case BFD_RELOC_K1_FUNCDESC_GOT_UP27: */
 	    /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
@@ -4205,21 +4206,21 @@ k1_force_reloc_sub_same(fixS * fixP, segT sec)
         switch (fixP->fx_r_type)
         {
 	  case BFD_RELOC_K1_GOTOFF:
-          case BFD_RELOC_K1_GOTOFF_UP27:
-          case BFD_RELOC_K1_GOTOFF_LO10:
+          case BFD_RELOC_K1_S37_GOTOFF_UP27:
+          case BFD_RELOC_K1_S37_GOTOFF_LO10:
 
 	  case BFD_RELOC_K1_GOTOFF64:
-          case BFD_RELOC_K1_GOTOFF64_UP27:
-          case BFD_RELOC_K1_GOTOFF64_LO10:
-          case BFD_RELOC_K1_GOTOFF64_EX6:
+          case BFD_RELOC_K1_S43_GOTOFF64_UP27:
+          case BFD_RELOC_K1_S43_GOTOFF64_LO10:
+          case BFD_RELOC_K1_S43_GOTOFF64_EX6:
 
 	  case BFD_RELOC_K1_GOT:
-          case BFD_RELOC_K1_GOT_UP27:
-          case BFD_RELOC_K1_GOT_LO10:
+          case BFD_RELOC_K1_S37_GOT_UP27:
+          case BFD_RELOC_K1_S37_GOT_LO10:
 //           case BFD_RELOC_K1_PCREL_HI22:
 //           case BFD_RELOC_K1_PCREL_LO10:
-          case BFD_RELOC_K1_PLT_UP27:
-          case BFD_RELOC_K1_PLT_LO10:
+          case BFD_RELOC_K1_S37_PLT_UP27:
+          case BFD_RELOC_K1_S37_PLT_LO10:
           /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
           /* case BFD_RELOC_K1_FUNCDESC_GOT_UP27: */
 	  /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
