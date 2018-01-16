@@ -335,6 +335,7 @@ b.target("#{variant}_post_install_valid") do
       march_valid_list.each do |arch|
         asm_files = `find #{mds_gbu_path}/#{arch}/ -name "*.s"`.chomp().split()
         b.run("echo \"No test file found in #{mds_gbu_path}/#{arch}\" && false") if(asm_files.size() == 0)
+        puts "Asm files: #{asm_files}"
         asm_files.each do |asm_test|
           test = File.basename(asm_test,".s")
           test_dir = b.diffdirs(File.dirname(asm_test), mds_gbu_path)
@@ -359,6 +360,24 @@ b.target("#{variant}_post_install_valid") do
                   :success_msg => "GBU : No diff, test OK",
                   :skip=>(skip_valid))
         end
+      end
+    end
+  elsif (variant == "gdb") then
+    gcc = "#{toolroot}/bin/k1-elf-gcc"
+    gdb = "#{toolroot}/bin/k1-gdb"
+
+    if(not skip_valid) then
+      raise "GCC not found #{gcc}" unless File.exists? gcc
+      raise "GDB not found #{gdb}" unless File.exists? gdb
+    end
+
+    ["hello.c"].each do |test|
+      march_valid_list.each do |arch|
+        c_file = File.join(gdb_path, 'valid', 'hudson', 'testsuite', arch, test)
+        elf_file = File.join(gdb_path, 'valid', 'hudson', 'testsuite', arch, "#{test}.u")
+        b.run("echo \"Source file not found: #{c_file}\" && false") unless(File.exists?(c_file))
+        b.run(:cmd=>"#{gcc} -o #{elf_file} #{c_file}", :skip=>skip_valid)
+        b.valid(:cmd => "#{gdb} -ex \"file #{elf_file}\" -ex \"r\" -ex \"quit\" |grep \"Hello world\"", :skip=>(skip_valid))
       end
     end
   end
