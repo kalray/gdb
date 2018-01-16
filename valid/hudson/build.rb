@@ -376,8 +376,11 @@ b.target("#{variant}_post_install_valid") do
         c_file = File.join(gdb_path, 'valid', 'hudson', 'testsuite', arch, test)
         elf_file = File.join(gdb_path, 'valid', 'hudson', 'testsuite', arch, "#{test}.u")
         b.run("echo \"Source file not found: #{c_file}\" && false") unless(File.exists?(c_file))
-        b.run(:cmd=>"#{gcc} -o #{elf_file} #{c_file}", :skip=>skip_valid)
+        b.run(:cmd=>"#{gcc} -g3 -o #{elf_file} #{c_file}", :skip=>skip_valid)
+        # Test execution
         b.valid(:cmd => "#{gdb} -ex \"file #{elf_file}\" -ex \"r\" -ex \"quit\" |grep \"Hello world\"", :skip=>(skip_valid))
+        # Test single breakpoint
+        b.valid(:cmd => "#{gdb} -ex \"file #{elf_file}\" -ex \"b main\" -ex \"r\" -ex \"c\" -ex \"quit\" |grep \"hit Breakpoint 1, main\"", :skip=>(skip_valid))
       end
     end
   end
