@@ -1,5 +1,6 @@
 /**
  *** (c) Copyright Hewlett-Packard Company 1999-2003
+ *** (c) Copyright Kalray 2010-2018
  ***
  *** This program is free software; you can redistribute it and/or
  *** modify it under the terms of the GNU General Public License
@@ -102,15 +103,7 @@ int k1_mode_set = 0;
 static char const k1_noop[4] = { 0x00, 0x00, 0x00, 0x80 };
 static char const k1_noop_stop_bit[4] = { 0x00, 0x00, 0x00, 0x00 };
 
-#ifdef OBJ_FDPIC_ELF
-# define DEFAULT_FDPIC ELF_K1_FDPIC
-#else
-# define DEFAULT_FDPIC 0
-#endif
-
-static flagword k1_pic_flags = DEFAULT_FDPIC;
-// static const char *k1_pic_flag = EF_K1_FDPIC ? "-mfdpic" : (const char *)0;
-
+static flagword k1_pic_flags = 0;
 
 /***********************************************/
 /*    Generic Globals for GAS                  */
@@ -139,27 +132,8 @@ struct k1_fixup_s
 
 typedef struct k1_fixup_s k1_fixup_t;
 
-typedef enum {
-  K1_UNDEF = 0,
-  K1_BCU = 1,
-  K1_ALU0= 2,
-  K1_ALU1= 4,
-  K1_ALU0_ALU1=6,
-  K1_MAU = 8,
-  K1_LSU = 16,
-} k1_slots_t;
-
-typedef enum {
-  K1_OTHER,  /* Not defined type */
-  K1_LITE,   /* LITE */
-  K1_TINY,   /* TINY */
-  K1_LMD,    /* LITE MONO DOUBLE */
-  K1_TMD,    /* TINY MONO DOUBLE */
-} k1_insn_type_t;
-
 /* a single assembled instruction record */
 /* may include immediate extension word  */
-
 struct k1insn_s {
   int written;		                /* written out ?                           */
   const k1opc_t *opdef;	                /* Opcode table entry for this insn        */
@@ -170,8 +144,6 @@ struct k1insn_s {
   int nfixups;		                /* the number of fixups [0,2]              */
   k1_fixup_t fixup[2];	                /* the actual fixups                       */
   Bundling bundling;                    /* the bundling type                       */
-  k1_slots_t slots;                     /* Used slots (one slot per bit).          */
-  k1_insn_type_t type;                  /* Type of instruction.                    */
 };
 
 typedef struct k1insn_s k1insn_t;
@@ -237,21 +209,6 @@ int is_code_section(asection *sec)
  {
     return ((bfd_get_section_flags(NULL, sec) & (SEC_CODE))) ;
 }
-
-__attribute__((unused))
-static char *
-k1_slots_name(const k1insn_t *insn) {
-  switch(insn->slots) {
-  case K1_BCU: return "BCU";
-  case K1_ALU0: return "ALU0";
-  case K1_ALU1: return "ALU1";
-  case K1_ALU0 | K1_ALU1: return "ALU0 + ALU1";
-  case K1_MAU: return "MAU";
-  case K1_LSU: return "LSU";
-  default: return "UNKNOWN";
-  }
-}
-
 
 /* Either 32 or 64.  */
 static int k1_arch_size = 32;
@@ -705,8 +662,6 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 /* added to std long options */
 
 #define OPTION_HEXFILE	(OPTION_MD_BASE + 0)
-#define OPTION_LITTLE_ENDIAN (OPTION_MD_BASE + 1)
-#define OPTION_BIG_ENDIAN (OPTION_MD_BASE + 2)
 #define OPTION_EMITALLRELOCS (OPTION_MD_BASE + 3)
 #define OPTION_MCORE (OPTION_MD_BASE + 4)
 #define OPTION_CHECK_RESOURCES (OPTION_MD_BASE + 5)
@@ -715,7 +670,6 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_DUMP_TABLE (OPTION_MD_BASE + 8)
 #define OPTION_PIC	(OPTION_MD_BASE + 9)
 #define OPTION_BIGPIC	(OPTION_MD_BASE + 10)
-#define OPTION_FDPIC	(OPTION_MD_BASE + 11)
 #define OPTION_NOPIC    (OPTION_MD_BASE + 12)
 #define OPTION_32 (OPTION_MD_BASE + 13)
 #define OPTION_64 (OPTION_MD_BASE + 14)
@@ -723,9 +677,6 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 
 struct option md_longopts[] =
  {
-     {"hex-output", required_argument, NULL, OPTION_HEXFILE},
-     {"EL", no_argument, NULL, OPTION_LITTLE_ENDIAN},
-     {"EB", no_argument, NULL, OPTION_BIG_ENDIAN},
      {"emit-all-relocs", no_argument, NULL, OPTION_EMITALLRELOCS},
      {"mcore", required_argument, NULL, OPTION_MCORE},
      {"check-resources", no_argument, NULL, OPTION_CHECK_RESOURCES},
@@ -734,9 +685,7 @@ struct option md_longopts[] =
      {"dump-table", no_argument, NULL, OPTION_DUMP_TABLE},
      {"mpic", no_argument, NULL, OPTION_PIC},
      {"mPIC", no_argument, NULL, OPTION_BIGPIC},
-     {"mfdpic",	no_argument,	NULL, OPTION_FDPIC},
      {"mnopic", no_argument,    NULL, OPTION_NOPIC},
-     {"mno-fdpic", no_argument,    NULL, OPTION_NOPIC},
      {"m32", no_argument,    NULL, OPTION_32},
      {"m64", no_argument,    NULL, OPTION_64},
      {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
@@ -758,11 +707,6 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     /* -V: SVR4 argument to print version ID.  */
   case 'V':
     print_version_id();
-    break;
-  case OPTION_HEXFILE:
-    /*        hex_file_name = strdup (arg);
-     * if (!hex_file_name)
-     * as_fatal ("virtual memory exhausted"); */
     break;
   case OPTION_EMITALLRELOCS:
     emit_all_relocs = 1;
@@ -815,12 +759,8 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_BIGPIC:
     k1_pic_flags |= ELF_K1_PIC;
     break;
-  case OPTION_FDPIC:
-    k1_pic_flags |= ELF_K1_FDPIC;
-//     k1_pic_flag = "-mfdpic";
-    break;
   case OPTION_NOPIC:
-    k1_pic_flags &= ~(ELF_K1_FDPIC);
+    k1_pic_flags &= ~(ELF_K1_PIC);
     break;
   case OPTION_32:
     k1_arch_size = 32;
@@ -2122,33 +2062,6 @@ static int is_lite(const k1opc_t *op) {
   return used_resources(op,Resource_k1c_LITE);
 }
 
-__attribute__((unused))
-static void
-bundle_resources(char string_buffer[], int buffer_size, int resource, const k1insn_t *shadow_bundle[], int bundle_size) {
-  int i;
-
-  if(buffer_size == 0) { return; }
-
-  string_buffer[0] = '\0';
-
-  for(i=0; i < bundle_size; i++){
-    if(shadow_bundle[i] != NULL){
-      char tmp_str[256];
-      int used_resources_val = used_resources(shadow_bundle[i]->opdef,resource);
-      if(resource == Resource_k1c_TINY || resource == Resource_k1c_LITE) {
-	if(shadow_bundle[i]->slots == (K1_ALU0 | K1_ALU1)) {
-	  used_resources_val++;
-	}
-      }
-      snprintf(tmp_str,256,"\t%s: %s slot(s) %d %s(s)\n",
-	       shadow_bundle[i]->opdef->as_op,
-	       k1_slots_name(shadow_bundle[i]),
-	       used_resources_val,
-	       k1c_resource_names[resource]);
-      strncat(string_buffer,tmp_str,buffer_size);
-    }
-  }
-}
 
 enum exu_t {
   bcu_e,
@@ -2839,8 +2752,6 @@ void
 md_apply_fix(fixS * fixP, valueT * valueP,
         segT segmentP ATTRIBUTE_UNUSED)
  {
-    bfd_byte *buf;
-    long insn;
     char *const fixpos = fixP->fx_frag->fr_literal + fixP->fx_where;
     //char *const fixpos2 = fixP->fx_frag->fr_literal + fixP->fx_where - 4;
     valueT value = *valueP;
