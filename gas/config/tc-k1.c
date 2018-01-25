@@ -1093,6 +1093,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GRF]))
 #define IS_K1_REGFILE_PRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_PRF]) \
 				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_PRF]))
+#define IS_K1_REGFILE_QRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_QRF]) \
+				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_QRF]))
 #define IS_K1_REGFILE_SRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_SRF]) \
 				 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_SRF]))
 #define IS_K1_REGFILE_ARF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_ARF]) \
@@ -1156,6 +1158,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
             case RegClass_k1c_pairedReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
+            case RegClass_k1c_quadReg:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_QRF)
             CASE_SRF_REGCLASSES(k1c):
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1c_accelReg:
@@ -1225,6 +1229,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 
 #undef IS_K1_REGFILE_GRF
 #undef IS_K1_REGFILE_PRF
+#undef IS_K1_REGFILE_QRF
 #undef IS_K1_REGFILE_SRF
 #undef IS_K1_REGFILE_ARF
 #undef MATCH_K1_REGFILE
