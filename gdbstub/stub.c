@@ -1468,6 +1468,23 @@ static bool kalray_set_break_on_spawn (struct gdbstub *stub)
   return send_ok (stub);
 }
 
+static bool kalray_set_stop_all (struct gdbstub *stub)
+{
+  struct context ctxt;
+  int v;
+
+  if (!stub->payload[2] || !parse_thread_id (stub, &ctxt, stub->payload + 3, NULL))
+  {
+    stub->error = "Malformed thread id in kA packet";
+    return send_err (stub, 0) ;
+  }
+
+  v = stub->payload[2] - '0';
+  debug_agent_set_stop_all (D_CONTEXT, v);
+
+  return send_ok (stub);
+}
+
 static bool kalray_set_stop_at_main (struct gdbstub *stub)
 {
   int bstop = stub->payload[2] - '0';
@@ -2319,6 +2336,8 @@ bool handle_command (struct gdbstub *stub)
       {
         case 'a':
           return kalray_is_hot_attached (stub);
+        case 'A':
+          return kalray_set_stop_all (stub);
         case 'B':
           return kalray_inform_dsu_stepi_bkp (stub);
         case 'c':

@@ -70,9 +70,12 @@ static const char *scluster_debug_levels[] = {"system", "kernel-user", "user", "
 static const char *scluster_debug_level;
 static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NULL};
 static const char *sglobal_debug_level;
+static const char *sopts_cluster_stop_all[] = {"none", "jtag", "break_mask", NULL};
+static const char *sopt_cluster_stop_all;
 int idx_global_debug_level, global_debug_level_set;
 int opt_hide_threads = 1;
 int opt_break_on_spawn = 0;
+int opt_cluster_stop_all = 0;
 int in_info_thread = 0;
 int in_attach_mppa = 0;
 int new_attach_requested = 0;
@@ -894,6 +897,46 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty, struct cmd_list
   fprintf_filtered (file, "The cluster break on reset is %d.\n", data->cluster_break_on_spawn);
 }
 
+static int
+str_cluster_stop_all_to_idx (const char *s)
+{
+  int i;
+  for (i = 0; i < sizeof (sopts_cluster_stop_all) / sizeof (char *) - 1; i++)
+    if (!strcmp (s, sopts_cluster_stop_all[i]))
+      return i;
+  return -1;
+}
+
+static void
+set_cluster_stop_all (char *args, int from_tty, struct cmd_list_element *c)
+{
+  struct inferior *inf;
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    error (_ ("Cannot set stop all cluster CPUs without a selected thread."));
+
+  inf = current_inferior ();
+  data = mppa_inferior_data (inf);
+  data->cluster_stop_all = str_cluster_stop_all_to_idx (sopt_cluster_stop_all);
+  send_cluster_stop_all (inf, data->cluster_stop_all);
+}
+
+static void
+show_cluster_stop_all (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+{
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf (_ ("Cannot show stop all cluster CPUs without a live selected thread."));
+    return;
+  }
+
+  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
+  fprintf_filtered (file, "Stop all cluster CPUs is %s.\n", sopts_cluster_stop_all[data->cluster_stop_all]);
+}
+
 static void
 attach_mppa_command (char *args, int from_tty)
 {
@@ -1330,6 +1373,10 @@ _initialize__k1_target (void)
 
   add_com ("attach-mppa", class_run, attach_mppa_command,
     _("Connect to a MPPA TLM platform and start debugging it.\nUsage is `attach-mppa PORT'."));
+
+  add_setshow_enum_cmd ("stop-all", class_maintenance, sopts_cluster_stop_all, &sopt_cluster_stop_all,
+    _("Set stop all cluster CPUs"), _("Show stop all cluster CPUs"),
+    NULL, set_cluster_stop_all, show_cluster_stop_all, &kalray_set_cmdlist, &kalray_show_cmdlist);
 
   add_com ("run-mppa", class_run, run_mppa_command, _ ("Connect to a MPPA TLM platform and start debugging it."));
 
