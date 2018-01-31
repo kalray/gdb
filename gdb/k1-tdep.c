@@ -55,7 +55,7 @@ struct displaced_step_closure
   unsigned rewrite_reg : 1;
 
   /* The destination address when the branch is taken. */
-  unsigned long long dest;
+  uint64_t dest;
   int reg;
 };
 
@@ -187,17 +187,17 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
   return data->step_pad_area;
 }
 
-static int
-extract_mds_bitfield (k1opc_t *op, uint32_t syllab, int bitfield)
+static uint64_t
+extract_mds_bitfield (k1opc_t *op, uint32_t syllab, int bitfield, int sign)
 {
   k1_bitfield_t *bfield;
-  int res;
+  uint64_t res;
 
   bfield = &op->format[bitfield]->bfield[0];
-  res = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
+  res = ((uint64_t) syllab >> bfield->to_offset) & ((1ULL << bfield->size) - 1);
 
-  if (res & (1 << (bfield->size - 1)))
-    res |= (0xffffffff << bfield->size);
+  if (sign && (res & (1ULL << (bfield->size - 1))))
+    res |= (0xffffffffffffffffULL << bfield->size);
 
   return res;
 }
@@ -418,26 +418,17 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
     if (strcmp ("call", op->as_op) == 0)
     {
       dsc->rewrite_RA = 1;
-      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0, 1) * 4;
       patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
     }
     else if (strcmp ("goto", op->as_op) == 0)
     {
-      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0) * 4;
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 0, 1) * 4;
       patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
-    }
-    else if (strncmp ("cjl.", op->as_op, 4) == 0)
-    {
-      ULONGEST ra;
-
-      dsc->rewrite_RA = 1;
-      regcache_raw_read_unsigned (regs, tdep->ra_regnum, &ra);
-      dsc->dest = ra;
-      regcache_raw_write_unsigned (regs, tdep->ra_regnum, to);
     }
     else if (strncmp ("cb.", op->as_op, 3) == 0)
     {
-      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1, 1) * 4;
       patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
     }
     else if (strcmp ("icall", op->as_op) == 0)
@@ -446,7 +437,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
 
       dsc->rewrite_RA = 1;
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0);
       regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
       dsc->dest = reg_value;
       regcache_raw_write_unsigned (regs, dsc->reg, to);
@@ -456,7 +447,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
       ULONGEST reg_value;
 
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0);
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0);
       regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
       dsc->dest = reg_value;
       regcache_raw_write_unsigned (regs, dsc->reg, to);
@@ -481,7 +472,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
       dsc->dest = reg_value;
       regcache_raw_write_unsigned (regs, dsc->reg, to);
     }
-    else if (strcmp ("scall", op->as_op) == 0 || strcmp ("trapa", op->as_op) == 0 || strcmp ("trapo", op->as_op) == 0)
+    else if (strcmp ("scall", op->as_op) == 0)
     {
       ULONGEST reg_value;
 
@@ -495,18 +486,18 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
       ULONGEST reg_value;
 
       dsc->rewrite_LE = 1;
-      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1) * 4;
+      dsc->dest = from + extract_mds_bitfield (op, dsc->insn_words[0], 1, 1) * 4;
       patch_mds_bitfield (op, &dsc->insn_words[0], 1, 0);
     }
-    else if (strcmp ("get", op->as_op) == 0 && op->format[1]->reg_nb != 64)
+    else if (strcmp ("get", op->as_op) == 0 && op->format[1])
     {
       /* get version with immediate */
-      if (extract_mds_bitfield (op, dsc->insn_words[0], 1) != (gdbarch_pc_regnum (gdbarch) - 64))
+      if (extract_mds_bitfield (op, dsc->insn_words[0], 1, 0) != (gdbarch_pc_regnum (gdbarch) - 64))
         break;
 
       dsc->branchy = 0;
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F;
       dsc->dest = from;
     }
     else if (strcmp ("get", op->as_op) == 0)
@@ -514,7 +505,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
       ULONGEST reg;
 
       /* indirect get instruction */
-      reg = extract_mds_bitfield (op, dsc->insn_words[0], 1);
+      reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0);
       regcache_raw_read_unsigned (regs, reg, &reg);
 
       if (reg != (gdbarch_pc_regnum (gdbarch) - 64))
@@ -522,7 +513,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
 
       dsc->branchy = 0;
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0) & 0x3F;
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F;
       dsc->dest = from;
     }
     else
@@ -607,7 +598,7 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
     /* We branched. */
     branched = 1;
     if (debug_displaced)
-      printf_filtered ("displaced: we branched (predicted dest: %llx) \n", dsc->dest);
+      printf_filtered ("displaced: we branched (predicted dest: %llx) \n", (unsigned long long) dsc->dest);
     if (dsc->branchy && (pc == to || (dsc->scall_jump && pc == dsc->dest)))
     {
       /* The branchy instruction jumped to its destination. */
@@ -646,7 +637,7 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
   {
     regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
     if (debug_displaced)
-      printf_filtered ("displaced: rewrite %i with %llx\n", dsc->reg, dsc->dest);
+      printf_filtered ("displaced: rewrite %i with %llx\n", dsc->reg, (unsigned long long) dsc->dest);
   }
 
   if (((ps >> 5) & 1) /* HLE */)

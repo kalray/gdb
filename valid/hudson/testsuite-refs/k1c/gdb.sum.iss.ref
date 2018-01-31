@@ -1,0 +1,126 @@
+Test Run By mgligor on Wed Jan 31 16:26:06 2018
+Target is k1-unknown-elf
+Host   is i686-pc-linux-gnu
+
+		=== gdb tests ===
+
+Schedule of variations:
+    k1-iss
+
+Running target k1-iss
+Running ../../../gdb/testsuite/gdb.kalray/displaced.exp ...
+PASS: gdb.kalray/displaced.exp: init memory
+PASS: gdb.kalray/displaced.exp: Force displaced stepping
+PASS: gdb.kalray/displaced.exp: Set breakpoints
+PASS: gdb.kalray/displaced.exp: continue to displaced1
+PASS: gdb.kalray/displaced.exp: display /i $pc
+PASS: gdb.kalray/displaced.exp: stepi 1
+PASS: gdb.kalray/displaced.exp: stepi over loopdo
+PASS: gdb.kalray/displaced.exp: stepi in loopdo 1
+PASS: gdb.kalray/displaced.exp: stepi in loopdo 2
+PASS: gdb.kalray/displaced.exp: stepi in loopdo 3
+PASS: gdb.kalray/displaced.exp: stepi in loopdo 4
+PASS: gdb.kalray/displaced.exp: stepi out of loopdo
+PASS: gdb.kalray/displaced.exp: Check that the loop was really executed
+PASS: gdb.kalray/displaced.exp: stepi to loopgtz
+PASS: gdb.kalray/displaced.exp: stepi over unentered loopgtz
+PASS: gdb.kalray/displaced.exp: stepi on taken cb
+PASS: gdb.kalray/displaced.exp: stepi in entered loopgtz 1
+PASS: gdb.kalray/displaced.exp: stepi in entered loopgtz 2
+PASS: gdb.kalray/displaced.exp: stepi in entered loopgtz 3
+PASS: gdb.kalray/displaced.exp: stepi in entered loopgtz 4
+PASS: gdb.kalray/displaced.exp: stepi in entered loopgtz 5
+PASS: gdb.kalray/displaced.exp: stepi out of loopgtz
+PASS: gdb.kalray/displaced.exp: Check that the loop was really executed
+PASS: gdb.kalray/displaced.exp: stepi over make
+PASS: gdb.kalray/displaced.exp: stepi to loopnez
+PASS: gdb.kalray/displaced.exp: stepi over unentered loopnez
+PASS: gdb.kalray/displaced.exp: stepi on taken cb
+PASS: gdb.kalray/displaced.exp: stepi in entered loopnez 1
+PASS: gdb.kalray/displaced.exp: stepi in entered loopnez 2
+PASS: gdb.kalray/displaced.exp: stepi in entered loopnez 3
+PASS: gdb.kalray/displaced.exp: stepi in entered loopnez 4
+PASS: gdb.kalray/displaced.exp: stepi in entered loopnez 5
+PASS: gdb.kalray/displaced.exp: stepi out of loopnez
+PASS: gdb.kalray/displaced.exp: Check that the loop was really executed
+PASS: gdb.kalray/displaced.exp: step over non-taken cb
+PASS: gdb.kalray/displaced.exp: stepi into scall
+PASS: gdb.kalray/displaced.exp: rfe 1
+PASS: gdb.kalray/displaced.exp: stepi over make
+PASS: gdb.kalray/displaced.exp: stepi over undefined insn
+PASS: gdb.kalray/displaced.exp: stepi to trap handler
+PASS: gdb.kalray/displaced.exp: stepi in trap handler
+PASS: gdb.kalray/displaced.exp: rfe 2
+PASS: gdb.kalray/displaced.exp: step over get pc
+PASS: gdb.kalray/displaced.exp: step over get pc 2
+PASS: gdb.kalray/displaced.exp: step over get pc 3
+PASS: gdb.kalray/displaced.exp: step over get indirect pc
+PASS: gdb.kalray/displaced.exp: step over get indirect pc 2
+PASS: gdb.kalray/displaced.exp: step over get indirect pc 3
+PASS: gdb.kalray/displaced.exp: stepi over copy
+PASS: gdb.kalray/displaced.exp: stepi to scall
+Running ../../../gdb/testsuite/gdb.kalray/bcu.exp ...
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_no_bcu_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_getra_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_getpc_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_igetra_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_igetpc_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_call_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_goto_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_cb_taken_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_cb_skip_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_icall_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_igoto_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_ret_test
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_loopdo_test_1
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_loopdo_test_2
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_loopgtz_test_1
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_loopgtz_test_2
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_loopnez_test_1
+PASS: gdb.kalray/bcu.exp: Set breakpoint bpbcu_loopnez_test_2
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_no_bcu_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_no_bcu_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_getra_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_getra_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_getpc_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_getpc_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_igetra_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_igetra_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_igetpc_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_igetpc_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_call_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_call_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_goto_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_goto_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_cb_taken_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_cb_taken_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_cb_skip_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_cb_skip_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_icall_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_icall_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_igoto_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_igoto_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_ret_test
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_ret_test
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopdo_test_1
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopdo_test_1
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopdo_test_2
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopdo_test_2
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopgtz_test_1
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopgtz_test_1
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopgtz_test_2
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopgtz_test_2
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopnez_test_1
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopnez_test_1
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopnez_test_2
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopnez_test_2
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopnez0_test_1
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopnez0_test_1
+PASS: gdb.kalray/bcu.exp: Continue to bpbcu_loopnez0_test_2
+PASS: gdb.kalray/bcu.exp: Stepi in bpbcu_loopnez0_test_2
+
+		=== gdb Summary ===
+
+# of expected passes		108
+/work1-hdd/rdtools_core/gdb/k1_build_gdb_x86/gdb/testsuite/../../gdb/gdb version  7.11.1.20160801-git -nw -nx -data-directory /work1-hdd/rdtools_core/gdb/k1_build_gdb_x86/gdb/testsuite/../data-directory 
+

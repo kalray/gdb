@@ -4,14 +4,13 @@ if $tracelevel then {
 }
 
 
-set CFLAGS_FOR_TARGET "$CFLAGS_FOR_TARGET -nostdlib"
-
 set testfile "displaced"
 set binfile ${objdir}/outputs/${subdir}/${testfile}
 set srcfile1 ${testfile}.S
+set srcfile2 ${testfile}.c
 file mkdir ${objdir}/outputs/${subdir}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}" executable {debug}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1} ${srcdir}/${subdir}/${srcfile2}" "${binfile}" executable {debug}] != "" } {
      untested asm-source.exp
      return -1
 }
@@ -25,13 +24,14 @@ gdb_test "set kalray debug_agent_options \"--init-value=0\" \"--no-segment-load\
 
 gdb_test "set displaced-stepping on" "" "Force displaced stepping"
 gdb_test "rbreak test_displaced.*" ".*Breakpoint 9 at.*" "Set breakpoints"
+
 if  {[info exists is_k1_server] && $is_k1_server == 1}  {
    gdb_reload
-   gdb_test "p \$pc = _start" ".*" "Setting start pc"
    gdb_test "c" ".*Breakpoint 1.*in test_displaced1.*" "Run"
 } else {
-   gdb_test "run" ".*Breakpoint 1.*in test_displaced1.*" "Run"
+   gdb_test "r" ".*Breakpoint 1.*in test_displaced1.*" "continue to displaced1"
 }
+gdb_test "display /i \$pc" ".*"
 gdb_test "si" ".*Breakpoint 2.*in test_displaced2.*" "stepi 1"
 gdb_test "si" ".*Breakpoint 3.*in test_displaced3.*" "stepi over loopdo"
 gdb_test "si" ".*Breakpoint 3.*in test_displaced3.*" "stepi in loopdo 1"

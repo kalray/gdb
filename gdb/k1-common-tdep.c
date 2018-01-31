@@ -585,13 +585,7 @@ k1_look_for_insns (void)
         add_op (&branch_insns[i], op);
       else if (strcmp ("scall", op->as_op) == 0)
         add_op (&branch_insns[i], op);
-      else if (strcmp ("trapa", op->as_op) == 0)
-        add_op (&branch_insns[i], op);
-      else if (strcmp ("trapo", op->as_op) == 0)
-        add_op (&branch_insns[i], op);
       else if (strncmp ("cb.", op->as_op, 3) == 0)
-        add_op (&branch_insns[i], op);
-      else if (strncmp ("cjl.", op->as_op, 4) == 0)
         add_op (&branch_insns[i], op);
       else if (strcmp ("loopdo", op->as_op) == 0)
         add_op (&branch_insns[i], op);
