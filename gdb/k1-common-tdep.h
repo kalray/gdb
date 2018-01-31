@@ -4,6 +4,7 @@
 #include "dwarf2-frame.h"
 #include "dis-asm.h"
 #include "opcode/k1c.h"
+#include "gdbtypes.h"
 
 enum K1_ARCH
 {
@@ -22,6 +23,7 @@ struct gdbarch_tdep
   int spc_regnum;
 
   int local_regnum;
+  struct type *uint256;
 };
 
 struct op_list
@@ -44,7 +46,7 @@ enum register_status k1c_pseudo_register_read (struct gdbarch *gdbarch,
 void k1c_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
     int regnum, const gdb_byte *buf);
 int k1c_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
-const int k1c_num_pseudos (struct gdbarch *);
+int k1c_num_pseudos (struct gdbarch *);
 const char *k1c_pc_name (struct gdbarch *);
 const char *k1c_sp_name (struct gdbarch *);
 const char *k1_dummy_register_name (struct gdbarch *gdbarch, int regno);
