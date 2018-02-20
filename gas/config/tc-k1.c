@@ -803,14 +803,6 @@ void md_show_usage(FILE * stream){
 /**************************************************/
 
 /*
- *  Write a value to the object file
- */
-
-void md_number_to_chars(char *buf, valueT val, int n){
-    number_to_chars_littleendian(buf, val, n);
-}
-
-/*
  * Read a value from to the object file
  */
 
@@ -997,19 +989,35 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
 }
 
 static int
-has_relocation_of_size(k1bfield *opnd, int is_symbol, int size) {
+has_relocation_of_size(k1bfield *opnd) {
   int i;
+
+  const int symbol_size = (k1_arch_size == 64) ? 43 : 32;
+
   for(i=0; i<opnd->reloc_nb; i++) {
-    if(opnd->relocs[i]->bitsize == size) {
+    switch(opnd->relocs[i]->relative) {
+      /* An absolute reloc needs a full size symbol reloc */
+    case K1_REL_ABS:
+      if(opnd->relocs[i]->bitsize >= symbol_size) {
+	return 1;
+      }
+      break;
+
+      /* Most likely relative jumps. Let something else check size is
+	 OK. We don't currently have several relocations for such
+	 insns */
+    case K1_REL_PC:
       return 1;
-    }
-    if(is_symbol && opnd->relocs[i]->relative != K1_REL_ABS) {
-      return 1;
+
+      /* These relocations should be handled elsewhere with pseudo functions */
+    case K1_REL_GP:
+    case K1_REL_TP:
+    case K1_REL_GOT:
+      break;
     }
   }
   return 0;
 }
-
 
 /*
  * Check input expressions against required operands
@@ -1077,8 +1085,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 
 	if(is_immediate) {
 	  if(tok[jj].X_op == O_symbol) {
-	    int reloc_size = (k1_arch_size == 64) ? 43 : 32;
-	    if(! has_relocation_of_size(op->format[jj], 1, reloc_size)) {
+	    if(! has_relocation_of_size(op->format[jj])) {
 	      return MATCH_NOT_FOUND;
 	    }
 	  }
@@ -1229,8 +1236,6 @@ insert_operand(k1insn_t * insn,
     int bf_nb = opdef->bitfields;
     int bf_idx;
     int immx_ready = 0;
-    //    max = (1LL << (opdef->width - 1)) - 1;
-    //    min = (-1LL << (opdef->width - 1));
 
     if (opdef->width == 0)
         return 0;			/* syntactic sugar ? */
@@ -1250,19 +1255,34 @@ insert_operand(k1insn_t * insn,
 	    reloc_arg.X_op = O_symbol;
 	    struct pseudo_func_s *pf = k1_get_pseudo_func2(arg->X_op_symbol, opdef);
 
-	    switch (pf->pseudo_relocs.reloc_type) {
-	    case S64_LO10_UP27_EX27:
-	    case S43_LO10_UP27_EX6:
-		insn->fixup[1].reloc = pf->pseudo_relocs.reloc_ex;
-		insn->fixup[1].exp = reloc_arg;
-		insn->fixup[1].where = 0;
-		insn->nfixups++;
-		/* fallthrough */
+	    /* S64 uses LO10/UP27/EX27 format (3 words), with one reloc in each words (3) */
+	    /* S43 uses LO10/EX6/UP27 format (2 words), with 2 relocs in main syllabes and 1 in extra word */
+	    /* S37 uses LO10/UP27 format (2 words), with one reloc in each word (2) */
 
-	    case S37_LO10_UP27:
-	      insn->fixup[0].reloc = pf->pseudo_relocs.reloc_lo10;
-	      insn->fixup[0].exp = reloc_arg;
-	      insn->fixup[0].where = 0;
+	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27) {
+	      insn->immx1 = immxcnt;
+	      immxbuf[immxcnt].insn[0] = 0;
+	      immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_ex;
+	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
+	      immxbuf[immxcnt].fixup[0].where = 0;
+	      immxbuf[immxcnt].nfixups = 1;
+	      immxbuf[immxcnt].len = 1;
+
+	      insn->len -= 1;
+	      incr_immxcnt();
+	    } else if (pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6) {
+	      insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_ex;
+	      insn->fixup[insn->nfixups].exp = reloc_arg;
+	      insn->fixup[insn->nfixups].where = 0;
+	      insn->nfixups++;
+	    }
+
+	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
+		|| pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6
+		|| pf->pseudo_relocs.reloc_type == S37_LO10_UP27) {
+	      insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_lo10;
+	      insn->fixup[insn->nfixups].exp = reloc_arg;
+	      insn->fixup[insn->nfixups].where = 0;
 	      insn->nfixups++;
 
 	      insn->immx0 = immxcnt;
@@ -1276,54 +1296,9 @@ insert_operand(k1insn_t * insn,
 	      insn->len -= 1;
 	      incr_immxcnt();
 	      immx_ready = 1;
-	      break;
-
-	    case S32:
-	    case S64:
+	    } else {
 	      as_fatal ("Unexpected fixup");
 	    }
-
-
-	    /* if (reloc_hi != BFD_RELOC_UNUSED  */
-	    /* 	&& reloc_lo == BFD_RELOC_UNUSED) { */
-	    /*   insn->fixup[0].reloc = reloc_hi; */
-	    /*   insn->fixup[0].exp = reloc_arg; */
-	    /*   insn->fixup[0].where = 0; */
-	    /*   insn->nfixups = 1; */
-	    /* } else if (reloc_hi == BFD_RELOC_UNUSED  */
-	    /* 	       && reloc_lo != BFD_RELOC_UNUSED) { */
-	    /*   insn->fixup[0].reloc = reloc_lo; */
-	    /*   insn->fixup[0].exp = reloc_arg; */
-	    /*   insn->fixup[0].where = 0; */
-	    /*   insn->nfixups = 1; */
-	    /* } else if (reloc_hi != BFD_RELOC_UNUSED  */
-	    /* 	       && reloc_lo != BFD_RELOC_UNUSED) { */
-	    /*   if (insn->len > 2 && reloc_extend == BFD_RELOC_UNUSED) */
-	    /* 	as_fatal("only one immediate extension allowed !"); */
-	    /*   insn->fixup[0].reloc = reloc_lo; */
-	    /*   insn->fixup[0].exp = reloc_arg; */
-	    /*   insn->fixup[0].where = 0; */
-	    /*   insn->nfixups = 1; */
-	    /*   if (reloc_extend != BFD_RELOC_UNUSED) { */
-	    /* 	insn->fixup[1].reloc = reloc_extend; */
-	    /* 	insn->fixup[1].exp = reloc_arg; */
-	    /* 	insn->fixup[1].where = 0; */
-	    /* 	insn->nfixups = 2; */
-	    /*   } */
-			
-
-	    /*   insn->immx0 = immxcnt; */
-	    /*   immxbuf[immxcnt].insn[0] = 0; */
-	    /*   immxbuf[immxcnt].fixup[0].reloc = reloc_hi; */
-	    /*   immxbuf[immxcnt].fixup[0].exp = reloc_arg; */
-	    /*   immxbuf[immxcnt].fixup[0].where = 0; */
-	    /*   immxbuf[immxcnt].nfixups = 1; */
-	    /*   immxbuf[immxcnt].len = 1; */
-
-	    /*   insn->len -= 1; */
-	    /*   incr_immxcnt(); */
-	    /*   immx_ready = 1; */
-	    /* } */
 	  }
 	else
 	  {
@@ -1342,7 +1317,6 @@ insert_operand(k1insn_t * insn,
 	  }
 	/* else falls through to fixup */
       default:
-	/*      fprintf(stdout, "generate a fixup\n"); */
         {
 	  if (insn->nfixups == 0)
             {
@@ -1361,13 +1335,6 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[0].where = 0;
 		  insn->nfixups = 1;
 		  break;
-
-		/* case Immediate_k1c_signed27: */
-		/*   insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /\* PLEASE FIXME K1B *\/ */
-		/*   insn->fixup[0].exp = *arg; */
-		/*   insn->fixup[0].where = 0; */
-		/*   insn->nfixups = 1; */
-		/*   break; */
 
 		case Immediate_k1c_signed32:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S32_LO5;
@@ -1391,7 +1358,6 @@ insert_operand(k1insn_t * insn,
 		  break;
 		  
 		case Immediate_k1c_signed10:
-		  /* if (k1_arch_size == 32){ */
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
@@ -1420,7 +1386,6 @@ insert_operand(k1insn_t * insn,
 		  break;
 		  
 		case Immediate_k1c_signed43:
-		  /* } else { */
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S43_LO10;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
@@ -1428,7 +1393,7 @@ insert_operand(k1insn_t * insn,
 		  insn->fixup[1].exp = *arg;
 		  insn->fixup[1].where = 0;
 		  insn->nfixups = 2;
-		  /* } */
+
 		  insn->immx0 = immxcnt;
 		  immxbuf[immxcnt].insn[0] = insn->insn[1];
 		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S43_UP27;
@@ -1444,26 +1409,36 @@ insert_operand(k1insn_t * insn,
 		  immx_ready = 1;
 		  break;
 
-		/* case Immediate_k1c_signed54: */
-		/*   insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /\* PLEASE FIXME K1C *\/ */
-		/*   insn->fixup[0].exp = *arg; */
-		/*   insn->fixup[0].where = 0; */
-		/*   insn->nfixups = 1; */
+		case Immediate_k1c_signed64:
+		  insn->fixup[0].reloc = BFD_RELOC_K1_S64_LO10;
+		  insn->fixup[0].exp = *arg;
+		  insn->fixup[0].where = 0;
 
-		/*   insn->immx0 = immxcnt; */
-		/*   immxbuf[immxcnt].insn[0] = 0; */
-		/*   immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_27_PCREL; /\* PLEASE FIXME K1C *\/ */
-		/*   immxbuf[immxcnt].fixup[0].exp = *arg; */
-		/*   immxbuf[immxcnt].fixup[0].where = 0; */
-		/*   immxbuf[immxcnt].nfixups = 1; */
-		/*   immxbuf[immxcnt].len = 1; */
+		  insn->nfixups = 1;
 
-		/*   // decrement insn->len: immx part handled separately */
-		/*   // from insn and must not be emited twice */
-		/*   insn->len -= 1; */
-		/*   incr_immxcnt(); */
-		/*   immx_ready = 1; */
-		/*   break; */
+		  insn->immx0 = immxcnt;
+		  immxbuf[immxcnt].insn[0] = insn->insn[1];
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_UP27;
+		  immxbuf[immxcnt].fixup[0].exp = *arg;
+		  immxbuf[immxcnt].fixup[0].where = 0;
+		  immxbuf[immxcnt].nfixups = 1;
+		  immxbuf[immxcnt].len = 1;
+
+		  incr_immxcnt();
+		  insn->len -= 1;
+
+		  insn->immx1 = immxcnt;
+		  immxbuf[immxcnt].insn[0] = insn->insn[2];
+		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_EX27;
+		  immxbuf[immxcnt].fixup[0].exp = *arg;
+		  immxbuf[immxcnt].fixup[0].where = 0;
+		  immxbuf[immxcnt].nfixups = 1;
+		  immxbuf[immxcnt].len = 1;
+
+		  incr_immxcnt();
+		  insn->len -= 1;
+		  immx_ready = 1;
+		  break;
 
 		default:
 		  as_fatal("don't know how to generate a fixup record");
@@ -1547,63 +1522,63 @@ assemble_insn( const k1opc_t * opcode,
 /* Emit an instruction from the instruction array into the object
  * file. INSN points to an element of the instruction array. STOPFLAG
  * is true if this is the last instruction in the bundle.
+ *
+ * Only handles main syllables of bundle. Immediate extensions are
+ * handled by insert_operand.
  */
 static void
 emit_insn(k1insn_t * insn, int stopflag){
-    char *f;
-    int i;
-    unsigned image;
+  char *f;
+  int i;
+  unsigned int image;
 
-    /* if we are listing, attach frag to previous line */
-
-    if (listing)
- {
-        listing_prev_line();
+  /* if we are listing, attach frag to previous line */
+  if (listing)
+    {
+      listing_prev_line();
     }
 
-    /* Update text size for lane parity checking */
+  /* Update text size for lane parity checking */
+  set_byte_counter(now_seg, (get_byte_counter(now_seg) + (insn->len * 4)) );
 
-    set_byte_counter(now_seg, (get_byte_counter(now_seg) + (insn->len * 4)) );
+  /* allocate space in the fragment      */
+  f = frag_more(insn->len * 4);
 
-    /* allocate space in the fragment      */
+  /* spit out bits          */
+  for (i = 0; i < insn->len; i++) {
+    image = insn->insn[i];
 
-    f = frag_more(insn->len * 4);
-
-    /* spit out bits          */
-
-    for (i = 0; i < (int)insn->len; i++) {
-      image = (unsigned)insn->insn[i];
-      /* Handle bundle parallel bit. */ ;
-      if ((i == (int)insn->len - 1) && stopflag){
-        image &= 0x7FFFFFFF;
-      }else{
-        image |= 0x80000000;
-      }
-      //printf("Emmiting %#x\n", image);
-      /* Emit the instruction image. */
-      md_number_to_chars(f + (i * 4), image, 4);
+    /* Handle bundle parallel bit. */ ;
+    if ((i == insn->len - 1) && stopflag){
+      image &= 0x7FFFFFFF;
+    }else{
+      image |= 0x80000000;
     }
 
-    /* generate fixup records */
+    /* Emit the instruction image. */
+    md_number_to_chars(f + (i * 4), image, 4);
+  }
 
-    for (i = 0; i < insn->nfixups; i++) {
-      int size, pcrel;
-      reloc_howto_type *reloc_howto = bfd_reloc_type_lookup(stdoutput, insn->fixup[i].reloc);
-      assert(reloc_howto);
-      size = bfd_get_reloc_size(reloc_howto);
-      pcrel = reloc_howto->pc_relative;
-      fixS* fixup = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where,
-				size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
-      /*
-       * Set this bit so that large value can still be
-       * handled. Without it, assembler will fail in fixup_segment
-       * when it checks there is enough bits to store the value. As we
-       * usually split our reloc across different words, it may think
-       * that 4 bytes are not enough for large value. This simply
-       * skips the tests
-       */
-      fixup->fx_no_overflow = 1;
-    }
+  /* generate fixup records */
+
+  for (i = 0; i < insn->nfixups; i++) {
+    int size, pcrel;
+    reloc_howto_type *reloc_howto = bfd_reloc_type_lookup(stdoutput, insn->fixup[i].reloc);
+    assert(reloc_howto);
+    size = bfd_get_reloc_size(reloc_howto);
+    pcrel = reloc_howto->pc_relative;
+    fixS* fixup = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where,
+			      size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+    /*
+     * Set this bit so that large value can still be
+     * handled. Without it, assembler will fail in fixup_segment
+     * when it checks there is enough bits to store the value. As we
+     * usually split our reloc across different words, it may think
+     * that 4 bytes are not enough for large value. This simply
+     * skips the tests
+     */
+    fixup->fx_no_overflow = 1;
+  }
 }
 
 
@@ -2859,6 +2834,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
             image = value;
             md_number_to_chars(fixpos, image, fixP->fx_size);
             break;
+
         case BFD_RELOC_K1_17_PCREL:
         case BFD_RELOC_K1_27_PCREL:
             if (fixP->fx_pcrel || fixP->fx_addsy)
@@ -2871,6 +2847,10 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_S32_UP27:
         case BFD_RELOC_K1_S37_UP27:
         case BFD_RELOC_K1_S43_UP27:
+
+        case BFD_RELOC_K1_S64_UP27:
+        case BFD_RELOC_K1_S64_EX27:
+        case BFD_RELOC_K1_S64_LO10:
 
         case BFD_RELOC_K1_S43_TPREL64_UP27:
         case BFD_RELOC_K1_S43_TPREL64_EX6:
@@ -2913,6 +2893,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         case BFD_RELOC_K1_S43_TPREL64_LO10:
         case BFD_RELOC_K1_S64_TPREL64_LO10:
         case BFD_RELOC_K1_S37_TPREL_LO10:
+
 //         case BFD_RELOC_K1_PCREL_LO10:
         /* case BFD_RELOC_K1_GPREL_LO10: */
 //    case BFD_RELOC_K1_NEG_GPREL_LO9:

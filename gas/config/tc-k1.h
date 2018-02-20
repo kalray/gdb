@@ -56,6 +56,8 @@ extern const char * k1_target_format (void);
 #define md_end k1_end
 extern void k1_end (void);
 
+#define md_number_to_chars number_to_chars_littleendian
+
 #define TC_FIX_TYPE struct _symbol_struct *
 #define TC_SYMFILED_TYPE struct list_info_struct *
 #define REPEAT_CONS_EXPRESSIONS
