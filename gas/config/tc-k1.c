@@ -2759,180 +2759,129 @@ md_after_pass(void)		/* called from md_end */
 void
 md_apply_fix(fixS * fixP, valueT * valueP,
         segT segmentP ATTRIBUTE_UNUSED)
- {
-    char *const fixpos = fixP->fx_frag->fr_literal + fixP->fx_where;
-    //char *const fixpos2 = fixP->fx_frag->fr_literal + fixP->fx_where - 4;
-    valueT value = *valueP;
-    //valueT value2 = *valueP;
-    valueT image;
-    arelent *rel;
+{
+  char *const fixpos = fixP->fx_frag->fr_literal + fixP->fx_where;
+  valueT value = *valueP;
+  valueT image;
+  arelent *rel;
 
-    rel = (arelent *)xmalloc(sizeof(arelent));
+  rel = (arelent *)xmalloc(sizeof(arelent));
 
-    rel->howto = bfd_reloc_type_lookup(stdoutput, fixP->fx_r_type);
-    if(rel->howto == NULL){
-        as_fatal("[md_apply_fix] unsupported relocation type (can't find howto)");
+  rel->howto = bfd_reloc_type_lookup(stdoutput, fixP->fx_r_type);
+  if(rel->howto == NULL){
+    as_fatal("[md_apply_fix] unsupported relocation type (can't find howto)");
+  }
+
+  /* Note whether this will delete the relocation.  */
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
+
+  if (fixP->fx_size > 0)
+    image = md_chars_to_number(fixpos, fixP->fx_size);
+  else
+    image = 0;
+  if (fixP->fx_addsy != NULL)
+    {
+      switch (fixP->fx_r_type)
+	{
+	case BFD_RELOC_K1_S37_TPREL_UP27:
+	case BFD_RELOC_K1_S37_TPREL_LO10:
+	case BFD_RELOC_K1_TPREL_32:
+
+	case BFD_RELOC_K1_S43_TPREL64_EX6 :
+	case BFD_RELOC_K1_S43_TPREL64_UP27 :
+	case BFD_RELOC_K1_S43_TPREL64_LO10:
+
+	case BFD_RELOC_K1_S64_TPREL64_EX27 :
+	case BFD_RELOC_K1_S64_TPREL64_UP27 :
+	case BFD_RELOC_K1_S64_TPREL64_LO10:
+
+	case BFD_RELOC_K1_TPREL64_64:
+
+	  S_SET_THREAD_LOCAL (fixP->fx_addsy);
+	  break;
+	default:
+	  break;
+	}
     }
 
-    if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
-        fixP->fx_done = 1;
-
-    if (fixP->fx_size > 0)
-        image = md_chars_to_number(fixpos, fixP->fx_size);
-    else
-        image = 0;
-    if (fixP->fx_addsy != NULL)
- {
-        switch (fixP->fx_r_type)
-          {
-            case BFD_RELOC_K1_S37_TPREL_UP27:
-            case BFD_RELOC_K1_S37_TPREL_LO10:
-            case BFD_RELOC_K1_TPREL_32:
-	      
-	  case BFD_RELOC_K1_S43_TPREL64_EX6 :
-	  case BFD_RELOC_K1_S43_TPREL64_UP27 :
-	  case BFD_RELOC_K1_S43_TPREL64_LO10:
-
-	  case BFD_RELOC_K1_S64_TPREL64_EX27 :
-	  case BFD_RELOC_K1_S64_TPREL64_UP27 :
-	  case BFD_RELOC_K1_S64_TPREL64_LO10:
-
-	  case BFD_RELOC_K1_TPREL64_64:
-
-//             case BFD_RELOC_K1_GOTOFF_HI22:
-//             case BFD_RELOC_K1_GOTOFF_LO10:
-                S_SET_THREAD_LOCAL (fixP->fx_addsy);
-                break;
-            default:
-                break;
-          }
-    }
-    /* Convert GPREL10 to GPREL16 for instruction 'make' */
-    /* FIXME: [AP] is there a better way to do that using some
-     * MDS mechanisms? */
-    /* if (fixP->fx_r_type == BFD_RELOC_K1_10_GPREL) */
-    /* { */
-    /*   buf = (bfd_byte *) (fixP->fx_frag->fr_literal + fixP->fx_where); */
-    /*   insn = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0]; */
-    /*   if ((insn & 0x7f030000) == 0x60000000) */
-    /*     fixP->fx_r_type = BFD_RELOC_K1_16_GPREL; */
-    /* } */
+  /* If relocation has been marked for deletion, apply remaineng changes */
+  if (fixP->fx_done) {
     switch (fixP->fx_r_type)
- {
-//    case BFD_RELOC_8:
-        case BFD_RELOC_16:
-        case BFD_RELOC_32:
-        case BFD_RELOC_K1_TPREL64_64:
-	case BFD_RELOC_64:
-        case BFD_RELOC_K1_TPREL_32:
-        /* case BFD_RELOC_K1_FUNCDESC: */
-        case BFD_RELOC_K1_GLOB_DAT:
-        case BFD_RELOC_K1_GOT:
-        case BFD_RELOC_K1_GOTOFF:
-        case BFD_RELOC_K1_GOTOFF64:
-            //  case BFD_RELOC_32_PCREL:
-            image = value;
-            md_number_to_chars(fixpos, image, fixP->fx_size);
-            break;
+      {
+      case BFD_RELOC_16:
+      case BFD_RELOC_32:
+      case BFD_RELOC_K1_TPREL64_64:
+      case BFD_RELOC_64:
+      case BFD_RELOC_K1_TPREL_32:
 
-        case BFD_RELOC_K1_17_PCREL:
-        case BFD_RELOC_K1_27_PCREL:
-            if (fixP->fx_pcrel || fixP->fx_addsy)
-                return;
-            value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
-            image = (image & ~(rel->howto->dst_mask)) | value;
-            md_number_to_chars(fixpos, image, fixP->fx_size);
-            break;
+      case BFD_RELOC_K1_GLOB_DAT:
+      case BFD_RELOC_K1_GOT:
+      case BFD_RELOC_K1_GOTOFF:
+      case BFD_RELOC_K1_GOTOFF64:
+	image = value;
+	md_number_to_chars(fixpos, image, fixP->fx_size);
+	break;
 
-        case BFD_RELOC_K1_S32_UP27:
-        case BFD_RELOC_K1_S37_UP27:
-        case BFD_RELOC_K1_S43_UP27:
+      case BFD_RELOC_K1_17_PCREL:
+      case BFD_RELOC_K1_27_PCREL:
+	if (fixP->fx_pcrel || fixP->fx_addsy)
+	  return;
+	value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
+	image = (image & ~(rel->howto->dst_mask)) | value;
+	md_number_to_chars(fixpos, image, fixP->fx_size);
+	break;
 
-        case BFD_RELOC_K1_S64_UP27:
-        case BFD_RELOC_K1_S64_EX27:
-        case BFD_RELOC_K1_S64_LO10:
+      case BFD_RELOC_K1_S32_UP27:
+      case BFD_RELOC_K1_S37_UP27:
+      case BFD_RELOC_K1_S43_UP27:
 
-        case BFD_RELOC_K1_S43_TPREL64_UP27:
-        case BFD_RELOC_K1_S43_TPREL64_EX6:
+      case BFD_RELOC_K1_S64_UP27:
+      case BFD_RELOC_K1_S64_EX27:
+      case BFD_RELOC_K1_S64_LO10:
 
-        case BFD_RELOC_K1_S37_TPREL_UP27:
+      case BFD_RELOC_K1_S43_TPREL64_UP27:
+      case BFD_RELOC_K1_S43_TPREL64_EX6:
 
-        case BFD_RELOC_K1_S64_TPREL64_UP27:
-        case BFD_RELOC_K1_S64_TPREL64_EX27:
+      case BFD_RELOC_K1_S37_TPREL_UP27:
 
-//         case BFD_RELOC_K1_PCREL_HI22:
-        /* case BFD_RELOC_K1_GPREL_UP27: */
-//    case BFD_RELOC_K1_NEG_GPREL_HI23:
-        case BFD_RELOC_K1_S37_GOTOFF_UP27:
+      case BFD_RELOC_K1_S64_TPREL64_UP27:
+      case BFD_RELOC_K1_S64_TPREL64_EX27:
 
-        case BFD_RELOC_K1_S43_GOTOFF64_UP27:
-        case BFD_RELOC_K1_S43_GOTOFF64_EX6:
-        case BFD_RELOC_K1_S43_GOT64_UP27:
-        case BFD_RELOC_K1_S43_GOT64_EX6:
-        case BFD_RELOC_K1_S37_GOT_UP27:
-        case BFD_RELOC_K1_S43_PLT64_UP27:
-        case BFD_RELOC_K1_S43_PLT64_EX6:
-	  
-//    case BFD_RELOC_K1_GOTOFFX_HI23:
-//    case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
-        case BFD_RELOC_K1_S37_PLT_UP27:
-//    case BFD_RELOC_K1_TPREL_HI23:
-//    case BFD_RELOC_K1_GOTOFF_TPREL_HI23:
-//    case BFD_RELOC_K1_GOTOFF_DTPLDM_HI23:
-//    case BFD_RELOC_K1_DTPREL_HI23:
-//    case BFD_RELOC_K1_GOTOFF_DTPNDX_HI23:
-        /* case BFD_RELOC_K1_FUNCDESC_GOT_HI22: */
-	/* case BFD_RELOC_K1_FUNCDESC_GOTOFF_HI22: */
-//
+      case BFD_RELOC_K1_S37_GOTOFF_UP27:
 
-        /* case BFD_RELOC_K1_LO10: */
-        case BFD_RELOC_K1_S32_LO5:
-        case BFD_RELOC_K1_S37_LO10:
-        case BFD_RELOC_K1_S43_LO10:
-        case BFD_RELOC_K1_S43_EX6:
-        case BFD_RELOC_K1_S43_TPREL64_LO10:
-        case BFD_RELOC_K1_S64_TPREL64_LO10:
-        case BFD_RELOC_K1_S37_TPREL_LO10:
+      case BFD_RELOC_K1_S43_GOTOFF64_UP27:
+      case BFD_RELOC_K1_S43_GOTOFF64_EX6:
+      case BFD_RELOC_K1_S43_GOT64_UP27:
+      case BFD_RELOC_K1_S43_GOT64_EX6:
+      case BFD_RELOC_K1_S37_GOT_UP27:
+      case BFD_RELOC_K1_S43_PLT64_UP27:
+      case BFD_RELOC_K1_S43_PLT64_EX6:
+      case BFD_RELOC_K1_S37_PLT_UP27:
+      case BFD_RELOC_K1_S32_LO5:
+      case BFD_RELOC_K1_S37_LO10:
+      case BFD_RELOC_K1_S43_LO10:
+      case BFD_RELOC_K1_S43_EX6:
+      case BFD_RELOC_K1_S43_TPREL64_LO10:
+      case BFD_RELOC_K1_S64_TPREL64_LO10:
+      case BFD_RELOC_K1_S37_TPREL_LO10:
 
-//         case BFD_RELOC_K1_PCREL_LO10:
-        /* case BFD_RELOC_K1_GPREL_LO10: */
-//    case BFD_RELOC_K1_NEG_GPREL_LO9:
-        case BFD_RELOC_K1_S37_GOTOFF_LO10:
-        case BFD_RELOC_K1_S43_GOTOFF64_LO10:
-        case BFD_RELOC_K1_S43_GOT64_LO10:
-        case BFD_RELOC_K1_S37_GOT_LO10:
-//    case BFD_RELOC_K1_GOTOFFX_LO9:
-//    case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
-        case BFD_RELOC_K1_S37_PLT_LO10:
-        case BFD_RELOC_K1_S43_PLT64_LO10:
-        /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
-	/* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
-//    case BFD_RELOC_K1_TPREL_LO9:
-//    case BFD_RELOC_K1_GOTOFF_TPREL_LO9:
-//    case BFD_RELOC_K1_GOTOFF_DTPLDM_LO9:
-//    case BFD_RELOC_K1_DTPREL_LO9:
-//    case BFD_RELOC_K1_GOTOFF_DTPNDX_LO9:
-        /* case BFD_RELOC_K1_10_GPREL: */
-        /* case BFD_RELOC_K1_16_GPREL: */
+      case BFD_RELOC_K1_S37_GOTOFF_LO10:
+      case BFD_RELOC_K1_S43_GOTOFF64_LO10:
+      case BFD_RELOC_K1_S43_GOT64_LO10:
+      case BFD_RELOC_K1_S37_GOT_LO10:
 
-            value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
-            image = (image & ~(rel->howto->dst_mask)) | value;
-            md_number_to_chars(fixpos, image, fixP->fx_size);
-            break;
+      case BFD_RELOC_K1_S37_PLT_LO10:
+      case BFD_RELOC_K1_S43_PLT64_LO10:
+	value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
+	image = (image & ~(rel->howto->dst_mask)) | value;
+	md_number_to_chars(fixpos, image, fixP->fx_size);
+	break;
 
-//    case BFD_RELOC_K1_REL32:
-//    case BFD_RELOC_K1_FPTR32:
-//    case BFD_RELOC_K1_IPLT:
-//    case BFD_RELOC_K1_LTV32:
-//    case BFD_RELOC_K1_SEGREL32:
-//    case BFD_RELOC_K1_JMP_SLOT:
-//    case BFD_RELOC_K1_DTPMOD32:
-//    case BFD_RELOC_K1_DTPREL32:
-//    case BFD_RELOC_K1_TPREL32:
-//      break;
-        default:
-	  as_fatal("[md_apply_fix] unsupported relocation type (type not handled : %d)", fixP->fx_r_type);
-    }
+      default:
+	as_fatal("[md_apply_fix] unsupported relocation type (type not handled : %d)", fixP->fx_r_type);
+      }
+  }
 }
 
 void
