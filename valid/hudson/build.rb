@@ -52,7 +52,7 @@ build_type= options['build_type']
 repo = Git.new(gdb_clone,workspace)
 
 clean = CleanTarget.new("clean", repo, [])
-build = ParallelTarget.new("#{variant}_build", repo, [], [])
+build = ParallelTarget.new("#{variant}_build", repo, [clean], [])
 build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [])
 install = Target.new("#{variant}_install", repo, [build], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [install], [])
@@ -231,7 +231,10 @@ end
 
 b.target("clean") do
   b.logtitle = "Report for GDB clean, arch = #{arch}"
-  FileUtils.rm_rf(build_path)
+  if( variant == "gdbstub")
+    puts "Deleting #{File.join(build_path, "build")} ..."
+    FileUtils.rm_rf(File.join(build_path, "build"))
+  end
 end
 
 b.target("#{variant}_install") do
