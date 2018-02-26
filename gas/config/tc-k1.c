@@ -1269,23 +1269,8 @@ insert_operand(k1insn_t * insn,
 	    /* S43 uses LO10/EX6/UP27 format (2 words), with 2 relocs in main syllabes and 1 in extra word */
 	    /* S37 uses LO10/UP27 format (2 words), with one reloc in each word (2) */
 
-	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27) {
-	      insn->immx1 = immxcnt;
-	      immxbuf[immxcnt].insn[0] = 0;
-	      immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_ex;
-	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
-	      immxbuf[immxcnt].fixup[0].where = 0;
-	      immxbuf[immxcnt].nfixups = 1;
-	      immxbuf[immxcnt].len = 1;
-
-	      insn->len -= 1;
-	      incr_immxcnt();
-	    } else if (pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6) {
-	      insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_ex;
-	      insn->fixup[insn->nfixups].exp = reloc_arg;
-	      insn->fixup[insn->nfixups].where = 0;
-	      insn->nfixups++;
-	    }
+	    /* Beware that immxbuf must be filled in the same order as
+	       relocs should be emitted. */
 
 	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
 		|| pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6
@@ -1309,6 +1294,25 @@ insert_operand(k1insn_t * insn,
 	    } else {
 	      as_fatal ("Unexpected fixup");
 	    }
+
+	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27) {
+	      insn->immx1 = immxcnt;
+	      immxbuf[immxcnt].insn[0] = 0;
+	      immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_ex;
+	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
+	      immxbuf[immxcnt].fixup[0].where = 0;
+	      immxbuf[immxcnt].nfixups = 1;
+	      immxbuf[immxcnt].len = 1;
+
+	      insn->len -= 1;
+	      incr_immxcnt();
+	    } else if (pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6) {
+	      insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_ex;
+	      insn->fixup[insn->nfixups].exp = reloc_arg;
+	      insn->fixup[insn->nfixups].where = 0;
+	      insn->nfixups++;
+	    }
+
 	  }
 	else
 	  {
