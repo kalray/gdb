@@ -3612,6 +3612,13 @@ captured_main (int argc, char *argv[])
 
   port = *next_arg;
 
+  next_arg++;
+  if (port == NULL || (!attach && !multi_mode && *next_arg == NULL))
+    {
+      gdbserver_usage (stderr);
+      exit (1);
+    }
+
   // K1 specific
   #ifdef __k1__
   if (!getenv ("NO_MUX"))
@@ -3622,13 +3629,6 @@ captured_main (int argc, char *argv[])
       exit (1);
   }
   #endif
-
-  next_arg++;
-  if (port == NULL || (!attach && !multi_mode && *next_arg == NULL))
-    {
-      gdbserver_usage (stderr);
-      exit (1);
-    }
 
   /* Remember stdio descriptors.  LISTEN_DESC must not be listed, it will be
      opened by remote_prepare.  */

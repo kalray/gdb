@@ -341,6 +341,14 @@ static inline char *debug_agent_get_device_list (debug_agent_t *da, const char *
   return NULL;
 }
 
+static inline int debug_agent_set_stop_all (debug_agent_t *da, int vehicle, int stop_all)
+{
+  if (da->interface.set_stop_all)
+    return da->interface.set_stop_all (da, vehicle, stop_all);
+
+  return RET_ABORT;
+}
+
 static inline errcode_t debug_agent_set_kwatch (debug_agent_t *da, const char *full_name,
   int watch_type, int bset, char **err_msg)
 {

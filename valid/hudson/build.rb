@@ -1,4 +1,7 @@
 #!/usr/bin/ruby
+#
+# Copyright (C) 2008-2017 Kalray SA.
+#
 
 $LOAD_PATH.push('metabuild/lib')
 require 'metabuild'
@@ -10,7 +13,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
 
                         "board"      => {
                           "type" => "keywords",
-                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2, :tc3, :konic80, :ab04],
+                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2, :tc3, :konic80, :ab04, :konic40],
                           "default" => "developer",
                           "help" => "Target board (changing things at compilation)."
                         },
@@ -49,7 +52,7 @@ build_type= options['build_type']
 repo = Git.new(gdb_clone,workspace)
 
 clean = CleanTarget.new("clean", repo, [])
-build = ParallelTarget.new("#{variant}_build", repo, [], [])
+build = ParallelTarget.new("#{variant}_build", repo, [clean], [])
 build_valid = ParallelTarget.new("#{variant}_post_build_valid", repo, [build], [])
 install = Target.new("#{variant}_install", repo, [build], [])
 install_valid = ParallelTarget.new("#{variant}_post_install_valid", repo, [install], [])
@@ -152,7 +155,6 @@ b.target("#{variant}_build") do
     if( arch == "k1" )
       version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
-      b.run(:cmd => "echo #{machine_type}" )
 
       if (build_type == "Release") then
         additional_flags = "CFLAGS=-O2"
@@ -229,8 +231,10 @@ end
 
 b.target("clean") do
   b.logtitle = "Report for GDB clean, arch = #{arch}"
-
-  b.run("rm -rf #{build_path}")
+  if( variant == "gdbstub")
+    puts "Deleting #{File.join(build_path, "build")} ..."
+    FileUtils.rm_rf(File.join(build_path, "build"))
+  end
 end
 
 b.target("#{variant}_install") do
@@ -274,6 +278,9 @@ b.target("#{variant}_post_build_valid") do
       execution_board = "k1-jtag-runner"
       execution_ref = "gdb.sum.hw.ref"
       extra_extra = ""
+      if (board != "emb01") then
+        b.run("#{toolroot}/bin/k1-jtag-runner --reset")
+      end
     else
       execution_board = "k1-iss"
       execution_ref = "gdb.sum.iss.ref"
@@ -298,7 +305,7 @@ b.target("#{variant}_post_build_valid") do
         b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
         
         if( not options["artifacts"].empty? )
-          b.valid(:cmd => "cp gdb.log #{File.expand_path($options["artifacts"])}" )
+          FileUtils.cp("gdb.log", "#{File.expand_path($options["artifacts"])}" )
         end
 
       end
@@ -400,6 +407,9 @@ b.target("gdb_long_valid") do
         execution_board = "k1-jtag-runner"
         execution_ref = "gdb.sum.hw.ref"
         extra_extra = ""
+        if (board != "emb01") then
+          b.run("#{toolroot}/bin/k1-jtag-runner --reset")
+        end
       else
         execution_board = "k1-iss"
         execution_ref = "gdb.sum.iss.ref"
@@ -420,7 +430,7 @@ b.target("gdb_long_valid") do
       b.valid(:cmd => "../../../gdb/testsuite/regtest.rb #{File.join(gdb_path, 'valid', 'hudson', 'testsuite-refs', march, execution_ref)} gdb.sum")
 
       if( not options["artifacts"].empty? )
-        b.valid(:cmd => "cp gdb.log #{File.expand_path($options["artifacts"])}" )
+        FileUtils.cp("gdb.log", "#{File.expand_path($options["artifacts"])}" )
       end
 
     end
@@ -460,7 +470,7 @@ b.target("#{variant}_package") do
     pinfo.license = "GPLv3+ and GPLv3+ with exceptions and GPLv2+ and GPLv2+ with exceptions and GPL+ and LGPLv2+ and BSD and Public Domain"
 
     b.create_package(tar_package, pinfo)
-    b.run("rm #{tar_package}")
+    FileUtils.rm(tar_package)
   else
     # GBU package
     cd gbu_install_prefix
@@ -484,7 +494,7 @@ b.target("#{variant}_package") do
     pinfo.license = "GPLv3+"
 
     b.create_package(tar_package, pinfo)
-    b.run("rm #{tar_package}")
+    FileUtils.rm(tar_package)
   end
 end
 

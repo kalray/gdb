@@ -109,6 +109,7 @@ typedef int (*is_hot_attached_t) (debug_agent_t *self);
 typedef char *(*da_get_device_list_t) (debug_agent_t *self, const char *device_full_name);
 typedef errcode_t (*da_set_kwatch_t) (debug_agent_t *da, const char *full_name, int watch_type,
   int bset, char **err_msg);
+typedef errcode_t (*da_set_stop_all) (debug_agent_t *self, int vehicle, int stop_all);
 
 /**
  * @struct debug_agent_interface_t
@@ -168,6 +169,7 @@ typedef struct {
   is_hot_attached_t is_hot_attached;
   da_get_device_list_t get_device_list;
   da_set_kwatch_t set_kwatch;
+  da_set_stop_all set_stop_all;
 } debug_agent_interface_t;
 
 #ifdef	__cplusplus

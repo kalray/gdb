@@ -245,6 +245,19 @@ send_cluster_break_on_spawn (struct inferior *inf, int v)
 }
 
 void
+send_cluster_stop_all (struct inferior *inf, int v)
+{
+  char *buf;
+  long size = 256;
+
+  buf = (char *) malloc (size);
+  sprintf (buf, "kA%dp%x.1", v, inf->pid);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
+void
 send_cluster_debug_level (int level)
 {
   char *buf;
@@ -758,7 +771,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
   set_gdbarch_long_double_bit (gdbarch, 64);
-  set_gdbarch_ptr_bit (gdbarch, 64);
+  set_gdbarch_ptr_bit (gdbarch, gdbarch_bfd_arch_info (gdbarch)->bits_per_address);
 
   /* Get the k1 target description from INFO.  */
   tdesc = info.target_desc;
