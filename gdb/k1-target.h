@@ -13,6 +13,7 @@ struct inferior_data
   int cluster_debug_level_postponed;
   int os_supported_debug_level;
   int cluster_break_on_spawn;
+  int cluster_stop_all;
 };
 
 extern int idx_global_debug_level;
@@ -39,6 +40,7 @@ void set_cluster_debug_level_no_check (struct inferior *inf, int debug_level);
 void apply_global_debug_level (int level);
 void send_stop_at_main (int bstop);
 void send_cluster_break_on_spawn (struct inferior *inf, int v);
+void send_cluster_stop_all (struct inferior *inf, int v);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);
 

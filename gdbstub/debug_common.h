@@ -61,21 +61,21 @@ int debug_attributes_dtor( debug_attributes_t *attr);
 
 
 #define __DEBUG_MESSAGE( _this, fmt, ... ) \
-  if( _this->attributes.debug ) fprintf(_this->attributes.ostream->file, "[%-20s] " fmt , _this->name(),  ##__VA_ARGS__ )
+  if( (_this)->attributes.debug ) fprintf((_this)->attributes.ostream->file, "[%-20s] " fmt , (_this)->name(),  ##__VA_ARGS__ )
 
 #define __ERROR_MESSAGE( _this, fmt, ... ) \
-  if( _this->attributes.debug ) fprintf(_this->attributes.ostream->file, "[%-20s] " fmt , _this->name(),  ##__VA_ARGS__ )
+  if( (_this)->attributes.debug ) fprintf((_this)->attributes.ostream->file, "[%-20s] " fmt , (_this)->name(),  ##__VA_ARGS__ )
 
-#define DEBUG_WARNING( fmt, ... ) \
-    fprintf(this->attributes.ostream->file, "[%-20s] " fmt , this->name(),  ##__VA_ARGS__ )
+#define DEBUG_WARNING( _this, fmt, ... ) \
+    fprintf((_this)->attributes.ostream->file, "[%-20s] " fmt , (_this)->name(),  ##__VA_ARGS__ )
 
 #ifndef NDEBUG
-#define DEV_WARNING( fmt, ... ) if( this->attributes.debug ) fprintf(this->attributes.ostream->file, "[%-20s *** DEV WARNING ***] " fmt, this->name(),  ##__VA_ARGS__ )
+#define DEV_WARNING( _this, fmt, ... ) if( (_this)->attributes.debug ) fprintf((_this)->attributes.ostream->file, "[%-20s *** DEV WARNING ***] " fmt, (_this)->name(),  ##__VA_ARGS__ )
 #else /* NDEBUG */
 #define DEV_WARNING( fmt, ... ) 
 #endif /* NDEBUG */
 
-#define VERBOSE_INFO( fmt, ... ) if( this->attributes.debug ) fprintf(this->attributes.ostream->file, "[%-20s] " fmt, this->name(),  ##__VA_ARGS__ )
+#define VERBOSE_INFO( _this, fmt, ... ) if( (_this)->attributes.debug ) fprintf((_this)->attributes.ostream->file, "[%-20s] " fmt, (_this)->name(),  ##__VA_ARGS__ )
 
 #define MESSAGE_FAILURE( fmt, ... ) fprintf(stderr, "[%-12s] " fmt, get_name(),  ##__VA_ARGS__ )
 #define MESSAGE_SUCCESS( fmt, ... ) fprintf(stderr, "[%-12s] " fmt, get_name(),  ##__VA_ARGS__ )
@@ -88,46 +88,46 @@ int debug_attributes_dtor( debug_attributes_t *attr);
 
 #ifndef __cplusplus
 
-#define DEBUG_MSG( this, _level, fmt, ... ) \
-  if( this->debug_attr.debug && (this->debug_attr.level >= _level) ) fprintf(this->debug_attr.ostream->file, "[%-20s] " fmt , this->attributes.name, ##__VA_ARGS__ )
+#define DEBUG_MSG( _this, _level, fmt, ... ) \
+  if( (_this)->debug_attr.debug && ((_this)->debug_attr.level >= _level) ) fprintf((_this)->debug_attr.ostream->file, "[%-20s] " fmt , (_this)->attributes.name, ##__VA_ARGS__ )
 
-#define DEBUG_MSG_APPEND( this, _level, fmt, ... ) \
-  if( this->debug_attr.debug && (this->debug_attr.level >= _level) ) fprintf(this->debug_attr.ostream->file, fmt ,  ##__VA_ARGS__ )
+#define DEBUG_MSG_APPEND( _this, _level, fmt, ... ) \
+  if( (_this)->debug_attr.debug && ((_this)->debug_attr.level >= _level) ) fprintf((_this)->debug_attr.ostream->file, fmt ,  ##__VA_ARGS__ )
 
-#define ERROR_MSG( this, fmt, ... ) \
+#define ERROR_MSG(_this, fmt, ... ) \
 { \
-  if( isatty(fileno(this->debug_attr.ostream->file)) ) { \
-    fprintf(this->debug_attr.ostream->file, "\033[1;31m[%-20s] " fmt "\033[0m", this->attributes.name,  ##__VA_ARGS__ ); \
+  if( isatty(fileno((_this)->debug_attr.ostream->file)) ) { \
+    fprintf((_this)->debug_attr.ostream->file, "\033[1;31m[%-20s] " fmt "\033[0m", (_this)->attributes.name,  ##__VA_ARGS__ ); \
   } else { \
-    fprintf(this->debug_attr.ostream->file, "[%-20s] " fmt , this->attributes.name,  ##__VA_ARGS__ ); \
+    fprintf((_this)->debug_attr.ostream->file, "[%-20s] " fmt , (_this)->attributes.name,  ##__VA_ARGS__ ); \
   } \
 }
 
 #define STDERR_MSG( fmt, ... ) \
   fprintf(stderr, "%s:%d error: " fmt , __func__, __LINE__, ##__VA_ARGS__ ); 
 
-#define WARNING_MSG( this, fmt, ... ) \
+#define WARNING_MSG( _this, fmt, ... ) \
 { \
-  if (this->debug_attr.warning  ) {			 \
-  if( isatty(fileno(this->debug_attr.ostream->file)) ) { \
-    fprintf(this->debug_attr.ostream->file, "\033[1;33m[%-20s] " fmt "\033[0m", this->attributes.name,  ##__VA_ARGS__ ); \
+  if ((_this)->debug_attr.warning  ) {			 \
+  if( isatty(fileno((_this)->debug_attr.ostream->file)) ) { \
+    fprintf((_this)->debug_attr.ostream->file, "\033[1;33m[%-20s] " fmt "\033[0m", (_this)->attributes.name,  ##__VA_ARGS__ ); \
   } else { \
-    fprintf(this->debug_attr.ostream->file, "[%-20s] " fmt , this->attributes.name,  ##__VA_ARGS__ ); \
+    fprintf((_this)->debug_attr.ostream->file, "[%-20s] " fmt , (_this)->attributes.name,  ##__VA_ARGS__ ); \
   } \
   } \
 }
 
-#define WARNING_MSG_APPEND( this, fmt, ... ) \
+#define WARNING_MSG_APPEND( _this, fmt, ... ) \
 { \
-  if( isatty(fileno(this->debug_attr.ostream->file)) ) { \
-    fprintf(this->debug_attr.ostream->file, "\033[1;33m" fmt "\033[0m", ##__VA_ARGS__ ); \
+  if( isatty(fileno((_this)->debug_attr.ostream->file)) ) { \
+    fprintf((_this)->debug_attr.ostream->file, "\033[1;33m" fmt "\033[0m", ##__VA_ARGS__ ); \
   } else { \
-    fprintf(this->debug_attr.ostream->file, fmt , ##__VA_ARGS__ ); \
+    fprintf((_this)->debug_attr.ostream->file, fmt , ##__VA_ARGS__ ); \
   } \
 }
 
-#define DEBUG_EXEC( this, _level, ... ) \
-  if( this->debug_attr.debug && (this->debug_attr.level >= _level) ) __VA_ARGS__; 
+#define DEBUG_EXEC( _this, _level, ... ) \
+  if( (_this)->debug_attr.debug && ((_this)->debug_attr.level >= _level) ) __VA_ARGS__; 
 #endif /* __cplusplus */
 
 

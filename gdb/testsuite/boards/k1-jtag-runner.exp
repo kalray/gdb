@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Kalray SA.
+# Copyright 2011-2017 Kalray SA.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -229,7 +229,7 @@ proc gdbserver_spawn { child_args } {
     # be debugged, and any arguments.
     # xraynaud: it's not the way k1-jtag-runner works.
     # set arguments "$target_exec"
-    set arguments "--exec-file=Cluster0:$last_loaded_file"
+    set arguments "--only_taps=Cluster0 --exec-file=Cluster0:$last_loaded_file"
     if { $child_args != "" } {
 	    append arguments " $child_args"        
     }
