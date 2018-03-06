@@ -2159,10 +2159,6 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1c_ALU_FULL_ODD:
-    PUSH(alu0,state, states, states_sz, states_storage_sz);
-    break;
-
   case Reservation_k1c_BCU:
   case Reservation_k1c_BCU_TINY_TINY_MAU:
     //  case Bundling_k1c_BCU:
@@ -2172,7 +2168,6 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     //  case Bundling_k1c_MAU:
   case Reservation_k1c_MAU:
   case Reservation_k1c_MAU_ACC:
-  case Reservation_k1c_MAU_ACC_ODD:
 
     //  case Bundling_k1c_MAU_X:
   case Reservation_k1c_MAU_X:
