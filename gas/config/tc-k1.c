@@ -1136,11 +1136,11 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case Immediate_k1c_signed10:
             case Immediate_k1c_signed16:
             case Immediate_k1c_signed27:
-            case Immediate_k1c_signed32:
+            case Immediate_k1c_wrapped32:
             case Immediate_k1c_signed37:
             case Immediate_k1c_signed43:
             case Immediate_k1c_signed54:
-            case Immediate_k1c_signed64:
+            case Immediate_k1c_wrapped64:
             case Immediate_k1c_sysnumber:
             case Immediate_k1c_unsigned5:
             case Immediate_k1c_unsigned6:
@@ -1154,12 +1154,15 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 		    int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
-                    if( !(opdef->flags & k1SIGNED) && (tok[jj].X_unsigned == 0)){
+                    if( !((opdef->flags & k1SIGNED) || (opdef->flags & k1WRAPPED)) && (tok[jj].X_unsigned == 0)){
 		      return MATCH_NOT_FOUND;
                     }
 
-		    // [JV] Special case of both signed and unsigned 
-		    if(opdef->width == 32) {
+		    // [JV] Special case of both signed and unsigned ranges are accepted because
+		    // this immediate;
+		    // - is zero extended on the same size of the instruction operation
+		    // - sign bit is the highest bit
+		    if(opdef->flags & k1WRAPPED) {
 		      signed long long high_mask = 0x8000000000000000LL;
 		      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
 
@@ -1174,12 +1177,16 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
+		    if(opdef->width == 64) {
+		      mask = -1LL;
+		    }
 
 		    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
 		    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
 
-                    if ( ( (!(opdef->flags & k1SIGNED)) && !match_unsigned ) ||
-			 ( (opdef->flags & k1SIGNED)    && !match_signed ) ) {
+                    if ( !                                                         /* Does not match signed and unsigned variantes */
+			 ( ( !(opdef->flags & k1SIGNED) && match_unsigned ) ||     /* Match unsigned and operand is unsigned or wrapped */           
+			   ( ((opdef->flags & k1SIGNED) || (opdef->flags & k1WRAPPED))  && match_signed ) ) ) { /* Match signed and operand is signed or wrapped */           
 		      return MATCH_NOT_FOUND;
                     }
                     break;
@@ -1350,7 +1357,7 @@ insert_operand(k1insn_t * insn,
 		  insn->nfixups = 1;
 		  break;
 
-		case Immediate_k1c_signed32:
+		case Immediate_k1c_wrapped32:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S32_LO5;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
@@ -1423,7 +1430,7 @@ insert_operand(k1insn_t * insn,
 		  immx_ready = 1;
 		  break;
 
-		case Immediate_k1c_signed64:
+		case Immediate_k1c_wrapped64:
 		  insn->fixup[0].reloc = BFD_RELOC_K1_S64_LO10;
 		  insn->fixup[0].exp = *arg;
 		  insn->fixup[0].where = 0;
@@ -2018,10 +2025,10 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case Immediate_k1c_signed10:
     case Immediate_k1c_signed16:
     case Immediate_k1c_signed27:
-    case Immediate_k1c_signed32:
+    case Immediate_k1c_wrapped32:
     case Immediate_k1c_signed37:
     case Immediate_k1c_signed43:
-    case Immediate_k1c_signed64:
+    case Immediate_k1c_wrapped64:
     case Immediate_k1c_sysnumber:
     case Immediate_k1c_unsigned5:
     case Immediate_k1c_unsigned6:
