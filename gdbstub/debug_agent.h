@@ -261,7 +261,7 @@ static inline errcode_t debug_agent_stop(debug_agent_t *da, int vehicle, exec_st
     return da->interface.stop(da, vehicle, state, val);
 }
 
-static inline errcode_t debug_agent_is_executing(debug_agent_t *da, int vehicle, exec_state_t *state, int *val) {
+static inline errcode_t debug_agent_is_executing(debug_agent_t *da, int vehicle, exec_state_t *state, int64_t *val) {
     return da->interface.is_executing(da, vehicle, state, val);
 }
 

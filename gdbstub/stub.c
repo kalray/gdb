@@ -84,7 +84,7 @@ struct stopped_context
 {
   struct context ctxt;
   exec_state_t state;
-  int val;
+  int64_t val;
 
   int notified;
   int used;
@@ -322,7 +322,7 @@ static struct
 stopped_context *insert_stopped_context (struct gdbstub *stub, int agent, int vehicle)
 {
   exec_state_t state;
-  int val;
+  int64_t val;
   struct stopped_context *ctxt;
 
   if (debug_agent_is_executing (stub->agents[agent].agent, vehicle,
@@ -567,7 +567,7 @@ gdbstub_build_osdata (struct gdbstub *stub)
   else
   {
     exec_state_t state;
-    int val;
+    int64_t val;
 
     for (i = 0; i < stub->nb_agents; ++i)
     {
@@ -599,7 +599,8 @@ gdbstub_build_osdata (struct gdbstub *stub)
 static int
 has_stopped_contexts (const struct agent *agent)
 {
-  int i, val;
+  int i;
+  int64_t val;
   exec_state_t state = EXEC_RUNNING;
 
   for (i = 0; i < agent->nbvehicles
@@ -1811,7 +1812,7 @@ handle_X (struct gdbstub *stub)
 
 static bool
 parse_breakpoint_packet (struct gdbstub *stub, bp_type_t *type,
-  unsigned int *addr, int *length)
+  uint64_t *addr, int *length)
 {
   unsigned int t;
   char *endptr;
@@ -1823,7 +1824,7 @@ parse_breakpoint_packet (struct gdbstub *stub, bp_type_t *type,
     return false;
   }
 
-  *addr = strtoul (endptr + 1, &endptr, 16);
+  *addr = strtoull (endptr + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed bp packet (addr)";
@@ -1860,7 +1861,7 @@ static bool
 handle_z (struct gdbstub *stub)
 {
   bp_type_t type;
-  unsigned int addr;
+  uint64_t addr;
   int length;
 
   NEED_REAL_D_CONTEXT;
@@ -1884,7 +1885,7 @@ static bool
 handle_Z (struct gdbstub *stub)
 {
   bp_type_t type;
-  unsigned int addr;
+  uint64_t addr;
   int length;
 
   NEED_REAL_D_CONTEXT;
@@ -1925,16 +1926,16 @@ append_stop_packet (struct gdbstub *stub, struct stopped_context *c,
   {
     case EXEC_SIGNALED:
       printf_packet (stub, "T%02xthread:p%x.%x;",
-        c->val, gdb_ctx.agent + 1, gdb_ctx.vehicle + 1);
+        (unsigned int) c->val, gdb_ctx.agent + 1, gdb_ctx.vehicle + 1);
       break;
     case EXEC_EXITED:
       stub->exited = true;
       stub->exit_value = c->val;
-      printf_packet (stub, "W%02x;process:%x;", c->val, gdb_ctx.agent + 1);
+      printf_packet (stub, "W%02x;process:%x;", (unsigned int) c->val, gdb_ctx.agent + 1);
       break;
     case EXEC_WATCHPOINT:
-      printf_packet (stub, "T05thread:p%x.%x;watch:%x;",
-        gdb_ctx.agent + 1, gdb_ctx.vehicle + 1, c->val);
+      printf_packet (stub, "T05thread:p%x.%x;watch:%llx;",
+        gdb_ctx.agent + 1, gdb_ctx.vehicle + 1, (unsigned long long) c->val);
       break;
     default:
       return false;

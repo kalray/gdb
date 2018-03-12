@@ -82,7 +82,7 @@ typedef errcode_t (*da_icache_invalidate_t) (debug_agent_t *self, int vehicle);
 typedef errcode_t (*da_stepi_t) (debug_agent_t *self, int vehicle);
 typedef errcode_t (*da_run_t) (debug_agent_t *self, int vehicle);
 typedef errcode_t (*da_stop_t) (debug_agent_t *self, int vehicle, exec_state_t state, int val);
-typedef errcode_t (*da_is_executing_t) (debug_agent_t *self, int vehicle, exec_state_t *state, int *val);
+typedef errcode_t (*da_is_executing_t) (debug_agent_t *self, int vehicle, exec_state_t *state, int64_t *val);
 typedef errcode_t (*da_insert_breakpoint_t) (debug_agent_t *self, int vehicle, bp_type_t, uint64_t addr, uint64_t size);
 typedef errcode_t (*da_remove_breakpoint_t) (debug_agent_t *self, int vehicle, bp_type_t, uint64_t addr, uint64_t size);
 typedef errcode_t (*da_read_cycle_t) (debug_agent_t *self, int vehicle, uint64_t *val);
