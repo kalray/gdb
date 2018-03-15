@@ -6765,6 +6765,17 @@ ENUMDOC
   This is a 64 bit reloc that stores 32-bit thread pointer relative offset
   to two words (uses imm instruction).
 ENUM
+  BFD_RELOC_K1_RELOC_START
+ENUMDOC
+  K1 pseudo relocation code to mark the start of the K1
+  relocation enumerators.  N.B. the order of the enumerators is
+  important as several tables in the K1 bfd backend are indexed
+  by these enumerators; make sure they are all synced.";
+ENUM
+BFD_RELOC_K1_NONE
+ENUMDOC
+  K1 null relocation code.
+ENUM
 BFD_RELOC_K1_16
 ENUMX
 BFD_RELOC_K1_32
@@ -6772,6 +6783,10 @@ ENUMX
 BFD_RELOC_K1_17_PCREL
 ENUMX
 BFD_RELOC_K1_27_PCREL
+ENUMX
+BFD_RELOC_K1_32_PCREL
+ENUMX
+BFD_RELOC_K1_64_PCREL
 ENUMX
 BFD_RELOC_K1_S32_LO5
 ENUMX
@@ -6864,8 +6879,30 @@ ENUMX
 BFD_RELOC_K1_S64_TPREL64_UP27
 ENUMX
 BFD_RELOC_K1_S64_TPREL64_EX27
+ENUMX
+BFD_RELOC_K1_S37_GOTADDR_LO10
+ENUMX
+BFD_RELOC_K1_S37_GOTADDR_UP27
+ENUMX
+BFD_RELOC_K1_S43_GOTADDR_LO10
+ENUMX
+BFD_RELOC_K1_S43_GOTADDR_UP27
+ENUMX
+BFD_RELOC_K1_S43_GOTADDR_EX6
+ENUMX
+BFD_RELOC_K1_S64_GOTADDR_LO10
+ENUMX
+BFD_RELOC_K1_S64_GOTADDR_UP27
+ENUMX
+BFD_RELOC_K1_S64_GOTADDR_EX27
+ENUMX
+  BFD_RELOC_K1_RELOC_END
 ENUMDOC
-  Relocations for K1 processor
+  K1 pseudo relocation code to mark the end of the K1
+  relocation enumerators that have direct mapping to ELF reloc codes.
+  There are a few more enumerators after this one; those are mainly
+  used by the K1 assembler for the internal fixup or to select
+  one of the above enumerators.
 ENUM
   BFD_RELOC_AARCH64_RELOC_START
 ENUMDOC

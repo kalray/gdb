@@ -830,10 +830,19 @@ case "${targ}" in
     targ_defvec=iq2000_elf32_vec
     ;;
 
+#ifdef BFD64
+  k1-*-linux)
+    targ_defvec=k1_elf64_vec
+    want64=true
+    ;;
+#endif
+
   k1-*-*)
     targ_defvec=k1_elf32_vec
     targ_selvecs="k1_elf32_vec"
-	targ64_selvecs=k1_elf64_vec
+#ifdef BFD64
+    targ64_selvecs=k1_elf64_vec
+#endif
     ;;
 
   lm32-*-elf | lm32-*-rtems*)

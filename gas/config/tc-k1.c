@@ -148,6 +148,7 @@ static int insncnt = 0;
 static k1insn_t immxbuf[K1MAXBUNDLEWORDS];
 static int immxcnt = 0;
 
+static void incr_immxcnt(void);
 static void incr_immxcnt(void)
 {
   immxcnt++;
@@ -157,7 +158,7 @@ static void incr_immxcnt(void)
 }
 
 static void set_byte_counter(asection *sec, int value);
-void set_byte_counter(asection *sec, int value)
+static void set_byte_counter(asection *sec, int value)
 {
     sec->target_index = value;
 }
@@ -387,6 +388,20 @@ struct k1_pseudo_relocs {
         S64,
   } reloc_type;
   int bitsize;
+
+  /* Used when pseudo func should expand to different relocations
+     based on the 32/64 bits mode.
+     Enum values should match the k1_arch_size var set by -m64
+  */
+  enum {
+	PSEUDO_ALL = 0,
+	PSEUDO_32_ONLY = 32,
+	PSEUDO_64_ONLY = 64,
+  } avail_modes;
+
+  /* set to 1 when pseudo func does not take an argument */
+  int has_no_arg;
+
   bfd_reloc_code_real_type reloc_lo10, reloc_up27, reloc_ex;
   bfd_reloc_code_real_type single;
   k1_reloc_t *kreloc;
@@ -395,6 +410,7 @@ struct k1_pseudo_relocs {
 struct pseudo_func_s
 {
   const char *name;
+
   symbolS *sym;
   struct k1_pseudo_relocs pseudo_relocs;
 };
@@ -406,6 +422,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "gotoff",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_ALL,
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
     .reloc_lo10 = BFD_RELOC_K1_S37_GOTOFF_LO10,
@@ -418,6 +435,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "gotoff",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_32_ONLY,
     .bitsize = 32,
     .reloc_type = S32,
     .single = BFD_RELOC_K1_GOTOFF,
@@ -428,6 +446,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "got",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_ALL,
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
     .reloc_lo10 = BFD_RELOC_K1_S37_GOT_LO10,
@@ -440,6 +459,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "got",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_32_ONLY,
     .bitsize = 32,
     .reloc_type = S32,
     .single = BFD_RELOC_K1_GOT,
@@ -450,6 +470,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "plt",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_32_ONLY,
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
     .reloc_lo10 = BFD_RELOC_K1_S37_PLT_LO10,
@@ -462,6 +483,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "tprel",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_32_ONLY,
     .bitsize = 37,
     .reloc_type = S37_LO10_UP27,
     .reloc_lo10 = BFD_RELOC_K1_S37_TPREL_LO10,
@@ -474,6 +496,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "tprel",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_32_ONLY,
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
     .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
@@ -488,6 +511,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "tprel",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_32_ONLY,
     .bitsize = 32,
     .reloc_type = S32,
     .single = BFD_RELOC_K1_TPREL_32,
@@ -498,6 +522,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "tprel64",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
     .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
@@ -511,6 +536,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "tprel64",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 64,
     .reloc_type = S64_LO10_UP27_EX27,
     .reloc_lo10 = BFD_RELOC_K1_S64_TPREL64_LO10,
@@ -524,6 +550,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "tprel64",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 64,
     .reloc_type = S64,
     .single = BFD_RELOC_K1_TPREL64_64,
@@ -531,9 +558,10 @@ static struct pseudo_func_s pseudo_func[] =
    }
   },
   {
-   .name = "gotoff64",
+   .name = "gotoff",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
     .reloc_lo10 = BFD_RELOC_K1_S43_GOTOFF64_LO10,
@@ -544,9 +572,10 @@ static struct pseudo_func_s pseudo_func[] =
    }
   },
   {
-   .name = "gotoff64",
+   .name = "gotoff",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 64,
     .reloc_type = S64,
     .single = BFD_RELOC_K1_GOTOFF64,
@@ -554,9 +583,10 @@ static struct pseudo_func_s pseudo_func[] =
    }
   },
   {
-   .name = "got64",
+   .name = "got",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
     .reloc_lo10 = BFD_RELOC_K1_S43_GOT64_LO10,
@@ -567,9 +597,10 @@ static struct pseudo_func_s pseudo_func[] =
    }
   },
   {
-   .name = "got64",
+   .name = "got",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 64,
     .reloc_type = S64,
     .single = BFD_RELOC_K1_GOT64,
@@ -580,6 +611,7 @@ static struct pseudo_func_s pseudo_func[] =
    .name = "plt64",
    .pseudo_relocs =
    {
+    .avail_modes = PSEUDO_64_ONLY,
     .bitsize = 43,
     .reloc_type = S43_LO10_UP27_EX6,
     .reloc_lo10 = BFD_RELOC_K1_S43_PLT64_LO10,
@@ -589,6 +621,50 @@ static struct pseudo_func_s pseudo_func[] =
     .kreloc = &k1c_signed64_plt_reloc,
    }
   },
+  {
+   .name = "gotaddr",
+   .pseudo_relocs =
+   {
+    .avail_modes = PSEUDO_32_ONLY,
+    .bitsize = 37,
+    .has_no_arg = 1,
+    .reloc_type = S37_LO10_UP27,
+    .reloc_lo10 = BFD_RELOC_K1_S37_GOTADDR_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S37_GOTADDR_UP27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_gotaddr37_reloc,
+   }
+  },
+  {
+   .name = "gotaddr",
+   .pseudo_relocs =
+   {
+    .avail_modes = PSEUDO_32_ONLY,
+    .bitsize = 43,
+    .has_no_arg = 1,
+    .reloc_type = S43_LO10_UP27_EX6,
+    .reloc_lo10 = BFD_RELOC_K1_S43_GOTADDR_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S43_GOTADDR_UP27,
+    .reloc_ex = BFD_RELOC_K1_S43_PLT64_EX6,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_gotaddr43_reloc,
+   }
+    },
+  {
+   .name = "gotaddr",
+   .pseudo_relocs =
+   {
+    .avail_modes = PSEUDO_64_ONLY,
+    .bitsize = 64,
+    .has_no_arg = 1,
+    .reloc_type = S64_LO10_UP27_EX27,
+    .reloc_lo10 = BFD_RELOC_K1_S64_GOTADDR_LO10,
+    .reloc_up27 = BFD_RELOC_K1_S64_GOTADDR_UP27,
+    .reloc_ex = BFD_RELOC_K1_S64_GOTADDR_EX27,
+    .single = BFD_RELOC_UNUSED,
+    .kreloc = &k1c_gotaddr64_reloc,
+   }
+  } 
 };
 
 /*****************************************************/
@@ -798,9 +874,11 @@ k1_get_pseudo_func2(symbolS *sym, k1bfield *opnd) {
     if (sym == pseudo_func[i].sym) {
       int relidx;
       for(relidx=0; relidx < opnd->reloc_nb; relidx++) {
-        if(opnd->relocs[relidx] == pseudo_func[i].pseudo_relocs.kreloc) {
-          return &pseudo_func[i];
-        }
+	if(opnd->relocs[relidx] == pseudo_func[i].pseudo_relocs.kreloc
+	   && (k1_arch_size == pseudo_func[i].pseudo_relocs.avail_modes
+	       || pseudo_func[i].pseudo_relocs.avail_modes == PSEUDO_ALL)) {
+	  return &pseudo_func[i];
+	}
       }
     }
 
@@ -1622,97 +1700,97 @@ int is_constant_expression(expressionS* exp)
 void
 md_operand(expressionS *e)
 {
-   /* enum pseudo_type pseudo_type; */
-   /* char *name = NULL; */
-   size_t len;
-   int ch, i;
+  /* enum pseudo_type pseudo_type; */
+  /* char *name = NULL; */
+  size_t len;
+  int ch, i;
 
- switch (*input_line_pointer)
-   {
-   case '@':
-     /* Find what relocation pseudo-function we're dealing with. */
-     /* pseudo_type = 0; */
-     ch = *++input_line_pointer;
-     for (i = 0; i < NELEMS (pseudo_func); ++i)
-        if (pseudo_func[i].name && pseudo_func[i].name[0] == ch)
-          {
-            len = strlen (pseudo_func[i].name);
-            if (strncmp (pseudo_func[i].name + 1,
-                         input_line_pointer + 1, len - 1) == 0
-                && !is_part_of_name (input_line_pointer[len]))
-              {
-                input_line_pointer += len;
-                /* pseudo_type = pseudo_func[i].type; */
-                break;
-              }
-          }
-     /* switch (pseudo_type) */
-     /*         { */
-     /*         case PSEUDO_FUNC_RELOC: */
-          SKIP_WHITESPACE ();
-          if (*input_line_pointer != '(')
-            {
-              as_bad ("Expected '('");
-              goto err;
-            }
-          /* Skip '('.  */
-          ++input_line_pointer;
-          expression (e);
-          if (*input_line_pointer++ != ')')
-            {
-              as_bad ("Missing ')'");
-              goto err;
-            }
-          if (e->X_op != O_symbol)
-            {
-                  as_bad ("Illegal combination of relocation functions");
-                  /* if (e->X_op != O_pseudo_fixup) */
-                  /*     { */
-                  /*           as_bad ("Not a symbolic expression"); */
-                  /*           goto err; */
-                  /*     } */
-                   /* if (i != FUNC_GOT_RELATIVE) */
-                   /* { */
-                   /*   as_bad ("Illegal combination of relocation functions"); */
-                   /*   goto err; */
-                   /* } */
-                  /* switch (S_GET_VALUE (e->X_op_symbol)) */
-                  /*     { */
-                  /*     case FUNC_FPTR_RELATIVE: */
-                  /*           i = FUNC_GOT_FPTR_RELATIVE; break; */
-                  /*     case FUNC_TP_RELATIVE: */
-                  /*           i = FUNC_GOT_TP_RELATIVE; break; */
-                  /*     case FUNC_DTP_INDEX: */
-                  /*           i = FUNC_GOT_DTP_INDEX_RELATIVE; break; */
-                  /*     case FUNC_DTP_LOAD_MODULE: */
-                  /*           i = FUNC_GOT_DTP_LOAD_MODULE_RELATIVE; break; */
-                  /*     default: */
-                  /*           as_bad ("Illegal combination of relocation functions"); */
-                  /*           goto err; */
-                  /*     } */
-            }
-          /* Make sure gas doesn't get rid of local symbols that are used
-             in relocs.  */
-          e->X_op = O_pseudo_fixup;
-          e->X_op_symbol = pseudo_func[i].sym;
-        /*   break; */
+  switch (*input_line_pointer)
+    {
+    case '@':
+      /* Find what relocation pseudo-function we're dealing with. */
+      /* pseudo_type = 0; */
+      ch = *++input_line_pointer;
+      for (i = 0; i < NELEMS (pseudo_func); ++i)
+	if (pseudo_func[i].name && pseudo_func[i].name[0] == ch)
+	  {
+	    len = strlen (pseudo_func[i].name);
+	    if (strncmp (pseudo_func[i].name + 1,
+			 input_line_pointer + 1, len - 1) == 0
+		&& !is_part_of_name (input_line_pointer[len]))
+	      {
+		input_line_pointer += len;
+		break;
+	      }
+	  }
+      SKIP_WHITESPACE ();
+      if (*input_line_pointer != '(')
+	{
+	  as_bad ("Expected '('");
+	  goto err;
+	}
+      /* Skip '('.  */
+      ++input_line_pointer;
+      if (!pseudo_func[i].pseudo_relocs.has_no_arg) {
+	expression (e);
+      }
+      if (*input_line_pointer++ != ')')
+	{
+	  as_bad ("Missing ')'");
+	  goto err;
+	}
+      if (!pseudo_func[i].pseudo_relocs.has_no_arg) {
+	if (e->X_op != O_symbol)
+	  {
+	    as_bad ("Illegal combination of relocation functions");
+	    /* if (e->X_op != O_pseudo_fixup) */
+	    /*     { */
+	    /* 	  as_bad ("Not a symbolic expression"); */
+	    /* 	  goto err; */
+	    /*     } */
+	    /* if (i != FUNC_GOT_RELATIVE) */
+	    /* { */
+	    /*   as_bad ("Illegal combination of relocation functions"); */
+	    /*   goto err; */
+	    /* } */
+	    /* switch (S_GET_VALUE (e->X_op_symbol)) */
+	    /*     { */
+	    /*     case FUNC_FPTR_RELATIVE: */
+	    /* 	  i = FUNC_GOT_FPTR_RELATIVE; break; */
+	    /*     case FUNC_TP_RELATIVE: */
+	    /* 	  i = FUNC_GOT_TP_RELATIVE; break; */
+	    /*     case FUNC_DTP_INDEX: */
+	    /* 	  i = FUNC_GOT_DTP_INDEX_RELATIVE; break; */
+	    /*     case FUNC_DTP_LOAD_MODULE: */
+	    /* 	  i = FUNC_GOT_DTP_LOAD_MODULE_RELATIVE; break; */
+	    /*     default: */
+	    /* 	  as_bad ("Illegal combination of relocation functions"); */
+	    /* 	  goto err; */
+	    /*     } */
+	  }
+      }
+      /* Make sure gas doesn't get rid of local symbols that are used
+	 in relocs.  */
+      e->X_op = O_pseudo_fixup;
+      e->X_op_symbol = pseudo_func[i].sym;
+      /*   break; */
 
-        /* default: */
-        /*   /\* name = input_line_pointer - 1; *\/ */
-        /*   /\* get_symbol_end (); *\/ */
-        /*   get_symbol_name (&name); */
-        /*   as_bad ("Unknown pseudo function `%s'", name); */
-        /*   goto err; */
-        /* } */
-     break;
-   default:
-     break;
-   }
-    return;
+      /* default: */
+      /*   /\* name = input_line_pointer - 1; *\/ */
+      /*   /\* get_symbol_end (); *\/ */
+      /*   get_symbol_name (&name); */
+      /*   as_bad ("Unknown pseudo function `%s'", name); */
+      /*   goto err; */
+      /* } */
+      break;
+    default:
+      break;
+    }
+  return;
 
-   err:
-                       ignore_rest_of_line();
- }
+ err:
+  ignore_rest_of_line();
+}
 
 /* Return 1 if it's OK to adjust a reloc by replacing the symbol with
  * a section symbol plus some offset.  For relocs involving @fptr(),
@@ -2425,12 +2503,10 @@ md_begin()
                                         &zero_address_frag);
     symbolS *tprel64_sym = symbol_create (".<tprel64>", undefined_section, 0,
                                           &zero_address_frag);
-    symbolS *gotoff64_sym = symbol_create (".<gotoff64>", undefined_section, 0,
-                                           &zero_address_frag);
-    symbolS *got64_sym = symbol_create (".<got64>", undefined_section, 0,
-                                        &zero_address_frag);
     symbolS *plt64_sym = symbol_create (".<plt64>", undefined_section, 0,
-                                        &zero_address_frag);
+					&zero_address_frag);
+    symbolS *gotaddr_sym = symbol_create (".<gotaddr>", undefined_section, 0,
+					  &zero_address_frag);
 
     for (i = 0; i < NELEMS (pseudo_func); ++i) {
       symbolS *sym;
@@ -2444,12 +2520,13 @@ md_begin()
         sym = tprel_sym;
       } else if (!strcmp(pseudo_func[i].name, "tprel64")) {
         sym = tprel64_sym;
-      } else if (!strcmp(pseudo_func[i].name, "gotoff64")) {
-        sym = gotoff64_sym;
-      } else if (!strcmp(pseudo_func[i].name, "got64")) {
-        sym = got64_sym;
       } else if (!strcmp(pseudo_func[i].name, "plt64")) {
-        sym = plt64_sym;
+	sym = plt64_sym;
+      } else if (!strcmp(pseudo_func[i].name, "gotaddr")) {
+	sym = gotaddr_sym;
+      } else {
+	as_fatal("internal error: Unknown pseudo func `%s'",
+		 pseudo_func[i].name);
       }
 
       pseudo_func[i].sym = sym;
@@ -2540,7 +2617,7 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         }
     }
 
-  /* If relocation has been marked for deletion, apply remaineng changes */
+  /* If relocation has been marked for deletion, apply remaining changes */
   if (fixP->fx_done) {
     switch (fixP->fx_r_type)
       {
@@ -2566,6 +2643,19 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         image = (image & ~(rel->howto->dst_mask)) | value;
         md_number_to_chars(fixpos, image, fixP->fx_size);
         break;
+
+      case BFD_RELOC_K1_S64_GOTADDR_LO10:
+      case BFD_RELOC_K1_S64_GOTADDR_UP27:
+      case BFD_RELOC_K1_S64_GOTADDR_EX27:
+
+      case BFD_RELOC_K1_S43_GOTADDR_LO10:
+      case BFD_RELOC_K1_S43_GOTADDR_UP27:
+      case BFD_RELOC_K1_S43_GOTADDR_EX6:
+
+      case BFD_RELOC_K1_S37_GOTADDR_LO10:
+      case BFD_RELOC_K1_S37_GOTADDR_UP27:
+	value = 0;
+	/* Fallthrough */
 
       case BFD_RELOC_K1_S32_UP27:
       case BFD_RELOC_K1_S37_UP27:

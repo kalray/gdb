@@ -5720,11 +5720,26 @@ to two words (uses imm instruction).  */
 to two words (uses imm instruction).  */
   BFD_RELOC_MICROBLAZE_64_TLSTPREL,
 
-/* Relocations for K1 processor  */
+/* K1 pseudo relocation code to mark the start of the K1
+relocation enumerators.  N.B. the order of the enumerators is
+important as several tables in the K1 bfd backend are indexed
+by these enumerators; make sure they are all synced.";  */
+  BFD_RELOC_K1_RELOC_START,
+
+/* K1 null relocation code.  */
+  BFD_RELOC_K1_NONE,
+
+/* K1 pseudo relocation code to mark the end of the K1
+relocation enumerators that have direct mapping to ELF reloc codes.
+There are a few more enumerators after this one; those are mainly
+used by the K1 assembler for the internal fixup or to select
+one of the above enumerators.  */
   BFD_RELOC_K1_16,
   BFD_RELOC_K1_32,
   BFD_RELOC_K1_17_PCREL,
   BFD_RELOC_K1_27_PCREL,
+  BFD_RELOC_K1_32_PCREL,
+  BFD_RELOC_K1_64_PCREL,
   BFD_RELOC_K1_S32_LO5,
   BFD_RELOC_K1_S32_UP27,
   BFD_RELOC_K1_S37_LO10,
@@ -5771,6 +5786,15 @@ to two words (uses imm instruction).  */
   BFD_RELOC_K1_S64_TPREL64_LO10,
   BFD_RELOC_K1_S64_TPREL64_UP27,
   BFD_RELOC_K1_S64_TPREL64_EX27,
+  BFD_RELOC_K1_S37_GOTADDR_LO10,
+  BFD_RELOC_K1_S37_GOTADDR_UP27,
+  BFD_RELOC_K1_S43_GOTADDR_LO10,
+  BFD_RELOC_K1_S43_GOTADDR_UP27,
+  BFD_RELOC_K1_S43_GOTADDR_EX6,
+  BFD_RELOC_K1_S64_GOTADDR_LO10,
+  BFD_RELOC_K1_S64_GOTADDR_UP27,
+  BFD_RELOC_K1_S64_GOTADDR_EX27,
+  BFD_RELOC_K1_RELOC_END,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is

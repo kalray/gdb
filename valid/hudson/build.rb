@@ -121,7 +121,7 @@ when "k1"
   when "linux" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
-    sysroot_option = "--with-sysroot=#{options['sysroot']} --with-build-sysroot=#{options['sysroot']} "
+    sysroot_option = "--with-sysroot=#{options['sysroot']} --with-build-sysroot=#{options['sysroot']} --with-lib-path==/usr/lib:=/lib"
     mds_gbu_path = "#{family_prefix}/BE/GBU"
   when "elf" then
     program_prefix += "#{variant}-"
@@ -170,17 +170,23 @@ b.target("#{variant}_build") do
 
       b.create_goto_dir! build_path
       b.run(:cmd => "../configure " +
-            "--target=#{build_target} " +
-            "--program-prefix=#{program_prefix} " +
-            "--disable-werror " +
-            "--without-gnu-as " +
-            "--without-gnu-ld " +
-            "--with-python " +
-            "--with-expat=yes " +
-            "--with-babeltrace=no " +
-            "--with-bugurl=no " +
-            "--prefix=#{gdb_install_prefix}")
+                    ## "--enable-maintainer-mode " +
+                    "--target=#{build_target} " +
+                    "--program-prefix=#{program_prefix} " +
+                    "--disable-werror " +
+                    "--without-gnu-as " +
+                    "--without-gnu-ld " +
+                    "--with-python " +
+                    "--with-expat=yes " +
+                    "--with-babeltrace=no " +
+                    "--with-bugurl=no " +
+                    "--prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
+      if (build_type == "Release") then
+        additional_flags = "CFLAGS=-O2"
+      else
+        additional_flags = "CFLAGS=-g3"
+      end
       b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
   else ## variant != gdb => binutils only
@@ -220,7 +226,7 @@ b.target("#{variant}_build") do
     if (build_type == "Release") then
       additional_flags = "CFLAGS=-O2"
     else
-      additional_flags = "CFLAGS=-g"
+      additional_flags = "CFLAGS=-g3"
     end
 
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +

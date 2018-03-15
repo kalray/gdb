@@ -3415,36 +3415,27 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	case EM_TI_C6000:
 	  if ((e_flags & EF_C6000_REL))
 	    strcat (buf, ", relocatable module");
-      break;
+	  break;
 
 	case EM_K1:
-			if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_DP)
-			      strcat (buf, ", k1bdp");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_B_IO)
-			      strcat (buf, ", k1bio");
-			else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_C)
-			      strcat (buf, ", Coolidge (k1c) k1c");
+	  if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_C)
+	    strcat (buf, ", Coolidge (k1c) k1c");
+	  if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_NO)
+	    strcat (buf, ", NO ABI");
+	  else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_MULTI)
+	    strcat (buf, ", Multi ABI");
+	  else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_GCC)
+	    strcat (buf, ", GCC ABI");
+	  else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_EMBED)
+	    strcat (buf, ", Embed ABI");
+	  else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_PIC)
+	    strcat (buf, ", PIC ABI");
 
-			if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_NO)
-			      strcat (buf, ", NO ABI");
-			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_MULTI)
-			      strcat (buf, ", Multi ABI");
-			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_GCC)
-			      strcat (buf, ", GCC ABI");
-			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_EMBED)
-			      strcat (buf, ", Embed ABI");
-			else if ((e_flags & ELF_K1_ABI_MASK) == ELF_K1_ABI_PIC)
-			      strcat (buf, ", PIC ABI");
+	  if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_NOPIC)
+	    strcat (buf, ", NO PIC");
+	  else if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_PIC)
+	    strcat (buf, ", PIC");
 
-			if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_NOPIC)
-			      strcat (buf, ", NO PIC");
-			else if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_PIC)
-			      strcat (buf, ", PIC");
-			else if ((e_flags & ELF_K1_PIC_MASK) == ELF_K1_FDPIC)
-			      strcat (buf, ", FDPIC");
-
-            else if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_V1)
-                strcat (buf, ", k1v1");
 	  break;
 
 	case EM_MSP430:
@@ -11603,8 +11594,6 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
       return reloc_type == 3;  /* R_ARM_REL32 */
     case EM_MICROBLAZE:
       return reloc_type == 2;  /* R_MICROBLAZE_32_PCREL.  */
-    case EM_K1:
-        return reloc_type == 6;  /* R_K1_32_PCREL */
     case EM_OR1K:
       return reloc_type == 9; /* R_OR1K_32_PCREL.  */
     case EM_PARISC:
@@ -11637,6 +11626,8 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
     case EM_XTENSA_OLD:
     case EM_XTENSA:
       return reloc_type == 14; /* R_XTENSA_32_PCREL.  */
+    case EM_K1:
+      return reloc_type == 5; /* R_K1_32_PCREL */
     default:
       /* Do not abort or issue an error message here.  Not all targets use
 	 pc-relative 32-bit relocs in their DWARF debug information and we
@@ -11680,6 +11671,8 @@ is_64bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_TILEGX_64.  */
     case EM_MIPS:
       return reloc_type == 18;	/* R_MIPS_64.  */
+    case EM_K1:
+      return reloc_type == 29; /* R_K1_64 */
     default:
       return FALSE;
     }
@@ -11795,6 +11788,8 @@ is_16bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 2; /* R_VISIUM_16. */
     case EM_XGATE:
       return reloc_type == 3; /* R_XGATE_16.  */
+    case EM_K1:
+      return reloc_type == 1; /* R_K1_16 */
     default:
       return FALSE;
     }

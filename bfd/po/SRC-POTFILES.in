@@ -89,6 +89,7 @@ cpu-ia64.c
 cpu-iamcu.c
 cpu-ip2k.c
 cpu-iq2000.c
+cpu-k1.c
 cpu-k1om.c
 cpu-l1om.c
 cpu-lm32.c
@@ -190,7 +191,6 @@ elf32-i860.c
 elf32-i960.c
 elf32-ip2k.c
 elf32-iq2000.c
-elf32-k1.c
 elf32-lm32.c
 elf32-m32c.c
 elf32-m32r.c
@@ -239,7 +239,6 @@ elf64-gen.c
 elf64-hppa.c
 elf64-hppa.h
 elf64-ia64-vms.c
-elf64-k1.c
 elf64-mips.c
 elf64-mmix.c
 elf64-ppc.c
