@@ -9839,7 +9839,7 @@ install-strip-gas: installdirs
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(HOST_EXPORTS) \
 	(cd $(HOST_SUBDIR)/gas && \
-	  $(MAKE) $(FLAGS_TO_PASS)  install-strip)
+	  $(MAKE) $(FLAGS_TO_PASS)  install)
 
 @endif gas
 

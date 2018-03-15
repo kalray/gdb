@@ -100,5 +100,6 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (32, bfd_mach_k1c_k1c_usr,  "k1:k1c:usr", FALSE, NULL),
 };
 
+/* default must be coherent with default in elfNN_k1_object_p() */
 const bfd_arch_info_type bfd_k1_arch =
   N (32, bfd_mach_k1c_k1c, "k1c", TRUE, & arch_info_struct[0]);

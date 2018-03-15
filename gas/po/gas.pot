@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2017-12-21 15:00+0100\n"
+"POT-Creation-Date: 2018-03-30 16:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -984,7 +984,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1958 config/tc-k1.c:3918
+#: config/obj-elf.c:1958 config/tc-k1.c:3885
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -2515,8 +2515,8 @@ msgstr ""
 #: config/tc-h8300.c:100 config/tc-h8300.c:110 config/tc-h8300.c:120
 #: config/tc-h8300.c:131 config/tc-h8300.c:248 config/tc-hppa.c:6834
 #: config/tc-hppa.c:6840 config/tc-hppa.c:6846 config/tc-hppa.c:6852
-#: config/tc-hppa.c:8252 config/tc-k1.c:2652 config/tc-k1.c:2668
-#: config/tc-k1.c:2671 config/tc-lm32.c:197 config/tc-mips.c:3475
+#: config/tc-hppa.c:8252 config/tc-k1.c:2632 config/tc-k1.c:2648
+#: config/tc-k1.c:2651 config/tc-lm32.c:197 config/tc-mips.c:3475
 #: config/tc-mips.c:3985 config/tc-mn10300.c:938 config/tc-mn10300.c:943
 #: config/tc-mn10300.c:2440 config/tc-xc16x.c:79 config/tc-xc16x.c:86
 #: config/tc-xc16x.c:93
@@ -9060,11 +9060,11 @@ msgid "missing `.end'"
 msgstr ""
 
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:3257
+#: config/tc-k1.c:3224
 msgid "floating-point literals are not supported"
 msgstr ""
 
-#: config/tc-k1.c:3732
+#: config/tc-k1.c:3699
 msgid "alignments greater than 32 bytes not supported in .text sections."
 msgstr ""
 
@@ -10178,11 +10178,10 @@ msgstr ""
 msgid "base register expected"
 msgstr ""
 
-#: config/tc-mcore.c:887 config/tc-microblaze.c:933
-#: config/tc-microblaze.c:1065 config/tc-microblaze.c:1097
-#: config/tc-microblaze.c:1550 config/tc-microblaze.c:1616
-#: config/tc-microblaze.c:1689 config/tc-microblaze.c:2101
-#: config/tc-microblaze.c:2147
+#: config/tc-mcore.c:887 config/tc-microblaze.c:933 config/tc-microblaze.c:1065
+#: config/tc-microblaze.c:1097 config/tc-microblaze.c:1550
+#: config/tc-microblaze.c:1616 config/tc-microblaze.c:1689
+#: config/tc-microblaze.c:2101 config/tc-microblaze.c:2147
 #, c-format
 msgid "unknown opcode \"%s\""
 msgstr ""

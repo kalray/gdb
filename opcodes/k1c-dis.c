@@ -134,7 +134,7 @@ k1c_reassemble_bundle(int wordcount, int *_insncount) {
   int mau_taken = 0;
   int lsu_taken = 0;
 
-  int i, j;
+  unsigned int i, j;
 
   struct instr_s instr[K1MAXBUNDLEISSUE];
   assert(K1MAXBUNDLEISSUE >= BundleIssue__);
