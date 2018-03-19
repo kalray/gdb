@@ -156,10 +156,16 @@ b.target("#{variant}_build") do
       version = options["version"] + " " + `git rev-parse --verify --short HEAD 2> /dev/null`.chomp
       version += "-dirty" if not `git diff-index --name-only HEAD 2> /dev/null`.chomp.empty?
 
+      install_lib = ""
+      b.builder_infos.each do |builder_info|
+        install_lib = "-DINSTALL_LIB='#{builder_info.lib}'"
+        break
+      end
+
       if (build_type == "Release") then
-        additional_flags = "CFLAGS=-O2"
+        additional_flags = "CFLAGS=\"-O2 #{install_lib}\""
       else
-        additional_flags = "CFLAGS=\"-g -O0\""
+        additional_flags = "CFLAGS=\"-g -O0 #{install_lib}\""
       end
 
       b.create_goto_dir! build_path

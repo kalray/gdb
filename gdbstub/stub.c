@@ -164,6 +164,7 @@ struct gdbstub
   bool async;
   int debug;
   bool skip_exit_when_stub_exited;
+  int jtag_over_iss_val;
 };
 
 static int str_printf (str_t str, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
@@ -414,6 +415,12 @@ gdbstub_listen (int port, int port_end, struct gdbstub *stub)
 
   stub->infd = stub->outfd = sd;
   return port;
+}
+
+void
+gdbstub_set_jtag_over_iss (struct gdbstub *stub, int value)
+{
+  stub->jtag_over_iss_val = value;
 }
 
 int
@@ -1451,6 +1458,16 @@ kalray_get_os_supported_debug_level (struct gdbstub *stub)
   //printf ("Agent %d  os_supported_debug_mode %d\n", ctxt.agent,
   //  stub->agents[ctxt.agent].agent->attributes.os_supported_debug_mode);
   stub->payload[0] = '0' + stub->agents[ctxt.agent].agent->attributes.os_supported_debug_mode;
+  stub->data_len = 1 + 1;
+  return send_answer (stub);
+}
+
+static bool
+kalray_get_jtag_over_iss (struct gdbstub *stub)
+{
+  prepare_to_answer (stub);
+  stub->payload[0] = (stub->jtag_over_iss_val == ISS_JTAG_OVER_ISS) ? 'i' :
+    ((stub->jtag_over_iss_val == OCE_JTAG_OVER_ISS) ? 'o' : 'n');
   stub->data_len = 1 + 1;
   return send_answer (stub);
 }
@@ -2564,6 +2581,8 @@ handle_command (struct gdbstub *stub)
           return kalray_set_debug_level (stub);
         case 'h':
           return kalray_get_intsys_handlers (stub);
+        case 'j':
+          return kalray_get_jtag_over_iss (stub);
         case 'l':
           return kalray_get_device_list (stub);
         case 'm':

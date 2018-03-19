@@ -325,6 +325,20 @@ inform_dsu_stepi_bkp (void)
   free (buf);
 }
 
+char
+get_jtag_over_iss (void)
+{
+  char ret, *buf = (char *) malloc (256);
+  long size = 256;
+  strcpy (buf, "kj");
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  ret = *buf;
+  free (buf);
+
+  return ret;
+}
+
 char *
 send_get_dev_list_string (const char *full_name)
 {
@@ -727,6 +741,19 @@ k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *gr
   return default_register_reggroup_p (gdbarch, regnum, group);
 }
 
+static const gdb_byte *
+k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
+{
+  static const gdb_byte BREAK[] = {0x1, 0x0, 0x0, 0x0};
+  static const gdb_byte BREAK_OCE[] = {0xfd, 0x0f, 0x20, 0x07}; // scall 4093
+  *len = 4;
+
+  if (cjtag_over_iss == 'o')
+    return BREAK_OCE;
+
+  return BREAK;
+}
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -871,7 +898,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
     k1_fetch_tls_load_module_address);
 
-  set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
+  set_gdbarch_breakpoint_from_pc (gdbarch, k1_bare_breakpoint_from_pc);
   set_gdbarch_adjust_breakpoint_address (gdbarch,
     k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */

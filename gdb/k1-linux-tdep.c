@@ -59,6 +59,15 @@ static int opt_debug_spawned_clusters = 0, debug_spawned_clusters = 0;
 static int use_comm_mux = 0;
 char *sysroot_path = NULL;
 
+static const gdb_byte *
+k1_linux_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
+{
+  static const gdb_byte BREAK[] = {0x1, 0x0, 0x0, 0x0};
+  *len = 4;
+
+  return BREAK;
+}
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -193,7 +202,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   dwarf2_append_unwinders (gdbarch);
   frame_unwind_append_unwinder (gdbarch, &k1_frame_unwind);
 
-  set_gdbarch_breakpoint_from_pc (gdbarch, k1_breakpoint_from_pc);
+  set_gdbarch_breakpoint_from_pc (gdbarch, k1_linux_breakpoint_from_pc);
   set_gdbarch_adjust_breakpoint_address (gdbarch,
     k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */

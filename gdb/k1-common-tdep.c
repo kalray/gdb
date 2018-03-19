@@ -91,15 +91,6 @@ k1_dummy_register_type (struct gdbarch *gdbarch, int regno)
   return builtin_type (gdbarch)->builtin_int;
 }
 
-const gdb_byte *
-k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
-{
-  static const gdb_byte BREAK[] = {0x1, 0x0, 0x0, 0x0};
-  *len = 4;
-
-  return BREAK;
-}
-
 CORE_ADDR
 k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr)
 {

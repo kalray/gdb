@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+enum {NO_JTAG_OVER_ISS = 0, OCE_JTAG_OVER_ISS = 1, ISS_JTAG_OVER_ISS = 2};
+
 struct gdbstub;
 
 struct gdbstub *gdbstub_init(debug_agent_t *agents);
@@ -37,6 +39,7 @@ void gdbstub_set_skip_exit_when_stub_exited(struct gdbstub *stub, bool v);
 int gdbstub_listen(int port_start, int port_end, struct gdbstub *stub); 
 int gdbstub_accept(struct gdbstub *stub); 
 void gdbstub_join (struct gdbstub *stub, pthread_t cthread);
+void gdbstub_set_jtag_over_iss (struct gdbstub *stub, int value);
 
 void gdbstub_notify_context_stop(struct gdbstub *, int agent, int vehicle);
 
