@@ -1814,19 +1814,19 @@ assemble_tokens(const char *opname,
  */
 
 static Bundling find_bundling(const k1insn_t *insn)
- {
-    int insn_bundlings = insn->opdef->bundlings;
-    return insn_bundlings;
+{
+    int insn_bundling = insn->opdef->bundling;
+    return insn_bundling;
 }
 
-static int find_scheduling(const k1insn_t *insn)
- {
+static int find_reservation(const k1insn_t *insn)
+{
     int insn_reservation = insn->opdef->reservation;
     return insn_reservation;
 }
 
 static int cmp_bundling(const void *a, const void *b)
- {
+{
     const Bundling *ba = (const Bundling *)a;
     const Bundling *bb = (const Bundling *)b;
     return (*bb < *ba) - (*ba < *bb);
@@ -2153,7 +2153,7 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     return 1;
   }
   k1insn_t *cur_insn = bundle_insn[state->cur_insn];
-  switch(find_scheduling(cur_insn)){
+  switch(find_reservation(cur_insn)){
 
   case Reservation_k1c_ALL:
     as_fatal("ALL reservation encountered, should have been handled before");
@@ -2218,7 +2218,7 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
 
   default:
     as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
-              cur_insn->opdef->as_op, find_scheduling(cur_insn));
+              cur_insn->opdef->as_op, find_reservation(cur_insn));
   }
   return 0;
 }
@@ -2236,7 +2236,7 @@ k1c_print_insn(k1opc_t *op) {
     asm_str[i] = '-';
   }
  
-  switch(op->bundlings){
+  switch(op->bundling){
   case Bundling_k1c_ALL:
     insn_type="ALL            ";
     break;
@@ -2309,7 +2309,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
       }
     }
     if (tiny_k1){
-      switch(find_scheduling(bundle_insn[bidx])){
+      switch(find_reservation(bundle_insn[bidx])){
       case Reservation_k1c_ALU_FULL:
       case Reservation_k1c_ALU_FULL_X:
       case Reservation_k1c_ALU_FULL_Y:
