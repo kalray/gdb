@@ -62,7 +62,6 @@ CORE_ADDR k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR sp, int struct_return, CORE_ADDR struct_addr);
 CORE_ADDR k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr);
 CORE_ADDR k1_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame);
-const gdb_byte *k1_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len);
 CORE_ADDR k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr);
 int k1_print_insn (bfd_vma pc, disassemble_info *di);
 int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc);

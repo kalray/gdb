@@ -35,6 +35,7 @@
 #include "event-loop.h"
 #include "location.h"
 #include "regcache.h"
+#include "objfiles.h"
 
 #include "elf/k1c.h"
 #include "elf-bfd.h"
@@ -44,6 +45,9 @@
 #ifndef MAX
 #define MAX(a, b) ((a < b) ? (b) : (a))
 #endif
+
+#define _STRINGIFY( s ) #s
+#define STRINGIFY( s ) _STRINGIFY(s)
 
 struct k1_dev_list
 {
@@ -72,6 +76,7 @@ static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NU
 static const char *sglobal_debug_level;
 static const char *sopts_cluster_stop_all[] = {"none", "jtag", "break_mask", NULL};
 static const char *sopt_cluster_stop_all;
+char cjtag_over_iss = 'n';
 int idx_global_debug_level, global_debug_level_set;
 int opt_hide_threads = 1;
 int opt_break_on_spawn = 0;
@@ -457,7 +462,7 @@ mppa_target_resume (struct target_ops *ops, ptid_t ptid, int step, enum gdb_sign
 }
 
 static void
-k1_change_file (const char *file_path)
+k1_change_file (const char *file_path, const char *cluster_name)
 {
   struct stat st;
   if (stat (file_path, &st))
@@ -472,12 +477,37 @@ k1_change_file (const char *file_path)
     return;
   }
 
+  cjtag_over_iss = get_jtag_over_iss ();
   TRY
   {
     exec_file_attach ((char *) file_path, 0);
     symbol_file_add_main (file_path, 0);
-  }
+    if (cjtag_over_iss == 'i')
+    {
+      const char *rel_debug_handlers = "/" STRINGIFY (INSTALL_LIB) "/kalray-oce/k1c/k1c_node_debug_handlers.u";
+      char path[1024], *dn;
+      int sz = readlink ("/proc/self/exe", path, sizeof (path) - 1);
+      path[sz] = 0;
+      dn = dirname (path);
+      if (dn != path)
+        strcpy (path, dn);
+      dn = dirname (path);
+      if (dn != path)
+        sprintf (path, "%s%s", dn, rel_debug_handlers);
+      else
+        strcat (path, rel_debug_handlers);
 
+      if (access (path, R_OK))
+        fprintf (stderr, "Warning: cannot find the debug handlers at %s\n", path);
+      else
+      {
+        if (!cluster_name)
+          cluster_name = "[unknown cluster name]";
+        fprintf (stderr, "Info: adding %s debug handler symbols from %s\n", cluster_name, path);
+        symbol_file_add (path, 0, NULL, OBJF_USERLOADED | OBJF_SHARED);
+      }
+    }
+  }
   CATCH (ex, RETURN_MASK_ALL)
   {
     // exception
@@ -580,7 +610,7 @@ k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus
         ptid_t save_ptid = inferior_ptid;
         data->sym_file_loaded = 1;
         switch_to_thread (res);
-        k1_change_file (file);
+        k1_change_file (file, data->cluster);
         switch_to_thread (save_ptid);
       }
 
@@ -960,6 +990,7 @@ attach_mppa_command (char *args, int from_tty)
   execute_command (set_pagination_off_cmd, 0);
 
   k1_target_attach (&current_target, args, from_tty);
+  cjtag_over_iss = get_jtag_over_iss ();
 
   remote_hw_breakpoint_limit = 0;
   remote_hw_watchpoint_limit = 1;
@@ -1038,7 +1069,7 @@ attach_mppa_command (char *args, int from_tty)
         if (!data->sym_file_loaded)
         {
           data->sym_file_loaded = 1;
-          k1_change_file (file);
+          k1_change_file (file, data->cluster);
         }
       }
     }
@@ -1300,6 +1331,7 @@ _initialize__k1_target (void)
   idx_global_debug_level = DBG_LEVEL_SYSTEM;
   global_debug_level_set = 0;
   sglobal_debug_level = sglobal_debug_levels[idx_global_debug_level];
+  cjtag_over_iss = 'n';
 
   k1_target_ops.to_shortname = "mppa";
   k1_target_ops.to_longname = "Kalray MPPA connection";

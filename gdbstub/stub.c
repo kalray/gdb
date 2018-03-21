@@ -164,6 +164,7 @@ struct gdbstub
   bool async;
   int debug;
   bool skip_exit_when_stub_exited;
+  int jtag_over_iss_val;
 };
 
 static int str_printf (str_t str, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
@@ -414,6 +415,12 @@ gdbstub_listen (int port, int port_end, struct gdbstub *stub)
 
   stub->infd = stub->outfd = sd;
   return port;
+}
+
+void
+gdbstub_set_jtag_over_iss (struct gdbstub *stub, int value)
+{
+  stub->jtag_over_iss_val = value;
 }
 
 int
@@ -1378,13 +1385,13 @@ handle_G (struct gdbstub *stub)
 }
 
 static errcode_t
-read_memory (debug_agent_t *da, int vehicle, unsigned int addr, void *buf, int buf_size)
+read_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size)
 {
   return debug_agent_read_dcache (da, vehicle, addr, buf, buf_size);
 }
 
 static errcode_t
-write_memory (debug_agent_t *da, int vehicle, unsigned int addr, void *buf, int buf_size)
+write_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size)
 {
   return debug_agent_write_dcache (da, vehicle, addr, buf, buf_size);
 }
@@ -1451,6 +1458,16 @@ kalray_get_os_supported_debug_level (struct gdbstub *stub)
   //printf ("Agent %d  os_supported_debug_mode %d\n", ctxt.agent,
   //  stub->agents[ctxt.agent].agent->attributes.os_supported_debug_mode);
   stub->payload[0] = '0' + stub->agents[ctxt.agent].agent->attributes.os_supported_debug_mode;
+  stub->data_len = 1 + 1;
+  return send_answer (stub);
+}
+
+static bool
+kalray_get_jtag_over_iss (struct gdbstub *stub)
+{
+  prepare_to_answer (stub);
+  stub->payload[0] = (stub->jtag_over_iss_val == ISS_JTAG_OVER_ISS) ? 'i' :
+    ((stub->jtag_over_iss_val == OCE_JTAG_OVER_ISS) ? 'o' : 'n');
   stub->data_len = 1 + 1;
   return send_answer (stub);
 }
@@ -1626,14 +1643,15 @@ kalray_get_cpu_exec_level (struct gdbstub *stub)
 static bool
 handle_m (struct gdbstub *stub)
 {
-  unsigned int addr, len;
+  unsigned int len;
+  uint64_t addr;
   char *endptr;
   unsigned char *buf;
   int i;
   errcode_t err;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoul ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed m packet (addr)";
@@ -1695,14 +1713,15 @@ icache_invalidate (struct gdbstub *stub)
 static bool
 handle_M (struct gdbstub *stub)
 {
-  unsigned int addr, len;
+  unsigned int len;
+  uint64_t addr;
   char *endptr;
   unsigned char *buf;
   int i;
   errcode_t err = RET_OK;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoul ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed M packet (addr)";
@@ -1765,12 +1784,13 @@ unescape (char* src, unsigned int src_len)
 static bool
 handle_X (struct gdbstub *stub)
 {
-  unsigned int addr, len, len2;
+  unsigned int len, len2;
+  uint64_t addr;
   char *endptr;
   errcode_t err = RET_OK;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoul ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed X packet (addr)";
@@ -2564,6 +2584,8 @@ handle_command (struct gdbstub *stub)
           return kalray_set_debug_level (stub);
         case 'h':
           return kalray_get_intsys_handlers (stub);
+        case 'j':
+          return kalray_get_jtag_over_iss (stub);
         case 'l':
           return kalray_get_device_list (stub);
         case 'm':
