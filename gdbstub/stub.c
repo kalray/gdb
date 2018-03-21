@@ -1385,13 +1385,13 @@ handle_G (struct gdbstub *stub)
 }
 
 static errcode_t
-read_memory (debug_agent_t *da, int vehicle, unsigned int addr, void *buf, int buf_size)
+read_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size)
 {
   return debug_agent_read_dcache (da, vehicle, addr, buf, buf_size);
 }
 
 static errcode_t
-write_memory (debug_agent_t *da, int vehicle, unsigned int addr, void *buf, int buf_size)
+write_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size)
 {
   return debug_agent_write_dcache (da, vehicle, addr, buf, buf_size);
 }
@@ -1643,14 +1643,15 @@ kalray_get_cpu_exec_level (struct gdbstub *stub)
 static bool
 handle_m (struct gdbstub *stub)
 {
-  unsigned int addr, len;
+  unsigned int len;
+  uint64_t addr;
   char *endptr;
   unsigned char *buf;
   int i;
   errcode_t err;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoul ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed m packet (addr)";
@@ -1712,14 +1713,15 @@ icache_invalidate (struct gdbstub *stub)
 static bool
 handle_M (struct gdbstub *stub)
 {
-  unsigned int addr, len;
+  unsigned int len;
+  uint64_t addr;
   char *endptr;
   unsigned char *buf;
   int i;
   errcode_t err = RET_OK;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoul ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed M packet (addr)";
@@ -1782,12 +1784,13 @@ unescape (char* src, unsigned int src_len)
 static bool
 handle_X (struct gdbstub *stub)
 {
-  unsigned int addr, len, len2;
+  unsigned int len, len2;
+  uint64_t addr;
   char *endptr;
   errcode_t err = RET_OK;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoul ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed X packet (addr)";
