@@ -2135,9 +2135,9 @@ new_state(struct state_t *orig){
 
 static int
 k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
-		  sched_state_t *state,
-		  sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz,
-		  sched_state_t **solutions, unsigned int *solutions_sz){
+                  sched_state_t *state,
+                  sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz,
+                  sched_state_t **solutions, unsigned int *solutions_sz){
 
   if (state->cur_insn == bundle_insncnt_p){
     solutions[(*solutions_sz)++] = state;
@@ -2145,63 +2145,47 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     return 1;
   }
   k1insn_t *cur_insn = bundle_insn[state->cur_insn];
-  switch(find_reservation(cur_insn)){
+  switch(find_bundling(cur_insn)){
 
-  case Reservation_k1c_ALL:
-    as_fatal("ALL reservation encountered, should have been handled before");
+  case Bundling_k1c_ALL:
+    as_fatal("Bundling ALL encountered, should have been handled before");
     break;
 
-  case Reservation_k1c_ALU_FULL:
-  case Reservation_k1c_ALU_FULL_X:
-  case Reservation_k1c_ALU_FULL_Y:
+  case Bundling_k1c_FULL:
+  case Bundling_k1c_FULL_X:
+  case Bundling_k1c_FULL_Y:
     PUSH(alu1,state, states, states_sz, states_storage_sz);
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1c_BCU:
-  case Reservation_k1c_BCU_TINY_TINY_MAU:
-    //  case Bundling_k1c_BCU:
+  case Bundling_k1c_BCU:
     PUSH(bcu,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1c_MAU:
-  case Reservation_k1c_MAU:
-  case Reservation_k1c_MAU_ACC:
-
-    //  case Bundling_k1c_MAU_X:
-  case Reservation_k1c_MAU_X:
-  case Reservation_k1c_MAU_ACC_X:
-    //  case Bundling_k1c_MAU_Y:
-  case Reservation_k1c_MAU_Y:
-  case Reservation_k1c_MAU_ACC_Y:
+  case Bundling_k1c_MAU:
+  case Bundling_k1c_MAU_X:
+  case Bundling_k1c_MAU_Y:
     PUSH(mau,state, states, states_sz, states_storage_sz);
     break;
 
-    //  case Bundling_k1c_LSU:
-  case Reservation_k1c_LSU:
-  case Reservation_k1c_LSU_ACC:
-    //  case Bundling_k1c_LSU_X:
-  case Reservation_k1c_LSU_X:
-  case Reservation_k1c_LSU_ACC_X:
-    //  case Bundling_k1c_LSU_Y:
-  case Reservation_k1c_LSU_Y:
-  case Reservation_k1c_LSU_ACC_Y:
+  case Bundling_k1c_LSU:
+  case Bundling_k1c_LSU_X:
+  case Bundling_k1c_LSU_Y:
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1c_ALU_LITE:
-  case Reservation_k1c_ALU_LITE_X:
-  case Reservation_k1c_ALU_LITE_Y:
+  case Bundling_k1c_LITE:
+  case Bundling_k1c_LITE_X:
+  case Bundling_k1c_LITE_Y:
     PUSH(mau,state, states, states_sz, states_storage_sz);
     PUSH(alu1,state, states, states_sz, states_storage_sz);
     PUSH(alu0,state, states, states_sz, states_storage_sz);
     break;
 
-  case Reservation_k1c_ALU_NOP:
-    /* FIXME! NOP only uses Issue slots, no ALUs. */
-  case Reservation_k1c_ALU_TINY:
-  case Reservation_k1c_ALU_TINY_X:
-  case Reservation_k1c_ALU_TINY_Y:
+  case Bundling_k1c_NOP: // FIXME!
+  case Bundling_k1c_TINY:
+  case Bundling_k1c_TINY_X:
+  case Bundling_k1c_TINY_Y:
     PUSH(lsu,state, states, states_sz, states_storage_sz);
     PUSH(mau,state, states, states_sz, states_storage_sz);
     PUSH(alu1,state, states, states_sz, states_storage_sz);
@@ -2209,8 +2193,8 @@ k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
     break;
 
   default:
-    as_fatal( "Unhandled scheduling class for insn : '%s', %d\n",
-              cur_insn->opdef->as_op, find_reservation(cur_insn));
+    as_fatal( "Unhandled Bundling class for insn : '%s', %d\n",
+              cur_insn->opdef->as_op, find_bundling(cur_insn));
   }
   return 0;
 }
@@ -2263,6 +2247,9 @@ k1c_print_insn(k1opc_t *op) {
   case Bundling_k1c_LSU_Y:
     insn_type="LSU            ";
     break;
+  case Bundling_k1c_NOP:
+    insn_type="NOP            ";
+    break;
   default:
     as_fatal("Unhandled Bundling class %d\n", op->bundling);
   }
@@ -2285,7 +2272,8 @@ k1c_print_insn(k1opc_t *op) {
 }
 
 static void
-k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
+k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
+{
   sched_state_t *first_state;
   sched_state_t **states = NULL, *solutions[10];
   unsigned int solutions_sz = 0;
@@ -2298,24 +2286,24 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
        return;
       }
       else {
-	as_fatal("Too many ops in a single op bundle (%s):\n",bundle_insn[bidx]->opdef->as_op);
+        as_fatal("Too many ops in a single op bundle (%s):\n",bundle_insn[bidx]->opdef->as_op);
       }
     }
     if (tiny_k1){
-      switch(find_reservation(bundle_insn[bidx])){
-      case Reservation_k1c_ALU_FULL:
-      case Reservation_k1c_ALU_FULL_X:
-      case Reservation_k1c_ALU_FULL_Y:
-      case Reservation_k1c_ALU_LITE:
-      case Reservation_k1c_ALU_LITE_X:
-      case Reservation_k1c_ALU_LITE_Y:
+      switch(find_bundling(bundle_insn[bidx])){
+      case Bundling_k1c_FULL:
+      case Bundling_k1c_FULL_X:
+      case Bundling_k1c_FULL_Y:
+      case Bundling_k1c_LITE:
+      case Bundling_k1c_LITE_X:
+      case Bundling_k1c_LITE_Y:
 
-	as_fatal("ALU non TINY instruction found in bundle with -mtiny-k1 used : %s\n",
-		 bundle_insn[bidx]->opdef->as_op);
-	break;
+        as_fatal("ALU non TINY instruction found in bundle with -mtiny-k1 used : %s\n",
+                 bundle_insn[bidx]->opdef->as_op);
+        break;
       default:
 
-	break;
+        break;
       }
     }
   }
@@ -2330,16 +2318,16 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     sched_state_t *cur_s = pop(states, &states_sz);
 
     int ok = k1c_schedule_step(bundle_insn, *bundle_insncnt_p,
-			       cur_s,
-			       &states, &states_sz, &states_storage_sz,
-			       solutions, &solutions_sz);
+                               cur_s,
+                               &states, &states_sz, &states_storage_sz,
+                               solutions, &solutions_sz);
     if (!cur_s->final)
       free(cur_s);
 
     if(ok){
       while(states_sz){
-	sched_state_t *to_free_s = pop(states, &states_sz);
-	free(to_free_s);
+        sched_state_t *to_free_s = pop(states, &states_sz);
+        free(to_free_s);
       }
       break;
     }
@@ -2351,37 +2339,37 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p){
     
     for (ii=0; ii<last_exu; ii++){
       if (solutions[0]->sched[ii] != -1
-	  && (ii != alu1_e || solutions[0]->sched[alu0_e] != solutions[0]->sched[alu1_e])){
-	shadow[jj] = bundle_insn[solutions[0]->sched[ii]];
+          && (ii != alu1_e || solutions[0]->sched[alu0_e] != solutions[0]->sched[alu1_e])){
+        shadow[jj] = bundle_insn[solutions[0]->sched[ii]];
 
-	// Tag EXU on IMMX
-	int tag;
-	if(shadow[jj]->immx0 != NOIMMX || 
-	   shadow[jj]->immx1 != NOIMMX ){
-	  switch(ii){
-	  case alu0_e:
-	    tag = Modifier_k1c_exunum_ALU0;
-	    break;
-	  case alu1_e:
-	    tag = Modifier_k1c_exunum_ALU1;
-	    break;
-	  case mau_e:
-	    tag = Modifier_k1c_exunum_MAU;
-	    break;
-	  case lsu_e:
-	    tag = Modifier_k1c_exunum_LSU;
-	    break;
-	  default:
-	    as_fatal("Unexpected EXU %d (%s)\n", ii, exu_names[ii]);
-	  }
-	  if(shadow[jj]->immx0 != NOIMMX) {
-	    immxbuf[shadow[jj]->immx0].insn[0] |= (tag << 27);
-	  }
-	  if(shadow[jj]->immx1 != NOIMMX){
-	    immxbuf[shadow[jj]->immx1].insn[0] |= (tag << 27);
-	  }
-	}
-	jj++;
+        // Tag EXU on IMMX
+        int tag;
+        if(shadow[jj]->immx0 != NOIMMX || 
+           shadow[jj]->immx1 != NOIMMX ){
+          switch(ii){
+          case alu0_e:
+            tag = Modifier_k1c_exunum_ALU0;
+            break;
+          case alu1_e:
+            tag = Modifier_k1c_exunum_ALU1;
+            break;
+          case mau_e:
+            tag = Modifier_k1c_exunum_MAU;
+            break;
+          case lsu_e:
+            tag = Modifier_k1c_exunum_LSU;
+            break;
+          default:
+            as_fatal("Unexpected EXU %d (%s)\n", ii, exu_names[ii]);
+          }
+          if(shadow[jj]->immx0 != NOIMMX) {
+            immxbuf[shadow[jj]->immx0].insn[0] |= (tag << 27);
+          }
+          if(shadow[jj]->immx1 != NOIMMX){
+            immxbuf[shadow[jj]->immx1].insn[0] |= (tag << 27);
+          }
+        }
+        jj++;
       }
     }
     memset(bundle_insn, 0, *bundle_insncnt_p * sizeof(k1insn_t*));
