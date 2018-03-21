@@ -2072,14 +2072,6 @@ static int used_resources(const k1opc_t *op, int resource) {
   return reservation_table[resource];
 }
 
-static int is_tiny(const k1opc_t *op) {
-  return used_resources(op,Resource_k1c_TINY);
-}
-
-static int is_lite(const k1opc_t *op) {
-  return used_resources(op,Resource_k1c_LITE);
-}
-
 
 enum exu_t {
   bcu_e,
@@ -2236,42 +2228,43 @@ k1c_print_insn(k1opc_t *op) {
     asm_str[i] = '-';
   }
  
-  switch(op->bundling){
+  switch(op->bundling) {
   case Bundling_k1c_ALL:
     insn_type="ALL            ";
-    break;
-  case Bundling_k1c_ALU:
-  case Bundling_k1c_ALU_X:
-  case Bundling_k1c_ALU_Y:
-    insn_type="ALU            ";
     break;
   case Bundling_k1c_BCU:
     insn_type="BCU            ";
     break;
-
+  case Bundling_k1c_TCA:
+    insn_type="TCA            ";
+    break;
+  case Bundling_k1c_FULL:
+  case Bundling_k1c_FULL_X:
+  case Bundling_k1c_FULL_Y:
+    insn_type="FULL           ";
+    break;
+  case Bundling_k1c_LITE:
+  case Bundling_k1c_LITE_X:
+  case Bundling_k1c_LITE_Y:
+    insn_type="LITE           ";
+    break;
+  case Bundling_k1c_TINY:
+  case Bundling_k1c_TINY_X:
+  case Bundling_k1c_TINY_Y:
+    insn_type="LITE           ";
+    break;
   case Bundling_k1c_MAU:
   case Bundling_k1c_MAU_X:
   case Bundling_k1c_MAU_Y:
     insn_type="MAU            ";
     break;
-
   case Bundling_k1c_LSU:
   case Bundling_k1c_LSU_X:
   case Bundling_k1c_LSU_Y:
     insn_type="LSU            ";
     break;
-
-  case Bundling_k1c_TINY:
-  case Bundling_k1c_TINY_X:
-  case Bundling_k1c_TINY_Y:
-    if (is_lite(op)){
-      insn_type="LITE           ";
-    } else if (is_tiny(op)){
-      insn_type="TINY           ";
-    } else {
-        as_fatal("TINY instruction is neither a TINY or LITE\n");
-    }
-    break;
+  default:
+    as_fatal("Unhandled Bundling class %d\n", op->bundling);
   }
 
   if (op->codeword[0].flags & k1OPCODE_FLAG_MODE64 && 
