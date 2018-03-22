@@ -431,7 +431,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
   {
     k1opc_t *op = insn->op;
 
-    if ((dsc->insn_words[0] & op->codeword[0].mask) != op->codeword[0].opcode)
+    if ((dsc->insn_words[0] & op->codewords[0].mask) != op->codewords[0].opcode)
     {
       insn = insn->next;
       continue;

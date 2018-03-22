@@ -165,7 +165,7 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
       while (ops)
       {
         k1opc_t *op = ops->op;
-        if ((syllab & op->codeword[0].mask) != op->codeword[0].opcode)
+        if ((syllab & op->codewords[0].mask) != op->codewords[0].opcode)
           goto next;
 
         if (strcmp (op->as_op, "make") == 0)

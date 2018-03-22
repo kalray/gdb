@@ -21,14 +21,6 @@
  * THIS FILE HAS BEEN MODIFIED OR ADDED BY STMicroelectronics, Inc. 1999-2003
  */
 
-
-/* Author Geoffrey Brown                */
-/* Modified by Giuseppe Desoli Jul 1999 */
-
-/**
- *** static char sccs_id[] = "@(#)tc-k1.c	1.20 07/18/00 13:19:21";
- **/
-
 #include "as.h"
 #include "obstack.h"
 #include "subsegs.h"
@@ -141,10 +133,10 @@ typedef struct k1_fixup_s k1_fixup_t;
 struct k1insn_s {
   int written;		                /* written out ?                           */
   const k1opc_t *opdef;	                /* Opcode table entry for this insn        */
-  unsigned len;		                /* length of instruction in words (1 or 2) */
+  int len;		                /* length of instruction in words (1 or 2) */
   int immx0;                            /* insn is extended */
   int immx1;                            /* only used for 64 immx */
-  unsigned int insn[K1MAXCODEWORDS];	/* instruction data                        */
+  unsigned int insn[K1MAXBUNDLEWORDS];	/* instruction data                        */
   int nfixups;		                /* the number of fixups [0,2]              */
   k1_fixup_t fixup[2];	                /* the actual fixups                       */
   Bundling bundling;                    /* the bundling type                       */
@@ -160,25 +152,17 @@ static print_insn_t print_insn = NULL;
 
 typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
-/* We leave an extra slot in K1MAXINSN in case we need to emit a nop
- * bundle to gain even alignment before emitting a cluster.
- */
-#define K1MAXINSN 5
-#define K1MAXBUNDLEWORDS 8
+#define NOIMMX -1
 
-/* Constant to tell if branches are required to be
- * emitted as the first syllable in a cluster */
-#define K1BRANCHFIRST 1
-
-static k1insn_t insbuf[K1MAXINSN];
+static k1insn_t insbuf[K1MAXBUNDLEISSUE];
 static int insncnt = 0;
-static k1insn_t immxbuf[K1MAXIMMX];
+static k1insn_t immxbuf[K1MAXBUNDLEWORDS];
 static int immxcnt = 0;
 
-static void incr_immxcnt()
+static void incr_immxcnt(void)
 {
   immxcnt++;
-  if(immxcnt >= K1MAXIMMX) {
+  if(immxcnt >= K1MAXBUNDLEWORDS) {
     as_bad("Max immx number exceeded: %d",immxcnt);
   }
 }
@@ -720,7 +704,7 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_MCORE:
     mcore = strdup(arg);
     i = 0;
-    while(i < K1C_NCORES && ! find_core) {
+    while(i < K1NUMCORES && ! find_core) {
       subcore_id = 0;
       while(k1c_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
 	if (strcasecmp(mcore, k1c_core_info_table[i]->names[subcore_id]) == 0
@@ -739,7 +723,7 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
       if(find_core) { break; }
       i++;
     }
-    if (i == K1C_NCORES){
+    if (i == K1NUMCORES){
       char buf[100];
       supported_cores(buf, sizeof(buf));
       as_fatal("Core specified not supported [%s]", buf);
@@ -858,7 +842,7 @@ static void
 supported_cores(char buf[], size_t buflen) {
   int i, j;
   buf[0] = '\0';
-  for (i = 0; i < K1C_NCORES; i++) {
+  for (i = 0; i < K1NUMCORES; i++) {
     j = 0;
     while(k1c_core_info_table[i]->elf_cores[j] != -1) {
       if (k1c_core_info_table[i]->supported) {
@@ -1027,7 +1011,7 @@ static match_operands_code
 match_operands(const k1opc_t * op, const expressionS * tok,
         int ntok)
  {
-    unsigned int ii;
+    int ii;
     int jj;
     int nop;
     k1bfield *opdef;
@@ -1043,8 +1027,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     /* Check enconding space */
     int encoding_space_flags = k1_arch_size == 32 ? k1OPCODE_FLAG_MODE32 : k1OPCODE_FLAG_MODE64;
 
-    for(ii=0; ii < op->codewords; ii++) {
-      if (! (op->codeword[ii].flags & encoding_space_flags))
+    for(ii=0; ii < op->wordcount; ii++) {
+      if (! (op->codewords[ii].flags & encoding_space_flags))
 	return MATCH_NOT_FOUND;
     }
 
@@ -1094,7 +1078,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 	    }
 	  }
 	  if (tok[jj].X_op == O_pseudo_fixup) {
-	    unsigned int i;
+	    int i;
 	    for (i = 0; i < NELEMS(pseudo_func); i++){
 	      if (tok[jj].X_op_symbol == pseudo_func[i].sym){
 		if (k1_get_pseudo_func2(pseudo_func[i].sym, op->format[jj]) != NULL) {
@@ -1499,40 +1483,40 @@ assemble_insn( const k1opc_t * opcode,
         k1insn_t * insn)
  {
     int argidx;
-    unsigned int i;
-    unsigned int immx_ready = 0;
+    int i;
+    unsigned immx_ready = 0;
 
     memset(insn, 0, sizeof (*insn));
     insn->opdef = opcode;
-    for(i=0; i < opcode->codewords; i++) {
-        insn->insn[i] = (unsigned int)opcode->codeword[i].opcode;
+    for(i=0; i < opcode->wordcount; i++) {
+        insn->insn[i] = (unsigned int)opcode->codewords[i].opcode;
         insn->len += 1;
     }
     insn->immx0 = NOIMMX;
     insn->immx1 = NOIMMX;
     for (argidx = 0; argidx < ntok; argidx++){
         int ret = insert_operand(insn, opcode->format[argidx], &tok[argidx]);
-	immx_ready |= ret;
+        immx_ready |= ret;
     }
 
     // Handle immx if insert_operand did not already take care of that
     if (!immx_ready){
-      for(i=0; i < opcode->codewords; i++){
-        if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX0){
-	  insn->immx0 = immxcnt;
-	  immxbuf[immxcnt].insn[0] = insn->insn[i];
-	  immxbuf[immxcnt].nfixups = 0;
-	  immxbuf[immxcnt].len = 1;
-	  insn->len -= 1; 
-	  incr_immxcnt();
+      for(i=0; i < opcode->wordcount; i++){
+        if(opcode->codewords[i].flags & k1OPCODE_FLAG_IMMX0){
+          insn->immx0 = immxcnt;
+          immxbuf[immxcnt].insn[0] = insn->insn[i];
+          immxbuf[immxcnt].nfixups = 0;
+          immxbuf[immxcnt].len = 1;
+          insn->len -= 1; 
+          incr_immxcnt();
         }
-        if(opcode->codeword[i].flags & k1OPCODE_FLAG_IMMX1){
-	  insn->immx1 = immxcnt;
-	  immxbuf[immxcnt].insn[0] = insn->insn[i];
-	  immxbuf[immxcnt].nfixups = 0;
-	  immxbuf[immxcnt].len = 1;
-	  insn->len -= 1;
-	  incr_immxcnt();
+        if(opcode->codewords[i].flags & k1OPCODE_FLAG_IMMX1){
+          insn->immx1 = immxcnt;
+          immxbuf[immxcnt].insn[0] = insn->insn[i];
+          immxbuf[immxcnt].nfixups = 0;
+          immxbuf[immxcnt].len = 1;
+          insn->len -= 1;
+          incr_immxcnt();
         }
       }
     }
@@ -1854,10 +1838,10 @@ find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
   int i;
   int canonical_ix;
   const BundleMatchType *match;
-  Bundling canonical_order[K1MAXBUNDLESIZE];
+  Bundling canonical_order[K1MAXBUNDLEISSUE];
   
   
-  if (*bundle_insn_cnt > K1MAXBUNDLESIZE) {
+  if (*bundle_insn_cnt > K1MAXBUNDLEISSUE) {
     return -1;
   }
   
@@ -1943,7 +1927,7 @@ assemble_tokens(const char *opname,
   
   /* make sure there is room in instruction buffer */
   
-  if (insncnt >= K1MAXINSN) {
+  if (insncnt >= K1MAXBUNDLEISSUE) {
     as_fatal("too many instructions in bundle ");
   }
 
@@ -2254,21 +2238,21 @@ k1c_print_insn(k1opc_t *op) {
     as_fatal("Unhandled Bundling class %d\n", op->bundling);
   }
 
-  if (op->codeword[0].flags & k1OPCODE_FLAG_MODE64 && 
-      op->codeword[0].flags & k1OPCODE_FLAG_MODE32) {
+  if (op->codewords[0].flags & k1OPCODE_FLAG_MODE64 && 
+      op->codewords[0].flags & k1OPCODE_FLAG_MODE32) {
     insn_mode = "32|64";
   }
-  else if(op->codeword[0].flags & k1OPCODE_FLAG_MODE64) {
+  else if(op->codewords[0].flags & k1OPCODE_FLAG_MODE64) {
     insn_mode = "64";
   }
-  else if(op->codeword[0].flags & k1OPCODE_FLAG_MODE32) {
+  else if(op->codewords[0].flags & k1OPCODE_FLAG_MODE32) {
     insn_mode = "32";
   }
   else {
     as_fatal("Unknown instruction mode.\n");
   }
 
-  printf("%s | syllables: %d | type: %s | mode: %s bits\n", asm_str, op->codewords, insn_type, insn_mode);
+  printf("%s | syllables: %d | type: %s | mode: %s bits\n", asm_str, op->wordcount, insn_type, insn_mode);
 }
 
 static void
@@ -2420,7 +2404,7 @@ md_assemble(char *s)
 
         {
 
-            k1insn_t *bundle_insn[K1MAXINSN];
+            k1insn_t *bundle_insn[K1MAXBUNDLEISSUE];
             int bundle_insn_cnt = 0;
             int syllables = 0;
             int entry;
@@ -3378,7 +3362,7 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
         SKIP_WHITESPACE();
 
         /* core */
-        for (i = 0; i < K1C_NCORES; i++) {
+        for (i = 0; i < K1NUMCORES; i++) {
 	  j=0;
 	  while(k1c_core_info_table[i]->elf_cores[j] != -1) {
             if (is_assume_param(&input_line_pointer, k1c_core_info_table[i]->names[j])) {
@@ -3549,7 +3533,7 @@ fragS *fragP;
     const char * noop, * noop_stop_bit;
     /* the bundle size must be a power of 2 otherwise the way
      * modulo is computed below must be changed */
-    int k1_bundle_size = K1MAXBUNDLESIZE;
+    int k1_bundle_size = K1MAXBUNDLEISSUE;
     int pad_counter = 1;
 
     if (fragP->fr_type != rs_align_code)
