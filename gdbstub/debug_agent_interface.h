@@ -89,7 +89,7 @@ typedef errcode_t (*da_read_cycle_t) (debug_agent_t *self, int vehicle, uint64_t
 typedef errcode_t (*da_strerror_t) (debug_agent_t *self, int vehicle, char **str);
 typedef errcode_t (*da_get_args_t) (debug_agent_t *self, int vehicle, int *argc, char ***argv);
 typedef errcode_t (*da_get_elf_file_t) (debug_agent_t *self, int vehicle, const char **elf_file);
-typedef errcode_t (*da_get_arg_t) (debug_agent_t *self, int vehicle, int num, uint32_t *arg);
+typedef errcode_t (*da_get_arg_t) (debug_agent_t *self, int vehicle, int num, uint64_t *arg);
 typedef errcode_t (*da_set_return_t) (debug_agent_t *self, int vehicle, int ret);
 typedef errcode_t (*da_load_elf_t) (debug_agent_t *self, char * elf, int argc, char * argv[]);
 typedef errcode_t (*da_load_memory_t) (debug_agent_t *self, const char * elf);
