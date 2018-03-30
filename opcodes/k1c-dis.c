@@ -55,6 +55,7 @@ typedef uint8_t Extension;
  */
 typedef enum {
   BundleIssue_BCU,
+  BundleIssue_TCA,
   BundleIssue_ALU0,
   BundleIssue_ALU1,
   BundleIssue_MAU,
@@ -70,21 +71,34 @@ static const BundleIssue
 Extension_BundleIssue[] = { BundleIssue_ALU0, BundleIssue_ALU1, BundleIssue_MAU, BundleIssue_LSU };
 
 static inline int
-k1c_steering(unsigned x)
+k1c_steering(uint32_t x)
 {
   return (((x) & 0x60000000) >> 29);
 }
 
 static inline int
-k1c_extension(unsigned x)
+k1c_extension(uint32_t x)
 {
   return  (((x) & 0x18000000) >> 27);
 }
 
 static inline int
-k1c_has_parallel_bit(unsigned x)
+k1c_has_parallel_bit(uint32_t x)
 {
   return (((x) & 0x80000000) == 0x80000000);
+}
+
+static inline int
+k1c_is_tca_opcode(uint32_t x)
+{
+  unsigned major = ((x)>>24) & 0x1F;
+  return (major > 0) && (major < 5);
+}
+
+static inline int
+k1c_is_nop_opcode(uint32_t x)
+{
+  return ((x)<<1) == 0xFFFFFFFE;
 }
 
 typedef struct {
@@ -113,16 +127,17 @@ k1c_reassemble_bundle(int wordcount, int *_insncount) {
   int debug = 0;
 
   // available resources
+  int bcu_taken = 0;
+  int tca_taken = 0;
   int alu0_taken = 0;
   int alu1_taken = 0;
-  int alu2_taken = 0;
-  int alu3_taken = 0;
   int mau_taken = 0;
   int lsu_taken = 0;
 
   int i, j;
 
   struct instr_s instr[K1MAXBUNDLEISSUE];
+  assert(K1MAXBUNDLEISSUE >= BundleIssue__);
   memset(instr, 0, sizeof(instr));
 
   if(debug) fprintf(stderr,"k1c_reassemble_bundle: wordcount = %d\n",wordcount);
@@ -132,55 +147,86 @@ k1c_reassemble_bundle(int wordcount, int *_insncount) {
     return 1;
   }
 
-  for (i = 0; i < wordcount ; i ++) {
-    switch (k1c_steering(bundle_words[i])) {
+  for (i = 0; i < wordcount ; i++) {
+    uint32_t syllable = bundle_words[i];
+    switch (k1c_steering(syllable)) {
       
     case Steering_BCU:
-      // BCU instruction
-      if(i == 0) {
-        if(debug) fprintf(stderr,"Syllable 0: Set valid on BCU for instr %d with 0x%x\n",BundleIssue_BCU,bundle_words[0]);
-        instr[BundleIssue_BCU].valid = 1;
-        instr[BundleIssue_BCU].opcode = bundle_words[0];
-        instr[BundleIssue_BCU].nb_syllables = 1;
-      }
-      else {
-        // Not first syllable in bundle, IMMX
-        struct instr_s *instr_p = &(instr[Extension_BundleIssue[k1c_extension(bundle_words[i])]]);
-        int immx_count = instr_p->immx_count;
-        instr_p->immx[immx_count] = bundle_words[i];
-        instr_p->immx_valid[immx_count] = 1;
-        instr_p->nb_syllables++;
-        if(debug) fprintf(stderr,"Set IMMX[%d] on instr %d for extension %d @ %d\n",
-                          immx_count, Extension_BundleIssue[k1c_extension(bundle_words[i])],k1c_extension(bundle_words[i]),i);
-        instr_p->immx_count = immx_count + 1;
+      // BCU or TCA instruction
+      if (i == 0) {
+        if (k1c_is_tca_opcode(syllable)) {
+          if (tca_taken) {
+            if(debug) fprintf(stderr,"Too many TCA instructions");
+            return 1;
+          }
+          if(debug) fprintf(stderr,"Syllable 0: Set valid on TCA for instr %d with 0x%x\n",BundleIssue_TCA,syllable);
+          instr[BundleIssue_TCA].valid = 1;
+          instr[BundleIssue_TCA].opcode = syllable;
+          instr[BundleIssue_TCA].nb_syllables = 1;
+          tca_taken = 1;
+        } else {
+          if(debug) fprintf(stderr,"Syllable 0: Set valid on BCU for instr %d with 0x%x\n",BundleIssue_BCU,syllable);
+          instr[BundleIssue_BCU].valid = 1;
+          instr[BundleIssue_BCU].opcode = syllable;
+          instr[BundleIssue_BCU].nb_syllables = 1;
+          bcu_taken = 1;
+        }
+      } else {
+        if (i == 1 && bcu_taken && k1c_is_tca_opcode(syllable)) {
+          if (tca_taken) {
+            if(debug) fprintf(stderr,"Too many TCA instructions");
+            return 1;
+          }
+          if(debug) fprintf(stderr,"Syllable 0: Set valid on TCA for instr %d with 0x%x\n",BundleIssue_TCA,syllable);
+          instr[BundleIssue_TCA].valid = 1;
+          instr[BundleIssue_TCA].opcode = syllable;
+          instr[BundleIssue_TCA].nb_syllables = 1;
+          tca_taken = 1;
+        } else {
+          // Not first syllable in bundle, IMMX
+          struct instr_s *instr_p = &(instr[Extension_BundleIssue[k1c_extension(syllable)]]);
+          int immx_count = instr_p->immx_count;
+          if (immx_count > 1) {
+            if(debug) fprintf(stderr,"Too many IMMX syllables");
+            return 1;
+          }
+          instr_p->immx[immx_count] = syllable;
+          instr_p->immx_valid[immx_count] = 1;
+          instr_p->nb_syllables++;
+          if(debug) fprintf(stderr,"Set IMMX[%d] on instr %d for extension %d @ %d\n",
+                            immx_count, Extension_BundleIssue[k1c_extension(syllable)],k1c_extension(syllable),i);
+          instr_p->immx_count = immx_count + 1;
+        }
       }
       break;
       
     case Steering_ALU:
       if (alu0_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on ALU0 for instr %d with 0x%x\n",BundleIssue_ALU0,bundle_words[i]);
+        if(debug) fprintf(stderr,"Set valid on ALU0 for instr %d with 0x%x\n",BundleIssue_ALU0,syllable);
         instr[BundleIssue_ALU0].valid = 1;
-          instr[BundleIssue_ALU0].opcode = bundle_words[i];
-          instr[BundleIssue_ALU0].nb_syllables = 1;
-          alu0_taken = 1;
+        instr[BundleIssue_ALU0].opcode = syllable;
+        instr[BundleIssue_ALU0].nb_syllables = 1;
+        alu0_taken = 1;
       } else if (alu1_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on ALU1 for instr %d with 0x%x\n",BundleIssue_ALU1,bundle_words[i]);
+        if(debug) fprintf(stderr,"Set valid on ALU1 for instr %d with 0x%x\n",BundleIssue_ALU1,syllable);
         instr[BundleIssue_ALU1].valid = 1;
-        instr[BundleIssue_ALU1].opcode = bundle_words[i];
+        instr[BundleIssue_ALU1].opcode = syllable;
         instr[BundleIssue_ALU1].nb_syllables = 1;
         alu1_taken = 1;
-      } else if (alu2_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on MAU (ALU) for instr %d with 0x%x\n",BundleIssue_MAU,bundle_words[i]);
+      } else if (mau_taken == 0) {
+        if(debug) fprintf(stderr,"Set valid on MAU (ALU) for instr %d with 0x%x\n",BundleIssue_MAU,syllable);
         instr[BundleIssue_MAU].valid = 1;
-        instr[BundleIssue_MAU].opcode = bundle_words[i];
+        instr[BundleIssue_MAU].opcode = syllable;
         instr[BundleIssue_MAU].nb_syllables = 1;
-        alu2_taken = 1;
-      } else if (alu3_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on LSU (ALU) for instr %d with 0x%x\n",BundleIssue_LSU,bundle_words[i]);
+        mau_taken = 1;
+      } else if (lsu_taken == 0) {
+        if(debug) fprintf(stderr,"Set valid on LSU (ALU) for instr %d with 0x%x\n",BundleIssue_LSU,syllable);
         instr[BundleIssue_LSU].valid = 1;
-        instr[BundleIssue_LSU].opcode = bundle_words[i];
+        instr[BundleIssue_LSU].opcode = syllable;
         instr[BundleIssue_LSU].nb_syllables = 1;
-        alu3_taken = 1;
+        lsu_taken = 1;
+      } else if (k1c_is_nop_opcode(syllable)) {
+        if(debug) fprintf(stderr,"Ignoring NOP (ALU) syllable\n");
       } else {
         if(debug) fprintf(stderr,"Too many ALU instructions");
         return 1;
@@ -192,12 +238,11 @@ k1c_reassemble_bundle(int wordcount, int *_insncount) {
         if(debug) fprintf(stderr,"Too many MAU instructions");
         return 1;
       } else {
-        mau_taken = 1;
-        if(debug) fprintf(stderr,"Set valid on MAU for instr %d with 0x%x\n",BundleIssue_MAU,bundle_words[i]);
+        if(debug) fprintf(stderr,"Set valid on MAU for instr %d with 0x%x\n",BundleIssue_MAU,syllable);
         instr[BundleIssue_MAU].valid = 1;
-        instr[BundleIssue_MAU].opcode = bundle_words[i];
+        instr[BundleIssue_MAU].opcode = syllable;
         instr[BundleIssue_MAU].nb_syllables = 1;
-        alu2_taken = 1;
+        mau_taken = 1;
       }
       break;
       
@@ -206,16 +251,15 @@ k1c_reassemble_bundle(int wordcount, int *_insncount) {
         if(debug) fprintf(stderr,"Too many LSU instructions");
         return 1;
       } else {
-        lsu_taken = 1;
-        if(debug) fprintf(stderr,"Set valid on LSU for instr %d with 0x%x\n",BundleIssue_LSU,bundle_words[i]);
+        if(debug) fprintf(stderr,"Set valid on LSU for instr %d with 0x%x\n",BundleIssue_LSU,syllable);
         instr[BundleIssue_LSU].valid = 1;
-        instr[BundleIssue_LSU].opcode = bundle_words[i];
+        instr[BundleIssue_LSU].opcode = syllable;
         instr[BundleIssue_LSU].nb_syllables = 1;
-        alu3_taken = 1;
+        lsu_taken = 1;
       }
     }
-    if (!(k1c_has_parallel_bit(bundle_words[i]))) {
-      if(debug) fprintf(stderr,"Stop! stop bit is set 0x%x\n",bundle_words[i]);
+    if (!(k1c_has_parallel_bit(syllable))) {
+      if(debug) fprintf(stderr,"Stop! stop bit is set 0x%x\n",syllable);
       break;
     }
     if(debug) fprintf(stderr,"Continue %d < %d?\n",i,wordcount);
