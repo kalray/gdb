@@ -120,7 +120,7 @@ const int md_long_jump_size = 0;
 /* a fix up record                       */
 
 struct k1_fixup_s
- {
+{
     expressionS exp;		/* the expression used            */
     int where;			/* where (byte) in frag this goes */
     bfd_reloc_code_real_type reloc;
@@ -143,9 +143,6 @@ struct k1insn_s {
 };
 
 typedef struct k1insn_s k1insn_t;
-
-typedef void (*reorder_bundle_t)(k1insn_t *bundle_insn[], int *bundle_insncnt_p);
-static reorder_bundle_t reorder_bundle = NULL;
 
 typedef void (*print_insn_t)(k1opc_t *op);
 static print_insn_t print_insn = NULL;
@@ -182,19 +179,19 @@ correctly odd/even constraints at link time.
 
 static void set_byte_counter(asection *sec, int value);
 void set_byte_counter(asection *sec, int value)
- {
+{
     sec->target_index = value;
 }
 
 static int get_byte_counter(asection *sec);
 int get_byte_counter(asection *sec)
- {
+{
     return sec->target_index;
 }
 
 static int is_code_section(asection *sec);
 int is_code_section(asection *sec)
- {
+{
     return ((bfd_get_section_flags(NULL, sec) & (SEC_CODE))) ;
 }
 
@@ -221,7 +218,7 @@ static struct hash_control *k1_opcode_hash;
 /****************************************************/
 
 enum unwrecord
- {
+{
     UNW_HEADER,
     UNW_PROLOGUE,
     UNW_BODY,
@@ -267,7 +264,7 @@ static void md_after_pass(void);
 #endif
 
 const pseudo_typeS md_pseudo_table[] =
- {
+{
     /* override ones defined in read.c */
 
      {"ascii", k1_stringer, 8},
@@ -404,11 +401,11 @@ const pseudo_typeS md_pseudo_table[] =
 
 struct k1_pseudo_relocs {
   enum {
-	S37_LO10_UP27,
-	S43_LO10_UP27_EX6,
-	S64_LO10_UP27_EX27,
-	S32,
-	S64,
+        S37_LO10_UP27,
+        S43_LO10_UP27_EX6,
+        S64_LO10_UP27_EX27,
+        S32,
+        S64,
   } reloc_type;
   int bitsize;
   bfd_reloc_code_real_type reloc_lo10, reloc_up27, reloc_ex;
@@ -424,7 +421,7 @@ struct pseudo_func_s
 };
 
 static struct pseudo_func_s pseudo_func[] =
- {
+{
   // reloc pseudo functions:
   {
    .name = "gotoff",
@@ -665,7 +662,7 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_MTINYK1 (OPTION_MD_BASE + 16)
 
 struct option md_longopts[] =
- {
+{
      {"emit-all-relocs", no_argument, NULL, OPTION_EMITALLRELOCS},
      {"mcore", required_argument, NULL, OPTION_MCORE},
      {"check-resources", no_argument, NULL, OPTION_CHECK_RESOURCES},
@@ -707,18 +704,18 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     while(i < K1NUMCORES && ! find_core) {
       subcore_id = 0;
       while(k1c_core_info_table[i]->elf_cores[subcore_id] != -1 && ! find_core) {
-	if (strcasecmp(mcore, k1c_core_info_table[i]->names[subcore_id]) == 0
-	    && k1c_core_info_table[i]->supported){
+        if (strcasecmp(mcore, k1c_core_info_table[i]->names[subcore_id]) == 0
+            && k1c_core_info_table[i]->supported){
 
-	  k1_core_info = k1c_core_info_table[i];
-	  k1_registers = k1_registers_table[i];
-	  k1_regfiles = k1_regfiles_table[i];
-	
-	  find_core = 1;
-	}
-	else {
-	  subcore_id++;
-	}
+          k1_core_info = k1c_core_info_table[i];
+          k1_registers = k1_registers_table[i];
+          k1_regfiles = k1_regfiles_table[i];
+        
+          find_core = 1;
+        }
+        else {
+          subcore_id++;
+        }
       }
       if(find_core) { break; }
       i++;
@@ -813,7 +810,7 @@ k1_get_pseudo_func_data_scn(symbolS *sym) {
 
   for (i = 0; i < NELEMS(pseudo_func); i++)
     if (sym == pseudo_func[i].sym
-	&& pseudo_func[i].pseudo_relocs.single != BFD_RELOC_UNUSED) {
+        && pseudo_func[i].pseudo_relocs.single != BFD_RELOC_UNUSED) {
       return &pseudo_func[i];
     }
   return NULL;
@@ -829,9 +826,9 @@ k1_get_pseudo_func2(symbolS *sym, k1bfield *opnd) {
     if (sym == pseudo_func[i].sym) {
       int relidx;
       for(relidx=0; relidx < opnd->reloc_nb; relidx++) {
-	if(opnd->relocs[relidx] == pseudo_func[i].pseudo_relocs.kreloc) {
-	  return &pseudo_func[i];
-	}
+        if(opnd->relocs[relidx] == pseudo_func[i].pseudo_relocs.kreloc) {
+          return &pseudo_func[i];
+        }
       }
     }
 
@@ -846,16 +843,16 @@ supported_cores(char buf[], size_t buflen) {
     j = 0;
     while(k1c_core_info_table[i]->elf_cores[j] != -1) {
       if (k1c_core_info_table[i]->supported) {
-	if (buf[0] == '\0') {
-	  strcpy(buf, k1c_core_info_table[i]->names[j]);
-	}
-	else {
-	  int l = strlen(buf);
-	  if ((l + 1 + strlen(k1c_core_info_table[i]->names[j]) + 1) < buflen) {
-	    strcat(buf, "|");
-	    strcat(buf, k1c_core_info_table[i]->names[j]);
-	  }
-	}
+        if (buf[0] == '\0') {
+          strcpy(buf, k1c_core_info_table[i]->names[j]);
+        }
+        else {
+          int l = strlen(buf);
+          if ((l + 1 + strlen(k1c_core_info_table[i]->names[j]) + 1) < buflen) {
+            strcat(buf, "|");
+            strcat(buf, k1c_core_info_table[i]->names[j]);
+          }
+        }
       }
     j++;
     }
@@ -912,46 +909,46 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
             case ',':
             case '=':
             case ':':
-	    case '?':
+            case '?':
                 ++input_line_pointer;
                 if (saw_comma || !saw_arg)
                     goto err;
                 saw_comma = 1;
                 break;
             case '[': {
-	      /* clarkes: for ldwl/stwl, we allow comma separator
-	       * before the [, so I have removed this test.
-	       * if (saw_comma)
-	       * goto err; */
-	      expression(tok);
-	      if (tok->X_op == O_register) {
-		saw_comma = 0;
-		saw_arg = 1;
-		++tok;
-		++tokcnt;
-		break;
-	      }
-	      else {
-		D(stderr, "tok type == %d\n", tok->X_op);
-		as_warn("expected a register");
-		break;
-	      }
+              /* clarkes: for ldwl/stwl, we allow comma separator
+               * before the [, so I have removed this test.
+               * if (saw_comma)
+               * goto err; */
+              expression(tok);
+              if (tok->X_op == O_register) {
+                saw_comma = 0;
+                saw_arg = 1;
+                ++tok;
+                ++tokcnt;
+                break;
+              }
+              else {
+                D(stderr, "tok type == %d\n", tok->X_op);
+                as_warn("expected a register");
+                break;
+              }
             }
-	    default: {
-	      if (saw_arg && !saw_comma) {
-		goto err;
-	      }
-	      expression(tok);
-	      if (tok->X_op == O_illegal || tok->X_op == O_absent) {
-		goto err;
-	      }
-	      
-	      saw_comma = 0;
-	      saw_arg = 1;
-	      ++tok;
-	      ++tokcnt;
-	      break;
-	    }
+            default: {
+              if (saw_arg && !saw_comma) {
+                goto err;
+              }
+              expression(tok);
+              if (tok->X_op == O_illegal || tok->X_op == O_absent) {
+                goto err;
+              }
+              
+              saw_comma = 0;
+              saw_arg = 1;
+              ++tok;
+              ++tokcnt;
+              break;
+            }
         }
     }
 
@@ -983,13 +980,12 @@ has_relocation_of_size(k1bfield *opnd) {
       /* An absolute reloc needs a full size symbol reloc */
     case K1_REL_ABS:
       if(opnd->relocs[i]->bitsize >= symbol_size) {
-	return 1;
+        return 1;
       }
       break;
 
       /* Most likely relative jumps. Let something else check size is
-	 OK. We don't currently have several relocations for such
-	 insns */
+         OK. We don't currently have several relocations for such insns */
     case K1_REL_PC:
       return 1;
 
@@ -1010,7 +1006,7 @@ has_relocation_of_size(k1bfield *opnd) {
 static match_operands_code
 match_operands(const k1opc_t * op, const expressionS * tok,
         int ntok)
- {
+{
     int ii;
     int jj;
     int nop;
@@ -1029,74 +1025,74 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 
     for(ii=0; ii < op->wordcount; ii++) {
       if (! (op->codewords[ii].flags & encoding_space_flags))
-	return MATCH_NOT_FOUND;
+        return MATCH_NOT_FOUND;
     }
 
 #define IS_K1_REGFILE_GRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_GRF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GRF]))
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GRF]))
 #define IS_K1_REGFILE_PRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_PRF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_PRF]))
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_PRF]))
 #define IS_K1_REGFILE_QRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_QRF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_QRF]))
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_QRF]))
 #define IS_K1_REGFILE_SRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_SRF]) \
-				 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_SRF]))
+                                 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_SRF]))
 #define IS_K1_REGFILE_CRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_CRF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_CRF]))
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_CRF]))
 #define IS_K1_REGFILE_BRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_BRF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_BRF]))
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_BRF]))
 #define IS_K1_REGFILE_ARF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_ARF]) \
-				&& (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_ARF]))
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_ARF]))
 
-#define MATCH_K1_REGFILE(tok,is_regfile)				\
-    if (((tok).X_op == O_register) && (is_regfile(tok))) {		\
-      break;								\
-    }									\
-    else {								\
-      return MATCH_NOT_FOUND;						\
+#define MATCH_K1_REGFILE(tok,is_regfile)                                \
+    if (((tok).X_op == O_register) && (is_regfile(tok))) {                \
+      break;                                                                \
+    }                                                                        \
+    else {                                                                \
+      return MATCH_NOT_FOUND;                                                \
     }
 
     /* Now check for compatiblility of each operand. */
     for (jj = 0; jj < ntok; jj++) {
         int operand_type = op->format[jj]->type;
         char *operand_type_name = op->format[jj]->tname;
-	// int has_relocation = (op->format[jj]->reloc_nb > 0);
-	int is_immediate = (op->format[jj]->reg_nb == 0);
+        // int has_relocation = (op->format[jj]->reloc_nb > 0);
+        int is_immediate = (op->format[jj]->reg_nb == 0);
 
         opdef = op->format[jj];
         int *valid_regs = op->format[jj]->regs;
 
-	/* When operand is a register, check if it is valid. */
-	if ((tok[jj].X_op == O_register) &&
-	    (valid_regs == NULL || !valid_regs[k1_registers[tok[jj].X_add_number].id])) {
-	  return MATCH_NOT_FOUND;
-	}
+        /* When operand is a register, check if it is valid. */
+        if ((tok[jj].X_op == O_register) &&
+            (valid_regs == NULL || !valid_regs[k1_registers[tok[jj].X_add_number].id])) {
+          return MATCH_NOT_FOUND;
+        }
 
-	if(is_immediate) {
-	  if(tok[jj].X_op == O_symbol) {
-	    if(! has_relocation_of_size(op->format[jj])) {
-	      return MATCH_NOT_FOUND;
-	    }
-	  }
-	  if (tok[jj].X_op == O_pseudo_fixup) {
-	    int i;
-	    for (i = 0; i < NELEMS(pseudo_func); i++){
-	      if (tok[jj].X_op_symbol == pseudo_func[i].sym){
-		if (k1_get_pseudo_func2(pseudo_func[i].sym, op->format[jj]) != NULL) {
-		  break;
-		}
-	      }
-	    }
-	    if (i == NELEMS(pseudo_func)) {
-	      return MATCH_NOT_FOUND;
-	    }
-	  }
-	}
+        if(is_immediate) {
+          if(tok[jj].X_op == O_symbol) {
+            if(! has_relocation_of_size(op->format[jj])) {
+              return MATCH_NOT_FOUND;
+            }
+          }
+          if (tok[jj].X_op == O_pseudo_fixup) {
+            int i;
+            for (i = 0; i < NELEMS(pseudo_func); i++){
+              if (tok[jj].X_op_symbol == pseudo_func[i].sym){
+                if (k1_get_pseudo_func2(pseudo_func[i].sym, op->format[jj]) != NULL) {
+                  break;
+                }
+              }
+            }
+            if (i == NELEMS(pseudo_func)) {
+              return MATCH_NOT_FOUND;
+            }
+          }
+        }
 
-#define CASE_SRF_REGCLASSES(core)					       \
-        case RegClass_ ## core ## _systemReg:			       \
-        case RegClass_ ## core ## _nopcpsReg:			       \
-        case RegClass_ ## core ## _onlypsReg:			       \
-        case RegClass_ ## core ## _onlyraReg:			       \
+#define CASE_SRF_REGCLASSES(core)                                               \
+        case RegClass_ ## core ## _systemReg:                               \
+        case RegClass_ ## core ## _nopcpsReg:                               \
+        case RegClass_ ## core ## _onlypsReg:                               \
+        case RegClass_ ## core ## _onlyraReg:                               \
         case RegClass_ ## core ## _onlyfxReg
 
         switch (operand_type) {
@@ -1132,46 +1128,46 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     break;
                 }
                 if (tok[jj].X_op == O_constant){
-  		    long long signed_value = tok[jj].X_add_number;
-  		    unsigned long long unsigned_value = tok[jj].X_add_number;
-  		    int match_signed = 0;
-		    int match_unsigned = 0;
+                      long long signed_value = tok[jj].X_add_number;
+                      unsigned long long unsigned_value = tok[jj].X_add_number;
+                      int match_signed = 0;
+                    int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
                     if( !((opdef->flags & k1SIGNED) || (opdef->flags & k1WRAPPED)) && (tok[jj].X_unsigned == 0)){
-		      return MATCH_NOT_FOUND;
+                      return MATCH_NOT_FOUND;
                     }
 
-		    // [JV] Special case of both signed and unsigned ranges are accepted because
-		    // this immediate;
-		    // - is zero extended on the same size of the instruction operation
-		    // - sign bit is the highest bit
-		    if(opdef->flags & k1WRAPPED) {
-		      signed long long high_mask = 0x8000000000000000LL;
-		      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
+                    // [JV] Special case of both signed and unsigned ranges are accepted because
+                    // this immediate;
+                    // - is zero extended on the same size of the instruction operation
+                    // - sign bit is the highest bit
+                    if(opdef->flags & k1WRAPPED) {
+                      signed long long high_mask = 0x8000000000000000LL;
+                      int shift = (sizeof(signed long long) * 8) - opdef->width - 1;
 
-		      high_mask = high_mask >> shift;
+                      high_mask = high_mask >> shift;
 
-		      // If high bits set to zero, can perform sign extension.
-		      if((signed_value & high_mask) == 0) {
-			signed_value = (signed_value << (64 - opdef->width)) >> (64 - opdef->width);
-		      }
-		    }
+                      // If high bits set to zero, can perform sign extension.
+                      if((signed_value & high_mask) == 0) {
+                        signed_value = (signed_value << (64 - opdef->width)) >> (64 - opdef->width);
+                      }
+                    }
 
                     max = (1LL << (opdef->width - 1)) - 1;
                     min = (-1LL << (opdef->width - 1));
                     mask = ~(-1LL << opdef->width);
-		    if(opdef->width == 64) {
-		      mask = -1LL;
-		    }
+                    if(opdef->width == 64) {
+                      mask = -1LL;
+                    }
 
-		    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
-		    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
+                    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
+                    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
 
                     if ( !                                                         /* Does not match signed and unsigned variantes */
-			 ( ( !(opdef->flags & k1SIGNED) && match_unsigned ) ||     /* Match unsigned and operand is unsigned or wrapped */           
-			   ( ((opdef->flags & k1SIGNED) || (opdef->flags & k1WRAPPED))  && match_signed ) ) ) { /* Match signed and operand is signed or wrapped */           
-		      return MATCH_NOT_FOUND;
+                         ( ( !(opdef->flags & k1SIGNED) && match_unsigned ) ||     /* Match unsigned and operand is unsigned or wrapped */           
+                           ( ((opdef->flags & k1SIGNED) || (opdef->flags & k1WRAPPED))  && match_signed ) ) ) { /* Match signed and operand is signed or wrapped */           
+                      return MATCH_NOT_FOUND;
                     }
                     break;
                 }
@@ -1179,7 +1175,7 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                 return MATCH_NOT_FOUND;
             default:
                 as_bad("[match_operands] : couldn't find operand type %s \n", operand_type_name);
-		return MATCH_NOT_FOUND;
+                return MATCH_NOT_FOUND;
         }
     }
     return MATCH_FOUND;
@@ -1207,7 +1203,7 @@ static const k1opc_t *
 find_format(const k1opc_t * opcode,
         const expressionS * tok,
         int ntok)
- {
+{
     char *name = opcode->as_op;
     const k1opc_t *t = opcode;
 
@@ -1229,9 +1225,9 @@ find_format(const k1opc_t * opcode,
  */
 static int
 insert_operand(k1insn_t * insn,
-	       k1bfield * opdef,
-	       const expressionS * arg)
- {
+               k1bfield * opdef,
+               const expressionS * arg)
+{
     unsigned long long op = 0;
     k1_bitfield_t *bfields = opdef->bfield;
     int bf_nb = opdef->bitfields;
@@ -1239,220 +1235,220 @@ insert_operand(k1insn_t * insn,
     int immx_ready = 0;
 
     if (opdef->width == 0)
-        return 0;			/* syntactic sugar ? */
+        return 0;                        /* syntactic sugar ? */
 
     /* try to resolve the value */
 
     switch (arg->X_op)
       {
       case O_register:
-	op = k1_registers[arg->X_add_number].id;
-	break;
+        op = k1_registers[arg->X_add_number].id;
+        break;
       case O_pseudo_fixup:
-	if (insn->nfixups == 0)
-	  {
-	    expressionS reloc_arg;
-	    reloc_arg = *arg;
-	    reloc_arg.X_op = O_symbol;
-	    struct pseudo_func_s *pf = k1_get_pseudo_func2(arg->X_op_symbol, opdef);
+        if (insn->nfixups == 0)
+          {
+            expressionS reloc_arg;
+            reloc_arg = *arg;
+            reloc_arg.X_op = O_symbol;
+            struct pseudo_func_s *pf = k1_get_pseudo_func2(arg->X_op_symbol, opdef);
 
-	    /* S64 uses LO10/UP27/EX27 format (3 words), with one reloc in each words (3) */
-	    /* S43 uses LO10/EX6/UP27 format (2 words), with 2 relocs in main syllabes and 1 in extra word */
-	    /* S37 uses LO10/UP27 format (2 words), with one reloc in each word (2) */
+            /* S64 uses LO10/UP27/EX27 format (3 words), with one reloc in each words (3) */
+            /* S43 uses LO10/EX6/UP27 format (2 words), with 2 relocs in main syllabes and 1 in extra word */
+            /* S37 uses LO10/UP27 format (2 words), with one reloc in each word (2) */
 
-	    /* Beware that immxbuf must be filled in the same order as
-	       relocs should be emitted. */
+            /* Beware that immxbuf must be filled in the same order as
+               relocs should be emitted. */
 
-	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
-		|| pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6
-		|| pf->pseudo_relocs.reloc_type == S37_LO10_UP27) {
-	      insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_lo10;
-	      insn->fixup[insn->nfixups].exp = reloc_arg;
-	      insn->fixup[insn->nfixups].where = 0;
-	      insn->nfixups++;
+            if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
+                || pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6
+                || pf->pseudo_relocs.reloc_type == S37_LO10_UP27) {
+              insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_lo10;
+              insn->fixup[insn->nfixups].exp = reloc_arg;
+              insn->fixup[insn->nfixups].where = 0;
+              insn->nfixups++;
 
-	      insn->immx0 = immxcnt;
-	      immxbuf[immxcnt].insn[0] = 0;
-	      immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_up27;
-	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
-	      immxbuf[immxcnt].fixup[0].where = 0;
-	      immxbuf[immxcnt].nfixups = 1;
-	      immxbuf[immxcnt].len = 1;
+              insn->immx0 = immxcnt;
+              immxbuf[immxcnt].insn[0] = 0;
+              immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_up27;
+              immxbuf[immxcnt].fixup[0].exp = reloc_arg;
+              immxbuf[immxcnt].fixup[0].where = 0;
+              immxbuf[immxcnt].nfixups = 1;
+              immxbuf[immxcnt].len = 1;
 
-	      insn->len -= 1;
-	      incr_immxcnt();
-	      immx_ready = 1;
-	    } else {
-	      as_fatal ("Unexpected fixup");
-	    }
+              insn->len -= 1;
+              incr_immxcnt();
+              immx_ready = 1;
+            } else {
+              as_fatal ("Unexpected fixup");
+            }
 
-	    if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27) {
-	      insn->immx1 = immxcnt;
-	      immxbuf[immxcnt].insn[0] = 0;
-	      immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_ex;
-	      immxbuf[immxcnt].fixup[0].exp = reloc_arg;
-	      immxbuf[immxcnt].fixup[0].where = 0;
-	      immxbuf[immxcnt].nfixups = 1;
-	      immxbuf[immxcnt].len = 1;
+            if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27) {
+              insn->immx1 = immxcnt;
+              immxbuf[immxcnt].insn[0] = 0;
+              immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_ex;
+              immxbuf[immxcnt].fixup[0].exp = reloc_arg;
+              immxbuf[immxcnt].fixup[0].where = 0;
+              immxbuf[immxcnt].nfixups = 1;
+              immxbuf[immxcnt].len = 1;
 
-	      insn->len -= 1;
-	      incr_immxcnt();
-	    } else if (pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6) {
-	      insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_ex;
-	      insn->fixup[insn->nfixups].exp = reloc_arg;
-	      insn->fixup[insn->nfixups].where = 0;
-	      insn->nfixups++;
-	    }
+              insn->len -= 1;
+              incr_immxcnt();
+            } else if (pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6) {
+              insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_ex;
+              insn->fixup[insn->nfixups].exp = reloc_arg;
+              insn->fixup[insn->nfixups].where = 0;
+              insn->nfixups++;
+            }
 
-	  }
-	else
-	  {
-	    as_fatal ("No room for fixup ");
-	  }
-	break;
-      case O_constant:		/* we had better generate a fixup if > max */
-	if (!(arg->X_add_symbol))
-	  {
-	    if(opdef->flags & k1SIGNED){
-	      op = ((signed long long)arg->X_add_number >> opdef->rightshift);
-	    }else{
-	      op = ((unsigned long long)arg->X_add_number >> opdef->rightshift);
-	    }
-	    break;
-	  }
-	/* else falls through to fixup */
+          }
+        else
+          {
+            as_fatal ("No room for fixup ");
+          }
+        break;
+      case O_constant:                /* we had better generate a fixup if > max */
+        if (!(arg->X_add_symbol))
+          {
+            if(opdef->flags & k1SIGNED){
+              op = ((signed long long)arg->X_add_number >> opdef->rightshift);
+            }else{
+              op = ((unsigned long long)arg->X_add_number >> opdef->rightshift);
+            }
+            break;
+          }
+        /* else falls through to fixup */
       default:
         {
-	  if (insn->nfixups == 0)
+          if (insn->nfixups == 0)
             {
-	      switch (opdef->type)
+              switch (opdef->type)
                 {
-		case Immediate_k1c_pcrel17:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->nfixups = 1;
-		  break;
+                case Immediate_k1c_pcrel17:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_17_PCREL;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
+                  insn->nfixups = 1;
+                  break;
 
-		case Immediate_k1c_pcrel27:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->nfixups = 1;
-		  break;
+                case Immediate_k1c_pcrel27:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_27_PCREL;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
+                  insn->nfixups = 1;
+                  break;
 
-		case Immediate_k1c_wrapped32:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_S32_LO5;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->nfixups = 1;
+                case Immediate_k1c_wrapped32:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_S32_LO5;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
+                  insn->nfixups = 1;
 
-		  insn->immx0 = immxcnt;
-		  immxbuf[immxcnt].insn[0] = 0;
-		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S32_UP27;
-		  immxbuf[immxcnt].fixup[0].exp = *arg;
-		  immxbuf[immxcnt].fixup[0].where = 0;
-		  immxbuf[immxcnt].nfixups = 1;
-		  immxbuf[immxcnt].len = 1;
+                  insn->immx0 = immxcnt;
+                  immxbuf[immxcnt].insn[0] = 0;
+                  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S32_UP27;
+                  immxbuf[immxcnt].fixup[0].exp = *arg;
+                  immxbuf[immxcnt].fixup[0].where = 0;
+                  immxbuf[immxcnt].nfixups = 1;
+                  immxbuf[immxcnt].len = 1;
 
-		  // decrement insn->len: immx part handled separately
-		  // from insn and must not be emited twice
-		  insn->len -= 1;
-		  incr_immxcnt();
-		  immx_ready = 1;
-		  break;
-		  
-		case Immediate_k1c_signed10:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->nfixups = 1;
-		  break;
+                  // decrement insn->len: immx part handled separately
+                  // from insn and must not be emited twice
+                  insn->len -= 1;
+                  incr_immxcnt();
+                  immx_ready = 1;
+                  break;
+                  
+                case Immediate_k1c_signed10:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
+                  insn->nfixups = 1;
+                  break;
 
-		case Immediate_k1c_signed37:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->nfixups = 1;
+                case Immediate_k1c_signed37:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_S37_LO10;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
+                  insn->nfixups = 1;
 
-		  insn->immx0 = immxcnt;
-		  immxbuf[immxcnt].insn[0] = 0;
-		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_UP27;
-		  immxbuf[immxcnt].fixup[0].exp = *arg;
-		  immxbuf[immxcnt].fixup[0].where = 0;
-		  immxbuf[immxcnt].nfixups = 1;
-		  immxbuf[immxcnt].len = 1;
+                  insn->immx0 = immxcnt;
+                  immxbuf[immxcnt].insn[0] = 0;
+                  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_UP27;
+                  immxbuf[immxcnt].fixup[0].exp = *arg;
+                  immxbuf[immxcnt].fixup[0].where = 0;
+                  immxbuf[immxcnt].nfixups = 1;
+                  immxbuf[immxcnt].len = 1;
 
-		  // decrement insn->len: immx part handled separately
-		  // from insn and must not be emited twice
-		  insn->len -= 1;
-		  incr_immxcnt();
-		  immx_ready = 1;
-		  break;
-		  
-		case Immediate_k1c_signed43:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_S43_LO10;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
-		  insn->fixup[1].reloc = BFD_RELOC_K1_S43_EX6;
-		  insn->fixup[1].exp = *arg;
-		  insn->fixup[1].where = 0;
-		  insn->nfixups = 2;
+                  // decrement insn->len: immx part handled separately
+                  // from insn and must not be emited twice
+                  insn->len -= 1;
+                  incr_immxcnt();
+                  immx_ready = 1;
+                  break;
+                  
+                case Immediate_k1c_signed43:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_S43_LO10;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
+                  insn->fixup[1].reloc = BFD_RELOC_K1_S43_EX6;
+                  insn->fixup[1].exp = *arg;
+                  insn->fixup[1].where = 0;
+                  insn->nfixups = 2;
 
-		  insn->immx0 = immxcnt;
-		  immxbuf[immxcnt].insn[0] = insn->insn[1];
-		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S43_UP27;
-		  immxbuf[immxcnt].fixup[0].exp = *arg;
-		  immxbuf[immxcnt].fixup[0].where = 0;
-		  immxbuf[immxcnt].nfixups = 1;
-		  immxbuf[immxcnt].len = 1;
+                  insn->immx0 = immxcnt;
+                  immxbuf[immxcnt].insn[0] = insn->insn[1];
+                  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S43_UP27;
+                  immxbuf[immxcnt].fixup[0].exp = *arg;
+                  immxbuf[immxcnt].fixup[0].where = 0;
+                  immxbuf[immxcnt].nfixups = 1;
+                  immxbuf[immxcnt].len = 1;
 
-		  // decrement insn->len: immx part handled separately
-		  // from insn and must not be emited twice
-		  incr_immxcnt();
-		  insn->len -= 1;
-		  immx_ready = 1;
-		  break;
+                  // decrement insn->len: immx part handled separately
+                  // from insn and must not be emited twice
+                  incr_immxcnt();
+                  insn->len -= 1;
+                  immx_ready = 1;
+                  break;
 
-		case Immediate_k1c_wrapped64:
-		  insn->fixup[0].reloc = BFD_RELOC_K1_S64_LO10;
-		  insn->fixup[0].exp = *arg;
-		  insn->fixup[0].where = 0;
+                case Immediate_k1c_wrapped64:
+                  insn->fixup[0].reloc = BFD_RELOC_K1_S64_LO10;
+                  insn->fixup[0].exp = *arg;
+                  insn->fixup[0].where = 0;
 
-		  insn->nfixups = 1;
+                  insn->nfixups = 1;
 
-		  insn->immx0 = immxcnt;
-		  immxbuf[immxcnt].insn[0] = insn->insn[1];
-		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_UP27;
-		  immxbuf[immxcnt].fixup[0].exp = *arg;
-		  immxbuf[immxcnt].fixup[0].where = 0;
-		  immxbuf[immxcnt].nfixups = 1;
-		  immxbuf[immxcnt].len = 1;
+                  insn->immx0 = immxcnt;
+                  immxbuf[immxcnt].insn[0] = insn->insn[1];
+                  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_UP27;
+                  immxbuf[immxcnt].fixup[0].exp = *arg;
+                  immxbuf[immxcnt].fixup[0].where = 0;
+                  immxbuf[immxcnt].nfixups = 1;
+                  immxbuf[immxcnt].len = 1;
 
-		  incr_immxcnt();
-		  insn->len -= 1;
+                  incr_immxcnt();
+                  insn->len -= 1;
 
-		  insn->immx1 = immxcnt;
-		  immxbuf[immxcnt].insn[0] = insn->insn[2];
-		  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_EX27;
-		  immxbuf[immxcnt].fixup[0].exp = *arg;
-		  immxbuf[immxcnt].fixup[0].where = 0;
-		  immxbuf[immxcnt].nfixups = 1;
-		  immxbuf[immxcnt].len = 1;
+                  insn->immx1 = immxcnt;
+                  immxbuf[immxcnt].insn[0] = insn->insn[2];
+                  immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_EX27;
+                  immxbuf[immxcnt].fixup[0].exp = *arg;
+                  immxbuf[immxcnt].fixup[0].where = 0;
+                  immxbuf[immxcnt].nfixups = 1;
+                  immxbuf[immxcnt].len = 1;
 
-		  incr_immxcnt();
-		  insn->len -= 1;
-		  immx_ready = 1;
-		  break;
+                  incr_immxcnt();
+                  insn->len -= 1;
+                  immx_ready = 1;
+                  break;
 
-		default:
-		  as_fatal("don't know how to generate a fixup record");
+                default:
+                  as_fatal("don't know how to generate a fixup record");
                 }
-	      return immx_ready;
+              return immx_ready;
             }
-	  else
-	    {
-	      as_fatal("No room for fixup ");
+          else
+            {
+              as_fatal("No room for fixup ");
             }
         }
       }
@@ -1475,13 +1471,12 @@ insert_operand(k1insn_t * insn,
  * assemble it
  *
  */
-
 static void
-assemble_insn( const k1opc_t * opcode,
-        const expressionS * tok,
-        int ntok,
-        k1insn_t * insn)
- {
+assemble_insn(const k1opc_t * opcode,
+              const expressionS * tok,
+              int ntok,
+              k1insn_t * insn)
+{
     int argidx;
     int i;
     unsigned immx_ready = 0;
@@ -1532,7 +1527,8 @@ assemble_insn( const k1opc_t * opcode,
  * handled by insert_operand.
  */
 static void
-emit_insn(k1insn_t * insn, int stopflag){
+emit_insn(k1insn_t * insn, int stopflag)
+{
   char *f;
   int i;
   unsigned int image;
@@ -1573,7 +1569,7 @@ emit_insn(k1insn_t * insn, int stopflag){
     size = bfd_get_reloc_size(reloc_howto);
     pcrel = reloc_howto->pc_relative;
     fixS* fixup = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where,
-			      size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+                              size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
     /*
      * Set this bit so that large value can still be
      * handled. Without it, assembler will fail in fixup_segment
@@ -1589,40 +1585,40 @@ emit_insn(k1insn_t * insn, int stopflag){
 
 /* Determines if the expression is constant absolute */
 int is_constant_expression(expressionS* exp)
- {
+{
     int retval=FALSE;
 
     if ( exp!=NULL )
- {
+    {
         if ( exp->X_op==O_constant )
- {
+        {
             retval=TRUE;
         }
         else if ( !(exp->X_add_symbol) )
- {
+        {
             retval=TRUE;
         }
         else if ( ! symbol_resolved_p(exp->X_add_symbol) )
- {
+        {
             retval=FALSE;
         }
         else
- {
+        {
             if ( exp->X_add_symbol )
- {
+            {
                 if ( bfd_is_abs_section(S_GET_SEGMENT(exp->X_add_symbol)) )
- {
+                {
                     retval=TRUE;
                 }
                 /* FIXME (lc) rather bad to test if we need another symbol */
                 if ( exp->X_op>=O_logical_not )
- {
+                {
                     if ( bfd_is_abs_section(S_GET_SEGMENT(exp->X_op_symbol)) )
- {
+                    {
                         retval=TRUE;
                     }
                     else
- {
+                    {
                         retval=FALSE;
                     }
                 } /* if (exp->X_op_symbol) */
@@ -1638,7 +1634,8 @@ int is_constant_expression(expressionS* exp)
  * the expression.  */
 
 void
-md_operand(expressionS *e) {
+md_operand(expressionS *e)
+{
    /* enum pseudo_type pseudo_type; */
    /* char *name = NULL; */
    size_t len;
@@ -1651,76 +1648,76 @@ md_operand(expressionS *e) {
      /* pseudo_type = 0; */
      ch = *++input_line_pointer;
      for (i = 0; i < NELEMS (pseudo_func); ++i)
-	if (pseudo_func[i].name && pseudo_func[i].name[0] == ch)
-	  {
-	    len = strlen (pseudo_func[i].name);
-	    if (strncmp (pseudo_func[i].name + 1,
-			 input_line_pointer + 1, len - 1) == 0
-		&& !is_part_of_name (input_line_pointer[len]))
-	      {
-		input_line_pointer += len;
-		/* pseudo_type = pseudo_func[i].type; */
-		break;
-	      }
-	  }
+        if (pseudo_func[i].name && pseudo_func[i].name[0] == ch)
+          {
+            len = strlen (pseudo_func[i].name);
+            if (strncmp (pseudo_func[i].name + 1,
+                         input_line_pointer + 1, len - 1) == 0
+                && !is_part_of_name (input_line_pointer[len]))
+              {
+                input_line_pointer += len;
+                /* pseudo_type = pseudo_func[i].type; */
+                break;
+              }
+          }
      /* switch (pseudo_type) */
-     /* 	{ */
-     /* 	case PSEUDO_FUNC_RELOC: */
-	  SKIP_WHITESPACE ();
-	  if (*input_line_pointer != '(')
-	    {
-	      as_bad ("Expected '('");
-	      goto err;
-	    }
-	  /* Skip '('.  */
-	  ++input_line_pointer;
-	  expression (e);
-	  if (*input_line_pointer++ != ')')
-	    {
-	      as_bad ("Missing ')'");
-	      goto err;
-	    }
-	  if (e->X_op != O_symbol)
-	    {
-		  as_bad ("Illegal combination of relocation functions");
-		  /* if (e->X_op != O_pseudo_fixup) */
-		  /*     { */
-		  /* 	  as_bad ("Not a symbolic expression"); */
-		  /* 	  goto err; */
-		  /*     } */
-		   /* if (i != FUNC_GOT_RELATIVE) */
+     /*         { */
+     /*         case PSEUDO_FUNC_RELOC: */
+          SKIP_WHITESPACE ();
+          if (*input_line_pointer != '(')
+            {
+              as_bad ("Expected '('");
+              goto err;
+            }
+          /* Skip '('.  */
+          ++input_line_pointer;
+          expression (e);
+          if (*input_line_pointer++ != ')')
+            {
+              as_bad ("Missing ')'");
+              goto err;
+            }
+          if (e->X_op != O_symbol)
+            {
+                  as_bad ("Illegal combination of relocation functions");
+                  /* if (e->X_op != O_pseudo_fixup) */
+                  /*     { */
+                  /*           as_bad ("Not a symbolic expression"); */
+                  /*           goto err; */
+                  /*     } */
+                   /* if (i != FUNC_GOT_RELATIVE) */
                    /* { */
                    /*   as_bad ("Illegal combination of relocation functions"); */
                    /*   goto err; */
                    /* } */
-		  /* switch (S_GET_VALUE (e->X_op_symbol)) */
-		  /*     { */
-		  /*     case FUNC_FPTR_RELATIVE: */
-		  /* 	  i = FUNC_GOT_FPTR_RELATIVE; break; */
-		  /*     case FUNC_TP_RELATIVE: */
-		  /* 	  i = FUNC_GOT_TP_RELATIVE; break; */
-		  /*     case FUNC_DTP_INDEX: */
-		  /* 	  i = FUNC_GOT_DTP_INDEX_RELATIVE; break; */
-		  /*     case FUNC_DTP_LOAD_MODULE: */
-		  /* 	  i = FUNC_GOT_DTP_LOAD_MODULE_RELATIVE; break; */
-		  /*     default: */
-		  /* 	  as_bad ("Illegal combination of relocation functions"); */
-		  /* 	  goto err; */
-		  /*     } */
-	    }
-	  /* Make sure gas doesn't get rid of local symbols that are used
-	     in relocs.  */
-	  e->X_op = O_pseudo_fixup;
-	  e->X_op_symbol = pseudo_func[i].sym;
-	/*   break; */
+                  /* switch (S_GET_VALUE (e->X_op_symbol)) */
+                  /*     { */
+                  /*     case FUNC_FPTR_RELATIVE: */
+                  /*           i = FUNC_GOT_FPTR_RELATIVE; break; */
+                  /*     case FUNC_TP_RELATIVE: */
+                  /*           i = FUNC_GOT_TP_RELATIVE; break; */
+                  /*     case FUNC_DTP_INDEX: */
+                  /*           i = FUNC_GOT_DTP_INDEX_RELATIVE; break; */
+                  /*     case FUNC_DTP_LOAD_MODULE: */
+                  /*           i = FUNC_GOT_DTP_LOAD_MODULE_RELATIVE; break; */
+                  /*     default: */
+                  /*           as_bad ("Illegal combination of relocation functions"); */
+                  /*           goto err; */
+                  /*     } */
+            }
+          /* Make sure gas doesn't get rid of local symbols that are used
+             in relocs.  */
+          e->X_op = O_pseudo_fixup;
+          e->X_op_symbol = pseudo_func[i].sym;
+        /*   break; */
 
-	/* default: */
-	/*   /\* name = input_line_pointer - 1; *\/ */
-	/*   /\* get_symbol_end (); *\/ */
-	/*   get_symbol_name (&name); */
-	/*   as_bad ("Unknown pseudo function `%s'", name); */
-	/*   goto err; */
-	/* } */
+        /* default: */
+        /*   /\* name = input_line_pointer - 1; *\/ */
+        /*   /\* get_symbol_end (); *\/ */
+        /*   get_symbol_name (&name); */
+        /*   as_bad ("Unknown pseudo function `%s'", name); */
+        /*   goto err; */
+        /* } */
      break;
    default:
      break;
@@ -1737,7 +1734,7 @@ md_operand(expressionS *e) {
  * original symbol's name in the reloc.  */
 int k1_fix_adjustable(fix)
 fixS *fix;
- {
+{
     if (emit_all_relocs)
         return 0;
 
@@ -1749,7 +1746,7 @@ fixS *fix;
         return 0;
 #endif
     switch (fix->fx_r_type)
- {
+    {
         default:
             break;
             /*
@@ -1757,16 +1754,16 @@ fixS *fix;
              * case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
              * case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
              */
-	case BFD_RELOC_K1_GOTOFF:
+        case BFD_RELOC_K1_GOTOFF:
         case BFD_RELOC_K1_S37_GOTOFF_UP27:
         case BFD_RELOC_K1_S37_GOTOFF_LO10:
 
-	case BFD_RELOC_K1_GOTOFF64:
+        case BFD_RELOC_K1_GOTOFF64:
         case BFD_RELOC_K1_S43_GOTOFF64_UP27:
         case BFD_RELOC_K1_S43_GOTOFF64_LO10:
         case BFD_RELOC_K1_S43_GOTOFF64_EX6:
 
-	case BFD_RELOC_K1_GOT:
+        case BFD_RELOC_K1_GOT:
         case BFD_RELOC_K1_S37_GOT_UP27:
         case BFD_RELOC_K1_S37_GOT_LO10:
         case BFD_RELOC_K1_S37_PLT_UP27:
@@ -1775,8 +1772,8 @@ fixS *fix;
         /* case BFD_RELOC_K1_FUNCDESC_GOT_UP27: */
         /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
         /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_UP27: */
-	/* case BFD_RELOC_K1_FUNCDESC: */
-	case BFD_RELOC_K1_GLOB_DAT:
+        /* case BFD_RELOC_K1_FUNCDESC: */
+        case BFD_RELOC_K1_GLOB_DAT:
              /* case BFD_RELOC_K1_GOTOFFX_HI23:
              * case BFD_RELOC_K1_GOTOFFX_LO9:             
              * case BFD_RELOC_K1_IPLT:
@@ -1788,15 +1785,10 @@ fixS *fix;
     return 1;
  }
 
-static void
-assemble_tokens(const char *opname,
-        const expressionS * tok,
-        int ntok);
 
 /*
  * Return the Bundling type for an insn.
  */
-
 static Bundling find_bundling(const k1insn_t *insn)
 {
     int insn_bundling = insn->opdef->bundling;
@@ -1809,124 +1801,19 @@ static int find_reservation(const k1insn_t *insn)
     return insn_reservation;
 }
 
-static int cmp_bundling(const void *a, const void *b)
-{
-    const Bundling *ba = (const Bundling *)a;
-    const Bundling *bb = (const Bundling *)b;
-    return (*bb < *ba) - (*ba < *bb);
-}
-
-/*
- * Find a bundle type that matches the operations in
- * bundle_insn.
- * If found, return the index in bundlematch_table.
- * If not found, return:
- *  -2 if operations cannot be bundled on this alignment
- *  -1 if operations cannot be bundled on any alignment
- * As a side-effect, reorder the operations in
- * bundle_insn and add nops to match the required ordering
- * for the bundle type.
- * If no bundle type found, the operations
- * are in the original order.
- *
- */
-
-__attribute__((unused))
-static int
-find_bundle_type(k1insn_t *bundle_insn[], int *bundle_insn_cnt){
-  int hash = 0;
-  int i;
-  int canonical_ix;
-  const BundleMatchType *match;
-  Bundling canonical_order[K1MAXBUNDLEISSUE];
-  
-  
-  if (*bundle_insn_cnt > K1MAXBUNDLEISSUE) {
-    return -1;
-  }
-  
-  for (i = 0; i < *bundle_insn_cnt; i++) {
-    canonical_order[i] = bundle_insn[i]->bundling;
-  }
-  qsort(canonical_order, *bundle_insn_cnt, sizeof(Bundling), cmp_bundling);
-  
-  for (i = 0; i < *bundle_insn_cnt; i++) {
-    hash = (hash * K1NUMBUNDLINGS) + canonical_order[i];
-  }
-  
-  if (hash > bundlematch_table_size) {
-    return -1;
-  }
-  
-  canonical_ix = bundlematch_table[hash];
-  
-  if (canonical_ix == -1) {
-    /* No match at all for canonical, on any alignment. */
-    return -1;
-  }
-  
-  match = &canonical_table[canonical_ix];
-  
-  /* Try each bundle type for this canonical. */
-  for (i = 0; i < match->entries; i++) {
-    int bt = match->entry[i];
-    const BundleType *btype = &bundle_types[bt];
-    int sec_align = 1 << bfd_get_section_alignment(stdoutput, now_seg);
-    /* Our known alignment is current pc modulo section align.
-     * That must satisfy the bundle requirements. */
-    int cur_align = get_byte_counter(now_seg) % sec_align;
-
-    if ((btype->nnops == 0 || nop_insertion_allowed)
-	&& sec_align >= btype->base
-	&& (cur_align % btype->base) == btype->bias) {
-      /* We have a match. Reorder bundle_insn to match it. */
-      int entry, insn;
-      int next_nop = 0;
-      
-      for (entry = 0; entry < *bundle_insn_cnt; entry++) {
-	/* Put correct insn in bundle_insn[entry] */
-	if (entry == btype->nops[next_nop]) {
-	  bundle_insn[(*bundle_insn_cnt)++] = bundle_insn[entry];
-	  assemble_tokens("nop", 0, 0);
-	  insbuf[insncnt-1].bundling = find_bundling(&insbuf[insncnt-1]);
-	  bundle_insn[entry] = &insbuf[insncnt-1];
-	  next_nop++;
-	}
-	else {
-	  for (insn = entry; insn < *bundle_insn_cnt; insn++) {
-	    if (bundle_insn[insn]->bundling == btype->bundling[entry]) {
-	      k1insn_t *t = bundle_insn[entry];
-	      bundle_insn[entry] = bundle_insn[insn];
-	      bundle_insn[insn] = t;
-	      break;
-	    }
-	  }
-	}
-      }
-      return canonical_ix;
-    }
-  }
-
-  /* Here if we matched a canonical, but the alignment was not good for
-   * any of the bundle types. */
-  return -2;
-}
-
 /*
  * Given an opcode name and a pre-tokenized
  * set of arguments, take the
  * opcode all the way through emission
  */
-
 static void
 assemble_tokens(const char *opname,
-        const expressionS * tok,
-        int ntok) {
+                const expressionS * tok,
+                int ntok) {
   const k1opc_t *opcode;
   k1insn_t *insn;
   
   /* make sure there is room in instruction buffer */
-  
   if (insncnt >= K1MAXBUNDLEISSUE) {
     as_fatal("too many instructions in bundle ");
   }
@@ -1934,12 +1821,10 @@ assemble_tokens(const char *opname,
   insn = insbuf + insncnt;
 
   /* find the instruction in the opcode table */
-  
   opcode = (k1opc_t *) hash_find(k1_opcode_hash, opname);
   if (opcode) {
     if (!(opcode = find_format(opcode, tok, ntok))) {
-      as_bad("[assemble_tokens] : couldn't find format %s \n",
-	     opname);
+      as_bad("[assemble_tokens] : couldn't find format %s \n", opname);
     }
     else {
       assemble_insn(opcode, tok, ntok, insn);
@@ -1952,11 +1837,13 @@ assemble_tokens(const char *opname,
 }
 
 
-/* Write in buf at most buf_size.
-   Returns the number of writen characters.
+/*
+ * Write in buf at most buf_size.
+ * Returns the number of writen characters.
  */
 static int
-insn_syntax(k1opc_t *op, char *buf, int buf_size) {
+insn_syntax(k1opc_t *op, char *buf, int buf_size)
+{
   int chars = snprintf(buf, buf_size, "%s ",op->as_op);
   int i;
   char *fmtp = op->fmtstring;
@@ -2017,10 +1904,10 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size) {
     case Immediate_k1c_unsigned5:
     case Immediate_k1c_unsigned6:
       if(flags & k1SIGNED){
-	chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
+        chars += snprintf(&buf[chars], buf_size - chars, "s%d",width);
       }
       else {
-	chars += snprintf(&buf[chars], buf_size - chars, "u%d",width);
+        chars += snprintf(&buf[chars], buf_size - chars, "u%d",width);
       }
       break;
     default:
@@ -2087,7 +1974,8 @@ pop(sched_state_t **states, unsigned int *states_sz){
 
 static int
 push_state(sched_state_t *s,
-	   sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz){
+           sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz)
+{
   if (*states == NULL){
     *states = malloc(1024 * sizeof(struct state_t*));
     *states_storage_sz = 1024;
@@ -2118,12 +2006,12 @@ new_state(struct state_t *orig){
 
 
 static int
-k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt_p,
+k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insn_cnt,
                   sched_state_t *state,
                   sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz,
                   sched_state_t **solutions, unsigned int *solutions_sz){
 
-  if (state->cur_insn == bundle_insncnt_p){
+  if (state->cur_insn == bundle_insn_cnt){
     solutions[(*solutions_sz)++] = state;
     state->final = 1;
     return 1;
@@ -2256,7 +2144,7 @@ k1c_print_insn(k1opc_t *op) {
 }
 
 static void
-k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
+k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
 {
   sched_state_t *first_state;
   sched_state_t **states = NULL, *solutions[10];
@@ -2264,10 +2152,10 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
   unsigned int states_sz = 0, states_storage_sz = 0;
   
   int bidx;
-  for(bidx=0; bidx < *bundle_insncnt_p; bidx++){
+  for(bidx=0; bidx < bundle_insn_cnt; bidx++){
     if(find_bundling(bundle_insn[bidx]) == Bundling_k1c_ALL){
-      if(*bundle_insncnt_p == 1) {
-       return;
+      if(bundle_insn_cnt == 1) {
+        return;
       }
       else {
         as_fatal("Too many ops in a single op bundle (%s):\n",bundle_insn[bidx]->opdef->as_op);
@@ -2281,12 +2169,10 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
       case Bundling_k1c_LITE:
       case Bundling_k1c_LITE_X:
       case Bundling_k1c_LITE_Y:
-
         as_fatal("ALU non TINY instruction found in bundle with -mtiny-k1 used : %s\n",
                  bundle_insn[bidx]->opdef->as_op);
         break;
       default:
-
         break;
       }
     }
@@ -2301,7 +2187,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
   while(states_sz){
     sched_state_t *cur_s = pop(states, &states_sz);
 
-    int ok = k1c_schedule_step(bundle_insn, *bundle_insncnt_p,
+    int ok = k1c_schedule_step(bundle_insn, bundle_insn_cnt,
                                cur_s,
                                &states, &states_sz, &states_storage_sz,
                                solutions, &solutions_sz);
@@ -2318,7 +2204,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
   }
 
   if (solutions_sz){
-    k1insn_t *shadow[*bundle_insncnt_p];
+    k1insn_t *shadow[bundle_insn_cnt];
     int ii, jj=0;
     
     for (ii=0; ii<last_exu; ii++){
@@ -2356,7 +2242,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
         jj++;
       }
     }
-    memset(bundle_insn, 0, *bundle_insncnt_p * sizeof(k1insn_t*));
+    memset(bundle_insn, 0, bundle_insn_cnt * sizeof(k1insn_t*));
     memcpy(bundle_insn, shadow, jj * sizeof(k1insn_t*));
     free(solutions[0]);
   } else {
@@ -2365,14 +2251,14 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int *bundle_insncnt_p)
   free(states);
 }
 
-/* called by core to assemble a single line */
-
+/*
+ * Called by core to assemble a single line
+ */
 void
 md_assemble(char *s)
- {
+{
     char *t;
-    int i;
-    int tlen;
+    int i, tag,tlen;
     char opname[32];
     expressionS tok[K1MAXOPERANDS];
     char *tok_begins[2*K1MAXOPERANDS];
@@ -2391,19 +2277,13 @@ md_assemble(char *s)
     /* and actually output any instructions in bundle */
     /* also we need to implement the stop bit         */
     /* check for bundle end */
-
     if (strncmp(t, "be", 2) == 0) {
         int j;
         int sec_align;
-
         inside_bundle = 0;
-
-        unwind_bundle_count++;	/* count of bundles in current proc */
-
+        unwind_bundle_count++;        /* count of bundles in current proc */
         sec_align = bfd_get_section_alignment(stdoutput, now_seg);
-
         {
-
             k1insn_t *bundle_insn[K1MAXBUNDLEISSUE];
             int bundle_insn_cnt = 0;
             int syllables = 0;
@@ -2412,7 +2292,7 @@ md_assemble(char *s)
              * raised for this bundle or not */
 
             /* retain bundle start adress for error messages */
-	    //            start_bundle = get_byte_counter(now_seg);
+            //            start_bundle = get_byte_counter(now_seg);
 
 #ifdef OBJ_ELF
             /* Emit Dwarf debug line information */
@@ -2441,9 +2321,7 @@ md_assemble(char *s)
             if (check_resource_usage) {
                 const int reservation_table_len = (k1c_reservation_table_lines * k1c_resource_max);
                 const int *resources = k1_core_info->resources;
-                int *resources_used;
-
-                resources_used = (int *)alloca(reservation_table_len * sizeof (int));
+                int *resources_used = (int *)alloca(reservation_table_len * sizeof (int));
                 memset(resources_used, 0, reservation_table_len * sizeof (int));
 
                 for (i = 0; i < bundle_insn_cnt; i++) {
@@ -2463,62 +2341,59 @@ md_assemble(char *s)
 
             if(!generate_illegal_code){
               // reorder and check the bundle
-              reorder_bundle(bundle_insn, &bundle_insn_cnt);
+              k1c_reorder_bundle(bundle_insn, bundle_insn_cnt);
             }
 
-            /* The ordering of the insns has been set correctly
-             * in bundle_insn. */
+            /* The ordering of the insns has been set correctly in bundle_insn. */
             for (entry = 0; entry < bundle_insn_cnt; entry++) {
                 emit_insn(bundle_insn[entry], (entry == (bundle_insn_cnt + immxcnt - 1)));
                 bundle_insn[entry]->written = 1;
             }
             // Emit immx, ordering them by EXU tags, 0 to 3
             entry = 0;
-            for(i=0; i < 4; i++){
+            for(tag=0; tag < 4; tag++){
               for (j = 0; j < immxcnt; j++) {
-                  if(k1c_exunum2_fld(immxbuf[j].insn[0]) == i){
-		    assert(immxbuf[j].written == 0);
+                  if(k1c_exunum2_fld(immxbuf[j].insn[0]) == tag){
+                    assert(immxbuf[j].written == 0);
                       emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
                       immxbuf[j].written = 1;
                       entry++;
                   }
               }
             }
-	    if (entry != immxcnt){
-	      as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
-	    }
+            if (entry != immxcnt){
+              as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
+            }
 
             // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
 
-	}
+        }
 
-	{
-	    /* The debug label that appear in the middle of bundles
-	       had better appear to be attached to the next
-	       bundle. This is because usually these labels point to
-	       the first instruction where some condition is met. If
-	       the label isn't handled this way it will be attached to
-	       the current bundle which is wrong as the conresponding
-	       instruction isn't executed yet. */
-	    while (label_fixes) {
-		struct label_fix *fix = label_fixes;
+        {
+            /* The debug label that appear in the middle of bundles
+               had better appear to be attached to the next
+               bundle. This is because usually these labels point to
+               the first instruction where some condition is met. If
+               the label isn't handled this way it will be attached to
+               the current bundle which is wrong as the conresponding
+               instruction isn't executed yet. */
+            while (label_fixes) {
+                struct label_fix *fix = label_fixes;
 
-		label_fixes = fix->next;
-		symbol_set_value_now (fix->sym);
-		free (fix);
-	    }
-	}
+                label_fixes = fix->next;
+                symbol_set_value_now (fix->sym);
+                free (fix);
+            }
+        }
 
         insncnt = 0;
         immxcnt = 0;
-	memset(immxbuf, 0, sizeof(immxbuf));
+        memset(immxbuf, 0, sizeof(immxbuf));
 
         return;
     }
 
-
     /* get opcode info    */
-
     while (t && t[0] && (t[0] == ' '))
         t++;
     i = strspn(t, "abcdefghijklmnopqrstuvwxyz.,_0123456789");
@@ -2529,7 +2404,6 @@ md_assemble(char *s)
     t += i;
 
     /* parse arguments             */
-
     if ((ntok = tokenize_arguments(t, tok, tok_begins, K1MAXOPERANDS)) < 0) {
       if(error_str != NULL) {
           as_bad("syntax error at: %s", error_str);
@@ -2542,7 +2416,6 @@ md_assemble(char *s)
 
     inside_bundle = 1;
     /* build an instruction record */
-
     assemble_tokens(opname, tok, ntok);
 }
 
@@ -2551,7 +2424,7 @@ k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1c_core_info;
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c)){
-	as_warn(_("could not set architecture and machine"));
+        as_warn(_("could not set architecture and machine"));
       }
   }
 
@@ -2567,12 +2440,11 @@ k1_set_cpu(void) {
   case ELF_K1_CORE_C_C:
     if (k1_arch_size == 32) {
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c))
-	as_warn(_("could not set architecture and machine"));
+        as_warn(_("could not set architecture and machine"));
     } else if (k1_arch_size == 64) {
       if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c_64))
-	as_warn(_("could not set architecture and machine"));
+        as_warn(_("could not set architecture and machine"));
     }
-    reorder_bundle = k1c_reorder_bundle;
     print_insn = k1c_print_insn;
     break;
   default:
@@ -2581,7 +2453,7 @@ k1_set_cpu(void) {
 }
 
 static int k1op_compar(const void *a, const void *b)
- {
+{
     const k1opc_t *opa = (const k1opc_t *)a;
     const k1opc_t *opb = (const k1opc_t *)b;
     return strcmp(opa->as_op, opb->as_op);
@@ -2600,7 +2472,7 @@ print_hash(const char *key,  __attribute__((unused)) PTR val){
 
 void
 md_begin()
- {
+{
     int i;
     k1_set_cpu();
 
@@ -2651,7 +2523,7 @@ md_begin()
     if(dump_insn) {
       k1opc_t *op;
       for (op = k1_core_info->optab; !(STREQ("", op->as_op)) ; op++) {
-	print_insn(op);
+        print_insn(op);
       }
       exit(0);
     }
@@ -2662,46 +2534,46 @@ md_begin()
      * because of the odd/even constraint on immediate extensions
      */
 
-    bfd_set_section_alignment(stdoutput, text_section, 3);	/* -- 8 bytes */
-    bfd_set_section_alignment(stdoutput, data_section, 2);	/* -- 4 bytes */
-    bfd_set_section_alignment(stdoutput, bss_section, 2);	/* -- 4 bytes */
+    bfd_set_section_alignment(stdoutput, text_section, 3);        /* -- 8 bytes */
+    bfd_set_section_alignment(stdoutput, data_section, 2);        /* -- 4 bytes */
+    bfd_set_section_alignment(stdoutput, bss_section, 2);        /* -- 4 bytes */
     subseg_set(text_section, 0);
 
     symbolS *gotoff_sym = symbol_create (".<gotoff>", undefined_section, 0,
-					 &zero_address_frag);
+                                         &zero_address_frag);
     symbolS *got_sym = symbol_create (".<got>", undefined_section, 0,
-				      &zero_address_frag);
+                                      &zero_address_frag);
     symbolS *plt_sym = symbol_create (".<plt>", undefined_section, 0,
-				      &zero_address_frag);
+                                      &zero_address_frag);
     symbolS *tprel_sym = symbol_create (".<tprel>", undefined_section, 0,
-					&zero_address_frag);
+                                        &zero_address_frag);
     symbolS *tprel64_sym = symbol_create (".<tprel64>", undefined_section, 0,
-					  &zero_address_frag);
+                                          &zero_address_frag);
     symbolS *gotoff64_sym = symbol_create (".<gotoff64>", undefined_section, 0,
-					   &zero_address_frag);
+                                           &zero_address_frag);
     symbolS *got64_sym = symbol_create (".<got64>", undefined_section, 0,
-					&zero_address_frag);
+                                        &zero_address_frag);
     symbolS *plt64_sym = symbol_create (".<plt64>", undefined_section, 0,
-					&zero_address_frag);
+                                        &zero_address_frag);
 
     for (i = 0; i < NELEMS (pseudo_func); ++i) {
       symbolS *sym;
       if (!strcmp(pseudo_func[i].name, "gotoff")) {
-	sym = gotoff_sym;
+        sym = gotoff_sym;
       } else if (!strcmp(pseudo_func[i].name, "got")) {
-	sym = got_sym;
+        sym = got_sym;
       } else if (!strcmp(pseudo_func[i].name, "plt")) {
-	sym = plt_sym;
+        sym = plt_sym;
       } else if (!strcmp(pseudo_func[i].name, "tprel")) {
-	sym = tprel_sym;
+        sym = tprel_sym;
       } else if (!strcmp(pseudo_func[i].name, "tprel64")) {
-	sym = tprel64_sym;
+        sym = tprel64_sym;
       } else if (!strcmp(pseudo_func[i].name, "gotoff64")) {
-	sym = gotoff64_sym;
+        sym = gotoff64_sym;
       } else if (!strcmp(pseudo_func[i].name, "got64")) {
-	sym = got64_sym;
+        sym = got64_sym;
       } else if (!strcmp(pseudo_func[i].name, "plt64")) {
-	sym = plt64_sym;
+        sym = plt64_sym;
       }
 
       pseudo_func[i].sym = sym;
@@ -2709,22 +2581,22 @@ md_begin()
 
     /* pseudo_func[FUNC_GOTOFF_RELATIVE].u.sym = */
     /*   symbol_create (".<gotoff>", undefined_section, FUNC_GOTOFF_RELATIVE, */
-    /* 		     &zero_address_frag); */
+    /*                      &zero_address_frag); */
     /* pseudo_func[FUNC_GOTOFF64_RELATIVE].u.sym = */
     /*   symbol_create (".<gotoff64>", undefined_section, FUNC_GOTOFF64_RELATIVE, */
-    /* 		     &zero_address_frag); */
+    /*                      &zero_address_frag); */
     /* pseudo_func[FUNC_GOT_RELATIVE].u.sym = */
     /*   symbol_create (".<got>", undefined_section, FUNC_GOT_RELATIVE, */
-    /* 		     &zero_address_frag); */
+    /*                      &zero_address_frag); */
     /* pseudo_func[FUNC_PLT_RELATIVE].u.sym = */
     /*   symbol_create (".<plt>", undefined_section, FUNC_PLT_RELATIVE, */
-    /* 		     &zero_address_frag); */
+    /*                      &zero_address_frag); */
     /* pseudo_func[FUNC_TP_RELATIVE].u.sym = */
     /*   symbol_create (".<tprel>", undefined_section, FUNC_TP_RELATIVE, */
-    /* 		     &zero_address_frag); */
+    /*                      &zero_address_frag); */
     /* pseudo_func[FUNC_TP64_RELATIVE].u.sym = */
     /*   symbol_create (".<tprel64>", undefined_section, FUNC_TP64_RELATIVE, */
-    /* 		     &zero_address_frag); */
+    /*                      &zero_address_frag); */
     /*  bfd_set_private_flags(stdoutput, 0); *//* default flags */
 }
 
@@ -2735,7 +2607,7 @@ md_begin()
 #if 0
 static void
 md_after_pass(void)		/* called from md_end */
- {
+{
 }
 #endif
 
@@ -2770,26 +2642,26 @@ md_apply_fix(fixS * fixP, valueT * valueP,
   if (fixP->fx_addsy != NULL)
     {
       switch (fixP->fx_r_type)
-	{
-	case BFD_RELOC_K1_S37_TPREL_UP27:
-	case BFD_RELOC_K1_S37_TPREL_LO10:
-	case BFD_RELOC_K1_TPREL_32:
+        {
+        case BFD_RELOC_K1_S37_TPREL_UP27:
+        case BFD_RELOC_K1_S37_TPREL_LO10:
+        case BFD_RELOC_K1_TPREL_32:
 
-	case BFD_RELOC_K1_S43_TPREL64_EX6 :
-	case BFD_RELOC_K1_S43_TPREL64_UP27 :
-	case BFD_RELOC_K1_S43_TPREL64_LO10:
+        case BFD_RELOC_K1_S43_TPREL64_EX6 :
+        case BFD_RELOC_K1_S43_TPREL64_UP27 :
+        case BFD_RELOC_K1_S43_TPREL64_LO10:
 
-	case BFD_RELOC_K1_S64_TPREL64_EX27 :
-	case BFD_RELOC_K1_S64_TPREL64_UP27 :
-	case BFD_RELOC_K1_S64_TPREL64_LO10:
+        case BFD_RELOC_K1_S64_TPREL64_EX27 :
+        case BFD_RELOC_K1_S64_TPREL64_UP27 :
+        case BFD_RELOC_K1_S64_TPREL64_LO10:
 
-	case BFD_RELOC_K1_TPREL64_64:
+        case BFD_RELOC_K1_TPREL64_64:
 
-	  S_SET_THREAD_LOCAL (fixP->fx_addsy);
-	  break;
-	default:
-	  break;
-	}
+          S_SET_THREAD_LOCAL (fixP->fx_addsy);
+          break;
+        default:
+          break;
+        }
     }
 
   /* If relocation has been marked for deletion, apply remaineng changes */
@@ -2806,18 +2678,18 @@ md_apply_fix(fixS * fixP, valueT * valueP,
       case BFD_RELOC_K1_GOT:
       case BFD_RELOC_K1_GOTOFF:
       case BFD_RELOC_K1_GOTOFF64:
-	image = value;
-	md_number_to_chars(fixpos, image, fixP->fx_size);
-	break;
+        image = value;
+        md_number_to_chars(fixpos, image, fixP->fx_size);
+        break;
 
       case BFD_RELOC_K1_17_PCREL:
       case BFD_RELOC_K1_27_PCREL:
-	if (fixP->fx_pcrel || fixP->fx_addsy)
-	  return;
-	value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
-	image = (image & ~(rel->howto->dst_mask)) | value;
-	md_number_to_chars(fixpos, image, fixP->fx_size);
-	break;
+        if (fixP->fx_pcrel || fixP->fx_addsy)
+          return;
+        value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
+        image = (image & ~(rel->howto->dst_mask)) | value;
+        md_number_to_chars(fixpos, image, fixP->fx_size);
+        break;
 
       case BFD_RELOC_K1_S32_UP27:
       case BFD_RELOC_K1_S37_UP27:
@@ -2860,22 +2732,22 @@ md_apply_fix(fixS * fixP, valueT * valueP,
 
       case BFD_RELOC_K1_S37_PLT_LO10:
       case BFD_RELOC_K1_S43_PLT64_LO10:
-	value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
-	image = (image & ~(rel->howto->dst_mask)) | value;
-	md_number_to_chars(fixpos, image, fixP->fx_size);
-	break;
+        value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
+        image = (image & ~(rel->howto->dst_mask)) | value;
+        md_number_to_chars(fixpos, image, fixP->fx_size);
+        break;
 
       default:
-	as_fatal("[md_apply_fix] unsupported relocation type (type not handled : %d)", fixP->fx_r_type);
+        as_fatal("[md_apply_fix] unsupported relocation type (type not handled : %d)", fixP->fx_r_type);
       }
   }
 }
 
 void
 k1_validate_fix(fixS *fix)
- {
+{
     switch (fix->fx_r_type)
- {
+    {
         // case BFD_RELOC_K1_FPTR32:
         // case BFD_RELOC_K1_GOTOFF_FPTR_LO9:
         // case BFD_RELOC_K1_GOTOFF_FPTR_HI23:
@@ -2896,11 +2768,11 @@ k1_validate_fix(fixS *fix)
  */
 int
 k1_validate_sub_fix(fixS *fixP)
- {
+{
     segT add_symbol_segment, sub_symbol_segment;
 
     switch (fixP->fx_r_type)
- {
+    {
         case BFD_RELOC_16:
         case BFD_RELOC_32:
             if (fixP->fx_addsy != NULL)
@@ -2930,21 +2802,21 @@ k1_validate_sub_fix(fixS *fixP)
  * fixup.  */
 void
 k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_code_real_type code)
- {
+{
     if (exp->X_op == O_pseudo_fixup)
- {
+    {
         exp->X_op = O_symbol;
         /* real_k1_reloc_type(exp->X_op_symbol, 0, 0, 0, &code); */
-	struct pseudo_func_s *pf = k1_get_pseudo_func_data_scn(exp->X_op_symbol);
-	assert(pf != NULL);
-	code = pf->pseudo_relocs.single;
+        struct pseudo_func_s *pf = k1_get_pseudo_func_data_scn(exp->X_op_symbol);
+        assert(pf != NULL);
+        code = pf->pseudo_relocs.single;
 
         if (code == BFD_RELOC_UNUSED)
             as_bad("Unsupported relocation");
     }
     else
         switch (nbytes)
- {
+        {
             /* [SC] We have no relocation for BFD_RELOC_8, but accept it
              * here in case we can later eliminate the fixup (in md_apply_fix).
              * This is required to pass the gas test forward.s.
@@ -2960,7 +2832,7 @@ k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_cod
                 break;
             case 8:
                 code = BFD_RELOC_64;
-		break;
+                break;
             default:
                 as_bad("unsupported BFD relocation size %u", nbytes);
                 code = BFD_RELOC_32;
@@ -2975,8 +2847,8 @@ k1_cons_fix_new(fragS *f, int where, int nbytes, expressionS *exp, bfd_reloc_cod
  */
 
 arelent *
-        tc_gen_reloc(asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
- {
+tc_gen_reloc(asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
+{
     arelent *reloc;
     bfd_reloc_code_real_type code;
 
@@ -2988,13 +2860,13 @@ arelent *
 
     code = fixp->fx_r_type;
     if (code == BFD_RELOC_32 && fixp->fx_pcrel)
- {
+    {
         code = BFD_RELOC_32_PCREL;
     }
     reloc->howto = bfd_reloc_type_lookup(stdoutput, code);
 
     if (reloc->howto == NULL)
- {
+    {
         as_bad_where(fixp->fx_file, fixp->fx_line,
                 "cannot represent `%s' relocation in object file",
                 bfd_get_reloc_code_name(code));
@@ -3002,7 +2874,7 @@ arelent *
     }
 
     if (!fixp->fx_pcrel != !reloc->howto->pc_relative)
- {
+    {
         as_fatal("internal error? cannot generate `%s' relocation",
                 bfd_get_reloc_code_name(code));
     }
@@ -3084,7 +2956,7 @@ arelent *
 
 valueT
 md_section_align(asection * seg ATTRIBUTE_UNUSED, valueT size)
- {
+{
 #ifndef OBJ_ELF
     /* This is not right for ELF; a.out wants it, and COFF will force
      * the alignment anyways.  */
@@ -3099,7 +2971,7 @@ md_section_align(asection * seg ATTRIBUTE_UNUSED, valueT size)
 int
 md_estimate_size_before_relax(register fragS * fragP ATTRIBUTE_UNUSED,
         segT segtype ATTRIBUTE_UNUSED)
- {
+{
     as_fatal("estimate_size_before_relax called\n");
 }
 
@@ -3107,13 +2979,13 @@ void
 md_convert_frag(bfd * abfd ATTRIBUTE_UNUSED,
         asection * sec ATTRIBUTE_UNUSED,
         fragS * fragp ATTRIBUTE_UNUSED)
- {
+{
     as_fatal("k1 convert_frag\n");
 }
 
 symbolS *
-        md_undefined_symbol(char *name ATTRIBUTE_UNUSED)
- {
+md_undefined_symbol(char *name ATTRIBUTE_UNUSED)
+{
     return 0;
 }
 
@@ -3121,7 +2993,7 @@ char *
 md_atof(int type ATTRIBUTE_UNUSED,
         char *litp ATTRIBUTE_UNUSED,
         int *sizep ATTRIBUTE_UNUSED)
- {
+{
     /* we'll need this for reading floating point constants */
     return _("floating-point literals are not supported");
 }
@@ -3133,7 +3005,7 @@ md_atof(int type ATTRIBUTE_UNUSED,
 
 long
 md_pcrel_from(fixS * fixP)
- {
+{
     return (fixP->fx_where + fixP->fx_frag->fr_address);
 }
 
@@ -3149,7 +3021,7 @@ static int update_last_proc_sym = 0;
 
 void
 k1_frob_label(symbolS * sym) {
-    if (input_line_pointer[1] == ':')	/* second colon => global symbol */ {
+    if (input_line_pointer[1] == ':')        /* second colon => global symbol */ {
         S_SET_EXTERNAL(sym);
         input_line_pointer++;
     }
@@ -3160,11 +3032,11 @@ k1_frob_label(symbolS * sym) {
     }
 
     if (inside_bundle) {
-	struct label_fix *fix;
-	fix = malloc (sizeof (*fix));
-	fix->next = label_fixes;
-	fix->sym = sym;
-	label_fixes = fix;
+        struct label_fix *fix;
+        fix = malloc (sizeof (*fix));
+        fix->next = label_fixes;
+        fix->sym = sym;
+        label_fixes = fix;
     }
 }
 
@@ -3236,7 +3108,7 @@ k1_md_start_line_hook(void) {
     /* we transform these into a special opcode BE      */
     /* because gas has ';' hardwired as a statement end */
     if (t && (t[0] == ';') && (t[1] == ';'))
- {
+    {
         t[0] = 'B';
         t[1] = 'E';
         return;
@@ -3251,16 +3123,16 @@ k1_md_start_line_hook(void) {
 
 static void
 k1_cons(int size)
- {
+{
     if (is_code_section(now_seg))
         set_byte_counter(now_seg, (get_byte_counter(now_seg) + size) );
     cons(size);
 }
 
 static int is_assume_param(char** input, const char* param)
- {
+{
     if ( (input!=NULL) && (strncmp(*input, param, strlen(param))==0) )
- {
+    {
         *input=*input+strlen(param);
         return TRUE;
     }
@@ -3271,7 +3143,7 @@ static int is_assume_param(char** input, const char* param)
 static void set_assume_param(int* param, int param_value, int* param_set);
 void
 set_assume_param(int* param, int param_value, int* param_set)
- {
+{
     if (!*param_set) {
         *param = param_value;
         *param_set = 1;
@@ -3314,36 +3186,36 @@ k1_pic_ptr (int nbytes)
       bfd_reloc_code_real_type reloc_type = BFD_RELOC_K1_GLOB_DAT;
 
       /* if (strncasecmp (input_line_pointer, "funcdesc(", 9) == 0) */
-      /* 	{ */
-      /* 	  input_line_pointer += 9; */
-      /* 	  expression (&exp); */
-      /* 	  if (*input_line_pointer == ')') */
-      /* 	    input_line_pointer++; */
-      /* 	  else */
-      /* 	    as_bad (_("missing ')'")); */
-      /* 	  reloc_type = BFD_RELOC_K1_FUNCDESC; */
-      /* 	} */
+      /*         { */
+      /*           input_line_pointer += 9; */
+      /*           expression (&exp); */
+      /*           if (*input_line_pointer == ')') */
+      /*             input_line_pointer++; */
+      /*           else */
+      /*             as_bad (_("missing ')'")); */
+      /*           reloc_type = BFD_RELOC_K1_FUNCDESC; */
+      /*         } */
 //       else if (strncasecmp (input_line_pointer, "tlsmoff(", 8) == 0)
-// 	{
-// 	  input_line_pointer += 8;
-// 	  expression (&exp);
-// 	  if (*input_line_pointer == ')')
-// 	    input_line_pointer++;
-// 	  else
-// 	    as_bad (_("missing ')'"));
-// 	  reloc_type = BFD_RELOC_FRV_TLSMOFF;
-// 	}
+//         {
+//           input_line_pointer += 8;
+//           expression (&exp);
+//           if (*input_line_pointer == ')')
+//             input_line_pointer++;
+//           else
+//             as_bad (_("missing ')'"));
+//           reloc_type = BFD_RELOC_FRV_TLSMOFF;
+//         }
       /* else */
-	expression (&exp);
+        expression (&exp);
 
       p = frag_more (4);
       memset (p, 0, 4);
       fix_new_exp (frag_now, p - frag_now->fr_literal, 4, &exp, 0,
-		   reloc_type);
+                   reloc_type);
     }
   while (*input_line_pointer++ == ',');
 
-  input_line_pointer--;			/* Put terminator back into stream. */
+  input_line_pointer--;                        /* Put terminator back into stream. */
   demand_empty_rest_of_line ();
 }
 
@@ -3351,20 +3223,20 @@ k1_pic_ptr (int nbytes)
 #define MAX_STR_LENGTH 20
 static void
 k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
- {
+{
     const char *target_name = k1_core_info->names[subcore_id];
 
     while ( (input_line_pointer!=NULL)
             && ! is_end_of_line [(unsigned char) *input_line_pointer])
- {
+    {
         int found = FALSE;
         int i, j;
         SKIP_WHITESPACE();
 
         /* core */
         for (i = 0; i < K1NUMCORES; i++) {
-	  j=0;
-	  while(k1c_core_info_table[i]->elf_cores[j] != -1) {
+          j=0;
+          while(k1c_core_info_table[i]->elf_cores[j] != -1) {
             if (is_assume_param(&input_line_pointer, k1c_core_info_table[i]->names[j])) {
                 set_assume_param(&k1_core, k1c_core_info_table[i]->elf_cores[subcore_id], &k1_core_set);
                 if (k1_core_info != k1c_core_info_table[i])
@@ -3373,8 +3245,8 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
                 found = TRUE;
                 break;
             }
-	    j++;
-	  }
+            j++;
+          }
         }
 
         if (! found) {
@@ -3384,37 +3256,37 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
                 int *variable;
                 int *set_variable;
             } assume_params[] = {
-	      { "cut0", ELF_K1_CUT_0, &k1_cut, &k1_cut_set },
-	      { "cut1", ELF_K1_CUT_1, &k1_cut, &k1_cut_set },
-	      { "cut2", ELF_K1_CUT_2, &k1_cut, &k1_cut_set },
-	      { "cut3", ELF_K1_CUT_3, &k1_cut, &k1_cut_set },
-	      { "cut4", ELF_K1_CUT_4, &k1_cut, &k1_cut_set },
-	      { "cut5", ELF_K1_CUT_5, &k1_cut, &k1_cut_set },
-	      { "no-abi", ELF_K1_ABI_NO, &k1_abi, &k1_abi_set },
-	      { "old-multiflow-abi", ELF_K1_ABI_MULTI, &k1_abi, &k1_abi_set },
-	      { "abi-k1c-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
-	      { "abi-k1c-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
-	      { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
-	      { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
-	      { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },
-	      { "user", ELF_K1_MODE_USER, &k1_mode, &k1_mode_set },
-	      { "kernel", ELF_K1_MODE_KERNEL, &k1_mode, &k1_mode_set },
+              { "cut0", ELF_K1_CUT_0, &k1_cut, &k1_cut_set },
+              { "cut1", ELF_K1_CUT_1, &k1_cut, &k1_cut_set },
+              { "cut2", ELF_K1_CUT_2, &k1_cut, &k1_cut_set },
+              { "cut3", ELF_K1_CUT_3, &k1_cut, &k1_cut_set },
+              { "cut4", ELF_K1_CUT_4, &k1_cut, &k1_cut_set },
+              { "cut5", ELF_K1_CUT_5, &k1_cut, &k1_cut_set },
+              { "no-abi", ELF_K1_ABI_NO, &k1_abi, &k1_abi_set },
+              { "old-multiflow-abi", ELF_K1_ABI_MULTI, &k1_abi, &k1_abi_set },
+              { "abi-k1c-embedded", ELF_K1_ABI_EMBED, &k1_abi, &k1_abi_set },
+              { "abi-k1c-pic", ELF_K1_ABI_PIC, &k1_abi, &k1_abi_set },
+              { "gcc-abi", ELF_K1_ABI_GCC, &k1_abi, &k1_abi_set },
+              { "bare-machine", ELFOSABI_NONE, &k1_osabi, &k1_osabi_set },
+              { "linux", ELFOSABI_LINUX, &k1_osabi, &k1_osabi_set },
+              { "user", ELF_K1_MODE_USER, &k1_mode, &k1_mode_set },
+              { "kernel", ELF_K1_MODE_KERNEL, &k1_mode, &k1_mode_set },
             };
 
             for (i = 0; i < ((int)(sizeof(assume_params)/sizeof(assume_params[0]))); i++) {
                 if (is_assume_param(&input_line_pointer, assume_params[i].name)) {
-		  set_assume_param(assume_params[i].variable,
-				   assume_params[i].value,
-				   assume_params[i].set_variable);
-		  
-		  found = TRUE;
-		  break;
+                  set_assume_param(assume_params[i].variable,
+                                   assume_params[i].value,
+                                   assume_params[i].set_variable);
+                  
+                  found = TRUE;
+                  break;
                 }
             }
         }
 
         if (! found)
- {
+        {
             as_bad("Bad assume parameter");
             demand_empty_rest_of_line();
         }
@@ -3422,12 +3294,12 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
         SKIP_WHITESPACE();
         if ( (*input_line_pointer!=',')
                 && ! is_end_of_line[(unsigned char) *input_line_pointer])
- {
+        {
             as_bad("Bad assume parameter");
             demand_empty_rest_of_line();
         }
         if ( *input_line_pointer==',' )
- {
+        {
             input_line_pointer++;
             SKIP_WHITESPACE();
         }
@@ -3436,19 +3308,19 @@ k1_set_assume_flags(int ignore ATTRIBUTE_UNUSED)
 
 static void
 k1_nop_insertion(int f)
- {
+{
     nop_insertion_allowed = f;
 }
 
 static void
 k1_check_resources(int f)
- {
+{
     check_resource_usage = f;
 }
 
 static void
 k1_set_rta_flags(int f ATTRIBUTE_UNUSED)
- {
+{
    get_absolute_expression();
     /* Ignore .rta directive from know on. */
     /*  set_assume_param(&k1_abi, get_absolute_expression (), &k1_abi_set); */
@@ -3457,7 +3329,7 @@ k1_set_rta_flags(int f ATTRIBUTE_UNUSED)
 /** called before write_object_file */
 void
 k1_end(void)
- {
+{
     int newflags;
     Elf_Internal_Ehdr * i_ehdrp;
 
@@ -3481,9 +3353,9 @@ k1_end(void)
 
 static void
 k1_float_cons(int type)
- {
+{
     if (is_code_section(now_seg))
- {
+    {
         if (type == 'd')
             set_byte_counter(now_seg, (get_byte_counter(now_seg) + 8) );
         if (type == 'f')
@@ -3494,7 +3366,7 @@ k1_float_cons(int type)
 
 static void
 k1_skip(int mult)
- {
+{
     char * saved_input_line_pointer;
     int skip;
 
@@ -3515,114 +3387,16 @@ k1_skip(int mult)
     s_space(mult);
 }
 
-
-/* AP: It seems it is copied from ST200, but for K1 it's better
-       if we simply fill with zeros */
-
-#if 0
-/* This is called from HANDLE_ALIGN in write.c.  Fill in the contents
- * of an rs_align_code fragment.  */
-void
-k1_handle_align(fragP)
-fragS *fragP;
- {
-    /* Use ST200 NOP instruction with Stop_Bit set */
-
-    int bytes, fix, noop_size;
-    char * p;
-    const char * noop, * noop_stop_bit;
-    /* the bundle size must be a power of 2 otherwise the way
-     * modulo is computed below must be changed */
-    int k1_bundle_size = K1MAXBUNDLEISSUE;
-    int pad_counter = 1;
-
-    if (fragP->fr_type != rs_align_code)
-        return;
-
-    bytes = fragP->fr_next->fr_address - fragP->fr_address - fragP->fr_fix;
-    p = fragP->fr_literal + fragP->fr_fix;
-    fix = 0;
-
-#if 0 /* No Max for ST200 */
-    if (bytes > MAX_MEM_FOR_RS_ALIGN_CODE)
-        bytes &= MAX_MEM_FOR_RS_ALIGN_CODE;
-#endif
-
-    noop = k1_noop;
-    noop_stop_bit = k1_noop_stop_bit;
-
-    noop_size = sizeof (k1_noop);
-
-    if (bytes & (noop_size - 1))
- {
-        fix = bytes & (noop_size - 1);
-        memset(p, 0, fix);
-        p += fix;
-        bytes -= fix;
-    }
-
-    while (bytes >= noop_size)
- {
-        if (((bytes - noop_size) == 0) || /* Put a stop bit for last nop */
-                ((pad_counter & (k1_bundle_size - 1)) == 0)) /* or last inst. of bundle */
- {
-            /* Insert NOP =with= bundle stop bit */
-            memcpy(p, noop_stop_bit, noop_size);
-        }
-        else
- {
-            /* Insert NOP =without= bundle stop bit */
-            memcpy(p, noop, noop_size);
-        }
-        pad_counter++;
-        p += noop_size;
-        bytes -= noop_size;
-        fix += noop_size;
-    }
-
-    fragP->fr_fix += fix;
-    fragP->fr_var = noop_size;
- }
-
-/* Called from md_do_align.  Used to create an alignment
- * frag in a code section.  */
-void
-        k1_frag_align_code(n, max)
-int n;
-int max;
- {
-    char * p;
-    int alignment = n; /* For MAX_MEM_FOR_RS_ALIGN_CODE macro */
-
-#if 0 /* No Max for ST200 */
-    /* We assume that there will never be a requirment
-     * to support alignments greater than 32 bytes.  */
-    if (max > MAX_MEM_FOR_RS_ALIGN_CODE)
-        as_fatal(_("alignments greater than 32 bytes not supported in .text sections."));
-#endif
-
-    p = frag_var(rs_align_code,
-            MAX_MEM_FOR_RS_ALIGN_CODE,
-            1,
-            (relax_substateT) max,
-            (symbolS *) NULL,
-            (offsetT) n,
-            (char *) NULL);
-    *p = 0;
-
- }
-#endif /*0*/
-
 static void
 k1_align_ptwo(int pow)
- {
+{
     k1_align(pow, 0);
     return;
 }
 
 static void
 k1_align_bytes(int bytes)
- {
+{
     k1_align(bytes, 1);
     return;
 }
@@ -3633,16 +3407,16 @@ k1_align_bytes(int bytes)
  */
 static void
 k1_align(int arg, int is_bytes)
- {
+{
     char * saved_input_line_pointer = input_line_pointer;
     int align;
     int max;
 
     if (is_code_section(now_seg))
- {
+    {
         /* Get argument of .align directive */
         if (is_end_of_line[(unsigned char) *input_line_pointer])
- {
+        {
             if (!is_bytes) {
                 int i;
 
@@ -3655,7 +3429,7 @@ k1_align(int arg, int is_bytes)
             }
         }
         else
- {
+        {
             align = get_absolute_expression();
             if (!is_bytes) {
                 int i, tmp = 1;
@@ -3717,9 +3491,9 @@ k1_comm(int param) {
 
 static void
 k1_stringer(int append_zero)
- {
+{
     if (is_code_section(now_seg))
- {
+    {
         set_byte_counter(now_seg, 1);
     }
     stringer(append_zero);
@@ -3727,16 +3501,15 @@ k1_stringer(int append_zero)
 
 static void
 k1_ignore(int arg ATTRIBUTE_UNUSED)
- {
+{
     /* the cs directives may have ';' in them.  These we must skip ! */
-
     while (input_line_pointer && (input_line_pointer[0] != '\n'))
         input_line_pointer++;
 }
 
 static void
 k1_type(int start ATTRIBUTE_UNUSED)
- {
+{
     char *name;
     char c;
     int type;
@@ -3826,7 +3599,7 @@ static int proc_endp_status = 0;
 
 static void
 k1_endp(int start ATTRIBUTE_UNUSED)
- {
+{
     char c;
     char *name;
 
@@ -3836,10 +3609,10 @@ k1_endp(int start ATTRIBUTE_UNUSED)
     /* function name is optionnal and is ignored */
     /* there may be several names separated by commas... */
     while (1)
- {
+    {
         SKIP_WHITESPACE();
-	c = get_symbol_name(&name);
-	(void)restore_line_pointer(c);
+        c = get_symbol_name(&name);
+        (void)restore_line_pointer(c);
         /* c = get_symbol_end(); */
         /* *input_line_pointer = c; */
         SKIP_WHITESPACE();
@@ -3850,7 +3623,7 @@ k1_endp(int start ATTRIBUTE_UNUSED)
     demand_empty_rest_of_line();
 
     if (!proc_endp_status)
- {
+    {
         as_warn(".endp directive doesn't follow .proc -- ignoring ");
         return;
     }
@@ -3882,16 +3655,16 @@ k1_endp(int start ATTRIBUTE_UNUSED)
             expression(&exp);
 
             if (exp.X_op == O_constant)
- {
+            {
                 S_SET_SIZE(last_proc_sym, exp.X_add_number);
                 if (symbol_get_obj(last_proc_sym)->size)
- {
+                {
                     xfree(symbol_get_obj(last_proc_sym)->size);
                     symbol_get_obj(last_proc_sym)->size = NULL;
                 }
             }
             else
- {
+            {
                 symbol_get_obj(last_proc_sym)->size =
                         (expressionS *) xmalloc(sizeof (expressionS));
                 *symbol_get_obj(last_proc_sym)->size = exp;
@@ -3903,68 +3676,20 @@ k1_endp(int start ATTRIBUTE_UNUSED)
     }
     /* TB end */
 
-/* FIXME: Do we need that? */
-#if 0    
-    /* (pp) encode wether a function is moveable by icacheopt in the st_other field of the ELF symbol */
-    if (emit_all_relocs) {
-        S_SET_OTHER(last_proc_sym, S_GET_OTHER(last_proc_sym) | STO_MOVEABLE);
-    }
-#endif//0
-
-#if 0
-    /* this code emit a global symbol to mark the end of each function    */
-    /* the symbol emitted has a name formed by the original function name */
-    /* cocatenated with $endproc so if _foo is a function name the symbol */
-    /* marking the end of it is _foo$endproc                              */
-
-
-    if (emit_all_relocs)
- {
-        char *newlab;
-        char *savep = input_line_pointer;
-
-        if (!last_proc_sym) {
-            as_bad("Cannot set symbol at end of function (bad symbol)");
-            return;
-        }
-
-        newlab = (char *) alloca(strlen(S_GET_NAME(last_proc_sym)) +
-                strlen(ENDPROCEXTENSION) + 1
-                + 1);	/* in case of "_" */
-
-#ifdef STRIP_UNDERSCORE
-        strcpy(newlab, "_");
-#else
-        *newlab = '\0';
-#endif
-        strcat(newlab, S_GET_NAME(last_proc_sym));
-        strcat(newlab, ENDPROCEXTENSION);
-
-        colon(newlab);
-
-        /* just make sure nobody did anything to the real input pointer */
-        input_line_pointer = savep;
-
-    }
-
-#endif
-
     last_proc_sym = NULL;
-
-
 }
 
 static void
 k1_proc(int start ATTRIBUTE_UNUSED)
- {
+{
     char c;
     char *name;
     /* there may be several names separated by commas... */
     while (1)
- {
+    {
         SKIP_WHITESPACE();
-	c = get_symbol_name(&name);
-	(void)restore_line_pointer(c);
+        c = get_symbol_name(&name);
+        (void)restore_line_pointer(c);
 
         /* c = get_symbol_end(); */
         /* *input_line_pointer = c; */
@@ -3976,7 +3701,7 @@ k1_proc(int start ATTRIBUTE_UNUSED)
     demand_empty_rest_of_line();
 
     if (proc_endp_status)
- {
+    {
         as_warn(".proc follows .proc -- ignoring");
         return;
     }
@@ -3990,14 +3715,14 @@ k1_proc(int start ATTRIBUTE_UNUSED)
     /* It is also required for generation of .size directive in k1_endp() */
 
     if ((emit_all_relocs) || (size_type_function))
- {
+    {
         update_last_proc_sym = 1;
     }
 }
 
 int
 k1_force_reloc(fixS * fixP)
- {
+{
     symbolS *sym;
     asection *symsec;
 
@@ -4008,15 +3733,15 @@ k1_force_reloc(fixS * fixP)
       {
         switch (fixP->fx_r_type)
           {
-	    case BFD_RELOC_K1_GOTOFF:
+            case BFD_RELOC_K1_GOTOFF:
             case BFD_RELOC_K1_S37_GOTOFF_UP27:
             case BFD_RELOC_K1_S37_GOTOFF_LO10:
-	    case BFD_RELOC_K1_GOTOFF64:
+            case BFD_RELOC_K1_GOTOFF64:
             case BFD_RELOC_K1_S43_GOTOFF64_UP27:
             case BFD_RELOC_K1_S43_GOTOFF64_LO10:
             case BFD_RELOC_K1_S43_GOTOFF64_EX6:
 
-	    case BFD_RELOC_K1_GOT:
+            case BFD_RELOC_K1_GOT:
             case BFD_RELOC_K1_S37_GOT_UP27:
             case BFD_RELOC_K1_S37_GOT_LO10:
 //             case BFD_RELOC_K1_PCREL_HI22:
@@ -4025,10 +3750,10 @@ k1_force_reloc(fixS * fixP)
             case BFD_RELOC_K1_S37_PLT_LO10:
             /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
             /* case BFD_RELOC_K1_FUNCDESC_GOT_UP27: */
-	    /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
+            /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
             /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_UP27: */
-	    /* case BFD_RELOC_K1_FUNCDESC: */
-	    case BFD_RELOC_K1_GLOB_DAT:
+            /* case BFD_RELOC_K1_FUNCDESC: */
+            case BFD_RELOC_K1_GLOB_DAT:
               
  /* case BFD_RELOC_K1_GOTOFFX_HI23:
   * case BFD_RELOC_K1_GOTOFFX_LO9:
@@ -4054,7 +3779,7 @@ k1_force_reloc(fixS * fixP)
 
 int
 k1_force_reloc_sub_same(fixS * fixP, segT sec)
- {
+{
     symbolS *sym;
     asection *symsec;
     const char *sec_name = NULL;
@@ -4066,16 +3791,16 @@ k1_force_reloc_sub_same(fixS * fixP, segT sec)
     {
         switch (fixP->fx_r_type)
         {
-	  case BFD_RELOC_K1_GOTOFF:
+          case BFD_RELOC_K1_GOTOFF:
           case BFD_RELOC_K1_S37_GOTOFF_UP27:
           case BFD_RELOC_K1_S37_GOTOFF_LO10:
 
-	  case BFD_RELOC_K1_GOTOFF64:
+          case BFD_RELOC_K1_GOTOFF64:
           case BFD_RELOC_K1_S43_GOTOFF64_UP27:
           case BFD_RELOC_K1_S43_GOTOFF64_LO10:
           case BFD_RELOC_K1_S43_GOTOFF64_EX6:
 
-	  case BFD_RELOC_K1_GOT:
+          case BFD_RELOC_K1_GOT:
           case BFD_RELOC_K1_S37_GOT_UP27:
           case BFD_RELOC_K1_S37_GOT_LO10:
 //           case BFD_RELOC_K1_PCREL_HI22:
@@ -4084,10 +3809,10 @@ k1_force_reloc_sub_same(fixS * fixP, segT sec)
           case BFD_RELOC_K1_S37_PLT_LO10:
           /* case BFD_RELOC_K1_FUNCDESC_GOT_LO10: */
           /* case BFD_RELOC_K1_FUNCDESC_GOT_UP27: */
-	  /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
+          /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_LO10: */
           /* case BFD_RELOC_K1_FUNCDESC_GOTOFF_UP27: */
-	  /* case BFD_RELOC_K1_FUNCDESC: */
-	  case BFD_RELOC_K1_GLOB_DAT:
+          /* case BFD_RELOC_K1_FUNCDESC: */
+          case BFD_RELOC_K1_GLOB_DAT:
   /* case BFD_RELOC_K1_GOTOFFX_HI23:
   * case BFD_RELOC_K1_GOTOFFX_LO9:
   * case BFD_RELOC_K1_FPTR32:  
@@ -4133,13 +3858,13 @@ k1_force_reloc_sub_same(fixS * fixP, segT sec)
 
 static int
 k1_get_constant(const expressionS arg)
- {
+{
     if (arg.X_op && !arg.X_add_symbol)
- {
+    {
         return arg.X_add_number;
     }
     else
- {
+    {
         as_warn("expected constant argument");
         return 0;
     }
@@ -4147,16 +3872,16 @@ k1_get_constant(const expressionS arg)
 
 static int
 k1_default(char *s, int i)
- {
+{
     as_warn(s);
     return i;
 }
 
 static void
 k1_emit_uleb128(int i)
- {
+{
     do
- {
+    {
         int tmp = i & 127;
         i = (i & 0x1fffffff) >> 7;
         FRAG_APPEND_1_CHAR((i != 0) ? (tmp + 1) : tmp);
@@ -4166,7 +3891,7 @@ k1_emit_uleb128(int i)
 
 static void
 k1_unwind(int r)
- {
+{
     int ntok;
     expressionS tok[K1MAXUNWINDARGS];
     char *f;
@@ -4174,7 +3899,7 @@ k1_unwind(int r)
     int tmp;
 
     if (strcmp(segment_name(now_seg), ".K1.unwind_info") != 0)
- {
+    {
         as_warn("unwind directive not in .K1.unwind_info segment\n");
         return;
     }
@@ -4188,7 +3913,7 @@ k1_unwind(int r)
 		       k1_default("too few operands", 0))
 
     switch ((enum unwrecord) r)
- {
+    {
         case UNW_HEADER:		/* postpone fixup work for now */
             tmp = (K1GETCONST(0) << 8);
             tmp += (K1GETCONST(1) & 1);
@@ -4201,11 +3926,11 @@ k1_unwind(int r)
         case UNW_PROLOGUE:
             tmp = K1GETCONST(0);
             if (tmp < 32)
- {
+            {
                 FRAG_APPEND_1_CHAR(tmp);
             }
             else
- {
+            {
                 FRAG_APPEND_1_CHAR(0x40);
                 k1_emit_uleb128(tmp);
             }
@@ -4214,11 +3939,11 @@ k1_unwind(int r)
         case UNW_BODY:
             tmp = K1GETCONST(0);
             if (tmp < 32)
- {
+            {
                 FRAG_APPEND_1_CHAR(tmp + 0x20);
             }
             else
- {
+            {
                 FRAG_APPEND_1_CHAR(0x41);
                 k1_emit_uleb128(tmp);
             }
@@ -4290,12 +4015,12 @@ k1_unwind(int r)
         case UNW_EPILOGUE:
             tmp = K1GETCONST(1);
             if (tmp < 32)
- {
+            {
                 FRAG_APPEND_1_CHAR(0xc0 + tmp);
                 k1_emit_uleb128(K1GETCONST(0));
             }
             else
- {
+            {
                 FRAG_APPEND_1_CHAR(0xe0);
                 k1_emit_uleb128(K1GETCONST(0));
                 k1_emit_uleb128(tmp);
@@ -4305,12 +4030,12 @@ k1_unwind(int r)
         case UNW_LABEL_STATE:
             tmp = K1GETCONST(0);
             if (tmp > 32)
- {
+            {
                 FRAG_APPEND_1_CHAR(0xe1);
                 k1_emit_uleb128(tmp);
             }
             else
- {
+            {
                 FRAG_APPEND_1_CHAR(0x80 + tmp);
             }
             break;
@@ -4318,12 +4043,12 @@ k1_unwind(int r)
         case UNW_COPY_STATE:
             tmp = K1GETCONST(0);
             if (tmp > 32)
- {
+            {
                 FRAG_APPEND_1_CHAR(0xe9);
                 k1_emit_uleb128(tmp);
             }
             else
- {
+            {
                 FRAG_APPEND_1_CHAR(0xa0 + tmp);
             }
             break;
@@ -4348,18 +4073,18 @@ print_operand(expressionS * e, FILE * out) ATTRIBUTE_UNUSED;
 
 static void
 print_operand(expressionS * e, FILE * out)
- {
+{
     if (e)
- {
+    {
         switch (e->X_op)
- {
+        {
             case O_register:
                 fprintf(out, "%s",  k1_registers[e->X_add_number].name);
                 break;
 
             case O_constant:
                 if (e->X_add_symbol)
- {
+                {
                     if (e->X_add_number)
                         fprintf(out, "(%s + %d)", S_GET_NAME(e->X_add_symbol),
                                 (int) e->X_add_number);
@@ -4372,7 +4097,7 @@ print_operand(expressionS * e, FILE * out)
 
             case O_symbol:
                 if (e->X_add_symbol)
- {
+                {
                     if (e->X_add_number)
                         fprintf(out, "(%s + %d)", S_GET_NAME(e->X_add_symbol),
                                 (int) e->X_add_number);
@@ -4391,20 +4116,20 @@ print_operand(expressionS * e, FILE * out)
 
 void
 k1_cfi_frame_initial_instructions(void)
- {
+{
     cfi_add_CFA_def_cfa(12, 16);
 }
 
 
 int
 k1_regname_to_dw2regnum(const char *regname)
- {
+{
     unsigned int regnum = -1;
     const char *p;
     char *q;
 
     if (regname[0] == 'r')
- {
+    {
         p = regname + 1;
         regnum = strtoul(p, &q, 10);
         if (p == q || *q || regnum >= 64)
