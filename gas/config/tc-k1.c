@@ -30,6 +30,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -130,19 +131,17 @@ typedef struct k1_fixup_s k1_fixup_t;
 
 /* a single assembled instruction record */
 /* may include immediate extension word  */
-struct k1insn_s {
-  int written;		                /* written out ?                           */
-  const k1opc_t *opdef;	                /* Opcode table entry for this insn        */
-  int len;		                /* length of instruction in words (1 or 2) */
+typedef struct {
+  int written;                          /* written out ? */
+  const k1opc_t *opdef;                 /* Opcode table entry for this insn */
+  int len;                              /* length of instruction in words (1 or 2) */
   int immx0;                            /* insn is extended */
   int immx1;                            /* only used for 64 immx */
-  unsigned int insn[K1MAXBUNDLEWORDS];	/* instruction data                        */
-  int nfixups;		                /* the number of fixups [0,2]              */
-  k1_fixup_t fixup[2];	                /* the actual fixups                       */
-  Bundling bundling;                    /* the bundling type                       */
-};
-
-typedef struct k1insn_s k1insn_t;
+  uint32_t words[K1MAXBUNDLEWORDS];     /* instruction words */
+  int nfixups;                          /* the number of fixups [0,2] */
+  k1_fixup_t fixup[2];                  /* the actual fixups */
+  Bundling bundling;                    /* the bundling class */
+} k1insn_t;
 
 typedef void (*print_insn_t)(k1opc_t *op);
 static print_insn_t print_insn = NULL;
@@ -151,7 +150,7 @@ typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_opera
 
 #define NOIMMX -1
 
-static k1insn_t insbuf[K1MAXBUNDLEISSUE];
+static k1insn_t insbuf[K1MAXBUNDLEWORDS]; /* Was K1MAXBUNDLEISSUE, changed because of NOPs */
 static int insncnt = 0;
 static k1insn_t immxbuf[K1MAXBUNDLEWORDS];
 static int immxcnt = 0;
@@ -163,19 +162,6 @@ static void incr_immxcnt(void)
     as_bad("Max immx number exceeded: %d",immxcnt);
   }
 }
-
-#define K1LANEALIGNMENT 3 /* Minimal section alignment required to handle
-correctly odd/even constraints at link time.
-2**3 = 8 */
-/*
- * Track the current text segment alginment so that syllable
- * alignments are correct (e.g. multiplies must be
- * in odd lanes).
- */
-/* static int text_alignment = 0; */
-/* There may be several text segments, so we use now_seg->target_index to keep
- * track of the byte counter, because this is a target dependant field only
- * used in the linker  */
 
 static void set_byte_counter(asection *sec, int value);
 void set_byte_counter(asection *sec, int value)
@@ -1256,8 +1242,7 @@ insert_operand(k1insn_t * insn,
             /* S43 uses LO10/EX6/UP27 format (2 words), with 2 relocs in main syllabes and 1 in extra word */
             /* S37 uses LO10/UP27 format (2 words), with one reloc in each word (2) */
 
-            /* Beware that immxbuf must be filled in the same order as
-               relocs should be emitted. */
+            /* Beware that immxbuf must be filled in the same order as relocs should be emitted. */
 
             if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
                 || pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6
@@ -1268,7 +1253,7 @@ insert_operand(k1insn_t * insn,
               insn->nfixups++;
 
               insn->immx0 = immxcnt;
-              immxbuf[immxcnt].insn[0] = 0;
+              immxbuf[immxcnt].words[0] = 0;
               immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_up27;
               immxbuf[immxcnt].fixup[0].exp = reloc_arg;
               immxbuf[immxcnt].fixup[0].where = 0;
@@ -1284,7 +1269,7 @@ insert_operand(k1insn_t * insn,
 
             if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27) {
               insn->immx1 = immxcnt;
-              immxbuf[immxcnt].insn[0] = 0;
+              immxbuf[immxcnt].words[0] = 0;
               immxbuf[immxcnt].fixup[0].reloc = pf->pseudo_relocs.reloc_ex;
               immxbuf[immxcnt].fixup[0].exp = reloc_arg;
               immxbuf[immxcnt].fixup[0].where = 0;
@@ -1344,7 +1329,7 @@ insert_operand(k1insn_t * insn,
                   insn->nfixups = 1;
 
                   insn->immx0 = immxcnt;
-                  immxbuf[immxcnt].insn[0] = 0;
+                  immxbuf[immxcnt].words[0] = 0;
                   immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S32_UP27;
                   immxbuf[immxcnt].fixup[0].exp = *arg;
                   immxbuf[immxcnt].fixup[0].where = 0;
@@ -1372,7 +1357,7 @@ insert_operand(k1insn_t * insn,
                   insn->nfixups = 1;
 
                   insn->immx0 = immxcnt;
-                  immxbuf[immxcnt].insn[0] = 0;
+                  immxbuf[immxcnt].words[0] = 0;
                   immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S37_UP27;
                   immxbuf[immxcnt].fixup[0].exp = *arg;
                   immxbuf[immxcnt].fixup[0].where = 0;
@@ -1396,7 +1381,7 @@ insert_operand(k1insn_t * insn,
                   insn->nfixups = 2;
 
                   insn->immx0 = immxcnt;
-                  immxbuf[immxcnt].insn[0] = insn->insn[1];
+                  immxbuf[immxcnt].words[0] = insn->words[1];
                   immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S43_UP27;
                   immxbuf[immxcnt].fixup[0].exp = *arg;
                   immxbuf[immxcnt].fixup[0].where = 0;
@@ -1418,7 +1403,7 @@ insert_operand(k1insn_t * insn,
                   insn->nfixups = 1;
 
                   insn->immx0 = immxcnt;
-                  immxbuf[immxcnt].insn[0] = insn->insn[1];
+                  immxbuf[immxcnt].words[0] = insn->words[1];
                   immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_UP27;
                   immxbuf[immxcnt].fixup[0].exp = *arg;
                   immxbuf[immxcnt].fixup[0].where = 0;
@@ -1429,7 +1414,7 @@ insert_operand(k1insn_t * insn,
                   insn->len -= 1;
 
                   insn->immx1 = immxcnt;
-                  immxbuf[immxcnt].insn[0] = insn->insn[2];
+                  immxbuf[immxcnt].words[0] = insn->words[2];
                   immxbuf[immxcnt].fixup[0].reloc = BFD_RELOC_K1_S64_EX27;
                   immxbuf[immxcnt].fixup[0].exp = *arg;
                   immxbuf[immxcnt].fixup[0].where = 0;
@@ -1460,7 +1445,7 @@ insert_operand(k1insn_t * insn,
       value &= (1LL << bfields[bf_idx].size) - 1;
       j = to_offset / 32;
       to_offset = to_offset % 32;
-      insn->insn[j] |= (value << to_offset) & 0xffffffff;
+      insn->words[j] |= (value << to_offset) & 0xffffffff;
     }
 
     return immx_ready;
@@ -1484,7 +1469,7 @@ assemble_insn(const k1opc_t * opcode,
     memset(insn, 0, sizeof (*insn));
     insn->opdef = opcode;
     for(i=0; i < opcode->wordcount; i++) {
-        insn->insn[i] = (unsigned int)opcode->codewords[i].opcode;
+        insn->words[i] = (unsigned int)opcode->codewords[i].opcode;
         insn->len += 1;
     }
     insn->immx0 = NOIMMX;
@@ -1499,7 +1484,7 @@ assemble_insn(const k1opc_t * opcode,
       for(i=0; i < opcode->wordcount; i++){
         if(opcode->codewords[i].flags & k1OPCODE_FLAG_IMMX0){
           insn->immx0 = immxcnt;
-          immxbuf[immxcnt].insn[0] = insn->insn[i];
+          immxbuf[immxcnt].words[0] = insn->words[i];
           immxbuf[immxcnt].nfixups = 0;
           immxbuf[immxcnt].len = 1;
           insn->len -= 1; 
@@ -1507,7 +1492,7 @@ assemble_insn(const k1opc_t * opcode,
         }
         if(opcode->codewords[i].flags & k1OPCODE_FLAG_IMMX1){
           insn->immx1 = immxcnt;
-          immxbuf[immxcnt].insn[0] = insn->insn[i];
+          immxbuf[immxcnt].words[0] = insn->words[i];
           immxbuf[immxcnt].nfixups = 0;
           immxbuf[immxcnt].len = 1;
           insn->len -= 1;
@@ -1547,7 +1532,7 @@ emit_insn(k1insn_t * insn, int stopflag)
 
   /* spit out bits          */
   for (i = 0; i < insn->len; i++) {
-    image = insn->insn[i];
+    image = insn->words[i];
 
     /* Handle bundle parallel bit. */ ;
     if ((i == insn->len - 1) && stopflag){
@@ -1814,7 +1799,7 @@ assemble_tokens(const char *opname,
   k1insn_t *insn;
   
   /* make sure there is room in instruction buffer */
-  if (insncnt >= K1MAXBUNDLEISSUE) {
+  if (insncnt >= K1MAXBUNDLEWORDS) { /* Was K1MAXBUNDLEISSUE, changed because of NOPs */
     as_fatal("too many instructions in bundle ");
   }
 
@@ -1932,11 +1917,11 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
   return chars;
 }
 
-static int used_resources(const k1opc_t *op, int resource) {
-  int op_reservations = op->reservation;
-  int reservation = op_reservations  & 0xff;
+static int
+used_resources(const k1opc_t *op, int resource) {
+  int op_reservation = op->reservation;
+  int reservation = op_reservation & 0xff;
   const int *reservation_table = k1c_reservation_table_table[reservation];
-
   if(resource < 0 || resource > RESOURCE_MAX) {
     as_fatal("Unknown resource ID");
   }
@@ -2158,7 +2143,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
         return;
       }
       else {
-        as_fatal("Too many ops in a single op bundle (%s):\n",bundle_insn[bidx]->opdef->as_op);
+        as_fatal("Too many ops in a single op bundle (%s):\n", bundle_insn[bidx]->opdef->as_op);
       }
     }
     if (tiny_k1){
@@ -2233,10 +2218,10 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
             as_fatal("Unexpected EXU %d (%s)\n", ii, exu_names[ii]);
           }
           if(shadow[jj]->immx0 != NOIMMX) {
-            immxbuf[shadow[jj]->immx0].insn[0] |= (tag << 27);
+            immxbuf[shadow[jj]->immx0].words[0] |= (tag << 27);
           }
           if(shadow[jj]->immx1 != NOIMMX){
-            immxbuf[shadow[jj]->immx1].insn[0] |= (tag << 27);
+            immxbuf[shadow[jj]->immx1].words[0] |= (tag << 27);
           }
         }
         jj++;
@@ -2284,12 +2269,10 @@ md_assemble(char *s)
         unwind_bundle_count++;        /* count of bundles in current proc */
         sec_align = bfd_get_section_alignment(stdoutput, now_seg);
         {
-            k1insn_t *bundle_insn[K1MAXBUNDLEISSUE];
+            k1insn_t *bundle_insn[K1MAXBUNDLEWORDS]; /* Was K1MAXBUNDLEISSUE, changed because of NOPs */
             int bundle_insn_cnt = 0;
             int syllables = 0;
             int entry;
-            int align_warn_done = 0; /* Alignment contraint warning already
-             * raised for this bundle or not */
 
             /* retain bundle start adress for error messages */
             //            start_bundle = get_byte_counter(now_seg);
@@ -2299,16 +2282,9 @@ md_assemble(char *s)
             dwarf2_emit_insn(0);
 #endif
             for (j = 0; j < insncnt; j++) {
-                Bundling bundling = find_bundling(&insbuf[j]);
-                insbuf[j].bundling = bundling;
+                insbuf[j].bundling = find_bundling(&insbuf[j]);
                 bundle_insn[bundle_insn_cnt++] = &insbuf[j];
                 syllables += insbuf[j].len;
-                if (sec_align < K1LANEALIGNMENT && !align_warn_done) {
-                    if (insbuf[j].len == 2) {
-                        align_warn_done = 1;
-                        as_bad("Minimum section alignment of %d required due to instruction (%s) requiring extended immediate (current alignment is %d)", (1 << K1LANEALIGNMENT), insbuf[j].opdef->as_op, (1 << sec_align));
-                    }
-                }
             }
 
             if(syllables + immxcnt > K1MAXBUNDLEWORDS){
@@ -2325,8 +2301,8 @@ md_assemble(char *s)
                 memset(resources_used, 0, reservation_table_len * sizeof (int));
 
                 for (i = 0; i < bundle_insn_cnt; i++) {
-                    int insn_reservations = bundle_insn[i]->opdef->reservation;
-                    int reservation = insn_reservations  & 0xff;
+                    int insn_reservation = find_reservation(bundle_insn[i]);
+                    int reservation = insn_reservation & 0xff;
                     const int *reservation_table = k1c_reservation_table_table[reservation];
                     for (j = 0; j < reservation_table_len; j++)
                         resources_used[j] += reservation_table[j];
@@ -2334,7 +2310,8 @@ md_assemble(char *s)
                 for (i = 0; i < k1c_reservation_table_lines; i++) {
                     for (j = 0; j < k1c_resource_max; j++)
                         if (resources_used[(i * k1c_resource_max) + j] > resources[j]) {
-                            as_bad("Resource %s over-used in bundle: %d used, %d available", k1c_resource_names[j], resources_used[(i * k1c_resource_max) + j], resources[j]);
+                            as_bad("Resource %s over-used in bundle: %d used, %d available",
+                                   k1c_resource_names[j], resources_used[(i * k1c_resource_max) + j], resources[j]);
                         }
                 }
             }
@@ -2353,8 +2330,8 @@ md_assemble(char *s)
             entry = 0;
             for(tag=0; tag < 4; tag++){
               for (j = 0; j < immxcnt; j++) {
-                  if(k1c_exunum2_fld(immxbuf[j].insn[0]) == tag){
-                    assert(immxbuf[j].written == 0);
+                  if(k1c_exunum2_fld(immxbuf[j].words[0]) == tag){
+                      assert(immxbuf[j].written == 0);
                       emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
                       immxbuf[j].written = 1;
                       entry++;
