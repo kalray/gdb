@@ -862,6 +862,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     tdep->spc_regnum = has_spc;
     tdep->local_regnum = has_local;
     tdep->uint256 = arch_integer_type (gdbarch, 256, 0, "uint256_t");
+    tdep->uint512 = arch_integer_type (gdbarch, 512, 0, "uint512_t");
+    tdep->uint1024 = arch_integer_type (gdbarch, 1024, 0, "uint1024_t");
 
     set_gdbarch_pc_regnum (gdbarch, has_pc);
     set_gdbarch_sp_regnum (gdbarch, has_sp);

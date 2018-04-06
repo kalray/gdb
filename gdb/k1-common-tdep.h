@@ -24,6 +24,8 @@ struct gdbarch_tdep
 
   int local_regnum;
   struct type *uint256;
+  struct type *uint512;
+  struct type *uint1024;
 };
 
 struct op_list
