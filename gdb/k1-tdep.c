@@ -754,6 +754,22 @@ k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
   return BREAK;
 }
 
+static CORE_ADDR
+k1_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr, struct value **args,
+  int nargs, struct type *value_type, CORE_ADDR *real_pc, CORE_ADDR *bp_addr, struct regcache *regcache)
+{
+  if (sp < 32)
+    error (_("Cannot call yet a function from gdb prompt because the stack pointer is not set yet (sp=0x%llx)"), (unsigned long long) sp);
+
+  // allocate space for a breakpoint, keep the stack aligned
+  sp -= 16;
+
+  *bp_addr = sp;
+  *real_pc = funcaddr;
+
+  return sp;
+}
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -891,6 +907,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_return_value (gdbarch, k1_return_value);
   set_gdbarch_push_dummy_call (gdbarch, k1_push_dummy_call);
   set_gdbarch_dummy_id (gdbarch, k1_dummy_id);
+
+  set_gdbarch_call_dummy_location (gdbarch, ON_STACK);
+  set_gdbarch_push_dummy_code (gdbarch, k1_push_dummy_code);
 
   set_gdbarch_skip_prologue (gdbarch, k1_skip_prologue);
   set_gdbarch_unwind_pc (gdbarch, k1_unwind_pc);
