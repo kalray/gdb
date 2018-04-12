@@ -133,7 +133,7 @@ typedef struct {
   const k1opc_t *opdef;                 /* Opcode table entry for this insn */
   int len;                              /* length of instruction in words (1 or 2) */
   int immx0;                            /* insn is extended */
-  int immx1;                            /* only used for 64 immx */
+  int immx1;                            /* insn has two immx */
   uint32_t words[K1MAXBUNDLEWORDS];     /* instruction words */
   int nfixups;                          /* the number of fixups [0,2] */
   k1_fixup_t fixup[2];                  /* the actual fixups */
@@ -1928,7 +1928,6 @@ used_resources(const k1opc_t *op, int resource) {
 
 enum exu_t {
   bcu_e,
-  tca_e,
   alu0_e,
   alu1_e,
   mau_e,
@@ -1938,7 +1937,6 @@ enum exu_t {
 
 const char *exu_names[] = {
   "BCU",
-  "TCA",
   "ALU0",
   "ALU1",
   "MAU",
@@ -1990,12 +1988,12 @@ new_state(sched_state_t *orig){
 
 
 static int
-k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insn_cnt,
+k1c_schedule_step(k1insn_t *bundle_insn[], int bundle_insncnt,
                   sched_state_t *state,
                   sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz,
                   sched_state_t **solutions, unsigned int *solutions_sz){
 
-  if (state->cur_insn == bundle_insn_cnt){
+  if (state->cur_insn == bundle_insncnt){
     solutions[(*solutions_sz)++] = state;
     state->final = 1;
     return 1;
@@ -2127,8 +2125,146 @@ k1c_print_insn(k1opc_t *op) {
   printf("%s | syllables: %d | type: %s | mode: %s bits\n", asm_str, op->wordcount, insn_type, insn_mode);
 }
 
+static int
+k1insn_compare(const void *a, const void *b)
+{
+  k1insn_t *k1insn_a = *(k1insn_t **)a;
+  k1insn_t *k1insn_b = *(k1insn_t **)b;
+  int bundling_a = find_bundling(k1insn_a);
+  int bundling_b = find_bundling(k1insn_b);
+  return (bundling_b < bundling_a) - (bundling_a < bundling_b);
+}
+
 static void
-k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
+new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
+{
+  enum { EXU_BCU, EXU_TCA, EXU_ALU0, EXU_ALU1, EXU_MAU, EXU_LSU, EXU__ };
+  k1insn_t *shadow[EXU__];
+  int i;
+  
+  /* Sort the bundle_insn in order of bundling. */
+  qsort(bundle_insn, bundle_insncnt, sizeof(k1insn_t *), k1insn_compare);
+  
+  memset(shadow, 0, sizeof(shadow));
+  for (i = 0; i < bundle_insncnt; i++) {
+    k1insn_t *k1insn = bundle_insn[i];
+    int tag = -1, exu = -1;
+    switch (find_bundling(k1insn)) {
+    case Bundling_k1c_ALL:
+      if (bundle_insncnt > 1)
+        as_fatal("Too many ops in a single op bundle\n");
+      shadow[0] = k1insn;
+      break;
+    case Bundling_k1c_BCU:
+      if (!shadow[EXU_BCU]) {
+        shadow[EXU_BCU] = k1insn;
+      } else
+        as_fatal("More than one BCU instruction in bundle\n");
+      break;
+    case Bundling_k1c_TCA:
+      if (!shadow[EXU_TCA]) {
+        shadow[EXU_TCA] = k1insn;
+      } else
+        as_fatal("More than one TCA instruction in bundle\n");
+      break;
+    case Bundling_k1c_FULL:
+    case Bundling_k1c_FULL_X:
+    case Bundling_k1c_FULL_Y:
+      if (!shadow[EXU_ALU0]) {
+        shadow[EXU_ALU0] = k1insn;
+        tag = Modifier_k1c_exunum_ALU0;
+        exu = EXU_ALU0;
+      } else
+        as_fatal("More than one ALU FULL instruction in bundle\n");
+      break;
+    case Bundling_k1c_LITE:
+    case Bundling_k1c_LITE_X:
+    case Bundling_k1c_LITE_Y:
+      if (!shadow[EXU_ALU0]) {
+        shadow[EXU_ALU0] = k1insn;
+        tag = Modifier_k1c_exunum_ALU0;
+        exu = EXU_ALU0;
+      } else
+      if (!shadow[EXU_ALU1]) {
+        shadow[EXU_ALU1] = k1insn;
+        tag = Modifier_k1c_exunum_ALU1;
+        exu = EXU_ALU1;
+      } else
+        as_fatal("Too many ALU FULL or LITE instructions in bundle\n");
+      break;
+    case Bundling_k1c_MAU:
+    case Bundling_k1c_MAU_X:
+    case Bundling_k1c_MAU_Y:
+      if (!shadow[EXU_MAU]) {
+        shadow[EXU_MAU] = k1insn;
+        tag = Modifier_k1c_exunum_MAU;
+        exu = EXU_MAU;
+      } else
+        as_fatal("More than one MAU instruction in bundle\n");
+      break;
+    case Bundling_k1c_LSU:
+    case Bundling_k1c_LSU_X:
+    case Bundling_k1c_LSU_Y:
+      if (!shadow[EXU_LSU]) {
+        shadow[EXU_LSU] = k1insn;
+        tag = Modifier_k1c_exunum_LSU;
+        exu = EXU_LSU;
+      } else
+        as_fatal("More than one LSU instruction in bundle\n");
+      break;
+    case Bundling_k1c_TINY:
+    case Bundling_k1c_TINY_X:
+    case Bundling_k1c_TINY_Y:
+    case Bundling_k1c_NOP:
+      if (!shadow[EXU_ALU0]) {
+        shadow[EXU_ALU0] = k1insn;
+        tag = Modifier_k1c_exunum_ALU0;
+        exu = EXU_ALU0;
+      } else
+      if (!shadow[EXU_ALU1]) {
+        shadow[EXU_ALU1] = k1insn;
+        tag = Modifier_k1c_exunum_ALU1;
+        exu = EXU_ALU1;
+      } else
+      if (!shadow[EXU_MAU]) {
+        shadow[EXU_MAU] = k1insn;
+        tag = Modifier_k1c_exunum_MAU;
+        exu = EXU_MAU;
+      } else
+      if (!shadow[EXU_LSU]) {
+        shadow[EXU_LSU] = k1insn;
+        tag = Modifier_k1c_exunum_LSU;
+        exu = EXU_LSU;
+      } else
+        as_fatal("Too many ALU instructions in bundle\n");
+      break;
+    default:
+      as_fatal("Unhandled Bundling class %d\n", find_bundling(k1insn));
+    }
+    if (tag >= 0) {
+      if (shadow[exu]->immx0 != NOIMMX) {
+        immxbuf[shadow[exu]->immx0].words[0] |= (tag << 27);
+      }
+      if (shadow[exu]->immx1 != NOIMMX) {
+        immxbuf[shadow[exu]->immx1].words[0] |= (tag << 27);
+      }
+    }
+  }
+  
+  if (bundle_insncnt > 1) {
+    int exu;
+    for (i = 0, exu = 0; exu < EXU__; exu++) {
+      if (shadow[exu]) {
+        bundle_insn[i++] = shadow[exu];
+      }
+    }
+    if (i != bundle_insncnt)
+      as_fatal("Mismatch between bundle and issued instructions\n");
+  }
+}
+
+static void
+k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
 {
   sched_state_t *first_state;
   sched_state_t **states = NULL, *solutions[10];
@@ -2136,9 +2272,9 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
   unsigned int states_sz = 0, states_storage_sz = 0;
   
   int bidx;
-  for(bidx=0; bidx < bundle_insn_cnt; bidx++){
+  for(bidx=0; bidx < bundle_insncnt; bidx++){
     if(find_bundling(bundle_insn[bidx]) == Bundling_k1c_ALL){
-      if(bundle_insn_cnt == 1) {
+      if(bundle_insncnt == 1) {
         return;
       }
       else {
@@ -2171,7 +2307,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
   while(states_sz){
     sched_state_t *cur_s = pop(states, &states_sz);
 
-    int ok = k1c_schedule_step(bundle_insn, bundle_insn_cnt,
+    int ok = k1c_schedule_step(bundle_insn, bundle_insncnt,
                                cur_s,
                                &states, &states_sz, &states_storage_sz,
                                solutions, &solutions_sz);
@@ -2188,7 +2324,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
   }
 
   if (solutions_sz){
-    k1insn_t *shadow[bundle_insn_cnt];
+    k1insn_t *shadow[bundle_insncnt];
     int ii, jj=0;
     
     for (ii=0; ii<last_exu; ii++){
@@ -2226,7 +2362,7 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insn_cnt)
         jj++;
       }
     }
-    memset(bundle_insn, 0, bundle_insn_cnt * sizeof(k1insn_t*));
+    memset(bundle_insn, 0, bundle_insncnt * sizeof(k1insn_t*));
     memcpy(bundle_insn, shadow, jj * sizeof(k1insn_t*));
     free(solutions[0]);
   } else {
@@ -2269,7 +2405,7 @@ md_assemble(char *s)
         sec_align = bfd_get_section_alignment(stdoutput, now_seg);
         {
             k1insn_t *bundle_insn[K1MAXBUNDLEWORDS]; /* Was K1MAXBUNDLEISSUE, changed because of NOPs */
-            int bundle_insn_cnt = 0;
+            int bundle_insncnt = 0;
             int syllables = 0;
             int entry;
 
@@ -2282,7 +2418,7 @@ md_assemble(char *s)
 #endif
             for (j = 0; j < insncnt; j++) {
                 insbuf[j].bundling = find_bundling(&insbuf[j]);
-                bundle_insn[bundle_insn_cnt++] = &insbuf[j];
+                bundle_insn[bundle_insncnt++] = &insbuf[j];
                 syllables += insbuf[j].len;
             }
 
@@ -2299,7 +2435,7 @@ md_assemble(char *s)
                 int *resources_used = (int *)alloca(reservation_table_len * sizeof (int));
                 memset(resources_used, 0, reservation_table_len * sizeof (int));
 
-                for (i = 0; i < bundle_insn_cnt; i++) {
+                for (i = 0; i < bundle_insncnt; i++) {
                     int insn_reservation = find_reservation(bundle_insn[i]);
                     int reservation = insn_reservation & 0xff;
                     const int *reservation_table = k1c_reservation_table_table[reservation];
@@ -2317,12 +2453,15 @@ md_assemble(char *s)
 
             if(!generate_illegal_code){
               // reorder and check the bundle
-              k1c_reorder_bundle(bundle_insn, bundle_insn_cnt);
+              if (getenv("NEW_REORDER_BUNDLE"))
+                new_reorder_bundle(bundle_insn, bundle_insncnt);
+              else
+                k1c_reorder_bundle(bundle_insn, bundle_insncnt);
             }
 
             /* The ordering of the insns has been set correctly in bundle_insn. */
-            for (entry = 0; entry < bundle_insn_cnt; entry++) {
-                emit_insn(bundle_insn[entry], (entry == (bundle_insn_cnt + immxcnt - 1)));
+            for (entry = 0; entry < bundle_insncnt; entry++) {
+                emit_insn(bundle_insn[entry], (entry == (bundle_insncnt + immxcnt - 1)));
                 bundle_insn[entry]->written = 1;
             }
             // Emit immx, ordering them by EXU tags, 0 to 3
@@ -2341,7 +2480,7 @@ md_assemble(char *s)
               as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
             }
 
-            // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insn_cnt, immxcnt);
+            // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insncnt, immxcnt);
 
         }
 
