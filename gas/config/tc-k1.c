@@ -120,17 +120,14 @@ const int md_long_jump_size = 0;
 
 /* a fix up record                       */
 
-struct k1_fixup_s
-{
-    expressionS exp;		/* the expression used            */
-    int where;			/* where (byte) in frag this goes */
+typedef struct {
+    expressionS exp;                   /* the expression used            */
+    int where;                         /* where (byte) in frag this goes */
     bfd_reloc_code_real_type reloc;
-};
-
-typedef struct k1_fixup_s k1_fixup_t;
+} k1_fixup_t;
 
 /* a single assembled instruction record */
-/* may include immediate extension word  */
+/* may include immediate extension words  */
 typedef struct {
   int written;                          /* written out ? */
   const k1opc_t *opdef;                 /* Opcode table entry for this insn */
@@ -146,7 +143,7 @@ typedef struct {
 typedef void (*print_insn_t)(k1opc_t *op);
 static print_insn_t print_insn = NULL;
 
-typedef enum match_operands_code_ {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
+typedef enum {MATCH_NOT_FOUND=0, MATCH_FOUND=1} match_operands_code;
 
 #define NOIMMX -1
 
@@ -1931,6 +1928,7 @@ used_resources(const k1opc_t *op, int resource) {
 
 enum exu_t {
   bcu_e,
+  tca_e,
   alu0_e,
   alu1_e,
   mau_e,
@@ -1940,13 +1938,14 @@ enum exu_t {
 
 const char *exu_names[] = {
   "BCU",
+  "TCA",
   "ALU0",
   "ALU1",
   "MAU",
   "LSU",
 };
 
-typedef struct state_t {
+typedef struct {
   int cur_insn;
   int sched[last_exu];
   int final;
@@ -1962,7 +1961,7 @@ push_state(sched_state_t *s,
            sched_state_t ***states, unsigned int *states_sz, unsigned int *states_storage_sz)
 {
   if (*states == NULL){
-    *states = malloc(1024 * sizeof(struct state_t*));
+    *states = malloc(1024 * sizeof(sched_state_t*));
     *states_storage_sz = 1024;
   } else if (*states_sz + 1 > *states_storage_sz) {
     *states = realloc(*states, *states_storage_sz + 1024);
@@ -1974,7 +1973,7 @@ push_state(sched_state_t *s,
 }
 
 static sched_state_t*
-new_state(struct state_t *orig){
+new_state(sched_state_t *orig){
   sched_state_t *s = malloc(sizeof(sched_state_t));
   memcpy(s, orig, sizeof(sched_state_t));
   return s;
