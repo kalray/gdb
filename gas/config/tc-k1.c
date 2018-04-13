@@ -134,10 +134,10 @@ typedef struct {
   int len;                              /* length of instruction in words (1 or 2) */
   int immx0;                            /* insn is extended */
   int immx1;                            /* insn has two immx */
+  int order;                            /* order to stabilize sort */
   uint32_t words[K1MAXBUNDLEWORDS];     /* instruction words */
   int nfixups;                          /* the number of fixups [0,2] */
   k1_fixup_t fixup[2];                  /* the actual fixups */
-  Bundling bundling;                    /* the bundling class */
 } k1insn_t;
 
 typedef void (*print_insn_t)(k1opc_t *op);
@@ -2132,46 +2132,50 @@ k1insn_compare(const void *a, const void *b)
   k1insn_t *k1insn_b = *(k1insn_t **)b;
   int bundling_a = find_bundling(k1insn_a);
   int bundling_b = find_bundling(k1insn_b);
-  return (bundling_b < bundling_a) - (bundling_a < bundling_b);
+  int order_a = k1insn_a->order;
+  int order_b = k1insn_b->order;
+  if (bundling_a != bundling_b)
+    return (bundling_b < bundling_a) - (bundling_a < bundling_b);
+  return (order_b < order_a) - (order_a < order_b);
 }
 
 static void
 new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
 {
   enum { EXU_BCU, EXU_TCA, EXU_ALU0, EXU_ALU1, EXU_MAU, EXU_LSU, EXU__ };
-  k1insn_t *shadow[EXU__];
-  int i;
+  k1insn_t *issued[EXU__];
+  int i, tag, exu;
   
   /* Sort the bundle_insn in order of bundling. */
   qsort(bundle_insn, bundle_insncnt, sizeof(k1insn_t *), k1insn_compare);
   
-  memset(shadow, 0, sizeof(shadow));
+  memset(issued, 0, sizeof(issued));
   for (i = 0; i < bundle_insncnt; i++) {
     k1insn_t *k1insn = bundle_insn[i];
-    int tag = -1, exu = -1;
+    tag = -1, exu = -1;
     switch (find_bundling(k1insn)) {
     case Bundling_k1c_ALL:
       if (bundle_insncnt > 1)
         as_fatal("Too many ops in a single op bundle\n");
-      shadow[0] = k1insn;
+      issued[0] = k1insn;
       break;
     case Bundling_k1c_BCU:
-      if (!shadow[EXU_BCU]) {
-        shadow[EXU_BCU] = k1insn;
+      if (!issued[EXU_BCU]) {
+        issued[EXU_BCU] = k1insn;
       } else
         as_fatal("More than one BCU instruction in bundle\n");
       break;
     case Bundling_k1c_TCA:
-      if (!shadow[EXU_TCA]) {
-        shadow[EXU_TCA] = k1insn;
+      if (!issued[EXU_TCA]) {
+        issued[EXU_TCA] = k1insn;
       } else
         as_fatal("More than one TCA instruction in bundle\n");
       break;
     case Bundling_k1c_FULL:
     case Bundling_k1c_FULL_X:
     case Bundling_k1c_FULL_Y:
-      if (!shadow[EXU_ALU0]) {
-        shadow[EXU_ALU0] = k1insn;
+      if (!issued[EXU_ALU0]) {
+        issued[EXU_ALU0] = k1insn;
         tag = Modifier_k1c_exunum_ALU0;
         exu = EXU_ALU0;
       } else
@@ -2180,13 +2184,13 @@ new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
     case Bundling_k1c_LITE:
     case Bundling_k1c_LITE_X:
     case Bundling_k1c_LITE_Y:
-      if (!shadow[EXU_ALU0]) {
-        shadow[EXU_ALU0] = k1insn;
+      if (!issued[EXU_ALU0]) {
+        issued[EXU_ALU0] = k1insn;
         tag = Modifier_k1c_exunum_ALU0;
         exu = EXU_ALU0;
       } else
-      if (!shadow[EXU_ALU1]) {
-        shadow[EXU_ALU1] = k1insn;
+      if (!issued[EXU_ALU1]) {
+        issued[EXU_ALU1] = k1insn;
         tag = Modifier_k1c_exunum_ALU1;
         exu = EXU_ALU1;
       } else
@@ -2195,8 +2199,8 @@ new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
     case Bundling_k1c_MAU:
     case Bundling_k1c_MAU_X:
     case Bundling_k1c_MAU_Y:
-      if (!shadow[EXU_MAU]) {
-        shadow[EXU_MAU] = k1insn;
+      if (!issued[EXU_MAU]) {
+        issued[EXU_MAU] = k1insn;
         tag = Modifier_k1c_exunum_MAU;
         exu = EXU_MAU;
       } else
@@ -2205,8 +2209,8 @@ new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
     case Bundling_k1c_LSU:
     case Bundling_k1c_LSU_X:
     case Bundling_k1c_LSU_Y:
-      if (!shadow[EXU_LSU]) {
-        shadow[EXU_LSU] = k1insn;
+      if (!issued[EXU_LSU]) {
+        issued[EXU_LSU] = k1insn;
         tag = Modifier_k1c_exunum_LSU;
         exu = EXU_LSU;
       } else
@@ -2216,23 +2220,23 @@ new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
     case Bundling_k1c_TINY_X:
     case Bundling_k1c_TINY_Y:
     case Bundling_k1c_NOP:
-      if (!shadow[EXU_ALU0]) {
-        shadow[EXU_ALU0] = k1insn;
+      if (!issued[EXU_ALU0]) {
+        issued[EXU_ALU0] = k1insn;
         tag = Modifier_k1c_exunum_ALU0;
         exu = EXU_ALU0;
       } else
-      if (!shadow[EXU_ALU1]) {
-        shadow[EXU_ALU1] = k1insn;
+      if (!issued[EXU_ALU1]) {
+        issued[EXU_ALU1] = k1insn;
         tag = Modifier_k1c_exunum_ALU1;
         exu = EXU_ALU1;
       } else
-      if (!shadow[EXU_MAU]) {
-        shadow[EXU_MAU] = k1insn;
+      if (!issued[EXU_MAU]) {
+        issued[EXU_MAU] = k1insn;
         tag = Modifier_k1c_exunum_MAU;
         exu = EXU_MAU;
       } else
-      if (!shadow[EXU_LSU]) {
-        shadow[EXU_LSU] = k1insn;
+      if (!issued[EXU_LSU]) {
+        issued[EXU_LSU] = k1insn;
         tag = Modifier_k1c_exunum_LSU;
         exu = EXU_LSU;
       } else
@@ -2242,25 +2246,22 @@ new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
       as_fatal("Unhandled Bundling class %d\n", find_bundling(k1insn));
     }
     if (tag >= 0) {
-      if (shadow[exu]->immx0 != NOIMMX) {
-        immxbuf[shadow[exu]->immx0].words[0] |= (tag << 27);
+      if (issued[exu]->immx0 != NOIMMX) {
+        immxbuf[issued[exu]->immx0].words[0] |= (tag << 27);
       }
-      if (shadow[exu]->immx1 != NOIMMX) {
-        immxbuf[shadow[exu]->immx1].words[0] |= (tag << 27);
+      if (issued[exu]->immx1 != NOIMMX) {
+        immxbuf[issued[exu]->immx1].words[0] |= (tag << 27);
       }
     }
   }
   
-  if (bundle_insncnt > 1) {
-    int exu;
-    for (i = 0, exu = 0; exu < EXU__; exu++) {
-      if (shadow[exu]) {
-        bundle_insn[i++] = shadow[exu];
-      }
+  for (i = 0, exu = 0; exu < EXU__; exu++) {
+    if (issued[exu]) {
+      bundle_insn[i++] = issued[exu];
     }
-    if (i != bundle_insncnt)
-      as_fatal("Mismatch between bundle and issued instructions\n");
   }
+  if (i != bundle_insncnt)
+    as_fatal("Mismatch between bundle and issued instructions\n");
 }
 
 static void
@@ -2417,7 +2418,7 @@ md_assemble(char *s)
             dwarf2_emit_insn(0);
 #endif
             for (j = 0; j < insncnt; j++) {
-                insbuf[j].bundling = find_bundling(&insbuf[j]);
+                insbuf[j].order = j;
                 bundle_insn[bundle_insncnt++] = &insbuf[j];
                 syllables += insbuf[j].len;
             }
@@ -2452,11 +2453,11 @@ md_assemble(char *s)
             }
 
             if(!generate_illegal_code){
-              // reorder and check the bundle
-              if (getenv("NEW_REORDER_BUNDLE"))
-                new_reorder_bundle(bundle_insn, bundle_insncnt);
-              else
-                k1c_reorder_bundle(bundle_insn, bundle_insncnt);
+                // reorder and check the bundle
+                if (!getenv("OLD_REORDER_BUNDLE"))
+                    new_reorder_bundle(bundle_insn, bundle_insncnt);
+                else
+                    k1c_reorder_bundle(bundle_insn, bundle_insncnt);
             }
 
             /* The ordering of the insns has been set correctly in bundle_insn. */
@@ -2467,17 +2468,17 @@ md_assemble(char *s)
             // Emit immx, ordering them by EXU tags, 0 to 3
             entry = 0;
             for(tag=0; tag < 4; tag++){
-              for (j = 0; j < immxcnt; j++) {
-                  if(k1c_exunum2_fld(immxbuf[j].words[0]) == tag){
-                      assert(immxbuf[j].written == 0);
-                      emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
-                      immxbuf[j].written = 1;
-                      entry++;
-                  }
-              }
+                for (j = 0; j < immxcnt; j++) {
+                      if(k1c_exunum2_fld(immxbuf[j].words[0]) == tag){
+                            assert(immxbuf[j].written == 0);
+                            emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
+                            immxbuf[j].written = 1;
+                            entry++;
+                      }
+                }
             }
             if (entry != immxcnt){
-              as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
+                as_bad("%d IMMX produced, only %d emitted.", immxcnt, entry);
             }
 
             // fprintf(stderr, "Emit %d + %d syllables\n", bundle_insncnt, immxcnt);
