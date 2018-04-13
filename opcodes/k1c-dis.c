@@ -112,12 +112,12 @@ static uint32_t bundle_words[K1MAXBUNDLEWORDS];
 static insn_t bundle_insn[K1MAXBUNDLEISSUE];
 
 struct instr_s {
-	int valid;
-	int opcode;
-	int immx[2];
-	int immx_valid[2];
-	int immx_count;
-	int nb_syllables;
+  int valid;
+  int opcode;
+  int immx[2];
+  int immx_valid[2];
+  int immx_count;
+  int nb_syllables;
 };
 
 static int
@@ -383,9 +383,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
   readsofar = insn->len * 4;
   insnindex++;
 
-  /* check for extension to right      */
-  /* iff this is not the end of bundle */
-
+  /* Check for extension to right iff this is not the end of bundle */
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
       int opcode_match = 1;
       int ch;
@@ -438,8 +436,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               int bf_idx;
 
 
-              /* Print characters in the format string up to the following
-               * % or nul. */
+              /* Print characters in the format string up to the following % or nul. */
               while((ch=*fmtp) && ch != '%'){
                   (*info->fprintf_func) (info->stream, "%c", ch);
                   fmtp++;
