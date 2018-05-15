@@ -92,7 +92,7 @@ static inline int
 k1c_is_tca_opcode(uint32_t x)
 {
   unsigned major = ((x)>>24) & 0x1F;
-  return (major > 0) && (major < 5);
+  return (major > 1) && (major < 8);
 }
 
 static inline int
