@@ -14,10 +14,6 @@ extern int icall_test, ra_icall_test;
 extern int igoto_test;
 extern int ret_test, ra_ret_test;
 extern int loopdo_test;
-extern int loopgtz_test;
-extern int loopgtz0_test;
-extern int loopnez_test;
-extern int loopnez0_test;
 extern int get_test;
 extern int iget_test;
 
@@ -34,10 +30,6 @@ extern int bpbcu_igetra_test;
 extern int bpbcu_igoto_test;
 extern int bpbcu_loopdo_test_1;
 extern int bpbcu_loopdo_test_2;
-extern int bpbcu_loopgtz_test_1;
-extern int bpbcu_loopgtz_test_2;
-extern int bpbcu_loopnez_test_1;
-extern int bpbcu_loopnez_test_2;
 extern int bpbcu_no_bcu_test;
 extern int bpbcu_ret_test;
 extern int bpbcu_uret_test;
@@ -88,10 +80,6 @@ struct test_s tests[] =
   {"igoto", &igoto_test, 0, {}, {DECL_BCU(igoto_test)}},
   {"ret", &ret_test, 1, {{"ra", (intptr_t) &ra_ret_test}}, {DECL_BCU(ret_test)}},
   {"loopdo", &loopdo_test, 1, {{"inc", 30}}, {DECL_BCU(loopdo_test_1), DECL_BCU(loopdo_test_2)}},
-  {"loopgtz", &loopgtz_test, 1, {{"inc", 30}}, {DECL_BCU(loopgtz_test_1), DECL_BCU(loopgtz_test_2)}},
-  {"loopgtz0", &loopgtz0_test, 1, {{"inc", 20}}, {DECL_BCU(loopgtz_test_1), DECL_BCU(loopgtz_test_2)}},
-  {"loopnez", &loopnez_test, 1, {{"inc", 30}}, {DECL_BCU(loopnez_test_1), DECL_BCU(loopnez_test_2)}},
-  {"loopnez0", &loopnez0_test, 1, {{"inc", 20}}, {DECL_BCU(loopnez_test_1), DECL_BCU(loopnez_test_2)}},
 };
 int ntests = sizeof (tests) / sizeof (tests[0]);
 

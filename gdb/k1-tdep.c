@@ -744,8 +744,8 @@ k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *gr
 static const gdb_byte *
 k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-  static const gdb_byte BREAK[] = {0x1, 0x0, 0x0, 0x0};
-  static const gdb_byte BREAK_OCE[] = {0xfd, 0x0f, 0x20, 0x07}; // scall 4093
+  static const gdb_byte BREAK[] = {0x0, 0x0, 0x8, 0x0};
+  static const gdb_byte BREAK_OCE[] = {0xfd, 0x0f, 0xe0, 0x0f}; // scall 4093
   *len = 4;
 
   if (cjtag_over_iss == 'o')
