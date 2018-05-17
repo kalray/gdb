@@ -20,7 +20,7 @@ if ![runto_main] {
   return -1
 }
 
-set bp_names {bpbcu_no_bcu_test bpbcu_getra_test bpbcu_getpc_test bpbcu_igetra_test bpbcu_igetpc_test bpbcu_call_test bpbcu_goto_test bpbcu_cb_taken_test bpbcu_cb_skip_test bpbcu_icall_test bpbcu_igoto_test bpbcu_ret_test bpbcu_loopdo_test_1 bpbcu_loopdo_test_2 bpbcu_loopgtz_test_1 bpbcu_loopgtz_test_2 bpbcu_loopnez_test_1 bpbcu_loopnez_test_2}
+set bp_names {bpbcu_no_bcu_test bpbcu_getra_test bpbcu_getpc_test bpbcu_igetra_test bpbcu_igetpc_test bpbcu_call_test bpbcu_goto_test bpbcu_cb_taken_test bpbcu_cb_skip_test bpbcu_icall_test bpbcu_igoto_test bpbcu_ret_test bpbcu_loopdo_test_1 bpbcu_loopdo_test_2}
 set nbp [llength $bp_names]
 
 for {set itest 0} {$itest < $nbp} {incr itest} {
@@ -31,10 +31,5 @@ for {set itest 0} {$itest < $nbp} {incr itest} {
   gdb_test "c" ".*hit Breakpoint.*" "Continue to [lindex $bp_names $itest]"
   gdb_test "si" ".*" "Stepi in [lindex $bp_names $itest]"
 }
-
-gdb_test "c" ".*hit Breakpoint.*" "Continue to bpbcu_loopnez0_test_1"
-gdb_test "si" ".*" "Stepi in bpbcu_loopnez0_test_1"
-gdb_test "c" ".*hit Breakpoint.*" "Continue to bpbcu_loopnez0_test_2"
-gdb_test "si" ".*" "Stepi in bpbcu_loopnez0_test_2"
 
 

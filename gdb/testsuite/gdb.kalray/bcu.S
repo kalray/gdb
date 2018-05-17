@@ -191,62 +191,6 @@ bpbcu_loopdo_test_2:
   goto ret_from_test
   ;;
 
-.global loopgtz_test
-.global loopgtz0_test
-.global bpbcu_loopgtz_test_1
-.global bpbcu_loopgtz_test_2
-loopgtz_test:
-  make $r40 = 10
-  make $r41 = 20
-  ;;
-  goto bpbcu_loopgtz_test_1
-  ;;
-loopgtz0_test:
-  make $r40 = -1
-  make $r41 = 20
-  ;;
-bpbcu_loopgtz_test_1:
-  loopgtz $r40, label_loopgtz_test
-  ;;
-  addd $r41 = $r41, 1
-  ;;
-label_loopgtz_test:
-bpbcu_loopgtz_test_2:
-  get_got_addr $r42 ret_val
-  ;;
-  sd 0[$r42], $r41
-  ;;
-  goto ret_from_test
-  ;;
-
-.global loopnez_test
-.global loopnez0_test
-.global bpbcu_loopnez_test_1
-.global bpbcu_loopnez_test_2
-loopnez_test:
-  make $r40 = 10
-  make $r41 = 20
-  ;;
-  goto bpbcu_loopnez_test_1
-  ;;
-loopnez0_test:
-  make $r40 = 0
-  make $r41 = 20
-  ;;
-bpbcu_loopnez_test_1:
-  loopnez $r40, label_loopnez_test
-  ;;
-  addd $r41 = $r41, 1
-  ;;
-label_loopnez_test:
-bpbcu_loopnez_test_2:
-  get_got_addr $r42 ret_val
-  ;;
-  sd 0[$r42], $r41
-  ;;
-  goto ret_from_test
-  ;;
-
 .global get_test
 .global bpbcu_getra_test
 .global bpbcu_getpc_test

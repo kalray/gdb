@@ -62,7 +62,7 @@ char *sysroot_path = NULL;
 static const gdb_byte *
 k1_linux_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-  static const gdb_byte BREAK[] = {0x1, 0x0, 0x0, 0x0};
+  static const gdb_byte BREAK[] = {0x0, 0x0, 0x8, 0x0};
   *len = 4;
 
   return BREAK;
