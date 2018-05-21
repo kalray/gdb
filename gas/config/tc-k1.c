@@ -68,10 +68,6 @@ static int dump_insn = 0;
 /* Core string passed as argument with -mcore option */
 char *mcore= NULL;
 
-/* If not-null, limit assembler to TINY subset. Raises an error if an
-   instruction outside this subset is found */
-static int tiny_k1 = 0;
-
 /* This string should contains position in string where error occured. */
 char *error_str=NULL;
 
@@ -642,7 +638,6 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_32 (OPTION_MD_BASE + 13)
 #define OPTION_64 (OPTION_MD_BASE + 14)
 #define OPTION_DUMPINSN (OPTION_MD_BASE + 15)
-#define OPTION_MTINYK1 (OPTION_MD_BASE + 16)
 
 struct option md_longopts[] =
 {
@@ -658,7 +653,6 @@ struct option md_longopts[] =
      {"m32", no_argument,    NULL, OPTION_32},
      {"m64", no_argument,    NULL, OPTION_64},
      {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
-     {"mtiny-k1", no_argument, NULL, OPTION_MTINYK1},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -739,11 +733,6 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_64:
     k1_arch_size = 64;
     break;
-
-  case OPTION_MTINYK1:
-    tiny_k1 = 1;
-    break;
-
   default:
     return 0;
   }
@@ -2280,21 +2269,6 @@ k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
       }
       else {
         as_fatal("Too many ops in a single op bundle (%s):\n", bundle_insn[bidx]->opdef->as_op);
-      }
-    }
-    if (tiny_k1){
-      switch(find_bundling(bundle_insn[bidx])){
-      case Bundling_k1c_FULL:
-      case Bundling_k1c_FULL_X:
-      case Bundling_k1c_FULL_Y:
-      case Bundling_k1c_LITE:
-      case Bundling_k1c_LITE_X:
-      case Bundling_k1c_LITE_Y:
-        as_fatal("ALU non TINY instruction found in bundle with -mtiny-k1 used : %s\n",
-                 bundle_insn[bidx]->opdef->as_op);
-        break;
-      default:
-        break;
       }
     }
   }
