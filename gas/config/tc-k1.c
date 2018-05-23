@@ -68,10 +68,6 @@ static int dump_insn = 0;
 /* Core string passed as argument with -mcore option */
 char *mcore= NULL;
 
-/* If not-null, limit assembler to TINY subset. Raises an error if an
-   instruction outside this subset is found */
-static int tiny_k1 = 0;
-
 /* This string should contains position in string where error occured. */
 char *error_str=NULL;
 
@@ -642,7 +638,6 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_32 (OPTION_MD_BASE + 13)
 #define OPTION_64 (OPTION_MD_BASE + 14)
 #define OPTION_DUMPINSN (OPTION_MD_BASE + 15)
-#define OPTION_MTINYK1 (OPTION_MD_BASE + 16)
 
 struct option md_longopts[] =
 {
@@ -658,7 +653,6 @@ struct option md_longopts[] =
      {"m32", no_argument,    NULL, OPTION_32},
      {"m64", no_argument,    NULL, OPTION_64},
      {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
-     {"mtiny-k1", no_argument, NULL, OPTION_MTINYK1},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -739,11 +733,6 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
   case OPTION_64:
     k1_arch_size = 64;
     break;
-
-  case OPTION_MTINYK1:
-    tiny_k1 = 1;
-    break;
-
   default:
     return 0;
   }
@@ -2002,7 +1991,7 @@ k1insn_compare(const void *a, const void *b)
 }
 
 static void
-new_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
+k1c_reorder_bundle(k1insn_t *bundle_insn[], int bundle_insncnt)
 {
   enum { EXU_BCU, EXU_TCA, EXU_ALU0, EXU_ALU1, EXU_MAU, EXU_LSU, EXU__ };
   k1insn_t *issued[EXU__];
@@ -2208,7 +2197,7 @@ md_assemble(char *s)
 
             if(!generate_illegal_code){
                 // reorder and check the bundle
-                new_reorder_bundle(bundle_insn, bundle_insncnt);
+                k1c_reorder_bundle(bundle_insn, bundle_insncnt);
             }
 
             /* The ordering of the insns has been set correctly in bundle_insn. */
