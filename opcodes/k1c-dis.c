@@ -460,15 +460,15 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   value = (value ^ signbit) - signbit;
               }
 
-#define K1_PRINT_REG(regfile,value)					\
- if(k1_regfiles[regfile]+value < k1_max_dec_registers) {	        \
-   (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[regfile]+value]].name); \
- }									\
- else {									\
-   (*info->fprintf_func) (info->stream, "$??");				\
- }
+#define K1_PRINT_REG(regfile,value) \
+    if(k1_regfiles[regfile]+value < k1_max_dec_registers) { \
+        (*info->fprintf_func) (info->stream, "%s", k1_registers[k1_dec_registers[k1_regfiles[regfile]+value]].name); \
+    } else { \
+        (*info->fprintf_func) (info->stream, "$??"); \
+    }
 
               switch (type) {
+
                   case RegClass_k1c_singleReg:
                       K1_PRINT_REG(K1_REGFILE_DEC_GRF,value)
                       break;
@@ -489,9 +489,13 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       K1_PRINT_REG(K1_REGFILE_DEC_CRF,value)
                       break;
                   case RegClass_k1c_blockReg:
+                  case RegClass_k1c_blockRegE:
+                  case RegClass_k1c_blockRegO:
                       K1_PRINT_REG(K1_REGFILE_DEC_BRF,value)
                       break;
                   case RegClass_k1c_accelReg:
+                  case RegClass_k1c_accelRegE:
+                  case RegClass_k1c_accelRegO:
                       K1_PRINT_REG(K1_REGFILE_DEC_ARF,value)
                       break;
 
