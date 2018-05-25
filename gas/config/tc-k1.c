@@ -1060,27 +1060,29 @@ match_operands(const k1opc_t * op, const expressionS * tok,
           }
         }
 
-#define CASE_SRF_REGCLASSES(core)                                               \
-        case RegClass_ ## core ## _systemReg:                               \
-        case RegClass_ ## core ## _nopcpsReg:                               \
-        case RegClass_ ## core ## _onlypsReg:                               \
-        case RegClass_ ## core ## _onlyraReg:                               \
-        case RegClass_ ## core ## _onlyfxReg
-
         switch (operand_type) {
+
             case RegClass_k1c_singleReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
             case RegClass_k1c_pairedReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
             case RegClass_k1c_quadReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_QRF)
-            CASE_SRF_REGCLASSES(k1c):
+            case RegClass_k1c_systemReg:
+            case RegClass_k1c_nopcpsReg:
+            case RegClass_k1c_onlypsReg:
+            case RegClass_k1c_onlyraReg:
+            case RegClass_k1c_onlyfxReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1c_coproReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_CRF)
             case RegClass_k1c_blockReg:
+            case RegClass_k1c_blockRegE:
+            case RegClass_k1c_blockRegO:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_BRF)
             case RegClass_k1c_accelReg:
+            case RegClass_k1c_accelRegE:
+            case RegClass_k1c_accelRegO:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_ARF)
 
             case Immediate_k1c_pcrel17:
@@ -1160,7 +1162,6 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 #undef IS_K1_REGFILE_BRF
 #undef IS_K1_REGFILE_ARF
 #undef MATCH_K1_REGFILE
-#undef CASE_SRF_REGCLASSES
 }
 
 /*
