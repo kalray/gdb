@@ -1102,9 +1102,9 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                     break;
                 }
                 if (tok[jj].X_op == O_constant){
-                      long long signed_value = tok[jj].X_add_number;
-                      unsigned long long unsigned_value = tok[jj].X_add_number;
-                      int match_signed = 0;
+                    long long signed_value = tok[jj].X_add_number;
+                    unsigned long long unsigned_value = tok[jj].X_add_number;
+                    int match_signed = 0;
                     int match_unsigned = 0;
 
                     // Operand is not signed, but the token is.
@@ -1135,8 +1135,12 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                       mask = -1LL;
                     }
 
-                    match_signed = (((signed_value >> opdef->rightshift) >= min) && ((signed_value >> opdef->rightshift) <= max));
-                    match_unsigned = (((unsigned_value >> opdef->rightshift) & mask) == (unsigned_value >> opdef->rightshift));
+                    if(opdef->bias != 0) {
+                      as_bad("[match_operands] : cannot use bias for encoding operand type %s \n", operand_type_name);
+                    }
+
+                    match_signed = (((signed_value >> opdef->shift) >= min) && ((signed_value >> opdef->shift) <= max));
+                    match_unsigned = (((unsigned_value >> opdef->shift) & mask) == (unsigned_value >> opdef->shift));
 
                     if ( !                                                         /* Does not match signed and unsigned variantes */
                          ( ( !(opdef->flags & k1SIGNED) && match_unsigned ) ||     /* Match unsigned and operand is unsigned or wrapped */           
@@ -1216,6 +1220,8 @@ insert_operand(k1insn_t * insn,
       {
       case O_register:
         op = k1_registers[arg->X_add_number].id;
+        op -= opdef->bias;
+        op >>= opdef->shift;
         break;
       case O_pseudo_fixup:
         if (insn->nfixups == 0)
@@ -1231,7 +1237,7 @@ insert_operand(k1insn_t * insn,
 
             /* Beware that immxbuf must be filled in the same order as relocs should be emitted. */
 
-            if (pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
+            if (   pf->pseudo_relocs.reloc_type == S64_LO10_UP27_EX27
                 || pf->pseudo_relocs.reloc_type == S43_LO10_UP27_EX6
                 || pf->pseudo_relocs.reloc_type == S37_LO10_UP27) {
               insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.reloc_lo10;
@@ -1282,9 +1288,9 @@ insert_operand(k1insn_t * insn,
         if (!(arg->X_add_symbol))
           {
             if(opdef->flags & k1SIGNED){
-              op = ((signed long long)arg->X_add_number >> opdef->rightshift);
+              op = ((signed long long)arg->X_add_number >> opdef->shift);
             }else{
-              op = ((unsigned long long)arg->X_add_number >> opdef->rightshift);
+              op = ((unsigned long long)arg->X_add_number >> opdef->shift);
             }
             break;
           }
@@ -2144,10 +2150,10 @@ md_assemble(char *s)
     /* check for bundle end */
     if (strncmp(t, "be", 2) == 0) {
         int j;
-        int sec_align;
         inside_bundle = 0;
         unwind_bundle_count++;        /* count of bundles in current proc */
-        sec_align = bfd_get_section_alignment(stdoutput, now_seg);
+        //int sec_align = bfd_get_section_alignment(stdoutput, now_seg);
+
         {
             k1insn_t *bundle_insn[K1MAXBUNDLEWORDS]; /* Was K1MAXBUNDLEISSUE, changed because of NOPs */
             int bundle_insncnt = 0;
