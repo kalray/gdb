@@ -431,7 +431,8 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               int type  = op->format[i]->type;
               char *type_name  = op->format[i]->tname;
               int flags = op->format[i]->flags;
-              int rightshift = op->format[i]->rightshift;
+              int shift = op->format[i]->shift;
+              int bias = op->format[i]->bias;
               unsigned long long value = 0;
               int bf_idx;
 
@@ -459,6 +460,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   unsigned long long signbit = 1LL << (width -1);
                   value = (value ^ signbit) - signbit;
               }
+              value = (value << shift) + bias;
 
 #define K1_PRINT_REG(regfile,value) \
     if(k1_regfiles[regfile]+value < k1_max_dec_registers) { \
@@ -510,7 +512,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1c_wrapped64:
                   case Immediate_k1c_unsigned5:
                   case Immediate_k1c_unsigned6:
-                      value <<= rightshift;
                       if(flags & k1SIGNED){
                           if(width <= 32) {
                               (*info->fprintf_func) (info->stream, "%d (0x%x)", (int)value, (int)value);
@@ -529,7 +530,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       break;
                   case Immediate_k1c_pcrel17:
                   case Immediate_k1c_pcrel27:
-                      (*info->print_address_func)((value << rightshift) + memaddr, info);
+                      (*info->print_address_func)(value + memaddr, info);
                       break;
                   default:
                       fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
