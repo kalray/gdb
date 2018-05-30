@@ -13,8 +13,8 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
 
                         "board"      => {
                           "type" => "keywords",
-                          "keywords" => [:developer, :explorer, :pcie_530, :emb01, :tc2, :tc3, :konic80, :ab04, :konic40],
-                          "default" => "developer",
+                          "keywords" => [:csp_generic],
+                          "default" => "csp_generic",
                           "help" => "Target board (changing things at compilation)."
                         },
 
