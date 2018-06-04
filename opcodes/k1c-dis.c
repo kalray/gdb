@@ -498,7 +498,12 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1c_accelReg:
                   case RegClass_k1c_accelRegE:
                   case RegClass_k1c_accelRegO:
+                  case RegClass_k1c_vectorReg_0:
+                  case RegClass_k1c_vectorReg_1:
                       K1_PRINT_REG(K1_REGFILE_DEC_ARF,value)
+                      break;
+                  case RegClass_k1c_vectorReg:
+                      K1_PRINT_REG(K1_REGFILE_DEC_VRF,value)
                       break;
 
                   case Immediate_k1c_sysnumber:

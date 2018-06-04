@@ -1014,6 +1014,10 @@ match_operands(const k1opc_t * op, const expressionS * tok,
                                 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_BRF]))
 #define IS_K1_REGFILE_ARF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_ARF]) \
                                 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_ARF]))
+#define IS_K1_REGFILE_VRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_VRF]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_VRF]))
+#define IS_K1_REGFILE_WRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_WRF]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_WRF]))
 
 #define MATCH_K1_REGFILE(tok,is_regfile)                                \
     if (((tok).X_op == O_register) && (is_regfile(tok))) {                \
@@ -1083,7 +1087,11 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_accelReg:
             case RegClass_k1c_accelRegE:
             case RegClass_k1c_accelRegO:
+            case RegClass_k1c_vectorReg_0:
+            case RegClass_k1c_vectorReg_1:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_ARF)
+            case RegClass_k1c_vectorReg:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_VRF)
 
             case Immediate_k1c_pcrel17:
             case Immediate_k1c_pcrel27:
@@ -1833,8 +1841,7 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
     int flags = op->format[i]->flags;
     int width = op->format[i]->width;
 
-    /* Print characters in the format string up to the following
-     * % or nul. */
+    /* Print characters in the format string up to the following * % or nul. */
     while((chars < buf_size) && (ch=*fmtp) && ch != '%') {
       buf[chars++] = ch;
       fmtp++;
@@ -1864,9 +1871,15 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
       chars += snprintf(&buf[chars], buf_size - chars, "crf");
       break;
     case RegClass_k1c_blockReg:
+    case RegClass_k1c_blockRegE:
+    case RegClass_k1c_blockRegO:
       chars += snprintf(&buf[chars], buf_size - chars, "brf");
       break;
     case RegClass_k1c_accelReg:
+    case RegClass_k1c_accelRegE:
+    case RegClass_k1c_accelRegO:
+    case RegClass_k1c_vectorReg_0:
+    case RegClass_k1c_vectorReg_1:
       chars += snprintf(&buf[chars], buf_size - chars, "arf");
       break;
     case Immediate_k1c_pcrel17:
