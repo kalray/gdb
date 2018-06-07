@@ -2284,11 +2284,11 @@ write_dwarf_eh_frame_hdr (bfd *abfd, struct bfd_link_info *info)
 		  != sec->output_section->vma + val))
 	    overflow = TRUE;
 	  bfd_put_32 (abfd, val, contents + EH_FRAME_HDR_SIZE + i * 8 + 8);
-	  /* if (i != 0 */
-	  /*     && (hdr_info->u.dwarf.array[i].initial_loc */
-	  /* 	  < (hdr_info->u.dwarf.array[i - 1].initial_loc */
-	  /* 	     + hdr_info->u.dwarf.array[i - 1].range))) */
-	    /* overlap = TRUE; */
+	  if (i != 0
+	      && (hdr_info->u.dwarf.array[i].initial_loc
+	  	  < (hdr_info->u.dwarf.array[i - 1].initial_loc
+	  	     + hdr_info->u.dwarf.array[i - 1].range)))
+	    overlap = TRUE;
 	}
       if (overflow)
 	(*info->callbacks->einfo) (_("%P: .eh_frame_hdr entry overflow.\n"));
