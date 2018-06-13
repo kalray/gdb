@@ -246,28 +246,11 @@ assert_str_hexa (char *s, int l)
 static void
 printf_reg_to_packet (struct gdbstub *stub, reg_t *reg, int idx_reg)
 {
-  if (stub->agents[stub->data_context.agent].reg_size[idx_reg] != 64)
-  {
-    unsigned char *c = (unsigned char *) &reg->u32;
-    printf_packet (stub, "%c%c%c%c%c%c%c%c",
-      tohex[c[0] >> 4], tohex[c[0] & 0xf],
-      tohex[c[1] >> 4], tohex[c[1] & 0xf],
-      tohex[c[2] >> 4], tohex[c[2] & 0xf],
-      tohex[c[3] >> 4], tohex[c[3] & 0xf]);
-  }
-  else
-  {
-    unsigned char *c = (unsigned char *) &reg->u64;
-    printf_packet (stub, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
-      tohex[c[0] >> 4], tohex[c[0] & 0xf],
-      tohex[c[1] >> 4], tohex[c[1] & 0xf],
-      tohex[c[2] >> 4], tohex[c[2] & 0xf],
-      tohex[c[3] >> 4], tohex[c[3] & 0xf],
-      tohex[c[4] >> 4], tohex[c[4] & 0xf],
-      tohex[c[5] >> 4], tohex[c[5] & 0xf],
-      tohex[c[6] >> 4], tohex[c[6] & 0xf],
-      tohex[c[7] >> 4], tohex[c[7] & 0xf]);
-  }
+  int i, sz = (stub->agents[stub->data_context.agent].reg_size[idx_reg] + 7)/ 8;
+  unsigned char *c = (unsigned char *) &reg->u64;
+
+  for (i = 0; i < sz; i++)
+    printf_packet (stub, "%c%c", tohex[c[i] >> 4], tohex[c[i] & 0xf]);
 }
 
 static int
@@ -292,31 +275,15 @@ fromhex (char *c)
 static char *
 read_reg_from_packet (struct gdbstub *stub, reg_t *reg, int idx_reg, char *buf_in)
 {
-  char *buf;
+  int i, sz = (stub->agents[stub->data_context.agent].reg_size[idx_reg] + 7) / 8;
+  unsigned char *c = (unsigned char *) &reg->u64;
 
-  if (stub->agents[stub->data_context.agent].reg_size[idx_reg] != 64)
-  {
-    buf = (char *) &reg->u32;
-    reg->u64 = 0;
-    assert_str_hexa (buf_in, 8);
-    buf[0] = fromhex (buf_in + 0);
-    buf[1] = fromhex (buf_in + 2);
-    buf[2] = fromhex (buf_in + 4);
-    buf[3] = fromhex (buf_in + 6);
-    return buf_in + 8;
-  }
+  assert_str_hexa (buf_in, sz);
+  reg->u64 = 0;
+  for (i = 0; i < sz; i++)
+    c[i] = fromhex (buf_in + 2 * i);
 
-  buf = (char *) &reg->u64;
-  assert_str_hexa (buf_in, 16);
-  buf[0] = fromhex (buf_in + 0);
-  buf[1] = fromhex (buf_in + 2);
-  buf[2] = fromhex (buf_in + 4);
-  buf[3] = fromhex (buf_in + 6);
-  buf[4] = fromhex (buf_in + 8);
-  buf[5] = fromhex (buf_in + 10);
-  buf[6] = fromhex (buf_in + 12);
-  buf[7] = fromhex (buf_in + 14);
-  return buf_in + 16;
+  return buf_in + 2 * sz;
 }
 
 static struct
