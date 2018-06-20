@@ -1167,9 +1167,15 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_accelRegO:
             case RegClass_k1c_vectorReg_0:
             case RegClass_k1c_vectorReg_1:
+            case RegClass_k1c_wideReg_0:
+            case RegClass_k1c_wideReg_1:
+            case RegClass_k1c_wideReg_2:
+            case RegClass_k1c_wideReg_3:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_ARF)
             case RegClass_k1c_vectorReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_VRF)
+            case RegClass_k1c_wideReg:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_WRF)
 
             case Immediate_k1c_pcrel17:
             case Immediate_k1c_pcrel27:
@@ -1251,6 +1257,8 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 #undef IS_K1_REGFILE_CRF
 #undef IS_K1_REGFILE_BRF
 #undef IS_K1_REGFILE_ARF
+#undef IS_K1_REGFILE_VRF
+#undef IS_K1_REGFILE_WRF
 #undef MATCH_K1_REGFILE
 }
 
@@ -1958,6 +1966,10 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
     case RegClass_k1c_accelRegO:
     case RegClass_k1c_vectorReg_0:
     case RegClass_k1c_vectorReg_1:
+    case RegClass_k1c_wideReg_0:
+    case RegClass_k1c_wideReg_1:
+    case RegClass_k1c_wideReg_2:
+    case RegClass_k1c_wideReg_3:
       chars += snprintf(&buf[chars], buf_size - chars, "arf");
       break;
     case Immediate_k1c_pcrel17:
