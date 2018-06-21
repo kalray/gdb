@@ -25,7 +25,7 @@ options = Options.new({ "target"        => ["k1", "k1nsim"],
                         "version"       => ["unknown", "Version of the delivered GDB."],
                         "variant"       => {
                           "type" => "keywords",
-                          "keywords" => [:nodeos, :elf, :rtems, :linux, :gdb, :gdblinux, :gdbstub],
+                          "keywords" => [:elf, :cos, :linux, :gdb, :gdblinux, :gdbstub],
                           "default" => :elf,
                           "help" => "Select build variant."
                         },
@@ -127,11 +127,7 @@ when "k1"
     program_prefix += "#{variant}-"
     build_target = "k1-#{variant}"
     mds_gbu_path = "#{family_prefix}/BE/GBU"
-  when "rtems" then
-    build_target = "k1-#{variant}"
-    program_prefix += "#{variant}-"
-    mds_gbu_path = "#{family_prefix}/BE/GBU"
-  when "nodeos" then
+  when "cos" then
     build_target = "k1-#{variant}"
     program_prefix += "#{variant}-"
     mds_gbu_path = "#{family_prefix}/BE/GBU"
@@ -340,7 +336,7 @@ end
 
 b.target("#{variant}_post_install_valid") do
   b.logtitle = "Report for Gbu #{variant}_post_install_valid, arch = #{arch}"
-  if (variant == "elf") then
+  if (variant == "elf" or variant == "cos") then
     gas = "#{build_path}/gas/as-new"
     objdump = "#{build_path}/binutils/objdump"
 
