@@ -1020,11 +1020,27 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
 }
 
 static int
-has_relocation_of_size(k1bfield *opnd) {
+has_relocation_of_size(const k1bfield *opnd) {
   int i;
 
   const int symbol_size = (k1_arch_size == 64) ? 43 : 32;
 
+  /*
+   * This is a bit hackish: in case of PCREL here, it means we are
+   * trying to fit a symbol in the insn, not a pseudo function
+   * (eg. @gotaddr, ...).
+   * We don't want to use a GOTADDR (pcrel) in any insn that tries to fit a symbol.
+   * One way to filter out these is to use the following asumption:
+   * - Any insn that accepts a pcrel immediate has only one immediate variant.
+   * Example:
+   * - call accepts only a pcrel27 -> allow pcrel reloc here
+   * - cb accepts only a pcrel17 -> allow pcrel reloc here
+   * - addd accepts signed10,37,64 -> deny pcrel reloc here
+   *
+   * The motivation here is to prevent the function to allow a 64bits
+   * symbol in a 37bits variant of any ALU insn (that would match with
+   * the GOTADDR 37bits reloc switch case below)
+   */
   for(i=0; i<opnd->reloc_nb; i++) {
     switch(opnd->relocs[i]->relative) {
       /* An absolute reloc needs a full size symbol reloc */
@@ -1037,7 +1053,9 @@ has_relocation_of_size(k1bfield *opnd) {
       /* Most likely relative jumps. Let something else check size is
          OK. We don't currently have several relocations for such insns */
     case K1_REL_PC:
-      return 1;
+      if (opnd->reloc_nb == 1)
+	return 1;
+      break;
 
       /* These relocations should be handled elsewhere with pseudo functions */
     case K1_REL_GP:
