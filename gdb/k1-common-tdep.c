@@ -45,6 +45,7 @@ static struct op_list *sp_store_insns[K1_NUM_ARCHES];
 static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
 
 struct op_list *branch_insns[K1_NUM_ARCHES];
+k1opc_t *break_op[K1_NUM_ARCHES];
 
 enum K1_ARCH
 k1_arch (void)
@@ -586,6 +587,8 @@ k1_look_for_insns (void)
         add_op (&branch_insns[i], op);
       else if (strcmp ("get", op->as_op) == 0)
         add_op (&branch_insns[i], op);
+      else if (strcmp ("break", op->as_op) == 0)
+        break_op[i] = op;
       ++op;
     }
   }

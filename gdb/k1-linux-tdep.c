@@ -62,10 +62,12 @@ char *sysroot_path = NULL;
 static const gdb_byte *
 k1_linux_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-  static const gdb_byte BREAK[] = {0x0, 0x0, 0x8, 0x0};
   *len = 4;
 
-  return BREAK;
+  if (!break_op[k1_arch ()])
+    error ("Cannot find the break instruction for the current architecture.");
+
+  return (gdb_byte *) &break_op[k1_arch ()]->codewords[0].opcode;
 }
 
 static struct gdbarch *
