@@ -744,14 +744,16 @@ k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *gr
 static const gdb_byte *
 k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-  static const gdb_byte BREAK[] = {0x0, 0x0, 0x8, 0x0};
   static const gdb_byte BREAK_OCE[] = {0xfd, 0x0f, 0xe0, 0x0f}; // scall 4093
   *len = 4;
 
   if (cjtag_over_iss == 'o')
     return BREAK_OCE;
 
-  return BREAK;
+  if (!break_op[k1_arch ()])
+    error ("Cannot find the break instruction for the current architecture.");
+
+  return (gdb_byte *) &break_op[k1_arch ()]->codewords[0].opcode;
 }
 
 static CORE_ADDR
