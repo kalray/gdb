@@ -811,7 +811,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
   set_gdbarch_int_bit (gdbarch, 32);
-  set_gdbarch_long_bit (gdbarch, 32);
+  set_gdbarch_long_bit (gdbarch, gdbarch_bfd_arch_info (gdbarch)->bits_per_address);
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
