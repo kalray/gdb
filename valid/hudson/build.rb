@@ -161,7 +161,7 @@ b.target("#{variant}_build") do
       if (build_type == "Release") then
         additional_flags = "CFLAGS=\"-O2 #{install_lib}\""
       else
-        additional_flags = "CFLAGS=\"-g -O0 #{install_lib}\""
+        additional_flags = "CFLAGS=\"-g3 -O0 #{install_lib}\""
       end
 
       b.create_goto_dir! build_path
@@ -178,11 +178,6 @@ b.target("#{variant}_build") do
                     "--with-bugurl=no " +
                     "--prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
-      if (build_type == "Release") then
-        additional_flags = "CFLAGS=-O2"
-      else
-        additional_flags = "CFLAGS=-g3"
-      end
       b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
     end
   else ## variant != gdb => binutils only
