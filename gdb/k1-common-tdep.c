@@ -31,6 +31,8 @@
 #include "opcode/k1c.h"
 #include "k1-common-tdep.h"
 
+#define SCALL_BREAK_JTAG_OVER_ISS 4093
+
 struct k1_frame_cache
 {
   CORE_ADDR base; // base address
@@ -46,6 +48,7 @@ static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
 
 struct op_list *branch_insns[K1_NUM_ARCHES];
 k1opc_t *break_op[K1_NUM_ARCHES];
+uint32_t break_jtag_over_iss[K1_NUM_ARCHES];
 
 enum K1_ARCH
 k1_arch (void)
@@ -194,7 +197,7 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 
         bfield = &op->format[(*prologue_insns)[ops_idx].sp_idx]->bfield[0];
         reg = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
-        if (reg == 12)
+        if (reg == gdbarch_sp_regnum (gdbarch))
           return 1;
       next:
         ops = ops->next;
@@ -576,7 +579,15 @@ k1_look_for_insns (void)
       else if (strcmp ("rfe", op->as_op) == 0)
         add_op (&branch_insns[i], op);
       else if (strcmp ("scall", op->as_op) == 0)
+      {
+        if (op->format && op->format[0] && op->format[0]->regs == NULL)
+        {
+          break_jtag_over_iss[i] = (op->codewords[0].opcode & op->codewords[0].mask) |
+            ((SCALL_BREAK_JTAG_OVER_ISS & ((1 << op->format[0]->bfield->size) - 1))
+            << op->format[0]->bfield->to_offset);
+        }
         add_op (&branch_insns[i], op);
+      }
       else if (strncmp ("cb.", op->as_op, 3) == 0)
         add_op (&branch_insns[i], op);
       else if (strcmp ("loopdo", op->as_op) == 0)

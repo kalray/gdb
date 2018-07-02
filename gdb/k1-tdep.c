@@ -744,11 +744,14 @@ k1_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *gr
 static const gdb_byte *
 k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
 {
-  static const gdb_byte BREAK_OCE[] = {0xfd, 0x0f, 0xe0, 0x0f}; // scall 4093
   *len = 4;
 
   if (cjtag_over_iss == 'o')
-    return BREAK_OCE;
+  {
+    if (!break_jtag_over_iss[k1_arch ()])
+      error ("Cannot find the scall instruction for the current architecture.");
+    return (gdb_byte *) &break_jtag_over_iss[k1_arch ()];
+  }
 
   if (!break_op[k1_arch ()])
     error ("Cannot find the break instruction for the current architecture.");
@@ -811,7 +814,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
   set_gdbarch_int_bit (gdbarch, 32);
-  set_gdbarch_long_bit (gdbarch, 32);
+  set_gdbarch_long_bit (gdbarch, gdbarch_bfd_arch_info (gdbarch)->bits_per_address);
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
