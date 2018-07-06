@@ -289,7 +289,7 @@ b.target("#{variant}_post_build_valid") do
       execution_ref = "gdb.sum.iss.ref"
       extra_extra = "-DK1_ISS"
     end
-    extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board} #{extra_extra}'"
+    extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} #{extra_extra}'"
 
     if (variant == "gdb" or variant == "gdblinux")
       if( arch == "k1" )
@@ -418,7 +418,7 @@ b.target("gdb_long_valid") do
         execution_ref = "gdb.sum.iss.ref"
         extra_extra = "-DK1_ISS"
       end
-      extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} -mboard=#{board} #{extra_extra}'"
+      extra_flags = "CFLAGS_FOR_TARGET='-march=#{march} #{extra_extra}'"
 
       Dir.chdir build_path + "/gdb/testsuite"
 
