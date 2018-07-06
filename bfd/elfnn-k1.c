@@ -108,14 +108,14 @@ static const bfd_byte elfNN_k1_small_plt0_entry[PLT_ENTRY_SIZE] =
    these PLT entries.  */
 static const bfd_byte elfNN_k1_small_plt_entry[PLT_SMALL_ENTRY_SIZE] =
 {
-  0x0e, 0x00, 0xc4, 0x0f,       /* get $r14 = $pc     ;; */
+  0x10, 0x00, 0xc4, 0x0f,       /* get $r16 = $pc     ;; */
 #if ARCH_SIZE == 32
-  0x0e, 0x00, 0x24, 0xb0,       /* lw $r9 = 0[$r14]   ;; */
+  0x10, 0x00, 0x40, 0xb0,       /* lwz $r16 = 0[$r16]   ;; */
 #else
-  0x0e, 0x00, 0x24, 0xb8,       /* ld $r9 = 0[$r14] ;; */
+  0x10, 0x00, 0x40, 0xb8,       /* ld $r16 = 0[$r16] ;; */
 #endif
   0x00, 0x00, 0x00, 0x18,       /* upper 27 bits for LSU */
-  0x09, 0x00, 0xd8, 0x0f,	/* igoto $r9          ;; */
+  0x10, 0x00, 0xd8, 0x0f,	/* igoto $r16          ;; */
 };
 
 #define elf_info_to_howto               elfNN_k1_info_to_howto
