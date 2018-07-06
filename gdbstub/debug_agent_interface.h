@@ -90,6 +90,8 @@ typedef errcode_t (*da_strerror_t) (debug_agent_t *self, int vehicle, char **str
 typedef errcode_t (*da_get_args_t) (debug_agent_t *self, int vehicle, int *argc, char ***argv);
 typedef errcode_t (*da_get_elf_file_t) (debug_agent_t *self, int vehicle, const char **elf_file);
 typedef errcode_t (*da_get_arg_t) (debug_agent_t *self, int vehicle, int num, uint64_t *arg);
+typedef errcode_t (*da_push_comment_t)(debug_agent_t *self, int vehicle, char *comment);
+
 typedef errcode_t (*da_set_return_t) (debug_agent_t *self, int vehicle, int ret);
 typedef errcode_t (*da_load_elf_t) (debug_agent_t *self, char * elf, int argc, char * argv[]);
 typedef errcode_t (*da_load_memory_t) (debug_agent_t *self, const char * elf);
@@ -151,6 +153,7 @@ typedef struct {
   da_strerror_t strerror;
   da_get_args_t get_args;
   da_get_arg_t get_arg;
+  da_push_comment_t push_comment;
   da_get_elf_file_t get_elf_file;
   da_set_return_t set_return;
   da_load_elf_t load_elf;
