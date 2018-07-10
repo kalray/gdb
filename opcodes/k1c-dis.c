@@ -518,6 +518,7 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       break;
 
                   case Immediate_k1c_sysnumber:
+                  case Immediate_k1c_signed6:
                   case Immediate_k1c_signed10:
                   case Immediate_k1c_signed16:
                   case Immediate_k1c_signed27:
@@ -526,7 +527,6 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_k1c_signed43:
                   case Immediate_k1c_signed54:
                   case Immediate_k1c_wrapped64:
-                  case Immediate_k1c_unsigned5:
                   case Immediate_k1c_unsigned6:
                       if(flags & k1SIGNED){
                           if(width <= 32) {
