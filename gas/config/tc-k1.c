@@ -1582,7 +1582,7 @@ assemble_insn(const k1opc_t * opcode,
     memset(insn, 0, sizeof (*insn));
     insn->opdef = opcode;
     for(i=0; i < opcode->wordcount; i++) {
-        insn->words[i] = (unsigned int)opcode->codewords[i].opcode;
+        insn->words[i] = opcode->codewords[i].opcode;
         insn->len += 1;
     }
     insn->immx0 = NOIMMX;
@@ -1666,8 +1666,13 @@ emit_insn(k1insn_t * insn, int stopflag)
     assert(reloc_howto);
     size = bfd_get_reloc_size(reloc_howto);
     pcrel = reloc_howto->pc_relative;
-    fixS* fixup = fix_new_exp(frag_now, f - frag_now->fr_literal + insn->fixup[i].where,
-                              size, &(insn->fixup[i].exp), pcrel, insn->fixup[i].reloc);
+
+    fixS* fixup = fix_new_exp(frag_now,
+			      f - frag_now->fr_literal + insn->fixup[i].where,
+                              size,
+			      &(insn->fixup[i].exp),
+			      pcrel,
+			      insn->fixup[i].reloc);
     /*
      * Set this bit so that large value can still be
      * handled. Without it, assembler will fail in fixup_segment
