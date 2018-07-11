@@ -1703,7 +1703,8 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 		   && h->dynindx != -1
 		   && (!bfd_link_pic (info) || !info->symbolic || !h->def_regular))
 	    outrel.r_info = ELFNN_R_INFO (h->dynindx, r_type);
-	  else if (bfd_r_type == BFD_RELOC_K1_32)
+	  else if (bfd_r_type == BFD_RELOC_K1_32
+		   || bfd_r_type == BFD_RELOC_K1_64)
 	    {
 	      int symbol;
 
