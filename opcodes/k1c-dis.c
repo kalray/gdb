@@ -502,19 +502,19 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1c_accelReg:
                   case RegClass_k1c_accelRegE:
                   case RegClass_k1c_accelRegO:
-                  case RegClass_k1c_vectorReg_0:
-                  case RegClass_k1c_vectorReg_1:
                   case RegClass_k1c_wideReg_0:
                   case RegClass_k1c_wideReg_1:
-                  case RegClass_k1c_wideReg_2:
-                  case RegClass_k1c_wideReg_3:
+                  case RegClass_k1c_extendReg_0:
+                  case RegClass_k1c_extendReg_1:
+                  case RegClass_k1c_extendReg_2:
+                  case RegClass_k1c_extendReg_3:
                       K1_PRINT_REG(K1_REGFILE_DEC_ARF,value)
-                      break;
-                  case RegClass_k1c_vectorReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_VRF,value)
                       break;
                   case RegClass_k1c_wideReg:
                       K1_PRINT_REG(K1_REGFILE_DEC_WRF,value)
+                      break;
+                  case RegClass_k1c_extendReg:
+                      K1_PRINT_REG(K1_REGFILE_DEC_XRF,value)
                       break;
 
                   case Immediate_k1c_sysnumber:
