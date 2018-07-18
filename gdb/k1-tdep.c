@@ -786,6 +786,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   unsigned long mach;
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
   int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
+  int has_ocec = -1, has_ea = -1, has_es = -1;
 
   static const char k1_ev_name[] = "ev";
   static const char k1_lc_name[] = "lc";
@@ -795,6 +796,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   static const char k1_ra_name[] = "ra";
   static const char k1_spc_name[] = "spc";
   static const char k1_local_name[] = "r13";
+  static const char k1_ocec_name[] = "ocec";
+  static const char k1_ea_name[] = "ea";
+  static const char k1_es_name[] = "es";
 
   const char *pc_name;
   const char *sp_name;
@@ -851,6 +855,12 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
         has_spc = i;
       else if (strcmp (tdesc_register_name (gdbarch, i), k1_ev_name) == 0)
         has_ev = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ocec_name) == 0)
+        has_ocec = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ea_name) == 0)
+        has_ea = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), k1_es_name) == 0)
+        has_es = i;
     }
 
     if (has_pc < 0)
@@ -873,6 +883,12 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       error ("There's no '%s' register!", k1_spc_name);
     if (has_ev < 0)
       error ("There's no '%s' register!", k1_ev_name);
+    if (has_ocec < 0)
+      error ("There's no '%s' register!", k1_ocec_name);
+    if (has_ea < 0)
+      error ("There's no '%s' register!", k1_ea_name);
+    if (has_es < 0)
+      error ("There's no '%s' register!", k1_es_name);
 
     tdep->ev_regnum = has_ev;
     tdep->le_regnum = has_le;
@@ -882,6 +898,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     tdep->ra_regnum = has_ra;
     tdep->spc_regnum = has_spc;
     tdep->local_regnum = has_local;
+    tdep->ocec_regnum = has_ocec;
+    tdep->ea_regnum = has_ea;
+    tdep->es_regnum = has_es;
     tdep->uint256 = arch_integer_type (gdbarch, 256, 0, "uint256_t");
     tdep->uint512 = arch_integer_type (gdbarch, 512, 0, "uint512_t");
     tdep->uint1024 = arch_integer_type (gdbarch, 1024, 0, "uint1024_t");
