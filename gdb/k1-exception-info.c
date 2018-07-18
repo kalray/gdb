@@ -11,8 +11,42 @@
 #include "common-types.h"
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
-
 #define MSG_FROM_ARRAY(a,i) ((i >= ARRAY_SIZE(a) || !a[i]) ? "[unknown]" : a[i])
+
+#define MB (1024ULL * 1024)
+#define GB (1024ULL * 1024 * 1024)
+
+struct addr_range_s
+{
+  const char *name;
+  uint64_t size;
+} cool_addr_map[] = {
+  {"Local SMEM", 4 * MB},
+  {"Local Meta", 4 * MB},
+  {"Local periph", 8 * MB},
+  {"Cluster 0 SMEM", 4 * MB},
+  {"Cluster 0 Meta", 4 * MB},
+  {"Cluster 0 periph", 8 * MB},
+  {"Cluster 1 SMEM", 4 * MB},
+  {"Cluster 1 Meta", 4 * MB},
+  {"Cluster 1 periph", 8 * MB},
+  {"Cluster 2 SMEM", 4 * MB},
+  {"Cluster 2 Meta", 4 * MB},
+  {"Cluster 2 periph", 8 * MB},
+  {"Cluster 3 SMEM", 4 * MB},
+  {"Cluster 3 Meta", 4 * MB},
+  {"Cluster 3 periph", 8 * MB},
+  {"Cluster 4 SMEM", 4 * MB},
+  {"Cluster 4 Meta", 4 * MB},
+  {"Cluster 4 periph", 8 * MB},
+  {"[reserved]", 32 * MB},
+  {"AXI config", 256 * MB},
+  {"AXI periphs", 256 * MB},
+  {"PCIE alias", (2 * GB - 640 * MB)},
+  {"DDR alias", 2 * GB},
+  {"DDR", 64 * GB},
+  {"PCIE", (256 * GB - 68 * GB)},
+};
 
 enum {
   EN_REG_OCEC_DES_SW_BREAK = 0,
@@ -122,6 +156,8 @@ const char *es_ec_msg[] = {
   "system stepi", // 4
 };
 
+#define PS_MME_BIT 11
+
 union reg_ocec_s
 {
   uint64_t reg;
@@ -181,7 +217,7 @@ union reg_es_s
 };
 
 static void
-show_addr_info (uint64_t addr)
+show_addr_info (uint64_t addr, int mme)
 {
   const char *sym_name = NULL;
   struct bound_minimal_symbol min_sym;
@@ -207,6 +243,18 @@ show_addr_info (uint64_t addr)
 
   if (sym_name)
     printf (" in %s %s", sym_type, sym_name);
+  else if (!mme)
+  {
+    int i;
+    for (i = 0; i < ARRAY_SIZE(cool_addr_map); i++)
+    {
+      if (addr < cool_addr_map[i].size)
+        break;
+      addr -= cool_addr_map[i].size;
+    }
+    if (i < ARRAY_SIZE(cool_addr_map))
+      printf ("in %s memory map range", cool_addr_map[i].name);
+  }
 }
 
 static void
@@ -229,11 +277,8 @@ show_trap_info (union reg_es_s es)
 }
 
 static void
-show_stepi_trap_info (union reg_es_s es, uint64_t ea)
+show_stepi_trap_info (union reg_es_s es)
 {
-  printf ("\texception address (ea): 0x%" PRIx64, ea);
-  show_addr_info (ea);
-  printf ("\n");
   printf ("\tread write execute: %s (es.rwx=0x%x\n)",
     MSG_FROM_ARRAY (es_rwx_stepi_msg, es.sys_si.rwx), es.sys_si.rwx);
   if (es.sys_si.rwx >= ES_RWS_STEPI_FIRST_DATA)
@@ -258,12 +303,16 @@ stopped_cpu_status (void)
   struct regcache *reg_cache = get_current_regcache ();
   union reg_ocec_s ocec;
   union reg_es_s es;
-  uint64_t pc, spc, ea;
+  uint64_t pc, spc, ea, ps;
+  int mme;
 
   // read required registers
   regcache_raw_read_unsigned (reg_cache, tdep->ocec_regnum, &ocec.reg);
   regcache_raw_read_unsigned (reg_cache, tdep->es_regnum, &es.reg);
   regcache_raw_read_unsigned (reg_cache, tdep->ea_regnum, &ea);
+  regcache_raw_read_unsigned (reg_cache, tdep->ps_regnum, &ps);
+
+  mme = (ps & (1 << PS_MME_BIT)) != 0;
 
   printf ("The processor entered debug mode because of a %s (ocec.des=0x%x).\n",
     MSG_FROM_ARRAY (reg_ocec_des_msg, ocec._.des), ocec._.des);
@@ -272,7 +321,7 @@ stopped_cpu_status (void)
   {
     printf ("Hardware trap information (es=0x%" PRIx64 "):\n", es.reg);
     printf ("\texception address (ea): 0x%" PRIx64, ea);
-    show_addr_info (ea);
+    show_addr_info (ea, mme);
     printf ("\n");
     show_trap_info (es);
   }
@@ -285,7 +334,7 @@ stopped_cpu_status (void)
     if (ocec._.des == EN_REG_OCEC_DES_DE_HWTRAP)
     {
       printf ("\texception address (ea): 0x%" PRIx64, ea);
-      show_addr_info (ea);
+      show_addr_info (ea, mme);
       printf ("\n");
     }
     printf ("First exception taken: %s (es.ec=%d)\n", MSG_FROM_ARRAY (es_ec_msg, es.common.ec), es.common.ec);
@@ -302,19 +351,24 @@ stopped_cpu_status (void)
         es.irq.iti, es.irq.iti);
     }
     else if (es.common.ec == EN_ES_EC_SYSTEM_STEPI)
-      show_stepi_trap_info (es, ea);
+    {
+      printf ("\texception address (ea): 0x%" PRIx64, ea);
+      show_addr_info (ea, mme);
+      printf ("\n");
+      show_stepi_trap_info (es);
+    }
   }
 
   // PC information
   pc = regcache_read_pc (reg_cache);
   printf ("pc: 0x%" PRIx64, pc);
-  show_addr_info (pc);
+  show_addr_info (pc, mme);
   printf ("\n");
 
   // SPC info
   regcache_raw_read_unsigned (reg_cache, tdep->spc_regnum, &spc);
   printf ("spc: 0x%" PRIx64, spc);
-  show_addr_info (spc);
+  show_addr_info (spc, mme);
   printf ("\n");
 }
 
