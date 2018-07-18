@@ -1175,6 +1175,10 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_onlyfxReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1c_coproReg:
+            case RegClass_k1c_coproReg0M4:
+            case RegClass_k1c_coproReg1M4:
+            case RegClass_k1c_coproReg2M4:
+            case RegClass_k1c_coproReg3M4:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_CRF)
             case RegClass_k1c_blockReg:
             case RegClass_k1c_blockRegE:
@@ -1976,6 +1980,10 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
       chars += snprintf(&buf[chars], buf_size - chars, "srf");
       break;
     case RegClass_k1c_coproReg:
+    case RegClass_k1c_coproReg0M4:
+    case RegClass_k1c_coproReg1M4:
+    case RegClass_k1c_coproReg2M4:
+    case RegClass_k1c_coproReg3M4:
       chars += snprintf(&buf[chars], buf_size - chars, "crf");
       break;
     case RegClass_k1c_blockReg:

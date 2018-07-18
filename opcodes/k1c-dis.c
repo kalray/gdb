@@ -488,6 +488,10 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                       K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
                       break;
                   case RegClass_k1c_coproReg:
+                  case RegClass_k1c_coproReg0M4:
+                  case RegClass_k1c_coproReg1M4:
+                  case RegClass_k1c_coproReg2M4:
+                  case RegClass_k1c_coproReg3M4:
                       K1_PRINT_REG(K1_REGFILE_DEC_CRF,value)
                       break;
                   case RegClass_k1c_blockReg:
