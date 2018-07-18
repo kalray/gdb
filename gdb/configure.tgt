@@ -276,7 +276,7 @@ k1*-*-linux*)
 	;;
 
 k1-*-*)
-	gdb_target_obs="k1c-mds-tdep.o k1-common-tdep.o k1-tdep.o k1-target.o"
+	gdb_target_obs="k1c-mds-tdep.o k1-common-tdep.o k1-tdep.o k1-exception-info.o k1-target.o"
 	;;
 
 lm32-*-*)		

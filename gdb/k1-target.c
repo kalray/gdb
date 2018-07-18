@@ -41,6 +41,7 @@
 #include "elf-bfd.h"
 #include "elf/k1c.h"
 #include "k1-target.h"
+#include "k1-exception-info.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a < b) ? (b) : (a))
@@ -1405,6 +1406,9 @@ _initialize__k1_target (void)
 
   add_com ("attach-mppa", class_run, attach_mppa_command,
     _("Connect to a MPPA TLM platform and start debugging it.\nUsage is `attach-mppa PORT'."));
+
+  add_com ("mppa-cpu-status", class_run, mppa_cpu_status_command,
+    _("Show information of the current processor."));
 
   add_setshow_enum_cmd ("stop-all", class_maintenance, sopts_cluster_stop_all, &sopt_cluster_stop_all,
     _("Set stop all cluster CPUs"), _("Show stop all cluster CPUs"),
