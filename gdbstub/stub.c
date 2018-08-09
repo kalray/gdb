@@ -1352,9 +1352,11 @@ handle_G (struct gdbstub *stub)
 }
 
 static errcode_t
-read_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size)
+read_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size, int use_dcache)
 {
-  return debug_agent_read_dcache (da, vehicle, addr, buf, buf_size);
+  if (use_dcache)
+    return debug_agent_read_dcache (da, vehicle, addr, buf, buf_size);
+  return debug_agent_read_memory (da, vehicle, addr, buf, buf_size);
 }
 
 static errcode_t
@@ -1608,7 +1610,7 @@ kalray_get_cpu_exec_level (struct gdbstub *stub)
 }
 
 static bool
-handle_m (struct gdbstub *stub)
+handle_m (struct gdbstub *stub, int use_dcache)
 {
   unsigned int len;
   uint64_t addr;
@@ -1618,7 +1620,7 @@ handle_m (struct gdbstub *stub)
   errcode_t err;
 
   NEED_REAL_D_CONTEXT;
-  addr = strtoull ((char*) stub->payload + 1, &endptr, 16);
+  addr = strtoull ((char*) stub->payload + 1 + (use_dcache ? 0 : 1), &endptr, 16);
   if (*endptr != ',')
   {
     stub->error = "Malformed m packet (addr)";
@@ -1637,7 +1639,7 @@ handle_m (struct gdbstub *stub)
   prepare_to_answer (stub);
   /* Don't check return value. This is done on purpose for the testsuite.
    * The memset above takes care of not returning garbage to GDB. */
-  err = read_memory (D_CONTEXT, addr, buf, len);
+  err = read_memory (D_CONTEXT, addr, buf, len, use_dcache);
 
   if (err == RET_SYSTRAP)
   {
@@ -2563,13 +2565,15 @@ handle_command (struct gdbstub *stub)
           return kalray_set_stop_at_main (stub);
         case 'S':
           return kalray_set_break_on_spawn (stub);
-        case 'W':
+        case 'u':
+          return handle_m (stub, 0);
+         case 'W':
           return kalray_set_kwatch (stub);
         default:
           goto unknown;
       }
     case 'm':
-      return handle_m (stub);
+      return handle_m (stub, 1);
     case 'M':
       return handle_M (stub);
     case 'p':

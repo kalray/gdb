@@ -46,6 +46,7 @@ char get_jtag_over_iss (void);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);
 
+int read_memory_no_dcache (uint64_t addr, unsigned char *gdb_byte, int len);
 
 void set_general_thread (struct ptid ptid);
 

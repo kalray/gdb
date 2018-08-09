@@ -229,8 +229,12 @@ static inline errcode_t debug_agent_write_registers(debug_agent_t *da, int vehic
     return da->interface.write_registers(da, vehicle, regnums, buf, count);
 }
 
-static inline errcode_t debug_agent_read_memory(debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size) {
-    return da->interface.read_memory(da, vehicle, addr, buf, buf_size);
+static inline errcode_t debug_agent_read_memory(debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size)
+{
+  if (da->interface.read_memory)
+    return da->interface.read_memory (da, vehicle, addr, buf, buf_size);
+
+  return RET_ABORT;
 }
 
 static inline errcode_t debug_agent_write_memory(debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_size) {
