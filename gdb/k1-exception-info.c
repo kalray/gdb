@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "inferior.h"
 #include "k1-common-tdep.h"
+#include "k1-target.h"
 #include "k1-exception-info.h"
 #include "ptid.h"
 #include "gdbcore.h"
@@ -156,6 +157,7 @@ const char *es_ec_msg[] = {
   "system stepi", // 4
 };
 
+#define PS_ET_BIT 2
 #define PS_MME_BIT 11
 
 union reg_ocec_s
@@ -304,7 +306,7 @@ stopped_cpu_status (void)
   union reg_ocec_s ocec;
   union reg_es_s es;
   uint64_t pc, spc, ea, ps;
-  int mme;
+  int mme, ps_et;
 
   // read required registers
   regcache_raw_read_unsigned (reg_cache, tdep->ocec_regnum, &ocec.reg);
@@ -313,17 +315,26 @@ stopped_cpu_status (void)
   regcache_raw_read_unsigned (reg_cache, tdep->ps_regnum, &ps);
 
   mme = (ps & (1 << PS_MME_BIT)) != 0;
+  ps_et = (ps & (1 << PS_ET_BIT)) != 0;
 
   printf ("The processor entered debug mode because of a %s (ocec.des=0x%x).\n",
     MSG_FROM_ARRAY (reg_ocec_des_msg, ocec._.des), ocec._.des);
 
-  if (ocec._.des == EN_REG_OCEC_DES_HWTRAP)
+  if (ocec._.des <= EN_REG_OCEC_DES_HWTRAP)
   {
-    printf ("Hardware trap information (es=0x%" PRIx64 "):\n", es.reg);
-    printf ("\texception address (ea): 0x%" PRIx64, ea);
-    show_addr_info (ea, mme);
-    printf ("\n");
-    show_trap_info (es);
+    if (ps_et && es.common.ec != 0 /*none*/)
+    {
+      printf ("Trap information (es=0x%" PRIx64 "):\n", es.reg);
+      printf ("\ttrap type: %s (es.ec=%d)\n", MSG_FROM_ARRAY (es_ec_msg, es.common.ec), es.common.ec);
+      printf ("\texception address (ea): 0x%" PRIx64, ea);
+      show_addr_info (ea, mme);
+      printf ("\n");
+      show_trap_info (es);
+    }
+    else
+    {
+      printf ("Not in a trap (ps.et=%d, es.ec=%d)\n", ps_et, es.common.ec);
+    }
   }
   else if (ocec._.des == EN_REG_OCEC_DES_SCALL)
   {
@@ -393,7 +404,10 @@ show_pwr_cpu_status (void)
   else
     power_control_status_addr = 0x944100; // &mppa_pwr_ctrl[0]->rm_status.proc_sts
 
-  read_memory (power_control_status_addr, (gdb_byte *) &status, 8);
+  if (!read_memory_no_dcache (power_control_status_addr, (gdb_byte *) &status, 8))
+		error (_("[cannot read power controller status]\n"));
+  if (!read_memory_no_dcache (power_control_rst_addr, (gdb_byte *) &rst, 8))
+		error (_("[cannot read power controller reset]\n"));
 
   wd = status & 1;
   idle = (status >> 1) & 3;
@@ -405,8 +419,6 @@ show_pwr_cpu_status (void)
   else
     printf (", last idle: %d", idle);
   printf (", watchdog %s", wd ? "set" : "not set");
-
-  read_memory (power_control_rst_addr, (gdb_byte *) &rst, 8);
   printf (", reset on wakeup %s\n", ((1 << vehicle) & rst) ? "set" : "not set");
 }
 

@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include <ctype.h>
 #include "arch-utils.h"
 #include "cli/cli-decode.h"
 #include "frame-unwind.h"
@@ -33,6 +34,7 @@
 #include "k1-target.h"
 #include "gdbthread.h"
 #include "k1-common-tdep.h"
+#include "rsp-low.h"
 
 struct k1_inferior_data
 {
@@ -286,6 +288,33 @@ send_cluster_postponed_debug_level (struct inferior *inf, int level)
   putpkt (buf);
   getpkt (&buf, &size, 0);
   free (buf);
+}
+
+int
+read_memory_no_dcache (uint64_t addr, gdb_byte *user_buf, int len)
+{
+  char *buf;
+  long size;
+  int decoded_bytes;
+
+  set_general_thread (inferior_ptid);
+
+  size = 256;
+  buf = (char *) malloc (size);
+  sprintf (buf, "ku%llx,%d", (unsigned long long) addr, len);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+
+  if (buf[0] == 'E' && isxdigit (buf[1]) && isxdigit (buf[2]) && !buf[3])
+  {
+    free (buf);
+    return 0;
+  }
+
+  decoded_bytes = hex2bin (buf, user_buf, len);
+  free (buf);
+
+  return decoded_bytes == len;
 }
 
 int
