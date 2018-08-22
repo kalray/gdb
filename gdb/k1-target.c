@@ -583,7 +583,7 @@ k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus
 
   inferior = find_inferior_pid (ptid_get_pid (res));
 
-  if (inferior && !mppa_inferior_data (inferior)->booted)
+  if (inferior && find_thread_ptid (res) && !mppa_inferior_data (inferior)->booted)
   {
     char *endptr;
     struct osdata *osdata;
