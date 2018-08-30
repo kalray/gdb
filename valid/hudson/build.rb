@@ -360,7 +360,7 @@ b.target("#{variant}_post_install_valid") do
           option_line =~ /'(.*)'/
           option = $1
           STDERR.puts "Core: #{core}, option: '#{option}'"
-          b.run(:cmd=>"#{gas} -mcore #{core} #{option} -o #{obj_test} #{asm_test}",
+          b.run(:cmd=>"#{gas} --all-sfr -mcore #{core} #{option} -o #{obj_test} #{asm_test}",
                 :skip=>skip_valid)
           b.run(:cmd=>"#{objdump} -d #{obj_test} > #{out_test}",
                 :skip=>skip_valid)
