@@ -68,6 +68,9 @@ static int dump_insn = 0;
 /* Core string passed as argument with -mcore option */
 char *mcore= NULL;
 
+/* Used for HW validation: allow all SFR on GET/SET/WFX */
+int allow_all_sfr = 0;
+
 /* This string should contains position in string where error occured. */
 char *error_str=NULL;
 
@@ -714,6 +717,7 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_32 (OPTION_MD_BASE + 13)
 #define OPTION_64 (OPTION_MD_BASE + 14)
 #define OPTION_DUMPINSN (OPTION_MD_BASE + 15)
+#define OPTION_ALL_SFR (OPTION_MD_BASE + 16)
 
 struct option md_longopts[] =
 {
@@ -729,6 +733,7 @@ struct option md_longopts[] =
      {"m32", no_argument,    NULL, OPTION_32},
      {"m64", no_argument,    NULL, OPTION_64},
      {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
+     {"all-sfr", no_argument, NULL, OPTION_ALL_SFR},
      {NULL, no_argument, NULL, 0}
 };
 
@@ -793,6 +798,9 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     break;
   case OPTION_DUMPINSN:
     dump_insn = 1;
+    break;
+  case OPTION_ALL_SFR:
+    allow_all_sfr = 1;
     break;
   case OPTION_PIC:
   /* fallthrough, for now the same on K1 */
@@ -1168,6 +1176,10 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_quadReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_QRF)
             case RegClass_k1c_systemReg:
+		 if( ! allow_all_sfr ) {
+		      /* If option all-sfr not set, doest not match systemReg for SET/GET/WFX: used only for HW validation. */
+		      return MATCH_NOT_FOUND;
+		 }
             case RegClass_k1c_onlypsReg:
             case RegClass_k1c_onlyraReg:
             case RegClass_k1c_onlyfxReg:
