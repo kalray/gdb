@@ -958,7 +958,6 @@ tokenize_arguments(char *str, expressionS tok[], char *tok_begins[], int ntok) {
                 goto fini;
             case ',':
             case '=':
-            case ':':
             case '?':
                 ++input_line_pointer;
                 if (saw_comma || !saw_arg)
@@ -2401,7 +2400,7 @@ md_assemble(char *s)
     /* get opcode info    */
     while (t && t[0] && (t[0] == ' '))
         t++;
-    i = strspn(t, "abcdefghijklmnopqrstuvwxyz.,_0123456789");
+    i = strspn(t, "abcdefghijklmnopqrstuvwxyz._0123456789@");
     tlen = (i < 31) ? i : 31;
     memcpy(opname, t, tlen);
     opname[tlen] = '\0';
