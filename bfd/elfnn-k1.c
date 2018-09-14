@@ -131,7 +131,7 @@ static const bfd_byte elfNN_k1_small_plt_entry[PLT_SMALL_ENTRY_SIZE] =
    in reloc.c.   */
 
 #define K1C
-#include "elfxx-k1c.def"
+#include "elfxx-k1c-relocs.h"
 #undef K1C
 
 /* Given HOWTO, return the bfd internal relocation enumerator.  */

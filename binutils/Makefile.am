@@ -110,7 +110,6 @@ BFDDIR = $(BASEDIR)/bfd
 INCDIR	= $(BASEDIR)/include
 
 AM_CPPFLAGS = -I. -I$(srcdir) -I../bfd -I$(BFDDIR) -I$(INCDIR) \
-	-I $(FAMDIR)/BE/GBU/k1c/include \
 	 @HDEFINES@ \
 	 @INCINTL@ \
 	 -DLOCALEDIR="\"$(datadir)/locale\"" \

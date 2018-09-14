@@ -22,11 +22,73 @@
 #ifndef _ELF_K1_H
 #define _ELF_K1_H
 
-//#include "bfd.h"
-//#include "elf-bfd.h"
-
 #include "elf/reloc-macros.h"
 
+START_RELOC_NUMBERS (elf_k1_reloc_type)
+    RELOC_NUMBER (R_K1_NONE,                                   0)
+    RELOC_NUMBER (R_K1_16,                                     1)
+    RELOC_NUMBER (R_K1_32,                                     2)
+    RELOC_NUMBER (R_K1_64,                                     3)
+    RELOC_NUMBER (R_K1_17_PCREL,                               4)
+    RELOC_NUMBER (R_K1_27_PCREL,                               5)
+    RELOC_NUMBER (R_K1_32_PCREL,                               6)
+    RELOC_NUMBER (R_K1_64_PCREL,                               7)
+    RELOC_NUMBER (R_K1_S32_LO5,                                8)
+    RELOC_NUMBER (R_K1_S32_UP27,                               9)
+    RELOC_NUMBER (R_K1_S37_LO10,                              10)
+    RELOC_NUMBER (R_K1_S37_UP27,                              11)
+    RELOC_NUMBER (R_K1_S37_TPREL_LO10,                        12)
+    RELOC_NUMBER (R_K1_S37_TPREL_UP27,                        13)
+    RELOC_NUMBER (R_K1_TPREL_32,                              14)
+    RELOC_NUMBER (R_K1_TPREL64_64,                            15)
+    RELOC_NUMBER (R_K1_S37_GOTOFF_LO10,                       16)
+    RELOC_NUMBER (R_K1_S37_GOTOFF_UP27,                       17)
+    RELOC_NUMBER (R_K1_S43_GOTOFF64_LO10,                     18)
+    RELOC_NUMBER (R_K1_S43_GOTOFF64_UP27,                     19)
+    RELOC_NUMBER (R_K1_S43_GOTOFF64_EX6,                      20)
+    RELOC_NUMBER (R_K1_S37_GOT_LO10,                          21)
+    RELOC_NUMBER (R_K1_S37_GOT_UP27,                          22)
+    RELOC_NUMBER (R_K1_GLOB_DAT,                              23)
+    RELOC_NUMBER (R_K1_GLOB_DAT64,                            24)
+    RELOC_NUMBER (R_K1_S37_PLT_LO10,                          25)
+    RELOC_NUMBER (R_K1_S37_PLT_UP27,                          26)
+    RELOC_NUMBER (R_K1_GOTOFF,                                27)
+    RELOC_NUMBER (R_K1_GOTOFF64,                              28)
+    RELOC_NUMBER (R_K1_GOT,                                   29)
+    RELOC_NUMBER (R_K1_GOT64,                                 30)
+    RELOC_NUMBER (R_K1_COPY,                                  31)
+    RELOC_NUMBER (R_K1_COPY64,                                32)
+    RELOC_NUMBER (R_K1_JMP_SLOT,                              33)
+    RELOC_NUMBER (R_K1_JMP_SLOT64,                            34)
+    RELOC_NUMBER (R_K1_RELATIVE,                              35)
+    RELOC_NUMBER (R_K1_RELATIVE64,                            36)
+    RELOC_NUMBER (R_K1_S43_LO10,                              37)
+    RELOC_NUMBER (R_K1_S43_UP27,                              38)
+    RELOC_NUMBER (R_K1_S43_EX6,                               39)
+    RELOC_NUMBER (R_K1_S43_TPREL64_LO10,                      40)
+    RELOC_NUMBER (R_K1_S43_TPREL64_UP27,                      41)
+    RELOC_NUMBER (R_K1_S43_TPREL64_EX6,                       42)
+    RELOC_NUMBER (R_K1_S43_GOT64_LO10,                        43)
+    RELOC_NUMBER (R_K1_S43_GOT64_UP27,                        44)
+    RELOC_NUMBER (R_K1_S43_GOT64_EX6,                         45)
+    RELOC_NUMBER (R_K1_S43_PLT64_LO10,                        46)
+    RELOC_NUMBER (R_K1_S43_PLT64_UP27,                        47)
+    RELOC_NUMBER (R_K1_S43_PLT64_EX6,                         48)
+    RELOC_NUMBER (R_K1_S64_LO10,                              49)
+    RELOC_NUMBER (R_K1_S64_UP27,                              50)
+    RELOC_NUMBER (R_K1_S64_EX27,                              51)
+    RELOC_NUMBER (R_K1_S64_TPREL64_LO10,                      52)
+    RELOC_NUMBER (R_K1_S64_TPREL64_UP27,                      53)
+    RELOC_NUMBER (R_K1_S64_TPREL64_EX27,                      54)
+    RELOC_NUMBER (R_K1_S37_GOTADDR_LO10,                      55)
+    RELOC_NUMBER (R_K1_S37_GOTADDR_UP27,                      56)
+    RELOC_NUMBER (R_K1_S43_GOTADDR_LO10,                      57)
+    RELOC_NUMBER (R_K1_S43_GOTADDR_UP27,                      58)
+    RELOC_NUMBER (R_K1_S43_GOTADDR_EX6,                       59)
+    RELOC_NUMBER (R_K1_S64_GOTADDR_LO10,                      60)
+    RELOC_NUMBER (R_K1_S64_GOTADDR_UP27,                      61)
+    RELOC_NUMBER (R_K1_S64_GOTADDR_EX27,                      62)
+END_RELOC_NUMBERS (R_K1_end)
 
 /* 	 16.15 	  8.7  4.3  0 */
 /* +----------------------------+ */
@@ -123,8 +185,5 @@
 #define _ELF_K1_CHECK_MODE(flags,m) (((flags) & ELF_K1_MODE_MASK)==(m))
 
 #define ELF_STRING_k1_pltoff ".k1.pltoff"
-
-/* Generated from MDS */
-#include "bfd/reloc.h"
 
 #endif
