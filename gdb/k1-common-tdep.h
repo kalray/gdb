@@ -40,7 +40,7 @@ struct op_list
 extern enum K1_ARCH k1_current_arch;
 extern const struct frame_unwind k1_frame_unwind;
 extern struct op_list *branch_insns[K1_NUM_ARCHES];
-extern k1opc_t *break_op[K1_NUM_ARCHES];
+extern uint32_t break_op[K1_NUM_ARCHES];
 extern uint32_t break_jtag_over_iss[K1_NUM_ARCHES];
 
 enum K1_ARCH k1_arch (void);
