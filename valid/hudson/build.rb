@@ -178,7 +178,7 @@ b.target("#{variant}_build") do
                     "--with-bugurl=no " +
                     "--prefix=#{gdb_install_prefix}")
       b.run(:cmd => "make clean")
-      b.run(:cmd => "make #{additional_flags} FAMDIR=#{family_prefix} ARCH=#{arch} KALRAY_VERSION=\"#{version}\"")
+      b.run(:cmd => "make #{additional_flags} KALRAY_VERSION=\"#{version}\"")
     end
   else ## variant != gdb => binutils only
     b.create_goto_dir! build_path
@@ -222,7 +222,6 @@ b.target("#{variant}_build") do
 
     b.run(:cmd => "PATH=\$PATH:#{toolroot}/bin " +
                   "make " +
-                  "FAMDIR='#{family_prefix}' " +
                   "ARCH=#{arch} " +
                   "#{additional_flags} " +
                   "KALRAY_VERSION=\"#{version}\" " +
@@ -250,9 +249,9 @@ b.target("#{variant}_install") do
   elsif( variant == "gdb" or variant == "gdblinux")
     if( arch == "k1" )
       if ("#{build_type}" == "Release") then
-        b.run(:cmd => "make -C #{build_path} install-strip-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+        b.run(:cmd => "make -C #{build_path} install-strip-gdb")
       else
-        b.run(:cmd => "make -C #{build_path} install-gdb FAMDIR=#{family_prefix} ARCH=#{arch}")
+        b.run(:cmd => "make -C #{build_path} install-gdb")
       end
 
       # Copy to toolroot.
@@ -261,9 +260,9 @@ b.target("#{variant}_install") do
   else
     cd build_path
     if ("#{build_type}" == "Release") then
-      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install-strip", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make install-strip", :skip=>skip_install)
     else
-      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make FAMDIR='#{family_prefix}' ARCH=#{arch} install", :skip=>skip_install)
+      b.run(:cmd => "PATH=\$PATH:#{gbu_install_prefix}/bin make install", :skip=>skip_install)
     end
 
     # Copy to toolroot.
