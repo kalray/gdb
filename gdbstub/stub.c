@@ -138,7 +138,7 @@ struct gdbstub
   unsigned int data_len;
 
   /* state */
-  core_register_descr_t *registers;
+  core_reg_def_t *registers;
   int nbregs;
   int *all_reg_ids;
   const char *error;
@@ -653,10 +653,26 @@ gdbstub_rt_add_agent (struct gdbstub *stub, debug_agent_t *da)
   stub->nb_agents++;
 }
 
+static int
+is_reg_reserved (core_reg_def_t *reg)
+{
+  static const char *reserved_regs_desc[] = {"Reserved", "Virtual SFR"};
+  static const int no_reserved_regs_desc = sizeof (reserved_regs_desc) /
+    sizeof (reserved_regs_desc[0]);
+  int i;
+
+  for (i = 0; i < no_reserved_regs_desc; i++)
+    if (reg->desc && !strncmp (reg->desc, reserved_regs_desc[i],
+      strlen (reserved_regs_desc[i])))
+        return 1;
+
+  return 0;
+}
+
 struct gdbstub *
 gdbstub_init (debug_agent_t *agents)
 {
-  core_register_descr_t *reg;
+  core_reg_def_t *reg;
   char **vehicle;
   int i, j;
   struct gdbstub *res;
@@ -690,7 +706,8 @@ gdbstub_init (debug_agent_t *agents)
     res->agents[i].eth_peer_united_io = NULL;
 
     res->agents[i].vehicles = vehicle;
-    while (*vehicle) ++vehicle;
+    while (*vehicle)
+      ++vehicle;
     res->agents[i].nbvehicles = vehicle - res->agents[i].vehicles;
     it->attributes.notify_stop = notify_callback;
     it->attributes.notify_cpu_level_seen = notify_cpu_level_seen_callback;
@@ -743,12 +760,15 @@ gdbstub_init (debug_agent_t *agents)
 
   /* FIXME: support heterogeneous clients. */
   reg = res->registers = debug_agent_register_names (agents, 0);
-  while (reg->name) ++reg;
-  res->nbregs = reg - res->registers;
+  for (res->nbregs = 0; reg->name; reg++)
+    if (!is_reg_reserved (reg))
+      res->nbregs++;
 
-  reg = malloc (sizeof (*reg) * res->nbregs);
-  memcpy (reg, res->registers, sizeof (*reg) * res->nbregs);
-  res->registers = reg;
+  reg = res->registers;
+  res->registers = malloc (sizeof (*reg) * res->nbregs);
+  for (i = 0; reg->name; reg++)
+    if (!is_reg_reserved (reg))
+      res->registers[i++] = *reg;
 
   res->all_reg_ids = malloc (sizeof (int) * (res->nbregs + 1));
   for (i = 0; i < res->nbregs; ++i)

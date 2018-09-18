@@ -205,7 +205,7 @@ static inline bool debug_agent_is_async (debug_agent_t *da) {
     return da->interface.is_async(da);
 }
 
-static inline core_register_descr_t *debug_agent_register_names(debug_agent_t *da, int vehicle) {
+static inline core_reg_def_t *debug_agent_register_names(debug_agent_t *da, int vehicle) {
     return da->interface.register_names(da, vehicle);
 }
     
