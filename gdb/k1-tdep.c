@@ -785,7 +785,7 @@ k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
   if (!break_op[k1_arch ()])
     error ("Cannot find the break instruction for the current architecture.");
 
-  return (gdb_byte *) &break_op[k1_arch ()]->codewords[0].opcode;
+  return (gdb_byte *) &break_op[k1_arch ()];
 }
 
 static CORE_ADDR
@@ -912,8 +912,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       error ("There's no '%s' register!", k1_spc_name);
     if (has_ev < 0)
       error ("There's no '%s' register!", k1_ev_name);
-    if (has_ocec < 0)
-      error ("There's no '%s' register!", k1_ocec_name);
+    //TODO:fix if (has_ocec < 0)
+    //  error ("There's no '%s' register!", k1_ocec_name);
     if (has_ea < 0)
       error ("There's no '%s' register!", k1_ea_name);
     if (has_es < 0)

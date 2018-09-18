@@ -32,6 +32,7 @@
 #include "k1-common-tdep.h"
 
 #define SCALL_BREAK_JTAG_OVER_ISS 4093
+#define SCALL_BREAK_PL0 4050
 
 struct k1_frame_cache
 {
@@ -47,7 +48,7 @@ static struct op_list *sp_store_insns[K1_NUM_ARCHES];
 static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
 
 struct op_list *branch_insns[K1_NUM_ARCHES];
-k1opc_t *break_op[K1_NUM_ARCHES];
+uint32_t break_op[K1_NUM_ARCHES];
 uint32_t break_jtag_over_iss[K1_NUM_ARCHES];
 
 enum K1_ARCH
@@ -585,6 +586,9 @@ k1_look_for_insns (void)
           break_jtag_over_iss[i] = (op->codewords[0].opcode & op->codewords[0].mask) |
             ((SCALL_BREAK_JTAG_OVER_ISS & ((1 << op->format[0]->bfield->size) - 1))
             << op->format[0]->bfield->to_offset);
+          break_op[i] = (op->codewords[0].opcode & op->codewords[0].mask) |
+            ((SCALL_BREAK_PL0 & ((1 << op->format[0]->bfield->size) - 1))
+            << op->format[0]->bfield->to_offset);
         }
         add_op (&branch_insns[i], op);
       }
@@ -598,8 +602,7 @@ k1_look_for_insns (void)
         add_op (&branch_insns[i], op);
       else if (strcmp ("get", op->as_op) == 0)
         add_op (&branch_insns[i], op);
-      else if (strcmp ("break", op->as_op) == 0)
-        break_op[i] = op;
+
       ++op;
     }
   }
