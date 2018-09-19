@@ -1093,7 +1093,7 @@ handle_g (struct gdbstub *stub)
 
   for (i = 0; i < stub->nbregs; ++i)
     if (*stub->registers[i].name)
-      printf_reg_to_packet (stub, &buf[i], i);
+      printf_reg_to_packet (stub, &buf[i], stub->all_reg_ids[i]);
 
   return send_answer (stub);
 }
@@ -1357,7 +1357,7 @@ handle_G (struct gdbstub *stub)
     if (stub->registers[i].name[0] == 0)
       continue;
 
-    buf_in = read_reg_from_packet (stub, &reg_buf, j, buf_in);
+    buf_in = read_reg_from_packet (stub, &reg_buf, stub->all_reg_ids[j], buf_in);
     err = debug_agent_write_register (D_CONTEXT, i, reg_buf);
     ++j;
     if (err != RET_OK)
