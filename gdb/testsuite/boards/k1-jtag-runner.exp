@@ -266,7 +266,7 @@ proc mi_gdbserver_start_multi { } {
 
 set timeout 60
 process_multilib_options ""
-set_board_info compiler "k1cc"
+set_board_info compiler "k1-elf-gcc"
 set_board_info gdb_server_prog "k1-jtag-runner"
 global is_k1_server
 set is_k1_server 1
