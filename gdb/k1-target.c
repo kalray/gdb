@@ -50,15 +50,6 @@
 #define _STRINGIFY( s ) #s
 #define STRINGIFY( s ) _STRINGIFY(s)
 
-struct k1_dev_list
-{
-  int loaded;
-  struct k1_dev_list *first_child;
-  char *full_name;
-  char *short_name; // points inside full_name, must not be freed
-  struct k1_dev_list *next;
-};
-
 extern int remote_hw_breakpoint_limit;
 extern int remote_hw_watchpoint_limit;
 extern int print_stopped_thread;
@@ -71,15 +62,9 @@ static struct cmd_list_element *kalray_set_cmdlist;
 static struct cmd_list_element *kalray_show_cmdlist;
 static const char *simulation_vehicles[] = {"k1-cluster", NULL};
 static const char *simulation_vehicle;
-static const char *scluster_debug_levels[] = {"system", "kernel-user", "user", "inherited", NULL};
-static const char *scluster_debug_level;
-static const char *sglobal_debug_levels[] = {"system", "kernel-user", "user", NULL};
-static const char *sglobal_debug_level;
 static const char *sopts_cluster_stop_all[] = {"none", "jtag", "break_mask", NULL};
 static const char *sopt_cluster_stop_all;
 char cjtag_over_iss = 'n';
-int idx_global_debug_level, global_debug_level_set;
-int opt_hide_threads = 1;
 int opt_break_on_spawn = 0;
 int opt_cluster_stop_all = 0;
 int in_info_thread = 0;
@@ -87,17 +72,10 @@ int in_attach_mppa = 0;
 int new_attach_requested = 0;
 static pid_t server_pid;
 int after_first_resume = 0;
-int inf_created_change_th = 0;
-struct k1_dev_list *head_k1_dev_list = NULL;
 
 static const struct inferior_data *k1_attached_inf_data;
 
 static void k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, char **env, int from_tty);
-
-const char *get_str_debug_level (int level)
-{
-  return scluster_debug_levels[level];
-}
 
 static struct inferior_data*
 mppa_init_inferior_data (struct inferior *inf)
@@ -108,8 +86,6 @@ mppa_init_inferior_data (struct inferior *inf)
   struct osdata_item *item;
   int ix_items;
 
-  data->cluster_debug_level = DBG_LEVEL_INHERITED;
-  data->os_supported_debug_level = -1;
   data->cluster_break_on_spawn = 0;
   set_inferior_data (inf, k1_attached_inf_data, data);
 
@@ -453,7 +429,7 @@ mppa_target_resume (struct target_ops *ops, ptid_t ptid, int step, enum gdb_sign
 {
   struct target_ops *remote_target = find_target_beneath (ops);
 
-  if (!after_first_resume && !inf_created_change_th)
+  if (!after_first_resume)
   {
     after_first_resume = 1;
     iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
@@ -597,7 +573,6 @@ k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus
       unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
       const char *file = get_osdata_column (item, "command");
       const char *cluster = get_osdata_column (item, "cluster");
-      int os_debug_level;
       struct inferior_data *data;
 
       if (pid != ptid_get_pid (res))
@@ -626,14 +601,6 @@ k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus
         }
         else
           status->kind = TARGET_WAITKIND_SPURIOUS;
-
-        //if os support a debug level, set it to the cluster
-        os_debug_level = get_os_supported_debug_levels (inferior);
-        if (os_debug_level > DBG_LEVEL_SYSTEM && !global_debug_level_set &&
-          data->cluster_debug_level == DBG_LEVEL_INHERITED)
-        {
-          set_cluster_debug_level_no_check (inferior, os_debug_level);
-        }
       }
       break;
     }
@@ -681,31 +648,6 @@ k1_target_can_async (struct target_ops *ops)
   return target_async_permitted;
 }
 
-static void change_thread_cb (struct inferior *inf)
-{
-  struct thread_info *th;
-
-  //printf ("change thread_cb pid=%d, lpw=%d\n", inferior_ptid.pid, inferior_ptid.lwp);
-
-  if (is_stopped (inferior_ptid))
-    return;
-
-  th = any_live_thread_of_process (inf->pid);
-  if (!is_stopped (th->ptid))
-    return;
-
-  switch_to_thread (th->ptid);
-}
-
-static int
-is_crt_cpu_in_user_mode (struct regcache *regcache)
-{
-  uint64_t ps;
-  regcache_raw_read_unsigned (regcache, 65, &ps);
-
-  return ((ps & 1) == 0); //PS.PM == 0 (user mode)
-}
-
 static void
 k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int regnum)
 {
@@ -713,36 +655,10 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int re
   // our caller (regcache_raw_read) changes only inferior_ptid
 
   struct target_ops *remote_target;
-  int crt_thread_mode_used, new_mode;
-  struct inferior_data *data;
-  struct inferior *inf;
 
   // get the registers of the current thread (CPU) in the usual way
   remote_target = find_target_beneath (target);
   remote_target->to_fetch_registers (target, regcache, regnum);
-
-  // first time we see a cluster, set the debug level
-  inf = find_inferior_pid (inferior_ptid.pid);
-  data = mppa_inferior_data (inf);
-  if (!data)
-    return;
-
-  if (data->cluster_debug_level_postponed)
-  {
-    data->cluster_debug_level_postponed = 0;
-    send_cluster_debug_level (get_debug_level (inferior_ptid.pid));
-  }
-
-  // after attach, if "c -a" executed to skip system code because of the
-  // debug level, change the thread to a stopped one
-  if (inf_created_change_th)
-  {
-    if (is_crt_cpu_in_user_mode (regcache))
-    {
-      inf_created_change_th = 0;
-      create_timer (0, (void (*)(void*)) change_thread_cb, inf);
-    }
-  }
 }
 
 static void
@@ -755,147 +671,6 @@ static void
 show_kalray_cmd (char *args, int from_tty)
 {
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
-}
-
-static int
-str_debug_level_to_idx (const char *slevel)
-{
-  int level;
-  for (level = 0; level < DBG_LEVEL_MAX; level++)
-    if (!strcmp (slevel, scluster_debug_levels[level]))
-      return level;
-
-  return 0;
-}
-
-static void
-apply_cluster_debug_level (struct inferior *inf)
-{
-  int level;
-  int os_supported_level;
-  struct thread_info *th;
-  ptid_t save_ptid, th_ptid;
-
-  level = get_debug_level (inf->pid);
-
-  th = any_live_thread_of_process (inf->pid);
-  //the CPU must be stopped
-  if (th == NULL || th->state != THREAD_STOPPED)
-  {
-    struct inferior_data *data = mppa_inferior_data (inf);
-    //printf ("Info: No stopped CPU found for %s. "
-    //  "Postpone the setting of the cluster debug level.\n", data->cluster);
-    data->cluster_debug_level_postponed = 1;
-    send_cluster_postponed_debug_level (inf, level);
-    return;
-  }
-
-  os_supported_level = get_os_supported_debug_levels (inf);
-  if (level > os_supported_level)
-    return;
-
-  save_ptid = inferior_ptid;
-  th_ptid = th->ptid;
-  switch_to_thread (th_ptid);
-  set_general_thread (th_ptid);
-
-  send_cluster_debug_level (level);
-
-  switch_to_thread (save_ptid);
-  set_general_thread (save_ptid);
-}
-
-void
-set_cluster_debug_level_no_check (struct inferior *inf, int debug_level)
-{
-  struct inferior_data *data;
-
-  data = mppa_inferior_data (inf);
-  data->cluster_debug_level = debug_level;
-  apply_cluster_debug_level (inf);
-}
-
-static void
-set_cluster_debug_level (char *args, int from_tty, struct cmd_list_element *c)
-{
-  int new_level, prev_level;
-  struct inferior *inf;
-
-  if (ptid_equal (inferior_ptid, null_ptid))
-    error (_ ("Cannot set debug level without a selected thread."));
-
-  inf = current_inferior ();
-  prev_level = get_cluster_debug_level (inf->pid);
-  new_level = str_debug_level_to_idx (scluster_debug_level);
-
-  if (new_level != prev_level)
-  {
-    int os_supported_level = get_os_supported_debug_levels (inf);
-    if (os_supported_level < new_level)
-    {
-      struct inferior_data *data = mppa_inferior_data (inf);
-      printf ("Cannot set debug level %s for %s (highest level supported by os is %s).\n",
-        scluster_debug_levels[new_level], data->cluster,
-        scluster_debug_levels[os_supported_level]);
-    }
-    else
-      set_cluster_debug_level_no_check (inf, new_level);
-  }
-}
-
-static int
-set_cluster_debug_level_iter (struct inferior *inf, void *not_used)
-{
-  apply_cluster_debug_level (inf);
-  return 0;
-}
-
-void
-apply_global_debug_level (int level)
-{
-  idx_global_debug_level = level;
-  if (have_inferiors ())
-    iterate_over_inferiors (set_cluster_debug_level_iter, NULL);
-  else
-    printf ("Info: No cluster found. Action postponed for attach.\n");
-}
-
-static void
-set_global_debug_level (char *args, int from_tty, struct cmd_list_element *c)
-{
-  int new_level;
-
-  new_level = str_debug_level_to_idx (sglobal_debug_level);
-  global_debug_level_set = 1;
-  if (new_level != idx_global_debug_level)
-    apply_global_debug_level (new_level);
-}
-
-static void
-show_cluster_debug_level (struct ui_file *file, int from_tty,
-  struct cmd_list_element *c, const char *value)
-{
-  struct inferior_data *data;
-  int level;
-
-  if (ptid_equal (inferior_ptid, null_ptid) || is_exited (inferior_ptid))
-  {
-    printf (_ ("Cannot show debug level without a live selected thread."));
-    return;
-  }
-
-  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
-
-  level = get_cluster_debug_level (-1);
-  fprintf_filtered (file, "The cluster debug level is \"%s\"%s.\n", scluster_debug_levels[level],
-    data->cluster_debug_level_postponed ? " (setting postponed)" : "");
-}
-
-static void
-show_global_debug_level (struct ui_file *file, int from_tty,
-  struct cmd_list_element *c, const char *value)
-{
-  fprintf_filtered (file, "The global debug level  is \"%s\".\n", scluster_debug_levels[idx_global_debug_level]);
 }
 
 static void
@@ -1089,9 +864,6 @@ attach_mppa_command (char *args, int from_tty)
      have the register descriptions */
   gdbarch_dwarf2_reg_to_regnum (get_current_arch (), 0);
 
-  if (idx_global_debug_level)
-    apply_global_debug_level (idx_global_debug_level);
-
   if (saved_async_execution)
     async_enable_stdin ();
 
@@ -1121,217 +893,10 @@ mppa_inferior_data_cleanup (struct inferior *inf, void *data)
   xfree (data);
 }
 
-static void
-mppa_observer_breakpoint_created (struct breakpoint *b)
-{
-  const char *addr_string;
-
-  if (b && b->location)
-  {
-    addr_string = event_location_to_string (b->location);
-    if (b && addr_string && !strcmp (addr_string, "main"))
-      send_stop_at_main (0);
-  }
-
-}
-
-static void
-mppa_observer_breakpoint_deleted (struct breakpoint *b)
-{
-  const char *addr_string;
-
-  if (b && b->location)
-  {
-    addr_string = event_location_to_string (b->location);
-    if (b && addr_string && !strcmp (addr_string, "main"))
-      send_stop_at_main (1);
-  }
-}
-
-static void
-k1_fill_dev_list (struct k1_dev_list *dev)
-{
-  char *s, *crt_text, *sep;
-  struct k1_dev_list **prev_dev, *crt_dev;
-  int len;
-
-  if (dev->loaded)
-    return;
-
-  s = send_get_dev_list_string (dev->full_name);
-  if (!s)
-    return;
-
-  dev->loaded = 1;
-  if (!*s)
-    return;
-
-  len = strlen (dev->full_name);
-  for (crt_text = s, prev_dev = &dev->first_child; crt_text; crt_text = sep + 1, prev_dev = &crt_dev->next)
-  {
-    sep = strchr (crt_text, ';');
-    if (sep)
-      *sep = 0;
-
-    crt_dev = (struct k1_dev_list *) calloc (1, sizeof (struct k1_dev_list));
-    crt_dev->full_name = (char *) malloc (len + 1 + strlen (crt_text) + 1);
-    if (len)
-    {
-      sprintf (crt_dev->full_name, "%s.%s", dev->full_name, crt_text);
-      crt_dev->short_name = crt_dev->full_name + len + 1;
-    }
-    else
-    {
-      strcpy (crt_dev->full_name, crt_text);
-      crt_dev->short_name = crt_dev->full_name;
-    }
-
-    *prev_dev = crt_dev;
-
-    if (!sep)
-      break;
-  }
-
-  free (s);
-}
-
-static void
-k1_rec_destroy_dev_list (struct k1_dev_list *dev)
-{
-  struct k1_dev_list *child, *next;
-
-  for (child = dev->first_child; child; child = next)
-  {
-    next = child->next; //get next child as the current child will be destroyed after the next line
-    k1_rec_destroy_dev_list (child);
-  }
-
-  free (dev->full_name);
-  free (dev);
-}
-
-static void
-k1_destroy_dev_list (void)
-{
-  if (head_k1_dev_list)
-    k1_rec_destroy_dev_list (head_k1_dev_list);
-  head_k1_dev_list = NULL;
-}
-
-static void
-kwatch_command (char *arg, int from_tty)
-{
-  char *err_msg = NULL;
-  int id = 1;
-
-  if (ptid_equal (inferior_ptid, null_ptid))
-  {
-    error ("Cannot add a kalray watchpoint without being attached");
-    return;
-  }
-
-  if (send_set_kwatch (arg, 0 /*type=kwatch*/, 1 /*set*/, &err_msg))
-  {
-    printf ("Error adding kalray watchpoint %s: %s\n", arg, err_msg ? err_msg : "Unspecified error");
-    if (err_msg)
-      free (err_msg);
-    return;
-  }
-
-  printf ("kwatchpoint %d: %s\n", id, arg);
-}
-
-static VEC (char_ptr) *
-k1_dev_completer (struct cmd_list_element *ignore, const char *text, const char *word)
-{
-  VEC (char_ptr) *result = NULL;
-  struct k1_dev_list *crt_dev;
-  char *point_text, *copy_text, *crt_text, *stmp;
-
-  if (ptid_equal (inferior_ptid, null_ptid))
-    return NULL;
-
-  if (!strcmp (ignore->name, "kwatch"))
-    copy_text = strdup (text);
-  else
-  {
-    // if multiple devs accepted by the command
-    for (stmp = (char *) word; stmp > text && *stmp != ' ' && *stmp != '\t'; stmp--)
-      ;
-    if (stmp > text)
-      stmp++;
-    copy_text = strdup (stmp);
-  }
-  crt_text = copy_text;
-
-  if (!head_k1_dev_list)
-  {
-    head_k1_dev_list = (struct k1_dev_list *) calloc (1, sizeof (struct k1_dev_list));
-    head_k1_dev_list->full_name = head_k1_dev_list->short_name = strdup ("");
-  }
-  crt_dev = head_k1_dev_list;
-
-  do
-  {
-    k1_fill_dev_list (crt_dev);
-
-    point_text = strchr (crt_text, '.');
-    if (point_text)
-    {
-      *point_text = 0;
-      for (crt_dev = crt_dev->first_child; crt_dev && strcmp (crt_dev->short_name, crt_text); crt_dev = crt_dev->next)
-        ;
-      if (!crt_dev)
-        break;
-      crt_text = point_text + 1;
-    }
-    else
-    {
-      struct k1_dev_list *last_pushed_dev = NULL;
-      int len = strlen (crt_text);
-
-      for (crt_dev = crt_dev->first_child; crt_dev; crt_dev = crt_dev->next)
-      {
-        if (!strncmp (crt_dev->short_name, crt_text, len))
-        {
-          last_pushed_dev = crt_dev;
-          VEC_safe_push (char_ptr, result, strdup (crt_dev->short_name));
-        }
-      }
-
-      if (VEC_length (char_ptr, result) == 1)
-      {
-        k1_fill_dev_list (last_pushed_dev);
-        if (last_pushed_dev->first_child)
-        {
-          free (VEC_pop (char_ptr, result));
-          len = strlen (last_pushed_dev->short_name);
-          stmp = (char *) malloc (len + 3);
-          strcpy (stmp, last_pushed_dev->short_name);
-
-          strcpy (stmp + len, ".");
-          VEC_safe_push (char_ptr, result, strdup (stmp));
-          strcpy (stmp + len, ".X"); // prevent readline to add a space
-          VEC_safe_push (char_ptr, result, strdup (stmp));
-          free (stmp);
-        }
-      }
-    }
-  } while (point_text);
-
-  free (copy_text);
-
-  return result;
-}
-
 void
 _initialize__k1_target (void)
 {
   simulation_vehicle = simulation_vehicles[0];
-  scluster_debug_level = scluster_debug_levels[DBG_LEVEL_INHERITED];
-  idx_global_debug_level = DBG_LEVEL_SYSTEM;
-  global_debug_level_set = 0;
-  sglobal_debug_level = sglobal_debug_levels[idx_global_debug_level];
   cjtag_over_iss = 'n';
 
   k1_target_ops.to_shortname = "mppa";
@@ -1367,11 +932,6 @@ _initialize__k1_target (void)
 
   print_stopped_thread = 1;
 
-  {
-    extern int (*p_kalray_hide_thread) (struct thread_info *tp, ptid_t crt_ptid);
-    p_kalray_hide_thread = kalray_hide_thread;
-  }
-
   add_prefix_cmd ("kalray", class_maintenance, set_kalray_cmd,
     _("Kalray specific variables\n            Configure various Kalray specific variables."),
     &kalray_set_cmdlist, "set kalray ", 0 /* allow-unknown */, &setlist);
@@ -1386,18 +946,6 @@ _initialize__k1_target (void)
 
   add_setshow_enum_cmd ("simulation_vehicle", class_maintenance, simulation_vehicles, &simulation_vehicle,
     _("Set the simulation vehicle to use for execution."), _("Show the simulation vehicle to use for execution."),
-    NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
-
-  add_setshow_enum_cmd ("cluster_debug_level", class_maintenance, scluster_debug_levels, &scluster_debug_level,
-    _("Set the cluster debug level."), _("Show the cluster debug level."), 
-    NULL, set_cluster_debug_level, show_cluster_debug_level, &kalray_set_cmdlist, &kalray_show_cmdlist);
-
-  add_setshow_enum_cmd ("global_debug_level", class_maintenance, sglobal_debug_levels, &sglobal_debug_level,
-    _("Set the global debug level."), _("Show the global debug level."),
-    NULL, set_global_debug_level, show_global_debug_level, &kalray_set_cmdlist, &kalray_show_cmdlist);
-
-  add_setshow_boolean_cmd ("hide_threads", class_maintenance, &opt_hide_threads,
-    _("Set hide threads in debug level."), _("Show hide threads in debug level."),
     NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
 
   add_setshow_boolean_cmd ("break_on_spawn", class_maintenance, &opt_break_on_spawn,
@@ -1416,16 +964,6 @@ _initialize__k1_target (void)
 
   add_com ("run-mppa", class_run, run_mppa_command, _ ("Connect to a MPPA TLM platform and start debugging it."));
 
-  {
-    struct cmd_list_element *c = add_com ("kwatch", class_breakpoint, kwatch_command,
-      _("Set watchpoint for a device registry (currently implemented only for simulator)."));
-    set_cmd_completer (c, k1_dev_completer);
-    atexit (k1_destroy_dev_list);
-  }
-
   observer_attach_inferior_created (k1_push_arch_stratum);
   k1_attached_inf_data = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
-
-  observer_attach_breakpoint_created (mppa_observer_breakpoint_created);
-  observer_attach_breakpoint_deleted (mppa_observer_breakpoint_deleted);
 }

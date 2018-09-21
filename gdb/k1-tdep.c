@@ -88,66 +88,10 @@ static CORE_ADDR k1_fetch_tls_load_module_address (struct objfile *objfile)
   return val;
 }
 
-int
-get_is_hot_attached (struct inferior *inf)
-{
-  int ret;
-  char *buf = (char *) malloc (256);
-  long size = 256;
-
-  strcpy (buf, "ka");
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-
-  ret = *buf - '0';
-  free (buf);
-
-  return ret;
-}
-
 static void
 k1_inferior_created (struct target_ops *target, int from_tty)
 {
-  int os_debug_level, cont = 0;
-  struct inferior *inf;
-
   k1_current_arch = K1_NUM_ARCHES;
-
-  if (after_first_resume)
-    return;
-
-  if (!(inf = current_inferior ()))
-    return;
-
-  os_debug_level = get_os_supported_debug_levels (inf);
-  if (os_debug_level == DBG_LEVEL_SYSTEM)
-    return;
-
-  if (idx_global_debug_level)
-  {
-    set_cluster_debug_level_no_check (inf, idx_global_debug_level);
-    cont = 1;
-  }
-  else if (!global_debug_level_set)
-  {
-    //set global debug level if not set before attach and if we boot with gdb
-    struct regcache *rc = get_current_regcache ();
-    int is_hot_attached = get_is_hot_attached (inf);
-    CORE_ADDR pc = regcache_read_pc (rc);
-
-    if (rc && !is_hot_attached)
-    {
-      apply_global_debug_level (os_debug_level);
-      if (pc == 0 || os_debug_level == DBG_LEVEL_USER)
-        cont = 1;
-    }
-  } // !global_debug_level_set
-
-  if (cont)
-  {
-    inf_created_change_th = 1;
-    continue_1 (0);
-  }
 }
 
 static CORE_ADDR
@@ -217,23 +161,6 @@ patch_mds_bitfield (k1opc_t *op, uint32_t *syllab, int bitfield, int value)
 }
 
 void
-send_stop_at_main (int bstop)
-{
-  char *buf;
-  long size;
-
-  if (ptid_equal (inferior_ptid, null_ptid))
-    return;
-
-  size = 256;
-  buf = (char *) malloc (size);
-  sprintf (buf, "ks%d", bstop);
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  free (buf);
-}
-
-void
 send_cluster_break_on_spawn (struct inferior *inf, int v)
 {
   char *buf;
@@ -254,37 +181,6 @@ send_cluster_stop_all (struct inferior *inf, int v)
 
   buf = (char *) malloc (size);
   sprintf (buf, "kA%dp%x.1", v, inf->pid);
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  free (buf);
-}
-
-void
-send_cluster_debug_level (int level)
-{
-  char *buf;
-  long size;
-
-  if (ptid_equal (inferior_ptid, null_ptid))
-    return;
-
-  size = 256;
-  buf = (char *) malloc (size);
-  sprintf (buf, "kD%d", level);
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  free (buf);
-}
-
-void
-send_cluster_postponed_debug_level (struct inferior *inf, int level)
-{
-  char *buf;
-  long size;
-
-  size = 256;
-  buf = (char *) malloc (size);
-  sprintf (buf, "kP%dp%x.1", level, inf->pid);
   putpkt (buf);
   getpkt (&buf, &size, 0);
   free (buf);
@@ -317,43 +213,6 @@ read_memory_no_dcache (uint64_t addr, gdb_byte *user_buf, int len)
   return decoded_bytes == len;
 }
 
-int
-get_os_supported_debug_levels (struct inferior *inf)
-{
-  char *buf = (char *) malloc (256);
-  long size = 256;
-  struct inferior_data *data = mppa_inferior_data (inf);
-  int ret = data->os_supported_debug_level;
-
-  if (data->os_supported_debug_level == -1)
-  {
-    sprintf (buf, "kdp%x.1", (unsigned int) inf->pid);
-    putpkt (buf);
-    getpkt (&buf, &size, 0);
-
-    ret = *buf - '0';
-    free (buf);
-
-    if (ret < DBG_LEVEL_SYSTEM || ret >= DBG_LEVEL_MAX)
-      ret = DBG_LEVEL_SYSTEM;
-
-    data->os_supported_debug_level = ret;
-  }
-
-  return ret;
-}
-
-static void
-inform_dsu_stepi_bkp (void)
-{
-  char *buf = (char *) malloc (256);
-  long size = 256;
-  strcpy (buf, "kB");
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  free (buf);
-}
-
 char
 get_jtag_over_iss (void)
 {
@@ -364,76 +223,6 @@ get_jtag_over_iss (void)
   getpkt (&buf, &size, 0);
   ret = *buf;
   free (buf);
-
-  return ret;
-}
-
-char *
-send_get_dev_list_string (const char *full_name)
-{
-  long size = 4096, len, result_size = 0;
-  char *result = strdup (""), *buf = (char *) malloc (size);
-
-  while (1)
-  {
-    sprintf (buf, "kl:%lx,%lx:%s", result_size, size - 4, full_name);
-    putpkt (buf);
-    getpkt (&buf, &size, 0);
-
-    len = strlen (buf);
-    if (len <= 1)
-      break;
-
-    result = realloc (result, result_size + len);
-    strcpy (result + result_size, buf + 1);
-    result_size += len - 1;
-  }
-
-  return result;
-}
-
-int
-send_set_kwatch (const char *full_name, int watch_type, int bset, char **err_msg)
-{
-  long len = strlen (full_name), size = len + 300;
-  char *buf = (char *) malloc (size);
-  int ret;
-
-  sprintf (buf, "kW%d%d:%s", watch_type, bset, full_name);
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-
-  ret = strcmp (buf, "OK");
-  if (ret && err_msg)
-    *err_msg = strdup (buf + 3);
-
-  free (buf);
-
-  return ret;
-}
-
-int
-get_cluster_debug_level (int pid)
-{
-  struct inferior *inf;
-  int ret;
-
-  if (pid == -1)
-    inf = current_inferior ();
-  else
-    inf = find_inferior_pid (pid);
-
-  ret = mppa_inferior_data (inf)->cluster_debug_level;
-  return ret;
-}
-
-int
-get_debug_level (int pid)
-{
-  int ret = get_cluster_debug_level (pid);
-
-  if (ret == DBG_LEVEL_INHERITED)
-    ret = idx_global_debug_level;
 
   return ret;
 }
@@ -610,17 +399,7 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR 
 
   write_memory (to, (gdb_byte*) dsc->insn_words, dsc->num_insn_words * 4);
 
-  inform_dsu_stepi_bkp ();
-
   return dsc;
-}
-
-static void
-stepi_to_skip_pm_cb (void *context)
-{
-  char si_cmd[25];
-  strcpy (si_cmd, "si");
-  execute_command (si_cmd, 0);
 }
 
 static void
@@ -631,8 +410,6 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int branched = 0;
   int exception = 0;
-  struct thread_info *th;
-  int cpu_level, debug_level;
 
   if (debug_displaced)
     printf_filtered ("displaced: Fixup\n");
@@ -734,21 +511,6 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
   regcache_write_pc (regs, pc);
   if (debug_displaced)
     printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
-
-  th = find_thread_ptid (inferior_ptid);
-  cpu_level = get_cpu_exec_level ();
-  debug_level = get_debug_level (inferior_ptid.pid);
-
-  if (debug_level > cpu_level)
-  {
-    if (th->control.step_range_start == 1 || th->control.step_range_end == 1)
-    {
-      printf ("[Schedule stepi after breakpoint to skip PM, exec_level = %s"
-        ", debug_level = %s]\n", get_str_debug_level (cpu_level), get_str_debug_level (debug_level));
-
-      create_timer (0, stepi_to_skip_pm_cb, NULL);
-    }
-  }
 }
 
 static void
@@ -1023,47 +785,4 @@ get_thread_mode_used_for_ptid (ptid_t ptid)
   free (buf);
 
   return ret;
-}
-
-int
-get_cpu_exec_level (void)
-{
-  int ret;
-  char *buf = (char *) malloc (256);
-  long size = 256;
-  strcpy (buf, "kc");
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  ret = (int) (buf[0] - '0');
-  free (buf);
-
-  return ret;
-}
-
-int
-kalray_hide_thread (struct thread_info *tp, ptid_t crt_ptid)
-{
-  int debug_level;
-  int th_mode_used;
-
-  if (!opt_hide_threads) //don't hide if option hide_threads is off
-  {
-    in_info_thread = 1;
-    return 0;
-  }
-
-  debug_level = get_debug_level (tp->ptid.pid);
-  th_mode_used = get_thread_mode_used_for_ptid (tp->ptid);
-
-  // don't hide a stopped thread and the current thread
-  if (tp->state != THREAD_STOPPED && !ptid_equal (tp->ptid, crt_ptid))
-  {
-    // hide the thread if it was never seen in a exec level >= debug level
-    // in debug_level system, don't hide anything
-    if (debug_level && th_mode_used < (1 << debug_level))
-      return 1;
-  }
-
-  in_info_thread = 1;
-  return 0;
 }
