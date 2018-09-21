@@ -61,7 +61,6 @@ typedef struct {
   char        **argv;                                 /**< argv for the program to run */
   char        **env;                                  /**< env for the program to run*/
   void        (*notify_stop)(debug_agent_t *da, int vehicle, void *); /**< Callback to notify the debug agent instantiator of a vehicle stop */
-  void        (*notify_cpu_level_seen)(debug_agent_t *da, int vehicle, void *, unsigned char mode);
   void        *notify_data;                         /**< Token to pass to the notify_stop callback */
 
   uint64_t    *global_cycle_ptr;
@@ -83,13 +82,7 @@ typedef struct {
    * debug agent should set spawn type to PCI_SPAWN
    */
   int fake_pcie_spawn;
-  
-  int os_supported_debug_mode;
   int break_on_spawn;
-  
-  /* link between ddr and eth of bostan for a united presentation to gdb */
-  struct debug_agent_         *da_ddr_peer_united_io;
-  struct debug_agent_         *da_eth_peer_united_io;
 } debug_agent_attributes_t;
 
 /**
@@ -281,86 +274,15 @@ static inline errcode_t debug_agent_read_cycle(debug_agent_t *da, int vehicle, u
     return da->interface.read_cycle(da, vehicle, val);
 }
 
-static inline errcode_t debug_agent_get_intsys_handlers (
-  debug_agent_t *da, int vehicle, void *buf, int buf_size) 
-{
-  if (da->interface.get_intsys_handlers)
-    return da->interface.get_intsys_handlers (da, vehicle, buf, buf_size);
-
-  return RET_ABORT;
-}
-
-static inline errcode_t debug_agent_set_debug_level (debug_agent_t *da,
-  int vehicle, int debug_level, int postpone)
-{
-  if (da->interface.set_debug_level)
-    return da->interface.set_debug_level (da, vehicle, debug_level, postpone);
-
-  return RET_ABORT;
-}
-
-static inline errcode_t debug_agent_inform_dsu_stepi_bkp (debug_agent_t *da, int vehicle)
-{
-  if (da->interface.inform_dsu_stepi_bkp)
-    return da->interface.inform_dsu_stepi_bkp (da, vehicle);
-
-  return RET_ABORT;
-}
-
-static inline errcode_t debug_agent_get_cpu_exec_level (debug_agent_t *da,
-  int vehicle, int* cpu_level)
-{
-  if (da->interface.get_cpu_exec_level)
-    return da->interface.get_cpu_exec_level (da, vehicle, cpu_level);
-
-  return RET_ABORT;
-}
-
-static inline errcode_t debug_agent_set_stop_at_main (debug_agent_t *da, int bstop)
-{
-  if (da->interface.set_stop_at_main)
-    return da->interface.set_stop_at_main (da, bstop);
-
-  return RET_ABORT;
-}
-
 static inline int debug_agent_get_rm_idx (debug_agent_t *da)
 {
   return da->interface.get_rm_idx (da);
-}
-
-static inline int debug_agent_is_hot_attached (debug_agent_t *da)
-{
-  if (da->interface.is_hot_attached)
-    return da->interface.is_hot_attached (da);
-
-  return 0;
-}
-
-static inline char *debug_agent_get_device_list (debug_agent_t *da, const char *device_full_name)
-{
-  if (da->interface.get_device_list)
-    return da->interface.get_device_list (da, device_full_name);
-
-  return NULL;
 }
 
 static inline int debug_agent_set_stop_all (debug_agent_t *da, int vehicle, int stop_all)
 {
   if (da->interface.set_stop_all)
     return da->interface.set_stop_all (da, vehicle, stop_all);
-
-  return RET_ABORT;
-}
-
-static inline errcode_t debug_agent_set_kwatch (debug_agent_t *da, const char *full_name,
-  int watch_type, int bset, char **err_msg)
-{
-  if (da->interface.set_kwatch)
-    return da->interface.set_kwatch (da, full_name, watch_type, bset, err_msg);
-
-  if (err_msg)
-    *err_msg = strdup ("not implemented");
 
   return RET_ABORT;
 }

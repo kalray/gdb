@@ -106,9 +106,6 @@ struct agent
   int *reg_size;
 
   struct stopped_context *contexts;
-  unsigned char vehicles_modes_seen[17];
-  struct agent *ddr_peer_united_io;
-  struct agent *eth_peer_united_io;
 };
 
 struct gdbstub
@@ -453,28 +450,6 @@ notify_callback (debug_agent_t *da, int vehicle, void *notify_data)
 }
 
 static void
-notify_cpu_level_seen_callback (debug_agent_t *da, int vehicle,
-  void *notify_data, unsigned char mode)
-{
-  struct gdbstub *stub = notify_data;
-  int i;
-
-  for (i = 0; i < stub->nb_agents; ++i)
-  {
-    if (stub->agents[i].agent == da)
-      break;
-  }
-
-  if (i == stub->nb_agents)
-  {
-    fprintf (stderr, "Unknown agent notifying the gdbstub about user mode!\n");
-    return;
-  }
-
-  stub->agents[i].vehicles_modes_seen[vehicle] |= mode;
-}
-
-static void
 gdbstub_build_thread_list (struct gdbstub *stub)
 {
   str_t str;
@@ -486,7 +461,7 @@ gdbstub_build_thread_list (struct gdbstub *stub)
 
   for (i = 0; i < stub->nb_agents; ++i)
   {
-    if (stub->agents[i].attached == 0 || stub->agents[i].ddr_peer_united_io)
+    if (stub->agents[i].attached == 0)
       continue;
 
     cluster_name = debug_agent_get_cluster_name (stub->agents[i].agent);
@@ -503,14 +478,6 @@ gdbstub_build_thread_list (struct gdbstub *stub)
       if (j != rm_idx)
         str_printf (str, "<thread id =\"p%x.%x\" name=\"%s of %s %s\">%s</thread>\n",
         i + 1, j + 1, stub->agents[i].vehicles[j], cluster_name, cluster_desc, stub->agents[i].vehicles[j]);
-
-    if (stub->agents[i].eth_peer_united_io)
-    {
-      struct agent *eth = stub->agents[i].eth_peer_united_io;
-      for (j = 0; j < eth->nbvehicles; j++)
-        str_printf (str, "<thread id =\"p%x.%x\" name=\"%s of %s %s\">%s</thread>\n",
-        i + 1, j + stub->agents[i].nbvehicles + 1, eth->vehicles[j], cluster_name, cluster_desc, eth->vehicles[j]);
-    }
   }
   str_printf (str, "</threads>");
   if (stub->threads)
@@ -545,12 +512,7 @@ gdbstub_build_osdata (struct gdbstub *stub)
 
     for (i = 0; i < stub->nb_agents; ++i)
     {
-      if (stub->agents[i].ddr_peer_united_io)
-        continue;
-
       debug_agent_is_executing (stub->agents[i].agent, debug_agent_get_rm_idx (stub->agents[i].agent), &state, &val);
-      if (state == EXEC_POWEROFF && stub->agents[i].eth_peer_united_io)
-        debug_agent_is_executing (stub->agents[i].eth_peer_united_io->agent, 0, &state, &val);
 
       str_printf (str, "<item>\n"
         "<column name=\"pid\">%i</column>\n"
@@ -606,7 +568,6 @@ gdbstub_rt_add_agent (struct gdbstub *stub, debug_agent_t *da)
   char **vehicle;
 
   da->attributes.notify_stop = notify_callback;
-  da->attributes.notify_cpu_level_seen = notify_cpu_level_seen_callback;
   da->attributes.notify_data = stub;
 
   ag->id = n;
@@ -615,34 +576,12 @@ gdbstub_rt_add_agent (struct gdbstub *stub, debug_agent_t *da)
   ag->attached = 0;
   ag->rt_added = 1;
   ag->reg_desc_xml = NULL;
-  ag->ddr_peer_united_io = NULL;
-  ag->eth_peer_united_io = NULL;
-  memset (&ag->vehicles_modes_seen, 0, sizeof (ag->vehicles_modes_seen));
 
   vehicle = ag->vehicles;
   while (*vehicle)
     ++vehicle;
   ag->nbvehicles = vehicle - ag->vehicles;
   ag->contexts = calloc (ag->nbvehicles, sizeof (struct stopped_context));
-
-  if (da->attributes.da_eth_peer_united_io || da->attributes.da_ddr_peer_united_io)
-  {
-    for (i = 0; i < n; i++)
-    {
-      if (stub->agents[i].agent == da->attributes.da_eth_peer_united_io)
-      {
-        ag->eth_peer_united_io = &stub->agents[i];
-        stub->agents[i].ddr_peer_united_io = ag;
-        break;
-      }
-      else if (stub->agents[i].agent == da->attributes.da_ddr_peer_united_io)
-      {
-        ag->ddr_peer_united_io = &stub->agents[i];
-        stub->agents[i].eth_peer_united_io = ag;
-        break;
-      }
-    }
-  }
 
   for (i = 0; i < ag->nbvehicles; i++)
   {
@@ -679,21 +618,17 @@ gdbstub_init (debug_agent_t *agents)
 
   for (i = 0, it = agents; i < nb_agents; ++i, it = it->next)
   {
-    memset (&res->agents[i].vehicles_modes_seen, 0, sizeof (res->agents[i].vehicles_modes_seen));
     res->agents[i].id = i;
     res->agents[i].agent = it;
     res->agents[i].reg_desc_xml = NULL;
     vehicle = debug_agent_get_vehicles (it);
     res->agents[i].attached = 0;
     res->agents[i].rt_added = 0;
-    res->agents[i].ddr_peer_united_io = NULL;
-    res->agents[i].eth_peer_united_io = NULL;
 
     res->agents[i].vehicles = vehicle;
     while (*vehicle) ++vehicle;
     res->agents[i].nbvehicles = vehicle - res->agents[i].vehicles;
     it->attributes.notify_stop = notify_callback;
-    it->attributes.notify_cpu_level_seen = notify_cpu_level_seen_callback;
     it->attributes.notify_data = res;
     res->agents[i].attached = 0;
     res->agents[i].contexts = calloc (res->agents[i].nbvehicles,
@@ -702,34 +637,7 @@ gdbstub_init (debug_agent_t *agents)
 
   qsort (res->agents, nb_agents, sizeof (*res->agents), compare_da_ids);
 
-  for (i = 0; i < nb_agents; ++i)
-  {
-    int j;
-    it = res->agents[i].agent;
-    if (it->attributes.da_eth_peer_united_io)
-    {
-      for (j = 0; j < nb_agents; j++)
-        if (res->agents[j].agent == it->attributes.da_eth_peer_united_io)
-        {
-          res->agents[i].eth_peer_united_io = &res->agents[j];
-          break;
-        }
-    }
-
-    if (it->attributes.da_ddr_peer_united_io)
-    {
-      for (j = 0; j < nb_agents; j++)
-        if (res->agents[j].agent == it->attributes.da_ddr_peer_united_io)
-        {
-          res->agents[i].ddr_peer_united_io = &res->agents[j];
-          break;
-        }
-    }
-  }
-
   res->agents[0].attached = 1;
-  if (res->agents[0].eth_peer_united_io)
-    res->agents[0].eth_peer_united_io->attached = 1;
   res->async = debug_agent_is_async (agents);
 
   for (i = 0, it = agents; i < nb_agents; ++i, it = it->next)
@@ -743,7 +651,8 @@ gdbstub_init (debug_agent_t *agents)
 
   /* FIXME: support heterogeneous clients. */
   reg = res->registers = debug_agent_register_names (agents, 0);
-  while (reg->name) ++reg;
+  while (reg->name)
+    reg++;
   res->nbregs = reg - res->registers;
 
   reg = malloc (sizeof (*reg) * res->nbregs);
@@ -1005,15 +914,6 @@ parse_thread_id (struct gdbstub *stub, struct context *ctxt, char *id, char **en
       return false;
 
     ctxt->vehicle = strtol (endptr + 1, &endptr, 16) - 1;
-    if (ctxt->agent >= 0 && ctxt->agent < stub->nb_agents)
-    {
-      struct agent *ag = &stub->agents[ctxt->agent];
-      if (ag->eth_peer_united_io && ctxt->vehicle >= ag->nbvehicles)
-      {
-        ctxt->vehicle -= ag->nbvehicles;
-        ctxt->agent = ag->eth_peer_united_io->contexts[0].ctxt.agent;
-      }
-    }
   }
   else
   {
@@ -1366,174 +1266,12 @@ write_memory (debug_agent_t *da, int vehicle, uint64_t addr, void *buf, int buf_
 }
 
 static bool
-kalray_is_hot_attached (struct gdbstub *stub)
-{
-  int ha = debug_agent_is_hot_attached (stub->agents[0].agent);
-
-  prepare_to_answer (stub);
-
-  stub->payload[0] = ha ? '1' : '0';
-  stub->data_len = 1 + 1;
-  return send_answer (stub);
-}
-
-static bool
-kalray_set_debug_level (struct gdbstub *stub)
-{
-  int level = *(char *) (stub->payload + 2) - '0';
-
-  if (* (char *) (stub->payload + 3) != '#')
-  {
-    stub->error = "Invalid kD (set_debug_level) packet!";
-    return send_err (stub, 0);
-  }
-
-  //printf ("stub received debug level %d.\n", i);
-  debug_agent_set_debug_level (D_CONTEXT, level, 0 /*postpone*/);
-
-  return send_ok (stub);
-}
-
-static bool
-kalray_set_postponed_debug_level (struct gdbstub *stub)
-{
-  int level = *(char *) (stub->payload + 2) - '0';
-  struct context ctxt;
-
-  if (!parse_thread_id (stub, &ctxt, stub->payload + 3, NULL))
-  {
-    stub->error = "Malformed thread id in kP packet";
-    return send_err (stub, 0);
-  }
-
-  //printf ("postpone debug level %d for p %d.%d\n", level, ctxt.agent, ctxt.vehicle);
-  debug_agent_set_debug_level (stub->agents[ctxt.agent].agent,
-    ctxt.vehicle, level, 1 /* postpone */);
-
-  return send_ok (stub);
-}
-
-static bool
-kalray_get_os_supported_debug_level (struct gdbstub *stub)
-{
-  struct context ctxt;
-
-  prepare_to_answer (stub);
-  if (!parse_thread_id (stub, &ctxt, stub->payload + 2, NULL))
-  {
-    stub->error = "Malformed thread id in km packet";
-    return send_err (stub, 0);
-  }
-  //printf ("Agent %d  os_supported_debug_mode %d\n", ctxt.agent,
-  //  stub->agents[ctxt.agent].agent->attributes.os_supported_debug_mode);
-  stub->payload[0] = '0' + stub->agents[ctxt.agent].agent->attributes.os_supported_debug_mode;
-  stub->data_len = 1 + 1;
-  return send_answer (stub);
-}
-
-static bool
 kalray_get_jtag_over_iss (struct gdbstub *stub)
 {
   prepare_to_answer (stub);
   stub->payload[0] = (stub->jtag_over_iss_val == ISS_JTAG_OVER_ISS) ? 'i' :
     ((stub->jtag_over_iss_val == OCE_JTAG_OVER_ISS) ? 'o' : 'n');
   stub->data_len = 1 + 1;
-  return send_answer (stub);
-}
-
-static bool
-kalray_get_intsys_handlers (struct gdbstub *stub)
-{
-  int i, size = 4 * 3;
-  char buf[size];
-  int *pint_buf = (int *) buf;
-  pint_buf[0] = 0xFFFFFFFF;
-  pint_buf[1] = 0xFFFFFFFF;
-  pint_buf[2] = 0xFFFFFFFF;
-
-  /*errcode_t ret =*/ debug_agent_get_intsys_handlers (D_CONTEXT, buf, 12);
-
-  prepare_to_answer (stub);
-
-  for (i = 0; i < size; ++i)
-  {
-    stub->payload[i * 2] = tohex[(buf[i] >> 4) & 0xf];
-    stub->payload[i * 2 + 1] = tohex[buf[i] & 0xf];
-  }
-  stub->data_len = 1 + size * 2;
-
-  return send_answer (stub);
-}
-
-static bool
-kalray_get_device_list (struct gdbstub *stub)
-{
-  char *sep, *device_full_name, *list = NULL;
-  long offset = 0, length = 0;
-
-  offset = strtol (stub->payload + 3, &sep, 16); // format: kl:<ofs>,<size>:<device_full_name>
-  if (*sep != ',')
-    goto err;
-
-  length = strtol (sep + 1, &sep, 16);
-  if (*sep != ':')
-    goto err;
-
-  device_full_name = sep + 1;
-  sep = strchr (device_full_name, '#');
-  if (!sep)
-    goto err;
-  *sep = 0;
-
-  prepare_to_answer (stub);
-  list = debug_agent_get_device_list (stub->agents[0].agent, device_full_name);
-  if (!list || offset >= strlen (list))
-    nprintf_packet (stub, length, "l");
-  else
-    nprintf_packet (stub, length, "m%s", list + offset);
-
-  if (list)
-    free (list);
-
-  return send_answer (stub);
-
-err:
-  stub->error = "Invalid kl (get_device_list) packet!";
-  return send_err (stub, 0);
-}
-
-static bool
-kalray_set_kwatch (struct gdbstub *stub)
-{
-  int watch_type = stub->payload[2] - '0'; // format: kW<type><set>:<reg_full_name>
-  int bset = stub->payload[3] - '0';
-  char *full_name = stub->payload + 5, *err_msg = NULL;
-
-  if (!debug_agent_set_kwatch (stub->agents[0].agent, full_name, watch_type, bset, &err_msg))
-    return send_ok (stub);
-
-  prepare_to_answer (stub);
-  nprintf_packet (stub, 290, "E00%s", err_msg ? err_msg : "");
-  if (err_msg)
-    free (err_msg);
-  return send_answer (stub);
-}
-
-static bool
-kalray_get_vehicle_modes_seen (struct gdbstub *stub)
-{
-  struct context ctxt;
-
-  if (!parse_thread_id (stub, &ctxt, stub->payload + 2, NULL))
-  {
-    stub->error = "Malformed thread id in km packet";
-    return send_err (stub, 0);
-  }
-
-  prepare_to_answer (stub);
-  stub->payload[0] = '0' + stub->agents[ctxt.agent].vehicles_modes_seen[ctxt.vehicle];
-  stub->data_len = 1 + 1;
-
   return send_answer (stub);
 }
 
@@ -1553,8 +1291,6 @@ kalray_set_break_on_spawn (struct gdbstub *stub)
 
   v = stub->payload[2] != '0';
   ag->agent->attributes.break_on_spawn = v;
-  if (ag->eth_peer_united_io)
-    ag->eth_peer_united_io->agent->attributes.break_on_spawn = v;
 
   return send_ok (stub);
 }
@@ -1575,38 +1311,6 @@ kalray_set_stop_all (struct gdbstub *stub)
   debug_agent_set_stop_all (D_CONTEXT, v);
 
   return send_ok (stub);
-}
-
-static bool
-kalray_set_stop_at_main (struct gdbstub *stub)
-{
-  int bstop = stub->payload[2] - '0';
-
-  debug_agent_set_stop_at_main (D_AGENT, bstop);
-
-  return send_ok (stub);
-}
-
-static bool
-kalray_inform_dsu_stepi_bkp (struct gdbstub *stub)
-{
-  debug_agent_inform_dsu_stepi_bkp (D_CONTEXT);
-
-  return send_ok (stub);
-}
-
-static bool
-kalray_get_cpu_exec_level (struct gdbstub *stub)
-{
-  int cpu_level = 0;
-
-  /*errcode_t ret = */debug_agent_get_cpu_exec_level (D_CONTEXT, &cpu_level);
-
-  prepare_to_answer (stub);
-  stub->payload[0] = '0' + cpu_level;
-  stub->data_len = 1 + 1;
-
-  return send_answer (stub);
 }
 
 static bool
@@ -1660,23 +1364,11 @@ handle_m (struct gdbstub *stub, int use_dcache)
 static void
 icache_invalidate (struct gdbstub *stub)
 {
-  int k, i;
+  int i;
   struct agent *ag = &stub->agents[stub->data_context.agent];
 
-  for (k = 0; k < 2; k++)
-  {
-    for (i = 0; i < ag->nbvehicles; ++i)
-      debug_agent_icache_invalidate (ag->agent, i);
-    if (!k)
-    {
-      if (ag->ddr_peer_united_io)
-        ag = ag->ddr_peer_united_io;
-      else if (ag->eth_peer_united_io)
-        ag = ag->eth_peer_united_io;
-      else
-        break;
-    }
-  }
+  for (i = 0; i < ag->nbvehicles; ++i)
+    debug_agent_icache_invalidate (ag->agent, i);
 }
 
 static bool
@@ -1901,16 +1593,6 @@ append_stop_packet (struct gdbstub *stub, struct stopped_context *c,
   struct context ctxt = {c->ctxt.agent, c->ctxt.vehicle};
   struct context gdb_ctx = ctxt;
 
-  if (gdb_ctx.agent >= 0 && gdb_ctx.agent < stub->nb_agents)
-  {
-    struct agent *ag = &stub->agents[gdb_ctx.agent];
-    if (ag->ddr_peer_united_io)
-    {
-      gdb_ctx.agent = ag->ddr_peer_united_io->contexts[0].ctxt.agent;
-      gdb_ctx.vehicle += ag->ddr_peer_united_io->nbvehicles;
-    }
-  }
-
   switch (c->state)
   {
     case EXEC_SIGNALED:
@@ -1971,7 +1653,6 @@ static bool
 handle_qC (struct gdbstub *stub)
 {
   struct context ctxt;
-  struct agent *ag;
 
   prepare_to_answer (stub);
 
@@ -1979,25 +1660,6 @@ handle_qC (struct gdbstub *stub)
   {
     ctxt.agent = 0;
     ctxt.vehicle = 0;
-  }
-  else
-  {
-    ctxt = stub->stopped_contexts_tail->ctxt;
-    ag = &stub->agents[ctxt.agent];
-    if (ag->ddr_peer_united_io)
-    {
-      ctxt.agent = ag->ddr_peer_united_io->contexts[0].ctxt.agent;
-      if (stub->agents[ctxt.agent].attached)
-      {
-        //printf ("GDBSTUB handle_qC ioeth context -> ioddr\n");
-        ctxt.vehicle += ag->ddr_peer_united_io->nbvehicles;
-      }
-      else
-      {
-        ctxt.agent = 0;
-        ctxt.vehicle = 0;
-      }
-    }
   }
 
   printf_packet (stub, "QCp%x.%x", ctxt.agent + 1, ctxt.vehicle + 1);
@@ -2011,9 +1673,6 @@ handle_threadinfo (struct gdbstub *stub)
 
   prepare_to_answer (stub);
 
-  if (stub->thread_iter < stub->nb_agents && stub->agents[stub->thread_iter].ddr_peer_united_io)
-    stub->thread_iter++;
-
   if (stub->thread_iter >= stub->nb_agents)
   {
     printf_packet (stub, "l");
@@ -2022,12 +1681,8 @@ handle_threadinfo (struct gdbstub *stub)
 
   printf_packet (stub, "mp%x.%x", stub->thread_iter + 1, 1);
   nbvehicles = stub->agents[stub->thread_iter].nbvehicles;
-  if (stub->agents[stub->thread_iter].eth_peer_united_io)
-    nbvehicles += stub->agents[stub->thread_iter].eth_peer_united_io->nbvehicles;
   for (i = 2; i <= nbvehicles; ++i)
-  {
     printf_packet (stub, ",p%x.%x", stub->thread_iter + 1, i);
-  }
   stub->thread_iter++;
   return send_answer (stub);
 }
@@ -2483,12 +2138,6 @@ handle_vAttach (struct gdbstub *stub)
   }
 
   stub->agents[i - 1].attached = 1;
-  if (stub->agents[i - 1].eth_peer_united_io)
-  {
-    stub->agents[i - 1].eth_peer_united_io->attached = 1;
-    ctx_eth = stub->agents[i - 1].eth_peer_united_io->contexts[0].ctxt.agent;
-  }
-
   gdbstub_build_thread_list (stub);
 
   prepare_to_answer (stub);
@@ -2539,36 +2188,14 @@ handle_command (struct gdbstub *stub)
     case 'k': //Kalray commands
       switch (stub->payload[1])
       {
-        case 'a':
-          return kalray_is_hot_attached (stub);
         case 'A':
           return kalray_set_stop_all (stub);
-        case 'B':
-          return kalray_inform_dsu_stepi_bkp (stub);
-        case 'c':
-          return kalray_get_cpu_exec_level (stub);
-        case 'd':
-          return kalray_get_os_supported_debug_level (stub);
-        case 'D':
-          return kalray_set_debug_level (stub);
-        case 'h':
-          return kalray_get_intsys_handlers (stub);
         case 'j':
           return kalray_get_jtag_over_iss (stub);
-        case 'l':
-          return kalray_get_device_list (stub);
-        case 'm':
-          return kalray_get_vehicle_modes_seen (stub);
-        case 'P':
-          return kalray_set_postponed_debug_level (stub);
-        case 's':
-          return kalray_set_stop_at_main (stub);
         case 'S':
           return kalray_set_break_on_spawn (stub);
         case 'u':
           return handle_m (stub, 0);
-         case 'W':
-          return kalray_set_kwatch (stub);
         default:
           goto unknown;
       }

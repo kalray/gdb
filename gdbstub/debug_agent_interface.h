@@ -101,16 +101,7 @@ typedef errcode_t (*da_debug_mode_t) (debug_agent_t *self, int vehicle, int mode
 typedef errcode_t (*da_disassemble_bundle_t) (debug_agent_t *self, int vehicle, void *bundle, int size, struct trace_record *record, registers_value_t *r_regs, registers_value_t *w_regs, registers_value_t *r_sfr_regs, registers_value_t *w_sfr_regs);
 typedef mppa_ml_loader_t *(*da_mppa_multiloader_t)(debug_agent_t *da);
 typedef errcode_t (*da_stack_min_max_t)(debug_agent_t *self, int vehicle, uint64_t *min, uint64_t *max);
-typedef errcode_t (*da_get_intsys_handlers_t)(debug_agent_t *self, int vehicle, void* buf, int buf_size);
-typedef errcode_t (*da_set_debug_level_t)(debug_agent_t *self, int vehicle, int debug_level, int postpone);
-typedef errcode_t (*da_inform_dsu_stepi_bkp_t)(debug_agent_t *self, int vehicle);
-typedef errcode_t (*da_get_cpu_exec_level_t) (debug_agent_t *self, int vehicle, int *cpu_level);
-typedef errcode_t (*da_set_stop_at_main_t) (debug_agent_t *self, int bstop);
 typedef int (*da_get_rm_idx_t) (debug_agent_t *self);
-typedef int (*is_hot_attached_t) (debug_agent_t *self);
-typedef char *(*da_get_device_list_t) (debug_agent_t *self, const char *device_full_name);
-typedef errcode_t (*da_set_kwatch_t) (debug_agent_t *da, const char *full_name, int watch_type,
-  int bset, char **err_msg);
 typedef errcode_t (*da_set_stop_all) (debug_agent_t *self, int vehicle, int stop_all);
 
 /**
@@ -163,15 +154,7 @@ typedef struct {
   da_debug_enable_t   debug_enable;
   da_debug_mode_t   debug_mode;
   da_stack_min_max_t  stack_min_max;
-  da_get_intsys_handlers_t get_intsys_handlers;
-  da_set_debug_level_t set_debug_level;
-  da_inform_dsu_stepi_bkp_t inform_dsu_stepi_bkp;
-  da_get_cpu_exec_level_t  get_cpu_exec_level;
-  da_set_stop_at_main_t set_stop_at_main;
   da_get_rm_idx_t get_rm_idx;
-  is_hot_attached_t is_hot_attached;
-  da_get_device_list_t get_device_list;
-  da_set_kwatch_t set_kwatch;
   da_set_stop_all set_stop_all;
 } debug_agent_interface_t;
 
