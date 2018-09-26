@@ -1502,8 +1502,6 @@ static k1_reloc_t *k1c_columnsel_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_columnsel_opnd  __attribute__((unused)) = {"k1c_columnsel_opnd", Modifier_k1c_columnsel, 2, 0, 0, 0, 0, 0, 0, k1c_columnsel_opnd_relocs, 1, { { 2, 0, 18 }, } };
 static k1_reloc_t *k1c_comparison_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_comparison_opnd  __attribute__((unused)) = {"k1c_comparison_opnd", Modifier_k1c_comparison, 4, 0, 0, 0, 0, 0, 0, k1c_comparison_opnd_relocs, 1, { { 4, 0, 24 }, } };
-static k1_reloc_t *k1c_dropbits_opnd_relocs[] __attribute__((unused)) = {0 };
-static k1bfield k1c_dropbits_opnd  __attribute__((unused)) = {"k1c_dropbits_opnd", Immediate_k1c_unsigned6, 6, 0, 0, 0, 0, 0, 0, k1c_dropbits_opnd_relocs, 1, { { 6, 0, 0 }, } };
 static k1_reloc_t *k1c_extend27_offset27_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_extend27_offset27_opnd  __attribute__((unused)) = {"k1c_extend27_offset27_opnd", Immediate_k1c_signed54, 54, 0, 0, k1SIGNED, 0, 0, 0, k1c_extend27_offset27_opnd_relocs, 2, { { 27, 27, 64 }, { 27, 0, 32 }, } };
 static k1_reloc_t *k1c_extend27_upper27_lower10_opnd_relocs[] __attribute__((unused)) = {&k1c_signed64_reloc, &k1c_signed64_tprel64_reloc, &k1c_gotaddr64_reloc, 0 };
@@ -1520,8 +1518,8 @@ static k1_reloc_t *k1c_pcrel17_opnd_relocs[] __attribute__((unused)) = {&k1c_pcr
 static k1bfield k1c_pcrel17_opnd  __attribute__((unused)) = {"k1c_pcrel17_opnd", Immediate_k1c_pcrel17, 17, 2, 0, k1SIGNED, 0, 0, 1, k1c_pcrel17_opnd_relocs, 1, { { 17, 0, 6 }, } };
 static k1_reloc_t *k1c_pcrel27_opnd_relocs[] __attribute__((unused)) = {&k1c_pcrel27_reloc, 0 };
 static k1bfield k1c_pcrel27_opnd  __attribute__((unused)) = {"k1c_pcrel27_opnd", Immediate_k1c_pcrel27, 27, 2, 0, k1SIGNED, 0, 0, 1, k1c_pcrel27_opnd_relocs, 1, { { 27, 0, 0 }, } };
-static k1_reloc_t *k1c_pow2scale_opnd_relocs[] __attribute__((unused)) = {0 };
-static k1bfield k1c_pow2scale_opnd  __attribute__((unused)) = {"k1c_pow2scale_opnd", Immediate_k1c_signed6, 6, 0, 0, k1SIGNED, 0, 0, 0, k1c_pow2scale_opnd_relocs, 1, { { 6, 0, 0 }, } };
+static k1_reloc_t *k1c_rectify_opnd_relocs[] __attribute__((unused)) = {0 };
+static k1bfield k1c_rectify_opnd  __attribute__((unused)) = {"k1c_rectify_opnd", Modifier_k1c_rectify, 1, 0, 0, 0, 0, 0, 0, k1c_rectify_opnd_relocs, 1, { { 1, 0, 7 }, } };
 static int k1c_registera_opnd_regs[] = {
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
@@ -2415,8 +2413,6 @@ static k1_reloc_t *k1c_rounding2_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_rounding2_opnd  __attribute__((unused)) = {"k1c_rounding2_opnd", Modifier_k1c_rounding, 3, 0, 0, 0, 0, 0, 0, k1c_rounding2_opnd_relocs, 1, { { 3, 0, 8 }, } };
 static k1_reloc_t *k1c_roundint_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_roundint_opnd  __attribute__((unused)) = {"k1c_roundint_opnd", Modifier_k1c_roundint, 3, 0, 0, 0, 0, 0, 0, k1c_roundint_opnd_relocs, 1, { { 3, 0, 8 }, } };
-static k1_reloc_t *k1c_satmode_opnd_relocs[] __attribute__((unused)) = {0 };
-static k1bfield k1c_satmode_opnd  __attribute__((unused)) = {"k1c_satmode_opnd", Modifier_k1c_satmode, 1, 0, 0, 0, 0, 0, 0, k1c_satmode_opnd_relocs, 1, { { 1, 0, 11 }, } };
 static k1_reloc_t *k1c_scalarcond_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_scalarcond_opnd  __attribute__((unused)) = {"k1c_scalarcond_opnd", Modifier_k1c_scalarcond, 4, 0, 0, 0, 0, 0, 0, k1c_scalarcond_opnd_relocs, 1, { { 4, 0, 24 }, } };
 static k1_reloc_t *k1c_scaling_opnd_relocs[] __attribute__((unused)) = {0 };
@@ -2464,6 +2460,13 @@ static int k1c_systems2_opnd_regs[] = {
       1, 1, 1, 1, 1, 1, };
 static k1_reloc_t *k1c_systems2_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_systems2_opnd  __attribute__((unused)) = {"k1c_systems2_opnd", RegClass_k1c_systemReg, 6, 0, 0, 0, 54, k1c_systems2_opnd_regs, 0, k1c_systems2_opnd_relocs, 1, { { 12, 0, 6 }, } };
+static int k1c_systems4_opnd_regs[] = {
+      0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+      1, 1, 1, 1, 1, 1, };
+static k1_reloc_t *k1c_systems4_opnd_relocs[] __attribute__((unused)) = {0 };
+static k1bfield k1c_systems4_opnd  __attribute__((unused)) = {"k1c_systems4_opnd", RegClass_k1c_nopcpsReg, 6, 0, 0, 0, 54, k1c_systems4_opnd_regs, 0, k1c_systems4_opnd_relocs, 1, { { 12, 0, 6 }, } };
 static int k1c_systemt2_opnd_regs[] = {
       0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
@@ -3122,6 +3125,10 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbo_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYV_registerA_registerBo_simple */
 	{"copyw", {{ 0x7a000000, 0x7f03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYW_registerW_registerZ_simple */
+	{"movefo", {{ 0x00081000, 0x7f0c1fff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-MOVEFO_registerN_registerBe_simple */
+	{"movefo", {{ 0x000c1000, 0x7f0c1fff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-MOVEFO_registerN_registerBo_simple */
 	{"negd", {{ 0x65000000, 0x7f03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-NEGD_registerW_registerZ_simple */
 	{"neghq", {{ 0xf5013000, 0xff03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x67ffffff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_ALU }, }, 2, 64,
@@ -4812,126 +4819,126 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_TINY_X, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY_X, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_upper27_lower5_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-COMPW_comparison_registerW_registerZ_w032_double */
 	{"compw.none", {{ 0xfd01b000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1c_TINY_X, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY_X, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_upper27_lower5_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-COMPW_comparison_registerW_registerZ_w032_double */
-	{"convdhv0.rd", {{ 0x05000200, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rd.u", {{ 0x05000a00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rhu", {{ 0x05000400, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rhu.u", {{ 0x05000c00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rn", {{ 0x05000000, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rn.u", {{ 0x05000800, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.ru", {{ 0x05000100, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.ru.u", {{ 0x05000900, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rz", {{ 0x05000300, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv0.rz.u", {{ 0x05000b00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV0_roundint_satmode_registerAl_registerBq_u006_simple */
-	{"convdhv1.rd", {{ 0x05001200, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rd.u", {{ 0x05001a00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rhu", {{ 0x05001400, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rhu.u", {{ 0x05001c00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rn", {{ 0x05001000, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rn.u", {{ 0x05001800, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.ru", {{ 0x05001100, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.ru.u", {{ 0x05001900, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rz", {{ 0x05001300, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convdhv1.rz.u", {{ 0x05001b00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVDHV1_roundint_satmode_registerAh_registerBq_u006_simple */
-	{"convwbv0.rd", {{ 0x06000200, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rd.u", {{ 0x06000a00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rhu", {{ 0x06000400, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rhu.u", {{ 0x06000c00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rn", {{ 0x06000000, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rn.u", {{ 0x06000800, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.ru", {{ 0x06000100, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.ru.u", {{ 0x06000900, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rz", {{ 0x06000300, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv0.rz.u", {{ 0x06000b00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV0_roundint_satmode_registerAx_registerBq_u006_simple */
-	{"convwbv1.rd", {{ 0x06001200, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rd.u", {{ 0x06001a00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rhu", {{ 0x06001400, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rhu.u", {{ 0x06001c00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rn", {{ 0x06001000, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rn.u", {{ 0x06001800, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.ru", {{ 0x06001100, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.ru.u", {{ 0x06001900, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rz", {{ 0x06001300, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv1.rz.u", {{ 0x06001b00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV1_roundint_satmode_registerAy_registerBq_u006_simple */
-	{"convwbv2.rd", {{ 0x06002200, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rd.u", {{ 0x06002a00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rhu", {{ 0x06002400, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rhu.u", {{ 0x06002c00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rn", {{ 0x06002000, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rn.u", {{ 0x06002800, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.ru", {{ 0x06002100, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.ru.u", {{ 0x06002900, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rz", {{ 0x06002300, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv2.rz.u", {{ 0x06002b00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV2_roundint_satmode_registerAz_registerBq_u006_simple */
-	{"convwbv3.rd", {{ 0x06003200, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rd.u", {{ 0x06003a00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rhu", {{ 0x06003400, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rhu.u", {{ 0x06003c00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rn", {{ 0x06003000, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rn.u", {{ 0x06003800, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.ru", {{ 0x06003100, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.ru.u", {{ 0x06003900, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rz", {{ 0x06003300, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
-	{"convwbv3.rz.u", {{ 0x06003b00, 0x7f003fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, &k1c_dropbits_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-CONVWBV3_roundint_satmode_registerAt_registerBq_u006_simple */
+	{"convdhv0.rd", {{ 0x05000200, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rd.relu", {{ 0x05000280, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rhu", {{ 0x05000400, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rhu.relu", {{ 0x05000480, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rn", {{ 0x05000000, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rn.relu", {{ 0x05000080, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.ru", {{ 0x05000100, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.ru.relu", {{ 0x05000180, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rz", {{ 0x05000300, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv0.rz.relu", {{ 0x05000380, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeral_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV0_roundint_rectify_registerAl_registerBq_simple */
+	{"convdhv1.rd", {{ 0x05001200, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rd.relu", {{ 0x05001280, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rhu", {{ 0x05001400, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rhu.relu", {{ 0x05001480, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rn", {{ 0x05001000, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rn.relu", {{ 0x05001080, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.ru", {{ 0x05001100, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.ru.relu", {{ 0x05001180, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rz", {{ 0x05001300, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convdhv1.rz.relu", {{ 0x05001380, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerah_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVDHV1_roundint_rectify_registerAh_registerBq_simple */
+	{"convwbv0.rd", {{ 0x06000200, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rd.relu", {{ 0x06000280, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rhu", {{ 0x06000400, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rhu.relu", {{ 0x06000480, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rn", {{ 0x06000000, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rn.relu", {{ 0x06000080, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.ru", {{ 0x06000100, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.ru.relu", {{ 0x06000180, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rz", {{ 0x06000300, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv0.rz.relu", {{ 0x06000380, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerax_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV0_roundint_rectify_registerAx_registerBq_simple */
+	{"convwbv1.rd", {{ 0x06001200, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rd.relu", {{ 0x06001280, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rhu", {{ 0x06001400, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rhu.relu", {{ 0x06001480, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rn", {{ 0x06001000, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rn.relu", {{ 0x06001080, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.ru", {{ 0x06001100, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.ru.relu", {{ 0x06001180, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rz", {{ 0x06001300, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv1.rz.relu", {{ 0x06001380, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeray_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV1_roundint_rectify_registerAy_registerBq_simple */
+	{"convwbv2.rd", {{ 0x06002200, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rd.relu", {{ 0x06002280, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rhu", {{ 0x06002400, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rhu.relu", {{ 0x06002480, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rn", {{ 0x06002000, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rn.relu", {{ 0x06002080, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.ru", {{ 0x06002100, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.ru.relu", {{ 0x06002180, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rz", {{ 0x06002300, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv2.rz.relu", {{ 0x06002380, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registeraz_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV2_roundint_rectify_registerAz_registerBq_simple */
+	{"convwbv3.rd", {{ 0x06003200, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rd.relu", {{ 0x06003280, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rhu", {{ 0x06003400, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rhu.relu", {{ 0x06003480, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rn", {{ 0x06003000, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rn.relu", {{ 0x06003080, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.ru", {{ 0x06003100, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.ru.relu", {{ 0x06003180, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rz", {{ 0x06003300, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
+	{"convwbv3.rz.relu", {{ 0x06003380, 0x7f0037c0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registerat_opnd, &k1c_registerbq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-CONVWBV3_roundint_rectify_registerAt_registerBq_simple */
 	{"copyo", {{ 0x3e050000, 0x7f0f0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC_DATA, {&k1c_registern_opnd, &k1c_registerq_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-COPYO_registerN_registerQ_simple */
 	{"copyq", {{ 0x5f00f000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
@@ -8008,70 +8015,70 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_MAU, ((int)0 << 8) | (int)Reservation_k1c_MAU, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_registery_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSBFW_rounding_silent_registerW_registerZ_registerY_simple */
 	{"fsbfw.s", {{ 0x5d02f000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_MAU, ((int)0 << 8) | (int)Reservation_k1c_MAU, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_registery_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSBFW_rounding_silent_registerW_registerZ_registerY_simple */
-	{"fscalerwv.rd", {{ 0x07000280, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rd.s", {{ 0x07000a80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rna", {{ 0x07000480, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rna.s", {{ 0x07000c80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rnz", {{ 0x07000580, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rnz.s", {{ 0x07000d80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rn", {{ 0x07000080, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rn.s", {{ 0x07000880, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.ro", {{ 0x07000680, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.ro.s", {{ 0x07000e80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.ru", {{ 0x07000180, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.ru.s", {{ 0x07000980, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rz", {{ 0x07000380, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.rz.s", {{ 0x07000b80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv", {{ 0x07000780, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalerwv.s", {{ 0x07000f80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALERWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.rd", {{ 0x07000200, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
 	{"fscalewv.rd.s", {{ 0x07000a00, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.rna", {{ 0x07000400, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rd.s.relu", {{ 0x07000a80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rd", {{ 0x07000200, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rd.relu", {{ 0x07000280, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.rna.s", {{ 0x07000c00, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.rnz", {{ 0x07000500, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rna.s.relu", {{ 0x07000c80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rna", {{ 0x07000400, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rna.relu", {{ 0x07000480, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.rnz.s", {{ 0x07000d00, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.rn", {{ 0x07000000, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rnz.s.relu", {{ 0x07000d80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rnz", {{ 0x07000500, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rnz.relu", {{ 0x07000580, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.rn.s", {{ 0x07000800, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.ro", {{ 0x07000600, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rn.s.relu", {{ 0x07000880, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rn", {{ 0x07000000, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rn.relu", {{ 0x07000080, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.ro.s", {{ 0x07000e00, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.ru", {{ 0x07000100, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.ro.s.relu", {{ 0x07000e80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.ro", {{ 0x07000600, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.ro.relu", {{ 0x07000680, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.ru.s", {{ 0x07000900, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv.rz", {{ 0x07000300, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.ru.s.relu", {{ 0x07000980, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.ru", {{ 0x07000100, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.ru.relu", {{ 0x07000180, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.rz.s", {{ 0x07000b00, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
-	{"fscalewv", {{ 0x07000700, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rz.s.relu", {{ 0x07000b80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rz", {{ 0x07000300, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.rz.relu", {{ 0x07000380, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv.s", {{ 0x07000f00, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, &k1c_pow2scale_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_registerA_registerB_s006_simple */
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.s.relu", {{ 0x07000f80, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.", {{ 0x07000700, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
+	{"fscalewv.relu", {{ 0x07000780, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fsdivd", {{ 0x70035000, 0x7f03f800, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LITE, ((int)0 << 8) | (int)Reservation_k1c_ALU_LITE, {&k1c_registerw_opnd, &k1c_registerp_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSDIVD_silent2_registerW_registerP_simple */
 	{"fsdivd.s", {{ 0x70035800, 0x7f03f800, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
@@ -8148,9 +8155,9 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_pcrel27_opnd, 0}, "", "%s"}, /* Opcode-k1c-GOTO_s027_simple */
 	{"icall", {{ 0x0fdc0000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registerz_opnd, 0}, "", "%s"}, /* Opcode-k1c-ICALL_registerZ_simple */
-	{"iget", {{ 0x0fc80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+	{"iget", {{ 0x0fcc0000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_TINY_MAU_XNOP, {&k1c_registerz_opnd, 0}, "", "%s"}, /* Opcode-k1c-IGET_registerZ_simple */
-	{"get", {{ 0x0fc80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+	{"get", {{ 0x0fcc0000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_TINY_MAU_XNOP, {&k1c_registerz_opnd, 0}, "", "%s"}, /* Opcode-k1c-IGET_registerZ_simple */
 	{"igoto", {{ 0x0fd80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registerz_opnd, 0}, "", "%s"}, /* Opcode-k1c-IGOTO_registerZ_simple */
@@ -14224,7 +14231,7 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_signed10_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-XORW_registerW_registerZ_s010_simple */
 	{"xorw", {{ 0xfc000000, 0xff030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1c_TINY_X, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY_X, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_upper27_lower10_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-XORW_registerW_registerZ_s037_double */
-/* Number of instructions : 5365 */
+/* Number of instructions : 5367 */
 	{"", { }, 0, 0, 0, 0, { }, "", ""}};
 
 const K1_Core_Info k1c_core_info = { k1c_k1optab, { "k1c", "\0" }, k1c_resources, TRUE, { ELF_K1_CORE_C_C, -1 }  };
