@@ -11,8 +11,8 @@ NO_REL_RELOCS=yes
 
 TEMPLATE_NAME=elf32
 
-# first user page at 4K.
-TEXT_START_ADDR=0x1000
+# first user page at 64K.
+TEXT_START_ADDR=0x10000
 
 # No support for .s* sections.
 NO_SMALL_DATA=yes
