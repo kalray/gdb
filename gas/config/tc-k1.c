@@ -384,6 +384,7 @@ struct k1_pseudo_relocs {
         S37_LO10_UP27,
         S43_LO10_UP27_EX6,
         S64_LO10_UP27_EX27,
+	S16,
         S32,
         S64,
   } reloc_type;
@@ -416,256 +417,313 @@ struct pseudo_func_s
 };
 
 static struct pseudo_func_s pseudo_func[] =
-{
-  // reloc pseudo functions:
   {
-   .name = "gotoff",
-   .pseudo_relocs =
+   // reloc pseudo functions:
    {
-    .avail_modes = PSEUDO_ALL,
-    .bitsize = 37,
-    .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_S37_GOTOFF_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S37_GOTOFF_UP27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_gotoff_reloc,
-   }
-  },
-  {
-   .name = "gotoff",
-   .pseudo_relocs =
+    .name = "gotoff",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_ALL,
+     .bitsize = 37,
+     .reloc_type = S37_LO10_UP27,
+     .reloc_lo10 = BFD_RELOC_K1_S37_GOTOFF_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S37_GOTOFF_UP27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_gotoff_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 32,
-    .reloc_type = S32,
-    .single = BFD_RELOC_K1_GOTOFF,
-    .kreloc = &k1c_gotoff32_reloc,
-   }
-  },
-  {
-   .name = "got",
-   .pseudo_relocs =
+    .name = "gotoff",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 32,
+     .reloc_type = S32,
+     .single = BFD_RELOC_K1_GOTOFF,
+     .kreloc = &k1c_gotoff32_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_ALL,
-    .bitsize = 37,
-    .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_S37_GOT_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S37_GOT_UP27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_got_reloc,
-   }
-  },
-  {
-   .name = "got",
-   .pseudo_relocs =
+    .name = "got",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_ALL,
+     .bitsize = 37,
+     .reloc_type = S37_LO10_UP27,
+     .reloc_lo10 = BFD_RELOC_K1_S37_GOT_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S37_GOT_UP27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_got_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 32,
-    .reloc_type = S32,
-    .single = BFD_RELOC_K1_GOT,
-    .kreloc = &k1c_got32_reloc,
-   }
-  },
-  {
-   .name = "plt",
-   .pseudo_relocs =
+    .name = "got",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 32,
+     .reloc_type = S32,
+     .single = BFD_RELOC_K1_GOT,
+     .kreloc = &k1c_got32_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 37,
-    .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_S37_PLT_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S37_PLT_UP27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_signed37_plt_reloc,
-   }
-  },
-  {
-   .name = "tprel",
-   .pseudo_relocs =
+    .name = "plt",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 37,
+     .reloc_type = S37_LO10_UP27,
+     .reloc_lo10 = BFD_RELOC_K1_S37_PLT_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S37_PLT_UP27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_signed37_plt_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 37,
-    .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_S37_TPREL_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S37_TPREL_UP27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_signed37_tprel_reloc,
-   }
-  },
-  { /* reusing the tprel64 for 32bits tprel for 'make' insn */
-   .name = "tprel",
-   .pseudo_relocs =
-   {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 43,
-    .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S43_TPREL64_UP27,
-    .reloc_ex = BFD_RELOC_K1_S43_TPREL64_EX6,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_signed43_tprel64_reloc,
-   }
-  },
+    .name = "tprel",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 37,
+     .reloc_type = S37_LO10_UP27,
+     .reloc_lo10 = BFD_RELOC_K1_S37_TPREL_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S37_TPREL_UP27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_signed37_tprel_reloc,
+    }
+   },
+   { /* reusing the tprel64 for 32bits tprel for 'make' insn */
+    .name = "tprel",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 43,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_TPREL64_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_TPREL64_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_signed43_tprel64_reloc,
+    }
+   },
 
-  {
-   .name = "tprel",
-   .pseudo_relocs =
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 32,
-    .reloc_type = S32,
-    .single = BFD_RELOC_K1_TPREL_32,
-    .kreloc = &k1c_tprel_rel32_reloc,
-   }
-  },
-  {
-   .name = "tprel64",
-   .pseudo_relocs =
+    .name = "tprel",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 32,
+     .reloc_type = S32,
+     .single = BFD_RELOC_K1_TPREL_32,
+     .kreloc = &k1c_tprel_rel32_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 43,
-    .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S43_TPREL64_UP27,
-    .reloc_ex = BFD_RELOC_K1_S43_TPREL64_EX6,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_signed43_tprel64_reloc,
-   }
-  },
-  {
-   .name = "tprel64",
-   .pseudo_relocs =
+    .name = "tprel64",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 43,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_TPREL64_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_TPREL64_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_TPREL64_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_signed43_tprel64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 64,
-    .reloc_type = S64_LO10_UP27_EX27,
-    .reloc_lo10 = BFD_RELOC_K1_S64_TPREL64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S64_TPREL64_UP27,
-    .reloc_ex = BFD_RELOC_K1_S64_TPREL64_EX27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_signed64_tprel64_reloc,
-   }
-  },
-  {
-   .name = "tprel64",
-   .pseudo_relocs =
+    .name = "tprel64",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 64,
+     .reloc_type = S64_LO10_UP27_EX27,
+     .reloc_lo10 = BFD_RELOC_K1_S64_TPREL64_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S64_TPREL64_UP27,
+     .reloc_ex = BFD_RELOC_K1_S64_TPREL64_EX27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_signed64_tprel64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 64,
-    .reloc_type = S64,
-    .single = BFD_RELOC_K1_TPREL64_64,
-    .kreloc = &k1c_tprel_rel64_reloc,
-   }
-  },
-  {
-   .name = "gotoff",
-   .pseudo_relocs =
+    .name = "tprel64",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 64,
+     .reloc_type = S64,
+     .single = BFD_RELOC_K1_TPREL64_64,
+     .kreloc = &k1c_tprel_rel64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 43,
-    .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_S43_GOTOFF64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S43_GOTOFF64_UP27,
-    .reloc_ex = BFD_RELOC_K1_S43_GOTOFF64_EX6,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_gotoff_64_reloc,
-   }
-  },
-  {
-   .name = "gotoff",
-   .pseudo_relocs =
+    .name = "gotoff",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 43,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_GOTOFF64_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_GOTOFF64_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_GOTOFF64_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_gotoff_64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 64,
-    .reloc_type = S64,
-    .single = BFD_RELOC_K1_GOTOFF64,
-    .kreloc = &k1c_gotoff64_reloc,
-   }
-  },
-  {
-   .name = "got",
-   .pseudo_relocs =
+    .name = "gotoff",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 64,
+     .reloc_type = S64,
+     .single = BFD_RELOC_K1_GOTOFF64,
+     .kreloc = &k1c_gotoff64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 43,
-    .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_S43_GOT64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S43_GOT64_UP27,
-    .reloc_ex = BFD_RELOC_K1_S43_GOT64_EX6,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_got64_reloc,
-   }
-  },
-  {
-   .name = "got",
-   .pseudo_relocs =
+    .name = "got",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 43,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_GOT64_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_GOT64_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_GOT64_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_got64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 64,
-    .reloc_type = S64,
-    .single = BFD_RELOC_K1_GOT64,
-    .kreloc = &k1c_got64_64_reloc,
-   }
-  },
-  {
-   .name = "plt64",
-   .pseudo_relocs =
+    .name = "got",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 64,
+     .reloc_type = S64,
+     .single = BFD_RELOC_K1_GOT64,
+     .kreloc = &k1c_got64_64_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 43,
-    .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_S43_PLT64_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S43_PLT64_UP27,
-    .reloc_ex = BFD_RELOC_K1_S43_PLT64_EX6,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_signed64_plt_reloc,
-   }
-  },
-  {
-   .name = "gotaddr",
-   .pseudo_relocs =
+    .name = "plt64",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 43,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_PLT64_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_PLT64_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_PLT64_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_signed64_plt_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 37,
-    .has_no_arg = 1,
-    .reloc_type = S37_LO10_UP27,
-    .reloc_lo10 = BFD_RELOC_K1_S37_GOTADDR_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S37_GOTADDR_UP27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_gotaddr37_reloc,
-   }
-  },
-  {
-   .name = "gotaddr",
-   .pseudo_relocs =
+    .name = "gotaddr",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 37,
+     .has_no_arg = 1,
+     .reloc_type = S37_LO10_UP27,
+     .reloc_lo10 = BFD_RELOC_K1_S37_GOTADDR_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S37_GOTADDR_UP27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_gotaddr37_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_32_ONLY,
-    .bitsize = 43,
-    .has_no_arg = 1,
-    .reloc_type = S43_LO10_UP27_EX6,
-    .reloc_lo10 = BFD_RELOC_K1_S43_GOTADDR_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S43_GOTADDR_UP27,
-    .reloc_ex = BFD_RELOC_K1_S43_PLT64_EX6,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_gotaddr43_reloc,
-   }
-    },
-  {
-   .name = "gotaddr",
-   .pseudo_relocs =
+    .name = "gotaddr",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 43,
+     .has_no_arg = 1,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_GOTADDR_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_GOTADDR_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_GOTADDR_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_gotaddr43_reloc,
+    }
+   },
    {
-    .avail_modes = PSEUDO_64_ONLY,
-    .bitsize = 64,
-    .has_no_arg = 1,
-    .reloc_type = S64_LO10_UP27_EX27,
-    .reloc_lo10 = BFD_RELOC_K1_S64_GOTADDR_LO10,
-    .reloc_up27 = BFD_RELOC_K1_S64_GOTADDR_UP27,
-    .reloc_ex = BFD_RELOC_K1_S64_GOTADDR_EX27,
-    .single = BFD_RELOC_UNUSED,
-    .kreloc = &k1c_gotaddr64_reloc,
-   }
-  } 
-};
+    .name = "gotaddr",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 64,
+     .has_no_arg = 1,
+     .reloc_type = S64_LO10_UP27_EX27,
+     .reloc_lo10 = BFD_RELOC_K1_S64_GOTADDR_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S64_GOTADDR_UP27,
+     .reloc_ex = BFD_RELOC_K1_S64_GOTADDR_EX27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_gotaddr64_reloc,
+    }
+   },
+   
+
+   // @pcrel()
+   {
+    // use pcrel16 to force the use of 16bits. This would normally not
+    // be selected as symbol would not fit.
+    .name = "pcrel16",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_ALL,
+     .bitsize = 16,
+     .single = BFD_RELOC_K1_S16_PCREL,
+     .reloc_type = S16,
+     .kreloc = &k1c_pcrel16_reloc,
+    }
+   },
+   {
+    .name = "pcrel",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 37,
+     .reloc_type = S37_LO10_UP27,
+     .reloc_lo10 = BFD_RELOC_K1_S37_PCREL_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S37_PCREL_UP27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_pcrel37_reloc,
+    }
+   },
+   {
+    .name = "pcrel",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_32_ONLY,
+     .bitsize = 43,
+     .reloc_type = S43_LO10_UP27_EX6,
+     .reloc_lo10 = BFD_RELOC_K1_S43_PCREL_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S43_PCREL_UP27,
+     .reloc_ex = BFD_RELOC_K1_S43_PCREL_EX6,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_pcrel43_reloc,
+    }
+   },
+   {
+    .name = "pcrel",
+    .pseudo_relocs =
+    {
+     .avail_modes = PSEUDO_64_ONLY,
+     .bitsize = 64,
+     .reloc_type = S64_LO10_UP27_EX27,
+     .reloc_lo10 = BFD_RELOC_K1_S64_PCREL_LO10,
+     .reloc_up27 = BFD_RELOC_K1_S64_PCREL_UP27,
+     .reloc_ex = BFD_RELOC_K1_S64_PCREL_EX27,
+     .single = BFD_RELOC_UNUSED,
+     .kreloc = &k1c_pcrel_64_reloc,
+    }
+   },   
+  };
 
 /*****************************************************/
 /*          Unwind information                       */
@@ -1375,7 +1433,13 @@ insert_operand(k1insn_t * insn,
               insn->len -= 1;
               incr_immxcnt();
               immx_ready = 1;
-            } else {
+            } else if (pf->pseudo_relocs.reloc_type == S16) {
+              insn->fixup[insn->nfixups].reloc = pf->pseudo_relocs.single;
+              insn->fixup[insn->nfixups].exp = reloc_arg;
+              insn->fixup[insn->nfixups].where = 0;
+              insn->nfixups++;
+
+	    } else {
               as_fatal ("Unexpected fixup");
             }
 
@@ -2557,6 +2621,11 @@ md_begin()
 					&zero_address_frag);
     symbolS *gotaddr_sym = symbol_create (".<gotaddr>", undefined_section, 0,
 					  &zero_address_frag);
+    symbolS *pcrel16_sym = symbol_create (".<pcrel16>", undefined_section, 0,
+					  &zero_address_frag);
+    symbolS *pcrel_sym = symbol_create (".<pcrel>", undefined_section, 0,
+					  &zero_address_frag);
+
 
     for (i = 0; i < NELEMS (pseudo_func); ++i) {
       symbolS *sym;
@@ -2572,6 +2641,10 @@ md_begin()
         sym = tprel64_sym;
       } else if (!strcmp(pseudo_func[i].name, "plt64")) {
 	sym = plt64_sym;
+      } else if (!strcmp(pseudo_func[i].name, "pcrel16")) {
+	sym = pcrel16_sym;
+      } else if (!strcmp(pseudo_func[i].name, "pcrel")) {
+	sym = pcrel_sym;
       } else if (!strcmp(pseudo_func[i].name, "gotaddr")) {
 	sym = gotaddr_sym;
       } else {
@@ -2685,8 +2758,21 @@ md_apply_fix(fixS * fixP, valueT * valueP,
         md_number_to_chars(fixpos, image, fixP->fx_size);
         break;
 
+      case BFD_RELOC_K1_S16_PCREL:
       case BFD_RELOC_K1_17_PCREL:
       case BFD_RELOC_K1_27_PCREL:
+
+      case BFD_RELOC_K1_S64_PCREL_LO10:
+      case BFD_RELOC_K1_S64_PCREL_UP27:
+      case BFD_RELOC_K1_S64_PCREL_EX27:
+
+      case BFD_RELOC_K1_S43_PCREL_LO10:
+      case BFD_RELOC_K1_S43_PCREL_UP27:
+      case BFD_RELOC_K1_S43_PCREL_EX6:
+
+      case BFD_RELOC_K1_S37_PCREL_LO10:
+      case BFD_RELOC_K1_S37_PCREL_UP27:
+
         if (fixP->fx_pcrel || fixP->fx_addsy)
           return;
         value = (((value >> rel->howto->rightshift) << rel->howto->bitpos ) & rel->howto->dst_mask);
