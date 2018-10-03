@@ -9699,7 +9699,7 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fscalewv", {{ 0x07000700, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
-	{"fscalewv.relu", {{ 0x07000780, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+	{"fscalewv..relu", {{ 0x07000780, 0x7f000fc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TCA, ((int)0 << 8) | (int)Reservation_k1c_TCA, {&k1c_registera_opnd, &k1c_registerb_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSCALEWV_xrounding_silent2_rectify_registerA_registerB_simple */
 	{"fsdivd", {{ 0x70035000, 0x7f03f800, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LITE, ((int)0 << 8) | (int)Reservation_k1c_ALU_LITE, {&k1c_registerw_opnd, &k1c_registerp_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-FSDIVD_silent2_registerW_registerP_simple */
