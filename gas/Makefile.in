@@ -1279,13 +1279,6 @@ tc-iq2000.obj: config/tc-iq2000.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-iq2000.obj `if test -f 'config/tc-iq2000.c'; then $(CYGPATH_W) 'config/tc-iq2000.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-iq2000.c'; fi`
 
-tc-lm32.o: config/tc-lm32.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-lm32.o -MD -MP -MF $(DEPDIR)/tc-lm32.Tpo -c -o tc-lm32.o `test -f 'config/tc-lm32.c' || echo '$(srcdir)/'`config/tc-lm32.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-lm32.Tpo $(DEPDIR)/tc-lm32.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-lm32.c' object='tc-lm32.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-lm32.o `test -f 'config/tc-lm32.c' || echo '$(srcdir)/'`config/tc-lm32.c
-
 tc-k1.o: config/tc-k1.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-k1.o -MD -MP -MF $(DEPDIR)/tc-k1.Tpo -c -o tc-k1.o `test -f 'config/tc-k1.c' || echo '$(srcdir)/'`config/tc-k1.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-k1.Tpo $(DEPDIR)/tc-k1.Po
@@ -1298,7 +1291,14 @@ tc-k1.obj: config/tc-k1.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-k1.Tpo $(DEPDIR)/tc-k1.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-k1.c' object='tc-k1.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-k1.obj `if test -f 'config/tc-k1.c'; then $(CYGPATH_W) 'config/tc-k1.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-k1.c'; fi`
 
+tc-lm32.o: config/tc-lm32.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-lm32.o -MD -MP -MF $(DEPDIR)/tc-lm32.Tpo -c -o tc-lm32.o `test -f 'config/tc-lm32.c' || echo '$(srcdir)/'`config/tc-lm32.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-lm32.Tpo $(DEPDIR)/tc-lm32.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-lm32.c' object='tc-lm32.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-lm32.o `test -f 'config/tc-lm32.c' || echo '$(srcdir)/'`config/tc-lm32.c
 
 tc-lm32.obj: config/tc-lm32.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-lm32.obj -MD -MP -MF $(DEPDIR)/tc-lm32.Tpo -c -o tc-lm32.obj `if test -f 'config/tc-lm32.c'; then $(CYGPATH_W) 'config/tc-lm32.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-lm32.c'; fi`

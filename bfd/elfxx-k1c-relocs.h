@@ -107,6 +107,19 @@ static reloc_howto_type elf_k1_howto_table[] =
 	 0x0,				/* src_mask */
 	 0xffffffffffffffff,			/* dst_mask */
 	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S16,			/* type */
+	 0,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 16,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S16",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0xffff,			/* dst_mask */
+	 FALSE),			/* pc_offset */
   HOWTO (R_K1_S32_LO5,			/* type */
 	 0,				/* rightshift */
 	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
@@ -818,6 +831,123 @@ static reloc_howto_type elf_k1_howto_table[] =
 	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,		/* special_function */
 	 "R_K1_S64_GOTADDR_EX27",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0x7ffffff,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S16_PCREL,			/* type */
+	 0,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 16,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S16_PCREL",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0xffff,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S37_PCREL_LO10,			/* type */
+	 0,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 10,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 6,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S37_PCREL_LO10",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0xffc0,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S37_PCREL_UP27,			/* type */
+	 10,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 27,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S37_PCREL_UP27",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0x7ffffff,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S43_PCREL_LO10,			/* type */
+	 0,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 10,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 6,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S43_PCREL_LO10",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0xffc0,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S43_PCREL_UP27,			/* type */
+	 10,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 27,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S43_PCREL_UP27",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0x7ffffff,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S43_PCREL_EX6,			/* type */
+	 37,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 6,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S43_PCREL_EX6",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0x3f,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S64_PCREL_LO10,			/* type */
+	 0,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 10,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 6,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S64_PCREL_LO10",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0xffc0,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S64_PCREL_UP27,			/* type */
+	 10,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 27,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S64_PCREL_UP27",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0,				/* src_mask */
+	 0x7ffffff,			/* dst_mask */
+	 TRUE),			/* pc_offset */
+  HOWTO (R_K1_S64_PCREL_EX27,			/* type */
+	 37,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long, 3 = invalid, 4 = 64bits, 8 = 128bits) */
+	 27,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos (bit field offset) */
+	 complain_overflow_dont,	/* complain_on_overflow */
+	 bfd_elf_generic_reloc,		/* special_function */
+	 "R_K1_S64_PCREL_EX27",			/* name */
 	 FALSE,				/* partial_inplace */
 	 0x0,				/* src_mask */
 	 0x7ffffff,			/* dst_mask */

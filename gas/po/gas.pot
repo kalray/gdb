@@ -984,7 +984,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1958 config/tc-k1.c:3573
+#: config/obj-elf.c:1958 config/tc-k1.c:3662
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -2515,8 +2515,8 @@ msgstr ""
 #: config/tc-h8300.c:100 config/tc-h8300.c:110 config/tc-h8300.c:120
 #: config/tc-h8300.c:131 config/tc-h8300.c:248 config/tc-hppa.c:6834
 #: config/tc-hppa.c:6840 config/tc-hppa.c:6846 config/tc-hppa.c:6852
-#: config/tc-hppa.c:8252 config/tc-k1.c:2428 config/tc-k1.c:2444
-#: config/tc-k1.c:2447 config/tc-lm32.c:197 config/tc-mips.c:3475
+#: config/tc-hppa.c:8252 config/tc-k1.c:2495 config/tc-k1.c:2511
+#: config/tc-k1.c:2514 config/tc-lm32.c:197 config/tc-mips.c:3475
 #: config/tc-mips.c:3985 config/tc-mn10300.c:938 config/tc-mn10300.c:943
 #: config/tc-mn10300.c:2440 config/tc-xc16x.c:79 config/tc-xc16x.c:86
 #: config/tc-xc16x.c:93
@@ -9060,7 +9060,7 @@ msgid "missing `.end'"
 msgstr ""
 
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:3011
+#: config/tc-k1.c:3100
 msgid "floating-point literals are not supported"
 msgstr ""
 
