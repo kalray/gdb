@@ -13156,6 +13156,7 @@ extern k1_reloc_t k1c_pcrel17_reloc;
 extern k1_reloc_t k1c_pcrel27_reloc;
 extern k1_reloc_t k1c_pcrel32_reloc;
 extern k1_reloc_t k1c_pcrel64_reloc;
+extern k1_reloc_t k1c_signed16_reloc;
 extern k1_reloc_t k1c_signed32_reloc;
 extern k1_reloc_t k1c_signed37_reloc;
 extern k1_reloc_t k1c_signed37_tprel_reloc;
@@ -13186,6 +13187,10 @@ extern k1_reloc_t k1c_signed64_tprel64_reloc;
 extern k1_reloc_t k1c_gotaddr37_reloc;
 extern k1_reloc_t k1c_gotaddr43_reloc;
 extern k1_reloc_t k1c_gotaddr64_reloc;
+extern k1_reloc_t k1c_pcrel16_reloc;
+extern k1_reloc_t k1c_pcrel37_reloc;
+extern k1_reloc_t k1c_pcrel43_reloc;
+extern k1_reloc_t k1c_pcrel_64_reloc;
 
 
 #endif /* OPCODE_K1_H */
