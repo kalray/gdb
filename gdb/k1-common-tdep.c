@@ -31,8 +31,8 @@
 #include "opcode/k1c.h"
 #include "k1-common-tdep.h"
 
-#define SCALL_BREAK_JTAG_OVER_ISS 4093
-#define SCALL_BREAK_PL0 4050
+#define __NR_BREAKPOINT_PL0     4050
+#define __NR_BREAKPOINT_JTAGISS 4054
 
 struct k1_frame_cache
 {
@@ -584,10 +584,10 @@ k1_look_for_insns (void)
         if (op->format && op->format[0] && op->format[0]->regs == NULL)
         {
           break_jtag_over_iss[i] = (op->codewords[0].opcode & op->codewords[0].mask) |
-            ((SCALL_BREAK_JTAG_OVER_ISS & ((1 << op->format[0]->bfield->size) - 1))
+            ((__NR_BREAKPOINT_JTAGISS & ((1 << op->format[0]->bfield->size) - 1))
             << op->format[0]->bfield->to_offset);
           break_op[i] = (op->codewords[0].opcode & op->codewords[0].mask) |
-            ((SCALL_BREAK_PL0 & ((1 << op->format[0]->bfield->size) - 1))
+            ((__NR_BREAKPOINT_PL0 & ((1 << op->format[0]->bfield->size) - 1))
             << op->format[0]->bfield->to_offset);
         }
         add_op (&branch_insns[i], op);
