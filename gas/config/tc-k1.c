@@ -523,7 +523,7 @@ static struct pseudo_func_s pseudo_func[] =
     }
    },
    {
-    .name = "tprel64",
+    .name = "tprel",
     .pseudo_relocs =
     {
      .avail_modes = PSEUDO_64_ONLY,
@@ -537,7 +537,7 @@ static struct pseudo_func_s pseudo_func[] =
     }
    },
    {
-    .name = "tprel64",
+    .name = "tprel",
     .pseudo_relocs =
     {
      .avail_modes = PSEUDO_64_ONLY,
@@ -551,7 +551,7 @@ static struct pseudo_func_s pseudo_func[] =
     }
    },
    {
-    .name = "tprel64",
+    .name = "tprel",
     .pseudo_relocs =
     {
      .avail_modes = PSEUDO_64_ONLY,
@@ -2631,8 +2631,6 @@ md_begin()
                                       &zero_address_frag);
     symbolS *tprel_sym = symbol_create (".<tprel>", undefined_section, 0,
                                         &zero_address_frag);
-    symbolS *tprel64_sym = symbol_create (".<tprel64>", undefined_section, 0,
-                                          &zero_address_frag);
     symbolS *plt64_sym = symbol_create (".<plt64>", undefined_section, 0,
 					&zero_address_frag);
     symbolS *gotaddr_sym = symbol_create (".<gotaddr>", undefined_section, 0,
@@ -2653,8 +2651,6 @@ md_begin()
         sym = plt_sym;
       } else if (!strcmp(pseudo_func[i].name, "tprel")) {
         sym = tprel_sym;
-      } else if (!strcmp(pseudo_func[i].name, "tprel64")) {
-        sym = tprel64_sym;
       } else if (!strcmp(pseudo_func[i].name, "plt64")) {
 	sym = plt64_sym;
       } else if (!strcmp(pseudo_func[i].name, "pcrel16")) {
