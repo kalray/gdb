@@ -255,7 +255,7 @@ show_addr_info (uint64_t addr, int mme)
       addr -= cool_addr_map[i].size;
     }
     if (i < ARRAY_SIZE(cool_addr_map))
-      printf ("in %s memory map range", cool_addr_map[i].name);
+      printf (" in %s memory map range", cool_addr_map[i].name);
   }
 }
 
