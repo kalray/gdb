@@ -942,9 +942,9 @@ static int init_k1c_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[112].name = "ocec";
 	dwarf2gdb[113].name = "ocea";
 	dwarf2gdb[114].name = "es";
-	dwarf2gdb[104].name = "ilr";
-	dwarf2gdb[118].name = "mes";
+	dwarf2gdb[115].name = "ilr";
 	dwarf2gdb[117].name = "ws";
+	dwarf2gdb[118].name = "mes";
 	dwarf2gdb[624].name = "a0a1";
 	dwarf2gdb[625].name = "a2a3";
 	dwarf2gdb[626].name = "a4a5";
