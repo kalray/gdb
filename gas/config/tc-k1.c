@@ -2491,7 +2491,7 @@ static void
 k1_set_cpu(void) {
   if (!k1_core_info) {
       k1_core_info = &k1c_core_info;
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c)){
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c)){
         as_warn(_("could not set architecture and machine"));
       }
   }
@@ -2507,10 +2507,10 @@ k1_set_cpu(void) {
   switch(k1_core_info->elf_cores[subcore_id]) {
   case ELF_K1_CORE_C_C:
     if (k1_arch_size == 32) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c))
         as_warn(_("could not set architecture and machine"));
     } else if (k1_arch_size == 64) {
-      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_k1c_64))
+      if (!bfd_set_arch_mach(stdoutput, TARGET_ARCH, bfd_mach_k1c_64))
         as_warn(_("could not set architecture and machine"));
     }
     print_insn = k1c_print_insn;
