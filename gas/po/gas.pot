@@ -984,7 +984,7 @@ msgstr ""
 msgid "symbol type \"%s\" is supported only by GNU targets"
 msgstr ""
 
-#: config/obj-elf.c:1958 config/tc-k1.c:3662
+#: config/obj-elf.c:1958 config/tc-k1.c:3658
 #, c-format
 msgid "unrecognized symbol type \"%s\""
 msgstr ""
@@ -9060,7 +9060,7 @@ msgid "missing `.end'"
 msgstr ""
 
 #. we'll need this for reading floating point constants
-#: config/tc-k1.c:3100
+#: config/tc-k1.c:3096
 msgid "floating-point literals are not supported"
 msgstr ""
 
