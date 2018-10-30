@@ -413,6 +413,9 @@
 
 /* See the above comment before you add a new EM_* value here.  */
 
+/* Kalray K1 */
+#define EM_K1                   0x1337
+
 /* Values for e_version.  */
 
 #define EV_NONE		0		/* Invalid ELF version */

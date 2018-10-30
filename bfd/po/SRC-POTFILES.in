@@ -89,6 +89,7 @@ cpu-ia64.c
 cpu-iamcu.c
 cpu-ip2k.c
 cpu-iq2000.c
+cpu-k1.c
 cpu-k1om.c
 cpu-l1om.c
 cpu-lm32.c
@@ -253,6 +254,8 @@ elflink.c
 elfn32-mips.c
 elfxx-aarch64.c
 elfxx-ia64.c
+elfxx-k1.c
+elfxx-k1.c
 elfxx-mips.c
 elfxx-sparc.c
 elfxx-tilegx.c

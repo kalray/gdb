@@ -2310,6 +2310,10 @@ enum bfd_architecture
   bfd_arch_lm32,      /* Lattice Mico32 */
 #define bfd_mach_lm32      1
   bfd_arch_microblaze,/* Xilinx MicroBlaze. */
+  bfd_arch_k1,        /* Kalray k1 */
+#define bfd_mach_k1c                0
+#define bfd_mach_k1c_64             1
+#define bfd_mach_k1c_usr            2
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -5707,6 +5711,96 @@ to two words (uses imm instruction).  */
 /* This is a 64 bit reloc that stores 32-bit thread pointer relative offset
 to two words (uses imm instruction).  */
   BFD_RELOC_MICROBLAZE_64_TLSTPREL,
+
+/* K1 pseudo relocation code to mark the start of the K1
+relocation enumerators.  N.B. the order of the enumerators is
+important as several tables in the K1 bfd backend are indexed
+by these enumerators; make sure they are all synced.";  */
+  BFD_RELOC_K1_RELOC_START,
+
+/* K1 null relocation code.  */
+  BFD_RELOC_K1_NONE,
+
+/* K1 Relocations.  */
+  BFD_RELOC_K1_16,
+  BFD_RELOC_K1_32,
+  BFD_RELOC_K1_64,
+  BFD_RELOC_K1_17_PCREL,
+  BFD_RELOC_K1_27_PCREL,
+  BFD_RELOC_K1_32_PCREL,
+  BFD_RELOC_K1_64_PCREL,
+  BFD_RELOC_K1_S16,
+  BFD_RELOC_K1_S32_LO5,
+  BFD_RELOC_K1_S32_UP27,
+  BFD_RELOC_K1_S37_LO10,
+  BFD_RELOC_K1_S37_UP27,
+  BFD_RELOC_K1_S37_TPREL_LO10,
+  BFD_RELOC_K1_S37_TPREL_UP27,
+  BFD_RELOC_K1_TPREL_32,
+  BFD_RELOC_K1_TPREL64_64,
+  BFD_RELOC_K1_S37_GOTOFF_LO10,
+  BFD_RELOC_K1_S37_GOTOFF_UP27,
+  BFD_RELOC_K1_S43_GOTOFF64_LO10,
+  BFD_RELOC_K1_S43_GOTOFF64_UP27,
+  BFD_RELOC_K1_S43_GOTOFF64_EX6,
+  BFD_RELOC_K1_S37_GOT_LO10,
+  BFD_RELOC_K1_S37_GOT_UP27,
+  BFD_RELOC_K1_GLOB_DAT,
+  BFD_RELOC_K1_GLOB_DAT64,
+  BFD_RELOC_K1_S37_PLT_LO10,
+  BFD_RELOC_K1_S37_PLT_UP27,
+  BFD_RELOC_K1_GOTOFF,
+  BFD_RELOC_K1_GOTOFF64,
+  BFD_RELOC_K1_GOT,
+  BFD_RELOC_K1_GOT64,
+  BFD_RELOC_K1_COPY,
+  BFD_RELOC_K1_COPY64,
+  BFD_RELOC_K1_JMP_SLOT,
+  BFD_RELOC_K1_JMP_SLOT64,
+  BFD_RELOC_K1_RELATIVE,
+  BFD_RELOC_K1_RELATIVE64,
+  BFD_RELOC_K1_S43_LO10,
+  BFD_RELOC_K1_S43_UP27,
+  BFD_RELOC_K1_S43_EX6,
+  BFD_RELOC_K1_S43_TPREL64_LO10,
+  BFD_RELOC_K1_S43_TPREL64_UP27,
+  BFD_RELOC_K1_S43_TPREL64_EX6,
+  BFD_RELOC_K1_S43_GOT64_LO10,
+  BFD_RELOC_K1_S43_GOT64_UP27,
+  BFD_RELOC_K1_S43_GOT64_EX6,
+  BFD_RELOC_K1_S43_PLT64_LO10,
+  BFD_RELOC_K1_S43_PLT64_UP27,
+  BFD_RELOC_K1_S43_PLT64_EX6,
+  BFD_RELOC_K1_S64_LO10,
+  BFD_RELOC_K1_S64_UP27,
+  BFD_RELOC_K1_S64_EX27,
+  BFD_RELOC_K1_S64_TPREL64_LO10,
+  BFD_RELOC_K1_S64_TPREL64_UP27,
+  BFD_RELOC_K1_S64_TPREL64_EX27,
+  BFD_RELOC_K1_S37_GOTADDR_LO10,
+  BFD_RELOC_K1_S37_GOTADDR_UP27,
+  BFD_RELOC_K1_S43_GOTADDR_LO10,
+  BFD_RELOC_K1_S43_GOTADDR_UP27,
+  BFD_RELOC_K1_S43_GOTADDR_EX6,
+  BFD_RELOC_K1_S64_GOTADDR_LO10,
+  BFD_RELOC_K1_S64_GOTADDR_UP27,
+  BFD_RELOC_K1_S64_GOTADDR_EX27,
+  BFD_RELOC_K1_S16_PCREL,
+  BFD_RELOC_K1_S37_PCREL_LO10,
+  BFD_RELOC_K1_S37_PCREL_UP27,
+  BFD_RELOC_K1_S43_PCREL_LO10,
+  BFD_RELOC_K1_S43_PCREL_UP27,
+  BFD_RELOC_K1_S43_PCREL_EX6,
+  BFD_RELOC_K1_S64_PCREL_LO10,
+  BFD_RELOC_K1_S64_PCREL_UP27,
+  BFD_RELOC_K1_S64_PCREL_EX27,
+
+/* K1 pseudo relocation code to mark the end of the K1
+relocation enumerators that have direct mapping to ELF reloc codes.
+There are a few more enumerators after this one; those are mainly
+used by the K1 assembler for the internal fixup or to select
+one of the above enumerators.  */
+  BFD_RELOC_K1_RELOC_END,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is
