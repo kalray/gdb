@@ -292,6 +292,8 @@ static void disable_trace_command (char *, int);
 
 static void trace_pass_command (char *, int);
 
+static void bp_location_target_extensions_update (void);
+
 static void set_tracepoint_count (int num);
 
 static int is_masked_watchpoint (const struct breakpoint *b);
@@ -3206,6 +3208,8 @@ You may have requested too many hardware breakpoints/watchpoints.\n");
       error_stream (tmp_error_stream);
     }
 
+  bp_location_target_extensions_update ();
+
   do_cleanups (cleanups);
 }
 
@@ -3493,16 +3497,20 @@ create_overlay_event_breakpoint (void)
 static void
 create_longjmp_master_breakpoint (void)
 {
-  struct program_space *pspace;
+  // K1: called by breakpoint_re_set who says:
+  // Re-set breakpoint locations for the current program space ONLY!
+  // Why the ALL_PSPACES iteration?
+  // we cannot access memory of other inferiors while running
+  // K1 struct program_space *pspace;
   struct cleanup *old_chain;
 
   old_chain = save_current_program_space ();
 
-  ALL_PSPACES (pspace)
+  // K1 ALL_PSPACES (pspace)
   {
     struct objfile *objfile;
 
-    set_current_program_space (pspace);
+    // K1 set_current_program_space (pspace);
 
     ALL_OBJFILES (objfile)
     {
@@ -3609,18 +3617,22 @@ create_longjmp_master_breakpoint (void)
 static void
 create_std_terminate_master_breakpoint (void)
 {
-  struct program_space *pspace;
+  // K1: called by breakpoint_re_set who says:
+  // Re-set breakpoint locations for the current program space ONLY!
+  // Why the ALL_PSPACES iteration?
+  // we cannot access memory of other inferiors while running
+  // K1 struct program_space *pspace;
   struct cleanup *old_chain;
   const char *const func_name = "std::terminate()";
 
   old_chain = save_current_program_space ();
 
-  ALL_PSPACES (pspace)
+  // K1 ALL_PSPACES (pspace)
   {
     struct objfile *objfile;
     CORE_ADDR addr;
 
-    set_current_program_space (pspace);
+    // K1 set_current_program_space (pspace);
 
     ALL_OBJFILES (objfile)
     {
@@ -9017,9 +9029,15 @@ add_location_to_breakpoint (struct breakpoint *b,
   struct bp_location *loc, **tmp;
   CORE_ADDR adjusted_address;
   struct gdbarch *loc_gdbarch = get_sal_arch (*sal);
+  struct cleanup *cleanup = NULL;
 
   if (loc_gdbarch == NULL)
     loc_gdbarch = b->gdbarch;
+
+  // adjust_breakpoint_address may call target_read_memory. Make sure that it is called from the correct context
+  cleanup = save_current_space_and_thread ();
+  if (sal && sal->pspace)
+    switch_to_program_space_and_thread (sal->pspace);
 
   /* Adjust the breakpoint's address prior to allocating a location.
      Once we call allocate_bp_location(), that mostly uninitialized
@@ -9029,6 +9047,8 @@ add_location_to_breakpoint (struct breakpoint *b,
      location that's only been partially initialized.  */
   adjusted_address = adjust_breakpoint_address (loc_gdbarch,
 						sal->pc, b->type);
+  if (cleanup)
+    do_cleanups (cleanup);
 
   /* Sort the locations by their ADDRESS.  */
   loc = allocate_bp_location (b);

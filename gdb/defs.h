@@ -592,7 +592,7 @@ extern double atof (const char *);	/* X3.159-1989  4.10.1.1 */
 /* * Maximum size of a register.  Something small, but large enough for
    all known ISAs.  If it turns out to be too small, make it bigger.  */
 
-enum { MAX_REGISTER_SIZE = 64 };
+enum { MAX_REGISTER_SIZE = 128 };
 
 /* In findvar.c.  */
 

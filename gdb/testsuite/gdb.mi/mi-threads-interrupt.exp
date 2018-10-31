@@ -16,6 +16,13 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
+# K1: does not compile (pthread_barrier_t)
+if [istarget k1*-*-*] then {
+  unsupported "mi-threads-interrupt.exp"
+  return 1
+}
+
+
 standard_testfile
 
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable {debug}] != "" } {

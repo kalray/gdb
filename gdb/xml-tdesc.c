@@ -367,7 +367,8 @@ tdesc_start_field (struct gdb_xml_parser *parser,
 
 	  if (end >= data->current_type_size * TARGET_CHAR_BIT)
 	    gdb_xml_error (parser,
-			   _("Bitfield \"%s\" does not fit in struct"));
+			   _("Bitfield \"%s\" does not fit in struct"),
+			   field_name);
 
 	  tdesc_add_bitfield (t, field_name, start, end);
 	}

@@ -8050,6 +8050,9 @@ print_stop_event (struct ui_out *uiout)
 
   do_cleanups (old_chain);
 
+  if (ptid_equal (inferior_ptid, null_ptid))
+    return;
+
   tp = inferior_thread ();
   if (tp->thread_fsm != NULL
       && thread_fsm_finished_p (tp->thread_fsm))

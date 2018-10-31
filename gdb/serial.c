@@ -46,7 +46,8 @@ static struct serial *scb_base;
 static char *serial_logfile = NULL;
 static struct ui_file *serial_logfp = NULL;
 
-static const struct serial_ops *serial_interface_lookup (const char *);
+/* K1 specific: used in k1-linux-tdep.c */
+/*static*/ const struct serial_ops *serial_interface_lookup (const char *);
 static void serial_logchar (struct ui_file *stream,
 			    int ch_type, int ch, int timeout);
 static const char logbase_hex[] = "hex";
@@ -145,7 +146,8 @@ serial_log_command (struct target_ops *self, const char *cmd)
 }
 
 
-static const struct serial_ops *
+/* K1 specific: used in k1-linux-tdep.c */
+/*static*/ const struct serial_ops *
 serial_interface_lookup (const char *name)
 {
   const struct serial_ops *ops;

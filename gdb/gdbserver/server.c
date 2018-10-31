@@ -572,6 +572,18 @@ handle_btrace_conf_general_set (char *own_buf)
 static void
 handle_general_set (char *own_buf)
 {
+  // K1: debug spawned
+  #ifdef __k1__
+  {
+    extern void custom_k1_command (char *own_buf);
+    if (startswith (own_buf, "Qk1."))
+    {
+      custom_k1_command (own_buf);
+      return;
+    }
+  }
+  #endif
+
   if (startswith (own_buf, "QPassSignals:"))
     {
       int numsigs = (int) GDB_SIGNAL_LAST, i;
@@ -1880,6 +1892,8 @@ handle_qxfer (char *own_buf, int packet_len, int *new_packet_len_p)
 		  write_enn (own_buf);
 		  return 1;
 		}
+
+	      len = 250; /* K1: workaround TTY bug T2265 */
 
 	      /* Read one extra byte, as an indicator of whether there is
 		 more.  */
@@ -3604,6 +3618,17 @@ captured_main (int argc, char *argv[])
       exit (1);
     }
 
+  // K1 specific
+  #ifdef __k1__
+  if (!getenv ("NO_MUX"))
+  {
+    extern int mux_open_host_connection (char **name);
+    run_once = 1;
+    if (mux_open_host_connection (&port))
+      exit (1);
+  }
+  #endif
+
   /* Remember stdio descriptors.  LISTEN_DESC must not be listed, it will be
      opened by remote_prepare.  */
   notice_open_fds ();
@@ -3888,6 +3913,13 @@ process_serial_event (void)
   unsigned char sig;
   int packet_len;
   int new_packet_len = -1;
+
+  /* Used to decide when gdbserver should exit in
+     multi-mode/remote.  */
+  static int have_ran = 0;
+
+  if (!have_ran)
+    have_ran = target_running ();
 
   disable_async_io ();
 
@@ -4328,6 +4360,21 @@ process_serial_event (void)
     putpkt (own_buf);
 
   response_needed = 0;
+
+  if (!extended_protocol && have_ran && !target_running ())
+    {
+      /* In non-stop, defer exiting until GDB had a chance to query
+	 the whole vStopped list (until it gets an OK).  */
+      if (QUEUE_is_empty (notif_event_p, notif_stop.queue))
+	{
+	  /* Be transparent when GDB is connected through stdio -- no
+	     need to spam GDB's console.  */
+	  if (!remote_connection_is_stdio ())
+	    fprintf (stderr, "GDBserver exiting\n");
+	  remote_close ();
+	  exit (0);
+	}
+    }
 
   if (exit_requested)
     return -1;

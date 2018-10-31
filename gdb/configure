@@ -2826,6 +2826,11 @@ fi
 
 
 
+
+cat >>confdefs.h <<_ACEOF
+#define KALRAY_VERSION "$KALRAY_VERSION"
+_ACEOF
+
 # Set the 'development' global.
 . $srcdir/../bfd/development.sh
 
