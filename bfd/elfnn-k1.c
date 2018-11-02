@@ -307,20 +307,21 @@ elfNN_k1_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    section.  */
 #define ELF_DYNAMIC_INTERPRETER     "/lib/ld.so.1"
 
-/* FIXME K1 NEW */
-/* This must be changed if we want to use the stub mecanism */
-/* It should be disabled ATM */
-#define K1_MAX_FWD_BRANCH_OFFSET \
-  (((1 << 25) - 1) << 2)
-#define K1_MAX_BWD_BRANCH_OFFSET \
-  (-((1 << 25) << 2))
 
+
+#define K1_MAX_FWD_CALL_OFFSET \
+  (((1 << (27+2)) - 1) << 2)
+#define K1_MAX_BWD_CALL_OFFSET \
+  (-((1 << (27+2)) << 2))
+
+/* Check that the destination of the call is within the PCREL27
+   range. */
 static int
-k1_valid_branch_p (bfd_vma value, bfd_vma place)
+k1_valid_call_p (bfd_vma value, bfd_vma place)
 {
   bfd_signed_vma offset = (bfd_signed_vma) (value - place);
-  return (offset <= K1_MAX_FWD_BRANCH_OFFSET
-	  && offset >= K1_MAX_BWD_BRANCH_OFFSET);
+  return (offset <= K1_MAX_FWD_CALL_OFFSET
+	  && offset >= K1_MAX_BWD_CALL_OFFSET);
 }
 
 /* Section name for stubs is the associated section name plus this
@@ -1624,18 +1625,31 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 	  {
 	    /* Check if a stub has to be inserted because the destination
 	       is too far away.  */
-	    if (! k1_valid_branch_p (value, place))
+	    if (! k1_valid_call_p (value, place))
 	      {
-		/* The target is out of reach, so redirect the branch to
-		   the local stub for this function.  */
-		struct elf_k1_stub_hash_entry *stub_entry;
-		stub_entry = elfNN_k1_get_stub_entry (input_section,
-							   sym_sec, h,
-							   rel, globals);
-		if (stub_entry != NULL)
-		  value = (stub_entry->stub_offset
-			   + stub_entry->stub_sec->output_offset
-			   + stub_entry->stub_sec->output_section->vma);
+		const char *name;
+		if (h && h->root.root.string)
+		  name = h->root.root.string;
+		else
+		  name = bfd_elf_sym_name (input_bfd, symtab_hdr, sym,
+					   NULL);
+
+		(*_bfd_error_handler)
+		  (_("%B: invalid branch to `%s' at 0x%lx in section `%A'."),
+		   input_bfd, input_section, name, rel->r_offset);
+		return bfd_reloc_notsupported;
+
+		/* Disabled stub handling */
+		/* /\* The target is out of reach, so redirect the branch to */
+		/*    the local stub for this function.  *\/ */
+		/* struct elf_k1_stub_hash_entry *stub_entry; */
+		/* stub_entry = elfNN_k1_get_stub_entry (input_section, */
+		/* 					   sym_sec, h, */
+		/* 					   rel, globals); */
+		/* if (stub_entry != NULL) */
+		/*   value = (stub_entry->stub_offset */
+		/* 	   + stub_entry->stub_sec->output_offset */
+		/* 	   + stub_entry->stub_sec->output_section->vma); */
 	      }
 	  }
       }
