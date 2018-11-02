@@ -136,12 +136,9 @@ END_RELOC_NUMBERS (R_K1_end)
 #define ELF_K1_CORE_C_C (ELF_K1_CORE_C)
 
 /* Last bit in byte used for 64bits addressing */
-#define ELF_K1_CORE_ADDR64_MASK (0x80<<ELF_K1_CORE_BIT)
 #define ELF_K1_IS_K1C (((flags) & ELF_K1_CORE_C) == ELF_K1_CORE_C)
 
 #define ELF_K1_CHECK_CORE(flags,m) (((flags) & ELF_K1_CORE_MASK)==(m))
-
-#define ELF_K1_CHECK_ADDR64(flags) (((flags) & ELF_K1_CORE_ADDR64_MASK))
 
 /* (pp) cut */
 #define _ELF_K1_CUT_BIT (16)                             /* 1st bit position in
