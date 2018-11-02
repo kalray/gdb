@@ -3437,10 +3437,6 @@ k1_end(void)
     /* (pp) the flags must be set at once */
     newflags = k1_core | k1_cut | k1_abi | k1_pic_flags;
 
-    if (k1_arch_size == 64) {
-      newflags |= ELF_K1_CORE_ADDR64_MASK;
-    }
-
     bfd_set_private_flags(stdoutput, newflags);
 
     i_ehdrp = elf_elfheader(stdoutput);

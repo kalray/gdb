@@ -2549,9 +2549,11 @@ elfNN_k1_object_p (bfd *abfd)
 
   if (elf_elfheader (abfd)->e_machine == EM_K1)
     {
-      int e_core = elf_elfheader (abfd)->e_flags & K1_CORE_MASK;
-      if (ELF_K1_CHECK_ADDR64(e_core))
-	e_set = bfd_mach_k1c_64;
+#if ARCH_SIZE == 64
+      e_set = bfd_mach_k1c_64;
+#else
+      e_set = bfd_mach_k1c;
+#endif
     }
   return bfd_default_set_arch_mach (abfd, bfd_arch_k1, e_set);
     
