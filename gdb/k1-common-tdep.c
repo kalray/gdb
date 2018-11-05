@@ -165,12 +165,11 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 
     for (ops_idx = 0; ops_idx < NUM_INSN_LISTS; ++ops_idx)
     {
-      ops = (*prologue_insns)[ops_idx].ops;
-      while (ops)
+      for (ops = (*prologue_insns)[ops_idx].ops; ops; ops = ops->next)
       {
         k1opc_t *op = ops->op;
         if ((syllab & op->codewords[0].mask) != op->codewords[0].opcode)
-          goto next;
+          continue;
 
         if (strcmp (op->as_op, "make") == 0)
         {
@@ -181,12 +180,11 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
         }
         else if (has_make && i == 1)
         {
-          if (strcmp (op->as_op, "sbf")) return 0;
+          if (strcmp (op->as_op, "sbfd"))
+            return 0;
         }
         else if (has_make)
-        {
           return 0;
-        }
 
         if ((*prologue_insns)[ops_idx].sp_idx < 0)
         {
@@ -199,8 +197,6 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
         reg = (syllab >> bfield->to_offset) & ((1 << bfield->size) - 1);
         if (reg == gdbarch_sp_regnum (gdbarch))
           return 1;
-      next:
-        ops = ops->next;
       }
     }
   } while (0);
@@ -209,21 +205,17 @@ k1_has_create_stack_frame (struct gdbarch *gdbarch, CORE_ADDR addr)
 }
 
 /* Return PC of first real instruction.  */
-
-/* This function is nearly cmopletely copied from
-   symtab.c:skip_prologue_using_lineinfo (excpet the test in the loop
-   at the end. */
+/* This function is nearly completely copied from symtab.c:skip_prologue_using_lineinfo
+ * (expect the test in the loop at the end.
+ */
 CORE_ADDR
 k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 {
   CORE_ADDR func_start, func_end;
   struct linetable *l;
-  int ind, i, len;
-  int best_lineno = 0;
-  CORE_ADDR best_pc = func_addr;
   struct symtab_and_line sal;
   struct compunit_symtab *cust;
-  int gcc_compiled = 0;
+  int ind, i, gcc_compiled = 0;
 
   sal = find_pc_line (func_addr, 0);
   if (sal.symtab == NULL)
@@ -292,13 +284,10 @@ k1_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 /* Given a GDB frame, determine the address of the calling function's
    frame.  This will be used to create a new GDB frame struct.  */
 static void
-k1_frame_this_id (struct frame_info *this_frame,
-  void **this_prologue_cache, struct frame_id *this_id)
+k1_frame_this_id (struct frame_info *this_frame, void **this_prologue_cache, struct frame_id *this_id)
 {
   if (get_frame_func (this_frame) == get_frame_pc (this_frame))
-  {
-    *this_id = frame_id_build (get_frame_sp (this_frame) - 16, get_frame_func (this_frame));
-  }
+    *this_id = frame_id_build (get_frame_sp (this_frame), get_frame_func (this_frame));
 }
 
 /* Get the value of register regnum in the previous stack frame.  */
@@ -337,10 +326,7 @@ k1_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
   if (regnum == gdbarch_pc_regnum (gdbarch))
     reg->how = DWARF2_FRAME_REG_RA;
   else if (regnum == gdbarch_sp_regnum (gdbarch))
-  {
-    reg->how = DWARF2_FRAME_REG_CFA_OFFSET;
-    reg->loc.offset = -16; /* Scratch area */
-  }
+    reg->how = DWARF2_FRAME_REG_CFA;
 }
 
 int
@@ -369,14 +355,14 @@ k1_print_insn (bfd_vma pc, disassemble_info *di)
 static CORE_ADDR
 k1_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
-  return addr - addr % 8;
+  return addr - addr % 16;
 }
 
 struct frame_id
 k1_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, gdbarch_sp_regnum (gdbarch));
-  return frame_id_build (sp + 16, get_frame_pc (this_frame));
+  return frame_id_build (sp, get_frame_pc (this_frame));
 }
 
 CORE_ADDR
@@ -384,45 +370,39 @@ k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function, struct regc
   CORE_ADDR bp_addr, int nargs, struct value **args, CORE_ADDR sp, int struct_return, CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  CORE_ADDR orig_sp = sp;
-  int i, j;
-  const gdb_byte *val;
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   gdb_byte *argslotsbuf = NULL;
   unsigned int argslotsnb = 0;
-  int len;
+  int i, len;
   int r0_regnum = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
+  int gpr_reg_sz = register_size (gdbarch, 0);
+  const int params_regs = 12;
 
   /* Allocate arguments to the virtual argument slots  */
   for (i = 0; i < nargs; i++)
   {
     int typelen = TYPE_LENGTH (value_enclosing_type (args[i]));
-    int newslots = (typelen + 3) / 4;
-    if (typelen > 4 && argslotsnb & 1)
+    int newslots = (typelen + gpr_reg_sz - 1) / gpr_reg_sz;
+
+    if (gpr_reg_sz == 4 && typelen > 4 && argslotsnb & 1)
       ++argslotsnb;
-    argslotsbuf = xrealloc (argslotsbuf, (argslotsnb + newslots)*4);
-    memset (&argslotsbuf[argslotsnb * 4], 0, newslots * 4);
-    memcpy (&argslotsbuf[argslotsnb * 4], value_contents (args[i]), typelen);
+
+    argslotsbuf = xrealloc (argslotsbuf, (argslotsnb + newslots) * gpr_reg_sz);
+    memset (&argslotsbuf[argslotsnb * gpr_reg_sz], 0, newslots * gpr_reg_sz);
+    memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz], value_contents (args[i]), typelen);
     argslotsnb += newslots;
   }
 
-  for (i = 0; i < (argslotsnb > 8 ? 8 : argslotsnb); i++)
-    regcache_cooked_write (regcache, i + r0_regnum, &argslotsbuf[i * 4]);
+  for (i = 0; i < (argslotsnb > params_regs ? params_regs : argslotsnb); i++)
+    regcache_cooked_write (regcache, i + r0_regnum, &argslotsbuf[i * gpr_reg_sz]);
 
   sp = k1_frame_align (gdbarch, sp);
-  len = argslotsnb - 8;
+  len = argslotsnb - params_regs;
   if (len > 0)
   {
-    /* Align stack correctly and copy args there */
-    if (argslotsnb & 0x1)
-      sp -= 4;
-
-    sp -= len * 4;
-    write_memory (sp, argslotsbuf + 8 * 4, len * 4);
+    sp -= len * gpr_reg_sz;
+    write_memory (sp, argslotsbuf +  params_regs * gpr_reg_sz, len * gpr_reg_sz);
   }
-
-  /* Scratch area */
-  sp -= 16;
 
   if (struct_return)
     regcache_cooked_write_unsigned (regcache, r0_regnum + 15, struct_addr);
@@ -430,7 +410,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function, struct regc
   regcache_cooked_write_unsigned (regcache, gdbarch_sp_regnum (gdbarch), sp);
   regcache_cooked_write_unsigned (regcache, tdep->ra_regnum, bp_addr);
 
-  return sp + 16;
+  return sp;
 }
 
 static void
@@ -537,32 +517,26 @@ k1_look_for_insns (void)
 
     while (op->as_op[0])
     {
-      if (strcmp ("add", op->as_op) == 0)
+      if (strcmp ("addd", op->as_op) == 0)
       {
         add_op (&sp_adjust_insns[i], op);
         add_op (&prologue_helper_insns[i], op);
       }
-      else if (strcmp ("sbf", op->as_op) == 0)
+      else if (strcmp ("sbfd", op->as_op) == 0)
         add_op (&sp_adjust_insns[i], op);
-      else if (strcmp ("swm", op->as_op) == 0)
-        add_op (&sp_store_insns[i], op);
-      else if (strcmp ("sdm", op->as_op) == 0)
-        add_op (&sp_store_insns[i], op);
-      else if (strcmp ("shm", op->as_op) == 0)
-        add_op (&sp_store_insns[i], op);
-      else if (strcmp ("sb", op->as_op) == 0)
-        add_op (&sp_store_insns[i], op);
-      else if (strcmp ("sh", op->as_op) == 0)
-        add_op (&sp_store_insns[i], op);
+      else if (strcmp ("sbfw", op->as_op) == 0)
+        add_op (&sp_adjust_insns[i], op);
       else if (strcmp ("sw", op->as_op) == 0)
         add_op (&sp_store_insns[i], op);
       else if (strcmp ("sd", op->as_op) == 0)
         add_op (&sp_store_insns[i], op);
       else if (strcmp ("make", op->as_op) == 0)
         add_op (&prologue_helper_insns[i], op);
-      else if (strcmp ("sxb", op->as_op) == 0)
+      else if (strcmp ("sxbd", op->as_op) == 0)
         add_op (&prologue_helper_insns[i], op);
-      else if (strcmp ("sxh", op->as_op) == 0)
+      else if (strcmp ("sxhd", op->as_op) == 0)
+        add_op (&prologue_helper_insns[i], op);
+      else if (strcmp ("sxwd", op->as_op) == 0)
         add_op (&prologue_helper_insns[i], op);
       else if (strcmp ("extfz", op->as_op) == 0)
         add_op (&prologue_helper_insns[i], op);
