@@ -328,10 +328,10 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
 
   switch (info->mach) {
 
-    case bfd_mach_k1c_k1c_64:
+    case bfd_mach_k1c_64:
       k1_arch_size = 64;
-    case bfd_mach_k1c_k1c_usr:
-    case bfd_mach_k1c_k1c:
+    case bfd_mach_k1c_usr:
+    case bfd_mach_k1c:
       opc_table = k1c_k1optab;
       k1_regfiles = k1_k1c_regfiles;
       k1_registers = k1_k1c_registers;

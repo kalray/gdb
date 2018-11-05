@@ -1,5 +1,5 @@
 ARCH=k1
-MACHINE=
+MACHINE=k1c:64
 
 # bundle with 1 nop insn
 NOP=0x7f03f000

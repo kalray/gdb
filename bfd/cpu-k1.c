@@ -11,28 +11,19 @@
 */
 
 static const bfd_arch_info_type *
-compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
+k1_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 {
   long amach =  a->mach, bmach =  b->mach;
   /* If a & b are for different architecture we can do nothing.  */
   if (a->arch != b->arch)
-      return NULL;
+    return NULL;
+
+  /* We do not want to transmute some machine into another one */
+  if (amach != bmach)
+    return NULL;
 
   /* If a & b are for the same machine then all is well.  */
   if (amach == bmach)
-    return a;
-
-  if ((amach == bfd_mach_k1c_k1c && bmach == bfd_mach_k1c_k1c_usr))
-    return b;
-  if ((bmach == bfd_mach_k1c_k1c && amach == bfd_mach_k1c_k1c_usr))
-    return a;
-
-  /* Otherwise if either a or b is the 'default' machine
-     then it can be polymorphed into the other.  */
-  if (a->the_default)
-    return b;
-
-  if (b->the_default)
     return a;
 
   return NULL;
@@ -45,9 +36,9 @@ static struct
 }
 processors[] =
 {
-  { bfd_mach_k1c_k1c, "k1c" },
-  { bfd_mach_k1c_k1c_64, "k1c_64" },
-  { bfd_mach_k1c_k1c_usr, "k1c_usr"},
+  { bfd_mach_k1c, "k1c" },
+  { bfd_mach_k1c_64, "k1c_64" },
+  { bfd_mach_k1c_usr, "k1c_usr"},
 };
 
 static bfd_boolean
@@ -87,19 +78,17 @@ scan (const struct bfd_arch_info *info, const char *string)
   print,                       /* Printable name.  */          \
   4,                           /* Section align power.  */     \
   default,                     /* Is this the default ?  */    \
-  compatible,                                                  \
+  k1_compatible,                                      \
   scan,                                                        \
   bfd_arch_default_fill,                                       \
   next                                                         \
 }
- 
-static const bfd_arch_info_type arch_info_struct[] =
-{
-  N (32, bfd_mach_k1c_k1c,      "k1:k1c",     FALSE, & arch_info_struct[1]),
-  N (64, bfd_mach_k1c_k1c_64,   "k1:k1c:64",  FALSE, & arch_info_struct[2]),
-  N (32, bfd_mach_k1c_k1c_usr,  "k1:k1c:usr", FALSE, NULL),
-};
 
-/* default must be coherent with default in elfNN_k1_object_p() */
+const bfd_arch_info_type bfd_k1_usr_arch =
+  N (32, bfd_mach_k1c_usr,  "k1:k1c:usr", FALSE, NULL);
+
+const bfd_arch_info_type bfd_k1_64_arch =
+  N (64, bfd_mach_k1c_64,   "k1:k1c:64",  FALSE, & bfd_k1_usr_arch);
+
 const bfd_arch_info_type bfd_k1_arch =
-  N (32, bfd_mach_k1c_k1c, "k1c", TRUE, & arch_info_struct[0]);
+  N (32, bfd_mach_k1c,      "k1:k1c",     TRUE, & bfd_k1_64_arch);
