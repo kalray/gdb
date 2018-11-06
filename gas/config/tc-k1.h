@@ -19,8 +19,9 @@
 
 #define TC_K1
 #define TARGET_ARCH bfd_arch_k1
-// #define TARGET_FORMAT "elf64-k1"
 
+#define K1C_RA_REGNO (73)
+#define K1C_SP_REGNO (12)
 
 extern const char * k1_target_format (void);
 #define TARGET_FORMAT k1_target_format ()
@@ -165,11 +166,13 @@ extern void k1_cons_fix_new (fragS *f, int where, int nbytes,
 #define TARGET_USE_CFIPOP 1
 extern void k1_cfi_frame_initial_instructions (void);
 
+#define tc_cfi_frame_initial_instructions k1_cfi_frame_initial_instructions
+
 #define tc_regname_to_dw2regnum k1_regname_to_dw2regnum
 extern int k1_regname_to_dw2regnum (const char *regname);
 
 /* All K1 instructions are multiples of 32 bits.  */
 #define DWARF2_LINE_MIN_INSN_LENGTH 1
-#define DWARF2_DEFAULT_RETURN_COLUMN 73
+#define DWARF2_DEFAULT_RETURN_COLUMN (K1C_RA_REGNO)
 #define DWARF2_CIE_DATA_ALIGNMENT -4
 #endif

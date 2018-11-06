@@ -4204,6 +4204,12 @@ print_operand(expressionS * e, FILE * out)
     }
 }
 
+void
+k1_cfi_frame_initial_instructions(void)
+{
+  cfi_add_CFA_def_cfa (K1C_SP_REGNO, 0);
+}
+
 int
 k1_regname_to_dw2regnum(const char *regname)
 {
