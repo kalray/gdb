@@ -25,18 +25,6 @@ k1_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   return NULL;
 }
 
-static struct
-{
-  unsigned int mach;
-  char *       name;
-}
-processors[] =
-{
-  { bfd_mach_k1c, "k1c" },
-  { bfd_mach_k1c_64, "k1c_64" },
-  { bfd_mach_k1c_usr, "k1c_usr"},
-};
-
 static bfd_boolean
 scan (const struct bfd_arch_info *info, const char *string)
 {
@@ -44,16 +32,6 @@ scan (const struct bfd_arch_info *info, const char *string)
 
   /* First test for an exact match.  */
   if (strcasecmp (string, info->printable_name) == 0)
-    return TRUE;
-
-  /* Next check for a processor name instead of an Architecture name.  */
-  for (i = sizeof (processors) / sizeof (processors[0]); i--;)
-    {
-      if (strcasecmp (string, processors [i].name) == 0)
-	break;
-    }
-
-  if (i != -1 && info->mach == processors [i].mach)
     return TRUE;
 
   /* Finally check for the default architecture.  */
@@ -74,7 +52,7 @@ scan (const struct bfd_arch_info *info, const char *string)
   print,                       /* Printable name.  */          \
   4,                           /* Section align power.  */     \
   default,                     /* Is this the default ?  */    \
-  k1_compatible,                                      \
+  k1_compatible,					       \
   scan,                                                        \
   bfd_arch_default_fill,                                       \
   next                                                         \

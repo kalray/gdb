@@ -2301,36 +2301,6 @@ elfNN_k1_relocate_section (bfd *output_bfd,
   return TRUE;
 }
 
-/* /\* The final processing done just before writing out an K1 ELF object */
-/*    file.  This gets the K1 architecture right based on the machine */
-/*    number.  *\/ */
-
-/* void */
-/* elfNN_k1_final_write_processing (bfd *abfd, */
-/* 				   bfd_boolean linker ATTRIBUTE_UNUSED) */
-/* { */
-/*   int mach; */
-/*   unsigned long val; */
-
-/*   switch (mach = bfd_get_mach (abfd)) */
-/*     { */
-/*     case bfd_mach_k1dp: */
-/*     case bfd_mach_k1io: */
-/*     case bfd_mach_k1bdp: */
-/*     case bfd_mach_k1bio: */
-/*     case bfd_mach_k1bdp_64: */
-/*     case bfd_mach_k1bio_64: */
-/*       val = mach; */
-/*       break; */
-/*     default: */
-/*       return; */
-/*     } */
-
-/*   elf_elfheader (abfd)->e_flags &=  (~ K1_MACH_MASK); */
-/*   elf_elfheader (abfd)->e_flags |= val; */
-/* } */
-
-
 /* Set the right machine number.  */
 
 static bfd_boolean
