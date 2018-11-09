@@ -3818,6 +3818,41 @@ static k1_reloc_t *k1c_stopbit2_stopbit4_opnd_relocs[] __attribute__((unused)) =
 static k1bfield k1c_stopbit2_stopbit4_opnd  __attribute__((unused)) = {"k1c_stopbit2_stopbit4_opnd", Immediate_k1c_unsigned6, 6, 0, 0, 0, 0, 0, 0, k1c_stopbit2_stopbit4_opnd_relocs, 2, { { 2, 4, 24 }, { 4, 0, 12 }, } };
 static k1_reloc_t *k1c_sysnumber_opnd_relocs[] __attribute__((unused)) = {0 };
 static k1bfield k1c_sysnumber_opnd  __attribute__((unused)) = {"k1c_sysnumber_opnd", Immediate_k1c_sysnumber, 12, 0, 0, 0, 0, 0, 0, k1c_sysnumber_opnd_relocs, 1, { { 12, 0, 0 }, } };
+static int k1c_systemowner_opnd_regs[] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
+static k1_reloc_t *k1c_systemowner_opnd_relocs[] __attribute__((unused)) = {0 };
+static k1bfield k1c_systemowner_opnd  __attribute__((unused)) = {"k1c_systemowner_opnd", RegClass_k1c_onlyownerReg, 3, 0, 0, 0, 512, k1c_systemowner_opnd_regs, 0, k1c_systemowner_opnd_relocs, 1, { { 9, 0, 6 }, } };
 static int k1c_systemps_opnd_regs[] = {
       0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
@@ -4000,7 +4035,7 @@ static int k1c_systemt2_opnd_regs[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 
-      1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
@@ -4035,7 +4070,7 @@ static int k1c_systemt3_opnd_regs[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
       1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 
-      1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 
       1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
@@ -14834,6 +14869,8 @@ k1opc_t k1c_k1optab[] = {
 	{"rorw", {{ 0x7f023000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LITE, ((int)0 << 8) | (int)Reservation_k1c_ALU_LITE, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_unsigned6_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-RORW_registerW_registerZ_u006_simple */
 	{"rswap", {{ 0x0fc80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_registerz_opnd, &k1c_systemowner_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-RSWAP_registerZ_systemOwner_simple */
+	{"rswap", {{ 0x0fc80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_registerz_opnd, &k1c_systemps_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-RSWAP_registerZ_systemPS_simple */
 	{"rswap", {{ 0x0fc80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_TINY_MAU_XNOP, {&k1c_registerz_opnd, &k1c_systems3_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-RSWAP_registerZ_systemS3_simple */
@@ -15241,6 +15278,8 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registert_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SD_scaling_registerY_registerZ_registerT_simple */
 	{"sd", {{ 0xa7010000, 0xff030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC_Y, {&k1c_extend27_upper27_lower10_opnd, &k1c_registerz_opnd, &k1c_registert_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SD_w064_registerZ_registerT_triple */
+	{"set", {{ 0x0fc00000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_systemowner_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-SET_systemOwner_registerZ_simple */
 	{"set", {{ 0x0fc00000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_systemps_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-SET_systemPS_registerZ_simple */
 	{"set", {{ 0x0fc00000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
@@ -15836,11 +15875,15 @@ k1opc_t k1c_k1optab[] = {
 	{"waitit", {{ 0x0fb00000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_TINY_MAU_XNOP, {&k1c_registerz_opnd, 0}, "", "%s"}, /* Opcode-k1c-WAITIT_registerZ_simple */
 	{"wfxl", {{ 0x0fb80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_systemowner_opnd, &k1c_registerz_opnd, 0}, "", "%s, %s"}, /* Opcode-k1c-WFXL_systemOwner_registerZ_simple */
+	{"wfxl", {{ 0x0fb80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_systemps_opnd, &k1c_registerz_opnd, 0}, "", "%s, %s"}, /* Opcode-k1c-WFXL_systemPS_registerZ_simple */
 	{"wfxl", {{ 0x0fb80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_systemt2_opnd, &k1c_registerz_opnd, 0}, "", "%s, %s"}, /* Opcode-k1c-WFXL_systemT2_registerZ_simple */
 	{"wfxl", {{ 0x0fb80000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_systemt4_opnd, &k1c_registerz_opnd, 0}, "", "%s, %s"}, /* Opcode-k1c-WFXL_systemT4_registerZ_simple */
+	{"wfxm", {{ 0x0fbc0000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
+((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_systemowner_opnd, &k1c_registerz_opnd, 0}, "", "%s, %s"}, /* Opcode-k1c-WFXM_systemOwner_registerZ_simple */
 	{"wfxm", {{ 0x0fbc0000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_ALL, ((int)0 << 8) | (int)Reservation_k1c_ALL, {&k1c_systemps_opnd, &k1c_registerz_opnd, 0}, "", "%s, %s"}, /* Opcode-k1c-WFXM_systemPS_registerZ_simple */
 	{"wfxm", {{ 0x0fbc0000, 0x7ffc0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
@@ -15861,7 +15904,7 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_signed10_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-XORW_registerW_registerZ_s010_simple */
 	{"xorw", {{ 0xfc000000, 0xff030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1c_TINY_X, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY_X, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_upper27_lower10_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-XORW_registerW_registerZ_s037_double */
-/* Number of instructions : 5374 */
+/* Number of instructions : 5378 */
 	{"", { }, 0, 0, 0, 0, { }, "", ""}};
 
 const K1_Core_Info k1c_core_info = { k1c_k1optab, { "k1c", "\0" }, k1c_resources, TRUE, { ELF_K1_CORE_C_C, -1 }  };
