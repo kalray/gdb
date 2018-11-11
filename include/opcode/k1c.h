@@ -12388,8 +12388,6 @@ extern int k1_k1c_dec_registers[];
 #define is_k1c_MOVETQ_registerAl_registerZ_registerY_simple_insn(x) (int)(((unsigned int)(x) & 0x7f03f000) == 0x7f02e000)
 #define k1c_MOVETQ_registerAh_registerZ_registerY_simple_insn(registerAh,registerZ,registerY) (unsigned int)(0x7f02f000 | (((int)(registerAh) & 0x3f) << 18) | ((int)(registerZ) & 0x3f) | (((int)(registerY) & 0x3f) << 6))
 #define is_k1c_MOVETQ_registerAh_registerZ_registerY_simple_insn(x) (int)(((unsigned int)(x) & 0x7f03f000) == 0x7f02f000)
-#define k1c_SPLATV_registerA_registerZ_simple_insn(registerA,registerZ) (unsigned int)(0x00000040 | (((int)(registerA) & 0x3f) << 18) | ((int)(registerZ) & 0x3f))
-#define is_k1c_SPLATV_registerA_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7f03ffc0) == 0x00000040)
 #define k1c_ALIGNO_registerN_registerBe_registerCo_byteshift_simple_insn(registerN,registerBe,registerCo,byteshift) (unsigned int)(0x00081000 | (((int)(registerN) & 0xf) << 20) | (((int)(registerBe) & 0x1f) << 13) | (((int)(registerCo) & 0x1f) << 7) | ((int)(byteshift) & 0x3f))
 #define is_k1c_ALIGNO_registerN_registerBe_registerCo_byteshift_simple_insn(x) (int)(((unsigned int)(x) & 0x7f0c1040) == 0x00081000)
 #define k1c_ALIGNO_registerN_registerBo_registerCe_byteshift_simple_insn(registerN,registerBo,registerCe,byteshift) (unsigned int)(0x000c1000 | (((int)(registerN) & 0xf) << 20) | (((int)(registerBo) & 0x1f) << 13) | (((int)(registerCe) & 0x1f) << 7) | ((int)(byteshift) & 0x3f))

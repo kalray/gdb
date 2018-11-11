@@ -15512,8 +15512,6 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registerv_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SO_scaling_registerY_registerZ_registerV_simple */
 	{"so", {{ 0xa8050000, 0xff0f0000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
 ((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC_Y, {&k1c_extend27_upper27_lower10_opnd, &k1c_registerz_opnd, &k1c_registerv_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SO_w064_registerZ_registerV_triple */
-	{"splatv", {{ 0x00000040, 0x7f03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registera_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* Opcode-k1c-SPLATV_registerA_registerZ_simple */
 	{"sq.deqz", {{ 0x28031000, 0x7f07f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registeru_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SQ_lsucond_registerY_registerZ_registerU_simple */
 	{"sq.dgez", {{ 0x28033000, 0x7f07f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
@@ -15904,7 +15902,7 @@ k1opc_t k1c_k1optab[] = {
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_signed10_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-XORW_registerW_registerZ_s010_simple */
 	{"xorw", {{ 0xfc000000, 0xff030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_ALU }, }, 2, 64,
 ((int)0 << 8) | (int)Bundling_k1c_TINY_X, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY_X, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_upper27_lower10_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-XORW_registerW_registerZ_s037_double */
-/* Number of instructions : 5378 */
+/* Number of instructions : 5377 */
 	{"", { }, 0, 0, 0, 0, { }, "", ""}};
 
 const K1_Core_Info k1c_core_info = { k1c_k1optab, { "k1c", "\0" }, k1c_resources, TRUE, { ELF_K1_CORE_C_C, -1 }  };
