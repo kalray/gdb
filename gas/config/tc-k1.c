@@ -1238,13 +1238,12 @@ match_operands(const k1opc_t * op, const expressionS * tok,
 		      /* If option all-sfr not set, doest not match systemReg for SET/GET/WFX: used only for HW validation. */
 		      return MATCH_NOT_FOUND;
 		 }
-            case RegClass_k1c_onlypsReg:
+            case RegClass_k1c_aloneReg:
             case RegClass_k1c_onlyraReg:
             case RegClass_k1c_onlyfxReg:
             case RegClass_k1c_onlygetReg:
             case RegClass_k1c_onlysetReg:
 	    case RegClass_k1c_onlyswapReg:
-	    case RegClass_k1c_onlyownerReg:
                 MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
             case RegClass_k1c_coproReg:
             case RegClass_k1c_coproReg0M4:
@@ -2056,13 +2055,12 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
       chars += snprintf(&buf[chars], buf_size - chars, "prf");
       break;
     case RegClass_k1c_systemReg:
-    case RegClass_k1c_onlypsReg:
+    case RegClass_k1c_aloneReg:
     case RegClass_k1c_onlyraReg:
     case RegClass_k1c_onlyfxReg:
     case RegClass_k1c_onlygetReg:
     case RegClass_k1c_onlysetReg:
     case RegClass_k1c_onlyswapReg:
-    case RegClass_k1c_onlyownerReg:
       chars += snprintf(&buf[chars], buf_size - chars, "srf");
       break;
     case RegClass_k1c_coproReg:
