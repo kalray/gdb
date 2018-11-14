@@ -10,6 +10,7 @@
 #include "gdbcore.h"
 #include "gdbthread.h"
 #include "common-types.h"
+#include "remote.h"
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 #define MSG_FROM_ARRAY(a,i) ((i >= ARRAY_SIZE(a) || !a[i]) ? "[unknown]" : a[i])
@@ -391,18 +392,100 @@ static const char *cpu_status[] = {
 };
 #define CPU_FSM_IDLE 3
 
+enum {DBG_SFR_FPC_IDX = 0, DBG_SFR_STAPC_IDX, DBG_SFR_PS_IDX,
+  DBG_SFR_SPC_IDX, DBG_SFR_SPS_IDX, DBG_SFR_EA_IDX,
+  DBG_SFR_ES_IDX, DBG_SFR_SR_IDX, DBG_SFR_RA_IDX,
+  DBG_SFR_NO_REGS
+  };
+static const char *dbg_sfr_name[] = {
+  "fetch pc", "stall pc", "ps",
+  "spc", "sps", "ea",
+  "es", "sr", "ra",
+  ""
+};
+
+union fpc_extra_u
+{
+  struct
+  {
+    uint16_t f_instr_valid:1;     // bit 0
+    uint16_t f_stall:1;           // bit 1
+    uint16_t rr_instr_valid:1;    // bit 2
+    uint16_t rr_stall:1;          // bit 3
+    uint16_t e1_instr_valid:1;    // bit 4
+    uint16_t e1_stall:1;          // bit 5
+    uint16_t e2_instr_valid:1;    // bit 6
+    uint16_t e2_stall:1;          // bit 7
+    uint16_t e3_instr_valid:1;    // bit 8
+    uint16_t e3_stall:1;          // bit 9
+    uint16_t icache_on_going_i:1; // bit 10
+    uint16_t dcache_on_going_i:1; // bit 11
+    uint16_t de_stop:1;           // bit 12
+    uint16_t wdog_err:1;          // bit 13
+    uint16_t reserved_1:2;        // bit 14 - 15
+  };
+  uint32_t uint16_t;
+};
+
+static void
+show_debug_sfr_regs (void)
+{
+  char *buf = (char *) malloc (512), *pbuf;
+  long size = 512;
+  unsigned long long dbg_sfrs[DBG_SFR_NO_REGS + 1];
+  union fpc_extra_u extra;
+  int i, n, offset;
+
+  sprintf (buf, "kfp%x.%lx", inferior_ptid.pid, inferior_ptid.lwp);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+
+  if (*buf == 'E')
+  {
+    free (buf);
+    printf ("Info: cannot get the debug SFR registers (not implemented yet by ISS)\n");
+    return;
+  }
+
+  for (n = 0, pbuf = buf;
+    n <= DBG_SFR_NO_REGS && sscanf (pbuf, "%llx %n", &dbg_sfrs[n], &offset) == 1;
+    n++, pbuf += offset)
+    ;
+
+  printf ("SFR debug registers:\n");
+  if (n != DBG_SFR_NO_REGS)
+    printf ("warning: read %d registers instead of %d\n", n, DBG_SFR_NO_REGS);
+
+  extra.uint16_t = (uint16_t) (dbg_sfrs[DBG_SFR_FPC_IDX] >> 48);
+  dbg_sfrs[DBG_SFR_FPC_IDX] &= 0xFFFFFFFFFFFFULL;
+  for (i = 0; i < n; i++)
+    printf ("  %s: 0x%llx\n", dbg_sfr_name[i], dbg_sfrs[i]);
+
+  printf ("  extra info:\n");
+  printf ("    f instruction: valid: %d, stall: %d\n", extra.f_instr_valid, extra.f_stall);
+  printf ("    rr instruction: valid: %d, stall: %d\n", extra.rr_instr_valid, extra.rr_stall);
+  printf ("    e1 instruction: valid: %d, stall: %d\n", extra.e1_instr_valid, extra.e1_stall);
+  printf ("    e2 instruction: valid: %d, stall: %d\n", extra.e2_instr_valid, extra.e2_stall);
+  printf ("    e3 instruction: valid: %d, stall: %d\n", extra.e3_instr_valid, extra.e3_stall);
+  printf ("    icache on going: %d, dcache on going: %d\n", extra.icache_on_going_i, extra.dcache_on_going_i);
+  printf ("    double exception stop: %d\n", extra.de_stop);
+  printf ("    watchdog error: %d\n", extra.wdog_err);
+
+  free (buf);
+}
+
 static void
 show_pwr_cpu_status (void)
 {
   uint64_t power_control_status_addr, status = 0;
-  uint64_t rst, power_control_rst_addr = 0x941040; // &mppa_pwr_ctrl[0]->vector_proc_control.reset_on_wakeup.write
+  uint64_t rst, power_control_rst_addr = 0xA41040; // &mppa_pwr_ctrl[0]->vector_proc_control.reset_on_wakeup.write
   int idle, fsm, wd;
   int vehicle = inferior_ptid.lwp - 1;
 
   if (vehicle < 16) // pe
-    power_control_status_addr = 0x940400 + vehicle * 16; // &mppa_pwr_ctrl[0]->pe_status[vehicle].proc_sts
+    power_control_status_addr = 0xA40400 + vehicle * 16; // &mppa_pwr_ctrl[0]->pe_status[vehicle].proc_sts
   else
-    power_control_status_addr = 0x944100; // &mppa_pwr_ctrl[0]->rm_status.proc_sts
+    power_control_status_addr = 0xA44100; // &mppa_pwr_ctrl[0]->rm_status.proc_sts
 
   if (!read_memory_no_dcache (power_control_status_addr, (gdb_byte *) &status, 8))
 		error (_("[cannot read power controller status]\n"));
@@ -436,5 +519,18 @@ mppa_cpu_status_command (char *args, int from_tty)
   else
     printf ("The processor is not in debug mode.\n");
 
+  show_debug_sfr_regs ();
   show_pwr_cpu_status ();
+}
+
+void
+mppa_cpu_debug_sfr_regs_command (char *args, int from_tty)
+{
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf (_ ("No thread selected.\n"));
+    return;
+  }
+
+  show_debug_sfr_regs ();
 }

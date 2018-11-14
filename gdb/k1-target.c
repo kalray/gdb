@@ -1389,7 +1389,7 @@ _initialize__k1_target (void)
     NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
 
   add_setshow_enum_cmd ("cluster_debug_level", class_maintenance, scluster_debug_levels, &scluster_debug_level,
-    _("Set the cluster debug level."), _("Show the cluster debug level."), 
+    _("Set the cluster debug level."), _("Show the cluster debug level."),
     NULL, set_cluster_debug_level, show_cluster_debug_level, &kalray_set_cmdlist, &kalray_show_cmdlist);
 
   add_setshow_enum_cmd ("global_debug_level", class_maintenance, sglobal_debug_levels, &sglobal_debug_level,
@@ -1409,6 +1409,9 @@ _initialize__k1_target (void)
 
   add_com ("mppa-cpu-status", class_run, mppa_cpu_status_command,
     _("Show information of the current processor."));
+
+  add_com ("mppa-cpu-debug-sfr-regs", class_run, mppa_cpu_debug_sfr_regs_command,
+    _("Read the current processor debug SFR registers from the magic bus"));
 
   add_setshow_enum_cmd ("stop-all", class_maintenance, sopts_cluster_stop_all, &sopt_cluster_stop_all,
     _("Set stop all cluster CPUs"), _("Show stop all cluster CPUs"),
