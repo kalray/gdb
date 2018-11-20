@@ -1451,6 +1451,9 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
     case BFD_RELOC_K1_S37_LO10:
     case BFD_RELOC_K1_S37_UP27:
 
+    case BFD_RELOC_K1_S32_LO5:
+    case BFD_RELOC_K1_S32_UP27:
+
     case BFD_RELOC_K1_S43_LO10:
     case BFD_RELOC_K1_S43_UP27:
     case BFD_RELOC_K1_S43_EX6:
