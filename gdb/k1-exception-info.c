@@ -424,7 +424,22 @@ union fpc_extra_u
     uint16_t wdog_err:1;          // bit 13
     uint16_t reserved_1:2;        // bit 14 - 15
   };
-  uint32_t uint16_t;
+  uint16_t uint16_t;
+};
+
+union stall_pc_extra_u
+{
+  struct
+  {
+    uint16_t reset:1;             // bit 0 (stall_pc bit 48)
+    uint16_t clk_enable_i:1;      // bit 1
+    uint16_t clk_idle_enable_i:1; // bit 2
+    uint16_t pwc_idle_i:1;        // bit 3
+    uint16_t pwc_fsm_i:1;         // bit 4
+    uint16_t pwc_wd_i:1;          // bit 5
+    uint16_t reserved_1:10;       // bit 6 - 15
+  };
+  uint16_t uint16_t;
 };
 
 static void
@@ -433,7 +448,8 @@ show_debug_sfr_regs (void)
   char *buf = (char *) malloc (512), *pbuf;
   long size = 512;
   unsigned long long dbg_sfrs[DBG_SFR_NO_REGS + 1];
-  union fpc_extra_u extra;
+  union fpc_extra_u fpc_extra;
+  union stall_pc_extra_u stall_pc_extra;
   int i, n, offset;
 
   sprintf (buf, "kfp%x.%lx", inferior_ptid.pid, inferior_ptid.lwp);
@@ -456,20 +472,29 @@ show_debug_sfr_regs (void)
   if (n != DBG_SFR_NO_REGS)
     printf ("warning: read %d registers instead of %d\n", n, DBG_SFR_NO_REGS);
 
-  extra.uint16_t = (uint16_t) (dbg_sfrs[DBG_SFR_FPC_IDX] >> 48);
+  fpc_extra.uint16_t = (uint16_t) (dbg_sfrs[DBG_SFR_FPC_IDX] >> 48);
   dbg_sfrs[DBG_SFR_FPC_IDX] &= 0xFFFFFFFFFFFFULL;
+  stall_pc_extra.uint16_t = (uint16_t) (dbg_sfrs[DBG_SFR_STAPC_IDX] >> 48);
+  dbg_sfrs[DBG_SFR_STAPC_IDX] &= 0xFFFFFFFFFFFFULL;
   for (i = 0; i < n; i++)
     printf ("  %s: 0x%llx\n", dbg_sfr_name[i], dbg_sfrs[i]);
 
   printf ("  extra info:\n");
-  printf ("    f instruction: valid: %d, stall: %d\n", extra.f_instr_valid, extra.f_stall);
-  printf ("    rr instruction: valid: %d, stall: %d\n", extra.rr_instr_valid, extra.rr_stall);
-  printf ("    e1 instruction: valid: %d, stall: %d\n", extra.e1_instr_valid, extra.e1_stall);
-  printf ("    e2 instruction: valid: %d, stall: %d\n", extra.e2_instr_valid, extra.e2_stall);
-  printf ("    e3 instruction: valid: %d, stall: %d\n", extra.e3_instr_valid, extra.e3_stall);
-  printf ("    icache on going: %d, dcache on going: %d\n", extra.icache_on_going_i, extra.dcache_on_going_i);
-  printf ("    double exception stop: %d\n", extra.de_stop);
-  printf ("    watchdog error: %d\n", extra.wdog_err);
+  printf ("    f instruction: valid: %d, stall: %d\n", fpc_extra.f_instr_valid, fpc_extra.f_stall);
+  printf ("    rr instruction: valid: %d, stall: %d\n", fpc_extra.rr_instr_valid, fpc_extra.rr_stall);
+  printf ("    e1 instruction: valid: %d, stall: %d\n", fpc_extra.e1_instr_valid, fpc_extra.e1_stall);
+  printf ("    e2 instruction: valid: %d, stall: %d\n", fpc_extra.e2_instr_valid, fpc_extra.e2_stall);
+  printf ("    e3 instruction: valid: %d, stall: %d\n", fpc_extra.e3_instr_valid, fpc_extra.e3_stall);
+  printf ("    icache on going: %d, dcache on going: %d\n", fpc_extra.icache_on_going_i, fpc_extra.dcache_on_going_i);
+  printf ("    double exception stop: %d\n", fpc_extra.de_stop);
+  printf ("    watchdog error: %d\n", fpc_extra.wdog_err);
+
+  printf ("    reset: %d\n", stall_pc_extra.reset);
+  printf ("    clk_enable_i: %d\n", stall_pc_extra.clk_enable_i);
+  printf ("    clk_idle_enable_i: %d\n", stall_pc_extra.clk_idle_enable_i);
+  printf ("    pwc_idle_i: %d\n", stall_pc_extra.pwc_idle_i);
+  printf ("    pwc_fsm_i: %d\n", stall_pc_extra.pwc_fsm_i);
+  printf ("    pwc_wd_i: %d\n", stall_pc_extra.pwc_wd_i);
 
   free (buf);
 }
