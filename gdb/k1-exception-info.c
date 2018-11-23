@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "inferior.h"
 #include "k1-common-tdep.h"
+#include "target-descriptions.h"
 #include "k1-target.h"
 #include "k1-exception-info.h"
 #include "ptid.h"
@@ -14,6 +15,7 @@
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 #define MSG_FROM_ARRAY(a,i) ((i >= ARRAY_SIZE(a) || !a[i]) ? "[unknown]" : a[i])
+#define NO_GPRS 64
 
 #define MB (1024ULL * 1024)
 #define GB (1024ULL * 1024 * 1024)
@@ -51,28 +53,27 @@ struct addr_range_s
 };
 
 enum {
-  EN_REG_OCEC_DES_SW_BREAK = 0,
-  EN_REG_OCEC_DES_HW_BREAK = 1,
-  EN_REG_OCEC_DES_WATCHPOINT = 2,
-  EN_REG_OCEC_DES_HWTRAP = 5,
-  EN_REG_OCEC_DES_SCALL = 7,
-  EN_REG_OCEC_DES_DE_STEPI = 8,
-  EN_REG_OCEC_DES_DE_HWTRAP = 9,
-  EN_REG_OCEC_DES_DE_INT = 10,
-  EN_REG_OCEC_DES_DE_SCALL = 11,
+  EN_REG_ES_EC_DEBUG = 0,
+  EN_REG_ES_EC_HWTRAP = 1,
+  EN_REG_ES_EC_INT = 2,
+  EN_REG_ES_EC_SCALL = 3,
+  EN_REG_ES_EC_WDOG = 8,
+  EN_REG_ES_EC_DE_HWTRAP = 9,
+  EN_REG_ES_EC_DE_INT = 10,
+  EN_REG_ES_EC_DE_SCALL = 11,
 };
-#define EN_REG_OCEC_DES_FIRST_DE EN_REG_OCEC_DES_DE_STEPI
+#define EN_REG_ES_EC_FIRST_DE EN_REG_ES_EC_DE_HWTRAP
 
-const char *reg_ocec_des_msg[] = {
-  "software break", // 0
-  "hardware break", // 1
-  "watchpoint", // 2
-  NULL, // 3
+const char *reg_es_ec_msg[] = {
+  "debug interception", // 0
+  "hardware trap interception", // 1
+  "interrupt interception", // 2
+  "syscall interception", // 3
   NULL, // 4
-  "hardware trap interception", // 5
+  NULL, // 5
   NULL, // 6
-  "scall trap interception", // 7
-  "double exception interception on system_stepi", // 8
+  NULL, // 7
+  "watchdog error", // 8
   "double exception interception on hardware trap", // 9
   "double exception interception on interrupt", // 10
   "double exception interception on scall", // 11
@@ -122,6 +123,20 @@ const char *es_rwx_stepi_msg[] = {
    "data atomic memory access in the stepped bundle", // 6
 };
 
+enum {
+  EN_ES_DC_BREAKPOINT = 0,
+  EN_ES_DC_WATCHPOINT = 1,
+  EN_ES_DC_STEPI      = 2,
+  EN_ES_DC_DSU_BREAK  = 3,
+};
+
+const char *es_dc_msg[] = {
+  "hardware breakpoint", // 0
+  "hardware watchpoint", // 1
+  "stepi", // 2
+  "dsu break", // 3
+};
+
 const char *es_nta_msg[] = {
   "trap was caused by a regular data memory access", // 0
   "trap was caused by a non-trapping data memory access", // 1
@@ -142,36 +157,18 @@ const char *es_as_msg[] = {
   [31] = "cache line-size access (DZEROL)",
 };
 
-enum {
-  EN_ES_EC_RESET, // 0
-  EN_ES_EC_HWTRAP, // 1
-  EN_ES_EC_INT, // 2
-  EN_ES_EC_SCALL, // 3
-  EN_ES_EC_SYSTEM_STEPI // 4
-};
-
-const char *es_ec_msg[] = {
-  "none", // 0
-  "hardware trap", // 1
-  "interrupt", // 2
-  "scall", // 3
-  "system stepi", // 4
+const char *es_sfri[] = {
+  [0] = "no SFR access instruction",
+  [2] = "GET",
+  [3] = "IGET",
+  [4] = "SET",
+  [5] = "WFXL",
+  [6] = "WFXM",
+  [7] = "RSWAP",
 };
 
 #define PS_ET_BIT 2
 #define PS_MME_BIT 11
-
-union reg_ocec_s
-{
-  uint64_t reg;
-  struct {
-    uint64_t des:4;   // 0 - 3
-    uint64_t wpe:1;   // 4 - 4
-    uint64_t wpr:6;   // 5 - 10
-    uint64_t htim:17; // 11 - 27
-    uint64_t sim:2;   // 28 - 29
-  } _;
-};
 
 union reg_es_s
 {
@@ -180,42 +177,88 @@ union reg_es_s
   {
     struct
     {
-      uint64_t ec:3;  // 0 - 2
+      uint64_t ec:4;    // 0 - 3
+      uint64_t oapl:2;  // 4 - 5
+      uint64_t orpl:2;  // 6 - 7
+      uint64_t ptapl:2; // 8 - 9
+      uint64_t ptrpl:2; // 10 - 11
     } common;
     struct
     {
-      uint64_t ec:3;  // 0 - 2
-      uint64_t itn:5; // 3 - 7
-      uint64_t itl:4; // 8 - 11
-      uint64_t iti:10; // 12 - 21
+      uint64_t ec:4;    // 0 - 3
+      uint64_t oapl:2;  // 4 - 5
+      uint64_t orpl:2;  // 6 - 7
+      uint64_t ptapl:2; // 8 - 9
+      uint64_t ptrpl:2; // 10 - 11
+
+      uint64_t itn:5;   // 12 - 16
+      uint64_t itl:2;   // 17 - 18
+      uint64_t iti:10;  // 19 - 28
     } irq;
     struct
     {
-      uint64_t ec:3;  // 0 - 2
-      uint64_t sn:12; // 3 - 14
+      uint64_t ec:4;    // 0 - 3
+      uint64_t oapl:2;  // 4 - 5
+      uint64_t orpl:2;  // 6 - 7
+      uint64_t ptapl:2; // 8 - 9
+      uint64_t ptrpl:2; // 10 - 11
+
+      uint64_t sn:12; // 12 - 23
     } scall;
     struct
     {
-      uint64_t ec:3;  // 0 - 2
-      uint64_t htc:5; // 3 - 7
-      uint64_t rwx:3; // 8 - 10
-      uint64_t nta:1; // 11- 11
-      uint64_t uca:1; // 12 - 12
-      uint64_t as:5;  // 13 - 17
-      uint64_t bs:4;  // 18 - 21
-      uint64_t ri:6;  // 22 - 27
+      uint64_t ec:4;    // 0 - 3
+      uint64_t oapl:2;  // 4 - 5
+      uint64_t orpl:2;  // 6 - 7
+      uint64_t ptapl:2; // 8 - 9
+      uint64_t ptrpl:2; // 10 - 11
+
+      uint64_t htc:5;   // 12 - 16
+      uint64_t sfrt:1;  // 17
+      uint64_t sfri:3;  // 18 - 20
+      uint64_t gprp:6;  // 21 - 26
+      uint64_t sfrp:12; // 27 - 38
+      uint64_t rwx:3;   // 39 - 41
+      uint64_t nta:1;   // 42
+      uint64_t uca:1;   // 43
+      uint64_t as:6;    // 44 - 49
+      uint64_t bs:4;    // 50 - 53
+      uint64_t dri:6;   // 54 - 59
     } trap;
     struct
     {
-      uint64_t ec:3;  // 0 - 2
-      uint64_t :5;    // 3 - 7
-      uint64_t rwx:3; // 8 - 10
-      uint64_t nta:1; // 11- 11
-      uint64_t uca:1; // 12 - 12
-      uint64_t as:5;  // 13 - 17
-      uint64_t bs:4;  // 18 - 21
-      uint64_t ri:6;  // 22 - 27
+      uint64_t ec:4;    // 0 - 3
+      uint64_t oapl:2;  // 4 - 5
+      uint64_t orpl:2;  // 6 - 7
+      uint64_t ptapl:2; // 8 - 9
+      uint64_t ptrpl:2; // 10 - 11
+
+      uint64_t dc:2;    // 12 - 13
+      uint64_t bn:1;    // 14
+      uint64_t wn:1;    // 15
+      uint64_t :2;      // 16 - 17
+      uint64_t sfri:3;  // 18 - 20
+      uint64_t gprp:6;  // 21 - 26
+      uint64_t sfrp:12; // 27 - 38
+      uint64_t rwx:3;   // 39 - 41
+      uint64_t nta:1;   // 42
+      uint64_t uca:1;   // 43
+      uint64_t as:6;    // 44 - 49
+      uint64_t bs:4;    // 50 - 53
+      uint64_t dri:6;   // 54 - 59
     } sys_si;
+    struct
+    {
+      uint64_t ec:4;    // 0 - 3
+      uint64_t oapl:2;  // 4 - 5
+      uint64_t orpl:2;  // 6 - 7
+      uint64_t ptapl:2; // 8 - 9
+      uint64_t ptrpl:2; // 10 - 11
+
+      uint64_t dc:2;    // 12 - 13
+      uint64_t bn:2;    // 14
+      uint64_t wn:2;    // 15
+    } debug;
   };
 };
 
@@ -261,8 +304,51 @@ show_addr_info (uint64_t addr, int mme)
 }
 
 static void
+show_trap_pl_details (union reg_es_s es)
+{
+  printf ("\torigin absolute PL (es.oapl): %d\n", es.common.oapl);
+  printf ("\torigin relative PL (es.orpl): %d\n", es.common.orpl);
+  printf ("\tprimary target absolute PL (es.ptapl): %d\n", es.common.ptapl);
+  printf ("\tprimary target relative PL (es.ptrpl): %d\n", es.common.ptrpl);
+}
+
+static const char *
+get_sfr_reg_name (int regnum)
+{
+  static char name[20];
+  const char *ret = NULL;
+  struct gdbarch *gdbarch = target_gdbarch ();
+
+  if (gdbarch && regnum + NO_GPRS < gdbarch_num_regs (gdbarch))
+    ret = tdesc_register_name (gdbarch, regnum + NO_GPRS);
+
+  if (ret == NULL)
+  {
+    sprintf (name, "SFR%d", regnum);
+    ret = name;
+  }
+
+  return ret;
+}
+
+static void
+show_trap_instruction (union reg_es_s es)
+{
+  printf ("\ttrap caused by a SFR instruction (es.sfrt): %d\n", es.trap.sfrt);
+  printf ("\tsfr instruction implied: %s (es.sfri=%d)", MSG_FROM_ARRAY (es_sfri, es.trap.sfri), es.trap.sfri);
+  if (es.trap.sfri)
+  {
+    printf ("SFR reg: %s (es.sfrp=%d), GRP reg: r%d (es.gprp=%d)",
+      get_sfr_reg_name (es.trap.sfrp), es.trap.sfrp, es.trap.gprp, es.trap.gprp);
+  }
+  printf ("\n");
+}
+
+static void
 show_trap_info (union reg_es_s es)
 {
+  show_trap_instruction (es);
+
   printf ("\ttrap cause: %s (es.htc=0x%x)\n",
     es.trap.htc >= ARRAY_SIZE(trap_msg) ? "[unknown]" : trap_msg[es.trap.htc], es.trap.htc);
   printf ("\tread write execute: %s (es.rwx=0x%x)\n", MSG_FROM_ARRAY (es_rwx_msg, es.trap.rwx), es.trap.rwx);
@@ -273,30 +359,27 @@ show_trap_info (union reg_es_s es)
       es.trap.uca ? "un" : "", es.trap.uca);
     printf ("\taccess size: %s (es.as=0x%x)\n", MSG_FROM_ARRAY (es_as_msg, es.trap.as), es.trap.as);
     printf ("\tsource or destination operand register "
-      "of the data memory access that caused the trap: r%d (es.ri=%u)\n", es.trap.ri, es.trap.ri);
+      "of the data memory access that caused the trap: r%d (es.dri=%u)\n", es.trap.dri, es.trap.dri);
   }
   printf ("\tbundle size: %d bits (%d syllable%s) (es.bs=%d)\n", es.trap.bs * 32, es.trap.bs,
     es.trap.bs > 1 ? "s" : "", es.trap.bs);
 }
 
 static void
-show_stepi_trap_info (union reg_es_s es)
+show_debug_trap_info (union reg_es_s es)
 {
-  printf ("\tread write execute: %s (es.rwx=0x%x\n)",
-    MSG_FROM_ARRAY (es_rwx_stepi_msg, es.sys_si.rwx), es.sys_si.rwx);
-  if (es.sys_si.rwx >= ES_RWS_STEPI_FIRST_DATA)
+  printf ("Debug cause: %s (es.dc=%d)\n", MSG_FROM_ARRAY (es_dc_msg, es.debug.dc), es.debug.dc);
+  switch (es.debug.dc)
   {
-    printf ("\tnon trapping access: %s (es.nta=0x%x)\n",
-      MSG_FROM_ARRAY (es_nta_stepi_msg, es.sys_si.nta), es.sys_si.nta);
-    printf ("\tthe stepped bundle %s a *U LSU instruction (es.uca=0x%x)\n",
-      es.sys_si.uca ? "contains" : "does not contain", es.sys_si.uca);
-    printf ("\tdata access size of the stepped bundle: %s (es.as=0x%x)\n",
-      MSG_FROM_ARRAY (es_as_msg, es.sys_si.as), es.sys_si.as);
-    printf ("\tsource or destination operand register of the data "
-      "memory access in the stepped bundle: r%d (es.ri=%u)\n", es.sys_si.ri, es.sys_si.ri);
+  case EN_ES_DC_BREAKPOINT:
+    printf ("\tbreakpoint number: %d (es.bn=%d)\n", es.debug.bn, es.debug.bn);
+    break;
+  case EN_ES_DC_WATCHPOINT:
+    printf ("\twatchpoint number: %d (es.wn=%d)\n", es.debug.wn, es.debug.wn);
+    break;
+  default:
+    break;
   }
-  printf ("\tbundle size of the stepped bundle: %d bits (%d syllable%s) (es.bs=%d)\n", es.sys_si.bs * 32,
-    es.sys_si.bs, es.sys_si.bs > 1 ? "s" : "", es.sys_si.bs);
 }
 
 static void
@@ -304,29 +387,28 @@ stopped_cpu_status (void)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (target_gdbarch ());
   struct regcache *reg_cache = get_current_regcache ();
-  union reg_ocec_s ocec;
   union reg_es_s es;
   uint64_t pc, spc, ea, ps;
   int mme, ps_et;
 
   // read required registers
-  regcache_raw_read_unsigned (reg_cache, tdep->ocec_regnum, &ocec.reg);
-  regcache_raw_read_unsigned (reg_cache, tdep->es_regnum, &es.reg);
-  regcache_raw_read_unsigned (reg_cache, tdep->ea_regnum, &ea);
+  regcache_raw_read_unsigned (reg_cache, tdep->es_pl0_regnum, &es.reg);
+  regcache_raw_read_unsigned (reg_cache, tdep->ea_pl0_regnum, &ea);
   regcache_raw_read_unsigned (reg_cache, tdep->ps_regnum, &ps);
 
   mme = (ps & (1 << PS_MME_BIT)) != 0;
   ps_et = (ps & (1 << PS_ET_BIT)) != 0;
 
-  printf ("The processor entered debug mode because of a %s (ocec.des=0x%x).\n",
-    MSG_FROM_ARRAY (reg_ocec_des_msg, ocec._.des), ocec._.des);
+  printf ("The processor entered debug mode because of a %s (es.ec=0x%x).\n",
+    MSG_FROM_ARRAY (reg_es_ec_msg, es.common.ec), es.common.ec);
 
-  if (ocec._.des <= EN_REG_OCEC_DES_HWTRAP)
+  show_trap_pl_details (es);
+
+  if (es.common.ec == EN_REG_ES_EC_HWTRAP || es.common.ec == EN_REG_ES_EC_DE_HWTRAP)
   {
-    if (ps_et && es.common.ec != 0 /*none*/)
+    if (ps_et)
     {
       printf ("Trap information (es=0x%" PRIx64 "):\n", es.reg);
-      printf ("\ttrap type: %s (es.ec=%d)\n", MSG_FROM_ARRAY (es_ec_msg, es.common.ec), es.common.ec);
       printf ("\texception address (ea): 0x%" PRIx64, ea);
       show_addr_info (ea, mme);
       printf ("\n");
@@ -334,41 +416,27 @@ stopped_cpu_status (void)
     }
     else
     {
-      printf ("Not in a trap (ps.et=%d, es.ec=%d)\n", ps_et, es.common.ec);
+      printf ("Not in a trap (ps.et=%d)\n", ps_et);
     }
   }
-  else if (ocec._.des == EN_REG_OCEC_DES_SCALL)
+  else if (es.common.ec == EN_REG_ES_EC_SCALL || es.common.ec == EN_REG_ES_EC_DE_SCALL)
   {
     printf ("Scall number: %d (es.sn=%d)\n", es.scall.sn, es.scall.sn);
   }
-  else if (ocec._.des > EN_REG_OCEC_DES_FIRST_DE)
+  else if (es.common.ec == EN_REG_ES_EC_INT || es.common.ec == EN_REG_ES_EC_DE_INT)
   {
-    if (ocec._.des == EN_REG_OCEC_DES_DE_HWTRAP)
-    {
-      printf ("\texception address (ea): 0x%" PRIx64, ea);
-      show_addr_info (ea, mme);
-      printf ("\n");
-    }
-    printf ("First exception taken: %s (es.ec=%d)\n", MSG_FROM_ARRAY (es_ec_msg, es.common.ec), es.common.ec);
-    if (es.common.ec == EN_ES_EC_HWTRAP)
-      show_trap_info (es);
-    else if (es.common.ec == EN_ES_EC_SCALL)
-      printf ("\tscall number: %d (es.sn=%d)\n", es.scall.sn, es.scall.sn);
-    else if (es.common.ec == EN_ES_EC_INT)
-    {
-      printf ("\tinterrupt number %d: (es.itn=%d)\n", es.irq.itn, es.irq.itn);
-      printf ("\tinterrupt level: %d (es.itl=%d)\n", es.irq.itl, es.irq.itl);
-      printf ("\tinterrupt info (copy of mes for memory related interrupts: 12 for SECCs, "
-        "16 for Data asynchronous memory errors, 17 for I/D line invalidation): %x (es.iti=%d)\n",
-        es.irq.iti, es.irq.iti);
-    }
-    else if (es.common.ec == EN_ES_EC_SYSTEM_STEPI)
-    {
-      printf ("\texception address (ea): 0x%" PRIx64, ea);
-      show_addr_info (ea, mme);
-      printf ("\n");
-      show_stepi_trap_info (es);
-    }
+    printf ("\tinterrupt number %d: (es.itn=%d)\n", es.irq.itn, es.irq.itn);
+    printf ("\tinterrupt level: %d (es.itl=%d)\n", es.irq.itl, es.irq.itl);
+    printf ("\tinterrupt info (copy of mes for memory related interrupts: 12 for SECCs, "
+      "16 for Data asynchronous memory errors, 17 for I/D line invalidation): %x (es.iti=%d)\n",
+      es.irq.iti, es.irq.iti);
+  }
+  else if (es.common.ec == EN_REG_ES_EC_DEBUG)
+  {
+    printf ("\texception address (ea): 0x%" PRIx64, ea);
+    show_addr_info (ea, mme);
+    printf ("\n");
+    show_debug_trap_info (es);
   }
 
   // PC information
@@ -542,9 +610,11 @@ mppa_cpu_status_command (char *args, int from_tty)
   if (is_stopped (inferior_ptid))
     stopped_cpu_status ();
   else
+  {
     printf ("The processor is not in debug mode.\n");
+    show_debug_sfr_regs ();
+  }
 
-  show_debug_sfr_regs ();
   show_pwr_cpu_status ();
 }
 
