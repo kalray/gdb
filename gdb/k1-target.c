@@ -289,8 +289,8 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
   k1_push_arch_stratum (NULL, 0);
   execute_command (set_non_stop_cmd, 0);
   execute_command (set_pagination_off_cmd, 0);
-  remote_hw_breakpoint_limit = 0;
-  remote_hw_watchpoint_limit = 1;
+  remote_hw_breakpoint_limit = 2;
+  remote_hw_watchpoint_limit = 2;
 
   arg = argv_args;
   while (arg && *arg++) nb_args++;
@@ -768,8 +768,8 @@ attach_mppa_command (char *args, int from_tty)
   k1_target_attach (&current_target, args, from_tty);
   cjtag_over_iss = get_jtag_over_iss ();
 
-  remote_hw_breakpoint_limit = 0;
-  remote_hw_watchpoint_limit = 1;
+  remote_hw_breakpoint_limit = 2;
+  remote_hw_watchpoint_limit = 2;
 
   bstopped = 0;
   bcur_inf_stopped = 0;
