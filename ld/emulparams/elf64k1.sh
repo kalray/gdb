@@ -2,7 +2,7 @@ ARCH=k1
 MACHINE=k1c:64
 
 # bundle with 1 nop insn
-NOP=0x7f03f000
+NOP=0x00f0037f
 
 SCRIPT_NAME=elf
 ELFSIZE=64

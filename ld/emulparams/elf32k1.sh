@@ -1,5 +1,9 @@
 MACHINE=k1c
 SCRIPT_NAME=elf
+
+# bundle with 1 nop insn
+NOP=0x00f0037f
+
 TEMPLATE_NAME=elf32
 OUTPUT_FORMAT="elf32-k1"
 TEXT_START_ADDR=0x0
