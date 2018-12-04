@@ -102,6 +102,7 @@ extern int k1_k1c_dec_registers[];
 #define k1c_bcucode5_fld(x) (int)(((unsigned int)(x) >> 12) & 0x3f)
 #define k1c_bcucode6_fld(x) (int)(((unsigned int)(x) >> 6) & 0x3f)
 #define k1c_bcucode7_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3f)
+#define k1c_bcucode8_fld(x) (int)(((unsigned int)(x) >> 15) & 0x7)
 #define k1c_branchcond_fld(x) (int)(((unsigned int)(x) >> 23) & 0xf)
 #define k1c_byteshift_fld(x) (int)((unsigned int)(x) & 0x3f)
 #define k1c_columnsel_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
@@ -187,7 +188,6 @@ extern int k1_k1c_dec_registers[];
 #define k1c_scalarcond_fld(x) (int)(((unsigned int)(x) >> 24) & 0xf)
 #define k1c_scaling_fld(x) (int)(((unsigned int)(x) >> 12) & 0x1)
 #define k1c_signed10_fld(x) (int)(((unsigned int)(x) >> 6) & 0x3ff)
-#define k1c_signed12_fld(x) (int)((unsigned int)(x) & 0xfff)
 #define k1c_signed16_fld(x) (int)((unsigned int)(x) & 0xffff)
 #define k1c_silent_fld(x) (int)(((unsigned int)(x) >> 15) & 0x1)
 #define k1c_silent2_fld(x) (int)(((unsigned int)(x) >> 11) & 0x1)
@@ -201,11 +201,14 @@ extern int k1_k1c_dec_registers[];
 #define k1c_stopbit2_fld(x) (int)(((unsigned int)(x) >> 24) & 0x3)
 #define k1c_stopbit4_fld(x) (int)(((unsigned int)(x) >> 12) & 0xf)
 #define k1c_sysnumber_fld(x) (int)((unsigned int)(x) & 0xfff)
-#define k1c_systemPS_fld(x) (int)(((unsigned int)(x) >> 6) & 0xfff)
-#define k1c_systemRA_fld(x) (int)(((unsigned int)(x) >> 6) & 0xfff)
-#define k1c_systemS2_fld(x) (int)(((unsigned int)(x) >> 6) & 0xfff)
-#define k1c_systemS4_fld(x) (int)(((unsigned int)(x) >> 6) & 0xfff)
-#define k1c_systemT2_fld(x) (int)(((unsigned int)(x) >> 6) & 0xfff)
+#define k1c_systemAlone_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemRA_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemS2_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemS3_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemS4_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemT2_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemT3_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
+#define k1c_systemT4_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1ff)
 #define k1c_tcacode1_fld(x) (int)(((unsigned int)(x) >> 24) & 0x7)
 #define k1c_tcacode2_fld(x) (int)(((unsigned int)(x) >> 14) & 0xf)
 #define k1c_tcacode3_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
@@ -223,7 +226,6 @@ extern int k1_k1c_dec_registers[];
 #define k1c_registerA_1_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
 #define k1c_registerA_2_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
 #define k1c_registerA_3_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
-#define k1c_signed12_opd(w) ((unsigned int)(w) & 0xfff)
 #define k1c_registerZ_opd(w) ((unsigned int)(w) & 0x3f)
 #define k1c_registerN_opd(w) (((unsigned int)(w) >> 20) & 0xf)
 #define k1c_registerN_0_opd(w) (((unsigned int)(w) >> 20) & 0xf)
@@ -283,11 +285,14 @@ extern int k1_k1c_dec_registers[];
 #define k1c_rectify_opd(w) (((unsigned int)(w) >> 7) & 0x1)
 #define k1c_branchcond_opd(w) (((unsigned int)(w) >> 23) & 0xf)
 #define k1c_pcrel17_opd(w) (((unsigned int)(w) >> 6) & 0x1ffff)
-#define k1c_systemT2_opd(w) (((unsigned int)(w) >> 6) & 0xfff)
-#define k1c_systemPS_opd(w) (((unsigned int)(w) >> 6) & 0xfff)
-#define k1c_systemRA_opd(w) (((unsigned int)(w) >> 6) & 0xfff)
-#define k1c_systemS2_opd(w) (((unsigned int)(w) >> 6) & 0xfff)
-#define k1c_systemS4_opd(w) (((unsigned int)(w) >> 6) & 0xfff)
+#define k1c_systemT2_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemAlone_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemT4_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemT3_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemRA_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemS2_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemS3_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
+#define k1c_systemS4_opd(w) (((unsigned int)(w) >> 6) & 0x1ff)
 #define k1c_sysnumber_opd(w) ((unsigned int)(w) & 0xfff)
 #define k1c_pcrel27_opd(w) ((unsigned int)(w) & 0x7ffffff)
 #define k1c_registerW_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
@@ -354,8 +359,7 @@ extern int k1_k1c_dec_registers[];
 #define is_k1c_TLBWRITE_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0f880000)
 #define is_k1c_TLBDINVAL_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0f8c0000)
 #define is_k1c_TLBIINVAL_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0f900000)
-#define is_k1c_ERROP_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffff000) == 0x00000000)
-#define is_k1c_BREAK_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffff000) == 0x00001000)
+#define is_k1c_ERROP_simple_insn(x) (int)(((unsigned int)(x) & 0x7fffffc0) == 0x00000000)
 #define is_k1c_RET_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fd00000)
 #define is_k1c_RFE_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fd40000)
 #define k1c_IGOTO_registerZ_simple_insn(registerZ) (unsigned int)(0x0fd80000 | ((int)(registerZ) & 0x3f))
@@ -368,24 +372,38 @@ extern int k1_k1c_dec_registers[];
 #define is_k1c_SCALL_sysnumber_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fe00000)
 #define k1c_LOOPDO_registerZ_pcrel17_simple_insn(registerZ,pcrel17) (unsigned int)(0x0f000000 | ((int)(registerZ) & 0x3f) | ((((int)(pcrel17) >> 2) & 0x1ffff) << 6))
 #define is_k1c_LOOPDO_registerZ_pcrel17_simple_insn(x) (int)(((unsigned int)(x) & 0x7f800000) == 0x0f000000)
-#define k1c_FXLW_systemT2_registerZ_simple_insn(systemT2,registerZ) (unsigned int)(0x0fb80000 | (((int)(systemT2) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
-#define is_k1c_FXLW_systemT2_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fb80000)
-#define k1c_FXLW_systemPS_registerZ_simple_insn(systemPS,registerZ) (unsigned int)(0x0fb80000 | (((int)(systemPS) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
-#define is_k1c_FXLW_systemPS_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fb80000)
-#define k1c_FXMW_systemT2_registerZ_simple_insn(systemT2,registerZ) (unsigned int)(0x0fbc0000 | (((int)(systemT2) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
-#define is_k1c_FXMW_systemT2_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fbc0000)
-#define k1c_FXMW_systemPS_registerZ_simple_insn(systemPS,registerZ) (unsigned int)(0x0fbc0000 | (((int)(systemPS) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
-#define is_k1c_FXMW_systemPS_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fbc0000)
-#define k1c_GET_registerZ_systemS2_simple_insn(registerZ,systemS2) (unsigned int)(0x0fc40000 | ((int)(registerZ) & 0x3f) | (((int)(systemS2) & 0xfff) << 6))
+#define k1c_WFXL_systemT2_registerZ_simple_insn(systemT2,registerZ) (unsigned int)(0x0fb80000 | (((int)(systemT2) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_WFXL_systemT2_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fb80000)
+#define k1c_WFXL_systemAlone_registerZ_simple_insn(systemAlone,registerZ) (unsigned int)(0x0fb80000 | (((int)(systemAlone) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_WFXL_systemAlone_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fb80000)
+#define k1c_WFXL_systemT4_registerZ_simple_insn(systemT4,registerZ) (unsigned int)(0x0fb80000 | (((int)(systemT4) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_WFXL_systemT4_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fb80000)
+#define k1c_WFXM_systemT2_registerZ_simple_insn(systemT2,registerZ) (unsigned int)(0x0fbc0000 | (((int)(systemT2) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_WFXM_systemT2_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fbc0000)
+#define k1c_WFXM_systemAlone_registerZ_simple_insn(systemAlone,registerZ) (unsigned int)(0x0fbc0000 | (((int)(systemAlone) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_WFXM_systemAlone_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fbc0000)
+#define k1c_WFXM_systemT4_registerZ_simple_insn(systemT4,registerZ) (unsigned int)(0x0fbc0000 | (((int)(systemT4) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_WFXM_systemT4_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fbc0000)
+#define k1c_GET_registerZ_systemS2_simple_insn(registerZ,systemS2) (unsigned int)(0x0fc40000 | ((int)(registerZ) & 0x3f) | (((int)(systemS2) & 0x1ff) << 6))
 #define is_k1c_GET_registerZ_systemS2_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc40000)
+#define k1c_GET_registerZ_systemS3_simple_insn(registerZ,systemS3) (unsigned int)(0x0fc40000 | ((int)(registerZ) & 0x3f) | (((int)(systemS3) & 0x1ff) << 6))
+#define is_k1c_GET_registerZ_systemS3_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc40000)
 #define k1c_IGET_registerZ_simple_insn(registerZ) (unsigned int)(0x0fcc0000 | ((int)(registerZ) & 0x3f))
 #define is_k1c_IGET_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fcc0000)
-#define k1c_SET_systemT2_registerZ_simple_insn(systemT2,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemT2) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
-#define is_k1c_SET_systemT2_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc00000)
-#define k1c_SET_systemPS_registerZ_simple_insn(systemPS,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemPS) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
-#define is_k1c_SET_systemPS_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc00000)
-#define k1c_SET_systemRA_registerZ_simple_insn(systemRA,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemRA) & 0xfff) << 6) | ((int)(registerZ) & 0x3f))
+#define k1c_SET_systemT3_registerZ_simple_insn(systemT3,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemT3) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_SET_systemT3_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc00000)
+#define k1c_SET_systemAlone_registerZ_simple_insn(systemAlone,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemAlone) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_SET_systemAlone_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc00000)
+#define k1c_SET_systemRA_registerZ_simple_insn(systemRA,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemRA) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
 #define is_k1c_SET_systemRA_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc00000)
+#define k1c_SET_systemT4_registerZ_simple_insn(systemT4,registerZ) (unsigned int)(0x0fc00000 | (((int)(systemT4) & 0x1ff) << 6) | ((int)(registerZ) & 0x3f))
+#define is_k1c_SET_systemT4_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc00000)
+#define k1c_RSWAP_registerZ_systemS4_simple_insn(registerZ,systemS4) (unsigned int)(0x0fc80000 | ((int)(registerZ) & 0x3f) | (((int)(systemS4) & 0x1ff) << 6))
+#define is_k1c_RSWAP_registerZ_systemS4_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc80000)
+#define k1c_RSWAP_registerZ_systemAlone_simple_insn(registerZ,systemAlone) (unsigned int)(0x0fc80000 | ((int)(registerZ) & 0x3f) | (((int)(systemAlone) & 0x1ff) << 6))
+#define is_k1c_RSWAP_registerZ_systemAlone_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc80000)
+#define k1c_RSWAP_registerZ_systemS3_simple_insn(registerZ,systemS3) (unsigned int)(0x0fc80000 | ((int)(registerZ) & 0x3f) | (((int)(systemS3) & 0x1ff) << 6))
+#define is_k1c_RSWAP_registerZ_systemS3_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fc80000)
 #define k1c_WAITIT_registerZ_simple_insn(registerZ) (unsigned int)(0x0fb00000 | ((int)(registerZ) & 0x3f))
 #define is_k1c_WAITIT_registerZ_simple_insn(x) (int)(((unsigned int)(x) & 0x7ffc0000) == 0x0fb00000)
 #define k1c_SYNCGROUP_registerZ_simple_insn(registerZ) (unsigned int)(0x0fb40000 | ((int)(registerZ) & 0x3f))
@@ -12729,6 +12747,7 @@ enum Method_k1c_enum {
   RegClass_k1c_accelReg_1,
   RegClass_k1c_accelReg_2,
   RegClass_k1c_accelReg_3,
+  RegClass_k1c_aloneReg,
   RegClass_k1c_blockReg,
   RegClass_k1c_blockReg0M4,
   RegClass_k1c_blockReg1M4,
@@ -12748,10 +12767,11 @@ enum Method_k1c_enum {
   RegClass_k1c_extendReg_1,
   RegClass_k1c_extendReg_2,
   RegClass_k1c_extendReg_3,
-  RegClass_k1c_nopcpsReg,
   RegClass_k1c_onlyfxReg,
-  RegClass_k1c_onlypsReg,
+  RegClass_k1c_onlygetReg,
   RegClass_k1c_onlyraReg,
+  RegClass_k1c_onlysetReg,
+  RegClass_k1c_onlyswapReg,
   RegClass_k1c_pairedReg,
   RegClass_k1c_pairedReg_0,
   RegClass_k1c_pairedReg_1,
