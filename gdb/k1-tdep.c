@@ -554,13 +554,28 @@ static CORE_ADDR
 k1_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr, struct value **args,
   int nargs, struct type *value_type, CORE_ADDR *real_pc, CORE_ADDR *bp_addr, struct regcache *regcache)
 {
+  int nop = nop_op[k1_arch ()];
+  uint32_t nops[4] = {nop, nop, nop, nop};
+
   if (sp < 32)
-    error (_("Cannot call yet a function from gdb prompt because the stack pointer is not set yet (sp=0x%llx)"), (unsigned long long) sp);
+  {
+    error (_("Cannot call yet a function from gdb prompt because the stack pointer is not set yet (sp=0x%llx)"),
+      (unsigned long long) sp);
+  }
 
   // allocate space for a breakpoint, keep the stack aligned
+  sp &= ~15ULL;
   sp -= 16;
 
-  *bp_addr = sp;
+  // write 4 NOPs on the reserved stack place
+  write_memory (sp, (gdb_byte *) nops, sizeof (nops));
+
+  // the breakpoint will be on the second NOP (beginning from the lowest address)
+  // when the breakpoint will be inserted, it will search the end of the previous bundle (bit parallel 0)
+  // so, it will find our first unparallel NOP
+  *bp_addr = sp + 4;
+
+  // inferior resumes at the function entry point
   *real_pc = funcaddr;
 
   return sp;

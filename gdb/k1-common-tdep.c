@@ -50,6 +50,7 @@ static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
 struct op_list *branch_insns[K1_NUM_ARCHES];
 uint32_t break_op[K1_NUM_ARCHES];
 uint32_t break_jtag_over_iss[K1_NUM_ARCHES];
+uint32_t nop_op[K1_NUM_ARCHES];
 
 enum K1_ARCH
 k1_arch (void)
@@ -602,6 +603,8 @@ k1_look_for_insns (void)
         add_op (&branch_insns[i], op);
       else if (strcmp ("get", op->as_op) == 0)
         add_op (&branch_insns[i], op);
+      else if (strcmp ("nop", op->as_op) == 0)
+        nop_op[i] = op->codewords[0].opcode;
 
       ++op;
     }
