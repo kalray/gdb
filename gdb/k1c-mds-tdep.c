@@ -1,6 +1,5 @@
 /* Generated target-description for k1c */
-/* (c) Copyright 1999-2005 STMicroelectronics. */
-/* (c) Copyright 2010-2015 Kalray SA. */
+/* (c) Copyright 2010-2018 Kalray SA. */
 #include "defs.h"
 
 #include <string.h>
