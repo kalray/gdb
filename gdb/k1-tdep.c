@@ -781,17 +781,3 @@ _initialize_k1_tdep (void)
   k1_inferior_data_token = register_inferior_data_with_cleanup (NULL, k1_cleanup_inferior_data);
 }
 
-int
-get_thread_mode_used_for_ptid (ptid_t ptid)
-{
-  int ret;
-  char *buf = (char *) malloc (256);
-  long size = 256;
-  sprintf (buf, "kmp%x.%x", (unsigned int) ptid.pid, (unsigned int) ptid.lwp);
-  putpkt (buf);
-  getpkt (&buf, &size, 0);
-  ret = (int) (buf[0] - '0');
-  free (buf);
-
-  return ret;
-}
