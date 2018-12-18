@@ -14,10 +14,6 @@ extern int after_first_resume;
 extern char cjtag_over_iss;
 
 void _initialize__k1_target (void);
-void send_cluster_debug_level (int level);
-void send_cluster_postponed_debug_level (struct inferior *inf, int level);
-int get_is_hot_attached (struct inferior *inf);
-int get_thread_mode_used_for_ptid (ptid_t ptid);
 void send_cluster_break_on_spawn (struct inferior *inf, int v);
 void send_cluster_stop_all (struct inferior *inf, int v);
 char get_jtag_over_iss (void);
