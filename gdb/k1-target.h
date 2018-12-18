@@ -8,6 +8,7 @@ struct inferior_data
   int sym_file_loaded;
   int cluster_break_on_spawn;
   int cluster_stop_all;
+  int cluster_debug_ring;
 };
 
 extern int after_first_resume;
@@ -16,6 +17,7 @@ extern char cjtag_over_iss;
 void _initialize__k1_target (void);
 void send_cluster_break_on_spawn (struct inferior *inf, int v);
 void send_cluster_stop_all (struct inferior *inf, int v);
+void send_cluster_debug_ring (struct inferior *inf, int v);
 char get_jtag_over_iss (void);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);

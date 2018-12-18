@@ -186,6 +186,19 @@ send_cluster_stop_all (struct inferior *inf, int v)
   free (buf);
 }
 
+void
+send_cluster_debug_ring (struct inferior *inf, int v)
+{
+  char *buf;
+  long size = 256;
+
+  buf = (char *) malloc (size);
+  sprintf (buf, "kR%dp%x.1", v, inf->pid);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
 int
 read_memory_no_dcache (uint64_t addr, gdb_byte *user_buf, int len)
 {

@@ -63,6 +63,8 @@ static struct cmd_list_element *kalray_show_cmdlist;
 static const char *simulation_vehicles[] = {"k1-cluster", NULL};
 static const char *simulation_vehicle;
 static const char *sopts_cluster_stop_all[] = {"none", "jtag", "break_mask", NULL};
+static const char *sopts_cluster_debug_ring[] = {"all", "current", NULL};
+static const char *sopt_cluster_debug_ring;
 static const char *sopt_cluster_stop_all;
 char cjtag_over_iss = 'n';
 int opt_break_on_spawn = 0;
@@ -704,11 +706,11 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty, struct cmd_list
 }
 
 static int
-str_cluster_stop_all_to_idx (const char *s)
+str_idx_in_opts (const char *s, const char **opts)
 {
   int i;
-  for (i = 0; i < sizeof (sopts_cluster_stop_all) / sizeof (char *) - 1; i++)
-    if (!strcmp (s, sopts_cluster_stop_all[i]))
+  for (i = 0; opts[i]; i++)
+    if (!strcmp (s, opts[i]))
       return i;
   return -1;
 }
@@ -724,7 +726,7 @@ set_cluster_stop_all (char *args, int from_tty, struct cmd_list_element *c)
 
   inf = current_inferior ();
   data = mppa_inferior_data (inf);
-  data->cluster_stop_all = str_cluster_stop_all_to_idx (sopt_cluster_stop_all);
+  data->cluster_stop_all = str_idx_in_opts (sopt_cluster_stop_all, sopts_cluster_stop_all);
   send_cluster_stop_all (inf, data->cluster_stop_all);
 }
 
@@ -741,6 +743,36 @@ show_cluster_stop_all (struct ui_file *file, int from_tty, struct cmd_list_eleme
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   fprintf_filtered (file, "Stop all cluster CPUs is %s.\n", sopts_cluster_stop_all[data->cluster_stop_all]);
+}
+
+static void
+set_cluster_debug_ring (char *args, int from_tty, struct cmd_list_element *c)
+{
+  struct inferior *inf;
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    error (_ ("Cannot set cluster debug ring without a selected thread."));
+
+  inf = current_inferior ();
+  data = mppa_inferior_data (inf);
+  data->cluster_debug_ring = str_idx_in_opts (sopt_cluster_debug_ring, sopts_cluster_debug_ring);
+  send_cluster_debug_ring (inf, data->cluster_debug_ring);
+}
+
+static void
+show_cluster_debug_ring (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+{
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf (_ ("Cannot show cluster debug ring without a selected thread."));
+    return;
+  }
+
+  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
+  fprintf_filtered (file, "Cluster debug ring is %s.\n", sopts_cluster_debug_ring[data->cluster_debug_ring]);
 }
 
 static void
@@ -964,6 +996,10 @@ _initialize__k1_target (void)
   add_setshow_enum_cmd ("stop-all", class_maintenance, sopts_cluster_stop_all, &sopt_cluster_stop_all,
     _("Set stop all cluster CPUs"), _("Show stop all cluster CPUs"),
     NULL, set_cluster_stop_all, show_cluster_stop_all, &kalray_set_cmdlist, &kalray_show_cmdlist);
+
+  add_setshow_enum_cmd ("cluster-debug-ring", class_maintenance, sopts_cluster_debug_ring, &sopt_cluster_debug_ring,
+    _("Set cluster debug ring"), _("Show cluster debug ring"),
+    NULL, set_cluster_debug_ring, show_cluster_debug_ring, &kalray_set_cmdlist, &kalray_show_cmdlist);
 
   add_com ("run-mppa", class_run, run_mppa_command, _ ("Connect to a MPPA TLM platform and start debugging it."));
 
