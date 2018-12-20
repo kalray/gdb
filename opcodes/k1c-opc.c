@@ -4114,12 +4114,13 @@ const char *k1c_resource_names[RESOURCE_MAX] = {
   "ACC",
   "DATA",
   "TCA",
+  "TCAMOVEREAD",
   "BRE",
   "BRO",
   "NOP"
 };
 
-const int k1c_resources[RESOURCE_MAX] = { 8,4,2,1,1,1,1,1,1,1,1,1,4};
+const int k1c_resources[RESOURCE_MAX] = { 8,4,2,1,1,1,1,1,1,1,1,1,1,4};
 
 
 
@@ -4137,6 +4138,7 @@ static const int Reservation_k1c_ALL_table[RESERVATION_TABLE_LINES * RESOURCE_MA
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4153,6 +4155,7 @@ static const int Reservation_k1c_ALU_FULL_table[RESERVATION_TABLE_LINES * RESOUR
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4169,6 +4172,7 @@ static const int Reservation_k1c_ALU_FULL_X_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4185,6 +4189,7 @@ static const int Reservation_k1c_ALU_FULL_Y_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4201,6 +4206,7 @@ static const int Reservation_k1c_ALU_LITE_table[RESERVATION_TABLE_LINES * RESOUR
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4217,6 +4223,7 @@ static const int Reservation_k1c_ALU_LITE_X_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4233,6 +4240,7 @@ static const int Reservation_k1c_ALU_LITE_Y_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4249,6 +4257,7 @@ static const int Reservation_k1c_ALU_LITE_BRE_table[RESERVATION_TABLE_LINES * RE
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   1 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4265,6 +4274,7 @@ static const int Reservation_k1c_ALU_LITE_BRO_table[RESERVATION_TABLE_LINES * RE
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   1 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4281,6 +4291,7 @@ static const int Reservation_k1c_ALU_NOP_table[RESERVATION_TABLE_LINES * RESOURC
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   1 /* cyc.0 Resource-k1c-NOP */
@@ -4297,6 +4308,7 @@ static const int Reservation_k1c_ALU_TINY_table[RESERVATION_TABLE_LINES * RESOUR
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4313,6 +4325,7 @@ static const int Reservation_k1c_ALU_TINY_X_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4329,6 +4342,7 @@ static const int Reservation_k1c_ALU_TINY_Y_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4345,8 +4359,43 @@ static const int Reservation_k1c_BCU_table[RESERVATION_TABLE_LINES * RESOURCE_MA
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
+  0 /* cyc.0 Resource-k1c-NOP */
+};
+
+static const int Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
+  1 /* cyc.0 Resource-k1c-ISSUE */,
+  1 /* cyc.0 Resource-k1c-TINY */,
+  0 /* cyc.0 Resource-k1c-LITE */,
+  0 /* cyc.0 Resource-k1c-ALU */,
+  0 /* cyc.0 Resource-k1c-LSU */,
+  0 /* cyc.0 Resource-k1c-MAU */,
+  1 /* cyc.0 Resource-k1c-BCU */,
+  0 /* cyc.0 Resource-k1c-ACC */,
+  1 /* cyc.0 Resource-k1c-DATA */,
+  0 /* cyc.0 Resource-k1c-TCA */,
+  1 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
+  0 /* cyc.0 Resource-k1c-BRE */,
+  0 /* cyc.0 Resource-k1c-BRO */,
+  0 /* cyc.0 Resource-k1c-NOP */
+};
+
+static const int Reservation_k1c_BCU_TCA_WRITE_INTERNAL_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
+  1 /* cyc.0 Resource-k1c-ISSUE */,
+  0 /* cyc.0 Resource-k1c-TINY */,
+  0 /* cyc.0 Resource-k1c-LITE */,
+  0 /* cyc.0 Resource-k1c-ALU */,
+  0 /* cyc.0 Resource-k1c-LSU */,
+  0 /* cyc.0 Resource-k1c-MAU */,
+  1 /* cyc.0 Resource-k1c-BCU */,
+  0 /* cyc.0 Resource-k1c-ACC */,
+  0 /* cyc.0 Resource-k1c-DATA */,
+  0 /* cyc.0 Resource-k1c-TCA */,
+  1 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
+  1 /* cyc.0 Resource-k1c-BRE */,
+  1 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
 };
 
@@ -4361,6 +4410,7 @@ static const int Reservation_k1c_BCU_TINY_DATA_table[RESERVATION_TABLE_LINES * R
   0 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4377,6 +4427,7 @@ static const int Reservation_k1c_BCU_TINY_TINY_MAU_XNOP_table[RESERVATION_TABLE_
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   4 /* cyc.0 Resource-k1c-NOP */
@@ -4393,6 +4444,7 @@ static const int Reservation_k1c_LSU_table[RESERVATION_TABLE_LINES * RESOURCE_MA
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4409,6 +4461,7 @@ static const int Reservation_k1c_LSU_X_table[RESERVATION_TABLE_LINES * RESOURCE_
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4425,6 +4478,7 @@ static const int Reservation_k1c_LSU_Y_table[RESERVATION_TABLE_LINES * RESOURCE_
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4441,6 +4495,7 @@ static const int Reservation_k1c_LSU_ACC_table[RESERVATION_TABLE_LINES * RESOURC
   1 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4457,6 +4512,7 @@ static const int Reservation_k1c_LSU_ACC_X_table[RESERVATION_TABLE_LINES * RESOU
   1 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4473,6 +4529,7 @@ static const int Reservation_k1c_LSU_ACC_Y_table[RESERVATION_TABLE_LINES * RESOU
   1 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4489,6 +4546,7 @@ static const int Reservation_k1c_LSU_ACC_DATA_table[RESERVATION_TABLE_LINES * RE
   1 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4505,6 +4563,7 @@ static const int Reservation_k1c_LSU_ACC_DATA_X_table[RESERVATION_TABLE_LINES * 
   1 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4521,6 +4580,7 @@ static const int Reservation_k1c_LSU_ACC_DATA_Y_table[RESERVATION_TABLE_LINES * 
   1 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4537,6 +4597,7 @@ static const int Reservation_k1c_LSU_DATA_table[RESERVATION_TABLE_LINES * RESOUR
   0 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4553,6 +4614,7 @@ static const int Reservation_k1c_LSU_DATA_X_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4569,6 +4631,58 @@ static const int Reservation_k1c_LSU_DATA_Y_table[RESERVATION_TABLE_LINES * RESO
   0 /* cyc.0 Resource-k1c-ACC */,
   1 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
+  0 /* cyc.0 Resource-k1c-BRE */,
+  0 /* cyc.0 Resource-k1c-BRO */,
+  0 /* cyc.0 Resource-k1c-NOP */
+};
+
+static const int Reservation_k1c_LSU_TCA_MOVE_READ_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
+  1 /* cyc.0 Resource-k1c-ISSUE */,
+  1 /* cyc.0 Resource-k1c-TINY */,
+  0 /* cyc.0 Resource-k1c-LITE */,
+  0 /* cyc.0 Resource-k1c-ALU */,
+  1 /* cyc.0 Resource-k1c-LSU */,
+  0 /* cyc.0 Resource-k1c-MAU */,
+  0 /* cyc.0 Resource-k1c-BCU */,
+  0 /* cyc.0 Resource-k1c-ACC */,
+  0 /* cyc.0 Resource-k1c-DATA */,
+  0 /* cyc.0 Resource-k1c-TCA */,
+  1 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
+  0 /* cyc.0 Resource-k1c-BRE */,
+  0 /* cyc.0 Resource-k1c-BRO */,
+  0 /* cyc.0 Resource-k1c-NOP */
+};
+
+static const int Reservation_k1c_LSU_TCA_MOVE_READ_X_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
+  2 /* cyc.0 Resource-k1c-ISSUE */,
+  1 /* cyc.0 Resource-k1c-TINY */,
+  0 /* cyc.0 Resource-k1c-LITE */,
+  0 /* cyc.0 Resource-k1c-ALU */,
+  1 /* cyc.0 Resource-k1c-LSU */,
+  0 /* cyc.0 Resource-k1c-MAU */,
+  0 /* cyc.0 Resource-k1c-BCU */,
+  0 /* cyc.0 Resource-k1c-ACC */,
+  0 /* cyc.0 Resource-k1c-DATA */,
+  0 /* cyc.0 Resource-k1c-TCA */,
+  1 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
+  0 /* cyc.0 Resource-k1c-BRE */,
+  0 /* cyc.0 Resource-k1c-BRO */,
+  0 /* cyc.0 Resource-k1c-NOP */
+};
+
+static const int Reservation_k1c_LSU_TCA_MOVE_READ_Y_table[RESERVATION_TABLE_LINES * RESOURCE_MAX] = {
+  3 /* cyc.0 Resource-k1c-ISSUE */,
+  1 /* cyc.0 Resource-k1c-TINY */,
+  0 /* cyc.0 Resource-k1c-LITE */,
+  0 /* cyc.0 Resource-k1c-ALU */,
+  1 /* cyc.0 Resource-k1c-LSU */,
+  0 /* cyc.0 Resource-k1c-MAU */,
+  0 /* cyc.0 Resource-k1c-BCU */,
+  0 /* cyc.0 Resource-k1c-ACC */,
+  0 /* cyc.0 Resource-k1c-DATA */,
+  0 /* cyc.0 Resource-k1c-TCA */,
+  1 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4585,6 +4699,7 @@ static const int Reservation_k1c_MAU_table[RESERVATION_TABLE_LINES * RESOURCE_MA
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4601,6 +4716,7 @@ static const int Reservation_k1c_MAU_X_table[RESERVATION_TABLE_LINES * RESOURCE_
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4617,6 +4733,7 @@ static const int Reservation_k1c_MAU_Y_table[RESERVATION_TABLE_LINES * RESOURCE_
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4633,6 +4750,7 @@ static const int Reservation_k1c_MAU_ACC_table[RESERVATION_TABLE_LINES * RESOURC
   1 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4649,6 +4767,7 @@ static const int Reservation_k1c_MAU_ACC_X_table[RESERVATION_TABLE_LINES * RESOU
   1 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4665,6 +4784,7 @@ static const int Reservation_k1c_MAU_ACC_Y_table[RESERVATION_TABLE_LINES * RESOU
   1 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   0 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4681,6 +4801,7 @@ static const int Reservation_k1c_TCA_table[RESERVATION_TABLE_LINES * RESOURCE_MA
   0 /* cyc.0 Resource-k1c-ACC */,
   0 /* cyc.0 Resource-k1c-DATA */,
   1 /* cyc.0 Resource-k1c-TCA */,
+  0 /* cyc.0 Resource-k1c-TCAMOVEREAD */,
   0 /* cyc.0 Resource-k1c-BRE */,
   0 /* cyc.0 Resource-k1c-BRO */,
   0 /* cyc.0 Resource-k1c-NOP */
@@ -4701,12 +4822,17 @@ const int *k1c_reservation_table_table[] = {
   Reservation_k1c_ALU_FULL_X_table,
   Reservation_k1c_ALU_FULL_Y_table,
   Reservation_k1c_BCU_table,
+  Reservation_k1c_BCU_TCA_WRITE_INTERNAL_table,
+  Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA_table,
   Reservation_k1c_BCU_TINY_DATA_table,
   Reservation_k1c_BCU_TINY_TINY_MAU_XNOP_table,
   Reservation_k1c_TCA_table,
   Reservation_k1c_LSU_table,
   Reservation_k1c_LSU_X_table,
   Reservation_k1c_LSU_Y_table,
+  Reservation_k1c_LSU_TCA_MOVE_READ_table,
+  Reservation_k1c_LSU_TCA_MOVE_READ_X_table,
+  Reservation_k1c_LSU_TCA_MOVE_READ_Y_table,
   Reservation_k1c_LSU_ACC_table,
   Reservation_k1c_LSU_ACC_X_table,
   Reservation_k1c_LSU_ACC_Y_table,
@@ -4736,15 +4862,15 @@ k1opc_t k1c_k1optab[] = {
 	{"copyd", {{ 0x6a000000, 0x7f03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYD_registerW_registerZ_simple */
 	{"copyv", {{ 0x01000000, 0x7f001fff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbe_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYV_registerA_registerBe_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_INTERNAL, {&k1c_registera_opnd, &k1c_registerbe_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYV_registerA_registerBe_simple */
 	{"copyv", {{ 0x01001000, 0x7f001fff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbo_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYV_registerA_registerBo_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_INTERNAL, {&k1c_registera_opnd, &k1c_registerbo_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYV_registerA_registerBo_simple */
 	{"copyw", {{ 0x7a000000, 0x7f03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-COPYW_registerW_registerZ_simple */
 	{"movefo", {{ 0x00081000, 0x7f0c1fff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-MOVEFO_registerN_registerBe_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-MOVEFO_registerN_registerBe_simple */
 	{"movefo", {{ 0x000c1000, 0x7f0c1fff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-MOVEFO_registerN_registerBo_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-MOVEFO_registerN_registerBo_simple */
 	{"negd", {{ 0x65000000, 0x7f03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s"}, /* A_Opcode-k1c-NEGD_registerW_registerZ_simple */
 	{"neghq", {{ 0xf5013000, 0xff03ffc0, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x67ffffff, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_ALU }, }, 2, 64,
@@ -5830,21 +5956,21 @@ k1opc_t k1c_k1optab[] = {
 	{"alclrw.xs", {{ 0x2a03f000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_DATA, {&k1c_registerw_opnd, &k1c_registery_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s[%s]"}, /* Opcode-k1c-ALCLRW_scaling_registerW_registerY_registerZ_simple */
 	{"aligno", {{ 0x00081040, 0x7f0c1040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBe_registerCo_registerZ_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBe_registerCo_registerZ_simple */
 	{"aligno", {{ 0x00081000, 0x7f0c1040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBe_registerCo_u006_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBe_registerCo_u006_simple */
 	{"aligno", {{ 0x000c1040, 0x7f0c1040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBo_registerCe_registerZ_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBo_registerCe_registerZ_simple */
 	{"aligno", {{ 0x000c1000, 0x7f0c1040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBo_registerCe_u006_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA, {&k1c_registern_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNO_registerN_registerBo_registerCe_u006_simple */
 	{"alignv", {{ 0x01000040, 0x7f001040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBe_registerCo_registerZ_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_INTERNAL, {&k1c_registera_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBe_registerCo_registerZ_simple */
 	{"alignv", {{ 0x01000000, 0x7f001040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBe_registerCo_u006_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_INTERNAL, {&k1c_registera_opnd, &k1c_registerbe_opnd, &k1c_registerco_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBe_registerCo_u006_simple */
 	{"alignv", {{ 0x01001040, 0x7f001040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBo_registerCe_registerZ_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_INTERNAL, {&k1c_registera_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_registerz_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBo_registerCe_registerZ_simple */
 	{"alignv", {{ 0x01001000, 0x7f001040, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU, {&k1c_registera_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBo_registerCe_u006_simple */
+((int)0 << 8) | (int)Bundling_k1c_BCU, ((int)0 << 8) | (int)Reservation_k1c_BCU_TCA_WRITE_INTERNAL, {&k1c_registera_opnd, &k1c_registerbo_opnd, &k1c_registerce_opnd, &k1c_byteshift_opnd, 0}, "", "%s = %s, %s, %s"}, /* Opcode-k1c-ALIGNV_registerA_registerBo_registerCe_u006_simple */
 	{"andd", {{ 0x78010000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_TINY, ((int)0 << 8) | (int)Reservation_k1c_ALU_TINY, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_registery_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-ANDD_registerW_registerZ_registerY_simple */
 	{"andd", {{ 0x68000000, 0x7f030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
@@ -15616,99 +15742,99 @@ k1opc_t k1c_k1optab[] = {
 	{"stsuw", {{ 0x70011000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LITE, ((int)0 << 8) | (int)Reservation_k1c_ALU_LITE, {&k1c_registerw_opnd, &k1c_registerz_opnd, &k1c_registery_opnd, 0}, "", "%s = %s, %s"}, /* Opcode-k1c-STSUW_registerW_registerZ_registerY_simple */
 	{"sv.deqz", {{ 0x29031000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.dgez", {{ 0x29033000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.dgtz", {{ 0x29035000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.dlez", {{ 0x29034000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.dltz", {{ 0x29032000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.dnez", {{ 0x29030000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.even", {{ 0x29037000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.odd", {{ 0x29036000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.weqz", {{ 0x29039000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.wgez", {{ 0x2903b000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.wgtz", {{ 0x2903d000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.wlez", {{ 0x2903c000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.wltz", {{ 0x2903a000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.wnez", {{ 0x29038000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_registerZ_registerE_simple */
 	{"sv.deqz", {{ 0xa9031000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.dgez", {{ 0xa9033000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.dgtz", {{ 0xa9035000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.dlez", {{ 0xa9034000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.dltz", {{ 0xa9032000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.dnez", {{ 0xa9030000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.even", {{ 0xa9037000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.odd", {{ 0xa9036000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.weqz", {{ 0xa9039000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.wgez", {{ 0xa903b000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.wgtz", {{ 0xa903d000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.wlez", {{ 0xa903c000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.wltz", {{ 0xa903a000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.wnez", {{ 0xa9038000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_registery_opnd, &k1c_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s027_registerZ_registerE_double */
 	{"sv.deqz", {{ 0xa9031000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.dgez", {{ 0xa9033000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.dgtz", {{ 0xa9035000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.dlez", {{ 0xa9034000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.dltz", {{ 0xa9032000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.dnez", {{ 0xa9030000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.even", {{ 0xa9037000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.odd", {{ 0xa9036000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.weqz", {{ 0xa9039000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.wgez", {{ 0xa903b000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.wgtz", {{ 0xa903d000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.wlez", {{ 0xa903c000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.wltz", {{ 0xa903a000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv.wnez", {{ 0xa9038000, 0xff03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_registery_opnd, &k1c_extend27_offset27_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s? %s[%s] = %s"}, /* Opcode-k1c-SV_lsucond_registerY_s054_registerZ_registerE_triple */
 	{"sv", {{ 0x29010000, 0x7f030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_signed10_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_s010_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_signed10_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_s010_registerZ_registerE_simple */
 	{"sv", {{ 0xa9010000, 0xff030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, }, 2, 64,
-((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_X, {&k1c_upper27_lower10_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_s037_registerZ_registerE_double */
+((int)0 << 8) | (int)Bundling_k1c_LSU_X, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_X, {&k1c_upper27_lower10_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_s037_registerZ_registerE_double */
 	{"sv", {{ 0x2903e000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_scaling_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_scaling_registerY_registerZ_registerE_simple */
 	{"sv.xs", {{ 0x2903f000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
-((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_scaling_registerY_registerZ_registerE_simple */
+((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_scaling_registerY_registerZ_registerE_simple */
 	{"sv", {{ 0xa9010000, 0xff030000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, { 0x80000000, 0xe0000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX0|k1OPCODE_FLAG_LSU }, { 0x00000000, 0x60000000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32|k1OPCODE_FLAG_IMMX1|k1OPCODE_FLAG_LSU }, }, 3, 96,
-((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_Y, {&k1c_extend27_upper27_lower10_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_w064_registerZ_registerE_triple */
+((int)0 << 8) | (int)Bundling_k1c_LSU_Y, ((int)0 << 8) | (int)Reservation_k1c_LSU_TCA_MOVE_READ_Y, {&k1c_extend27_upper27_lower10_opnd, &k1c_registerz_opnd, &k1c_registere_opnd, 0}, "", "%s[%s] = %s"}, /* Opcode-k1c-SV_w064_registerZ_registerE_triple */
 	{"sw.deqz", {{ 0x26031000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,
 ((int)0 << 8) | (int)Bundling_k1c_LSU, ((int)0 << 8) | (int)Reservation_k1c_LSU_ACC, {&k1c_registery_opnd, &k1c_registerz_opnd, &k1c_registert_opnd, 0}, "", "%s? [%s] = %s"}, /* Opcode-k1c-SW_lsucond_registerY_registerZ_registerT_simple */
 	{"sw.dgez", {{ 0x26033000, 0x7f03f000, k1OPCODE_FLAG_MODE64|k1OPCODE_FLAG_MODE32 }, }, 1, 32,

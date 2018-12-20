@@ -12973,10 +12973,11 @@ static char *bundling_names(Bundling bundling) {
 #define Resource_k1c_ACC 7
 #define Resource_k1c_DATA 8
 #define Resource_k1c_TCA 9
-#define Resource_k1c_BRE 10
-#define Resource_k1c_BRO 11
-#define Resource_k1c_NOP 12
-#define RESOURCE_MAX 13
+#define Resource_k1c_TCAMOVEREAD 10
+#define Resource_k1c_BRE 11
+#define Resource_k1c_BRO 12
+#define Resource_k1c_NOP 13
+#define RESOURCE_MAX 14
 
 
 /* Reservations list */
@@ -12994,27 +12995,32 @@ static char *bundling_names(Bundling bundling) {
 #define Reservation_k1c_ALU_FULL_X 11
 #define Reservation_k1c_ALU_FULL_Y 12
 #define Reservation_k1c_BCU 13
-#define Reservation_k1c_BCU_TINY_DATA 14
-#define Reservation_k1c_BCU_TINY_TINY_MAU_XNOP 15
-#define Reservation_k1c_TCA 16
-#define Reservation_k1c_LSU 17
-#define Reservation_k1c_LSU_X 18
-#define Reservation_k1c_LSU_Y 19
-#define Reservation_k1c_LSU_ACC 20
-#define Reservation_k1c_LSU_ACC_X 21
-#define Reservation_k1c_LSU_ACC_Y 22
-#define Reservation_k1c_LSU_DATA 23
-#define Reservation_k1c_LSU_DATA_X 24
-#define Reservation_k1c_LSU_DATA_Y 25
-#define Reservation_k1c_LSU_ACC_DATA 26
-#define Reservation_k1c_LSU_ACC_DATA_X 27
-#define Reservation_k1c_LSU_ACC_DATA_Y 28
-#define Reservation_k1c_MAU 29
-#define Reservation_k1c_MAU_X 30
-#define Reservation_k1c_MAU_Y 31
-#define Reservation_k1c_MAU_ACC 32
-#define Reservation_k1c_MAU_ACC_X 33
-#define Reservation_k1c_MAU_ACC_Y 34
+#define Reservation_k1c_BCU_TCA_WRITE_INTERNAL 14
+#define Reservation_k1c_BCU_TCA_WRITE_EXT_TINY_DATA 15
+#define Reservation_k1c_BCU_TINY_DATA 16
+#define Reservation_k1c_BCU_TINY_TINY_MAU_XNOP 17
+#define Reservation_k1c_TCA 18
+#define Reservation_k1c_LSU 19
+#define Reservation_k1c_LSU_X 20
+#define Reservation_k1c_LSU_Y 21
+#define Reservation_k1c_LSU_TCA_MOVE_READ 22
+#define Reservation_k1c_LSU_TCA_MOVE_READ_X 23
+#define Reservation_k1c_LSU_TCA_MOVE_READ_Y 24
+#define Reservation_k1c_LSU_ACC 25
+#define Reservation_k1c_LSU_ACC_X 26
+#define Reservation_k1c_LSU_ACC_Y 27
+#define Reservation_k1c_LSU_DATA 28
+#define Reservation_k1c_LSU_DATA_X 29
+#define Reservation_k1c_LSU_DATA_Y 30
+#define Reservation_k1c_LSU_ACC_DATA 31
+#define Reservation_k1c_LSU_ACC_DATA_X 32
+#define Reservation_k1c_LSU_ACC_DATA_Y 33
+#define Reservation_k1c_MAU 34
+#define Reservation_k1c_MAU_X 35
+#define Reservation_k1c_MAU_Y 36
+#define Reservation_k1c_MAU_ACC 37
+#define Reservation_k1c_MAU_ACC_X 38
+#define Reservation_k1c_MAU_ACC_Y 39
 
 
 
