@@ -22,4 +22,4 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile {debug quiet}] } 
 }
 
 # 64-bit array size should not overflow
-gdb_test "print &f->buf" {= \(char \(\*\)\[1099494850560\]\) 0x0}
+gdb_test "print &f->buf" {= \(char \(\*\)\[1099494850560\]\) 0x0 .*}
