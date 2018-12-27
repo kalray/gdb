@@ -386,7 +386,7 @@ k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function, struct regc
     int typelen = TYPE_LENGTH (value_enclosing_type (args[i]));
     int newslots = (typelen + gpr_reg_sz - 1) / gpr_reg_sz;
 
-    if (gpr_reg_sz == 4 && typelen > 4 && argslotsnb & 1)
+    if (typelen > gpr_reg_sz && argslotsnb & 1)
       ++argslotsnb;
 
     argslotsbuf = xrealloc (argslotsbuf, (argslotsnb + newslots) * gpr_reg_sz);
