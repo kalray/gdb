@@ -5,13 +5,11 @@
 .section .text
 .global start_test
 start_test:
-  make $r0 = ev
-  ;;
-  ord $r0 = $r0,4
+  make $r0 = ev_debug
   ;;
   set $ev = $r0
   ;;
-  make $r0 = 0x000000200000000C /* Enable H/W loops, clear PS.ET and PS.HTD */
+  make $r0 = 0x0000002000000004 /* Enable H/W loops, clear PS.ET */
   ;;
   wfxl $ps, $r0
   ;;
@@ -30,13 +28,13 @@ test_displaced4:
   make $r0 = -1
   ;;
 test_displaced5:
-  scall 128
+  scall 2048
   ;;
 test_displaced6:
   make $r0 = test_displaced8
   ;;
 test_displaced7:
-  .word 0x7bababab /* Invalid opcode */
+  errop /* Invalid opcode */
   ;;
 test_displaced8:
   get $r61 = $pc
@@ -65,17 +63,3 @@ test_displaced:
   scall 4095
   ;;
 
-.align 4096
-ev: /* Warning: This table works in this context, but not in the general one. OPCODE trap will jump to ev+0x8 */
-  nop
-  ;;
-  set $spc = $r0
-  ;;
-  rfe
-  ;;
-  rfe
-  ;;
-
-.section .data
-_debug_start:
-  .word 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab, 0xabababab
