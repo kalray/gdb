@@ -475,17 +475,17 @@ int
 k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
   /* R0 point to the jmpbuf, and RA is at offset 0x34 in the buf */
-  gdb_byte buf[4];
+  gdb_byte buf[sizeof (uint64_t)];
   CORE_ADDR r0;
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   get_frame_register (frame, user_reg_map_name_to_regnum (get_frame_arch (frame), "r0", -1), buf);
-  r0 = extract_unsigned_integer (buf, 4, byte_order);
-  if (target_read_memory (r0 + 0x34, buf, 4))
+  r0 = extract_unsigned_integer (buf, sizeof (buf), byte_order);
+  if (target_read_memory (r0 + 0x68, buf, sizeof (buf))) // 0x68 = offset of RA in the jmp_buf struct
     return 0;
 
-  *pc = extract_unsigned_integer (buf, 4, byte_order);
+  *pc = extract_unsigned_integer (buf, sizeof (buf), byte_order);
   return 1;
 }
 
