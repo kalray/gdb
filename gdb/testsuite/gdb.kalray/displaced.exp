@@ -7,10 +7,12 @@ if $tracelevel then {
 set testfile "displaced"
 set binfile ${objdir}/outputs/${subdir}/${testfile}
 set srcfile1 ${testfile}.S
-set srcfile2 ${testfile}.c
+set srcfile2 ${testfile}_pl1.S
+set ldscript ${testfile}.ld
 file mkdir ${objdir}/outputs/${subdir}
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1} ${srcdir}/${subdir}/${srcfile2}" "${binfile}" executable {debug}] != "" } {
+if  { [gdb_compile "-nostdlib ${srcdir}/${subdir}/${srcfile1} ${srcdir}/${subdir}/${srcfile2} -T${srcdir}/${subdir}/${ldscript}" ${binfile} executable {debug}] != ""} {
+    set_board_info compiler "k1-mbr-gcc"
      untested asm-source.exp
      return -1
 }
@@ -41,14 +43,15 @@ gdb_test "si" ".*Breakpoint 3.*in test_displaced3.*" "stepi in loopdo 4"
 gdb_test "si" ".*Breakpoint 4.*in test_displaced4.*" "stepi out of loopdo"
 gdb_test "p \$r1" ".*\\\$. = 5.*" "Check that the loop was really executed"
 gdb_test "si" ".*Breakpoint 5.*in test_displaced5.*" "step to scall"
-gdb_test "si" ".*in ev .*" "stepi into scall"
+gdb_test "si" ".*in ev_scall .*" "stepi into scall"
 gdb_test "si" ".*Breakpoint 6.*in test_displaced6 .*" "rfe 1"
 gdb_test "si" ".*Breakpoint 7.*in test_displaced7 .*" "stepi over make"
 if { ! [info exists is_k1_server] || $is_k1_server != 1} {
     gdb_test "si" ".*received signal SIGILL.*" "stepi over undefined insn"
+} else {
+  gdb_test "si" ".*in ev_trap .*" "stepi to trap handler"
 }
-gdb_test "si" ".*in ev .*" "stepi to trap handler"
-gdb_test "si" ".*in ev .*" "stepi in trap handler"
+gdb_test "si" ".*in ev_trap .*" "stepi in trap handler"
 gdb_test "si" ".*Breakpoint 8.*in test_displaced8 .*" "rfe 2"
 gdb_test "si" ".*Breakpoint 9.*in test_displaced9 .*" "step over get pc"
 gdb_test "si" ".*Breakpoint 10.*in test_displaced10 .*" "step over get pc 2"
