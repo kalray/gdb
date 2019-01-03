@@ -36,6 +36,9 @@ proc compare_sections { {options ""} } {
 	-re {bsp_config[^\n]*MIS-MATCHED} {
 	    exp_continue
 	}
+	-re {bare_runtime_dsu[^\n]*MIS-MATCHED} {
+		exp_continue
+	}
 	-re "MIS-MATCHED.*$gdb_prompt $" {
 	    fail $test
 	}
