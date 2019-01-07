@@ -20,8 +20,8 @@
 #define TC_K1
 #define TARGET_ARCH bfd_arch_k1
 
-#define K1C_RA_REGNO (67)
-#define K1C_SP_REGNO (12)
+#define K1C_RA_REGNO (67 - 64)
+#define K1C_SP_REGNO (12 + 512)
 
 extern const char * k1_target_format (void);
 #define TARGET_FORMAT k1_target_format ()
