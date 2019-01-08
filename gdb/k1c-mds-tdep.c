@@ -1452,8 +1452,13 @@ static int init_k1c_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[1119].name = "a60a61a62a63";
 
 	for (i = 0; i < sizeof(dwarf2gdb)/sizeof(struct dwarf2gdb_desc); ++i) {
-	if (dwarf2gdb[i].name == (void*)-1) continue;
-		dwarf2gdb[i].gdb_regno = user_reg_map_name_to_regnum (gdbarch, dwarf2gdb[i].name, -1);
+		if (dwarf2gdb[i].name == (void *) -1)
+			continue;
+
+		if (i >= 512 && i < 512 + 64 )
+			dwarf2gdb[i].gdb_regno = i - 512;
+		else
+			dwarf2gdb[i].gdb_regno = i + 64;
 	}
 	return 1;
 }
