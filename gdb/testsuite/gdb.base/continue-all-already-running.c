@@ -21,7 +21,7 @@ int
 main (void)
 {
   #ifdef K1_ISS
-  usleep (10000);
+  usleep (20000);
   #else
   sleep (10);
   #endif
