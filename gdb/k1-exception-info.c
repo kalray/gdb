@@ -499,13 +499,13 @@ union stall_pc_extra_u
 {
   struct
   {
-    uint16_t reset:1;             // bit 0 (stall_pc bit 48)
-    uint16_t clk_enable_i:1;      // bit 1
-    uint16_t clk_idle_enable_i:1; // bit 2
-    uint16_t pwc_idle_i:1;        // bit 3
-    uint16_t pwc_fsm_i:1;         // bit 4
-    uint16_t pwc_wd_i:1;          // bit 5
-    uint16_t reserved_1:10;       // bit 6 - 15
+    uint16_t reset:1;           // bit 0 (stall_pc bit 48)
+    uint16_t clk_enable:1;      // bit 1
+    uint16_t clk_idle_enable:1; // bit 2
+    uint16_t pwc_idle:2;        // bit 3 - 4
+    uint16_t pwc_fsm:2;         // bit 5 - 6
+    uint16_t pwc_wd:1;          // bit 7
+    uint16_t reserved_1:8;      // bit 8 - 15
   };
   uint16_t uint16_t;
 };
@@ -558,11 +558,11 @@ show_debug_sfr_regs (void)
   printf ("    watchdog error: %d\n", fpc_extra.wdog_err);
 
   printf ("    reset: %d\n", stall_pc_extra.reset);
-  printf ("    clk_enable_i: %d\n", stall_pc_extra.clk_enable_i);
-  printf ("    clk_idle_enable_i: %d\n", stall_pc_extra.clk_idle_enable_i);
-  printf ("    pwc_idle_i: %d\n", stall_pc_extra.pwc_idle_i);
-  printf ("    pwc_fsm_i: %d\n", stall_pc_extra.pwc_fsm_i);
-  printf ("    pwc_wd_i: %d\n", stall_pc_extra.pwc_wd_i);
+  printf ("    clk_enable: %d\n", stall_pc_extra.clk_enable);
+  printf ("    clk_idle_enable: %d\n", stall_pc_extra.clk_idle_enable);
+  printf ("    pwc_crfr_wdf/idle: %d\n", stall_pc_extra.pwc_idle);
+  printf ("    pwc_fsm: %d\n", stall_pc_extra.pwc_fsm);
+  printf ("    pwc_wdf: %d\n", stall_pc_extra.pwc_wd);
 
   free (buf);
 }
