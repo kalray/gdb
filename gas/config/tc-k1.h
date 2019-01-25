@@ -20,8 +20,8 @@
 #define TC_K1
 #define TARGET_ARCH bfd_arch_k1
 
-#define K1C_RA_REGNO (67 - 64)
-#define K1C_SP_REGNO (12 + 512)
+#define K1C_RA_REGNO (67)
+#define K1C_SP_REGNO (12)
 
 extern const char * k1_target_format (void);
 #define TARGET_FORMAT k1_target_format ()
@@ -69,8 +69,8 @@ int is_constant_expression(expressionS*);
 #define tc_frob_symbol(sym,punt) \
   { \
     if ((S_GET_SEGMENT (sym) == undefined_section \
-	 && ! symbol_used_p (sym)\
-	 && ELF_ST_VISIBILITY (S_GET_OTHER (sym)) == STV_DEFAULT) \
+        && ! symbol_used_p (sym)\
+        && ELF_ST_VISIBILITY (S_GET_OTHER (sym)) == STV_DEFAULT) \
         || (S_GET_SEGMENT (sym) == absolute_section \
             && ! S_IS_EXTERNAL (sym))) \
       punt = 1; \
