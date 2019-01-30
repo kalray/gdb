@@ -84,9 +84,9 @@ static const int k1c_num_pseudo_regs = 48;
 static const char *_k1c_sp_name = "r12";
 static const char *_k1c_pc_name = "pc";
 
-static int init_k1c_dwarf2gdb(struct gdbarch *gdbarch) 
+static int init_k1c_dwarf2gdb(struct gdbarch *gdbarch)
 {
-
+	int i;
 	memset (dwarf2gdb, -1, sizeof(dwarf2gdb));
 	dwarf2gdb[64].name = "pc";
 	dwarf2gdb[64].gdb_regno = 0;
@@ -600,6 +600,12 @@ static int init_k1c_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[62].gdb_regno = 254;
 	dwarf2gdb[63].name = "r63";
 	dwarf2gdb[63].gdb_regno = 255;
+
+	for (i = 0; i < sizeof(dwarf2gdb)/sizeof(struct dwarf2gdb_desc); ++i) {
+		if (dwarf2gdb[i].name == (void *) -1)
+			continue;
+		dwarf2gdb[i].gdb_regno = user_reg_map_name_to_regnum (gdbarch, dwarf2gdb[i].name, -1);
+	}
 	return 1;
 }
 static const char*
