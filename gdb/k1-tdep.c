@@ -295,7 +295,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
 
       dsc->rewrite_RA = 1;
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0);
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) + tdep->r0_regnum;
       regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
       dsc->dest = reg_value;
       regcache_raw_write_unsigned (regs, dsc->reg, to);
@@ -305,7 +305,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
       ULONGEST reg_value;
 
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0);
+      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) + tdep->r0_regnum;
       regcache_raw_read_unsigned (regs, dsc->reg, &reg_value);
       dsc->dest = reg_value;
       regcache_raw_write_unsigned (regs, dsc->reg, to);
@@ -359,28 +359,28 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
     else if (strcmp ("get", op->as_op) == 0 && op->format[1])
     {
       /* get version with immediate */
-      if (extract_mds_bitfield (op, dsc->insn_words[0], 1, 0) != (gdbarch_pc_regnum (gdbarch) - 64))
+      if (extract_mds_bitfield (op, dsc->insn_words[0], 1, 0) != (gdbarch_pc_regnum (gdbarch) - tdep->srf_offset))
         break;
 
       dsc->branchy = 0;
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F;
+      dsc->reg = (extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F) + tdep->r0_regnum;
       dsc->dest = from;
     }
     else if (strcmp ("get", op->as_op) == 0)
     {
-      ULONGEST reg;
+      ULONGEST reg, srf_reg;
 
       /* indirect get instruction */
-      reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0);
-      regcache_raw_read_unsigned (regs, reg, &reg);
+      reg = (extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F) + tdep->r0_regnum;
+      regcache_raw_read_unsigned (regs, reg, &srf_reg);
 
-      if (reg != (gdbarch_pc_regnum (gdbarch) - 64))
+      if (srf_reg != (gdbarch_pc_regnum (gdbarch) - tdep->srf_offset))
         break;
 
       dsc->branchy = 0;
       dsc->rewrite_reg = 1;
-      dsc->reg = extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F;
+      dsc->reg = reg;
       dsc->dest = from;
     }
     else
@@ -615,6 +615,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
   int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
   int has_ea_pl0 = -1, has_es_pl0 = -1, has_syo = -1, has_ev_pl0 = -1;
+  int has_r0 = -1;
 
   static const char k1_ev_name[] = "ev";
   static const char k1_lc_name[] = "lc";
@@ -628,6 +629,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   static const char k1_es_pl0_name[] = "es_pl0";
   static const char k1_syo_name[] = "syo";
   static const char k1_ev_pl0_name[] = "ev_pl0";
+  static const char k1_r0_name[] = "r0";
 
   const char *pc_name;
   const char *sp_name;
@@ -664,7 +666,9 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
     for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
     {
-      if (strcmp (tdesc_register_name (gdbarch, i), pc_name) == 0)
+      if (strcmp (tdesc_register_name (gdbarch, i), k1_r0_name) == 0)
+        has_r0 = i;
+      else if (strcmp (tdesc_register_name (gdbarch, i), pc_name) == 0)
         has_pc = i;
       else if (strcmp (tdesc_register_name (gdbarch, i), sp_name) == 0)
         has_sp = i;
@@ -694,6 +698,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
         has_ev_pl0 = i;
     }
 
+    if (has_r0 < 0)
+      error ("There's no '%s' register!", k1_r0_name);
     if (has_pc < 0)
       error ("There's no '%s' register!", pc_name);
     if (has_sp < 0)
@@ -723,6 +729,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     if (has_ev_pl0 < 0)
       error ("There's no '%s' register!", k1_ev_pl0_name);
 
+    tdep->r0_regnum = has_r0;
     tdep->ev_regnum = has_ev;
     tdep->le_regnum = has_le;
     tdep->ls_regnum = has_ls;
@@ -738,6 +745,11 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     tdep->uint256 = arch_integer_type (gdbarch, 256, 0, "uint256_t");
     tdep->uint512 = arch_integer_type (gdbarch, 512, 0, "uint512_t");
     tdep->uint1024 = arch_integer_type (gdbarch, 1024, 0, "uint1024_t");
+
+    if (has_r0 == 0)
+      tdep->srf_offset = has_pc;
+    else
+      tdep->srf_offset = has_pc;
 
     set_gdbarch_pc_regnum (gdbarch, has_pc);
     set_gdbarch_sp_regnum (gdbarch, has_sp);

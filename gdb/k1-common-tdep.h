@@ -25,6 +25,8 @@ struct gdbarch_tdep
   int ea_pl0_regnum;
   int es_pl0_regnum;
   int ev_pl0_regnum;
+  int r0_regnum;
+  int srf_offset;
 
   int local_regnum;
   struct type *uint256;
