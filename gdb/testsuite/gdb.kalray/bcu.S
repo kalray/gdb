@@ -214,7 +214,7 @@ bpbcu_getpc_test:
 .global bpbcu_igetra_test
 .global bpbcu_igetpc_test
 iget_test:
-  make $r40 = 9
+  make $r40 = 3
   ;;
 bpbcu_igetra_test:
   iget $r40
