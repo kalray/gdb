@@ -2618,7 +2618,8 @@ eelf32iq2000.c: $(srcdir)/emulparams/elf32iq2000.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/iq2000.sc ${GEN_DEPENDS}
 
 eelf32k1.c: $(srcdir)/emulparams/elf32k1.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+  $(ELF_DEPS) $(srcdir)/emultempl/k1elf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf32l4300.c: $(srcdir)/emulparams/elf32l4300.sh \
   $(srcdir)/emulparams/elf32b4300.sh $(srcdir)/emulparams/elf32bmip.sh \
@@ -3448,7 +3449,8 @@ eelf64hppa.c: $(srcdir)/emulparams/elf64hppa.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf64hppa.sc ${GEN_DEPENDS}
 
 eelf64k1.c: $(srcdir)/emulparams/elf64k1.sh \
-  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+  $(ELF_DEPS) $(srcdir)/emultempl/k1elf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 
 eelf64k1_linux.c: $(srcdir)/emulparams/elf64k1_linux.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}

@@ -2,7 +2,7 @@
    Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
-   Copyright (C) 2018 Kalray
+   Copyright (C) 2019 Kalray
    
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -91,7 +91,7 @@
 #define PLT_TLSDESC_ENTRY_SIZE          (32)
 
 /* Encoding of the nop instruction */
-#define INSN_NOP 0x00000000
+#define INSN_NOP 0x00f0037f
 
 #define k1_compute_jump_table_size(htab)		\
   (((htab)->root.srelplt == NULL) ? 0			\
@@ -116,6 +116,14 @@ static const bfd_byte elfNN_k1_small_plt_entry[PLT_SMALL_ENTRY_SIZE] =
 #endif
   0x00, 0x00, 0x00, 0x18,       /* upper 27 bits for LSU */
   0x10, 0x00, 0xd8, 0x0f,	/* igoto $r16          ;; */
+};
+
+/* Long stub use 43bits format of make. */
+static const bfd_byte elfNN_k1_long_branch_stub[] =
+{
+ 0x00, 0x00, 0x40, 0xe0,      /* make $r16 = LO10<emm43> EX6<imm43> */
+ 0x00, 0x00, 0x00, 0x00,      /* UP27<imm43> ;; */
+ 0x10, 0x00, 0xd8, 0x0f,      /* igoto "r16  ;; */
 };
 
 #define elf_info_to_howto               elfNN_k1_info_to_howto
@@ -147,9 +155,6 @@ elfNN_k1_bfd_reloc_from_howto (reloc_howto_type *howto)
   if (offset > 0 && offset < size - 1)
     return BFD_RELOC_K1_RELOC_START + offset;
 
-  /* if (howto == &elf_k1_howto_none) */
-  /*   return BFD_RELOC_K1_NONE; */
-
   return BFD_RELOC_K1_RELOC_START;
 }
 
@@ -171,9 +176,6 @@ elfNN_k1_bfd_reloc_from_type (unsigned int r_type)
 
       initialized_p = TRUE;
     }
-
-  /* if (r_type == R_K1_NONE) // || r_type == R_K1_NULL) */
-  /*   return BFD_RELOC_K1_NONE; */
 
   /* PR 17512: file: b371e70a.  */
   if (r_type >= R_K1_end)
@@ -230,9 +232,6 @@ elfNN_k1_howto_from_bfd_reloc (bfd_reloc_code_real_type code)
     if (elf_k1_howto_table[code - BFD_RELOC_K1_RELOC_START].type)
       return &elf_k1_howto_table[code - BFD_RELOC_K1_RELOC_START];
 
-  /* if (code == BFD_RELOC_K1_NONE) */
-  /*   return &elfNN_k1_howto_none; */
-
   return NULL;
 }
 
@@ -249,9 +248,6 @@ elfNN_k1_howto_from_type (unsigned int r_type)
       return NULL;
     }
 #endif
-
-  /* if (r_type == R_K1_NONE) */
-  /*   return &elfNN_k1_howto_none; */
 
   val = elfNN_k1_bfd_reloc_from_type (r_type);
   howto = elfNN_k1_howto_from_bfd_reloc (val);
@@ -303,16 +299,22 @@ elfNN_k1_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 #define TARGET_LITTLE_SYM               k1_elfNN_vec
 #define TARGET_LITTLE_NAME              "elfNN-k1"
 
+/* The linker script knows the section names for placement.
+   The entry_names are used to do simple name mangling on the stubs.
+   Given a function name, and its type, the stub can be found. The
+   name can be changed. The only requirement is the %s be present.  */
+#define STUB_ENTRY_NAME   "__%s_veneer"
+
 /* The name of the dynamic interpreter.  This is put in the .interp
    section.  */
 #define ELF_DYNAMIC_INTERPRETER     "/lib/ld.so.1"
 
 
-
+/* PCREL 27 is signed-extended and scaled by 4 */
 #define K1_MAX_FWD_CALL_OFFSET \
-  (((1 << (27+2)) - 1) << 2)
+  (((1 << 26) - 1) << 2)
 #define K1_MAX_BWD_CALL_OFFSET \
-  (-((1 << (27+2)) << 2))
+  (-((1 << 26) << 2))
 
 /* Check that the destination of the call is within the PCREL27
    range. */
@@ -331,7 +333,7 @@ k1_valid_call_p (bfd_vma value, bfd_vma place)
 enum elf_k1_stub_type
 {
   k1_stub_none,
-  /* Original aarch64 has several stub types */
+  k1_stub_long_branch,
 };
 
 struct elf_k1_stub_hash_entry
@@ -366,10 +368,6 @@ struct elf_k1_stub_hash_entry
      stub name in the hash table has to be unique; this does not, so
      it can be friendlier.  */
   char *output_name;
-
-  /* The instruction which caused this stub to be generated (only valid for
-     erratum 835769 workaround stubs at present).  */
-  uint32_t veneered_insn;
 };
 
 /* Used to build a map of a section.  This is required for mixed-endian
@@ -867,10 +865,45 @@ k1_type_of_stub (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 		      struct elf_k1_link_hash_entry *hash ATTRIBUTE_UNUSED,
 		      bfd_vma destination ATTRIBUTE_UNUSED)
 {
-  enum elf_k1_stub_type stub_type = k1_stub_none;
 
-  /* Disable stub selection for now */
-  /* Check elfnn-aarch64.c */
+  bfd_vma location;
+  bfd_signed_vma branch_offset;
+  unsigned int r_type;
+  struct elf_k1_link_hash_table *globals;
+  enum elf_k1_stub_type stub_type = k1_stub_none;
+  bfd_boolean via_plt_p;
+
+  if (st_type != STT_FUNC
+      && (sym_sec == input_sec))
+    return stub_type;
+
+  globals = elf_k1_hash_table (info);
+  via_plt_p = (globals->root.splt != NULL && hash != NULL
+	       && hash->root.plt.offset != (bfd_vma) - 1);
+  /* Make sure call to plt stub can fit into the branch range.  */
+  if (via_plt_p)
+    destination = (globals->root.splt->output_section->vma
+		   + globals->root.splt->output_offset
+		   + hash->root.plt.offset);
+
+  /* Determine where the call point is.  */
+  location = (input_sec->output_offset
+	      + input_sec->output_section->vma + rel->r_offset);
+
+  branch_offset = (bfd_signed_vma) (destination - location);
+
+  r_type = ELFNN_R_TYPE (rel->r_info);
+
+  /* We don't want to redirect any old unconditional jump in this way,
+     only one which is being used for a sibcall, where it is
+     acceptable for the IP0 and IP1 registers to be clobbered.  */
+  if (r_type == R_K1_27_PCREL
+      && (branch_offset > K1_MAX_FWD_CALL_OFFSET
+	  || branch_offset < K1_MAX_BWD_CALL_OFFSET))
+    {
+      stub_type = k1_stub_long_branch;
+    }
+
   return stub_type;
 }
 
@@ -1075,8 +1108,72 @@ static bfd_boolean
 k1_build_one_stub (struct bfd_hash_entry *gen_entry ATTRIBUTE_UNUSED,
 			void *in_arg ATTRIBUTE_UNUSED)
 {
-  /* No need for stub in K1 at the moment, this code can stay commented harmlessly */
-  /* Check elfnn-aarch64.c */
+  struct elf_k1_stub_hash_entry *stub_entry;
+  asection *stub_sec;
+  bfd *stub_bfd;
+  bfd_byte *loc;
+  bfd_vma sym_value;
+  bfd_signed_vma branch_offset = 0;
+  unsigned int template_size;
+  const bfd_byte *template;
+  unsigned int i;
+
+  /* Massage our args to the form they really have.  */
+  stub_entry = (struct elf_k1_stub_hash_entry *) gen_entry;
+
+  stub_sec = stub_entry->stub_sec;
+
+  /* Make a note of the offset within the stubs for this entry.  */
+  stub_entry->stub_offset = stub_sec->size;
+  loc = stub_sec->contents + stub_entry->stub_offset;
+
+  stub_bfd = stub_sec->owner;
+
+  /* This is the address of the stub destination.  */
+  sym_value = (stub_entry->target_value
+	       + stub_entry->target_section->output_offset
+	       + stub_entry->target_section->output_section->vma);
+
+  switch (stub_entry->stub_type)
+    {
+    case k1_stub_long_branch:
+      template = elfNN_k1_long_branch_stub;
+      template_size = sizeof (elfNN_k1_long_branch_stub);
+      break;
+    default:
+      abort ();
+    }
+
+  memcpy(loc, template, template_size);
+
+  /* Align stubs. Padding is 0 <=> errop insns */
+  template_size = (template_size + 7) & ~7;
+  stub_sec->size += template_size;
+
+  switch (stub_entry->stub_type)
+    {
+    case k1_stub_long_branch:
+      /*
+	The stub uses a make insn with 43bits immediate.
+	We need to apply 3 relocations:
+	     BFD_RELOC_K1_S43_LO10
+	     BFD_RELOC_K1_S43_UP27
+	     BFD_RELOC_K1_S43_EX6
+      */
+      if (k1_relocate (R_K1_S43_LO10, stub_bfd, stub_sec,
+		       stub_entry->stub_offset , sym_value))
+      	BFD_FAIL ();
+      if (k1_relocate (R_K1_S43_EX6, stub_bfd, stub_sec,
+		       stub_entry->stub_offset , sym_value))
+      	BFD_FAIL ();
+      if (k1_relocate (R_K1_S43_UP27, stub_bfd, stub_sec,
+		       stub_entry->stub_offset  + 4, sym_value))
+      	BFD_FAIL ();
+      break;
+    default:
+      abort ();
+    }
+
   return TRUE;
 }
 
@@ -1087,6 +1184,601 @@ static bfd_boolean
 k1_size_one_stub (struct bfd_hash_entry *gen_entry ATTRIBUTE_UNUSED,
 		       void *in_arg ATTRIBUTE_UNUSED)
 {
+  struct elf_k1_stub_hash_entry *stub_entry;
+  int size;
+
+  /* Massage our args to the form they really have.  */
+  stub_entry = (struct elf_k1_stub_hash_entry *) gen_entry;
+
+  switch (stub_entry->stub_type)
+    {
+    case k1_stub_long_branch:
+      size = sizeof (elfNN_k1_long_branch_stub);
+      break;
+    default:
+      abort ();
+    }
+
+  size = (size + 7) & ~7;
+  stub_entry->stub_sec->size += size;
+
+  return TRUE;
+}
+
+/* External entry points for sizing and building linker stubs.  */
+
+/* Set up various things so that we can make a list of input sections
+   for each output section included in the link.  Returns -1 on error,
+   0 when no stubs will be needed, and 1 on success.  */
+
+int
+elfNN_k1_setup_section_lists (bfd *output_bfd,
+				   struct bfd_link_info *info)
+{
+  bfd *input_bfd;
+  unsigned int bfd_count;
+  unsigned int top_id, top_index;
+  asection *section;
+  asection **input_list, **list;
+  bfd_size_type amt;
+  struct elf_k1_link_hash_table *htab =
+    elf_k1_hash_table (info);
+
+  if (!is_elf_hash_table (htab))
+    return 0;
+
+  /* Count the number of input BFDs and find the top input section id.  */
+  for (input_bfd = info->input_bfds, bfd_count = 0, top_id = 0;
+       input_bfd != NULL; input_bfd = input_bfd->link.next)
+    {
+      bfd_count += 1;
+      for (section = input_bfd->sections;
+	   section != NULL; section = section->next)
+	{
+	  if (top_id < section->id)
+	    top_id = section->id;
+	}
+    }
+  htab->bfd_count = bfd_count;
+
+  amt = sizeof (struct map_stub) * (top_id + 1);
+  htab->stub_group = bfd_zmalloc (amt);
+  if (htab->stub_group == NULL)
+    return -1;
+
+  /* We can't use output_bfd->section_count here to find the top output
+     section index as some sections may have been removed, and
+     _bfd_strip_section_from_output doesn't renumber the indices.  */
+  for (section = output_bfd->sections, top_index = 0;
+       section != NULL; section = section->next)
+    {
+      if (top_index < section->index)
+	top_index = section->index;
+    }
+
+  htab->top_index = top_index;
+  amt = sizeof (asection *) * (top_index + 1);
+  input_list = bfd_malloc (amt);
+  htab->input_list = input_list;
+  if (input_list == NULL)
+    return -1;
+
+  /* For sections we aren't interested in, mark their entries with a
+     value we can check later.  */
+  list = input_list + top_index;
+  do
+    *list = bfd_abs_section_ptr;
+  while (list-- != input_list);
+
+  for (section = output_bfd->sections;
+       section != NULL; section = section->next)
+    {
+      if ((section->flags & SEC_CODE) != 0)
+	input_list[section->index] = NULL;
+    }
+
+  return 1;
+}
+
+
+/* Used by elfNN_k1_next_input_section and group_sections.  */
+#define PREV_SEC(sec) (htab->stub_group[(sec)->id].link_sec)
+
+/* The linker repeatedly calls this function for each input section,
+   in the order that input sections are linked into output sections.
+   Build lists of input sections to determine groupings between which
+   we may insert linker stubs.  */
+
+void
+elfNN_k1_next_input_section (struct bfd_link_info *info, asection *isec)
+{
+  struct elf_k1_link_hash_table *htab =
+    elf_k1_hash_table (info);
+
+  if (isec->output_section->index <= htab->top_index)
+    {
+      asection **list = htab->input_list + isec->output_section->index;
+
+      if (*list != bfd_abs_section_ptr)
+	{
+	  /* Steal the link_sec pointer for our list.  */
+	  /* This happens to make the list in reverse order,
+	     which is what we want.  */
+	  PREV_SEC (isec) = *list;
+	  *list = isec;
+	}
+    }
+}
+
+
+/* See whether we can group stub sections together.  Grouping stub
+   sections may result in fewer stubs.  More importantly, we need to
+   put all .init* and .fini* stubs at the beginning of the .init or
+   .fini output sections respectively, because glibc splits the
+   _init and _fini functions into multiple parts.  Putting a stub in
+   the middle of a function is not a good idea.  */
+
+static void
+group_sections (struct elf_k1_link_hash_table *htab,
+		bfd_size_type stub_group_size,
+		bfd_boolean stubs_always_before_branch)
+{
+  asection **list = htab->input_list + htab->top_index;
+
+  do
+    {
+      asection *tail = *list;
+
+      if (tail == bfd_abs_section_ptr)
+	continue;
+
+      while (tail != NULL)
+	{
+	  asection *curr;
+	  asection *prev;
+	  bfd_size_type total;
+
+	  curr = tail;
+	  total = tail->size;
+	  while ((prev = PREV_SEC (curr)) != NULL
+		 && ((total += curr->output_offset - prev->output_offset)
+		     < stub_group_size))
+	    curr = prev;
+
+	  /* OK, the size from the start of CURR to the end is less
+	     than stub_group_size and thus can be handled by one stub
+	     section.  (Or the tail section is itself larger than
+	     stub_group_size, in which case we may be toast.)
+	     We should really be keeping track of the total size of
+	     stubs added here, as stubs contribute to the final output
+	     section size.  */
+	  do
+	    {
+	      prev = PREV_SEC (tail);
+	      /* Set up this stub group.  */
+	      htab->stub_group[tail->id].link_sec = curr;
+	    }
+	  while (tail != curr && (tail = prev) != NULL);
+
+	  /* But wait, there's more!  Input sections up to stub_group_size
+	     bytes before the stub section can be handled by it too.  */
+	  if (!stubs_always_before_branch)
+	    {
+	      total = 0;
+	      while (prev != NULL
+		     && ((total += tail->output_offset - prev->output_offset)
+			 < stub_group_size))
+		{
+		  tail = prev;
+		  prev = PREV_SEC (tail);
+		  htab->stub_group[tail->id].link_sec = curr;
+		}
+	    }
+	  tail = prev;
+	}
+    }
+  while (list-- != htab->input_list);
+
+  free (htab->input_list);
+}
+
+static void
+_bfd_k1_resize_stubs (struct elf_k1_link_hash_table *htab)
+{
+  asection *section;
+
+  /* OK, we've added some stubs.  Find out the new size of the
+     stub sections.  */
+  for (section = htab->stub_bfd->sections;
+       section != NULL; section = section->next)
+    {
+      /* Ignore non-stub sections.  */
+      if (!strstr (section->name, STUB_SUFFIX))
+	continue;
+      section->size = 0;
+    }
+
+  bfd_hash_traverse (&htab->stub_hash_table, k1_size_one_stub, htab);
+}
+
+/* Satisfy the ELF linker by filling in some fields in our fake bfd.  */
+
+bfd_boolean
+k1_elfNN_init_stub_bfd (struct bfd_link_info *info,
+			bfd *stub_bfd)
+{
+  struct elf_k1_link_hash_table *htab;
+
+  elf_elfheader (stub_bfd)->e_ident[EI_CLASS] = ELFCLASSNN;
+
+/* Always hook our dynamic sections into the first bfd, which is the
+   linker created stub bfd.  This ensures that the GOT header is at
+   the start of the output TOC section.  */
+  htab = elf_k1_hash_table (info);
+  if (htab == NULL)
+    return FALSE;
+
+  return TRUE;
+}
+
+
+/* Determine and set the size of the stub section for a final link.
+
+   The basic idea here is to examine all the relocations looking for
+   PC-relative calls to a target that is unreachable with a 27bits
+   immediate (found in call and goto).  */
+
+bfd_boolean
+elfNN_k1_size_stubs (bfd *output_bfd,
+		     bfd *stub_bfd,
+		     struct bfd_link_info *info,
+		     bfd_signed_vma group_size,
+		     asection * (*add_stub_section) (const char *,
+						     asection *),
+		     void (*layout_sections_again) (void))
+{
+  bfd_size_type stub_group_size;
+  bfd_boolean stubs_always_before_branch;
+  bfd_boolean stub_changed = FALSE;
+  struct elf_k1_link_hash_table *htab = elf_k1_hash_table (info);
+
+  /* Propagate mach to stub bfd, because it may not have been
+     finalized when we created stub_bfd.  */
+  bfd_set_arch_mach (stub_bfd, bfd_get_arch (output_bfd),
+		     bfd_get_mach (output_bfd));
+
+  /* Stash our params away.  */
+  htab->stub_bfd = stub_bfd;
+  htab->add_stub_section = add_stub_section;
+  htab->layout_sections_again = layout_sections_again;
+  stubs_always_before_branch = group_size < 0;
+  if (group_size < 0)
+    stub_group_size = -group_size;
+  else
+    stub_group_size = group_size;
+
+  if (stub_group_size == 1)
+    {
+      /* Default values.  */
+      /* K1C branch range is +-256MB. The value used is 1MB less.  */
+      stub_group_size = 255 * 1024 * 1024;
+    }
+
+  group_sections (htab, stub_group_size, stubs_always_before_branch);
+
+  (*htab->layout_sections_again) ();
+
+  while (1)
+    {
+      bfd *input_bfd;
+
+      for (input_bfd = info->input_bfds;
+	   input_bfd != NULL; input_bfd = input_bfd->link.next)
+	{
+	  Elf_Internal_Shdr *symtab_hdr;
+	  asection *section;
+	  Elf_Internal_Sym *local_syms = NULL;
+
+	  /* We'll need the symbol table in a second.  */
+	  symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
+	  if (symtab_hdr->sh_info == 0)
+	    continue;
+
+	  /* Walk over each section attached to the input bfd.  */
+	  for (section = input_bfd->sections;
+	       section != NULL; section = section->next)
+	    {
+	      Elf_Internal_Rela *internal_relocs, *irelaend, *irela;
+
+	      /* If there aren't any relocs, then there's nothing more
+		 to do.  */
+	      if ((section->flags & SEC_RELOC) == 0
+		  || section->reloc_count == 0
+		  || (section->flags & SEC_CODE) == 0)
+		continue;
+
+	      /* If this section is a link-once section that will be
+		 discarded, then don't create any stubs.  */
+	      if (section->output_section == NULL
+		  || section->output_section->owner != output_bfd)
+		continue;
+
+	      /* Get the relocs.  */
+	      internal_relocs
+		= _bfd_elf_link_read_relocs (input_bfd, section, NULL,
+					     NULL, info->keep_memory);
+	      if (internal_relocs == NULL)
+		goto error_ret_free_local;
+
+	      /* Now examine each relocation.  */
+	      irela = internal_relocs;
+	      irelaend = irela + section->reloc_count;
+	      for (; irela < irelaend; irela++)
+		{
+		  unsigned int r_type, r_indx;
+		  enum elf_k1_stub_type stub_type;
+		  struct elf_k1_stub_hash_entry *stub_entry;
+		  asection *sym_sec;
+		  bfd_vma sym_value;
+		  bfd_vma destination;
+		  struct elf_k1_link_hash_entry *hash;
+		  const char *sym_name;
+		  char *stub_name;
+		  const asection *id_sec;
+		  unsigned char st_type;
+		  bfd_size_type len;
+
+		  r_type = ELFNN_R_TYPE (irela->r_info);
+		  r_indx = ELFNN_R_SYM (irela->r_info);
+
+		  if (r_type >= (unsigned int) R_K1_end)
+		    {
+		      bfd_set_error (bfd_error_bad_value);
+		    error_ret_free_internal:
+		      if (elf_section_data (section)->relocs == NULL)
+			free (internal_relocs);
+		      goto error_ret_free_local;
+		    }
+
+		  /* Only look for stubs on unconditional branch and
+		     branch and link instructions.  */
+		  /* This catches CALL and GOTO insn */
+		  if (r_type != (unsigned int) R_K1_27_PCREL)
+		    continue;
+
+		  /* Now determine the call target, its name, value,
+		     section.  */
+		  sym_sec = NULL;
+		  sym_value = 0;
+		  destination = 0;
+		  hash = NULL;
+		  sym_name = NULL;
+		  if (r_indx < symtab_hdr->sh_info)
+		    {
+		      /* It's a local symbol.  */
+		      Elf_Internal_Sym *sym;
+		      Elf_Internal_Shdr *hdr;
+
+		      if (local_syms == NULL)
+			{
+			  local_syms
+			    = (Elf_Internal_Sym *) symtab_hdr->contents;
+			  if (local_syms == NULL)
+			    local_syms
+			      = bfd_elf_get_elf_syms (input_bfd, symtab_hdr,
+						      symtab_hdr->sh_info, 0,
+						      NULL, NULL, NULL);
+			  if (local_syms == NULL)
+			    goto error_ret_free_internal;
+			}
+
+		      sym = local_syms + r_indx;
+		      hdr = elf_elfsections (input_bfd)[sym->st_shndx];
+		      sym_sec = hdr->bfd_section;
+		      if (!sym_sec)
+			/* This is an undefined symbol.  It can never
+			   be resolved.  */
+			continue;
+
+		      if (ELF_ST_TYPE (sym->st_info) != STT_SECTION)
+			sym_value = sym->st_value;
+		      destination = (sym_value + irela->r_addend
+				     + sym_sec->output_offset
+				     + sym_sec->output_section->vma);
+		      st_type = ELF_ST_TYPE (sym->st_info);
+		      sym_name
+			= bfd_elf_string_from_elf_section (input_bfd,
+							   symtab_hdr->sh_link,
+							   sym->st_name);
+		    }
+		  else
+		    {
+		      int e_indx;
+
+		      e_indx = r_indx - symtab_hdr->sh_info;
+		      hash = ((struct elf_k1_link_hash_entry *)
+			      elf_sym_hashes (input_bfd)[e_indx]);
+
+		      while (hash->root.root.type == bfd_link_hash_indirect
+			     || hash->root.root.type == bfd_link_hash_warning)
+			hash = ((struct elf_k1_link_hash_entry *)
+				hash->root.root.u.i.link);
+
+		      if (hash->root.root.type == bfd_link_hash_defined
+			  || hash->root.root.type == bfd_link_hash_defweak)
+			{
+			  struct elf_k1_link_hash_table *globals =
+			    elf_k1_hash_table (info);
+			  sym_sec = hash->root.root.u.def.section;
+			  sym_value = hash->root.root.u.def.value;
+			  /* For a destination in a shared library,
+			     use the PLT stub as target address to
+			     decide whether a branch stub is
+			     needed.  */
+			  if (globals->root.splt != NULL && hash != NULL
+			      && hash->root.plt.offset != (bfd_vma) - 1)
+			    {
+			      sym_sec = globals->root.splt;
+			      sym_value = hash->root.plt.offset;
+			      if (sym_sec->output_section != NULL)
+				destination = (sym_value
+					       + sym_sec->output_offset
+					       +
+					       sym_sec->output_section->vma);
+			    }
+			  else if (sym_sec->output_section != NULL)
+			    destination = (sym_value + irela->r_addend
+					   + sym_sec->output_offset
+					   + sym_sec->output_section->vma);
+			}
+		      else if (hash->root.root.type == bfd_link_hash_undefined
+			       || (hash->root.root.type
+				   == bfd_link_hash_undefweak))
+			{
+			  /* For a shared library, use the PLT stub as
+			     target address to decide whether a long
+			     branch stub is needed.
+			     For absolute code, they cannot be handled.  */
+			  struct elf_k1_link_hash_table *globals =
+			    elf_k1_hash_table (info);
+
+			  if (globals->root.splt != NULL && hash != NULL
+			      && hash->root.plt.offset != (bfd_vma) - 1)
+			    {
+			      sym_sec = globals->root.splt;
+			      sym_value = hash->root.plt.offset;
+			      if (sym_sec->output_section != NULL)
+				destination = (sym_value
+					       + sym_sec->output_offset
+					       +
+					       sym_sec->output_section->vma);
+			    }
+			  else
+			    continue;
+			}
+		      else
+			{
+			  bfd_set_error (bfd_error_bad_value);
+			  goto error_ret_free_internal;
+			}
+		      st_type = ELF_ST_TYPE (hash->root.type);
+		      sym_name = hash->root.root.root.string;
+		    }
+
+		  /* Determine what (if any) linker stub is needed.  */
+		  stub_type = k1_type_of_stub
+		    (info, section, irela, sym_sec, st_type, hash, destination);
+		  if (stub_type == k1_stub_none)
+		    continue;
+
+		  /* Support for grouping stub sections.  */
+		  id_sec = htab->stub_group[section->id].link_sec;
+
+		  /* Get the name of this stub.  */
+		  stub_name = elfNN_k1_stub_name (id_sec, sym_sec, hash,
+						  irela);
+		  if (!stub_name)
+		    goto error_ret_free_internal;
+
+		  stub_entry =
+		    k1_stub_hash_lookup (&htab->stub_hash_table,
+					 stub_name, FALSE, FALSE);
+		  if (stub_entry != NULL)
+		    {
+		      /* The proper stub has already been created.  */
+		      free (stub_name);
+		      continue;
+		    }
+
+		  stub_entry = _bfd_k1_add_stub_entry_in_group
+		    (stub_name, section, htab);
+		  if (stub_entry == NULL)
+		    {
+		      free (stub_name);
+		      goto error_ret_free_internal;
+		    }
+
+		  stub_entry->target_value = sym_value + irela->r_addend;
+		  stub_entry->target_section = sym_sec;
+		  stub_entry->stub_type = stub_type;
+		  stub_entry->h = hash;
+		  stub_entry->st_type = st_type;
+
+		  if (sym_name == NULL)
+		    sym_name = "unnamed";
+		  len = sizeof (STUB_ENTRY_NAME) + strlen (sym_name);
+		  stub_entry->output_name = bfd_alloc (htab->stub_bfd, len);
+		  if (stub_entry->output_name == NULL)
+		    {
+		      free (stub_name);
+		      goto error_ret_free_internal;
+		    }
+
+		  snprintf (stub_entry->output_name, len, STUB_ENTRY_NAME,
+			    sym_name);
+
+		  stub_changed = TRUE;
+		}
+
+	      /* We're done with the internal relocs, free them.  */
+	      if (elf_section_data (section)->relocs == NULL)
+		free (internal_relocs);
+	    }
+	}
+
+      if (!stub_changed)
+	break;
+
+      _bfd_k1_resize_stubs (htab);
+
+      /* Ask the linker to do its stuff.  */
+      (*htab->layout_sections_again) ();
+      stub_changed = FALSE;
+    }
+
+  return TRUE;
+
+error_ret_free_local:
+  return FALSE;
+
+}
+
+/* Build all the stubs associated with the current output file.  The
+   stubs are kept in a hash table attached to the main linker hash
+   table.  We also set up the .plt entries for statically linked PIC
+   functions here.  This function is called via k1_elf_finish in the
+   linker.  */
+
+bfd_boolean
+elfNN_k1_build_stubs (struct bfd_link_info *info)
+{
+  asection *stub_sec;
+  struct bfd_hash_table *table;
+  struct elf_k1_link_hash_table *htab;
+
+  htab = elf_k1_hash_table (info);
+
+  for (stub_sec = htab->stub_bfd->sections;
+       stub_sec != NULL; stub_sec = stub_sec->next)
+    {
+      bfd_size_type size;
+
+      /* Ignore non-stub sections.  */
+      if (!strstr (stub_sec->name, STUB_SUFFIX))
+	continue;
+
+      /* Allocate memory to hold the linker stubs.  */
+      size = stub_sec->size;
+      stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
+      if (stub_sec->contents == NULL && size != 0)
+	return FALSE;
+      stub_sec->size = 0;
+    }
+
+  /* Build the stubs as directed by the stub hash table.  */
+  table = &htab->stub_hash_table;
+  bfd_hash_traverse (table, k1_build_one_stub, info);
+
   return TRUE;
 }
 
@@ -1613,49 +2305,38 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 	/* If the call goes through a PLT entry, make sure to
 	   check distance to the right destination address.  */
 	if (via_plt_p)
-	  {
-	    value = (splt->output_section->vma
-		     + splt->output_offset + h->plt.offset);
-	    *unresolved_reloc_p = FALSE;
-	  }
+	  value = (splt->output_section->vma
+		   + splt->output_offset + h->plt.offset);
+
+	/* Check if a stub has to be inserted because the destination
+	   is too far away.  */
+	struct elf_k1_stub_hash_entry *stub_entry = NULL;
 
 	/* If the target symbol is global and marked as a function the
 	   relocation applies a function call or a tail call.  In this
 	   situation we can veneer out of range branches.  The veneers
 	   use IP0 and IP1 hence cannot be used arbitrary out of range
 	   branches that occur within the body of a function.  */
-	if (h && h->type == STT_FUNC)
+
+	/* Check if a stub has to be inserted because the destination
+	   is too far away.  */
+	if (! k1_valid_call_p (value, place))
 	  {
-	    /* Check if a stub has to be inserted because the destination
-	       is too far away.  */
-	    if (! k1_valid_call_p (value, place))
-	      {
-		const char *name;
-		if (h && h->root.root.string)
-		  name = h->root.root.string;
-		else
-		  name = bfd_elf_sym_name (input_bfd, symtab_hdr, sym,
-					   NULL);
-
-		(*_bfd_error_handler)
-		  (_("%B: invalid branch to `%s' at 0x%lx in section `%A'."),
-		   input_bfd, input_section, name, rel->r_offset);
-		return bfd_reloc_notsupported;
-
-		/* Disabled stub handling */
-		/* /\* The target is out of reach, so redirect the branch to */
-		/*    the local stub for this function.  *\/ */
-		/* struct elf_k1_stub_hash_entry *stub_entry; */
-		/* stub_entry = elfNN_k1_get_stub_entry (input_section, */
-		/* 					   sym_sec, h, */
-		/* 					   rel, globals); */
-		/* if (stub_entry != NULL) */
-		/*   value = (stub_entry->stub_offset */
-		/* 	   + stub_entry->stub_sec->output_offset */
-		/* 	   + stub_entry->stub_sec->output_section->vma); */
-	      }
+	    /* The target is out of reach, so redirect the branch to
+	       the local stub for this function.  */
+	    stub_entry = elfNN_k1_get_stub_entry (input_section,
+						  sym_sec, h,
+						  rel, globals);
+	    if (stub_entry != NULL)
+	      value = (stub_entry->stub_offset
+		       + stub_entry->stub_sec->output_offset
+		       + stub_entry->stub_sec->output_section->vma);
+	    /* We have redirected the destination to stub entry address,
+	       so ignore any addend record in the original rela entry.  */
+	    signed_addend = 0;
 	  }
       }
+      *unresolved_reloc_p = FALSE;
 
       /* FALLTHROUGH */
 
@@ -3083,8 +3764,6 @@ typedef struct section_list
 }
 section_list;
 
-
-
 typedef struct
 {
   void *finfo;
@@ -3094,31 +3773,6 @@ typedef struct
   int (*func) (void *, const char *, Elf_Internal_Sym *,
 	       asection *, struct elf_link_hash_entry *);
 } output_arch_syminfo;
-
-enum map_symbol_type
-{
-  K1_MAP_INSN,
-  K1_MAP_DATA
-};
-
-
-/* Output a single mapping symbol.  */
-
-static bfd_boolean
-elfNN_k1_output_map_sym (output_arch_syminfo *osi,
-			      enum map_symbol_type type, bfd_vma offset)
-{
-  static const char *names[2] = { "$x", "$d" };
-  Elf_Internal_Sym sym;
-
-  sym.st_value = (osi->sec->output_section->vma
-		  + osi->sec->output_offset + offset);
-  sym.st_size = 0;
-  sym.st_other = 0;
-  sym.st_info = ELF_ST_INFO (STB_LOCAL, STT_NOTYPE);
-  sym.st_shndx = osi->sec_shndx;
-  return osi->func (osi->finfo, names[type], &sym, osi->sec, NULL) == 1;
-}
 
 /* Output a single local symbol for a generated stub.  */
 
@@ -3163,6 +3817,11 @@ k1_map_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 
   switch (stub_entry->stub_type)
     {
+    case k1_stub_long_branch:
+      if (!elfNN_k1_output_stub_sym
+	  (osi, stub_name, addr, sizeof (elfNN_k1_long_branch_stub)))
+	return FALSE;
+      break;
 
     default:
       abort ();
@@ -3209,10 +3868,6 @@ elfNN_k1_output_arch_local_syms (bfd *output_bfd,
 	  osi.sec_shndx = _bfd_elf_section_from_bfd_section
 	    (output_bfd, osi.sec->output_section);
 
-	  /* The first instruction in a stub is always a branch.  */
-	  if (!elfNN_k1_output_map_sym (&osi, K1_MAP_INSN, 0))
-	    return FALSE;
-
 	  bfd_hash_traverse (&htab->stub_hash_table, k1_map_one_stub,
 			     &osi);
 	}
@@ -3225,8 +3880,6 @@ elfNN_k1_output_arch_local_syms (bfd *output_bfd,
   osi.sec_shndx = _bfd_elf_section_from_bfd_section
     (output_bfd, htab->root.splt->output_section);
   osi.sec = htab->root.splt;
-
-  elfNN_k1_output_map_sym (&osi, K1_MAP_INSN, 0);
 
   return TRUE;
 
