@@ -1,0 +1,5 @@
+#name: k1-farcall-goto-gsym
+#source: farcall-goto-gsym.s
+#as:
+#ld: -Ttext 0x1000
+#error: .*\(.text\+0x0\): relocation truncated to fit: R_K1_27_PCREL against symbol `bar_gsym'.*

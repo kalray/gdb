@@ -2,7 +2,7 @@
    Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
-   Copyright (C) 2018 Kalray
+   Copyright (C) 2019 Kalray
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -38,6 +38,13 @@ bfd_vma
 _bfd_k1_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
 				bfd_vma place, bfd_vma value,
 				bfd_vma addend, bfd_boolean weak_undef_p);
+
+bfd_boolean
+k1_elf32_init_stub_bfd (struct bfd_link_info *info,
+			bfd *stub_bfd);
+bfd_boolean
+k1_elf64_init_stub_bfd (struct bfd_link_info *info,
+			bfd *stub_bfd);
 
 
 #define elf_backend_add_symbol_hook	_bfd_k1_elf_add_symbol_hook
