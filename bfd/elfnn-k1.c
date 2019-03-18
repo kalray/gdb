@@ -896,7 +896,7 @@ k1_type_of_stub (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 
   /* We don't want to redirect any old unconditional jump in this way,
      only one which is being used for a sibcall, where it is
-     acceptable for the IP0 and IP1 registers to be clobbered.  */
+     acceptable for the R16 and R17 registers to be clobbered.  */
   if (r_type == R_K1_27_PCREL
       && (branch_offset > K1_MAX_FWD_CALL_OFFSET
 	  || branch_offset < K1_MAX_BWD_CALL_OFFSET))
@@ -2315,7 +2315,7 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 	/* If the target symbol is global and marked as a function the
 	   relocation applies a function call or a tail call.  In this
 	   situation we can veneer out of range branches.  The veneers
-	   use IP0 and IP1 hence cannot be used arbitrary out of range
+	   use R16 and R17 hence cannot be used arbitrary out of range
 	   branches that occur within the body of a function.  */
 
 	/* Check if a stub has to be inserted because the destination
