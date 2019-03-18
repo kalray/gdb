@@ -241,7 +241,8 @@ gld${EMULATION_NAME}_finish (void)
   if (!bfd_link_relocatable (&link_info))
     {
       /* Now build the linker stubs.  */
-      if (stub_file->the_bfd->sections != NULL)
+      if (stub_file != NULL
+	  && stub_file->the_bfd->sections != NULL)
 	{
 	  if (! elf${ELFSIZE}_k1_build_stubs (& link_info))
 	    einfo ("%X%P: can not build stubs: %E\n");
@@ -256,6 +257,10 @@ gld${EMULATION_NAME}_finish (void)
 static void
 k1_elf_create_output_section_statements (void)
 {
+  if (!(bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour
+        && elf_object_id (link_info.output_bfd) == K1_ELF_DATA))
+    return;
+
   stub_file = lang_add_input_file ("linker stubs",
 				   lang_input_file_is_fake_enum,
 				   NULL);
