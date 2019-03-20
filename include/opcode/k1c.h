@@ -12966,7 +12966,7 @@ static char *bundling_names(Bundling bundling) {
 #define Resource_k1c_ISSUE 0
 #define Resource_k1c_TINY 1
 #define Resource_k1c_LITE 2
-#define Resource_k1c_ALU 3
+#define Resource_k1c_FULL 3
 #define Resource_k1c_LSU 4
 #define Resource_k1c_MAU 5
 #define Resource_k1c_BCU 6
