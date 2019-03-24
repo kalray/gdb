@@ -363,7 +363,13 @@ k1_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
 struct frame_id
 k1_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 {
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, gdbarch_sp_regnum (gdbarch));
+  CORE_ADDR sp;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  // force read all registers to avoid writing all registers when returning the dummy call
+  get_frame_register_unsigned (this_frame, tdep->r0_regnum + 20);
+
+  sp = get_frame_register_unsigned (this_frame, gdbarch_sp_regnum (gdbarch));
   return frame_id_build (sp, get_frame_pc (this_frame));
 }
 
