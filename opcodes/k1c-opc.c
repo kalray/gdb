@@ -4199,11 +4199,11 @@ static int k1c_systemalone_opnd_regs[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
@@ -4228,7 +4228,7 @@ static int k1c_systemalone_opnd_regs[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 static k1_reloc_t *k1c_systemalone_opnd_relocs[] __attribute__((unused)) = {0 };
-static k1bfield k1c_systemalone_opnd  __attribute__((unused)) = {"k1c_systemalone_opnd", RegClass_k1c_aloneReg, 3, 0, 0, 0, 512, k1c_systemalone_opnd_regs, 0, k1c_systemalone_opnd_relocs, 1, { { 9, 0, 6 }, } };
+static k1bfield k1c_systemalone_opnd  __attribute__((unused)) = {"k1c_systemalone_opnd", RegClass_k1c_aloneReg, 4, 0, 0, 0, 512, k1c_systemalone_opnd_regs, 0, k1c_systemalone_opnd_relocs, 1, { { 9, 0, 6 }, } };
 static int k1c_systemra_opnd_regs[] = {
       0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
