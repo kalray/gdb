@@ -14,6 +14,11 @@ k1_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
   if (a->arch != b->arch)
     return NULL;
 
+  if (amach == bfd_mach_k1c_64 && bmach == bfd_mach_k1c_usr)
+    return b;
+  if (bmach == bfd_mach_k1c_64 && amach == bfd_mach_k1c_usr)
+    return a;
+
   /* We do not want to transmute some machine into another one */
   if (amach != bmach)
     return NULL;
@@ -28,8 +33,6 @@ k1_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 static bfd_boolean
 scan (const struct bfd_arch_info *info, const char *string)
 {
-  int  i;
-
   /* First test for an exact match.  */
   if (strcasecmp (string, info->printable_name) == 0)
     return TRUE;
@@ -59,7 +62,7 @@ scan (const struct bfd_arch_info *info, const char *string)
 }
 
 const bfd_arch_info_type bfd_k1_usr_arch =
-  N (32, bfd_mach_k1c_usr,  "k1:k1c:usr", FALSE, NULL);
+  N (64, bfd_mach_k1c_usr,  "k1:k1c:usr", FALSE, NULL);
 
 const bfd_arch_info_type bfd_k1_64_arch =
   N (64, bfd_mach_k1c_64,   "k1:k1c:64",  FALSE, & bfd_k1_usr_arch);
