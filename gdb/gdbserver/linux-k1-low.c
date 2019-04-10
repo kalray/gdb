@@ -29,24 +29,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/mppa_debug_server_lib.h>
-
-#ifndef PTRACE_SET_DEBUG_SPAWNED
-#define PTRACE_SET_DEBUG_SPAWNED  111
-#endif
+#include <sys/procfs.h>
 
 static const char *xmltarget_k1_linux = 0;
-static int debug_spawned_clusters = 0;
 
 void init_registers_k1 (void);
 extern const struct target_desc *tdesc_k1;
 
-enum regnum {R0 = 0, R_PC = 64, R_PS, R_CS, R_RA, R_LC, R_LE, R_LS};
+enum regnum {R0 = 0, R_LC = 64, R_LE, R_LS, R_RA, R_CS, R_PC};
 
 static void
 k1_fill_gregset (struct regcache *regcache, void *buf)
 {
-  elf_greg_t* rset = (elf_greg_t *) buf;
+  elf_greg_t *rset = (elf_greg_t *) buf;
   const struct target_desc *tdesc = regcache->tdesc;
   int r0_regnum;
   char *ptr;
@@ -62,19 +57,18 @@ k1_fill_gregset (struct regcache *regcache, void *buf)
     ptr += register_size (tdesc, i);
   }
 
-  collect_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
-  collect_register_by_name (regcache, "ps", (char*) &rset[R_PS]);
-  collect_register_by_name (regcache, "cs", (char*) &rset[R_CS]);
-  collect_register_by_name (regcache, "ra", (char*) &rset[R_RA]);
   collect_register_by_name (regcache, "lc", (char*) &rset[R_LC]);
   collect_register_by_name (regcache, "le", (char*) &rset[R_LE]);
   collect_register_by_name (regcache, "ls", (char*) &rset[R_LS]);
+  collect_register_by_name (regcache, "ra", (char*) &rset[R_RA]);
+  collect_register_by_name (regcache, "cs", (char*) &rset[R_CS]);
+  collect_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
 }
 
 static void
 k1_store_gregset (struct regcache *regcache, const void *buf)
 {
-  const elf_greg_t* rset = (const elf_greg_t*)buf;
+  const elf_greg_t *rset = (const elf_greg_t*) buf;
   const struct target_desc *tdesc = regcache->tdesc;
   int r0_regnum;
   char *ptr;
@@ -90,13 +84,12 @@ k1_store_gregset (struct regcache *regcache, const void *buf)
     ptr += register_size (tdesc, i);
   }
 
-  supply_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
-  supply_register_by_name (regcache, "ps", (char*) &rset[R_PS]);
-  supply_register_by_name (regcache, "cs", (char*) &rset[R_CS]);
-  supply_register_by_name (regcache, "ra", (char*) &rset[R_RA]);
   supply_register_by_name (regcache, "lc", (char*) &rset[R_LC]);
   supply_register_by_name (regcache, "le", (char*) &rset[R_LE]);
   supply_register_by_name (regcache, "ls", (char*) &rset[R_LS]);
+  supply_register_by_name (regcache, "ra", (char*) &rset[R_RA]);
+  supply_register_by_name (regcache, "cs", (char*) &rset[R_CS]);
+  supply_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
 }
 
 struct regset_info k1_regsets[] = {
@@ -106,9 +99,12 @@ struct regset_info k1_regsets[] = {
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
-#define K1_BREAKPOINT {0xF9,0x00, 0x10, 0x02}
+/*__attribute__((naked)) */void k1_breakpoint_opcode (void)
+{
+  __asm ("set $vsfr0=$r63\n;;\n");
+}
 
-static const gdb_byte k1_breakpoint[] = K1_BREAKPOINT;
+static const gdb_byte *k1_breakpoint = (gdb_byte *) (void *) &k1_breakpoint_opcode;
 #define k1_breakpoint_len 4
 
 static CORE_ADDR
@@ -203,13 +199,6 @@ k1_sw_breakpoint_from_kind (int kind, int *size)
   return k1_breakpoint;
 }
 
-static void
-k1_new_thread (struct lwp_info *lwp)
-{
-  if (debug_spawned_clusters)
-    ptrace (PTRACE_SET_DEBUG_SPAWNED, lwpid_of (lwp->thread), NULL, (PTRACE_TYPE_ARG4) debug_spawned_clusters);
-}
-
 struct linux_target_ops the_low_target = {
   k1_arch_setup, /* void (*arch_setup) (void) */
   k1_regs_info, /* const struct regs_info *(*regs_info) (void) */
@@ -234,7 +223,7 @@ struct linux_target_ops the_low_target = {
   NULL, /* supply_ptrace_register */
   NULL, /* siginfo_fixup*/
   NULL, /* new_process */
-  k1_new_thread, /* void (*new_thread) (struct lwp_info *) */
+  NULL, /* void (*new_thread) (struct lwp_info *) */
 };
 
 static char *
@@ -246,7 +235,7 @@ create_xml (void)
 
   nr = tdesc_k1->num_registers;
   buf   = malloc (nr * 150 + 1000);
-  strcpy (buf, "@<target><architecture>k1c_usr</architecture>"
+  strcpy (buf, "@<target><architecture>k1:k1c:usr</architecture>"
     "<feature name=\"eu.kalray.core.k1c\">");
   pos = strlen (buf);
 
@@ -255,26 +244,30 @@ create_xml (void)
     r = &tdesc_k1->reg_defs[i];
     if (!strcmp (r->name, "cs"))
     {
-      pos += sprintf (buf + pos, "<struct id=\"cs_type\" size=\"4\">"
-        "<field name=\"ic\" start=\"0\" end=\"0\" />"
-        "<field name=\"io\" start=\"1\" end=\"1\" />"
-        "<field name=\"dz\" start=\"2\" end=\"2\" />"
-        "<field name=\"ov\" start=\"3\" end=\"3\" />"
-        "<field name=\"un\" start=\"4\" end=\"4\" />"
-        "<field name=\"in\" start=\"5\" end=\"5\" />"
-        "<field name=\"rm\" start=\"8\" end=\"9\" />"
-        "<field name=\"wu\" start=\"15\" end=\"15\" />"
-        "<field name=\"cc\" start=\"16\" end=\"31\" /></struct>");
+      pos += sprintf (buf + pos,
+        "<struct id=\"cs_type\" size=\"8\">\n"
+        "	<field name=\"ic\" start=\"0\" end=\"0\" />"
+        "	<field name=\"io\" start=\"1\" end=\"1\" />"
+        "	<field name=\"dz\" start=\"2\" end=\"2\" />"
+        "	<field name=\"ov\" start=\"3\" end=\"3\" />"
+        "	<field name=\"un\" start=\"4\" end=\"4\" />"
+        "	<field name=\"in\" start=\"5\" end=\"5\" />"
+        "	<field name=\"xio\" start=\"9\" end=\"9\" />"
+        "	<field name=\"xdz\" start=\"10\" end=\"10\" />"
+        "	<field name=\"xov\" start=\"11\" end=\"11\" />"
+        "	<field name=\"xun\" start=\"12\" end=\"12\" />"
+        "	<field name=\"xin\" start=\"13\" end=\"13\" />"
+        "	<field name=\"rm\" start=\"16\" end=\"17\" />"
+        "	<field name=\"xrm\" start=\"20\" end=\"21\" />"
+        "	<field name=\"xmf\" start=\"24\" end=\"24\" />"
+        "	<field name=\"cc\" start=\"32\" end=\"47\" />"
+        "	<field name=\"xdrop\" start=\"48\" end=\"53\" />"
+        "	<field name=\"xpow2\" start=\"54\" end=\"59\" />"
+        "</struct>");
       strcpy (reg_type, "cs_type");
     }
     else if (!strcmp (r->name, "pc") || !strcmp (r->name, "ra"))
       strcpy (reg_type, "code_ptr");
-    else if (!strcmp (r->name, "ps"))
-    {
-      pos += sprintf (buf + pos, "<struct id=\"ps_type\" size=\"4\">"
-        "<field name=\"pm\" start=\"0\" end=\"0\" /></struct>");
-      strcpy (reg_type, "ps_type");
-    }
     else
       sprintf (reg_type, "int%d", r->size);
 
@@ -291,102 +284,6 @@ create_xml (void)
   return ret;
 }
 
-static void
-set_inf_debug_spawned_clusters (struct inferior_list_entry *inf, void *arg)
-{
-  struct thread_info *thread = (struct thread_info *) inf;
-  int *global_res = (int *) arg;
-  if (*global_res)
-    return;
-
-  *global_res = ptrace (PTRACE_SET_DEBUG_SPAWNED, lwpid_of (thread), NULL,
-    (PTRACE_TYPE_ARG4) debug_spawned_clusters);
-}
-
-void
-set_debug_spawned_clusters (int val, char *own_buf)
-{
-  int res = 0;
-  int save_debug_spawned = debug_spawned_clusters;
-
-  debug_spawned_clusters = val;
-  for_each_inferior_with_data (&all_threads, set_inf_debug_spawned_clusters, &res);
-
-  if (res)
-  {
-    debug_spawned_clusters = save_debug_spawned;
-    if (res == -1)
-      strcpy (own_buf, "spawned by JTAG");
-    else
-      strcpy (own_buf, "unknown error on MPPA");
-  }
-  else
-    write_ok (own_buf);
-}
-
-void
-list_spawned_clusters (char *opt, char *own_buf)
-{
-  struct k1lds_cluster_list spawned_clusters;
-  struct k1lds_cluster_list_item *it;
-  int ofs;
-
-  if (fd_clusters == -1)
-  {
-    strcpy (own_buf, "the debug server driver file is not opened");
-    return;
-  }
-
-  if ((ofs = ioctl (fd_clusters, K1LDS_GET_SPAWNED_CLUSTERS, &spawned_clusters)) != 0)
-  {
-    sprintf (own_buf, "cannot get the list of spawned clusters from debug server driver (ret=%d)", ofs);
-    return;
-  }
-
-  write_ok (own_buf);
-  ofs = 2;
-  ofs += sprintf (own_buf + ofs, "%d", getpid ());
-  for (it = spawned_clusters.cl; it->cluster_id != -1; it++)
-    ofs += sprintf (own_buf + ofs, ":%d %d %d %d", it->cluster_id, it->pid_spawner, it->pid_gdbserver, it->own);
-}
-
-void
-start_debug_spawned_cluster (char *opt, char *own_buf)
-{
-  int ret, cluster_id = strtol (opt, NULL, 10);
-  if (fd_clusters == -1)
-  {
-    strcpy (own_buf, "the debug server driver file is not opened");
-    return;
-  }
-
-  if ((ret = ioctl (fd_clusters, K1LDS_START_DEBUG_SPAWNED_CLUSTER, &cluster_id)) != 0)
-  {
-    sprintf (own_buf, "cannot start debug spawned cluster %d (ret=%d)", cluster_id, ret);
-    return;
-  }
-
-  write_ok (own_buf);
-}
-
-void
-custom_k1_command (char *own_buf)
-{
-  const char *k1_query_cmd = "Qk1.";
-  char *cmd = own_buf + strlen (k1_query_cmd);
-  char *opt = strchr (cmd, ':') + 1;
-
-  if (startswith (cmd, "spawn_debug:"))
-  {
-    int val = (*opt == '1');
-    set_debug_spawned_clusters (val, own_buf);
-  }
-  else if (startswith (cmd, "spawned_list:"))
-    list_spawned_clusters (opt, own_buf);
-  else if (startswith (cmd, "start_debug:"))
-    start_debug_spawned_cluster (opt, own_buf);
-}
-
 void
 initialize_low_arch (void)
 {
@@ -401,3 +298,4 @@ initialize_low_arch (void)
 
   initialize_regsets_info (&k1_regsets_info);
 }
+
