@@ -17,11 +17,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "nat/linux-nat.h"
+// K1 specific
+#ifndef __k1__
 #include "nat/gdb_thread_db.h"
+#endif
 #include <signal.h>
 
 #include "gdbthread.h"
+// K1 specific
+#ifndef __k1__
 #include "gdb_proc_service.h"
+#endif
 
 /* Included for ptrace type definitions.  */
 #include "nat/linux-ptrace.h"
