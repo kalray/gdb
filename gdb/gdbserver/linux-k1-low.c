@@ -31,6 +31,61 @@
 #include <fcntl.h>
 #include <sys/procfs.h>
 
+#ifndef PTRACE_GET_HW_PT_REGS
+#define PTRACE_GET_HW_PT_REGS 20
+#define PTRACE_SET_HW_PT_REGS 21
+#endif
+
+#ifndef TRAP_HWBKPT
+#define TRAP_HWBKPT 4
+#endif
+
+#define get_hw_pt_idx(v) ((v) >> 2)
+#define hw_pt_is_bkp(v) (((v) & 1) != 0)
+
+#define MAX_WPTS 2
+#define MAX_BPTS 2
+#define HW_PT_ENABLE 1
+
+#define HW_PT_CMD_GET_CAPS	0
+#define HW_PT_CMD_GET_PT	1
+#define HW_PT_CMD_SET_RESERVE	0
+#define HW_PT_CMD_SET_ENABLE	1
+
+/* Information describing the hardware breakpoint capabilities. */
+static struct
+{
+  int wp_count;
+  int bp_count;
+} k1_linux_hw_pt_cap;
+
+/* Structure used to keep track of hardware breakpoints/watchpoints. */
+struct k1_linux_hw_pt
+{
+  uint64_t address;
+  int size;
+  int enabled;
+};
+
+/* Per-process arch-specific data we want to keep.  */
+struct arch_process_info
+{
+  /* Hardware breakpoints for this process.  */
+  struct k1_linux_hw_pt bpts[MAX_BPTS];
+  /* Hardware watchpoints for this process.  */
+  struct k1_linux_hw_pt wpts[MAX_WPTS];
+};
+
+/* Per-thread arch-specific data we want to keep.  */
+struct arch_lwp_info
+{
+  /* Non-zero if our copy differs from what's recorded in the thread.  */
+  char bpts_changed[MAX_BPTS];
+  char wpts_changed[MAX_WPTS];
+  /* Cached stopped data address.  */
+  uint64_t stopped_data_address;
+};
+
 static const char *xmltarget_k1_linux = 0;
 
 void init_registers_k1 (void);
@@ -146,10 +201,31 @@ static struct regs_info vregs_info =
   &k1_regsets_info
 };
 
+/* Query Hardware Breakpoint information for the target we are attached to */
+static void
+k1_linux_init_hwbp_cap (int pid)
+{
+  uint64_t val[2];
+
+  if (ptrace (PTRACE_GET_HW_PT_REGS, pid, 0, val) < 0)
+    return;
+
+  k1_linux_hw_pt_cap.bp_count = val[0];
+  k1_linux_hw_pt_cap.wp_count = val[1];
+
+  if (k1_linux_hw_pt_cap.wp_count > MAX_WPTS)
+    internal_error (__FILE__, __LINE__, "Unsupported number of watchpoints");
+  if (k1_linux_hw_pt_cap.bp_count > MAX_BPTS)
+    internal_error (__FILE__, __LINE__, "Unsupported number of breakpoints");
+}
+
 static void
 k1_arch_setup (void)
 {
+  int pid = lwpid_of (current_thread);
+
   current_process ()->tdesc = tdesc_k1;
+  k1_linux_init_hwbp_cap (pid);
 }
 
 static const struct regs_info *
@@ -164,32 +240,200 @@ k1_supports_z_point_type (char z_type)
   switch (z_type)
   {
   case Z_PACKET_SW_BP:
+  case Z_PACKET_HW_BP:
+  case Z_PACKET_WRITE_WP:
     return 1;
   }
 
   return 0;
 }
 
+/* Callback to mark a watch-/breakpoint to be updated in all threads of
+   the current process.  */
+struct update_registers_data
+{
+  int type;
+  int i;
+};
+
+static int
+update_registers_callback (struct inferior_list_entry *entry, void *arg)
+{
+  struct thread_info *thread = (struct thread_info *) entry;
+  struct lwp_info *lwp = get_thread_lwp (thread);
+  struct update_registers_data *data = (struct update_registers_data *) arg;
+
+  /* Only update the threads of the current process.  */
+  if (pid_of (thread) == pid_of (current_thread))
+  {
+    /* The actual update is done later just before resuming the lwp,
+    we just mark that the registers need updating.  */
+    if (data->type == raw_bkpt_type_hw)
+      lwp->arch_private->bpts_changed[data->i] = 1;
+    else
+      lwp->arch_private->wpts_changed[data->i] = 1;
+
+    /* If the lwp isn't stopped, force it to momentarily pause, so
+       we can update its breakpoint registers.  */
+    if (!lwp->stopped)
+      linux_stop_lwp (lwp);
+  }
+
+  return 0;
+}
+
+static PTRACE_TYPE_ARG3
+compute_ptrace_addr_arg (int cmd, int type, int idx)
+{
+  uint64_t ret = cmd;
+
+  if (type == raw_bkpt_type_write_wp)
+    ret |= 1 << 2;
+  ret |= idx << 3;
+
+  return (PTRACE_TYPE_ARG3) ret;
+}
+
+static uint64_t *
+compute_ptrace_data_arg (struct k1_linux_hw_pt *p)
+{
+  static uint64_t data[2];
+
+  data[0] = p->address;
+  data[1] = p->enabled | (p->size << 1);
+
+  return data;
+}
+
 int
 k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 {
+  struct process_info *proc;
+  struct arch_process_info *proc_info;
+  struct k1_linux_hw_pt *pts;
+  int pid, i, count;
+
   if (type == raw_bkpt_type_sw)
-  {
     return insert_memory_breakpoint (bp);
+
+  pid = lwpid_of (current_thread);
+  proc = current_process ();
+  proc_info = proc->priv->arch_private;
+  if (type == raw_bkpt_type_hw)
+  {
+    /* breakpoint */
+    count = k1_linux_hw_pt_cap.bp_count;
+    pts = proc_info->bpts;
+  }
+  else
+  {
+    count = k1_linux_hw_pt_cap.wp_count;
+    pts = proc_info->wpts;
   }
 
-  return 1;
+  for (i = 0; i < count; i++)
+  {
+    if (!pts[i].enabled)
+    {
+      struct update_registers_data data = {type, i};
+
+      if (ptrace (PTRACE_SET_HW_PT_REGS, pid,
+        compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE, type, i),
+        compute_ptrace_data_arg (&pts[i])))
+        continue;
+
+      pts[i].address = addr;
+      pts[i].size = size;
+      pts[i].enabled = 1;
+
+      find_inferior (&all_threads, update_registers_callback, &data);
+      return 0;
+    }
+  }
+
+  /* We're out of watchpoints.  */
+  return -1;
 }
 
 int
 k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 {
+  struct process_info *proc;
+  struct k1_linux_hw_pt *pts;
+  int i, count;
+
   if (type == raw_bkpt_type_sw)
-  {
     return remove_memory_breakpoint (bp);
+
+  proc = current_process ();
+  if (type == raw_bkpt_type_hw)
+  {
+    /* breakpoint */
+    count = k1_linux_hw_pt_cap.bp_count;
+    pts = proc->priv->arch_private->bpts;
+  }
+  else
+  {
+    count = k1_linux_hw_pt_cap.wp_count;
+    pts = proc->priv->arch_private->wpts;
   }
 
+  for (i = 0; i < count; i++)
+  {
+    if (pts[i].address == addr && pts[i].size == size && pts[i].enabled == 1)
+    {
+      struct update_registers_data data = {type, i};
+      pts[i].enabled = 0;
+      find_inferior (&all_threads, update_registers_callback, &data);
+      return 0;
+    }
+  }
+
+  /* No watchpoint matched.  */
+  return -1;
+}
+
+/* Return whether current thread is stopped due to a watchpoint.  */
+static int
+k1_stopped_by_watchpoint (void)
+{
+  struct lwp_info *lwp = get_thread_lwp (current_thread);
+  int pid = lwpid_of (current_thread);
+  siginfo_t siginfo;
+
+  /* We must be able to set hardware watchpoints.  */
+  if (k1_linux_hw_pt_cap.wp_count == 0)
+    return 0;
+
+  /* Retrieve siginfo.  */
+  errno = 0;
+  ptrace (PTRACE_GETSIGINFO, pid, 0, &siginfo);
+  if (errno != 0)
+    return 0;
+
+  /* This must be a hardware breakpoint.  */
+  if (siginfo.si_signo != SIGTRAP || (siginfo.si_code & 0xffff) != TRAP_HWBKPT)
+    return 0;
+
+  /* If we are in a positive slot then we're looking at a breakpoint and not
+     a watchpoint.  */
+  if (hw_pt_is_bkp (siginfo.si_errno))
+    return 0;
+
+  /* Cache stopped data address for use by k1_stopped_data_address.  */
+  lwp->arch_private->stopped_data_address
+    = (CORE_ADDR) (uintptr_t) siginfo.si_addr;
+
   return 1;
+}
+
+/* Return data address that triggered watchpoint.  Called only if
+   k1_stopped_by_watchpoint returned true.  */
+static CORE_ADDR
+k1_stopped_data_address (void)
+{
+  struct lwp_info *lwp = get_thread_lwp (current_thread);
+  return lwp->arch_private->stopped_data_address;
 }
 
 static const gdb_byte *
@@ -197,6 +441,114 @@ k1_sw_breakpoint_from_kind (int kind, int *size)
 {
   *size = k1_breakpoint_len;
   return k1_breakpoint;
+}
+
+/* Called when a new process is created.  */
+static struct arch_process_info *
+k1_new_process (void)
+{
+  struct arch_process_info *info = XCNEW (struct arch_process_info);
+  return info;
+}
+
+/* Called when a new thread is detected.  */
+static void
+k1_new_thread (struct lwp_info *lwp)
+{
+  struct arch_lwp_info *info = XCNEW (struct arch_lwp_info);
+  int i;
+
+  for (i = 0; i < MAX_BPTS; i++)
+    info->bpts_changed[i] = 1;
+  for (i = 0; i < MAX_WPTS; i++)
+    info->wpts_changed[i] = 1;
+
+  lwp->arch_private = info;
+}
+
+static void
+k1_new_fork (struct process_info *parent, struct process_info *child)
+{
+  struct arch_process_info *parent_proc_info;
+  struct arch_process_info *child_proc_info;
+  struct lwp_info *child_lwp;
+  struct arch_lwp_info *child_lwp_info;
+  int i;
+
+  /* These are allocated by linux_add_process.  */
+  gdb_assert (parent->priv != NULL && parent->priv->arch_private != NULL);
+  gdb_assert (child->priv != NULL && child->priv->arch_private != NULL);
+
+  parent_proc_info = parent->priv->arch_private;
+  child_proc_info = child->priv->arch_private;
+
+  /* Linux kernel before 2.6.33 commit
+     72f674d203cd230426437cdcf7dd6f681dad8b0d
+     will inherit hardware debug registers from parent
+     on fork/vfork/clone.  Newer Linux kernels create such tasks with
+     zeroed debug registers.
+
+     GDB core assumes the child inherits the watchpoints/hw
+     breakpoints of the parent, and will remove them all from the
+     forked off process.  Copy the debug registers mirrors into the
+     new process so that all breakpoints and watchpoints can be
+     removed together.  The debug registers mirror will become zeroed
+     in the end before detaching the forked off process, thus making
+     this compatible with older Linux kernels too.  */
+
+  *child_proc_info = *parent_proc_info;
+
+  /* Mark all the hardware breakpoints and watchpoints as changed to
+     make sure that the registers will be updated.  */
+  child_lwp = find_lwp_pid (ptid_of (child));
+  child_lwp_info = child_lwp->arch_private;
+  for (i = 0; i < MAX_BPTS; i++)
+    child_lwp_info->bpts_changed[i] = 1;
+  for (i = 0; i < MAX_WPTS; i++)
+    child_lwp_info->wpts_changed[i] = 1;
+}
+
+/* Called when resuming a thread.
+   If the debug regs have changed, update the thread's copies.  */
+static void
+k1_prepare_to_resume (struct lwp_info *lwp)
+{
+  struct thread_info *thread = get_lwp_thread (lwp);
+  int pid = lwpid_of (thread);
+  struct process_info *proc = find_process_pid (pid_of (thread));
+  struct arch_process_info *proc_info = proc->priv->arch_private;
+  struct arch_lwp_info *lwp_info = lwp->arch_private;
+  int i, ret;
+
+  for (i = 0; i < k1_linux_hw_pt_cap.bp_count; i++)
+  {
+    if (lwp_info->bpts_changed[i])
+    {
+      errno = 0;
+      ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
+        compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE, raw_bkpt_type_hw, i),
+        compute_ptrace_data_arg (&proc_info->bpts[i]));
+      if (ret < 0)
+          perror_with_name ("Error setting breakpoint");
+
+      lwp_info->bpts_changed[i] = 0;
+    }
+  }
+
+  for (i = 0; i < k1_linux_hw_pt_cap.wp_count; i++)
+  {
+    if (lwp_info->wpts_changed[i])
+    {
+      errno = 0;
+      ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
+        compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE, raw_bkpt_type_write_wp, i),
+        compute_ptrace_data_arg (&proc_info->wpts[i]));
+      if (ret < 0)
+        perror_with_name ("Error setting watchpoint");
+
+      lwp_info->wpts_changed[i] = 0;
+    }
+  }
 }
 
 struct linux_target_ops the_low_target = {
@@ -217,13 +569,15 @@ struct linux_target_ops the_low_target = {
                     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
   k1_remove_point, /* int (*remove_point) (enum raw_bkpt_type type,
                     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
-  NULL, /* stopped_by_watchpoint */
-  NULL, /* stopped_data_address */
+  k1_stopped_by_watchpoint, /* int (*stopped_by_watchpoint) (void) */
+  k1_stopped_data_address, /* CORE_ADDR (*stopped_data_address) (void) */
   NULL, /* collect_ptrace_register */
   NULL, /* supply_ptrace_register */
   NULL, /* siginfo_fixup*/
-  NULL, /* new_process */
-  NULL, /* void (*new_thread) (struct lwp_info *) */
+  k1_new_process, /* struct new_process_info *(*new_process) (void) */
+  k1_new_thread, /* void (*new_thread) (struct lwp_info *) */
+  k1_new_fork, /* void (*new_fork) (struct process_info *parent, struct process_info *child) */
+  k1_prepare_to_resume, /* void (*prepare_to_resume) (struct lwp_info *lwp) */
 };
 
 static char *
@@ -246,23 +600,23 @@ create_xml (void)
     {
       pos += sprintf (buf + pos,
         "<struct id=\"cs_type\" size=\"8\">\n"
-        "	<field name=\"ic\" start=\"0\" end=\"0\" />"
-        "	<field name=\"io\" start=\"1\" end=\"1\" />"
-        "	<field name=\"dz\" start=\"2\" end=\"2\" />"
-        "	<field name=\"ov\" start=\"3\" end=\"3\" />"
-        "	<field name=\"un\" start=\"4\" end=\"4\" />"
-        "	<field name=\"in\" start=\"5\" end=\"5\" />"
-        "	<field name=\"xio\" start=\"9\" end=\"9\" />"
-        "	<field name=\"xdz\" start=\"10\" end=\"10\" />"
-        "	<field name=\"xov\" start=\"11\" end=\"11\" />"
-        "	<field name=\"xun\" start=\"12\" end=\"12\" />"
-        "	<field name=\"xin\" start=\"13\" end=\"13\" />"
-        "	<field name=\"rm\" start=\"16\" end=\"17\" />"
-        "	<field name=\"xrm\" start=\"20\" end=\"21\" />"
-        "	<field name=\"xmf\" start=\"24\" end=\"24\" />"
-        "	<field name=\"cc\" start=\"32\" end=\"47\" />"
-        "	<field name=\"xdrop\" start=\"48\" end=\"53\" />"
-        "	<field name=\"xpow2\" start=\"54\" end=\"59\" />"
+        " <field name=\"ic\" start=\"0\" end=\"0\" />"
+        " <field name=\"io\" start=\"1\" end=\"1\" />"
+        " <field name=\"dz\" start=\"2\" end=\"2\" />"
+        " <field name=\"ov\" start=\"3\" end=\"3\" />"
+        " <field name=\"un\" start=\"4\" end=\"4\" />"
+        " <field name=\"in\" start=\"5\" end=\"5\" />"
+        " <field name=\"xio\" start=\"9\" end=\"9\" />"
+        " <field name=\"xdz\" start=\"10\" end=\"10\" />"
+        " <field name=\"xov\" start=\"11\" end=\"11\" />"
+        " <field name=\"xun\" start=\"12\" end=\"12\" />"
+        " <field name=\"xin\" start=\"13\" end=\"13\" />"
+        " <field name=\"rm\" start=\"16\" end=\"17\" />"
+        " <field name=\"xrm\" start=\"20\" end=\"21\" />"
+        " <field name=\"xmf\" start=\"24\" end=\"24\" />"
+        " <field name=\"cc\" start=\"32\" end=\"47\" />"
+        " <field name=\"xdrop\" start=\"48\" end=\"53\" />"
+        " <field name=\"xpow2\" start=\"54\" end=\"59\" />"
         "</struct>");
       strcpy (reg_type, "cs_type");
     }

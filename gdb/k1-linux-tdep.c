@@ -42,6 +42,9 @@
 #include "remote.h"
 #include "cli/cli-decode.h"
 
+extern int remote_hw_breakpoint_limit;
+extern int remote_hw_watchpoint_limit;
+
 char *sysroot_path = NULL;
 uint32_t breakpoint_linux = 0x0;
 
@@ -317,6 +320,9 @@ extern initialize_file_ftype _initialize_k1_linux_tdep;
 void
 _initialize_k1_linux_tdep (void)
 {
+  remote_hw_breakpoint_limit = 2;
+  remote_hw_watchpoint_limit = 1;
+
   gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1c_usr, GDB_OSABI_LINUX, k1_linux_init_abi);
   add_k1_commands ();
 }
