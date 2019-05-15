@@ -42,6 +42,7 @@
 #include "elf/k1c.h"
 #include "k1-target.h"
 #include "k1-exception-info.h"
+#include "solib-k1-bare.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a < b) ? (b) : (a))
@@ -119,6 +120,15 @@ mppa_inferior_data (struct inferior *inf)
     data = mppa_init_inferior_data (inf);
 
   return data;
+}
+
+const char *get_cluster_name (struct inferior *inf)
+{
+  struct inferior_data *data = mppa_inferior_data (inf);
+  if (!data || !data->cluster)
+    return "[cluster unknown]";
+
+  return data->cluster;
 }
 
 static void
@@ -486,6 +496,8 @@ k1_change_file (const char *file_path, const char *cluster_name)
         symbol_file_add (path, 0, NULL, OBJF_USERLOADED | OBJF_SHARED);
       }
     }
+
+    k1_bare_solib_load_debug_info ();
   }
   CATCH (ex, RETURN_MASK_ALL)
   {
@@ -925,6 +937,12 @@ mppa_inferior_data_cleanup (struct inferior *inf, void *data)
   xfree (data);
 }
 
+static int
+k1_filesystem_is_local (struct target_ops *ops)
+{
+  return 1;
+}
+
 void
 _initialize__k1_target (void)
 {
@@ -957,6 +975,7 @@ _initialize__k1_target (void)
   k1_target_ops.to_extra_thread_info = mppa_threads_extra_info;
 
   k1_target_ops.to_fetch_registers = k1_fetch_registers;
+  k1_target_ops.to_filesystem_is_local = k1_filesystem_is_local;
 
   k1_target_ops.to_magic = OPS_MAGIC;
 
