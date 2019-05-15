@@ -35,6 +35,7 @@
 #include "gdbthread.h"
 #include "k1-common-tdep.h"
 #include "rsp-low.h"
+#include "solib-k1-bare.h"
 
 struct k1_inferior_data
 {
@@ -804,6 +805,11 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_max_insn_length (gdbarch, 8 * 4);
 
   set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
+
+  if (tdesc_has_registers (tdesc))
+  {
+    set_solib_ops (gdbarch, &k1_bare_solib_ops);
+  }
 
   return gdbarch;
 }
