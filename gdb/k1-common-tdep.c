@@ -481,7 +481,7 @@ k1_return_value (struct gdbarch *gdbarch, struct value *func_type, struct type *
 int
 k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 {
-  /* R0 point to the jmpbuf, and RA is at offset 0x34 in the buf */
+  /* R0 point to the jmpbuf, and RA is at offset 0xA0 in the buf */
   gdb_byte buf[sizeof (uint64_t)];
   CORE_ADDR r0;
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -489,7 +489,7 @@ k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 
   get_frame_register (frame, user_reg_map_name_to_regnum (get_frame_arch (frame), "r0", -1), buf);
   r0 = extract_unsigned_integer (buf, sizeof (buf), byte_order);
-  if (target_read_memory (r0 + 0x68, buf, sizeof (buf))) // 0x68 = offset of RA in the jmp_buf struct
+  if (target_read_memory (r0 + 0xA0, buf, sizeof (buf))) // 0xA0 = offset of RA in the jmp_buf struct
     return 0;
 
   *pc = extract_unsigned_integer (buf, sizeof (buf), byte_order);
