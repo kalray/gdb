@@ -9,6 +9,7 @@ struct inferior_data
   int cluster_break_on_spawn;
   int cluster_stop_all;
   int cluster_debug_ring;
+  int unified;
 };
 
 extern int after_first_resume;

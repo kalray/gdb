@@ -101,11 +101,13 @@ mppa_init_inferior_data (struct inferior *inf)
   {
     unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
     const char *cluster = get_osdata_column (item, "cluster");
+    const char *unified = get_osdata_column (item, "unified");
 
     if (pid != inf->pid)
       continue;
 
     data->cluster = cluster;
+    data->unified = unified && !strcmp (unified, "yes");
   }
 
   return data;
