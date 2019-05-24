@@ -604,6 +604,66 @@ k1_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr, s
   return sp;
 }
 
+static int
+is_inferior_unified (void)
+{
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid) || !is_stopped (inferior_ptid))
+    return 0;
+
+  data = mppa_inferior_data (current_inferior ());
+
+  return data->unified;
+}
+
+static int
+insert_remove_unified_breakpoint (CORE_ADDR addr, int len, uint32_t value)
+{
+  char *buf;
+  long size = 256;
+
+  buf = (char *) malloc (size);
+  sprintf (buf, "kB%llx,%d:%llx",
+    (unsigned long long) addr, len, (unsigned long long) value);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+
+  return 0;
+}
+
+static int
+k1_memory_insert_breakpoint (struct gdbarch *gdbarch, struct bp_target_info *bp_tgt)
+{
+  int ret = default_memory_insert_breakpoint (gdbarch, bp_tgt);
+
+  if (!ret && is_inferior_unified ())
+  {
+    int len = 0;
+    CORE_ADDR pc = bp_tgt->placed_address;
+    const gdb_byte *bp = k1_bare_breakpoint_from_pc (gdbarch, &pc, &len);
+
+    insert_remove_unified_breakpoint (bp_tgt->placed_address, len, *(uint32_t *) bp);
+  }
+
+  return ret;
+}
+
+static int
+k1_memory_remove_breakpoint (struct gdbarch *gdbarch, struct bp_target_info *bp_tgt)
+{
+  int ret = default_memory_remove_breakpoint (gdbarch, bp_tgt);
+
+  if (!ret && is_inferior_unified ())
+  {
+    insert_remove_unified_breakpoint (bp_tgt->placed_address, bp_tgt->placed_size,
+      *(uint32_t *) bp_tgt->shadow_contents);
+  }
+
+  return ret;
+}
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -656,6 +716,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_double_bit (gdbarch, 64);
   set_gdbarch_long_double_bit (gdbarch, 64);
   set_gdbarch_ptr_bit (gdbarch, gdbarch_bfd_arch_info (gdbarch)->bits_per_address);
+  set_gdbarch_memory_insert_breakpoint (gdbarch, k1_memory_insert_breakpoint);
+  set_gdbarch_memory_remove_breakpoint (gdbarch, k1_memory_remove_breakpoint);
 
   /* Get the k1 target description from INFO.  */
   tdesc = info.target_desc;
