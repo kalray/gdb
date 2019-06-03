@@ -543,7 +543,7 @@ struct elf_k1_link_hash_table
   bfd *stub_bfd;
 
   /* Linker call-backs.  */
-  asection *(*add_stub_section) (const char *, asection *);
+  asection *(*add_stub_section) (const char *, asection *, bfd_boolean);
   void (*layout_sections_again) (void);
 
   /* Array to keep track of which stub sections have been created, and
@@ -555,6 +555,10 @@ struct elf_k1_link_hash_table
     asection *link_sec;
     /* The stub section.  */
     asection *stub_sec;
+
+    /* Wether the stub section must be placed before or after
+       link_sec */
+    bfd_boolean afterp;
   } *stub_group;
 
   /* Assorted information used by elfNN_k1_size_stubs.  */
@@ -997,7 +1001,8 @@ elfNN_k1_get_stub_entry (const asection *input_section,
 
 static asection *
 _bfd_k1_create_stub_section (asection *section,
-				  struct elf_k1_link_hash_table *htab)
+			     struct elf_k1_link_hash_table *htab,
+			     bfd_boolean afterp)
 {
   size_t namelen;
   bfd_size_type len;
@@ -1011,7 +1016,7 @@ _bfd_k1_create_stub_section (asection *section,
 
   memcpy (s_name, section->name, namelen);
   memcpy (s_name + namelen, STUB_SUFFIX, sizeof (STUB_SUFFIX));
-  return (*htab->add_stub_section) (s_name, section);
+  return (*htab->add_stub_section) (s_name, section, afterp);
 }
 
 
@@ -1026,7 +1031,8 @@ _bfd_k1_get_stub_for_link_section (asection *link_section,
 {
   if (htab->stub_group[link_section->id].stub_sec == NULL)
     htab->stub_group[link_section->id].stub_sec
-      = _bfd_k1_create_stub_section (link_section, htab);
+      = _bfd_k1_create_stub_section (link_section, htab,
+				     htab->stub_group[link_section->id].afterp);
   return htab->stub_group[link_section->id].stub_sec;
 }
 
@@ -1105,7 +1111,7 @@ _bfd_k1_add_stub_entry_after (const char *stub_name,
 
 
 static bfd_boolean
-k1_build_one_stub (struct bfd_hash_entry *gen_entry ATTRIBUTE_UNUSED,
+k1_build_one_stub (struct bfd_hash_entry *gen_entry,
 			void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf_k1_stub_hash_entry *stub_entry;
@@ -1181,8 +1187,8 @@ k1_build_one_stub (struct bfd_hash_entry *gen_entry ATTRIBUTE_UNUSED,
    we know stub section sizes.  */
 
 static bfd_boolean
-k1_size_one_stub (struct bfd_hash_entry *gen_entry ATTRIBUTE_UNUSED,
-		       void *in_arg ATTRIBUTE_UNUSED)
+k1_size_one_stub (struct bfd_hash_entry *gen_entry,
+		  void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf_k1_stub_hash_entry *stub_entry;
   int size;
@@ -1199,7 +1205,9 @@ k1_size_one_stub (struct bfd_hash_entry *gen_entry ATTRIBUTE_UNUSED,
       abort ();
     }
 
+  /* align on 64bits */
   size = (size + 7) & ~7;
+
   stub_entry->stub_sec->size += size;
 
   return TRUE;
@@ -1337,6 +1345,7 @@ group_sections (struct elf_k1_link_hash_table *htab,
 	  asection *curr;
 	  asection *prev;
 	  bfd_size_type total;
+	  bfd_boolean afterp = TRUE;
 
 	  curr = tail;
 	  total = tail->size;
@@ -1344,6 +1353,8 @@ group_sections (struct elf_k1_link_hash_table *htab,
 		 && ((total += curr->output_offset - prev->output_offset)
 		     < stub_group_size))
 	    curr = prev;
+
+	  afterp = (prev != NULL) || (total >= stub_group_size);
 
 	  /* OK, the size from the start of CURR to the end is less
 	     than stub_group_size and thus can be handled by one stub
@@ -1357,6 +1368,7 @@ group_sections (struct elf_k1_link_hash_table *htab,
 	      prev = PREV_SEC (tail);
 	      /* Set up this stub group.  */
 	      htab->stub_group[tail->id].link_sec = curr;
+	      htab->stub_group[tail->id].afterp = afterp;
 	    }
 	  while (tail != curr && (tail = prev) != NULL);
 
@@ -1372,6 +1384,7 @@ group_sections (struct elf_k1_link_hash_table *htab,
 		  tail = prev;
 		  prev = PREV_SEC (tail);
 		  htab->stub_group[tail->id].link_sec = curr;
+		  htab->stub_group[tail->id].afterp = afterp;
 		}
 	    }
 	  tail = prev;

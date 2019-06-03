@@ -1,81 +1,61 @@
 #name: k1-farcall-back
 #source: farcall-back.s
 #as:
-#ld: -Ttext 0x1000 --section-start .foo=0x100000000
+#ld: -Ttext 0x1000 --section-start .foo=0x80001000
 #objdump: -dr
 
 #...
 
 Disassembly of section .text:
 
+.* <__bar2_veneer>:
+    1000:	00 0a 40 e0 08 00 20 00                         	make \$r16 = 2147491880 \(0x80002028\);;
+
+    1008:	10 00 d8 0f                                     	igoto \$r16;;
+
+    100c:	00 00 00 00                                     	errop ;;
+
+
+.* <__bar3_veneer>:
+    1010:	00 0c 40 e0 0c 00 20 00                         	make \$r16 = 2147495984 \(0x80003030\);;
+
+    1018:	10 00 d8 0f                                     	igoto \$r16;;
+
+    101c:	00 00 00 00                                     	errop ;;
+
+
+.* <__bar1_veneer>:
+    1020:	00 08 40 e0 04 00 20 00                         	make \$r16 = 2147487776 \(0x80001020\);;
+
+    1028:	10 00 d8 0f                                     	igoto \$r16;;
+
+    102c:	00 00 00 00                                     	errop ;;
+
+
 .* <_start>:
-    1000:	10 04 00 18                                     	call 2040 <__bar1_veneer>;;
+    1030:	fc ff ff 1f                                     	call 1020 <__bar1_veneer>;;
 
-    1004:	0f 04 00 10                                     	goto 2040 <__bar1_veneer>;;
+    1034:	fb ff ff 17                                     	goto 1020 <__bar1_veneer>;;
 
-    1008:	06 04 00 18                                     	call 2020 <__bar2_veneer>;;
+    1038:	f2 ff ff 1f                                     	call 1000 <__bar2_veneer>;;
 
-    100c:	05 04 00 10                                     	goto 2020 <__bar2_veneer>;;
+    103c:	f1 ff ff 17                                     	goto 1000 <__bar2_veneer>;;
 
-    1010:	08 04 00 18                                     	call 2030 <__bar3_veneer>;;
+    1040:	f4 ff ff 1f                                     	call 1010 <__bar3_veneer>;;
 
-    1014:	07 04 00 10                                     	goto 2030 <__bar3_veneer>;;
+    1044:	f3 ff ff 17                                     	goto 1010 <__bar3_veneer>;;
 
-    1018:	00 00 d0 0f                                     	ret ;;
+    1048:	00 00 d0 0f                                     	ret ;;
 
 	...
 
 .* <_back>:
-    201c:	00 00 d0 0f                                     	ret ;;
-
-.* <__bar2_veneer>:
-    2020:	00 02 40 e0 04 00 40 00                         	make \$r16 = 4294971400 \(0x100001008\);;
-
-    2028:	10 00 d8 0f                                     	igoto \$r16;;
-
-    202c:	00 00 00 00                                     	errop ;;
-
-
-.* <__bar3_veneer>:
-    2030:	00 04 40 e0 08 00 40 00                         	make \$r16 = 4294975504 \(0x100002010\);;
-
-    2038:	10 00 d8 0f                                     	igoto \$r16;;
-
-    203c:	00 00 00 00                                     	errop ;;
-
-
-.* <__bar1_veneer>:
-    2040:	00 00 40 e0 00 00 40 00                         	make \$r16 = 4294967296 \(0x100000000\);;
-
-    2048:	10 00 d8 0f                                     	igoto \$r16;;
-
-    204c:	00 00 00 00                                     	errop ;;
-
+    204c:	00 00 d0 0f                                     	ret ;;
 
 Disassembly of section .foo:
 
-.* <bar1>:
-.*:	00 00 d0 0f                                     	ret ;;
-
-.*:	05 08 00 10                                     	goto .* <___start_veneer>;;
-
-	...
-
-.* <bar2>:
-.*:	00 00 d0 0f                                     	ret ;;
-
-.*:	03 04 00 10                                     	goto .* <___start_veneer>;;
-
-	...
-
-.* <bar3>:
-.*:	00 00 d0 0f                                     	ret ;;
-
-.*:	05 00 00 10                                     	goto .* <___back_veneer>;;
-
-
 .* <___start_veneer>:
-.*:	00 00 40 e0 04 00 00 00                         	make \$r16 = 4096 \(0x1000\);;
+.*:	00 0c 40 e0 04 00 00 00                         	make \$r16 = 4144 \(0x1030\);;
 
 .*:	10 00 d8 0f                                     	igoto \$r16;;
 
@@ -83,9 +63,29 @@ Disassembly of section .foo:
 
 
 .* <___back_veneer>:
-.*:	00 07 40 e0 08 00 00 00                         	make \$r16 = 8220 \(0x201c\);;
+.*:	00 13 40 e0 08 00 00 00                         	make \$r16 = 8268 \(0x204c\);;
 
 .*:	10 00 d8 0f                                     	igoto \$r16;;
 
 .*:	00 00 00 00                                     	errop ;;
+
+
+.* <bar1>:
+.*:	00 00 d0 0f                                     	ret ;;
+
+.*:	f7 ff ff 17                                     	goto 80001000 <___start_veneer>;;
+
+	...
+
+.* <bar2>:
+.*:	00 00 d0 0f                                     	ret ;;
+
+.*:	f5 fb ff 17                                     	goto 80001000 <___start_veneer>;;
+
+	...
+
+.* <bar3>:
+.*:	00 00 d0 0f                                     	ret ;;
+
+.*:	f7 f7 ff 17                                     	goto 80001010 <___back_veneer>;;
 
