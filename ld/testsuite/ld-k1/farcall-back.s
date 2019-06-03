@@ -29,7 +29,7 @@ _start:
 _back:	ret
 	;;
 
-# We will place the section .foo at 0x8001000.
+# We will place the section .foo at 0x80001000.
 
 	.section .foo, "xa"
 	.type bar1, @function

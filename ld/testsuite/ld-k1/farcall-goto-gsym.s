@@ -7,7 +7,7 @@
 
 _start:
 # for long jump (goto) to global symbol, we shouldn't insert veneer
-# as the veneer will clobber IP0/IP1 which is caller saved, gcc only
+# as the veneer will clobber r16/r17 which is caller saved, gcc only
 # reserve them for function call relocation (call).
 	goto bar_gsym
 	;;

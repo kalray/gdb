@@ -48,7 +48,8 @@ struct hook_stub_info
 /* Traverse the linker tree to find the spot where the stub goes.  */
 
 static bfd_boolean
-hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
+hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp,
+	      bfd_boolean afterp)
 {
   lang_statement_union_type *l;
   bfd_boolean ret;
@@ -58,26 +59,27 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
       switch (l->header.type)
 	{
 	case lang_constructors_statement_enum:
-	  ret = hook_in_stub (info, &constructor_list.head);
+	  ret = hook_in_stub (info, &constructor_list.head, afterp);
 	  if (ret)
 	    return ret;
 	  break;
 
 	case lang_output_section_statement_enum:
 	  ret = hook_in_stub (info,
-			      &l->output_section_statement.children.head);
+			      &l->output_section_statement.children.head,
+			      afterp);
 	  if (ret)
 	    return ret;
 	  break;
 
 	case lang_wild_statement_enum:
-	  ret = hook_in_stub (info, &l->wild_statement.children.head);
+	  ret = hook_in_stub (info, &l->wild_statement.children.head, afterp);
 	  if (ret)
 	    return ret;
 	  break;
 
 	case lang_group_statement_enum:
-	  ret = hook_in_stub (info, &l->group_statement.children.head);
+	  ret = hook_in_stub (info, &l->group_statement.children.head, afterp);
 	  if (ret)
 	    return ret;
 	  break;
@@ -86,9 +88,18 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 	  if (l->input_section.section == info->input_section)
 	    {
 	      /* We've found our section.  Insert the stub immediately
-		 after its associated input section.  */
-	      *(info->add.tail) = l->header.next;
-	      l->header.next = info->add.head;
+		 before or after its associated input section.  */
+
+	      if (afterp)
+		{
+		  *(info->add.tail) = l->header.next;
+		  l->header.next = info->add.head;
+		}
+	      else
+		{
+		  *lp = info->add.head;
+		  *(info->add.tail) = l;
+		}
 	      return TRUE;
 	    }
 	  break;
@@ -121,7 +132,8 @@ hook_in_stub (struct hook_stub_info *info, lang_statement_union_type **lp)
 
 static asection *
 elf${ELFSIZE}_k1_add_stub_section (const char *stub_sec_name,
-					asection *input_section)
+				   asection *input_section,
+				   bfd_boolean afterp)
 {
   asection *stub_sec;
   flagword flags;
@@ -148,7 +160,7 @@ elf${ELFSIZE}_k1_add_stub_section (const char *stub_sec_name,
   if (info.add.head == NULL)
     goto err_ret;
 
-  if (hook_in_stub (&info, &os->children.head))
+  if (hook_in_stub (&info, &os->children.head, afterp))
     return stub_sec;
 
  err_ret:

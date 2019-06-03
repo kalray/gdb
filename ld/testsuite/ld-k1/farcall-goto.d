@@ -7,18 +7,18 @@
 
 Disassembly of section .text:
 
-.* <_start>:
-    1000:	02 00 00 10                                     	goto 1008 <__bar_veneer>;;
-
-    1004:	00 00 d0 0f                                     	ret ;;
-
-
 .* <__bar_veneer>:
-    1008:	00 00 40 e0 04 00 08 00                         	make \$r16 = 536875008 \(0x20001000\);;
+    1000:	00 00 40 e0 04 00 08 00                         	make \$r16 = 536875008 \(0x20001000\);;
 
-    1010:	10 00 d8 0f                                     	igoto \$r16;;
+    1008:	10 00 d8 0f                                     	igoto \$r16;;
 
-    1014:	00 00 00 00                                     	errop ;;
+    100c:	00 00 00 00                                     	errop ;;
+
+
+.* <_start>:
+    1010:	fc ff ff 17                                     	goto 1000 <__bar_veneer>;;
+
+    1014:	00 00 d0 0f                                     	ret ;;
 
 
 Disassembly of section .foo:
