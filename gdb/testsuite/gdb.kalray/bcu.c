@@ -16,6 +16,8 @@ extern int ret_test, ra_ret_test;
 extern int loopdo_test;
 extern int get_test;
 extern int iget_test;
+extern int pcrel_no_bcu_test;
+extern int pcrel_bcu_test;
 
 // bcu
 extern int bpbcu_call_test;
@@ -33,6 +35,8 @@ extern int bpbcu_loopdo_test_2;
 extern int bpbcu_no_bcu_test;
 extern int bpbcu_ret_test;
 extern int bpbcu_uret_test;
+extern int bpbcu_pcrel_no_bcu_test;
+extern int bpbcu_pcrel_bcu_test;
 
 #define MAX_TEST_BCUS 3
 #define DECL_BCU(NAME) \
@@ -80,6 +84,11 @@ struct test_s tests[] =
   {"igoto", &igoto_test, 0, {}, {DECL_BCU(igoto_test)}},
   {"ret", &ret_test, 1, {{"ra", (intptr_t) &ra_ret_test}}, {DECL_BCU(ret_test)}},
   {"loopdo", &loopdo_test, 1, {{"inc", 30}}, {DECL_BCU(loopdo_test_1), DECL_BCU(loopdo_test_2)}},
+  {"pcrel no bcu", &pcrel_no_bcu_test, 1, {"pc_plus_0x20", (intptr_t) &bpbcu_pcrel_no_bcu_test + 0x20},
+    {DECL_BCU(pcrel_no_bcu_test)}},
+  {"pcrel bcu", &pcrel_bcu_test, 2,
+    {{"pc_plus_0x30", (intptr_t) &bpbcu_pcrel_bcu_test + 0x30}, {"pc", (intptr_t) &bpbcu_pcrel_bcu_test}},
+    {DECL_BCU(pcrel_bcu_test)}},
 };
 int ntests = sizeof (tests) / sizeof (tests[0]);
 

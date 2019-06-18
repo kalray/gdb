@@ -57,6 +57,9 @@ struct displaced_step_closure
   unsigned rewrite_LE : 1;
   unsigned rewrite_reg : 1;
 
+  int has_pcrel;
+  int pcrel_reg;
+
   /* The destination address when the branch is taken. */
   uint64_t dest;
   int reg;
@@ -398,6 +401,7 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR 
 {
   struct displaced_step_closure *dsc = xzalloc (sizeof (struct displaced_step_closure));
   struct k1_inferior_data *data = k1_inferior_data (current_inferior ());
+  int i;
 
   if (debug_displaced)
     printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
@@ -418,6 +422,40 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR 
   dsc->insn_words[0] = extract_unsigned_integer ((const gdb_byte*) dsc->insn_words, 4, gdbarch_byte_order (gdbarch));
   if (((dsc->insn_words[0] >> 29) & 0x3) == 0)
     patch_bcu_instruction (gdbarch, from, to, regs, dsc);
+
+  // pcrel instruction - the first syllable after the branch instructions
+  for (i = 0; i < dsc->num_insn_words; i++)
+  {
+    uint32_t crt_word = dsc->insn_words[i];
+
+    if (((crt_word >> 29) & 0x3) != 0)
+    {
+      struct op_list *insn = pcrel_insn[k1_arch ()];
+
+      if (((crt_word >> 29) & 0x3) != 0x3)
+        break;
+
+      while (insn)
+      {
+        k1opc_t *op = insn->op;
+
+        if ((crt_word & op->codewords[0].mask) != op->codewords[0].opcode)
+        {
+          insn = insn->next;
+          continue;
+        }
+
+        dsc->has_pcrel = 1;
+        dsc->pcrel_reg = extract_mds_bitfield (op, crt_word, 0, 0);
+
+        if (debug_displaced)
+          printf_filtered ("displaced: found pcrel insn: destination register r%d\n", dsc->pcrel_reg);
+        break;
+      }
+
+      break;
+    }
+  }
   store_unsigned_integer ((gdb_byte*) dsc->insn_words, 4, gdbarch_byte_order (gdbarch), dsc->insn_words[0]);
 
   write_memory (to, (gdb_byte*) dsc->insn_words, dsc->num_insn_words * 4);
@@ -429,7 +467,7 @@ static void
 k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure *dsc,
   CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
 {
-  ULONGEST ps, lc, le, pc;
+  ULONGEST ps, lc, le, pc, pcrel_reg;
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int branched = 0;
   int exception = 0;
@@ -441,6 +479,17 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch, struct displaced_step_closure 
   pc = regcache_read_pc (regs);
   if (debug_displaced)
     printf_filtered ("displaced: new pc %s\n", paddress (gdbarch, pc));
+
+  if (dsc->has_pcrel)
+  {
+    regcache_raw_read_unsigned (regs, dsc->pcrel_reg + tdep->r0_regnum, &pcrel_reg);
+    pcrel_reg += from - to;
+    if (debug_displaced)
+      printf_filtered ("displaced: pcrel patch register r%d to 0x%llx\n",
+        dsc->pcrel_reg, (unsigned long long) pcrel_reg);
+    regcache_raw_write_unsigned (regs, dsc->pcrel_reg + tdep->r0_regnum, pcrel_reg);
+  }
+
   if (pc - to == dsc->num_insn_words * 4)
   {
     pc = from + (pc - to);

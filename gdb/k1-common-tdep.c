@@ -48,6 +48,7 @@ static struct op_list *sp_store_insns[K1_NUM_ARCHES];
 static struct op_list *prologue_helper_insns[K1_NUM_ARCHES];
 
 struct op_list *branch_insns[K1_NUM_ARCHES];
+struct op_list *pcrel_insn[K1_NUM_ARCHES];
 uint32_t break_op[K1_NUM_ARCHES];
 uint32_t break_jtag_over_iss[K1_NUM_ARCHES];
 uint32_t nop_op[K1_NUM_ARCHES];
@@ -560,6 +561,8 @@ k1_look_for_insns (void)
         add_op (&branch_insns[i], op);
       else if (strcmp ("rfe", op->as_op) == 0)
         add_op (&branch_insns[i], op);
+      else if (strcmp ("pcrel", op->as_op) == 0)
+        add_op (&pcrel_insn[i], op);
       else if (strcmp ("scall", op->as_op) == 0)
       {
         if (op->format && op->format[0] && op->format[0]->regs == NULL)

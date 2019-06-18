@@ -232,6 +232,35 @@ bpbcu_igetpc_test:
   goto ret_from_test
   ;;
 
+.global pcrel_no_bcu_test
+.global bpbcu_pcrel_no_bcu_test
+pcrel_no_bcu_test:
+bpbcu_pcrel_no_bcu_test:
+  pcrel $r43 = 0x20
+  ;;
+  get_got_addr $r42 ret_val
+  ;;
+  sd 0[$r42] = $r43
+  ;;
+  goto ret_from_test
+  ;;
+
+.global pcrel_bcu_test
+.global bpbcu_pcrel_bcu_test
+pcrel_bcu_test:
+bpbcu_pcrel_bcu_test:
+  get $r41 = $pc
+  pcrel $r43 = 0x20
+  ;;
+  get_got_addr $r42 ret_val
+  ;;
+  sd 0[$r42] = $r43
+  ;;
+  sd 8[$r42] = $r41
+  ;;
+  goto ret_from_test
+  ;;
+
 verify_test_regs:
   make $r42 = 0
   get_got_addr $r40 saved_regs
