@@ -658,7 +658,7 @@ is_inferior_unified (void)
 {
   struct inferior_data *data;
 
-  if (ptid_equal (inferior_ptid, null_ptid) || !is_stopped (inferior_ptid))
+  if (ptid_equal (inferior_ptid, null_ptid))
     return 0;
 
   data = mppa_inferior_data (current_inferior ());
