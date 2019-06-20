@@ -75,7 +75,7 @@ k1_arch (void)
   else if (desc && tdesc_architecture (desc))
   {
     const char *name = tdesc_architecture (desc)->printable_name;
-    if (!strcmp (name, "k1:k1c"))
+    if (!strncmp (name, "k1:k1c", 6))
       k1_current_arch = K1_K1C;
     else
       error ("unable to find the current k1 architecture.");
