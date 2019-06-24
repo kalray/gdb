@@ -105,7 +105,6 @@ extern int k1_k1c_dec_registers[];
 #define k1c_bcucode8_fld(x) (int)(((unsigned int)(x) >> 15) & 0x7)
 #define k1c_branchcond_fld(x) (int)(((unsigned int)(x) >> 23) & 0xf)
 #define k1c_byteshift_fld(x) (int)((unsigned int)(x) & 0x3f)
-#define k1c_columnsel_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
 #define k1c_comparison_fld(x) (int)(((unsigned int)(x) >> 24) & 0xf)
 #define k1c_extend27_fld(x) (int)((unsigned int)(x) & 0x7ffffff)
 #define k1c_extend6_fld(x) (int)((unsigned int)(x) & 0x3f)
@@ -127,6 +126,7 @@ extern int k1_k1c_dec_registers[];
 #define k1c_exunum2_fld(x) (int)(((unsigned int)(x) >> 27) & 0x3)
 #define k1c_exunum3_fld(x) (int)(((unsigned int)(x) >> 27) & 0x3)
 #define k1c_floatcomp_fld(x) (int)(((unsigned int)(x) >> 24) & 0x7)
+#define k1c_lanesel_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
 #define k1c_loadcode_fld(x) (int)(((unsigned int)(x) >> 26) & 0x7)
 #define k1c_lower10_fld(x) (int)(((unsigned int)(x) >> 6) & 0x3ff)
 #define k1c_lower5_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1f)
@@ -304,7 +304,7 @@ extern int k1_k1c_dec_registers[];
 #define k1c_registerM_0_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_registerM_1_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_speculate_opd(w) (((unsigned int)(w) >> 24) & 0x1)
-#define k1c_columnsel_opd(w) (((unsigned int)(w) >> 18) & 0x3)
+#define k1c_lanesel_opd(w) (((unsigned int)(w) >> 18) & 0x3)
 #define k1c_registerT_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
 #define k1c_registerU_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_registerU_0_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
@@ -12688,14 +12688,14 @@ extern int k1_k1c_dec_registers[];
 #define is_k1c_NEGHQ_registerW_registerZ_double_insn(x) (int)(((unsigned int)(x) & 0xff03ffc0) == 0xf5013000)
 #define k1c_ABSHQ_registerW_registerZ_double_insn(registerW,registerZ) (unsigned int)(0xf4013000 | (((int)(registerW) & 0x3f) << 18) | ((int)(registerZ) & 0x3f))
 #define is_k1c_ABSHQ_registerW_registerZ_double_insn(x) (int)(((unsigned int)(x) & 0xff03ffc0) == 0xf4013000)
-#define k1c_COPYV_registerA_registerBe_simple_insn(registerA,registerBe) (unsigned int)(0x01000000 | (((int)(registerA) & 0x3f) << 18) | (((int)(registerBe) & 0x1f) << 13))
-#define is_k1c_COPYV_registerA_registerBe_simple_insn(x) (int)(((unsigned int)(x) & 0x7f001fff) == 0x01000000)
-#define k1c_COPYV_registerA_registerBo_simple_insn(registerA,registerBo) (unsigned int)(0x01001000 | (((int)(registerA) & 0x3f) << 18) | (((int)(registerBo) & 0x1f) << 13))
-#define is_k1c_COPYV_registerA_registerBo_simple_insn(x) (int)(((unsigned int)(x) & 0x7f001fff) == 0x01001000)
-#define k1c_MOVEFO_registerN_registerBe_simple_insn(registerN,registerBe) (unsigned int)(0x00081000 | (((int)(registerN) & 0xf) << 20) | (((int)(registerBe) & 0x1f) << 13))
-#define is_k1c_MOVEFO_registerN_registerBe_simple_insn(x) (int)(((unsigned int)(x) & 0x7f0c1fff) == 0x00081000)
-#define k1c_MOVEFO_registerN_registerBo_simple_insn(registerN,registerBo) (unsigned int)(0x000c1000 | (((int)(registerN) & 0xf) << 20) | (((int)(registerBo) & 0x1f) << 13))
-#define is_k1c_MOVEFO_registerN_registerBo_simple_insn(x) (int)(((unsigned int)(x) & 0x7f0c1fff) == 0x000c1000)
+#define k1c_COPYV_registerA_registerBe_simple_insn(registerA,registerBe) (unsigned int)(0x01000f80 | (((int)(registerA) & 0x3f) << 18) | (((int)(registerBe) & 0x1f) << 13))
+#define is_k1c_COPYV_registerA_registerBe_simple_insn(x) (int)(((unsigned int)(x) & 0x7f001fff) == 0x01000f80)
+#define k1c_COPYV_registerA_registerBo_simple_insn(registerA,registerBo) (unsigned int)(0x01001f80 | (((int)(registerA) & 0x3f) << 18) | (((int)(registerBo) & 0x1f) << 13))
+#define is_k1c_COPYV_registerA_registerBo_simple_insn(x) (int)(((unsigned int)(x) & 0x7f001fff) == 0x01001f80)
+#define k1c_MOVEFO_registerN_registerBe_simple_insn(registerN,registerBe) (unsigned int)(0x00081f80 | (((int)(registerN) & 0xf) << 20) | (((int)(registerBe) & 0x1f) << 13))
+#define is_k1c_MOVEFO_registerN_registerBe_simple_insn(x) (int)(((unsigned int)(x) & 0x7f0c1fff) == 0x00081f80)
+#define k1c_MOVEFO_registerN_registerBo_simple_insn(registerN,registerBo) (unsigned int)(0x000c1f80 | (((int)(registerN) & 0xf) << 20) | (((int)(registerBo) & 0x1f) << 13))
+#define is_k1c_MOVEFO_registerN_registerBo_simple_insn(x) (int)(((unsigned int)(x) & 0x7f0c1fff) == 0x000c1f80)
 
 #define K1C_DOUBLE_MASK 	0x80000000
 #define K1C_DOUBLE_VAL  	0x80000000
@@ -12725,10 +12725,10 @@ enum Method_k1c_enum {
   Immediate_k1c_unsigned6,
   Immediate_k1c_wrapped32,
   Immediate_k1c_wrapped64,
-  Modifier_k1c_columnsel,
   Modifier_k1c_comparison,
   Modifier_k1c_exunum,
   Modifier_k1c_floatcomp,
+  Modifier_k1c_lanesel,
   Modifier_k1c_rectify,
   Modifier_k1c_rounding,
   Modifier_k1c_roundint,
@@ -12896,11 +12896,11 @@ enum Modifier_k1c_speculate_enum {
   Modifier_k1c_speculate_S=1,
 };
 
-enum Modifier_k1c_columnsel_enum {
-  Modifier_k1c_columnsel_C0=0,
-  Modifier_k1c_columnsel_C1=1,
-  Modifier_k1c_columnsel_C2=2,
-  Modifier_k1c_columnsel_C3=3,
+enum Modifier_k1c_lanesel_enum {
+  Modifier_k1c_lanesel_C0=0,
+  Modifier_k1c_lanesel_C1=1,
+  Modifier_k1c_lanesel_C2=2,
+  Modifier_k1c_lanesel_C3=3,
 };
 
 enum Modifier_k1c_scaling_enum {
