@@ -126,7 +126,7 @@ extern int k1_k1c_dec_registers[];
 #define k1c_exunum2_fld(x) (int)(((unsigned int)(x) >> 27) & 0x3)
 #define k1c_exunum3_fld(x) (int)(((unsigned int)(x) >> 27) & 0x3)
 #define k1c_floatcomp_fld(x) (int)(((unsigned int)(x) >> 24) & 0x7)
-#define k1c_lanesel_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
+#define k1c_laneselect_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
 #define k1c_loadcode_fld(x) (int)(((unsigned int)(x) >> 26) & 0x7)
 #define k1c_lower10_fld(x) (int)(((unsigned int)(x) >> 6) & 0x3ff)
 #define k1c_lower5_fld(x) (int)(((unsigned int)(x) >> 6) & 0x1f)
@@ -304,7 +304,7 @@ extern int k1_k1c_dec_registers[];
 #define k1c_registerM_0_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_registerM_1_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_speculate_opd(w) (((unsigned int)(w) >> 24) & 0x1)
-#define k1c_lanesel_opd(w) (((unsigned int)(w) >> 18) & 0x3)
+#define k1c_laneselect_opd(w) (((unsigned int)(w) >> 18) & 0x3)
 #define k1c_registerT_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
 #define k1c_registerU_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_registerU_0_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
@@ -12728,7 +12728,7 @@ enum Method_k1c_enum {
   Modifier_k1c_comparison,
   Modifier_k1c_exunum,
   Modifier_k1c_floatcomp,
-  Modifier_k1c_lanesel,
+  Modifier_k1c_laneselect,
   Modifier_k1c_rectify,
   Modifier_k1c_rounding,
   Modifier_k1c_roundint,
@@ -12896,11 +12896,11 @@ enum Modifier_k1c_speculate_enum {
   Modifier_k1c_speculate_S=1,
 };
 
-enum Modifier_k1c_lanesel_enum {
-  Modifier_k1c_lanesel_C0=0,
-  Modifier_k1c_lanesel_C1=1,
-  Modifier_k1c_lanesel_C2=2,
-  Modifier_k1c_lanesel_C3=3,
+enum Modifier_k1c_laneselect_enum {
+  Modifier_k1c_laneselect_C0=0,
+  Modifier_k1c_laneselect_C1=1,
+  Modifier_k1c_laneselect_C2=2,
+  Modifier_k1c_laneselect_C3=3,
 };
 
 enum Modifier_k1c_scaling_enum {
