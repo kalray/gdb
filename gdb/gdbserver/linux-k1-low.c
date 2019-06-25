@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/procfs.h>
+#include <elf.h>
 
 #ifndef PTRACE_GET_HW_PT_REGS
 #define PTRACE_GET_HW_PT_REGS 20
@@ -147,11 +148,14 @@ k1_store_gregset (struct regcache *regcache, const void *buf)
   supply_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
 }
 
-struct regset_info k1_regsets[] = {
-  { PTRACE_GETREGS, PTRACE_SETREGS, 0, sizeof (elf_gregset_t),
+struct regset_info k1_regsets[] =
+{
+  {
+    PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PRSTATUS, sizeof (elf_gregset_t),
     GENERAL_REGS,
-    k1_fill_gregset, k1_store_gregset },
-  { 0, 0, 0, -1, -1, NULL, NULL }
+    k1_fill_gregset, k1_store_gregset
+  },
+  NULL_REGSET
 };
 
 /*__attribute__((naked)) */void k1_breakpoint_opcode (void)
