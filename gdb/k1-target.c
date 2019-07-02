@@ -60,6 +60,8 @@ static struct target_ops k1_target_ops;
 static char *da_options = NULL;
 
 static struct cmd_list_element *kalray_set_cmdlist;
+static struct cmd_list_element *kalray_set_traps_cmdlist;
+static struct cmd_list_element *kalray_show_traps_cmdlist;
 static struct cmd_list_element *kalray_show_cmdlist;
 static const char *simulation_vehicles[] = {"k1-cluster", NULL};
 static const char *simulation_vehicle;
@@ -67,6 +69,12 @@ static const char *sopts_cluster_stop_all[] = {"none", "jtag", "break_mask", NUL
 static const char *sopts_cluster_debug_ring[] = {"all", "current", NULL};
 static const char *sopt_cluster_debug_ring;
 static const char *sopt_cluster_stop_all;
+static const char *traps_name[] = {
+  "opcode", "misalign", "psys", "dsys",
+  "double_ecc", "single_ecc", "nomap", "protection",
+  "write_to_clean", "atomic_to_clean", "double_exception", "vsfr",
+  "pl_owner"};
+static int no_traps_name = sizeof (traps_name) / sizeof (traps_name[0]);
 char cjtag_over_iss = 'n';
 int opt_break_on_spawn = 0;
 int opt_cluster_stop_all = 0;
@@ -75,6 +83,7 @@ int in_attach_mppa = 0;
 int new_attach_requested = 0;
 static pid_t server_pid;
 int after_first_resume = 0;
+int opt_trap = 0;
 
 static const struct inferior_data *k1_attached_inf_data;
 
@@ -684,6 +693,18 @@ set_kalray_cmd (char *args, int from_tty)
 }
 
 static void
+set_kalray_traps_cmd (char *args, int from_tty)
+{
+  help_list (kalray_set_traps_cmdlist, "intercept-traps ", -1, gdb_stdout);
+}
+
+static void
+show_kalray_traps_cmd (char *args, int from_tty)
+{
+  help_list (kalray_show_traps_cmdlist, "show kalray ", -1, gdb_stdout);
+}
+
+static void
 show_kalray_cmd (char *args, int from_tty)
 {
   help_list (kalray_show_cmdlist, "show kalray ", -1, gdb_stdout);
@@ -717,6 +738,94 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty, struct cmd_list
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   fprintf_filtered (file, "The cluster break on reset is %d.\n", data->cluster_break_on_spawn);
+}
+
+static int
+get_trap_index (const char *name)
+{
+  int i;
+
+  for (i = 0; i < no_traps_name; i++)
+    if (!strcmp (traps_name[i], name))
+      return i;
+
+  return -1;
+}
+
+static void
+set_intercept_trap (char *args, int from_tty, struct cmd_list_element *c)
+{
+  struct inferior *inf;
+  struct inferior_data *data;
+  int trap_idx;
+
+  trap_idx = get_trap_index (c->name);
+  if (trap_idx < 0)
+    error (_("Invalid trap name %s."), c->name);
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    error (_ ("Cannot set intercept trap without a selected thread."));
+
+  inf = current_inferior ();
+  data = mppa_inferior_data (inf);
+  data->intercept_trap &= ~(1 << trap_idx);
+  data->intercept_trap |= opt_trap << trap_idx;
+
+  send_intercept_trap (inf, data->intercept_trap);
+}
+
+static void
+show_intercept_trap (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+{
+  struct inferior_data *data;
+  int trap_idx;
+
+  trap_idx = get_trap_index (c->name);
+  if (trap_idx < 0)
+    error (_("Invalid trap name %s."), c->name);
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf (_ ("Cannot show intercept trap without a live selected thread."));
+    return;
+  }
+
+  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
+  fprintf_filtered (file, "Intercept %s trap is %s.\n", c->name,
+    ((data->intercept_trap >> trap_idx) & 1) ? "on" : "off");
+}
+
+static void
+set_intercept_trap_mask (char *args, int from_tty, struct cmd_list_element *c)
+{
+  struct inferior *inf;
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+    error (_ ("Cannot set intercept trap without a selected thread."));
+
+  opt_trap &= (1 << no_traps_name) - 1;
+
+  inf = current_inferior ();
+  data = mppa_inferior_data (inf);
+  data->intercept_trap = opt_trap;
+
+  send_intercept_trap (inf, data->intercept_trap);
+}
+
+static void
+show_intercept_trap_mask (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+{
+  struct inferior_data *data;
+
+  if (ptid_equal (inferior_ptid, null_ptid))
+  {
+    printf (_ ("Cannot show intercept trap without a live selected thread."));
+    return;
+  }
+
+  data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
+  fprintf_filtered (file, "Intercept trap mask is 0x%04x.\n", data->intercept_trap);
 }
 
 static int
@@ -948,6 +1057,8 @@ k1_filesystem_is_local (struct target_ops *ops)
 void
 _initialize__k1_target (void)
 {
+  int i;
+
   simulation_vehicle = simulation_vehicles[0];
   cjtag_over_iss = 'n';
 
@@ -1021,6 +1132,29 @@ _initialize__k1_target (void)
   add_setshow_enum_cmd ("cluster-debug-ring", class_maintenance, sopts_cluster_debug_ring, &sopt_cluster_debug_ring,
     _("Set cluster debug ring"), _("Show cluster debug ring"),
     NULL, set_cluster_debug_ring, show_cluster_debug_ring, &kalray_set_cmdlist, &kalray_show_cmdlist);
+
+  add_prefix_cmd ("intercept-trap", class_maintenance, set_kalray_traps_cmd,
+    _("Configure what traps should be intercepted for the current cluster."),
+    &kalray_set_traps_cmdlist, "set kalray intercept-traps ", 0 /* allow-unknown */, &kalray_set_cmdlist);
+
+  add_prefix_cmd ("intercept-trap", class_maintenance, show_kalray_traps_cmd,
+    _("Configure what traps should be intercepted for the current cluster."),
+    &kalray_show_traps_cmdlist, "show kalray intercept-traps ", 0 /* allow-unknown */, &kalray_show_cmdlist);
+
+  for (i = 0; i < no_traps_name; i++)
+  {
+    char trap_set_doc[100], trap_show_doc[100];
+
+    sprintf (trap_set_doc, _("Set intercept %s trap."), traps_name[i]);
+    sprintf (trap_show_doc, _("Show intercept %s trap."), traps_name[i]);
+    add_setshow_boolean_cmd (traps_name[i], class_maintenance, &opt_trap,
+      trap_set_doc, trap_show_doc, NULL,
+      set_intercept_trap, show_intercept_trap, &kalray_set_traps_cmdlist, &kalray_show_traps_cmdlist);
+  }
+  add_setshow_uinteger_cmd ("mask", class_maintenance, (unsigned int *) &opt_trap,
+    _("Set intercept traps mask."), _("Show intercept traps mask."), NULL,
+    set_intercept_trap_mask, show_intercept_trap_mask,
+     &kalray_set_traps_cmdlist, &kalray_show_traps_cmdlist);
 
   add_com ("run-mppa", class_run, run_mppa_command, _ ("Connect to a MPPA TLM platform and start debugging it."));
 
