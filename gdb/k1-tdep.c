@@ -178,6 +178,22 @@ send_cluster_break_on_spawn (struct inferior *inf, int v)
 }
 
 void
+send_intercept_trap (struct inferior *inf, unsigned int v)
+{
+  char *buf;
+  long size = 256;
+
+  buf = (char *) malloc (size);
+  sprintf (buf, "kT%04xp%x.1", v, inf->pid);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  if (!strcmp (buf, "KO"))
+    printf (_("Trap intercepting is not supported by ISS.\n"));
+
+  free (buf);
+}
+
+void
 send_cluster_stop_all (struct inferior *inf, int v)
 {
   char *buf;

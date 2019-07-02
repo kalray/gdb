@@ -10,6 +10,7 @@ struct inferior_data
   int cluster_stop_all;
   int cluster_debug_ring;
   int unified;
+  unsigned int intercept_trap;
 };
 
 extern int after_first_resume;
@@ -17,6 +18,7 @@ extern char cjtag_over_iss;
 
 void _initialize__k1_target (void);
 void send_cluster_break_on_spawn (struct inferior *inf, int v);
+void send_intercept_trap (struct inferior *inf, unsigned int v);
 void send_cluster_stop_all (struct inferior *inf, int v);
 void send_cluster_debug_ring (struct inferior *inf, int v);
 char get_jtag_over_iss (void);
