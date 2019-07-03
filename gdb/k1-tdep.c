@@ -188,7 +188,7 @@ send_intercept_trap (struct inferior *inf, unsigned int v)
   putpkt (buf);
   getpkt (&buf, &size, 0);
   if (!strcmp (buf, "KO"))
-    printf (_("Trap intercepting is not supported by ISS.\n"));
+    printf (_("Error setting the trap intercepting mask.\n"));
 
   free (buf);
 }

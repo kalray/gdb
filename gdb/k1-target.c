@@ -732,7 +732,7 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty, struct cmd_list
 
   if (ptid_equal (inferior_ptid, null_ptid))
   {
-    printf (_ ("Cannot show break on reset without a live selected thread."));
+    printf (_ ("Cannot show break on reset without a live selected thread.\n"));
     return;
   }
 
@@ -786,7 +786,7 @@ show_intercept_trap (struct ui_file *file, int from_tty, struct cmd_list_element
 
   if (ptid_equal (inferior_ptid, null_ptid))
   {
-    printf (_ ("Cannot show intercept trap without a live selected thread."));
+    printf (_ ("Cannot show intercept trap without a live selected thread.\n"));
     return;
   }
 
@@ -820,7 +820,7 @@ show_intercept_trap_mask (struct ui_file *file, int from_tty, struct cmd_list_el
 
   if (ptid_equal (inferior_ptid, null_ptid))
   {
-    printf (_ ("Cannot show intercept trap without a live selected thread."));
+    printf (_ ("Cannot show intercept trap without a live selected thread.\n"));
     return;
   }
 
@@ -860,7 +860,7 @@ show_cluster_stop_all (struct ui_file *file, int from_tty, struct cmd_list_eleme
 
   if (ptid_equal (inferior_ptid, null_ptid))
   {
-    printf (_ ("Cannot show stop all cluster CPUs without a live selected thread."));
+    printf (_ ("Cannot show stop all cluster CPUs without a live selected thread.\n"));
     return;
   }
 
@@ -890,7 +890,7 @@ show_cluster_debug_ring (struct ui_file *file, int from_tty, struct cmd_list_ele
 
   if (ptid_equal (inferior_ptid, null_ptid))
   {
-    printf (_ ("Cannot show cluster debug ring without a selected thread."));
+    printf (_ ("Cannot show cluster debug ring without a selected thread.\n"));
     return;
   }
 
