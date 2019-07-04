@@ -18,6 +18,10 @@ _start:
 
 reserve_resources_pl1:
   // delegate rights
+  make $r0 = 3 /* reserve opcode trap */
+  ;;
+  wfxl $htow, $r0
+  ;;
   make $r0 = 0x5555555555555555 /* all miscs assigned to PL+1*/
   ;;
   set $mow = $r0
