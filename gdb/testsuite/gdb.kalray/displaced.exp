@@ -46,11 +46,7 @@ gdb_test "si" ".*Breakpoint 5.*in test_displaced5.*" "step to scall"
 gdb_test "si" ".*in ev_scall .*" "stepi into scall"
 gdb_test "si" ".*Breakpoint 6.*in test_displaced6 .*" "rfe 1"
 gdb_test "si" ".*Breakpoint 7.*in test_displaced7 .*" "stepi over make"
-if { ! [info exists is_k1_server] || $is_k1_server != 1} {
-    gdb_test "si" ".*received signal SIGILL.*" "stepi over undefined insn"
-} else {
-  gdb_test "si" ".*in ev_trap .*" "stepi to trap handler"
-}
+gdb_test "si" ".*in ev_trap .*" "stepi to trap handler"
 gdb_test "si" ".*in ev_trap .*" "stepi in trap handler"
 gdb_test "si" ".*Breakpoint 8.*in test_displaced8 .*" "rfe 2"
 gdb_test "si" ".*Breakpoint 9.*in test_displaced9 .*" "step over get pc"
