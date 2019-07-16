@@ -1693,7 +1693,7 @@ assemble_insn(const k1opc_t * opcode,
  * handled by insert_operand.
  */
 static void
-emit_insn(k1insn_t * insn, int stopflag)
+emit_insn (k1insn_t *insn, int insn_pos, int stopflag)
 {
   char *f;
   int i;
@@ -1734,6 +1734,14 @@ emit_insn(k1insn_t * insn, int stopflag)
     assert(reloc_howto);
     size = bfd_get_reloc_size(reloc_howto);
     pcrel = reloc_howto->pc_relative;
+
+    /* In case the PCREL relocation is not for the first insn in the
+       bundle, we have to offset it.  The pc used by the hardware
+       references a bundle and not separate insn.
+    */
+    assert (!(insn_pos == -1 && pcrel));
+    if (pcrel && insn_pos > 0)
+      insn->fixup[i].exp.X_add_number += insn_pos * 4;
 
     fixS* fixup = fix_new_exp(frag_now,
 			      f - frag_now->fr_literal + insn->fixup[i].where,
@@ -2421,8 +2429,9 @@ md_assemble(char *s)
 
             /* The ordering of the insns has been set correctly in bundle_insn. */
             for (entry = 0; entry < bundle_insncnt; entry++) {
-                emit_insn(bundle_insn[entry], (entry == (bundle_insncnt + immxcnt - 1)));
-                bundle_insn[entry]->written = 1;
+		emit_insn (bundle_insn[entry], entry,
+			   (entry == (bundle_insncnt + immxcnt - 1)));
+		bundle_insn[entry]->written = 1;
             }
             // Emit immx, ordering them by EXU tags, 0 to 3
             entry = 0;
@@ -2430,8 +2439,10 @@ md_assemble(char *s)
                 for (j = 0; j < immxcnt; j++) {
                       if(k1c_exunum2_fld(immxbuf[j].words[0]) == tag){
                             assert(immxbuf[j].written == 0);
-                            emit_insn(&(immxbuf[j]), (entry == (immxcnt - 1)));
-                            immxbuf[j].written = 1;
+			    int insn_pos = bundle_insncnt + entry;
+			    emit_insn (&(immxbuf[j]), insn_pos,
+				       (entry == (immxcnt - 1)));
+			    immxbuf[j].written = 1;
                             entry++;
                       }
                 }
