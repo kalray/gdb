@@ -586,7 +586,7 @@ static struct pseudo_func_s pseudo_func[] =
     .name = "got",
     .pseudo_relocs =
     {
-     .avail_modes = PSEUDO_64_ONLY,
+     .avail_modes = PSEUDO_ALL,
      .bitsize = 43,
      .reloc_type = S43_LO10_UP27_EX6,
      .reloc_lo10 = BFD_RELOC_K1_S43_GOT64_LO10,
