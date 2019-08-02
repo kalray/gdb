@@ -34,15 +34,15 @@ if { ![is_elf_format] || ![istarget "k1*-*-*"] } {
 # nm: Apply nm options on result.  Compare with regex (last arg).
 # readelf: Apply readelf options on result.  Compare with regex (last arg).
 
-# 32bits tests
+# 64bits tests
 run_dump_test "limit-call"
 run_dump_test "limit-goto"
 run_dump_test "farcall-back"
 run_dump_test "farcall-goto-defsym"
 run_dump_test "farcall-call-defsym"
 run_dump_test "farcall-goto-gsym"
-run_dump_test "farcall-goto-plt" [list [list dump farcall-goto-plt-32bits.d]]
-run_dump_test "farcall-call-plt" [list [list dump farcall-call-plt-32bits.d]]
+run_dump_test "farcall-goto-plt"
+run_dump_test "farcall-call-plt"
 run_dump_test "farcall-call"
 run_dump_test "farcall-goto"
 run_dump_test "farcall-goto-none-function"
@@ -50,19 +50,19 @@ run_dump_test "farcall-call-none-function"
 run_dump_test "farcall-goto-section"
 run_dump_test "farcall-call-section"
 
-## 64bits tests
-set extra_64bits [list [list as -m64] [list ld -melf64k1]]
-run_dump_test "limit-call" $extra_64bits
-run_dump_test "limit-goto" $extra_64bits
-run_dump_test "farcall-back" $extra_64bits
-run_dump_test "farcall-goto-defsym" $extra_64bits
-run_dump_test "farcall-call-defsym" $extra_64bits
-run_dump_test "farcall-goto-gsym" $extra_64bits
-run_dump_test "farcall-goto-plt" $extra_64bits
-run_dump_test "farcall-call-plt" $extra_64bits
-run_dump_test "farcall-call" $extra_64bits
-run_dump_test "farcall-goto" $extra_64bits
-run_dump_test "farcall-goto-none-function" $extra_64bits
-run_dump_test "farcall-call-none-function" $extra_64bits
-run_dump_test "farcall-goto-section" $extra_64bits
-run_dump_test "farcall-call-section" $extra_64bits
+## 32bits tests
+set extra_32bits [list [list as -m32] [list ld -melf32k1]]
+run_dump_test "limit-call" $extra_32bits
+run_dump_test "limit-goto" $extra_32bits
+run_dump_test "farcall-back" $extra_32bits
+run_dump_test "farcall-goto-defsym" $extra_32bits
+run_dump_test "farcall-call-defsym" $extra_32bits
+run_dump_test "farcall-goto-gsym" $extra_32bits
+run_dump_test "farcall-goto-plt" [list [list as -m32] [list ld -melf32k1] [list dump farcall-goto-plt-32bits.d]]
+run_dump_test "farcall-call-plt" [list [list as -m32] [list ld -melf32k1] [list dump farcall-call-plt-32bits.d]]
+run_dump_test "farcall-call" $extra_32bits
+run_dump_test "farcall-goto" $extra_32bits
+run_dump_test "farcall-goto-none-function" $extra_32bits
+run_dump_test "farcall-call-none-function" $extra_32bits
+run_dump_test "farcall-goto-section" $extra_32bits
+run_dump_test "farcall-call-section" $extra_32bits

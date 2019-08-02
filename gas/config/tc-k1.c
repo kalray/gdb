@@ -175,7 +175,7 @@ int is_code_section(asection *sec)
 }
 
 /* Either 32 or 64.  */
-static int k1_arch_size = 32;
+static int k1_arch_size = 64;
 
 const char *
 k1_target_format (void)
@@ -391,7 +391,7 @@ struct k1_pseudo_relocs {
 
   /* Used when pseudo func should expand to different relocations
      based on the 32/64 bits mode.
-     Enum values should match the k1_arch_size var set by -m64
+     Enum values should match the k1_arch_size var set by -m32
   */
   enum {
 	PSEUDO_ALL = 0,
@@ -769,7 +769,6 @@ const char *md_shortopts = "hV";	/* catted to std short options */
 #define OPTION_BIGPIC	(OPTION_MD_BASE + 10)
 #define OPTION_NOPIC    (OPTION_MD_BASE + 12)
 #define OPTION_32 (OPTION_MD_BASE + 13)
-#define OPTION_64 (OPTION_MD_BASE + 14)
 #define OPTION_DUMPINSN (OPTION_MD_BASE + 15)
 #define OPTION_ALL_SFR (OPTION_MD_BASE + 16)
 
@@ -785,7 +784,6 @@ struct option md_longopts[] =
      {"mPIC", no_argument, NULL, OPTION_BIGPIC},
      {"mnopic", no_argument,    NULL, OPTION_NOPIC},
      {"m32", no_argument,    NULL, OPTION_32},
-     {"m64", no_argument,    NULL, OPTION_64},
      {"dump-insn", no_argument,    NULL, OPTION_DUMPINSN},
      {"all-sfr", no_argument, NULL, OPTION_ALL_SFR},
      {NULL, no_argument, NULL, 0}
@@ -868,9 +866,6 @@ int md_parse_option(int c, char *arg ATTRIBUTE_UNUSED) {
     k1_arch_size = 32;
     break;
 
-  case OPTION_64:
-    k1_arch_size = 64;
-    break;
   default:
     return 0;
   }
