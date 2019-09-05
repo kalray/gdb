@@ -42,6 +42,7 @@
 #include "elf/k1c.h"
 #include "k1-target.h"
 #include "k1-exception-info.h"
+#include "k1-dump-tlb.h"
 #include "solib-k1-bare.h"
 
 #ifndef MAX
@@ -1157,6 +1158,15 @@ _initialize__k1_target (void)
      &kalray_set_traps_cmdlist, &kalray_show_traps_cmdlist);
 
   add_com ("run-mppa", class_run, run_mppa_command, _ ("Connect to a MPPA TLM platform and start debugging it."));
+
+  add_com ("mppa-dump-tlb", class_run, mppa_dump_tlb_command,
+    _("Dump TLB. Syntax:\nmppa-dump-tlb [--jtlb] [--ltlb] [--valid-only] [--global] [--asn=<asn>]\nIf none of "
+    "--jtlb and --ltlb are given, the both are dumped."));
+
+  add_com ("mppa-lookup-addr", class_run, mppa_lookup_addr_command,
+    _("Translate virtual address to/from physical address using the TLB entries. "
+    "Syntax:\nmppa-lookup-addr --phys=<addr>|--virt=<addr> [--asn=<asn>]\nIf --asn is not specified, "
+    "display all matching entries."));
 
   observer_attach_inferior_created (k1_push_arch_stratum);
   k1_attached_inf_data = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
