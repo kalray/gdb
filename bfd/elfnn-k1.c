@@ -2065,22 +2065,154 @@ symbol_tlsdesc_got_offset (bfd *input_bfd, struct elf_link_hash_entry *h,
   return value;
 }
 
-/* FIXME: Leaving commented until cleaning done */
-/* static bfd_boolean */
-/* elfNN_k1_write_section (bfd *output_bfd  ATTRIBUTE_UNUSED, */
-/* 			     struct bfd_link_info *link_info, */
-/* 			     asection *sec, */
-/* 			     bfd_byte *contents) */
+/* N_ONES produces N one bits, without overflowing machine arithmetic.  */
+#define N_ONES(n) (((((bfd_vma) 1 << ((n) -1)) - 1) << 1) | 1)
 
-/* { */
-/*   struct elf_k1_link_hash_table *globals = */
-/*     elf_k1_hash_table (link_info); */
+/*
+ * This is a copy/paste + modification from
+ * reloc.c:_bfd_relocate_contents. Relocations are applied to 32bits
+ * words, so all overflow checks will overflow for values above
+ * 32bits.
+ */
+static bfd_reloc_status_type
+check_signed_overflow (enum complain_overflow complain_on_overflow,
+		       bfd_reloc_code_real_type bfd_r_type, bfd *input_bfd,
+		       bfd_vma relocation)
+{
+  bfd_reloc_status_type flag = bfd_reloc_ok;
+  bfd_vma addrmask, fieldmask, signmask, ss;
+  bfd_vma a, b, sum;
+  bfd_vma x = 0;
 
-/*   if (globals == NULL) */
-/*     return FALSE; */
+  /* These usually come from howto struct. As we don't check for
+   * values fitting in bitfields or in subpart of words, we set all
+   * these to values to check as if the field is starting from first
+   * bit.
+   */
+  unsigned int rightshift = 0;
+  unsigned int bitpos = 0;
+  unsigned int bitsize = 0;
+  bfd_vma src_mask = -1;
 
-/*   return FALSE; */
-/* } */
+  /* Only regular symbol relocations are checked here. Others
+     relocations (GOT, TLS) could be checked if the need is
+     confirmed. At the moment, we keep previous behavior
+     (ie. unchecked) for those. */
+  switch (bfd_r_type)
+    {
+    case BFD_RELOC_K1_S37_LO10:
+    case BFD_RELOC_K1_S37_UP27:
+      bitsize = 37;
+      break;
+
+    case BFD_RELOC_K1_S32_LO5:
+    case BFD_RELOC_K1_S32_UP27:
+      bitsize = 32;
+      break;
+
+    case BFD_RELOC_K1_S43_LO10:
+    case BFD_RELOC_K1_S43_UP27:
+    case BFD_RELOC_K1_S43_EX6:
+      bitsize = 43;
+      break;
+
+    case BFD_RELOC_K1_S64_LO10:
+    case BFD_RELOC_K1_S64_UP27:
+    case BFD_RELOC_K1_S64_EX27:
+      bitsize = 64;
+      break;
+
+    default:
+      return bfd_reloc_ok;
+    }
+
+  /* direct copy/paste from reloc.c below */
+
+  /* Get the values to be added together.  For signed and unsigned
+     relocations, we assume that all values should be truncated to
+     the size of an address.  For bitfields, all the bits matter.
+     See also bfd_check_overflow.  */
+  fieldmask = N_ONES (bitsize);
+  signmask = ~fieldmask;
+  addrmask = (N_ONES (bfd_arch_bits_per_address (input_bfd))
+	      | (fieldmask << rightshift));
+  a = (relocation & addrmask) >> rightshift;
+  b = (x & src_mask & addrmask) >> bitpos;
+  addrmask >>= rightshift;
+
+  switch (complain_on_overflow)
+    {
+    case complain_overflow_signed:
+      /* If any sign bits are set, all sign bits must be set.
+	 That is, A must be a valid negative address after
+	 shifting.  */
+      signmask = ~(fieldmask >> 1);
+      /* Fall thru */
+
+    case complain_overflow_bitfield:
+      /* Much like the signed check, but for a field one bit
+	 wider.  We allow a bitfield to represent numbers in the
+	 range -2**n to 2**n-1, where n is the number of bits in the
+	 field.  Note that when bfd_vma is 32 bits, a 32-bit reloc
+	 can't overflow, which is exactly what we want.  */
+      ss = a & signmask;
+      if (ss != 0 && ss != (addrmask & signmask))
+	flag = bfd_reloc_overflow;
+
+      /* We only need this next bit of code if the sign bit of B
+	 is below the sign bit of A.  This would only happen if
+	 SRC_MASK had fewer bits than BITSIZE.  Note that if
+	 SRC_MASK has more bits than BITSIZE, we can get into
+	 trouble; we would need to verify that B is in range, as
+	 we do for A above.  */
+      ss = ((~src_mask) >> 1) & src_mask;
+      ss >>= bitpos;
+
+      /* Set all the bits above the sign bit.  */
+      b = (b ^ ss) - ss;
+
+      /* Now we can do the addition.  */
+      sum = a + b;
+
+      /* See if the result has the correct sign.  Bits above the
+	 sign bit are junk now; ignore them.  If the sum is
+	 positive, make sure we did not have all negative inputs;
+	 if the sum is negative, make sure we did not have all
+	 positive inputs.  The test below looks only at the sign
+	 bits, and it really just
+	 SIGN (A) == SIGN (B) && SIGN (A) != SIGN (SUM)
+
+	 We mask with addrmask here to explicitly allow an address
+	 wrap-around.  The Linux kernel relies on it, and it is
+	 the only way to write assembler code which can run when
+	 loaded at a location 0x80000000 away from the location at
+	 which it is linked.  */
+      if (((~(a ^ b)) & (a ^ sum)) & signmask & addrmask)
+	flag = bfd_reloc_overflow;
+      break;
+
+    case complain_overflow_unsigned:
+      /* Checking for an unsigned overflow is relatively easy:
+	 trim the addresses and add, and trim the result as well.
+	 Overflow is normally indicated when the result does not
+	 fit in the field.  However, we also need to consider the
+	 case when, e.g., fieldmask is 0x7fffffff or smaller, an
+	 input is 0x80000000, and bfd_vma is only 32 bits; then we
+	 will get sum == 0, but there is an overflow, since the
+	 inputs did not fit in the field.  Instead of doing a
+	 separate test, we can check for this by or-ing in the
+	 operands when testing for the sum overflowing its final
+	 field.  */
+      sum = (a + b) & addrmask;
+      if ((a | b | sum) & signmask)
+	flag = bfd_reloc_overflow;
+      break;
+
+    default:
+      abort ();
+    }
+  return flag;
+}
 
 /* Perform a relocation as part of a final link.  */
 static bfd_reloc_status_type
@@ -2111,7 +2243,7 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
   struct elf_k1_link_hash_table *globals;
   bfd_boolean weak_undef_p;
   asection *base_got;
-
+  bfd_reloc_status_type rret = bfd_reloc_ok;
   globals = elf_k1_hash_table (info);
 
   symtab_hdr = &elf_symtab_hdr (input_bfd);
@@ -2166,8 +2298,6 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
     case BFD_RELOC_K1_S64_LO10:
     case BFD_RELOC_K1_S64_UP27:
     case BFD_RELOC_K1_S64_EX27:
-
-
       /* When generating a shared object or relocatable executable, these
          relocations are copied into the output file to be resolved at
          run time.  */
@@ -2278,14 +2408,23 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 	  if (!relocate)
 	    return bfd_reloc_ok;
 
+	  rret = check_signed_overflow (complain_overflow_signed, bfd_r_type,
+					input_bfd, value + signed_addend);
+	  if (rret != bfd_reloc_ok)
+	    return rret;
+
 	  return _bfd_final_link_relocate (howto, input_bfd, input_section,
 					   contents, rel->r_offset, value,
 					   signed_addend);
 	}
       /* else */
       /* 	value += signed_addend; */
-    ugly_exit:
 
+    ugly_exit:
+      rret = check_signed_overflow (complain_overflow_signed, bfd_r_type,
+				    input_bfd, value + signed_addend);
+      if (rret != bfd_reloc_ok)
+	return rret;
 
       /* FIXME K1 : this was added for K1*/
       return _bfd_final_link_relocate (howto, input_bfd, input_section,
