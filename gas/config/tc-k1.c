@@ -1079,7 +1079,7 @@ static int
 has_relocation_of_size(const k1bfield *opnd) {
   int i;
 
-  const int symbol_size = (k1_arch_size == 64) ? 43 : 32;
+  const int symbol_size = k1_arch_size;
 
   /*
    * This is a bit hackish: in case of PCREL here, it means we are
