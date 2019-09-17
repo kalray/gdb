@@ -13036,6 +13036,7 @@ typedef enum {
     K1_REL_GP,    /* GP relative relocation. */
     K1_REL_TP,    /* TP relative relocation. */
     K1_REL_GOT,   /* GOT relative relocation. */
+    K1_REL_BASE,  /* BASE load address relative relocation. */
 } k1_rel_t;
 
 struct k1_reloc
@@ -13147,45 +13148,47 @@ extern const int *k1_regfiles_table[];
 extern k1_reloc_t k1c_rel16_reloc;
 extern k1_reloc_t k1c_rel32_reloc;
 extern k1_reloc_t k1c_rel64_reloc;
+extern k1_reloc_t k1c_pcrel_signed16_reloc;
 extern k1_reloc_t k1c_pcrel17_reloc;
 extern k1_reloc_t k1c_pcrel27_reloc;
 extern k1_reloc_t k1c_pcrel32_reloc;
+extern k1_reloc_t k1c_pcrel_signed37_reloc;
+extern k1_reloc_t k1c_pcrel_signed43_reloc;
+extern k1_reloc_t k1c_pcrel_signed64_reloc;
 extern k1_reloc_t k1c_pcrel64_reloc;
 extern k1_reloc_t k1c_signed16_reloc;
 extern k1_reloc_t k1c_signed32_reloc;
 extern k1_reloc_t k1c_signed37_reloc;
-extern k1_reloc_t k1c_signed37_tprel_reloc;
-extern k1_reloc_t k1c_tprel_rel32_reloc;
-extern k1_reloc_t k1c_tprel_rel64_reloc;
-extern k1_reloc_t k1c_gotoff_reloc;
+extern k1_reloc_t k1c_gotoff_signed37_reloc;
+extern k1_reloc_t k1c_gotoff_signed43_reloc;
+extern k1_reloc_t k1c_gotoff_32_reloc;
 extern k1_reloc_t k1c_gotoff_64_reloc;
-extern k1_reloc_t k1c_got_reloc;
+extern k1_reloc_t k1c_got_32_reloc;
+extern k1_reloc_t k1c_got_signed37_reloc;
+extern k1_reloc_t k1c_got_signed43_reloc;
+extern k1_reloc_t k1c_got_64_reloc;
 extern k1_reloc_t k1c_glob_dat_reloc;
-extern k1_reloc_t k1c_glob_dat64_reloc;
-extern k1_reloc_t k1c_signed37_plt_reloc;
-extern k1_reloc_t k1c_gotoff32_reloc;
-extern k1_reloc_t k1c_gotoff64_reloc;
-extern k1_reloc_t k1c_got32_reloc;
-extern k1_reloc_t k1c_got64_64_reloc;
 extern k1_reloc_t k1c_copy_reloc;
-extern k1_reloc_t k1c_copy64_reloc;
 extern k1_reloc_t k1c_jump_slot_reloc;
-extern k1_reloc_t k1c_jump_slot64_reloc;
 extern k1_reloc_t k1c_relative_reloc;
-extern k1_reloc_t k1c_relative64_reloc;
 extern k1_reloc_t k1c_signed43_reloc;
-extern k1_reloc_t k1c_signed43_tprel64_reloc;
-extern k1_reloc_t k1c_got64_reloc;
-extern k1_reloc_t k1c_signed64_plt_reloc;
 extern k1_reloc_t k1c_signed64_reloc;
-extern k1_reloc_t k1c_signed64_tprel64_reloc;
-extern k1_reloc_t k1c_gotaddr37_reloc;
-extern k1_reloc_t k1c_gotaddr43_reloc;
-extern k1_reloc_t k1c_gotaddr64_reloc;
-extern k1_reloc_t k1c_pcrel16_reloc;
-extern k1_reloc_t k1c_pcrel37_reloc;
-extern k1_reloc_t k1c_pcrel43_reloc;
-extern k1_reloc_t k1c_pcrel_64_reloc;
+extern k1_reloc_t k1c_gotaddr_signed37_reloc;
+extern k1_reloc_t k1c_gotaddr_signed43_reloc;
+extern k1_reloc_t k1c_gotaddr_signed64_reloc;
+extern k1_reloc_t k1c_dtpmod64_reloc;
+extern k1_reloc_t k1c_dtpoff64_reloc;
+extern k1_reloc_t k1c_dtpoff_signed37_reloc;
+extern k1_reloc_t k1c_dtpoff_signed43_reloc;
+extern k1_reloc_t k1c_tlsgd_signed37_reloc;
+extern k1_reloc_t k1c_tlsgd_signed43_reloc;
+extern k1_reloc_t k1c_tlsld_signed37_reloc;
+extern k1_reloc_t k1c_tlsld_signed43_reloc;
+extern k1_reloc_t k1c_tpoff64_reloc;
+extern k1_reloc_t k1c_tlsie_signed37_reloc;
+extern k1_reloc_t k1c_tlsie_signed43_reloc;
+extern k1_reloc_t k1c_tlsle_signed37_reloc;
+extern k1_reloc_t k1c_tlsle_signed43_reloc;
 
 
 #endif /* OPCODE_K1_H */

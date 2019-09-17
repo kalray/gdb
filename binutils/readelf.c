@@ -11613,7 +11613,7 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
     case EM_XTENSA:
       return reloc_type == 14; /* R_XTENSA_32_PCREL.  */
     case EM_K1:
-      return reloc_type == 6; /* R_K1_32_PCREL */
+      return reloc_type == 7; /* R_K1_32_PCREL */
     default:
       /* Do not abort or issue an error message here.  Not all targets use
 	 pc-relative 32-bit relocs in their DWARF debug information and we
