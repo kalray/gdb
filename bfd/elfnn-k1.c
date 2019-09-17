@@ -33,43 +33,45 @@
 
 #define ARCH_SIZE	NN
 
-
 #define K1_DISABLE_IFUNC (1)
 
 #if ARCH_SIZE == 64
-#define K1_R(NAME)		R_K1_ ## NAME
-#define K1_R_STR(NAME)	        "R_K1_" #NAME
-#define HOWTO64(...)		HOWTO (__VA_ARGS__)
-#define HOWTO32(...)		EMPTY_HOWTO (0)
 #define LOG_FILE_ALIGN	3
 #endif
 
 #if ARCH_SIZE == 32
-/* in K1 we have all relocs in the same set */
-/* #define K1_R(NAME)           R_K1_P32_ ## NAME */
-/* #define K1_R_STR(NAME)       "R_K1_P32_" #NAME */
-#define K1_R(NAME)		R_K1_ ## NAME
-#define K1_R_STR(NAME)	        "R_K1_" #NAME
-#define HOWTO64(...)		EMPTY_HOWTO (0)
-#define HOWTO32(...)		HOWTO (__VA_ARGS__)
 #define LOG_FILE_ALIGN	2
 #endif
 
 #define IS_K1_TLS_RELOC(R_TYPE)			\
-  ((R_TYPE) == BFD_RELOC_K1_S37_TPREL_LO10	\
-   || (R_TYPE) == BFD_RELOC_K1_S37_TPREL_UP27	\
-   || (R_TYPE) == BFD_RELOC_K1_S43_TPREL64_LO10	\
-   || (R_TYPE) == BFD_RELOC_K1_S43_TPREL64_UP27	\
-   || (R_TYPE) == BFD_RELOC_K1_S43_TPREL64_EX6	\
-   || (R_TYPE) == BFD_RELOC_K1_S64_TPREL64_LO10	\
-   || (R_TYPE) == BFD_RELOC_K1_S64_TPREL64_UP27	\
-   || (R_TYPE) == BFD_RELOC_K1_S64_TPREL64_EX27	\
+  ((R_TYPE) == BFD_RELOC_K1_S37_TLS_LE_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_LE_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_LE_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_LE_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_LE_EX6	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_DTPOFF_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_DTPOFF_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_DTPOFF_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_DTPOFF_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_DTPOFF_EX6	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_IE_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_IE_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_IE_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_IE_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_IE_EX6	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_GD_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_GD_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_GD_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_GD_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_GD_EX6	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_LD_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S37_TLS_LD_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_LD_LO10	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_LD_UP27	\
+   || (R_TYPE) == BFD_RELOC_K1_S43_TLS_LD_EX6	\
    )
 
 #define IS_K1_TLS_RELAX_RELOC(R_TYPE)			\
-  0
-
-#define IS_K1_TLSDESC_RELOC(R_TYPE)			\
   0
 
 #define ELIMINATE_COPY_RELOCS 0
@@ -87,8 +89,6 @@
 #else  /* 64 */
 #define PLT_SMALL_ENTRY_SIZE            (20)
 #endif
-
-#define PLT_TLSDESC_ENTRY_SIZE          (32)
 
 /* Encoding of the nop instruction */
 #define INSN_NOP 0x00f0037f
@@ -393,22 +393,19 @@ _k1_elf_section_data;
 #define elf_k1_section_data(sec) \
   ((_k1_elf_section_data *) elf_section_data (sec))
 
+#ifndef K1_TCB_SIZE
 /* The size of the thread control block which is defined to be two pointers.  */
 #define TCB_SIZE	(ARCH_SIZE/8)*2
+#else
+/* Currently not using TCB on anything but Linux */
+#define TCB_SIZE	(K1_TCB_SIZE)
+#endif
 
 struct elf_k1_local_symbol
 {
   unsigned int got_type;
   bfd_signed_vma got_refcount;
   bfd_vma got_offset;
-
-  /* Offset of the GOTPLT entry reserved for the TLS descriptor. The
-     offset is from the end of the jump table and reserved entries
-     within the PLTGOT.
-
-     The magic value (bfd_vma) -1 indicates that an offset has not be
-     allocated.  */
-  bfd_vma tlsdesc_got_jump_table_offset;
 };
 
 struct elf_k1_obj_tdata
@@ -448,13 +445,9 @@ elfNN_k1_mkobject (bfd *abfd)
 #define GOT_UNKNOWN    0
 #define GOT_NORMAL     1
 
-/* Disabled untested and unused TLS */
-/* #define GOT_TLS_GD     2 */
-/* #define GOT_TLS_IE     4 */
-/* #define GOT_TLSDESC_GD 8 */
-
-/* Disabled untested and unused TLS */
-//#define GOT_TLS_GD_ANY_P(type)	((type & GOT_TLS_GD) || (type & GOT_TLSDESC_GD))
+#define GOT_TLS_GD     2
+#define GOT_TLS_IE     4
+#define GOT_TLS_LD     8
 
 /* K1 ELF linker hash entry.  */
 struct elf_k1_link_hash_entry
@@ -476,13 +469,6 @@ struct elf_k1_link_hash_entry
   /* A pointer to the most recently used stub hash entry against this
      symbol.  */
   struct elf_k1_stub_hash_entry *stub_cache;
-
-  /* Offset of the GOTPLT entry reserved for the TLS descriptor.  The offset
-     is from the end of the jump table and reserved entries within the PLTGOT.
-
-     The magic value (bfd_vma) -1 indicates that an offset has not
-     be allocated.  */
-  bfd_vma tlsdesc_got_jump_table_offset;
 };
 
 static unsigned int
@@ -566,17 +552,6 @@ struct elf_k1_link_hash_table
   unsigned int top_index;
   asection **input_list;
 
-  /* The offset into splt of the PLT entry for the TLS descriptor
-     resolver.  Special values are 0, if not necessary (or not found
-     to be necessary yet), and -1 if needed but not determined
-     yet.  */
-  bfd_vma tlsdesc_plt;
-
-  /* The GOT offset for the lazy trampoline.  Communicated to the
-     loader via DT_TLSDESC_GOT.  The magic value (bfd_vma) -1
-     indicates an offset is not allocated.  */
-  bfd_vma dt_tlsdesc_got;
-
   /* Used by local STT_GNU_IFUNC symbols.  */
   htab_t loc_hash_table;
   void * loc_hash_memory;
@@ -610,7 +585,6 @@ elfNN_k1_link_hash_newfunc (struct bfd_hash_entry *entry,
       ret->got_type = GOT_UNKNOWN;
       ret->plt_got_offset = (bfd_vma) - 1;
       ret->stub_cache = NULL;
-      ret->tlsdesc_got_jump_table_offset = (bfd_vma) - 1;
     }
 
   return (struct bfd_hash_entry *) ret;
@@ -816,7 +790,6 @@ elfNN_k1_link_hash_table_create (bfd *abfd)
   ret->plt_header_size = PLT_ENTRY_SIZE;
   ret->plt_entry_size = PLT_SMALL_ENTRY_SIZE;
   ret->obfd = abfd;
-  ret->dt_tlsdesc_got = (bfd_vma) - 1;
 
   if (!bfd_hash_table_init (&ret->stub_hash_table, stub_hash_newfunc,
 			    sizeof (struct elf_k1_stub_hash_entry)))
@@ -901,7 +874,7 @@ k1_type_of_stub (struct bfd_link_info *info ATTRIBUTE_UNUSED,
   /* We don't want to redirect any old unconditional jump in this way,
      only one which is being used for a sibcall, where it is
      acceptable for the R16 and R17 registers to be clobbered.  */
-  if (r_type == R_K1_27_PCREL
+  if (r_type == R_K1_PCREL27
       && (branch_offset > K1_MAX_FWD_CALL_OFFSET
 	  || branch_offset < K1_MAX_BWD_CALL_OFFSET))
     {
@@ -1556,7 +1529,7 @@ elfNN_k1_size_stubs (bfd *output_bfd,
 		  /* Only look for stubs on unconditional branch and
 		     branch and link instructions.  */
 		  /* This catches CALL and GOTO insn */
-		  if (r_type != (unsigned int) R_K1_27_PCREL)
+		  if (r_type != (unsigned int) R_K1_PCREL27)
 		    continue;
 
 		  /* Now determine the call target, its name, value,
@@ -1891,16 +1864,40 @@ k1_reloc_got_type (bfd_reloc_code_real_type r_type)
 	 */
     case BFD_RELOC_K1_S37_GOTOFF_LO10:
     case BFD_RELOC_K1_S37_GOTOFF_UP27:
+
     case BFD_RELOC_K1_S37_GOT_LO10:
     case BFD_RELOC_K1_S37_GOT_UP27:
-    case BFD_RELOC_K1_S43_GOTOFF64_LO10:
-    case BFD_RELOC_K1_S43_GOTOFF64_UP27:
-    case BFD_RELOC_K1_S43_GOTOFF64_EX6:
-    case BFD_RELOC_K1_S43_GOT64_LO10:
-    case BFD_RELOC_K1_S43_GOT64_UP27:
-    case BFD_RELOC_K1_S43_GOT64_EX6:
+
+    case BFD_RELOC_K1_S43_GOTOFF_LO10:
+    case BFD_RELOC_K1_S43_GOTOFF_UP27:
+    case BFD_RELOC_K1_S43_GOTOFF_EX6:
+
+    case BFD_RELOC_K1_S43_GOT_LO10:
+    case BFD_RELOC_K1_S43_GOT_UP27:
+    case BFD_RELOC_K1_S43_GOT_EX6:
       return GOT_NORMAL;
  
+    case BFD_RELOC_K1_S37_TLS_GD_LO10:
+    case BFD_RELOC_K1_S37_TLS_GD_UP27:
+    case BFD_RELOC_K1_S43_TLS_GD_LO10:
+    case BFD_RELOC_K1_S43_TLS_GD_UP27:
+    case BFD_RELOC_K1_S43_TLS_GD_EX6:
+      return GOT_TLS_GD;
+
+    case BFD_RELOC_K1_S37_TLS_LD_LO10:
+    case BFD_RELOC_K1_S37_TLS_LD_UP27:
+    case BFD_RELOC_K1_S43_TLS_LD_LO10:
+    case BFD_RELOC_K1_S43_TLS_LD_UP27:
+    case BFD_RELOC_K1_S43_TLS_LD_EX6:
+      return GOT_TLS_LD;
+
+    case BFD_RELOC_K1_S37_TLS_IE_LO10:
+    case BFD_RELOC_K1_S37_TLS_IE_UP27:
+    case BFD_RELOC_K1_S43_TLS_IE_LO10:
+    case BFD_RELOC_K1_S43_TLS_IE_UP27:
+    case BFD_RELOC_K1_S43_TLS_IE_EX6:
+      return GOT_TLS_IE;
+
     default:
       break;
     }
@@ -1942,7 +1939,7 @@ k1_tls_transition (bfd *input_bfd,
 }
 
 /* Return the base VMA address which should be subtracted from real addresses
-   when resolving R_K1_TLS_* relocation.  */
+   when resolving R_K1_*_TLS_GD_* and R_K1_*_TLS_LD_* relocation.  */
 
 static bfd_vma
 dtpoff_base (struct bfd_link_info *info)
@@ -1953,7 +1950,7 @@ dtpoff_base (struct bfd_link_info *info)
 }
 
 /* Return the base VMA address which should be subtracted from real addresses
-   when resolving R_K1_TLS_* relocations.  */
+   when resolving R_K1_*_TLS_IE_* and R_K1_*_TLS_LE_* relocations.  */
 
 static bfd_vma
 tpoff_base (struct bfd_link_info *info)
@@ -2010,57 +2007,6 @@ symbol_got_offset (bfd *input_bfd, struct elf_link_hash_entry *h,
 {
   bfd_vma value;
   value = * symbol_got_offset_ref (input_bfd, h, r_symndx);
-  value &= ~1;
-  return value;
-}
-
-static bfd_vma *
-symbol_tlsdesc_got_offset_ref (bfd *input_bfd, struct elf_link_hash_entry *h,
-			       unsigned long r_symndx)
-{
-  /* Calculate the address of the GOT entry for symbol
-     referred to in h.  */
-  if (h != NULL)
-    {
-      struct elf_k1_link_hash_entry *eh;
-      eh = (struct elf_k1_link_hash_entry *) h;
-      return &eh->tlsdesc_got_jump_table_offset;
-    }
-  else
-    {
-      /* local symbol */
-      struct elf_k1_local_symbol *l;
-
-      l = elf_k1_locals (input_bfd);
-      return &l[r_symndx].tlsdesc_got_jump_table_offset;
-    }
-}
-
-static void
-symbol_tlsdesc_got_offset_mark (bfd *input_bfd, struct elf_link_hash_entry *h,
-				unsigned long r_symndx)
-{
-  bfd_vma *p;
-  p = symbol_tlsdesc_got_offset_ref (input_bfd, h, r_symndx);
-  *p |= 1;
-}
-
-static int
-symbol_tlsdesc_got_offset_mark_p (bfd *input_bfd,
-				  struct elf_link_hash_entry *h,
-				  unsigned long r_symndx)
-{
-  bfd_vma value;
-  value = * symbol_tlsdesc_got_offset_ref (input_bfd, h, r_symndx);
-  return value & 1;
-}
-
-static bfd_vma
-symbol_tlsdesc_got_offset (bfd *input_bfd, struct elf_link_hash_entry *h,
-			  unsigned long r_symndx)
-{
-  bfd_vma value;
-  value = * symbol_tlsdesc_got_offset_ref (input_bfd, h, r_symndx);
   value &= ~1;
   return value;
 }
@@ -2348,7 +2294,7 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 		 relocate the text and data segments independently,
 		 so the symbol does not matter.  */
 	      symbol = 0;
-	      outrel.r_info = ELFNN_R_INFO (symbol, K1_R (RELATIVE));
+	      outrel.r_info = ELFNN_R_INFO (symbol, R_K1_RELATIVE);
 	      outrel.r_addend += value;
 	    }
 	  else if (/* h != NULL */
@@ -2432,8 +2378,8 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 				       signed_addend);
       break;
 
-    case BFD_RELOC_K1_17_PCREL:
-    case BFD_RELOC_K1_27_PCREL:
+    case BFD_RELOC_K1_PCREL17:
+    case BFD_RELOC_K1_PCREL27:
       {
 	/*
 	 * BCU insn are always first in a bundle, so there is no need
@@ -2499,76 +2445,57 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 				       signed_addend);
       break;
 
-    case BFD_RELOC_K1_S37_TPREL_LO10:
-    case BFD_RELOC_K1_S37_TPREL_UP27:
+    case BFD_RELOC_K1_S37_TLS_LE_LO10:
+    case BFD_RELOC_K1_S37_TLS_LE_UP27:
 
-    case BFD_RELOC_K1_S43_TPREL64_LO10:
-    case BFD_RELOC_K1_S43_TPREL64_UP27:
-    case BFD_RELOC_K1_S43_TPREL64_EX6:
-
-    case BFD_RELOC_K1_S64_TPREL64_LO10:
-    case BFD_RELOC_K1_S64_TPREL64_UP27:
-    case BFD_RELOC_K1_S64_TPREL64_EX27:
-
-    case BFD_RELOC_K1_TPREL64_64:
-    case BFD_RELOC_K1_TPREL_32:
-      {
-	if(bfd_link_pic (info))
-	  {
-	    /* TBD: Manage dynamic relocations. */
-	    *unresolved_reloc_p = FALSE;
-	  }
-	else
-	  {
-	    asection *tls_sec = elf_hash_table (info)->tls_sec;
-	    if (tls_sec == NULL)
-	      {
-		const char *name;		
-		if (h->root.root.string)
-		  name = h->root.root.string;
-		else
-		  name = bfd_elf_sym_name (input_bfd, symtab_hdr, sym,
-					   NULL);
-
-		(*_bfd_error_handler)
-		  (_("%B: missing TLS section for relocation %s against `%s' at 0x%lx in section `%A'."),
-		   input_bfd, input_section, howto->name, name,
-		   rel->r_offset);
-		return FALSE;
-	      }
-	    value -=  tls_sec->vma;
-	  }
+    case BFD_RELOC_K1_S43_TLS_LE_LO10:
+    case BFD_RELOC_K1_S43_TLS_LE_UP27:
+    case BFD_RELOC_K1_S43_TLS_LE_EX6:
 	return _bfd_final_link_relocate (howto, input_bfd, input_section,
-					 contents, rel->r_offset, value,
+					 contents, rel->r_offset, value - tpoff_base (info),
 					 signed_addend);
-      }
       break;
 
-    /* case BFD_RELOC_K1_TLS_GD_LO10: */
-    /* case BFD_RELOC_K1_TLS_GD_HI22: */
-      /* FIXME Add 64 TLS_GD relocation handling */
+    case BFD_RELOC_K1_S37_TLS_DTPOFF_LO10:
+    case BFD_RELOC_K1_S37_TLS_DTPOFF_UP27:
 
-    /* case BFD_RELOC_K1_TLS_IE64_LO10: */
-    /* case BFD_RELOC_K1_TLS_IE64_HI27: */
-    /* case BFD_RELOC_K1_TLS_IE64_EXTEND6: */
+    case BFD_RELOC_K1_S43_TLS_DTPOFF_LO10:
+    case BFD_RELOC_K1_S43_TLS_DTPOFF_UP27:
+    case BFD_RELOC_K1_S43_TLS_DTPOFF_EX6:
+	return _bfd_final_link_relocate (howto, input_bfd, input_section,
+					 contents, rel->r_offset, value - dtpoff_base (info),
+					 signed_addend);
 
-    /* case BFD_RELOC_K1_TLS_IE_LO10: */
-    /* case BFD_RELOC_K1_TLS_IE_HI22: */
-    /*   if (globals->root.sgot == NULL) */
-    /* 	return bfd_reloc_notsupported; */
-    /*   if (h != NULL) { */
-    /* 	value = (symbol_got_offset (input_bfd, h, r_symndx) */
-    /* 		 + globals->root.sgot->output_section->vma */
-    /* 		 + globals->root.sgot->output_offset); */
+    case BFD_RELOC_K1_S37_TLS_GD_UP27:
+    case BFD_RELOC_K1_S37_TLS_GD_LO10:
 
-    /* 	_bfd_final_link_relocate (howto, input_bfd, input_section, */
-    /* 				  contents, rel->r_offset, value, */
-    /* 				  signed_addend); */
-    /* 	/\* value = _bfd_k1_elf_resolve_relocation (bfd_r_type, place, value, *\/ */
-    /* 	/\* 						   0, weak_undef_p); *\/ */
-    /*   } */
-    /*   *unresolved_reloc_p = FALSE; */
-    /*   break; */
+    case BFD_RELOC_K1_S43_TLS_GD_UP27:
+    case BFD_RELOC_K1_S43_TLS_GD_EX6:
+    case BFD_RELOC_K1_S43_TLS_GD_LO10:
+
+    case BFD_RELOC_K1_S37_TLS_IE_UP27:
+    case BFD_RELOC_K1_S37_TLS_IE_LO10:
+
+    case BFD_RELOC_K1_S43_TLS_IE_UP27:
+    case BFD_RELOC_K1_S43_TLS_IE_EX6:
+    case BFD_RELOC_K1_S43_TLS_IE_LO10:
+
+    case BFD_RELOC_K1_S37_TLS_LD_UP27:
+    case BFD_RELOC_K1_S37_TLS_LD_LO10:
+
+    case BFD_RELOC_K1_S43_TLS_LD_UP27:
+    case BFD_RELOC_K1_S43_TLS_LD_EX6:
+    case BFD_RELOC_K1_S43_TLS_LD_LO10:
+
+      if (globals->root.sgot == NULL)
+    	return bfd_reloc_notsupported;
+      value = symbol_got_offset (input_bfd, h, r_symndx);
+
+      _bfd_final_link_relocate (howto, input_bfd, input_section,
+				contents, rel->r_offset, value,
+				signed_addend);
+      *unresolved_reloc_p = FALSE;
+      break;
 
     case BFD_RELOC_K1_S37_GOTADDR_UP27:
     case BFD_RELOC_K1_S37_GOTADDR_LO10:
@@ -2584,63 +2511,24 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 	if (globals->root.sgot == NULL)
 	  BFD_ASSERT (h != NULL);
 
-	int bundle_offset = 0;
-
-#ifdef UGLY_DEBUG
-	printf("GOTADDR: rel@ %x", rel->r_offset);
-#endif
-	/* find address of bundle as PC rel are computed using it
-	   instead of addr of the relocation */
-	if (rel->r_offset != 0){
-	  BFD_ASSERT(rel->r_offset >= 4);
-
-	  /* start with previous word */
-	  int bundle_end_found = 0;
-	  int data;
-	  unsigned int data_idx = 0;
-	  bfd_vma current_offset;
-	  for(data_idx = 1 ; data_idx <= rel->r_offset/4; data_idx++){
-	    current_offset = rel->r_offset - 4*data_idx;
-	    data = bfd_get_32(input_bfd, contents + current_offset);
-
-	    bundle_end_found = !(1<<31 & data);
-
-	    if (bundle_end_found)
-	      break;
-	  }
-
-	  if (bundle_end_found){
-	    bundle_offset = (current_offset + 4) - rel->r_offset;
-	  } else {
-	    bundle_offset = -rel->r_offset;
-	  }
-	}
-#ifdef UGLY_DEBUG
-	printf(", bundle offset: %d\n", bundle_offset);
-#endif
 	value = globals->root.sgot->output_section->vma
 	  + globals->root.sgot->output_offset;
-#ifdef UGLY_DEBUG
-	printf("  value(got) %x (%x +%x)\n", value,
-	       globals->root.sgot->output_section->vma,
-	       globals->root.sgot->output_offset);
-#endif
 
 	return _bfd_final_link_relocate (howto, input_bfd, input_section,
 					 contents, rel->r_offset, value,
-					 -bundle_offset);
+					 signed_addend);
       }
       break;
 
     case BFD_RELOC_K1_S37_GOTOFF_LO10:
     case BFD_RELOC_K1_S37_GOTOFF_UP27:
 
-    case BFD_RELOC_K1_GOTOFF:
-    case BFD_RELOC_K1_GOTOFF64:
+    case BFD_RELOC_K1_32_GOTOFF:
+    case BFD_RELOC_K1_64_GOTOFF:
 
-    case BFD_RELOC_K1_S43_GOTOFF64_LO10:
-    case BFD_RELOC_K1_S43_GOTOFF64_UP27:
-    case BFD_RELOC_K1_S43_GOTOFF64_EX6:
+    case BFD_RELOC_K1_S43_GOTOFF_LO10:
+    case BFD_RELOC_K1_S43_GOTOFF_UP27:
+    case BFD_RELOC_K1_S43_GOTOFF_EX6:
 
       {
 	asection *basegot = globals->root.sgot;
@@ -2656,12 +2544,12 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
     case BFD_RELOC_K1_S37_GOT_LO10:
     case BFD_RELOC_K1_S37_GOT_UP27:
 
-    case BFD_RELOC_K1_GOT:
-    case BFD_RELOC_K1_GOT64:
+    case BFD_RELOC_K1_32_GOT:
+    case BFD_RELOC_K1_64_GOT:
 
-    case BFD_RELOC_K1_S43_GOT64_LO10:
-    case BFD_RELOC_K1_S43_GOT64_UP27:
-    case BFD_RELOC_K1_S43_GOT64_EX6:
+    case BFD_RELOC_K1_S43_GOT_LO10:
+    case BFD_RELOC_K1_S43_GOT_UP27:
+    case BFD_RELOC_K1_S43_GOT_EX6:
 
       if (globals->root.sgot == NULL)
 	BFD_ASSERT (h != NULL);
@@ -2725,7 +2613,7 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 		  abort ();
 
 		outrel.r_offset = got_entry_addr;
-		outrel.r_info = ELFNN_R_INFO (0, K1_R (RELATIVE));
+		outrel.r_info = ELFNN_R_INFO (0, R_K1_RELATIVE);
 		outrel.r_addend = value;
 		elf_append_rela (output_bfd, s, &outrel);
 	      }
@@ -2824,7 +2712,7 @@ elfNN_k1_relocate_section (bfd *output_bfd,
       sym = NULL;
       sec = NULL;
 
-      if (r_symndx < symtab_hdr->sh_info)
+      if (r_symndx < symtab_hdr->sh_info) /* A local symbol. */
 	{
 	  sym = local_syms + r_symndx;
 	  sym_type = ELFNN_ST_TYPE (sym->st_info);
@@ -2923,147 +2811,170 @@ elfNN_k1_relocate_section (bfd *output_bfd,
 					       h, &unresolved_reloc,
 					       save_addend, &addend, sym);
 
-      /* Disabling TLS IE/GD untested code */
-      /* switch (elfNN_k1_bfd_reloc_from_type (r_type)) */
-      /* 	{ */
+      switch (elfNN_k1_bfd_reloc_from_type (r_type))
+      	{
+                      	case BFD_RELOC_K1_S37_TLS_GD_LO10:
+      	case BFD_RELOC_K1_S37_TLS_GD_UP27:
 
-      /* 	case BFD_RELOC_K1_TLS_IE64_LO10: */
-      /* 	case BFD_RELOC_K1_TLS_IE64_HI27: */
-      /* 	case BFD_RELOC_K1_TLS_IE64_EXTEND6: */
+      	case BFD_RELOC_K1_S43_TLS_GD_LO10:
+      	case BFD_RELOC_K1_S43_TLS_GD_UP27:
+      	case BFD_RELOC_K1_S43_TLS_GD_EX6:
 
-      /* 	case BFD_RELOC_K1_TLS_IE_LO10: */
-      /* 	case BFD_RELOC_K1_TLS_IE_HI22: */
-      /* 	  if (! symbol_got_offset_mark_p (input_bfd, h, r_symndx)) */
-      /* 	    { */
-      /* 	      bfd_boolean need_relocs = FALSE; */
-      /* 	      bfd_byte *loc; */
-      /* 	      int indx; */
-      /* 	      bfd_vma off; */
+      	case BFD_RELOC_K1_S37_TLS_LD_LO10:
+      	case BFD_RELOC_K1_S37_TLS_LD_UP27:
 
-      /* 	      off = symbol_got_offset (input_bfd, h, r_symndx); */
+      	case BFD_RELOC_K1_S43_TLS_LD_LO10:
+      	case BFD_RELOC_K1_S43_TLS_LD_UP27:
+      	case BFD_RELOC_K1_S43_TLS_LD_EX6:
 
-      /* 	      indx = h && h->dynindx != -1 ? h->dynindx : 0; */
+      	  if (! symbol_got_offset_mark_p (input_bfd, h, r_symndx))
+      	    {
+      	      bfd_boolean need_relocs = FALSE;
+      	      bfd_byte *loc;
+      	      int indx;
+      	      bfd_vma off;
 
-      /* 	      need_relocs = */
-      /* 		(bfd_link_pic (info) || indx != 0) && */
-      /* 		(h == NULL */
-      /* 		 || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT */
-      /* 		 || h->root.type != bfd_link_hash_undefweak); */
+      	      off = symbol_got_offset (input_bfd, h, r_symndx);
+      	      indx = h && h->dynindx != -1 ? h->dynindx : 0;
 
-      /* 	      BFD_ASSERT (globals->root.srelgot != NULL); */
+      	      need_relocs = 
+      		(bfd_link_pic (info) || indx != 0) &&
+      		(h == NULL
+      		 || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+      		 || h->root.type != bfd_link_hash_undefweak);
 
-      /* 	      if (need_relocs) */
-      /* 		{ */
-      /* 		  Elf_Internal_Rela rela; */
+      	      BFD_ASSERT (globals->root.srelgot != NULL);
 
-      /* 		  if (indx == 0) */
-      /* 		    rela.r_addend = relocation - dtpoff_base (info); */
-      /* 		  else */
-      /* 		    rela.r_addend = 0; */
+      	      if (need_relocs)
+      		{
+      		  Elf_Internal_Rela rela;
+      		  rela.r_info = ELFNN_R_INFO (indx, R_K1_64_DTPMOD);
+      		  rela.r_addend = 0;
+      		  rela.r_offset = globals->root.sgot->output_section->vma +
+      		    globals->root.sgot->output_offset + off;
 
-      /* 		  /\* FIXME need for better 64bits relocs support ! *\/ */
-      /* 		  rela.r_info = ELFNN_R_INFO (indx, K1_R (TLS_TPOFF32)); */
-      /* 		  rela.r_offset = globals->root.sgot->output_section->vma + */
-      /* 		    globals->root.sgot->output_offset + off; */
+      		  loc = globals->root.srelgot->contents;
+      		  loc += globals->root.srelgot->reloc_count++
+      		    * RELOC_SIZE (htab);
+      		  bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc);
 
-      /* 		  loc = globals->root.srelgot->contents; */
-      /* 		  loc += globals->root.srelgot->reloc_count++ */
-      /* 		    * RELOC_SIZE (htab); */
+		  bfd_reloc_code_real_type real_type =
+		    elfNN_k1_bfd_reloc_from_type (r_type);
 
-      /* 		  bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc); */
+		  if (real_type == BFD_RELOC_K1_S37_TLS_LD_LO10
+		      || real_type == BFD_RELOC_K1_S37_TLS_LD_UP27
+		      || real_type == BFD_RELOC_K1_S43_TLS_LD_LO10
+		      || real_type == BFD_RELOC_K1_S43_TLS_LD_UP27
+		      || real_type == BFD_RELOC_K1_S43_TLS_LD_EX6)
+		    {
+		      /* For local dynamic, don't generate DTPOFF in any case.
+			 Initialize the DTPOFF slot into zero, so we get module
+			 base address when invoke runtime TLS resolver.  */
+		      bfd_put_NN (output_bfd, 0,
+				  globals->root.sgot->contents + off
+				  + GOT_ENTRY_SIZE);
+		    }
+      		  else if (indx == 0)
+      		    {
+      		      bfd_put_NN (output_bfd,
+      				  relocation - dtpoff_base (info),
+      				  globals->root.sgot->contents + off
+      				  + GOT_ENTRY_SIZE);
+      		    }
+      		  else
+      		    {
+      		      /* This TLS symbol is global. We emit a
+      			 relocation to fixup the tls offset at load
+      			 time.  */
+      		      rela.r_info =
+      			ELFNN_R_INFO (indx, R_K1_64_DTPOFF);
+      		      rela.r_addend = 0;
+      		      rela.r_offset =
+      			(globals->root.sgot->output_section->vma
+      			 + globals->root.sgot->output_offset + off
+      			 + GOT_ENTRY_SIZE);
 
-      /* 		  bfd_put_NN (output_bfd, rela.r_addend, */
-      /* 			      globals->root.sgot->contents + off); */
-      /* 		} */
-      /* 	      else */
-      /* 		bfd_put_NN (output_bfd, relocation - tpoff_base (info), */
-      /* 			    globals->root.sgot->contents + off); */
+      		      loc = globals->root.srelgot->contents;
+      		      loc += globals->root.srelgot->reloc_count++
+      			* RELOC_SIZE (globals);
+      		      bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc);
+      		      bfd_put_NN (output_bfd, (bfd_vma) 0,
+      				  globals->root.sgot->contents + off
+      				  + GOT_ENTRY_SIZE);
+      		    }
+      		}
+      	      else
+      		{
+      		  bfd_put_NN (output_bfd, (bfd_vma) 1,
+      			      globals->root.sgot->contents + off);
+      		  bfd_put_NN (output_bfd,
+      			      relocation - dtpoff_base (info),
+      			      globals->root.sgot->contents + off
+      			      + GOT_ENTRY_SIZE);
+      		}
 
-      /* 	      symbol_got_offset_mark (input_bfd, h, r_symndx); */
-      /* 	    } */
-      /* 	  break; */
+      	      symbol_got_offset_mark (input_bfd, h, r_symndx);
+      	    }
+      	  break;
 
+      	case BFD_RELOC_K1_S37_TLS_IE_LO10:
+      	case BFD_RELOC_K1_S37_TLS_IE_UP27:
 
-      /* 	case BFD_RELOC_K1_TLS_GD_LO10: */
-      /* 	case BFD_RELOC_K1_TLS_GD_HI22: */
-      /* 	  if (! symbol_got_offset_mark_p (input_bfd, h, r_symndx)) */
-      /* 	    { */
-      /* 	      bfd_boolean need_relocs = FALSE; */
-      /* 	      bfd_byte *loc; */
-      /* 	      int indx; */
-      /* 	      bfd_vma off; */
+      	case BFD_RELOC_K1_S43_TLS_IE_LO10:
+      	case BFD_RELOC_K1_S43_TLS_IE_UP27:
+      	case BFD_RELOC_K1_S43_TLS_IE_EX6:
+	  if (! symbol_got_offset_mark_p (input_bfd, h, r_symndx))
+	    {
+	      bfd_boolean need_relocs = FALSE;
+	      bfd_byte *loc;
+	      int indx;
+	      bfd_vma off;
 
-      /* 	      off = symbol_got_offset (input_bfd, h, r_symndx); */
-      /* 	      indx = h && h->dynindx != -1 ? h->dynindx : 0; */
+	      off = symbol_got_offset (input_bfd, h, r_symndx);
 
-      /* 	      need_relocs = */
-      /* 		(bfd_link_pic (info) || indx != 0) && */
-      /* 		(h == NULL */
-      /* 		 || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT */
-      /* 		 || h->root.type != bfd_link_hash_undefweak); */
+	      indx = h && h->dynindx != -1 ? h->dynindx : 0;
 
-      /* 	      BFD_ASSERT (globals->root.srelgot != NULL); */
+	      need_relocs =
+		(bfd_link_pic (info) || indx != 0) &&
+		(h == NULL
+		 || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+		 || h->root.type != bfd_link_hash_undefweak);
 
-      /* 	      if (need_relocs) */
-      /* 		{ */
-      /* 		  Elf_Internal_Rela rela; */
-      /* 		  rela.r_info = ELFNN_R_INFO (indx, K1_R (TLS_DTPMOD32)); */
-      /* 		  rela.r_addend = 0; */
-      /* 		  rela.r_offset = globals->root.sgot->output_section->vma + */
-      /* 		    globals->root.sgot->output_offset + off; */
+	      BFD_ASSERT (globals->root.srelgot != NULL);
 
+	      if (need_relocs)
+		{
+		  Elf_Internal_Rela rela;
 
-      /* 		  loc = globals->root.srelgot->contents; */
-      /* 		  loc += globals->root.srelgot->reloc_count++ */
-      /* 		    * RELOC_SIZE (htab); */
-      /* 		  bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc); */
+		  if (indx == 0)
+		    rela.r_addend = relocation - dtpoff_base (info);
+		  else
+		    rela.r_addend = 0;
 
-      /* 		  if (indx == 0) */
-      /* 		    { */
-      /* 		      bfd_put_NN (output_bfd, */
-      /* 				  relocation - dtpoff_base (info), */
-      /* 				  globals->root.sgot->contents + off */
-      /* 				  + GOT_ENTRY_SIZE); */
-      /* 		    } */
-      /* 		  else */
-      /* 		    { */
-      /* 		      /\* This TLS symbol is global. We emit a */
-      /* 			 relocation to fixup the tls offset at load */
-      /* 			 time.  *\/ */
-      /* 		      rela.r_info = */
-      /* 			ELFNN_R_INFO (indx, K1_R (TLS_DTPOFF32)); */
-      /* 		      rela.r_addend = 0; */
-      /* 		      rela.r_offset = */
-      /* 			(globals->root.sgot->output_section->vma */
-      /* 			 + globals->root.sgot->output_offset + off */
-      /* 			 + GOT_ENTRY_SIZE); */
+		  rela.r_info = ELFNN_R_INFO (indx, R_K1_64_TPOFF);
+		  rela.r_offset = globals->root.sgot->output_section->vma +
+		    globals->root.sgot->output_offset + off;
 
-      /* 		      loc = globals->root.srelgot->contents; */
-      /* 		      loc += globals->root.srelgot->reloc_count++ */
-      /* 			* RELOC_SIZE (globals); */
-      /* 		      bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc); */
-      /* 		      bfd_put_NN (output_bfd, (bfd_vma) 0, */
-      /* 				  globals->root.sgot->contents + off */
-      /* 				  + GOT_ENTRY_SIZE); */
-      /* 		    } */
-      /* 		} */
-      /* 	      else */
-      /* 		{ */
-      /* 		  bfd_put_NN (output_bfd, (bfd_vma) 1, */
-      /* 			      globals->root.sgot->contents + off); */
-      /* 		  bfd_put_NN (output_bfd, */
-      /* 			      relocation - dtpoff_base (info), */
-      /* 			      globals->root.sgot->contents + off */
-      /* 			      + GOT_ENTRY_SIZE); */
-      /* 		} */
+		  loc = globals->root.srelgot->contents;
+		  loc += globals->root.srelgot->reloc_count++
+		    * RELOC_SIZE (htab);
 
-      /* 	      symbol_got_offset_mark (input_bfd, h, r_symndx); */
-      /* 	    } */
-      /* 	  break; */
+		  bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc);
 
-      /* 	default: */
-      /* 	  break; */
-      /* 	} */
+		  bfd_put_NN (output_bfd, rela.r_addend,
+			      globals->root.sgot->contents + off);
+		}
+	      else
+		bfd_put_NN (output_bfd, relocation - tpoff_base (info),
+			    globals->root.sgot->contents + off);
+
+	      symbol_got_offset_mark (input_bfd, h, r_symndx);
+	    }
+	  break;
+
+      	default:
+      	  break;
+      	}
 
       /* Dynamic relocs are not propagated for SEC_DEBUGGING sections
          because such sections are not SEC_ALLOC and thus ld.so will
@@ -3763,14 +3674,34 @@ elfNN_k1_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	case BFD_RELOC_K1_S37_GOTOFF_LO10:
 	case BFD_RELOC_K1_S37_GOTOFF_UP27:
 
-	case BFD_RELOC_K1_S43_GOT64_LO10:
-	case BFD_RELOC_K1_S43_GOT64_UP27:
-	case BFD_RELOC_K1_S43_GOT64_EX6:
+	case BFD_RELOC_K1_S43_GOT_LO10:
+	case BFD_RELOC_K1_S43_GOT_UP27:
+	case BFD_RELOC_K1_S43_GOT_EX6:
 
-	case BFD_RELOC_K1_S43_GOTOFF64_LO10:
-	case BFD_RELOC_K1_S43_GOTOFF64_UP27:
-	case BFD_RELOC_K1_S43_GOTOFF64_EX6:
+	case BFD_RELOC_K1_S43_GOTOFF_LO10:
+	case BFD_RELOC_K1_S43_GOTOFF_UP27:
+	case BFD_RELOC_K1_S43_GOTOFF_EX6:
 
+	case BFD_RELOC_K1_S37_TLS_GD_LO10:
+	case BFD_RELOC_K1_S37_TLS_GD_UP27:
+
+	case BFD_RELOC_K1_S43_TLS_GD_LO10:
+	case BFD_RELOC_K1_S43_TLS_GD_UP27:
+	case BFD_RELOC_K1_S43_TLS_GD_EX6:
+
+	case BFD_RELOC_K1_S37_TLS_IE_LO10:
+	case BFD_RELOC_K1_S37_TLS_IE_UP27:
+
+	case BFD_RELOC_K1_S43_TLS_IE_LO10:
+	case BFD_RELOC_K1_S43_TLS_IE_UP27:
+	case BFD_RELOC_K1_S43_TLS_IE_EX6:
+
+	case BFD_RELOC_K1_S37_TLS_LD_LO10:
+	case BFD_RELOC_K1_S37_TLS_LD_UP27:
+
+	case BFD_RELOC_K1_S43_TLS_LD_LO10:
+	case BFD_RELOC_K1_S43_TLS_LD_UP27:
+	case BFD_RELOC_K1_S43_TLS_LD_EX6:
 	  {
 	    unsigned got_type;
 	    unsigned old_got_type;
@@ -3795,12 +3726,6 @@ elfNN_k1_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		locals[r_symndx].got_refcount += 1;
 		old_got_type = locals[r_symndx].got_type;
 	      }
-
-	    /* If a variable is accessed with both general dynamic TLS
-	       methods, two slots may be created.  */
-	    /* Disabled untested and unused TLS */
-	    /* if (GOT_TLS_GD_ANY_P (old_got_type) && GOT_TLS_GD_ANY_P (got_type)) */
-	    /*   got_type |= old_got_type; */
 
 	    /* We will already have issued an error message if there
 	       is a TLS/non-TLS mismatch, based on the symbol type.
@@ -3854,8 +3779,8 @@ elfNN_k1_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      return FALSE;
 	    break;
 
-	case BFD_RELOC_K1_27_PCREL:
-	case BFD_RELOC_K1_17_PCREL:
+	case BFD_RELOC_K1_PCREL27:
+	case BFD_RELOC_K1_PCREL17:
 	  /* If this is a local symbol then we resolve it
 	     directly without creating a PLT entry.  */
 	  if (h == NULL)
@@ -3895,11 +3820,11 @@ elfNN_k1_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 {
   switch ((int) ELFNN_R_TYPE (rela->r_info))
     {
-    case K1_R (RELATIVE):
+    case R_K1_RELATIVE:
       return reloc_class_relative;
-    case K1_R (JMP_SLOT):
+    case R_K1_JMP_SLOT:
       return reloc_class_plt;
-    case K1_R (COPY):
+    case R_K1_COPY:
       return reloc_class_copy;
     default:
       return reloc_class_normal;
@@ -4165,16 +4090,15 @@ elfNN_k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
 	  /* We need to ensure that all GOT entries that serve the PLT
 	     are consecutive with the special GOT slots [0] [1] and
-	     [2]. Any addtional relocations, such as
-	     R_AARCH64_TLSDESC, must be placed after the PLT related
-	     entries.  We abuse the reloc_count such that during
-	     sizing we adjust reloc_count to indicate the number of
-	     PLT related reserved entries.  In subsequent phases when
-	     filling in the contents of the reloc entries, PLT related
-	     entries are placed by computing their PLT index (0
-	     .. reloc_count). While other none PLT relocs are placed
-	     at the slot indicated by reloc_count and reloc_count is
-	     updated.  */
+	     [2]. Any addtional relocations must be placed after the
+	     PLT related entries.  We abuse the reloc_count such that
+	     during sizing we adjust reloc_count to indicate the
+	     number of PLT related reserved entries.  In subsequent
+	     phases when filling in the contents of the reloc entries,
+	     PLT related entries are placed by computing their PLT
+	     index (0 .. reloc_count). While other none PLT relocs are
+	     placed at the slot indicated by reloc_count and
+	     reloc_count is updated.  */
 
 	  htab->root.srelplt->reloc_count++;
 	}
@@ -4191,7 +4115,6 @@ elfNN_k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     }
 
   eh = (struct elf_k1_link_hash_entry *) h;
-  eh->tlsdesc_got_jump_table_offset = (bfd_vma) - 1;
 
   if (h->got.refcount > 0)
     {
@@ -4237,33 +4160,21 @@ elfNN_k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	}
       else
 	{
-	  (*_bfd_error_handler)
-	    (_("relocation against `%s' has faulty GOT type "),
-	     (h) ? h->root.root.string : "a local symbol");
-	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
-
 	  int indx;
-	  /* Disabled untested and unused TLS */
-	  /* if (got_type & GOT_TLSDESC_GD) */
-	  /*   { */
-	  /*     eh->tlsdesc_got_jump_table_offset = */
-	  /* 	(htab->root.sgotplt->size */
-	  /* 	 - k1_compute_jump_table_size (htab)); */
-	  /*     htab->root.sgotplt->size += GOT_ENTRY_SIZE * 2; */
-	  /*     h->got.offset = (bfd_vma) - 2; */
-	  /*   } */
-	  /* if (got_type & GOT_TLS_GD) */
-	  /*   { */
-	  /*     h->got.offset = htab->root.sgot->size; */
-	  /*     htab->root.sgot->size += GOT_ENTRY_SIZE * 2; */
-	  /*   } */
 
-	  /* if (got_type & GOT_TLS_IE) */
-	  /*   { */
-	  /*     h->got.offset = htab->root.sgot->size; */
-	  /*     htab->root.sgot->size += GOT_ENTRY_SIZE; */
-	  /*   } */
+	  /* Any of these will require 2 GOT slots because
+	   * they use __tls_get_addr() */
+	  if (got_type & (GOT_TLS_GD | GOT_TLS_LD))
+	    {
+	      h->got.offset = htab->root.sgot->size;
+	      htab->root.sgot->size += GOT_ENTRY_SIZE * 2;
+	    }
+
+	  if (got_type & GOT_TLS_IE)
+	    {
+	      h->got.offset = htab->root.sgot->size;
+	      htab->root.sgot->size += GOT_ENTRY_SIZE;
+	    }
 
 	  indx = h && h->dynindx != -1 ? h->dynindx : 0;
 	  if ((ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
@@ -4272,24 +4183,13 @@ elfNN_k1_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 		  || indx != 0
 		  || WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, 0, h)))
 	    {
-	      BFD_ASSERT(0);
-	    /* Disabled untested and unused TLS */
-	      /* if (got_type & GOT_TLSDESC_GD) */
-	      /* 	{ */
-	      /* 	  htab->root.srelplt->size += RELOC_SIZE (htab); */
-	      /* 	  /\* Note reloc_count not incremented here!  We have */
-	      /* 	     already adjusted reloc_count for this relocation */
-	      /* 	     type.  *\/ */
+	      /* Only the GD case requires 2 relocations. */
+	      if (got_type & GOT_TLS_GD)
+	      	htab->root.srelgot->size += RELOC_SIZE (htab) * 2;
 
-	      /* 	  /\* TLSDESC PLT is now needed, but not yet determined.  *\/ */
-	      /* 	  htab->tlsdesc_plt = (bfd_vma) - 1; */
-	      /* 	} */
-
-	      /* if (got_type & GOT_TLS_GD) */
-	      /* 	htab->root.srelgot->size += RELOC_SIZE (htab) * 2; */
-
-	      /* if (got_type & GOT_TLS_IE) */
-	      /* 	htab->root.srelgot->size += RELOC_SIZE (htab); */
+	      /* LD needs a DTPMOD reloc, IE needs a DTPOFF. */
+	      if (got_type & (GOT_TLS_LD | GOT_TLS_IE))
+	      	htab->root.srelgot->size += RELOC_SIZE (htab);
 	    }
 	}
     }
@@ -4536,29 +4436,16 @@ elfNN_k1_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       for (i = 0; i < symtab_hdr->sh_info; i++)
 	{
 	  locals[i].got_offset = (bfd_vma) - 1;
-	  locals[i].tlsdesc_got_jump_table_offset = (bfd_vma) - 1;
 	  if (locals[i].got_refcount > 0)
 	    {
 	      unsigned got_type = locals[i].got_type;
-	      /* Disabled untested and unused TLS */
-	      /* if (got_type & GOT_TLSDESC_GD) */
-	      /* 	{ */
-	      /* 	  locals[i].tlsdesc_got_jump_table_offset = */
-	      /* 	    (htab->root.sgotplt->size */
-	      /* 	     - k1_compute_jump_table_size (htab)); */
-	      /* 	  htab->root.sgotplt->size += GOT_ENTRY_SIZE * 2; */
-	      /* 	  locals[i].got_offset = (bfd_vma) - 2; */
-	      /* 	} */
+	      if (got_type & GOT_TLS_GD)
+	      	{
+	      	  locals[i].got_offset = htab->root.sgot->size;
+	      	  htab->root.sgot->size += GOT_ENTRY_SIZE * 2;
+	      	}
 
-	      /* if (got_type & GOT_TLS_GD) */
-	      /* 	{ */
-	      /* 	  locals[i].got_offset = htab->root.sgot->size; */
-	      /* 	  htab->root.sgot->size += GOT_ENTRY_SIZE * 2; */
-	      /* 	} */
-
-	      /* if (got_type & GOT_TLS_IE */
-	      /* 	  || got_type & GOT_NORMAL) */
-	      if (got_type & GOT_NORMAL)
+	      if (got_type & (GOT_NORMAL | GOT_TLS_IE | GOT_TLS_LD))
 		{
 		  locals[i].got_offset = htab->root.sgot->size;
 		  htab->root.sgot->size += GOT_ENTRY_SIZE;
@@ -4570,20 +4457,12 @@ elfNN_k1_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	      if (bfd_link_pic (info))
 		{
-		  /* Disabled untested and unused TLS */
-		  /* if (got_type & GOT_TLSDESC_GD) */
-		  /*   { */
-		  /*     htab->root.srelplt->size += RELOC_SIZE (htab); */
-		  /*     /\* Note RELOC_COUNT not incremented here! *\/ */
-		  /*     htab->tlsdesc_plt = (bfd_vma) - 1; */
-		  /*   } */
+		  if (got_type & GOT_TLS_GD)
+		    htab->root.srelgot->size += RELOC_SIZE (htab) * 2;
 
-		  /* if (got_type & GOT_TLS_GD) */
-		  /*   htab->root.srelgot->size += RELOC_SIZE (htab) * 2; */
-		  /* if (got_type & GOT_TLS_IE */
-		  /*     || got_type & GOT_NORMAL) */
-
-		  if (got_type & GOT_NORMAL)
+		  if (got_type & GOT_TLS_IE
+		      || got_type & GOT_TLS_LD
+		      || got_type & GOT_NORMAL)
 		    htab->root.srelgot->size += RELOC_SIZE (htab);
 		}
 	    }
@@ -4626,23 +4505,6 @@ elfNN_k1_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   if (htab->root.srelplt)
     htab->sgotplt_jump_table_size = k1_compute_jump_table_size (htab);
-
-  if (htab->tlsdesc_plt)
-    {
-      if (htab->root.splt->size == 0)
-	htab->root.splt->size += PLT_ENTRY_SIZE;
-
-      htab->tlsdesc_plt = htab->root.splt->size;
-      htab->root.splt->size += PLT_TLSDESC_ENTRY_SIZE;
-
-      /* If we're not using lazy TLS relocations, don't generate the
-         GOT entry required.  */
-      if (!(info->flags & DF_BIND_NOW))
-	{
-	  htab->dt_tlsdesc_got = htab->root.sgot->size;
-	  htab->root.sgot->size += GOT_ENTRY_SIZE;
-	}
-    }
 
   /* We now have determined the sizes of the various dynamic sections.
      Allocate memory for them.  */
@@ -4728,11 +4590,6 @@ elfNN_k1_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
 	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
 	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-
-	  if (htab->tlsdesc_plt
-	      && (!add_dynamic_entry (DT_TLSDESC_PLT, 0)
-		  || !add_dynamic_entry (DT_TLSDESC_GOT, 0)))
 	    return FALSE;
 	}
 
@@ -4855,7 +4712,7 @@ elfNN_k1_create_small_pltn_entry (struct elf_link_hash_entry *h,
 #endif
     {
       /* Fill in the entry in the .rela.plt section.  */
-      rela.r_info = ELFNN_R_INFO (h->dynindx, K1_R (JMP_SLOT));
+      rela.r_info = ELFNN_R_INFO (h->dynindx, R_K1_JMP_SLOT);
       rela.r_addend = 0;
     }
 
@@ -5010,7 +4867,7 @@ elfNN_k1_finish_dynamic_symbol (bfd *output_bfd,
 	     So we are commenting it ATM
 	  */
 	  // BFD_ASSERT ((h->got.offset & 1) != 0);
-	  rela.r_info = ELFNN_R_INFO (0, K1_R (RELATIVE));
+	  rela.r_info = ELFNN_R_INFO (0, R_K1_RELATIVE);
 	  rela.r_addend = (h->root.u.def.value
 			   + h->root.u.def.section->output_section->vma
 			   + h->root.u.def.section->output_offset);
@@ -5021,7 +4878,7 @@ do_glob_dat:
 	  BFD_ASSERT ((h->got.offset & 1) == 0);
 	  bfd_put_NN (output_bfd, (bfd_vma) 0,
 		      htab->root.sgot->contents + h->got.offset);
-	  rela.r_info = ELFNN_R_INFO (h->dynindx, K1_R (GLOB_DAT));
+	  rela.r_info = ELFNN_R_INFO (h->dynindx, R_K1_GLOB_DAT);
 	  rela.r_addend = 0;
 	}
 
@@ -5046,7 +4903,7 @@ do_glob_dat:
       rela.r_offset = (h->root.u.def.value
 		       + h->root.u.def.section->output_section->vma
 		       + h->root.u.def.section->output_offset);
-      rela.r_info = ELFNN_R_INFO (h->dynindx, K1_R (COPY));
+      rela.r_info = ELFNN_R_INFO (h->dynindx, R_K1_COPY);
       rela.r_addend = 0;
       loc = htab->srelbss->contents;
       loc += htab->srelbss->reloc_count++ * RELOC_SIZE (htab);
@@ -5154,18 +5011,6 @@ elfNN_k1_finish_dynamic_sections (bfd *output_bfd,
 		  dyn.d_un.d_val -= s->size;
 		}
 	      break;
-
-	    case DT_TLSDESC_PLT:
-	      s = htab->root.splt;
-	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset
-		+ htab->tlsdesc_plt;
-	      break;
-
-	    case DT_TLSDESC_GOT:
-	      s = htab->root.sgot;
-	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset
-		+ htab->dt_tlsdesc_got;
-	      break;
 	    }
 
 	  bfd_elfNN_swap_dyn_out (output_bfd, &dyn, dyncon);
@@ -5180,13 +5025,6 @@ elfNN_k1_finish_dynamic_sections (bfd *output_bfd,
 
       elf_section_data (htab->root.splt->output_section)->
 	this_hdr.sh_entsize = htab->plt_entry_size;
-
-
-      if (htab->tlsdesc_plt)
-	{
-	  /* Original aarch64 handle TLS here. */
-	  BFD_ASSERT (0);
-	}
     }
 
   if (htab->root.sgotplt)
