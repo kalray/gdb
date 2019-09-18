@@ -387,7 +387,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to, st
       dsc->reg = (extract_mds_bitfield (op, dsc->insn_words[0], 0, 0) & 0x3F) + tdep->r0_regnum;
       dsc->dest = from;
     }
-    else if (strcmp ("get", op->as_op) == 0)
+    else if (strcmp ("iget", op->as_op) == 0)
     {
       ULONGEST reg, srf_reg;
 
