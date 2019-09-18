@@ -477,6 +477,8 @@ k1_look_for_insns (void)
         add_op (&branch_insns[i], op);
       else if (strcmp ("get", op->as_op) == 0)
         add_op (&branch_insns[i], op);
+      else if (strcmp ("iget", op->as_op) == 0)
+        add_op (&branch_insns[i], op);
       else if (strcmp ("nop", op->as_op) == 0)
         nop_op[i] = op->codewords[0].opcode;
 
