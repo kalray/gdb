@@ -21,33 +21,33 @@
 #ifndef OPCODE_K1_H
 #define OPCODE_K1_H
 
-#define K1_REGFILE_FIRST_ARF 0
-#define K1_REGFILE_LAST_ARF 1
-#define K1_REGFILE_DEC_ARF 2
-#define K1_REGFILE_FIRST_BRF 3
-#define K1_REGFILE_LAST_BRF 4
-#define K1_REGFILE_DEC_BRF 5
-#define K1_REGFILE_FIRST_CRF 6
-#define K1_REGFILE_LAST_CRF 7
-#define K1_REGFILE_DEC_CRF 8
-#define K1_REGFILE_FIRST_GRF 9
-#define K1_REGFILE_LAST_GRF 10
-#define K1_REGFILE_DEC_GRF 11
-#define K1_REGFILE_FIRST_PRF 12
-#define K1_REGFILE_LAST_PRF 13
-#define K1_REGFILE_DEC_PRF 14
-#define K1_REGFILE_FIRST_QRF 15
-#define K1_REGFILE_LAST_QRF 16
-#define K1_REGFILE_DEC_QRF 17
-#define K1_REGFILE_FIRST_SRF 18
-#define K1_REGFILE_LAST_SRF 19
-#define K1_REGFILE_DEC_SRF 20
-#define K1_REGFILE_FIRST_WRF 21
-#define K1_REGFILE_LAST_WRF 22
-#define K1_REGFILE_DEC_WRF 23
-#define K1_REGFILE_FIRST_XRF 24
-#define K1_REGFILE_LAST_XRF 25
-#define K1_REGFILE_DEC_XRF 26
+#define K1_REGFILE_FIRST_GPR 0
+#define K1_REGFILE_LAST_GPR 1
+#define K1_REGFILE_DEC_GPR 2
+#define K1_REGFILE_FIRST_PGR 3
+#define K1_REGFILE_LAST_PGR 4
+#define K1_REGFILE_DEC_PGR 5
+#define K1_REGFILE_FIRST_QGR 6
+#define K1_REGFILE_LAST_QGR 7
+#define K1_REGFILE_DEC_QGR 8
+#define K1_REGFILE_FIRST_SFR 9
+#define K1_REGFILE_LAST_SFR 10
+#define K1_REGFILE_DEC_SFR 11
+#define K1_REGFILE_FIRST_XBR 12
+#define K1_REGFILE_LAST_XBR 13
+#define K1_REGFILE_DEC_XBR 14
+#define K1_REGFILE_FIRST_XCR 15
+#define K1_REGFILE_LAST_XCR 16
+#define K1_REGFILE_DEC_XCR 17
+#define K1_REGFILE_FIRST_XMR 18
+#define K1_REGFILE_LAST_XMR 19
+#define K1_REGFILE_DEC_XMR 20
+#define K1_REGFILE_FIRST_XVR 21
+#define K1_REGFILE_LAST_XVR 22
+#define K1_REGFILE_DEC_XVR 23
+#define K1_REGFILE_FIRST_XWR 24
+#define K1_REGFILE_LAST_XWR 25
+#define K1_REGFILE_DEC_XWR 26
 #define K1_REGFILE_REGISTERS 27
 #define K1_REGFILE_DEC_REGISTERS 28
 
@@ -221,12 +221,6 @@ extern int k1_k1c_dec_registers[];
 #define k1c_wricode1_fld(x) (int)(((unsigned int)(x) >> 26) & 0x3)
 #define k1c_xrounding_fld(x) (int)(((unsigned int)(x) >> 8) & 0x7)
 
-#define k1c_registerA_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
-#define k1c_registerA_0_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
-#define k1c_registerA_1_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
-#define k1c_registerA_2_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
-#define k1c_registerA_3_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
-#define k1c_registerZ_opd(w) ((unsigned int)(w) & 0x3f)
 #define k1c_registerN_opd(w) (((unsigned int)(w) >> 20) & 0xf)
 #define k1c_registerN_0_opd(w) (((unsigned int)(w) >> 20) & 0xf)
 #define k1c_registerN_1_opd(w) (((unsigned int)(w) >> 20) & 0xf)
@@ -235,8 +229,14 @@ extern int k1_k1c_dec_registers[];
 #define k1c_registerBe_opd(w) (((unsigned int)(w) >> 13) & 0x1f)
 #define k1c_registerCo_opd(w) (((unsigned int)(w) >> 7) & 0x1f)
 #define k1c_byteshift_opd(w) ((unsigned int)(w) & 0x3f)
+#define k1c_registerZ_opd(w) ((unsigned int)(w) & 0x3f)
 #define k1c_registerBo_opd(w) (((unsigned int)(w) >> 13) & 0x1f)
 #define k1c_registerCe_opd(w) (((unsigned int)(w) >> 7) & 0x1f)
+#define k1c_registerA_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
+#define k1c_registerA_0_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
+#define k1c_registerA_1_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
+#define k1c_registerA_2_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
+#define k1c_registerA_3_opd(w) (((unsigned int)(w) >> 18) & 0x3f)
 #define k1c_registerAp_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_registerAp_0_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
 #define k1c_registerAp_1_opd(w) (((unsigned int)(w) >> 19) & 0x1f)
@@ -12740,13 +12740,6 @@ enum Method_k1c_enum {
   Modifier_k1c_speculate,
   Modifier_k1c_splat32,
   Modifier_k1c_variant,
-  RegClass_k1c_accelReg,
-  RegClass_k1c_accelRegE,
-  RegClass_k1c_accelRegO,
-  RegClass_k1c_accelReg_0,
-  RegClass_k1c_accelReg_1,
-  RegClass_k1c_accelReg_2,
-  RegClass_k1c_accelReg_3,
   RegClass_k1c_aloneReg,
   RegClass_k1c_blockReg,
   RegClass_k1c_blockReg0M4,
@@ -12762,11 +12755,11 @@ enum Method_k1c_enum {
   RegClass_k1c_coproReg1M4,
   RegClass_k1c_coproReg2M4,
   RegClass_k1c_coproReg3M4,
-  RegClass_k1c_extendReg,
-  RegClass_k1c_extendReg_0,
-  RegClass_k1c_extendReg_1,
-  RegClass_k1c_extendReg_2,
-  RegClass_k1c_extendReg_3,
+  RegClass_k1c_matrixReg,
+  RegClass_k1c_matrixReg_0,
+  RegClass_k1c_matrixReg_1,
+  RegClass_k1c_matrixReg_2,
+  RegClass_k1c_matrixReg_3,
   RegClass_k1c_onlyfxReg,
   RegClass_k1c_onlygetReg,
   RegClass_k1c_onlyraReg,
@@ -12782,6 +12775,13 @@ enum Method_k1c_enum {
   RegClass_k1c_quadReg_3,
   RegClass_k1c_singleReg,
   RegClass_k1c_systemReg,
+  RegClass_k1c_vectorReg,
+  RegClass_k1c_vectorRegE,
+  RegClass_k1c_vectorRegO,
+  RegClass_k1c_vectorReg_0,
+  RegClass_k1c_vectorReg_1,
+  RegClass_k1c_vectorReg_2,
+  RegClass_k1c_vectorReg_3,
   RegClass_k1c_wideReg,
   RegClass_k1c_wideReg_0,
   RegClass_k1c_wideReg_1
@@ -12995,7 +12995,7 @@ static char *bundling_names(Bundling bundling) {
 #define Reservation_k1c_ALU_FULL_X 11
 #define Reservation_k1c_ALU_FULL_Y 12
 #define Reservation_k1c_BCU 13
-#define Reservation_k1c_BCU_CRRW 14
+#define Reservation_k1c_BCU_CRRP_CRWL_CRWH 14
 #define Reservation_k1c_BCU_TINY_AUXW_CRRP 15
 #define Reservation_k1c_BCU_TINY_TINY_MAU_XNOP 16
 #define Reservation_k1c_TCA 17

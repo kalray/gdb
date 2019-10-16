@@ -1182,24 +1182,24 @@ match_operands(const k1opc_t * op, const expressionS * tok,
         return MATCH_NOT_FOUND;
     }
 
-#define IS_K1_REGFILE_GRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_GRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GRF]))
-#define IS_K1_REGFILE_PRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_PRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_PRF]))
-#define IS_K1_REGFILE_QRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_QRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_QRF]))
-#define IS_K1_REGFILE_SRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_SRF]) \
-                                 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_SRF]))
-#define IS_K1_REGFILE_CRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_CRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_CRF]))
-#define IS_K1_REGFILE_BRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_BRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_BRF]))
-#define IS_K1_REGFILE_ARF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_ARF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_ARF]))
-#define IS_K1_REGFILE_WRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_WRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_WRF]))
-#define IS_K1_REGFILE_XRF(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_XRF]) \
-                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_XRF]))
+#define IS_K1_REGFILE_GPR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_GPR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_GPR]))
+#define IS_K1_REGFILE_PGR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_PGR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_PGR]))
+#define IS_K1_REGFILE_QGR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_QGR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_QGR]))
+#define IS_K1_REGFILE_SFR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_SFR]) \
+                                 && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_SFR]))
+#define IS_K1_REGFILE_XCR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_XCR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_XCR]))
+#define IS_K1_REGFILE_XBR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_XBR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_XBR]))
+#define IS_K1_REGFILE_XVR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_XVR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_XVR]))
+#define IS_K1_REGFILE_XWR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_XWR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_XWR]))
+#define IS_K1_REGFILE_XMR(tok) ((((tok).X_add_number) >= k1_regfiles[K1_REGFILE_FIRST_XMR]) \
+                                && (((tok).X_add_number) <= k1_regfiles[K1_REGFILE_LAST_XMR]))
 
 #define MATCH_K1_REGFILE(tok,is_regfile)                                \
     if (((tok).X_op == O_register) && (is_regfile(tok))) {                \
@@ -1249,11 +1249,11 @@ match_operands(const k1opc_t * op, const expressionS * tok,
         switch (operand_type) {
 
             case RegClass_k1c_singleReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_GPR)
             case RegClass_k1c_pairedReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_PGR)
             case RegClass_k1c_quadReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_QRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_QGR)
             case RegClass_k1c_systemReg:
 		 if( ! allow_all_sfr ) {
 		      /* If option all-sfr not set, doest not match systemReg for SET/GET/WFX: used only for HW validation. */
@@ -1265,13 +1265,13 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_onlygetReg:
             case RegClass_k1c_onlysetReg:
 	    case RegClass_k1c_onlyswapReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_SFR)
             case RegClass_k1c_coproReg:
             case RegClass_k1c_coproReg0M4:
             case RegClass_k1c_coproReg1M4:
             case RegClass_k1c_coproReg2M4:
             case RegClass_k1c_coproReg3M4:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_CRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_XCR)
             case RegClass_k1c_blockReg:
             case RegClass_k1c_blockRegE:
             case RegClass_k1c_blockRegO:
@@ -1279,21 +1279,21 @@ match_operands(const k1opc_t * op, const expressionS * tok,
             case RegClass_k1c_blockReg1M4:
             case RegClass_k1c_blockReg2M4:
             case RegClass_k1c_blockReg3M4:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_BRF)
-            case RegClass_k1c_accelReg:
-            case RegClass_k1c_accelRegE:
-            case RegClass_k1c_accelRegO:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_XBR)
+            case RegClass_k1c_vectorReg:
+            case RegClass_k1c_vectorRegE:
+            case RegClass_k1c_vectorRegO:
             case RegClass_k1c_wideReg_0:
             case RegClass_k1c_wideReg_1:
-            case RegClass_k1c_extendReg_0:
-            case RegClass_k1c_extendReg_1:
-            case RegClass_k1c_extendReg_2:
-            case RegClass_k1c_extendReg_3:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_ARF)
+            case RegClass_k1c_matrixReg_0:
+            case RegClass_k1c_matrixReg_1:
+            case RegClass_k1c_matrixReg_2:
+            case RegClass_k1c_matrixReg_3:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_XVR)
             case RegClass_k1c_wideReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_WRF)
-            case RegClass_k1c_extendReg:
-                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_XRF)
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_XWR)
+            case RegClass_k1c_matrixReg:
+                MATCH_K1_REGFILE(tok[jj],IS_K1_REGFILE_XMR)
 
             case Immediate_k1c_pcrel17:
             case Immediate_k1c_pcrel27:
@@ -1368,15 +1368,15 @@ match_operands(const k1opc_t * op, const expressionS * tok,
     }
     return MATCH_FOUND;
 
-#undef IS_K1_REGFILE_GRF
-#undef IS_K1_REGFILE_PRF
-#undef IS_K1_REGFILE_QRF
-#undef IS_K1_REGFILE_SRF
-#undef IS_K1_REGFILE_CRF
-#undef IS_K1_REGFILE_BRF
-#undef IS_K1_REGFILE_ARF
-#undef IS_K1_REGFILE_WRF
-#undef IS_K1_REGFILE_XRF
+#undef IS_K1_REGFILE_GPR
+#undef IS_K1_REGFILE_PGR
+#undef IS_K1_REGFILE_QGR
+#undef IS_K1_REGFILE_SFR
+#undef IS_K1_REGFILE_XCR
+#undef IS_K1_REGFILE_XBR
+#undef IS_K1_REGFILE_XVR
+#undef IS_K1_REGFILE_XWR
+#undef IS_K1_REGFILE_XMR
 #undef MATCH_K1_REGFILE
 }
 
@@ -2110,15 +2110,15 @@ insn_syntax(k1opc_t *op, char *buf, int buf_size)
     case RegClass_k1c_blockReg3M4:
       chars += snprintf(&buf[chars], buf_size - chars, "brf");
       break;
-    case RegClass_k1c_accelReg:
-    case RegClass_k1c_accelRegE:
-    case RegClass_k1c_accelRegO:
+    case RegClass_k1c_vectorReg:
+    case RegClass_k1c_vectorRegE:
+    case RegClass_k1c_vectorRegO:
     case RegClass_k1c_wideReg_0:
     case RegClass_k1c_wideReg_1:
-    case RegClass_k1c_extendReg_0:
-    case RegClass_k1c_extendReg_1:
-    case RegClass_k1c_extendReg_2:
-    case RegClass_k1c_extendReg_3:
+    case RegClass_k1c_matrixReg_0:
+    case RegClass_k1c_matrixReg_1:
+    case RegClass_k1c_matrixReg_2:
+    case RegClass_k1c_matrixReg_3:
       chars += snprintf(&buf[chars], buf_size - chars, "arf");
       break;
     case Immediate_k1c_pcrel17:
