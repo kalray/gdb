@@ -472,13 +472,13 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
               switch (type) {
 
                   case RegClass_k1c_singleReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_GRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_GPR,value)
                       break;
                   case RegClass_k1c_pairedReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_PRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_PGR,value)
                       break;
                   case RegClass_k1c_quadReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_QRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_QGR,value)
                       break;
                   case RegClass_k1c_systemReg:
                   case RegClass_k1c_aloneReg:
@@ -486,14 +486,14 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1c_onlygetReg:
                   case RegClass_k1c_onlysetReg:
                   case RegClass_k1c_onlyfxReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_SRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_SFR,value)
                       break;
                   case RegClass_k1c_coproReg:
                   case RegClass_k1c_coproReg0M4:
                   case RegClass_k1c_coproReg1M4:
                   case RegClass_k1c_coproReg2M4:
                   case RegClass_k1c_coproReg3M4:
-                      K1_PRINT_REG(K1_REGFILE_DEC_CRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_XCR,value)
                       break;
                   case RegClass_k1c_blockReg:
                   case RegClass_k1c_blockRegE:
@@ -502,24 +502,24 @@ int print_insn_k1 (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_k1c_blockReg1M4:
                   case RegClass_k1c_blockReg2M4:
                   case RegClass_k1c_blockReg3M4:
-                      K1_PRINT_REG(K1_REGFILE_DEC_BRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_XBR,value)
                       break;
-                  case RegClass_k1c_accelReg:
-                  case RegClass_k1c_accelRegE:
-                  case RegClass_k1c_accelRegO:
+                  case RegClass_k1c_vectorReg:
+                  case RegClass_k1c_vectorRegE:
+                  case RegClass_k1c_vectorRegO:
                   case RegClass_k1c_wideReg_0:
                   case RegClass_k1c_wideReg_1:
-                  case RegClass_k1c_extendReg_0:
-                  case RegClass_k1c_extendReg_1:
-                  case RegClass_k1c_extendReg_2:
-                  case RegClass_k1c_extendReg_3:
-                      K1_PRINT_REG(K1_REGFILE_DEC_ARF,value)
+                  case RegClass_k1c_matrixReg_0:
+                  case RegClass_k1c_matrixReg_1:
+                  case RegClass_k1c_matrixReg_2:
+                  case RegClass_k1c_matrixReg_3:
+                      K1_PRINT_REG(K1_REGFILE_DEC_XVR,value)
                       break;
                   case RegClass_k1c_wideReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_WRF,value)
+                      K1_PRINT_REG(K1_REGFILE_DEC_XWR,value)
                       break;
-                  case RegClass_k1c_extendReg:
-                      K1_PRINT_REG(K1_REGFILE_DEC_XRF,value)
+                  case RegClass_k1c_matrixReg:
+                      K1_PRINT_REG(K1_REGFILE_DEC_XMR,value)
                       break;
 
                   case Immediate_k1c_sysnumber:
