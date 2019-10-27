@@ -339,20 +339,19 @@ k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function, struct regc
 static void
 k1_store_return_value (struct gdbarch *gdbarch, struct type *type, struct regcache *regcache, const gdb_byte *buf)
 {
-  int len = TYPE_LENGTH (type);
-  int i = 0;
+  int i, len = TYPE_LENGTH (type);
   int r0_regnum = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
-  int sz = register_size (gdbarch, 0);
+  int sz = register_size (gdbarch, r0_regnum);
 
-  while (len > sz)
-  {
+  for (i = 0; len > sz; i++, len -= sz)
     regcache_raw_write (regcache, i + r0_regnum, buf + i * sz);
-    i++, len -= sz;
-  }
+
   if (len > 0)
   {
-    gdb_byte tmp[4] = {0};
-    memcpy (tmp, buf + i*sz, len);
+    gdb_byte tmp[sz];
+
+    memset (tmp, 0, sz);
+    memcpy (tmp, buf + i * sz, len);
     regcache_raw_write (regcache, i + r0_regnum, tmp);
   }
 }
@@ -360,21 +359,19 @@ k1_store_return_value (struct gdbarch *gdbarch, struct type *type, struct regcac
 static void
 k1_extract_return_value (struct gdbarch *gdbarch, struct type *type, struct regcache *regcache, gdb_byte *buf)
 {
-  int len = TYPE_LENGTH (type);
-  int i = 0;
+  int i, len = TYPE_LENGTH (type);
   int r0_regnum = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
-  int sz = register_size (gdbarch, 0);
+  int sz = register_size (gdbarch, r0_regnum);
 
-  while (len > sz)
-  {
+  for (i = 0; len > sz; i++, len -= sz)
     regcache_raw_read (regcache, i + r0_regnum, buf + i * sz);
-    i++, len -= sz;
-  }
+
   if (len > 0)
   {
-    gdb_byte tmp[4];
+    gdb_byte tmp[sz];
+
     regcache_raw_read (regcache, i + r0_regnum, tmp);
-    memcpy (buf + i*sz, tmp, len);
+    memcpy (buf + i * sz, tmp, len);
   }
 }
 
