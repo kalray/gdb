@@ -12,7 +12,7 @@ set ldscript ${testfile}.ld
 file mkdir ${objdir}/outputs/${subdir}
 
 if  { [gdb_compile "-nostdlib ${srcdir}/${subdir}/${srcfile1} ${srcdir}/${subdir}/${srcfile2} -T${srcdir}/${subdir}/${ldscript}" ${binfile} executable {debug}] != ""} {
-    set_board_info compiler "k1-mbr-gcc"
+    set_board_info compiler "k1-elf-gcc"
      untested asm-source.exp
      return -1
 }
