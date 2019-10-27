@@ -21,7 +21,7 @@ int
 main (void)
 {
   #ifdef K1_ISS
-  #ifdef __mppa_bare_runtime__
+  #ifndef __CLUSTER_OS__
   usleep (20000);
   #else
   sleep(1);
