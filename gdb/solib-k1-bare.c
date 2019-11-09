@@ -22,6 +22,7 @@ struct mppa_dl_debug_s
   uint64_t version;                 /* Protocol version */
   uint64_t head;                    /* Head of the shared object chain */
   uint64_t brk;                     /* Address of the breakpoint function */
+  uint64_t valid;                   /* The  shared object chain is valid */
 } __attribute__((packed));
 
 struct mppa_dl_debug_map_s
@@ -48,7 +49,9 @@ struct k1_bare_solib_info
 {
   CORE_ADDR brk;
   CORE_ADDR head_addr;
+  CORE_ADDR valid_addr;
   int no_name_shown;
+  struct so_list *last_head;
 };
 
 /* Per-program-space data key. */
@@ -107,6 +110,7 @@ k1_bare_solib_load_debug_info (void)
 
   info->brk = dl_debug.brk;
   info->head_addr = (CORE_ADDR) &((struct mppa_dl_debug_s *) mppa_dl_debug_addr)->head;
+  info->valid_addr = (CORE_ADDR) &((struct mppa_dl_debug_s *) mppa_dl_debug_addr)->valid;
 
   create_solib_event_breakpoint (target_gdbarch (), info->brk);
 }
@@ -144,6 +148,7 @@ k1_bare_solib_clear_solib (void)
 
   info->brk = 0;
   info->head_addr = 0;
+  info->valid_addr = 0;
 }
 
 /* Shared library startup support.  See documentation in solib-svr4.c */
@@ -160,25 +165,72 @@ k1_bare_solib_special_symbol_handling (void)
 {
 }
 
+static struct so_list *
+k1_bare_solib_dup_chain (struct so_list *head)
+{
+  struct so_list *dup_head = NULL, **p = &dup_head;
+
+  for (; head; head = head->next)
+  {
+    *p = xzalloc (sizeof (struct k1_bare_so_list));
+    memcpy (*p, head, sizeof (struct k1_bare_so_list));
+    (*p)->next = NULL;
+    p = &(*p)->next;
+  }
+
+  return dup_head;
+}
+
+static void
+k1_bare_solib_free_chain (struct so_list *head)
+{
+  struct so_list *p;
+
+  while (head)
+  {
+    p = head;
+    head = head->next;
+
+    k1_bare_solib_free_so (p);
+    xfree (p);
+  }
+}
+
 /* Build a list of currently loaded shared objects.  See solib-svr4.c */
 static struct so_list *
 k1_bare_solib_current_sos (void)
 {
   struct k1_bare_solib_info *info;
   struct mppa_dl_debug_map_s crt_debug_map;
-  uint64_t crt_debug_map_addr;
+  uint64_t crt_debug_map_addr, is_valid;
   char crt_file_name[SO_NAME_MAX_PATH_SIZE];
   struct k1_bare_so_list *sl_k1;
   struct so_list *head = NULL, **ptail = &head;
   const char *cluster_name = NULL;
 
   info = k1_bare_solib_get_info ();
-  if (!info->brk || !info->head_addr)
-    return NULL;
+  if (!info->brk || !info->head_addr || !info->valid_addr)
+  {
+    k1_bare_solib_load_debug_info ();
+    if (!info->brk || !info->head_addr || !info->valid_addr)
+      return NULL;
+  }
 
   if (ptid_equal (inferior_ptid, null_ptid))
     return NULL;
   cluster_name = get_cluster_name (find_inferior_pid (ptid_get_pid (inferior_ptid)));
+
+  if (target_read_memory (info->valid_addr, (gdb_byte*) &is_valid, sizeof (is_valid)))
+    return NULL;
+
+  if (!is_valid)
+  {
+    if (!info->last_head)
+      return NULL;
+
+    return k1_bare_solib_dup_chain (info->last_head);
+  }
+  k1_bare_solib_free_chain (info->last_head);
 
   if (target_read_memory (info->head_addr, (gdb_byte*) &crt_debug_map_addr, sizeof (crt_debug_map_addr)))
     return NULL;
@@ -214,7 +266,9 @@ k1_bare_solib_current_sos (void)
     ptail = &(*ptail)->next;
   }
 
-  return head;
+  info->last_head = head;
+
+  return k1_bare_solib_dup_chain (head);
 }
 
 /* Return 1 if PC lies in the dynamic symbol resolution code of the run time loader */
