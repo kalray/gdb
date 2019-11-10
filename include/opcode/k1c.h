@@ -105,6 +105,7 @@ extern int k1_k1c_dec_registers[];
 #define k1c_bcucode8_fld(x) (int)(((unsigned int)(x) >> 15) & 0x7)
 #define k1c_branchcond_fld(x) (int)(((unsigned int)(x) >> 23) & 0xf)
 #define k1c_byteshift_fld(x) (int)((unsigned int)(x) & 0x3f)
+#define k1c_cachelev_fld(x) (int)(((unsigned int)(x) >> 24) & 0x3)
 #define k1c_column_fld(x) (int)(((unsigned int)(x) >> 18) & 0x3)
 #define k1c_comparison_fld(x) (int)(((unsigned int)(x) >> 24) & 0xf)
 #define k1c_extend27_fld(x) (int)((unsigned int)(x) & 0x7ffffff)
