@@ -52,11 +52,14 @@ enum K1_ARCH k1_arch (void);
 void k1_look_for_insns (void);
 const char *k1c_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
 struct type *k1c_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
-int k1c_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum, struct reggroup *reggroup);
+int k1c_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
+				    struct reggroup *reggroup);
 enum register_status k1c_pseudo_register_read (struct gdbarch *gdbarch,
-  struct regcache *regcache, int regnum, gdb_byte *buf);
-void k1c_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
-    int regnum, const gdb_byte *buf);
+					       struct regcache *regcache,
+					       int regnum, gdb_byte *buf);
+void k1c_pseudo_register_write (struct gdbarch *gdbarch,
+				struct regcache *regcache, int regnum,
+				const gdb_byte *buf);
 int k1c_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
 int k1c_num_pseudos (struct gdbarch *);
 const char *k1c_pc_name (struct gdbarch *);
@@ -64,17 +67,22 @@ const char *k1c_sp_name (struct gdbarch *);
 const char *k1_dummy_register_name (struct gdbarch *gdbarch, int regno);
 struct type *k1_dummy_register_type (struct gdbarch *gdbarch, int regno);
 void k1_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
-  struct dwarf2_frame_state_reg *reg, struct frame_info *this_frame);
-enum return_value_convention k1_return_value (struct gdbarch *gdbarch,
-  struct value *func_type, struct type *type, struct regcache *regcache,
-  gdb_byte *readbuf, const gdb_byte *writebuf);
-struct frame_id k1_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame);
+			       struct dwarf2_frame_state_reg *reg,
+			       struct frame_info *this_frame);
+enum return_value_convention
+k1_return_value (struct gdbarch *gdbarch, struct value *func_type,
+		 struct type *type, struct regcache *regcache,
+		 gdb_byte *readbuf, const gdb_byte *writebuf);
+struct frame_id k1_dummy_id (struct gdbarch *gdbarch,
+			     struct frame_info *this_frame);
 CORE_ADDR k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-  struct regcache *regcache, CORE_ADDR bp_addr, int nargs, struct value **args,
-  CORE_ADDR sp, int struct_return, CORE_ADDR struct_addr);
+			      struct regcache *regcache, CORE_ADDR bp_addr,
+			      int nargs, struct value **args, CORE_ADDR sp,
+			      int struct_return, CORE_ADDR struct_addr);
 CORE_ADDR k1_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr);
 CORE_ADDR k1_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame);
-CORE_ADDR k1_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr);
+CORE_ADDR k1_adjust_breakpoint_address (struct gdbarch *gdbarch,
+					CORE_ADDR bpaddr);
 int k1_print_insn (bfd_vma pc, disassemble_info *di);
 int k1_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc);
 

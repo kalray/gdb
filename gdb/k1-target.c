@@ -49,8 +49,8 @@
 #define MAX(a, b) ((a < b) ? (b) : (a))
 #endif
 
-#define _STRINGIFY( s ) #s
-#define STRINGIFY( s ) _STRINGIFY(s)
+#define _STRINGIFY(s) #s
+#define STRINGIFY(s) _STRINGIFY (s)
 
 extern int remote_hw_breakpoint_limit;
 extern int remote_hw_watchpoint_limit;
@@ -66,15 +66,24 @@ static struct cmd_list_element *kalray_show_traps_cmdlist;
 static struct cmd_list_element *kalray_show_cmdlist;
 static const char *simulation_vehicles[] = {"k1-cluster", NULL};
 static const char *simulation_vehicle;
-static const char *sopts_cluster_stop_all[] = {"none", "jtag", "break_mask", NULL};
+static const char *sopts_cluster_stop_all[]
+  = {"none", "jtag", "break_mask", NULL};
 static const char *sopts_cluster_debug_ring[] = {"all", "current", NULL};
 static const char *sopt_cluster_debug_ring;
 static const char *sopt_cluster_stop_all;
-static const char *traps_name[] = {
-  "opcode", "misalign", "psys", "dsys",
-  "double_ecc", "single_ecc", "nomap", "protection",
-  "write_to_clean", "atomic_to_clean", "double_exception", "vsfr",
-  "pl_owner"};
+static const char *traps_name[] = {"opcode",
+				   "misalign",
+				   "psys",
+				   "dsys",
+				   "double_ecc",
+				   "single_ecc",
+				   "nomap",
+				   "protection",
+				   "write_to_clean",
+				   "atomic_to_clean",
+				   "double_exception",
+				   "vsfr",
+				   "pl_owner"};
 static int no_traps_name = sizeof (traps_name) / sizeof (traps_name[0]);
 char cjtag_over_iss = 'n';
 int opt_break_on_spawn = 0;
@@ -88,9 +97,10 @@ int opt_trap = 0;
 
 static const struct inferior_data *k1_attached_inf_data;
 
-static void k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, char **env, int from_tty);
+static void k1_target_create_inferior (struct target_ops *ops, char *exec_file,
+				       char *args, char **env, int from_tty);
 
-static struct inferior_data*
+static struct inferior_data *
 mppa_init_inferior_data (struct inferior *inf)
 {
   struct inferior_data *data = xcalloc (1, sizeof (struct inferior_data));
@@ -107,23 +117,25 @@ mppa_init_inferior_data (struct inferior *inf)
 
   osdata = get_osdata (NULL);
 
-  for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
-  {
-    unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-    const char *cluster = get_osdata_column (item, "cluster");
-    const char *unified = get_osdata_column (item, "unified");
+  for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item);
+       ix_items++)
+    {
+      unsigned long pid
+	= strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+      const char *cluster = get_osdata_column (item, "cluster");
+      const char *unified = get_osdata_column (item, "unified");
 
-    if (pid != inf->pid)
-      continue;
+      if (pid != inf->pid)
+	continue;
 
-    data->cluster = cluster;
-    data->unified = unified && !strcmp (unified, "yes");
-  }
+      data->cluster = cluster;
+      data->unified = unified && !strcmp (unified, "yes");
+    }
 
   return data;
 }
 
-struct inferior_data*
+struct inferior_data *
 mppa_inferior_data (struct inferior *inf)
 {
   struct inferior_data *data = inferior_data (inf, k1_attached_inf_data);
@@ -134,7 +146,8 @@ mppa_inferior_data (struct inferior *inf)
   return data;
 }
 
-const char *get_cluster_name (struct inferior *inf)
+const char *
+get_cluster_name (struct inferior *inf)
 {
   struct inferior_data *data = mppa_inferior_data (inf);
   if (!data || !data->cluster)
@@ -171,10 +184,10 @@ k1_target_mourn_inferior (struct target_ops *target)
   unpush_target (&k1_target_ops);
 
   if (server_pid)
-  {
-    kill (server_pid, 9);
-    server_pid = 0;
-  }
+    {
+      kill (server_pid, 9);
+      server_pid = 0;
+    }
 }
 
 static int
@@ -200,19 +213,20 @@ mppa_pid_to_str (struct target_ops *ops, ptid_t ptid)
   struct target_ops *remote_target = find_target_beneath (ops);
 
   if (ti)
-  {
-    const char *name = remote_target->to_thread_name (ops, ti);
-
-    if (in_info_thread)
     {
-      in_info_thread = 0;
-      return (char *) "Thread";
+      const char *name = remote_target->to_thread_name (ops, ti);
+
+      if (in_info_thread)
+	{
+	  in_info_thread = 0;
+	  return (char *) "Thread";
+	}
+
+      return (char *) name;
     }
 
-    return (char *) name;
-  }
-
-  return find_target_beneath (ops)->to_pid_to_str (find_target_beneath (ops), ptid);
+  return find_target_beneath (ops)->to_pid_to_str (find_target_beneath (ops),
+						   ptid);
 }
 
 static char *
@@ -234,18 +248,19 @@ k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 
   port = strchr (args, ':');
   if (port)
-  {
-    *port = 0;
-    port++;
-    host = args;
-  }
+    {
+      *port = 0;
+      port++;
+      host = args;
+    }
   else
-  {
-    port = args;
-    host = "";
-  }
+    {
+      port = args;
+      host = "";
+    }
 
-  tar_remote_cmd = alloca (strlen (host) + strlen (port) + strlen (tar_remote_str) + 4);
+  tar_remote_cmd
+    = alloca (strlen (host) + strlen (port) + strlen (tar_remote_str) + 4);
   parse_pid_to_attach (port);
 
   print_thread_events = 0;
@@ -262,10 +277,7 @@ k1_target_attach (struct target_ops *ops, char *args, int from_tty)
    */
   new_thread_observer = observer_attach_new_thread (k1_target_new_thread);
   async_disable_stdin ();
-  TRY
-  {
-    execute_command (tar_remote_cmd, 0);
-  }
+  TRY { execute_command (tar_remote_cmd, 0); }
 
   CATCH (ex, RETURN_MASK_ALL)
   {
@@ -291,7 +303,8 @@ k1_target_attach (struct target_ops *ops, char *args, int from_tty)
 }
 
 static void
-k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, char **env, int from_tty)
+k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args,
+			   char **env, int from_tty)
 {
   char set_non_stop_cmd[] = "set non-stop";
   char set_pagination_off_cmd[] = "set pagination off";
@@ -308,7 +321,8 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
   int saved_async_execution = !sync_execution;
 
   if (exec_file == NULL)
-    error (_ ("No executable file specified.\nUse the \"file\" or \"exec-file\" command."));
+    error (_ ("No executable file specified.\nUse the \"file\" or "
+	      "\"exec-file\" command."));
 
   k1_push_arch_stratum (NULL, 0);
   execute_command (set_non_stop_cmd, 0);
@@ -317,12 +331,14 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
   remote_hw_watchpoint_limit = 1;
 
   arg = argv_args;
-  while (arg && *arg++) nb_args++;
+  while (arg && *arg++)
+    nb_args++;
   if (nb_args && !*argv_args[nb_args - 1])
     nb_args--;
 
   arg = da_args;
-  while (arg && *arg++) nb_da_args++;
+  while (arg && *arg++)
+    nb_da_args++;
 
   stub_args = xmalloc ((nb_args + nb_da_args + 7) * sizeof (char *));
   stub_args[argidx++] = (char *) simulation_vehicle;
@@ -330,50 +346,49 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
   core = (elf_elfheader (exec_bfd)->e_flags & ELF_K1_CORE_MASK);
 
   if (nb_da_args && strlen (da_options))
-  {
-    arg = da_args;
-    while (*arg)
     {
-      if (strncmp (*arg, "--mcluster=", 11) == 0)
-        no_mcluster = 1;
-      if (strncmp (*arg, "--march=", 8) == 0)
-        no_march = 1;
+      arg = da_args;
+      while (*arg)
+	{
+	  if (strncmp (*arg, "--mcluster=", 11) == 0)
+	    no_mcluster = 1;
+	  if (strncmp (*arg, "--march=", 8) == 0)
+	    no_march = 1;
 
-
-      stub_args[argidx++] = *arg++;
+	  stub_args[argidx++] = *arg++;
+	}
     }
-  }
 
   if (!no_march)
-  {
-    switch (core)
     {
-      case ELF_K1_CORE_C_C:
-        stub_args[argidx++] = "--march=coolidge";
-        break;
-      default:
-        error (_ ("The K1 binary is compiled for an unknown core."));
+      switch (core)
+	{
+	case ELF_K1_CORE_C_C:
+	  stub_args[argidx++] = "--march=coolidge";
+	  break;
+	default:
+	  error (_ ("The K1 binary is compiled for an unknown core."));
+	}
     }
-  }
 
   stub_args[argidx++] = "--gdb";
   stub_args[argidx++] = "--";
   stub_args[argidx++] = exec_file;
   if (nb_args)
-  {
-    memcpy (stub_args + argidx, argv_args, nb_args * sizeof (char *));
-    argidx += nb_args;
-  }
+    {
+      memcpy (stub_args + argidx, argv_args, nb_args * sizeof (char *));
+      argidx += nb_args;
+    }
   stub_args[argidx++] = NULL;
 
   /* Check that we didn't overflow the allocation above. */
   gdb_assert (argidx <= nb_args + nb_da_args + 7);
 
   if (server_pid != 0)
-  {
-    kill (server_pid, 9);
-    waitpid (server_pid, NULL, 0);
-  }
+    {
+      kill (server_pid, 9);
+      waitpid (server_pid, NULL, 0);
+    }
 
   pipe (pipefds);
   server_pid = fork ();
@@ -382,50 +397,49 @@ k1_target_create_inferior (struct target_ops *ops, char *exec_file, char *args, 
     error ("Couldn't fork to launch the server.");
 
   if (server_pid == 0)
-  {
-    char path[PATH_MAX];
-    char tmp[PATH_MAX] = {0};
-    char *dir;
-
-    close (pipefds[0]);
-    dup2 (pipefds[1], 500);
-    close (pipefds[1]);
-
-    setsid ();
-
-    /* Child */
-    if (env)
-      environ = env;
-    execvp (simulation_vehicle, stub_args);
-
-    /* Not in PATH */
-    if (readlink ("/proc/self/exe", tmp, PATH_MAX) != -1)
     {
-      dir = dirname (tmp);
-      snprintf (path, PATH_MAX, "%s/%s", dir, simulation_vehicle);
-      execvp (path, stub_args);
+      char path[PATH_MAX];
+      char tmp[PATH_MAX] = {0};
+      char *dir;
+
+      close (pipefds[0]);
+      dup2 (pipefds[1], 500);
+      close (pipefds[1]);
+
+      setsid ();
+
+      /* Child */
+      if (env)
+	environ = env;
+      execvp (simulation_vehicle, stub_args);
+
+      /* Not in PATH */
+      if (readlink ("/proc/self/exe", tmp, PATH_MAX) != -1)
+	{
+	  dir = dirname (tmp);
+	  snprintf (path, PATH_MAX, "%s/%s", dir, simulation_vehicle);
+	  execvp (path, stub_args);
+	}
+
+      printf_unfiltered ("Could not find %s in you PATH\n", simulation_vehicle);
+      exit (1);
     }
-
-    printf_unfiltered ("Could not find %s in you PATH\n", simulation_vehicle);
-    exit (1);
-  }
   else
-  {
-    int port;
-    char cmd_port[10];
+    {
+      int port;
+      char cmd_port[10];
 
-    close (pipefds[1]);
-    read (pipefds[0], &port, sizeof (port));
-    close (pipefds[0]);
+      close (pipefds[1]);
+      read (pipefds[0], &port, sizeof (port));
+      close (pipefds[0]);
 
-    sprintf (cmd_port, "%i", port);
-    print_stopped_thread = 0;
-    k1_target_attach (ops, cmd_port, from_tty);
-    print_stopped_thread = 1;
-    if (saved_async_execution)
-      async_enable_stdin ();
-  }
-
+      sprintf (cmd_port, "%i", port);
+      print_stopped_thread = 0;
+      k1_target_attach (ops, cmd_port, from_tty);
+      print_stopped_thread = 1;
+      if (saved_async_execution)
+	async_enable_stdin ();
+    }
 }
 
 static int
@@ -449,15 +463,16 @@ mppa_mark_clusters_booted (struct inferior *inf, void *_ptid)
 }
 
 static void
-mppa_target_resume (struct target_ops *ops, ptid_t ptid, int step, enum gdb_signal siggnal)
+mppa_target_resume (struct target_ops *ops, ptid_t ptid, int step,
+		    enum gdb_signal siggnal)
 {
   struct target_ops *remote_target = find_target_beneath (ops);
 
   if (!after_first_resume)
-  {
-    after_first_resume = 1;
-    iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
-  }
+    {
+      after_first_resume = 1;
+      iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
+    }
 
   return remote_target->to_resume (remote_target, ptid, step, siggnal);
 }
@@ -467,16 +482,16 @@ k1_change_file (const char *file_path, const char *cluster_name)
 {
   struct stat st;
   if (stat (file_path, &st))
-  {
-    printf ("Cannot stat K1 executable file %s\n", file_path);
-    return;
-  }
+    {
+      printf ("Cannot stat K1 executable file %s\n", file_path);
+      return;
+    }
 
   if (st.st_mode & S_IFDIR)
-  {
-    printf ("%s is a directory, not a K1 executable!\n", file_path);
-    return;
-  }
+    {
+      printf ("%s is a directory, not a K1 executable!\n", file_path);
+      return;
+    }
 
   cjtag_over_iss = get_jtag_over_iss ();
   TRY
@@ -484,30 +499,33 @@ k1_change_file (const char *file_path, const char *cluster_name)
     exec_file_attach ((char *) file_path, 0);
     symbol_file_add_main (file_path, 0);
     if (cjtag_over_iss == 'i')
-    {
-      const char *rel_debug_handlers = "/" STRINGIFY (INSTALL_LIB) "/kalray-oce/k1c/k1c_node_debug_handlers.u";
-      char path[1024], *dn;
-      int sz = readlink ("/proc/self/exe", path, sizeof (path) - 1);
-      path[sz] = 0;
-      dn = dirname (path);
-      if (dn != path)
-        strcpy (path, dn);
-      dn = dirname (path);
-      if (dn != path)
-        sprintf (path, "%s%s", dn, rel_debug_handlers);
-      else
-        strcat (path, rel_debug_handlers);
-
-      if (access (path, R_OK))
-        fprintf (stderr, "Warning: cannot find the debug handlers at %s\n", path);
-      else
       {
-        if (!cluster_name)
-          cluster_name = "[unknown cluster name]";
-        fprintf (stderr, "Info: adding %s debug handler symbols from %s\n", cluster_name, path);
-        symbol_file_add (path, 0, NULL, OBJF_USERLOADED | OBJF_SHARED);
+	const char *rel_debug_handlers = "/" STRINGIFY (
+	  INSTALL_LIB) "/kalray-oce/k1c/k1c_node_debug_handlers.u";
+	char path[1024], *dn;
+	int sz = readlink ("/proc/self/exe", path, sizeof (path) - 1);
+	path[sz] = 0;
+	dn = dirname (path);
+	if (dn != path)
+	  strcpy (path, dn);
+	dn = dirname (path);
+	if (dn != path)
+	  sprintf (path, "%s%s", dn, rel_debug_handlers);
+	else
+	  strcat (path, rel_debug_handlers);
+
+	if (access (path, R_OK))
+	  fprintf (stderr, "Warning: cannot find the debug handlers at %s\n",
+		   path);
+	else
+	  {
+	    if (!cluster_name)
+	      cluster_name = "[unknown cluster name]";
+	    fprintf (stderr, "Info: adding %s debug handler symbols from %s\n",
+		     cluster_name, path);
+	    symbol_file_add (path, 0, NULL, OBJF_USERLOADED | OBJF_SHARED);
+	  }
       }
-    }
 
     k1_bare_solib_load_debug_info ();
   }
@@ -529,36 +547,40 @@ k1_new_inferiors_cb (void *arg)
   struct cleanup *old_chain;
 
   do
-  {
-    in_attach_mppa = 1;
-    old_chain = make_cleanup (null_cleanup, NULL);
-    new_attach_requested = 0;
-    found_new = 0;
-
-    save_current_space_and_thread ();
-
-    osdata = get_osdata (NULL);
-    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
     {
-      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+      in_attach_mppa = 1;
+      old_chain = make_cleanup (null_cleanup, NULL);
+      new_attach_requested = 0;
+      found_new = 0;
 
-      if (find_inferior_pid (pid))
-        continue;
+      save_current_space_and_thread ();
 
-      found_new = 1;
-      inf = add_inferior_with_spaces ();
-      set_current_inferior (inf);
-      switch_to_thread (null_ptid);
-      set_current_program_space (inf->pspace);
-      sprintf (attach_cmd, "attach %li&", pid);
-      execute_command (attach_cmd, 0);
-      inf->control.stop_soon = NO_STOP_QUIETLY;
-      inf->removable = 1;
+      osdata = get_osdata (NULL);
+      for (ix_items = 0;
+	   VEC_iterate (osdata_item_s, osdata->items, ix_items, item);
+	   ix_items++)
+	{
+	  unsigned long pid
+	    = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+
+	  if (find_inferior_pid (pid))
+	    continue;
+
+	  found_new = 1;
+	  inf = add_inferior_with_spaces ();
+	  set_current_inferior (inf);
+	  switch_to_thread (null_ptid);
+	  set_current_program_space (inf->pspace);
+	  sprintf (attach_cmd, "attach %li&", pid);
+	  execute_command (attach_cmd, 0);
+	  inf->control.stop_soon = NO_STOP_QUIETLY;
+	  inf->removable = 1;
+	}
+
+      do_cleanups (old_chain);
+      in_attach_mppa = 0;
     }
-
-    do_cleanups (old_chain);
-    in_attach_mppa = 0;
-  } while (new_attach_requested || found_new);
+  while (new_attach_requested || found_new);
 }
 
 void custom_notification_cb (char *arg);
@@ -574,7 +596,8 @@ custom_notification_cb (char *arg)
 }
 
 static ptid_t
-k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus *status, int options)
+k1_target_wait (struct target_ops *target, ptid_t ptid,
+		struct target_waitstatus *status, int options)
 {
   struct target_ops *remote_target = find_target_beneath (target);
   ptid_t res;
@@ -585,52 +608,56 @@ k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus
 
   inferior = find_inferior_pid (ptid_get_pid (res));
 
-  if (inferior && find_thread_ptid (res) && !mppa_inferior_data (inferior)->booted)
-  {
-    char *endptr;
-    struct osdata *osdata;
-    struct osdata_item *last;
-    struct osdata_item *item;
-
-    osdata = get_osdata (NULL);
-
-    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
+  if (inferior && find_thread_ptid (res)
+      && !mppa_inferior_data (inferior)->booted)
     {
-      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-      const char *file = get_osdata_column (item, "command");
-      const char *cluster = get_osdata_column (item, "cluster");
-      struct inferior_data *data;
+      char *endptr;
+      struct osdata *osdata;
+      struct osdata_item *last;
+      struct osdata_item *item;
 
-      if (pid != ptid_get_pid (res))
-        continue;
+      osdata = get_osdata (NULL);
 
-      data = mppa_inferior_data (inferior);
-      data->booted = 1;
+      for (ix_items = 0;
+	   VEC_iterate (osdata_item_s, osdata->items, ix_items, item);
+	   ix_items++)
+	{
+	  unsigned long pid
+	    = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+	  const char *file = get_osdata_column (item, "command");
+	  const char *cluster = get_osdata_column (item, "cluster");
+	  struct inferior_data *data;
 
-      if (file && file[0] != 0 && !data->sym_file_loaded)
-      {
-        ptid_t save_ptid = inferior_ptid;
-        data->sym_file_loaded = 1;
-        switch_to_thread (res);
-        k1_change_file (file, data->cluster);
-        switch_to_thread (save_ptid);
-      }
+	  if (pid != ptid_get_pid (res))
+	    continue;
 
-      if (!after_first_resume)
-        status->value.sig = GDB_SIGNAL_TRAP;
-      else
-      {
-        if (data->cluster_break_on_spawn)
-        {
-          status->kind = TARGET_WAITKIND_STOPPED;
-          status->value.sig = GDB_SIGNAL_TRAP;
-        }
-        else
-          status->kind = TARGET_WAITKIND_SPURIOUS;
-      }
-      break;
+	  data = mppa_inferior_data (inferior);
+	  data->booted = 1;
+
+	  if (file && file[0] != 0 && !data->sym_file_loaded)
+	    {
+	      ptid_t save_ptid = inferior_ptid;
+	      data->sym_file_loaded = 1;
+	      switch_to_thread (res);
+	      k1_change_file (file, data->cluster);
+	      switch_to_thread (save_ptid);
+	    }
+
+	  if (!after_first_resume)
+	    status->value.sig = GDB_SIGNAL_TRAP;
+	  else
+	    {
+	      if (data->cluster_break_on_spawn)
+		{
+		  status->kind = TARGET_WAITKIND_STOPPED;
+		  status->value.sig = GDB_SIGNAL_TRAP;
+		}
+	      else
+		status->kind = TARGET_WAITKIND_SPURIOUS;
+	    }
+	  break;
+	}
     }
-  }
 
   return res;
 }
@@ -638,7 +665,8 @@ k1_target_wait (struct target_ops *target, ptid_t ptid, struct target_waitstatus
 static void
 mppa_attach (struct target_ops *ops, const char *args, int from_tty)
 {
-  struct target_ops *remote_target, *k1_ops = find_target_beneath (&current_target);
+  struct target_ops *remote_target,
+    *k1_ops = find_target_beneath (&current_target);
 
   if (k1_ops != &k1_target_ops)
     error ("Don't know how to attach.  Try \"help target\".");
@@ -654,12 +682,15 @@ k1_target_can_run (struct target_ops *ops)
 }
 
 static enum target_xfer_status
-k1_target_xfer_partial (struct target_ops *ops, enum target_object object, const char *annex, gdb_byte *readbuf,
-  const gdb_byte *writebuf, ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+k1_target_xfer_partial (struct target_ops *ops, enum target_object object,
+			const char *annex, gdb_byte *readbuf,
+			const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
+			ULONGEST *xfered_len)
 {
   if (!ops->beneath)
-    error (_("Don't know how to xfer.  Try \"help target\"."));
-  return ops->beneath->to_xfer_partial (ops->beneath, object, annex, readbuf, writebuf, offset, len, xfered_len);
+    error (_ ("Don't know how to xfer.  Try \"help target\"."));
+  return ops->beneath->to_xfer_partial (ops->beneath, object, annex, readbuf,
+					writebuf, offset, len, xfered_len);
 }
 
 static int
@@ -675,7 +706,8 @@ k1_target_can_async (struct target_ops *ops)
 }
 
 static void
-k1_fetch_registers (struct target_ops *target, struct regcache *regcache, int regnum)
+k1_fetch_registers (struct target_ops *target, struct regcache *regcache,
+		    int regnum)
 {
   // don't use current_inferior () & current_inferior_
   // our caller (regcache_raw_read) changes only inferior_ptid
@@ -712,7 +744,8 @@ show_kalray_cmd (char *args, int from_tty)
 }
 
 static void
-set_cluster_break_on_spawn (char *args, int from_tty, struct cmd_list_element *c)
+set_cluster_break_on_spawn (char *args, int from_tty,
+			    struct cmd_list_element *c)
 {
   struct inferior *inf;
   struct inferior_data *data;
@@ -727,18 +760,21 @@ set_cluster_break_on_spawn (char *args, int from_tty, struct cmd_list_element *c
 }
 
 static void
-show_cluster_break_on_spawn (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+show_cluster_break_on_spawn (struct ui_file *file, int from_tty,
+			     struct cmd_list_element *c, const char *value)
 {
   struct inferior_data *data;
 
   if (ptid_equal (inferior_ptid, null_ptid))
-  {
-    printf (_ ("Cannot show break on reset without a live selected thread.\n"));
-    return;
-  }
+    {
+      printf (
+	_ ("Cannot show break on reset without a live selected thread.\n"));
+      return;
+    }
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
-  fprintf_filtered (file, "The cluster break on reset is %d.\n", data->cluster_break_on_spawn);
+  fprintf_filtered (file, "The cluster break on reset is %d.\n",
+		    data->cluster_break_on_spawn);
 }
 
 static int
@@ -762,7 +798,7 @@ set_intercept_trap (char *args, int from_tty, struct cmd_list_element *c)
 
   trap_idx = get_trap_index (c->name);
   if (trap_idx < 0)
-    error (_("Invalid trap name %s."), c->name);
+    error (_ ("Invalid trap name %s."), c->name);
 
   if (ptid_equal (inferior_ptid, null_ptid))
     error (_ ("Cannot set intercept trap without a selected thread."));
@@ -776,24 +812,26 @@ set_intercept_trap (char *args, int from_tty, struct cmd_list_element *c)
 }
 
 static void
-show_intercept_trap (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+show_intercept_trap (struct ui_file *file, int from_tty,
+		     struct cmd_list_element *c, const char *value)
 {
   struct inferior_data *data;
   int trap_idx;
 
   trap_idx = get_trap_index (c->name);
   if (trap_idx < 0)
-    error (_("Invalid trap name %s."), c->name);
+    error (_ ("Invalid trap name %s."), c->name);
 
   if (ptid_equal (inferior_ptid, null_ptid))
-  {
-    printf (_ ("Cannot show intercept trap without a live selected thread.\n"));
-    return;
-  }
+    {
+      printf (
+	_ ("Cannot show intercept trap without a live selected thread.\n"));
+      return;
+    }
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   fprintf_filtered (file, "Intercept %s trap is %s.\n", c->name,
-    ((data->intercept_trap >> trap_idx) & 1) ? "on" : "off");
+		    ((data->intercept_trap >> trap_idx) & 1) ? "on" : "off");
 }
 
 static void
@@ -815,18 +853,21 @@ set_intercept_trap_mask (char *args, int from_tty, struct cmd_list_element *c)
 }
 
 static void
-show_intercept_trap_mask (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+show_intercept_trap_mask (struct ui_file *file, int from_tty,
+			  struct cmd_list_element *c, const char *value)
 {
   struct inferior_data *data;
 
   if (ptid_equal (inferior_ptid, null_ptid))
-  {
-    printf (_ ("Cannot show intercept trap without a live selected thread.\n"));
-    return;
-  }
+    {
+      printf (
+	_ ("Cannot show intercept trap without a live selected thread.\n"));
+      return;
+    }
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
-  fprintf_filtered (file, "Intercept trap mask is 0x%04x.\n", data->intercept_trap);
+  fprintf_filtered (file, "Intercept trap mask is 0x%04x.\n",
+		    data->intercept_trap);
 }
 
 static int
@@ -850,23 +891,27 @@ set_cluster_stop_all (char *args, int from_tty, struct cmd_list_element *c)
 
   inf = current_inferior ();
   data = mppa_inferior_data (inf);
-  data->cluster_stop_all = str_idx_in_opts (sopt_cluster_stop_all, sopts_cluster_stop_all);
+  data->cluster_stop_all
+    = str_idx_in_opts (sopt_cluster_stop_all, sopts_cluster_stop_all);
   send_cluster_stop_all (inf, data->cluster_stop_all);
 }
 
 static void
-show_cluster_stop_all (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+show_cluster_stop_all (struct ui_file *file, int from_tty,
+		       struct cmd_list_element *c, const char *value)
 {
   struct inferior_data *data;
 
   if (ptid_equal (inferior_ptid, null_ptid))
-  {
-    printf (_ ("Cannot show stop all cluster CPUs without a live selected thread.\n"));
-    return;
-  }
+    {
+      printf (_ (
+	"Cannot show stop all cluster CPUs without a live selected thread.\n"));
+      return;
+    }
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
-  fprintf_filtered (file, "Stop all cluster CPUs is %s.\n", sopts_cluster_stop_all[data->cluster_stop_all]);
+  fprintf_filtered (file, "Stop all cluster CPUs is %s.\n",
+		    sopts_cluster_stop_all[data->cluster_stop_all]);
 }
 
 static void
@@ -880,23 +925,27 @@ set_cluster_debug_ring (char *args, int from_tty, struct cmd_list_element *c)
 
   inf = current_inferior ();
   data = mppa_inferior_data (inf);
-  data->cluster_debug_ring = str_idx_in_opts (sopt_cluster_debug_ring, sopts_cluster_debug_ring);
+  data->cluster_debug_ring
+    = str_idx_in_opts (sopt_cluster_debug_ring, sopts_cluster_debug_ring);
   send_cluster_debug_ring (inf, data->cluster_debug_ring);
 }
 
 static void
-show_cluster_debug_ring (struct ui_file *file, int from_tty, struct cmd_list_element *c, const char *value)
+show_cluster_debug_ring (struct ui_file *file, int from_tty,
+			 struct cmd_list_element *c, const char *value)
 {
   struct inferior_data *data;
 
   if (ptid_equal (inferior_ptid, null_ptid))
-  {
-    printf (_ ("Cannot show cluster debug ring without a selected thread.\n"));
-    return;
-  }
+    {
+      printf (
+	_ ("Cannot show cluster debug ring without a selected thread.\n"));
+      return;
+    }
 
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
-  fprintf_filtered (file, "Cluster debug ring is %s.\n", sopts_cluster_debug_ring[data->cluster_debug_ring]);
+  fprintf_filtered (file, "Cluster debug ring is %s.\n",
+		    sopts_cluster_debug_ring[data->cluster_debug_ring]);
 }
 
 static void
@@ -936,76 +985,82 @@ attach_mppa_command (char *args, int from_tty)
   cur_pid = cur_inf->pid;
 
   for (new_attached = 1; new_attached;)
-  {
-    new_attached = 0;
-    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
     {
-      char *endptr;
-      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-      struct inferior *inf;
-      char attach_cmd[25];
+      new_attached = 0;
+      for (ix_items = 0;
+	   VEC_iterate (osdata_item_s, osdata->items, ix_items, item);
+	   ix_items++)
+	{
+	  char *endptr;
+	  unsigned long pid
+	    = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+	  struct inferior *inf;
+	  char attach_cmd[25];
 
-      if (pid == cur_inf->pid || find_inferior_pid (pid))
-        continue;
+	  if (pid == cur_inf->pid || find_inferior_pid (pid))
+	    continue;
 
-      inf = add_inferior_with_spaces ();
-      set_current_inferior (inf);
-      switch_to_thread (null_ptid);
-      set_current_program_space (inf->pspace);
-      sprintf (attach_cmd, "attach %li&", pid);
-      execute_command (attach_cmd, 0);
-      inf->control.stop_soon = NO_STOP_QUIETLY;
-      inf->removable = 1;
+	  inf = add_inferior_with_spaces ();
+	  set_current_inferior (inf);
+	  switch_to_thread (null_ptid);
+	  set_current_program_space (inf->pspace);
+	  sprintf (attach_cmd, "attach %li&", pid);
+	  execute_command (attach_cmd, 0);
+	  inf->control.stop_soon = NO_STOP_QUIETLY;
+	  inf->removable = 1;
+	}
+
+      bstopped = 0;
+      bcur_inf_stopped = 0;
+      osdata = get_osdata (NULL);
+
+      for (ix_items = 0;
+	   VEC_iterate (osdata_item_s, osdata->items, ix_items, item);
+	   ix_items++)
+	{
+	  char *endptr;
+	  struct thread_info *live_th;
+	  unsigned long pid
+	    = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
+	  const char *file = get_osdata_column (item, "command");
+	  const char *running = get_osdata_column (item, "running");
+
+	  if (strcmp (running, "yes"))
+	    continue;
+
+	  if (!find_inferior_pid (pid)) // new cluster not attached yet
+	    {
+	      new_attached = 1;
+	      continue;
+	    }
+
+	  live_th = any_live_thread_of_process (pid);
+	  if (live_th && !live_th->stop_requested)
+	    set_stop_requested (live_th->ptid, 1);
+
+	  if (pid == cur_pid)
+	    bcur_inf_stopped = 1;
+
+	  if (!bstopped)
+	    {
+	      bstopped = 1;
+	      stopped_ptid = any_live_thread_of_process (pid)->ptid;
+	    }
+
+	  if (file && file[0])
+	    {
+	      struct inferior_data *data;
+
+	      switch_to_thread (any_live_thread_of_process (pid)->ptid);
+	      data = mppa_inferior_data (current_inferior ());
+	      if (!data->sym_file_loaded)
+		{
+		  data->sym_file_loaded = 1;
+		  k1_change_file (file, data->cluster);
+		}
+	    }
+	}
     }
-
-    bstopped = 0;
-    bcur_inf_stopped = 0;
-    osdata = get_osdata (NULL);
-
-    for (ix_items = 0; VEC_iterate (osdata_item_s, osdata->items, ix_items, item); ix_items++)
-    {
-      char *endptr;
-      struct thread_info *live_th;
-      unsigned long pid = strtoul (get_osdata_column (item, "pid"), &endptr, 10);
-      const char *file = get_osdata_column (item, "command");
-      const char *running = get_osdata_column (item, "running");
-
-      if (strcmp (running, "yes"))
-        continue;
-
-      if (!find_inferior_pid (pid)) // new cluster not attached yet
-      {
-        new_attached = 1;
-        continue;
-      }
-
-      live_th = any_live_thread_of_process (pid);
-      if (live_th && !live_th->stop_requested)
-        set_stop_requested (live_th->ptid, 1);
-
-      if (pid == cur_pid)
-        bcur_inf_stopped = 1;
-
-      if (!bstopped)
-      {
-        bstopped = 1;
-        stopped_ptid = any_live_thread_of_process (pid)->ptid;
-      }
-
-      if (file && file[0])
-      {
-        struct inferior_data *data;
-
-        switch_to_thread (any_live_thread_of_process (pid)->ptid);
-        data = mppa_inferior_data (current_inferior ());
-        if (!data->sym_file_loaded)
-        {
-          data->sym_file_loaded = 1;
-          k1_change_file (file, data->cluster);
-        }
-      }
-    }
-  }
   if (!bstopped)
     async_enable_stdin ();
 
@@ -1065,8 +1120,7 @@ _initialize__k1_target (void)
 
   k1_target_ops.to_shortname = "mppa";
   k1_target_ops.to_longname = "Kalray MPPA connection";
-  k1_target_ops.to_doc =
-    "Connect to a Kalray MPPA execution vehicle.";
+  k1_target_ops.to_doc = "Connect to a Kalray MPPA execution vehicle.";
   k1_target_ops.to_stratum = arch_stratum;
 
   k1_target_ops.to_open = k1_target_open;
@@ -1098,76 +1152,109 @@ _initialize__k1_target (void)
   print_stopped_thread = 1;
 
   add_prefix_cmd ("kalray", class_maintenance, set_kalray_cmd,
-    _("Kalray specific variables\n            Configure various Kalray specific variables."),
-    &kalray_set_cmdlist, "set kalray ", 0 /* allow-unknown */, &setlist);
+		  _ ("Kalray specific variables\n            Configure various "
+		     "Kalray specific variables."),
+		  &kalray_set_cmdlist, "set kalray ", 0 /* allow-unknown */,
+		  &setlist);
 
   add_prefix_cmd ("kalray", class_maintenance, show_kalray_cmd,
-    _("Kalray specific variables\n            Configure various Kalray specific variables."),
-    &kalray_show_cmdlist, "show kalray ", 0 /* allow-unknown */, &showlist);
+		  _ ("Kalray specific variables\n            Configure various "
+		     "Kalray specific variables."),
+		  &kalray_show_cmdlist, "show kalray ", 0 /* allow-unknown */,
+		  &showlist);
 
-  add_setshow_string_noescape_cmd ("debug_agent_options", class_maintenance,
-    &da_options, _ ("Set the options passed to the debug agent."), _("Show the options passed to the debug agent."),
-    NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
+  add_setshow_string_noescape_cmd (
+    "debug_agent_options", class_maintenance, &da_options,
+    _ ("Set the options passed to the debug agent."),
+    _ ("Show the options passed to the debug agent."), NULL, NULL, NULL,
+    &kalray_set_cmdlist, &kalray_show_cmdlist);
 
-  add_setshow_enum_cmd ("simulation_vehicle", class_maintenance, simulation_vehicles, &simulation_vehicle,
-    _("Set the simulation vehicle to use for execution."), _("Show the simulation vehicle to use for execution."),
-    NULL, NULL, NULL, &kalray_set_cmdlist, &kalray_show_cmdlist);
+  add_setshow_enum_cmd ("simulation_vehicle", class_maintenance,
+			simulation_vehicles, &simulation_vehicle,
+			_ ("Set the simulation vehicle to use for execution."),
+			_ ("Show the simulation vehicle to use for execution."),
+			NULL, NULL, NULL, &kalray_set_cmdlist,
+			&kalray_show_cmdlist);
 
-  add_setshow_boolean_cmd ("break_on_spawn", class_maintenance, &opt_break_on_spawn,
-    _("Set break on reset."), _("Show break on reset."),
-    NULL, set_cluster_break_on_spawn, show_cluster_break_on_spawn, &kalray_set_cmdlist, &kalray_show_cmdlist);
+  add_setshow_boolean_cmd ("break_on_spawn", class_maintenance,
+			   &opt_break_on_spawn, _ ("Set break on reset."),
+			   _ ("Show break on reset."), NULL,
+			   set_cluster_break_on_spawn,
+			   show_cluster_break_on_spawn, &kalray_set_cmdlist,
+			   &kalray_show_cmdlist);
 
   add_com ("attach-mppa", class_run, attach_mppa_command,
-    _("Connect to a MPPA TLM platform and start debugging it.\nUsage is `attach-mppa PORT'."));
+	   _ ("Connect to a MPPA TLM platform and start debugging it.\nUsage "
+	      "is `attach-mppa PORT'."));
 
   add_com ("mppa-cpu-status", class_run, mppa_cpu_status_command,
-    _("Show information of the current processor."));
+	   _ ("Show information of the current processor."));
 
-  add_com ("mppa-cpu-debug-sfr-regs", class_run, mppa_cpu_debug_sfr_regs_command,
-    _("Read the current processor debug SFR registers from the magic bus"));
+  add_com (
+    "mppa-cpu-debug-sfr-regs", class_run, mppa_cpu_debug_sfr_regs_command,
+    _ ("Read the current processor debug SFR registers from the magic bus"));
 
-  add_setshow_enum_cmd ("stop-all", class_maintenance, sopts_cluster_stop_all, &sopt_cluster_stop_all,
-    _("Set stop all cluster CPUs"), _("Show stop all cluster CPUs"),
-    NULL, set_cluster_stop_all, show_cluster_stop_all, &kalray_set_cmdlist, &kalray_show_cmdlist);
+  add_setshow_enum_cmd ("stop-all", class_maintenance, sopts_cluster_stop_all,
+			&sopt_cluster_stop_all, _ ("Set stop all cluster CPUs"),
+			_ ("Show stop all cluster CPUs"), NULL,
+			set_cluster_stop_all, show_cluster_stop_all,
+			&kalray_set_cmdlist, &kalray_show_cmdlist);
 
-  add_setshow_enum_cmd ("cluster-debug-ring", class_maintenance, sopts_cluster_debug_ring, &sopt_cluster_debug_ring,
-    _("Set cluster debug ring"), _("Show cluster debug ring"),
-    NULL, set_cluster_debug_ring, show_cluster_debug_ring, &kalray_set_cmdlist, &kalray_show_cmdlist);
+  add_setshow_enum_cmd ("cluster-debug-ring", class_maintenance,
+			sopts_cluster_debug_ring, &sopt_cluster_debug_ring,
+			_ ("Set cluster debug ring"),
+			_ ("Show cluster debug ring"), NULL,
+			set_cluster_debug_ring, show_cluster_debug_ring,
+			&kalray_set_cmdlist, &kalray_show_cmdlist);
 
-  add_prefix_cmd ("intercept-trap", class_maintenance, set_kalray_traps_cmd,
-    _("Configure what traps should be intercepted for the current cluster."),
-    &kalray_set_traps_cmdlist, "set kalray intercept-traps ", 0 /* allow-unknown */, &kalray_set_cmdlist);
+  add_prefix_cmd (
+    "intercept-trap", class_maintenance, set_kalray_traps_cmd,
+    _ ("Configure what traps should be intercepted for the current cluster."),
+    &kalray_set_traps_cmdlist, "set kalray intercept-traps ",
+    0 /* allow-unknown */, &kalray_set_cmdlist);
 
-  add_prefix_cmd ("intercept-trap", class_maintenance, show_kalray_traps_cmd,
-    _("Configure what traps should be intercepted for the current cluster."),
-    &kalray_show_traps_cmdlist, "show kalray intercept-traps ", 0 /* allow-unknown */, &kalray_show_cmdlist);
+  add_prefix_cmd (
+    "intercept-trap", class_maintenance, show_kalray_traps_cmd,
+    _ ("Configure what traps should be intercepted for the current cluster."),
+    &kalray_show_traps_cmdlist, "show kalray intercept-traps ",
+    0 /* allow-unknown */, &kalray_show_cmdlist);
 
   for (i = 0; i < no_traps_name; i++)
-  {
-    char trap_set_doc[100], trap_show_doc[100];
+    {
+      char trap_set_doc[100], trap_show_doc[100];
 
-    sprintf (trap_set_doc, _("Set intercept %s trap."), traps_name[i]);
-    sprintf (trap_show_doc, _("Show intercept %s trap."), traps_name[i]);
-    add_setshow_boolean_cmd (traps_name[i], class_maintenance, &opt_trap,
-      trap_set_doc, trap_show_doc, NULL,
-      set_intercept_trap, show_intercept_trap, &kalray_set_traps_cmdlist, &kalray_show_traps_cmdlist);
-  }
-  add_setshow_uinteger_cmd ("mask", class_maintenance, (unsigned int *) &opt_trap,
-    _("Set intercept traps mask."), _("Show intercept traps mask."), NULL,
-    set_intercept_trap_mask, show_intercept_trap_mask,
-     &kalray_set_traps_cmdlist, &kalray_show_traps_cmdlist);
+      sprintf (trap_set_doc, _ ("Set intercept %s trap."), traps_name[i]);
+      sprintf (trap_show_doc, _ ("Show intercept %s trap."), traps_name[i]);
+      add_setshow_boolean_cmd (traps_name[i], class_maintenance, &opt_trap,
+			       trap_set_doc, trap_show_doc, NULL,
+			       set_intercept_trap, show_intercept_trap,
+			       &kalray_set_traps_cmdlist,
+			       &kalray_show_traps_cmdlist);
+    }
+  add_setshow_uinteger_cmd ("mask", class_maintenance,
+			    (unsigned int *) &opt_trap,
+			    _ ("Set intercept traps mask."),
+			    _ ("Show intercept traps mask."), NULL,
+			    set_intercept_trap_mask, show_intercept_trap_mask,
+			    &kalray_set_traps_cmdlist,
+			    &kalray_show_traps_cmdlist);
 
-  add_com ("run-mppa", class_run, run_mppa_command, _ ("Connect to a MPPA TLM platform and start debugging it."));
+  add_com ("run-mppa", class_run, run_mppa_command,
+	   _ ("Connect to a MPPA TLM platform and start debugging it."));
 
   add_com ("mppa-dump-tlb", class_run, mppa_dump_tlb_command,
-    _("Dump TLB. Syntax:\nmppa-dump-tlb [--jtlb] [--ltlb] [--valid-only] [--global] [--asn=<asn>]\nIf none of "
-    "--jtlb and --ltlb are given, the both are dumped."));
+	   _ ("Dump TLB. Syntax:\nmppa-dump-tlb [--jtlb] [--ltlb] "
+	      "[--valid-only] [--global] [--asn=<asn>]\nIf none of "
+	      "--jtlb and --ltlb are given, the both are dumped."));
 
   add_com ("mppa-lookup-addr", class_run, mppa_lookup_addr_command,
-    _("Translate virtual address to/from physical address using the TLB entries. "
-    "Syntax:\nmppa-lookup-addr --phys=<addr>|--virt=<addr> [--asn=<asn>]\nIf --asn is not specified, "
-    "display all matching entries."));
+	   _ ("Translate virtual address to/from physical address using the "
+	      "TLB entries. "
+	      "Syntax:\nmppa-lookup-addr --phys=<addr>|--virt=<addr> "
+	      "[--asn=<asn>]\nIf --asn is not specified, "
+	      "display all matching entries."));
 
   observer_attach_inferior_created (k1_push_arch_stratum);
-  k1_attached_inf_data = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
+  k1_attached_inf_data
+    = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
 }

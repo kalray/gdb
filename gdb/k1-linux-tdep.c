@@ -55,7 +55,6 @@ k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
   return (gdb_byte *) &breakpoint_linux;
 }
 
-
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -102,70 +101,70 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Get the k1 target description from INFO.  */
   tdesc = info.target_desc;
   if (tdesc_has_registers (tdesc))
-  {
-    set_gdbarch_num_regs (gdbarch, 0);
-    tdesc_data = tdesc_data_alloc ();
-    tdesc_use_registers (gdbarch, tdesc, tdesc_data);
-
-    for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
     {
-      if (strcmp (tdesc_register_name (gdbarch, i), k1_lc_name) == 0)
-        has_lc = i;
-      else if (strcmp (tdesc_register_name (gdbarch, i), k1_le_name) == 0)
-        has_le = i;
-      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ls_name) == 0)
-        has_ls = i;
-      else if (strcmp (tdesc_register_name (gdbarch, i), k1_ra_name) == 0)
-        has_ra = i;
-      if (strcmp (tdesc_register_name (gdbarch, i), pc_name) == 0)
-        has_pc = i;
-      else if (strcmp (tdesc_register_name (gdbarch, i), sp_name) == 0)
-        has_sp = i;
-      else if (strcmp (tdesc_register_name (gdbarch, i), k1_local_name) == 0)
-        has_local = i;
+      set_gdbarch_num_regs (gdbarch, 0);
+      tdesc_data = tdesc_data_alloc ();
+      tdesc_use_registers (gdbarch, tdesc, tdesc_data);
+
+      for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
+	{
+	  if (strcmp (tdesc_register_name (gdbarch, i), k1_lc_name) == 0)
+	    has_lc = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), k1_le_name) == 0)
+	    has_le = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), k1_ls_name) == 0)
+	    has_ls = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), k1_ra_name) == 0)
+	    has_ra = i;
+	  if (strcmp (tdesc_register_name (gdbarch, i), pc_name) == 0)
+	    has_pc = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), sp_name) == 0)
+	    has_sp = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), k1_local_name)
+		   == 0)
+	    has_local = i;
+	}
+
+      if (has_lc < 0)
+	error ("There's no '%s' register!", k1_lc_name);
+      if (has_le < 0)
+	error ("There's no '%s' register!", k1_le_name);
+      if (has_ls < 0)
+	error ("There's no '%s' register!", k1_ls_name);
+      if (has_ra < 0)
+	error ("There's no '%s' register!", k1_ra_name);
+      if (has_pc < 0)
+	error ("There's no '%s' register!", pc_name);
+      if (has_sp < 0)
+	error ("There's no '%s' register!", sp_name);
+      if (has_local < 0)
+	error ("There's no '%s' register!", k1_local_name);
+
+      tdep->lc_regnum = has_lc;
+      tdep->le_regnum = has_le;
+      tdep->ls_regnum = has_ls;
+      tdep->ra_regnum = has_ra;
+      tdep->local_regnum = has_local;
+      set_gdbarch_pc_regnum (gdbarch, has_pc);
+      set_gdbarch_sp_regnum (gdbarch, has_sp);
+
+      tdep->uint256 = arch_integer_type (gdbarch, 256, 0, "uint256_t");
+      tdep->uint512 = arch_integer_type (gdbarch, 512, 0, "uint512_t");
+      tdep->uint1024 = arch_integer_type (gdbarch, 1024, 0, "uint1024_t");
     }
-
-    if (has_lc < 0)
-      error ("There's no '%s' register!", k1_lc_name);
-    if (has_le < 0)
-      error ("There's no '%s' register!", k1_le_name);
-    if (has_ls < 0)
-      error ("There's no '%s' register!", k1_ls_name);
-    if (has_ra < 0)
-      error ("There's no '%s' register!", k1_ra_name);
-    if (has_pc < 0)
-      error ("There's no '%s' register!", pc_name);
-    if (has_sp < 0)
-      error ("There's no '%s' register!", sp_name);
-    if (has_local < 0)
-      error ("There's no '%s' register!", k1_local_name);
-
-    tdep->lc_regnum = has_lc;
-    tdep->le_regnum = has_le;
-    tdep->ls_regnum = has_ls;
-    tdep->ra_regnum = has_ra;
-    tdep->local_regnum = has_local;
-    set_gdbarch_pc_regnum (gdbarch, has_pc);
-    set_gdbarch_sp_regnum (gdbarch, has_sp);
-
-    tdep->uint256 = arch_integer_type (gdbarch, 256, 0, "uint256_t");
-    tdep->uint512 = arch_integer_type (gdbarch, 512, 0, "uint512_t");
-    tdep->uint1024 = arch_integer_type (gdbarch, 1024, 0, "uint1024_t");
-
-  }
   else
-  {
-    set_gdbarch_num_regs (gdbarch, 1);
-    set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
-    set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
-  }
+    {
+      set_gdbarch_num_regs (gdbarch, 1);
+      set_gdbarch_register_name (gdbarch, k1_dummy_register_name);
+      set_gdbarch_register_type (gdbarch, k1_dummy_register_type);
+    }
 
   set_gdbarch_num_pseudo_regs (gdbarch, k1c_num_pseudos (gdbarch));
 
   set_tdesc_pseudo_register_name (gdbarch, k1c_pseudo_register_name);
   set_tdesc_pseudo_register_type (gdbarch, k1c_pseudo_register_type);
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
-    k1c_pseudo_register_reggroup_p);
+					k1c_pseudo_register_reggroup_p);
 
   set_gdbarch_pseudo_register_read (gdbarch, k1c_pseudo_register_read);
   set_gdbarch_pseudo_register_write (gdbarch, k1c_pseudo_register_write);
@@ -182,8 +181,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   frame_unwind_append_unwinder (gdbarch, &k1_frame_unwind);
 
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_bare_breakpoint_from_pc);
-  set_gdbarch_adjust_breakpoint_address (gdbarch,
-    k1_adjust_breakpoint_address);
+  set_gdbarch_adjust_breakpoint_address (gdbarch, k1_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_print_insn (gdbarch, k1_print_insn);
@@ -193,11 +191,12 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
 
   if (tdesc_has_registers (tdesc))
-  {
-    set_solib_svr4_fetch_link_map_offsets (gdbarch, svr4_ilp32_fetch_link_map_offsets);
-    /* Hook in the ABI-specific overrides, if they have been registered.  */
-    gdbarch_init_osabi (info, gdbarch);
-  }
+    {
+      set_solib_svr4_fetch_link_map_offsets (gdbarch,
+					     svr4_ilp32_fetch_link_map_offsets);
+      /* Hook in the ABI-specific overrides, if they have been registered.  */
+      gdbarch_init_osabi (info, gdbarch);
+    }
 
   return gdbarch;
 }
@@ -205,35 +204,38 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 static void
 attach_user_command (char *args, int from_tty)
 {
-  static const char *syntax = "Syntax: attach-user <comm> [<path_in_initrd_k1_linux_program>]\n";
+  static const char *syntax
+    = "Syntax: attach-user <comm> [<path_in_initrd_k1_linux_program>]\n";
   char *file, *comm, *k1_comm, *pargs, cmd[PATH_MAX + 50], file_dir[PATH_MAX];
   struct stat vstat;
   int ret;
 
   if (!ptid_equal (inferior_ptid, null_ptid))
-  {
-    fprintf (stderr, "Gdb already attached!\n");
-    return;
-  }
+    {
+      fprintf (stderr, "Gdb already attached!\n");
+      return;
+    }
 
   pargs = args;
   k1_comm = comm = extract_arg (&pargs);
   if (!comm)
-  {
-    fprintf (stderr, "Error: the comm was not specified!\n%s", syntax);
-    return;
-  }
+    {
+      fprintf (stderr, "Error: the comm was not specified!\n%s", syntax);
+      return;
+    }
   file = extract_arg (&pargs);
   if (!file)
-  {
-    fprintf (stderr, "Error: the K1 Linux program was not specified!\n%s", syntax);
-    return;
-  }
-  if (stat (file, &vstat) || S_ISDIR (vstat.st_mode) || realpath (file, file_dir) == NULL)
-  {
-    fprintf (stderr, "Error: Cannot find file %s!\n", file);
-    return;
-  }
+    {
+      fprintf (stderr, "Error: the K1 Linux program was not specified!\n%s",
+	       syntax);
+      return;
+    }
+  if (stat (file, &vstat) || S_ISDIR (vstat.st_mode)
+      || realpath (file, file_dir) == NULL)
+    {
+      fprintf (stderr, "Error: Cannot find file %s!\n", file);
+      return;
+    }
 
   execute_command ("set pagination off", 0);
 
@@ -243,26 +245,26 @@ attach_user_command (char *args, int from_tty)
 
   // set sysroot
   if (sysroot_path)
-  {
-    free (sysroot_path);
-    sysroot_path = NULL;
-  }
+    {
+      free (sysroot_path);
+      sysroot_path = NULL;
+    }
   strcpy (file_dir, dirname (file_dir));
   while (*file_dir && (file_dir[0] != '/' || file_dir[1] != 0))
-  {
-    sprintf (cmd, "%s/etc/inittab", file_dir);
-    if (stat (cmd, &vstat) == 0)
     {
-      // found the root of k1 filesystem
-      sysroot_path = strdup (file_dir);
-      sprintf (cmd, "set sysroot %s", file_dir);
-      fprintf (stderr, "Set sysroot to %s\n", file_dir);
-      execute_command (cmd, 0);
-      break;
-    }
+      sprintf (cmd, "%s/etc/inittab", file_dir);
+      if (stat (cmd, &vstat) == 0)
+	{
+	  // found the root of k1 filesystem
+	  sysroot_path = strdup (file_dir);
+	  sprintf (cmd, "set sysroot %s", file_dir);
+	  fprintf (stderr, "Set sysroot to %s\n", file_dir);
+	  execute_command (cmd, 0);
+	  break;
+	}
 
-    strcpy (file_dir, dirname (file_dir));
-  }
+      strcpy (file_dir, dirname (file_dir));
+    }
 
   ret = 0;
   TRY
@@ -302,16 +304,19 @@ k1_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   linux_init_abi (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_fetch_link_map_offsets (gdbarch,
+					 svr4_ilp32_fetch_link_map_offsets);
 
   /* Enable TLS support.  */
-  set_gdbarch_fetch_tls_load_module_address (gdbarch, svr4_fetch_objfile_link_map);
+  set_gdbarch_fetch_tls_load_module_address (gdbarch,
+					     svr4_fetch_objfile_link_map);
 }
 
 static void
 add_k1_commands (void)
 {
-  add_com ("attach-user", class_run, attach_user_command,
+  add_com (
+    "attach-user", class_run, attach_user_command,
     "Connect to gdbserver running on MPPA.\n"
     "Usage is 'attach-user <comm> [<path_in_initrd_k1_linux_program>]'.");
 }
@@ -323,7 +328,8 @@ _initialize_k1_linux_tdep (void)
   remote_hw_breakpoint_limit = 2;
   remote_hw_watchpoint_limit = 1;
 
-  gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1c_usr, GDB_OSABI_LINUX, k1_linux_init_abi);
+  gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1c_usr, GDB_OSABI_LINUX,
+			  k1_linux_init_abi);
   add_k1_commands ();
 }
 

@@ -19,19 +19,19 @@ struct target_so_ops k1_bare_solib_ops;
 
 struct mppa_dl_debug_s
 {
-  uint64_t version;                 /* Protocol version */
-  uint64_t head;                    /* Head of the shared object chain */
-  uint64_t brk;                     /* Address of the breakpoint function */
-  uint64_t valid;                   /* The  shared object chain is valid */
-} __attribute__((packed));
+  uint64_t version; /* Protocol version */
+  uint64_t head;    /* Head of the shared object chain */
+  uint64_t brk;     /* Address of the breakpoint function */
+  uint64_t valid;   /* The  shared object chain is valid */
+} __attribute__ ((packed));
 
 struct mppa_dl_debug_map_s
 {
-  uint64_t load_addr;               /* Load address for the dynamic object */
-  uint64_t file_name;               /* File name of the dynamic object */
-  uint64_t file_name_len;           /* File name length of the dynamic object */
-  uint64_t next;                    /* Chain of loaded objects */
-} __attribute__((packed));
+  uint64_t load_addr;     /* Load address for the dynamic object */
+  uint64_t file_name;     /* File name of the dynamic object */
+  uint64_t file_name_len; /* File name length of the dynamic object */
+  uint64_t next;	  /* Chain of loaded objects */
+} __attribute__ ((packed));
 
 struct lm_info
 {
@@ -40,9 +40,9 @@ struct lm_info
 
 struct k1_bare_so_list
 {
-  struct so_list sl;                /* Struct containing the common fields. Must be the first
-                                     * field of struct k1_bare_so_list for delete */
-  struct lm_info li;                /* K1 specific data */
+  struct so_list sl; /* Struct containing the common fields. Must be the first
+		      * field of struct k1_bare_so_list for delete */
+  struct lm_info li; /* K1 specific data */
 };
 
 struct k1_bare_solib_info
@@ -70,12 +70,14 @@ k1_bare_solib_get_info (void)
 {
   struct k1_bare_solib_info *info;
 
-  info = (struct k1_bare_solib_info *) program_space_data (current_program_space, k1_bare_solib_pspace_data);
+  info = (struct k1_bare_solib_info *)
+    program_space_data (current_program_space, k1_bare_solib_pspace_data);
   if (info != NULL)
     return info;
 
   info = xzalloc (sizeof (struct k1_bare_solib_info));
-  set_program_space_data (current_program_space, k1_bare_solib_pspace_data, info);
+  set_program_space_data (current_program_space, k1_bare_solib_pspace_data,
+			  info);
 
   return info;
 }
@@ -98,19 +100,22 @@ k1_bare_solib_load_debug_info (void)
 
   mppa_dl_debug_addr = BMSYMBOL_VALUE_ADDRESS (msym);
 
-  if (target_read_memory (mppa_dl_debug_addr, (gdb_byte*) &dl_debug, sizeof (struct mppa_dl_debug_s)))
+  if (target_read_memory (mppa_dl_debug_addr, (gdb_byte *) &dl_debug,
+			  sizeof (struct mppa_dl_debug_s)))
     return;
 
   if (dl_debug.version != DL_VERSION)
-  {
-    warning ("solib-k1: incorrect version %lld (expected %d)\n",
-      (unsigned long long) dl_debug.version, DL_VERSION);
-    return;
-  }
+    {
+      warning ("solib-k1: incorrect version %lld (expected %d)\n",
+	       (unsigned long long) dl_debug.version, DL_VERSION);
+      return;
+    }
 
   info->brk = dl_debug.brk;
-  info->head_addr = (CORE_ADDR) &((struct mppa_dl_debug_s *) mppa_dl_debug_addr)->head;
-  info->valid_addr = (CORE_ADDR) &((struct mppa_dl_debug_s *) mppa_dl_debug_addr)->valid;
+  info->head_addr
+    = (CORE_ADDR) & ((struct mppa_dl_debug_s *) mppa_dl_debug_addr)->head;
+  info->valid_addr
+    = (CORE_ADDR) & ((struct mppa_dl_debug_s *) mppa_dl_debug_addr)->valid;
 
   create_solib_event_breakpoint (target_gdbarch (), info->brk);
 }
@@ -118,17 +123,18 @@ k1_bare_solib_load_debug_info (void)
 /* The section table is built from bfd sections using bfd VMAs.
    Relocate these VMAs according to solib info */
 static void
-k1_bare_solib_relocate_section_addresses (struct so_list *so, struct target_section *sec)
+k1_bare_solib_relocate_section_addresses (struct so_list *so,
+					  struct target_section *sec)
 {
   sec->addr += so->lm_info->lm_addr;
   sec->endaddr += so->lm_info->lm_addr;
 
   // best effort to set addr_high/addr_low, used by 'info sharedlibary'.
   if (so->addr_high == 0)
-  {
-    so->addr_low = sec->addr;
-    so->addr_high = sec->endaddr;
-  }
+    {
+      so->addr_low = sec->addr;
+      so->addr_high = sec->endaddr;
+    }
   if (sec->endaddr > so->addr_high)
     so->addr_high = sec->endaddr;
   if (sec->addr < so->addr_low)
@@ -139,7 +145,6 @@ static void
 k1_bare_solib_free_so (struct so_list *so)
 {
 }
-
 
 static void
 k1_bare_solib_clear_solib (void)
@@ -171,12 +176,12 @@ k1_bare_solib_dup_chain (struct so_list *head)
   struct so_list *dup_head = NULL, **p = &dup_head;
 
   for (; head; head = head->next)
-  {
-    *p = xzalloc (sizeof (struct k1_bare_so_list));
-    memcpy (*p, head, sizeof (struct k1_bare_so_list));
-    (*p)->next = NULL;
-    p = &(*p)->next;
-  }
+    {
+      *p = xzalloc (sizeof (struct k1_bare_so_list));
+      memcpy (*p, head, sizeof (struct k1_bare_so_list));
+      (*p)->next = NULL;
+      p = &(*p)->next;
+    }
 
   return dup_head;
 }
@@ -187,13 +192,13 @@ k1_bare_solib_free_chain (struct so_list *head)
   struct so_list *p;
 
   while (head)
-  {
-    p = head;
-    head = head->next;
+    {
+      p = head;
+      head = head->next;
 
-    k1_bare_solib_free_so (p);
-    xfree (p);
-  }
+      k1_bare_solib_free_so (p);
+      xfree (p);
+    }
 }
 
 /* Build a list of currently loaded shared objects.  See solib-svr4.c */
@@ -210,68 +215,78 @@ k1_bare_solib_current_sos (void)
 
   info = k1_bare_solib_get_info ();
   if (!info->brk || !info->head_addr || !info->valid_addr)
-  {
-    k1_bare_solib_load_debug_info ();
-    if (!info->brk || !info->head_addr || !info->valid_addr)
-      return NULL;
-  }
+    {
+      k1_bare_solib_load_debug_info ();
+      if (!info->brk || !info->head_addr || !info->valid_addr)
+	return NULL;
+    }
 
   if (ptid_equal (inferior_ptid, null_ptid))
     return NULL;
-  cluster_name = get_cluster_name (find_inferior_pid (ptid_get_pid (inferior_ptid)));
+  cluster_name
+    = get_cluster_name (find_inferior_pid (ptid_get_pid (inferior_ptid)));
 
-  if (target_read_memory (info->valid_addr, (gdb_byte*) &is_valid, sizeof (is_valid)))
+  if (target_read_memory (info->valid_addr, (gdb_byte *) &is_valid,
+			  sizeof (is_valid)))
     return NULL;
 
   if (!is_valid)
-  {
-    if (!info->last_head)
-      return NULL;
+    {
+      if (!info->last_head)
+	return NULL;
 
-    return k1_bare_solib_dup_chain (info->last_head);
-  }
+      return k1_bare_solib_dup_chain (info->last_head);
+    }
   k1_bare_solib_free_chain (info->last_head);
 
-  if (target_read_memory (info->head_addr, (gdb_byte*) &crt_debug_map_addr, sizeof (crt_debug_map_addr)))
+  if (target_read_memory (info->head_addr, (gdb_byte *) &crt_debug_map_addr,
+			  sizeof (crt_debug_map_addr)))
     return NULL;
   for (; crt_debug_map_addr; crt_debug_map_addr = crt_debug_map.next)
-  {
-    if (target_read_memory (crt_debug_map_addr, (gdb_byte*) &crt_debug_map, sizeof (struct mppa_dl_debug_map_s)))
-      break;
-
-    if (!crt_debug_map.file_name || !crt_debug_map.file_name_len)
     {
-      if (!info->no_name_shown)
-      {
-        printf_unfiltered ("%s loaded a library without name.\n"
-          "Please add -Wl,-soname=<lib_file.so> to the library link flags.\n", cluster_name);
-        info->no_name_shown = 1;
-      }
-      continue;
+      if (target_read_memory (crt_debug_map_addr, (gdb_byte *) &crt_debug_map,
+			      sizeof (struct mppa_dl_debug_map_s)))
+	break;
+
+      if (!crt_debug_map.file_name || !crt_debug_map.file_name_len)
+	{
+	  if (!info->no_name_shown)
+	    {
+	      printf_unfiltered ("%s loaded a library without name.\n"
+				 "Please add -Wl,-soname=<lib_file.so> to the "
+				 "library link flags.\n",
+				 cluster_name);
+	      info->no_name_shown = 1;
+	    }
+	  continue;
+	}
+
+      if (crt_debug_map.file_name_len >= SO_NAME_MAX_PATH_SIZE)
+	continue;
+
+      if (target_read_memory (crt_debug_map.file_name,
+			      (gdb_byte *) crt_file_name,
+			      crt_debug_map.file_name_len))
+	continue;
+
+      sl_k1 = xzalloc (sizeof (struct k1_bare_so_list));
+      sl_k1->li.lm_addr = crt_debug_map.load_addr;
+      sl_k1->sl.lm_info = &sl_k1->li;
+      strncpy (sl_k1->sl.so_original_name, crt_file_name,
+	       SO_NAME_MAX_PATH_SIZE);
+      strncpy (sl_k1->sl.so_name, crt_file_name, SO_NAME_MAX_PATH_SIZE);
+
+      *ptail = &sl_k1->sl;
+      ptail = &(*ptail)->next;
     }
-
-    if (crt_debug_map.file_name_len >= SO_NAME_MAX_PATH_SIZE)
-      continue;
-
-    if (target_read_memory (crt_debug_map.file_name, (gdb_byte*) crt_file_name, crt_debug_map.file_name_len))
-      continue;
-
-    sl_k1 = xzalloc (sizeof (struct k1_bare_so_list));
-    sl_k1->li.lm_addr = crt_debug_map.load_addr;
-    sl_k1->sl.lm_info = &sl_k1->li;
-    strncpy (sl_k1->sl.so_original_name, crt_file_name, SO_NAME_MAX_PATH_SIZE);
-    strncpy (sl_k1->sl.so_name, crt_file_name, SO_NAME_MAX_PATH_SIZE);
-
-    *ptail = &sl_k1->sl;
-    ptail = &(*ptail)->next;
-  }
 
   info->last_head = head;
 
   return k1_bare_solib_dup_chain (head);
 }
 
-/* Return 1 if PC lies in the dynamic symbol resolution code of the run time loader */
+/* Return 1 if PC lies in the dynamic symbol resolution code of the run time
+ * loader */
 static int
 k1_bare_solib_in_dynsym_resolve_code (CORE_ADDR pc)
 {
@@ -279,9 +294,10 @@ k1_bare_solib_in_dynsym_resolve_code (CORE_ADDR pc)
 }
 
 static struct block_symbol
-k1_bare_solib_lookup_lib_symbol (struct objfile *objfile, const char *name, const domain_enum domain)
+k1_bare_solib_lookup_lib_symbol (struct objfile *objfile, const char *name,
+				 const domain_enum domain)
 {
-  return (struct block_symbol) {NULL, NULL};
+  return (struct block_symbol){NULL, NULL};
 }
 
 /*  Not used */
@@ -296,16 +312,22 @@ extern initialize_file_ftype _initialize_k1_bare_solib;
 void
 _initialize_k1_bare_solib (void)
 {
-  k1_bare_solib_pspace_data = register_program_space_data_with_cleanup (NULL, k1_bare_solib_pspace_data_cleanup);
+  k1_bare_solib_pspace_data = register_program_space_data_with_cleanup (
+    NULL, k1_bare_solib_pspace_data_cleanup);
 
-  k1_bare_solib_ops.relocate_section_addresses = k1_bare_solib_relocate_section_addresses;
+  k1_bare_solib_ops.relocate_section_addresses
+    = k1_bare_solib_relocate_section_addresses;
   k1_bare_solib_ops.free_so = k1_bare_solib_free_so;
   k1_bare_solib_ops.clear_solib = k1_bare_solib_clear_solib;
-  k1_bare_solib_ops.solib_create_inferior_hook = k1_bare_solib_solib_create_inferior_hook;
-  k1_bare_solib_ops.special_symbol_handling = k1_bare_solib_special_symbol_handling;
+  k1_bare_solib_ops.solib_create_inferior_hook
+    = k1_bare_solib_solib_create_inferior_hook;
+  k1_bare_solib_ops.special_symbol_handling
+    = k1_bare_solib_special_symbol_handling;
   k1_bare_solib_ops.current_sos = k1_bare_solib_current_sos;
-  k1_bare_solib_ops.open_symbol_file_object = k1_bare_solib_open_symbol_file_object;
-  k1_bare_solib_ops.in_dynsym_resolve_code = k1_bare_solib_in_dynsym_resolve_code;
+  k1_bare_solib_ops.open_symbol_file_object
+    = k1_bare_solib_open_symbol_file_object;
+  k1_bare_solib_ops.in_dynsym_resolve_code
+    = k1_bare_solib_in_dynsym_resolve_code;
   k1_bare_solib_ops.lookup_lib_global_symbol = k1_bare_solib_lookup_lib_symbol;
   k1_bare_solib_ops.bfd_open = solib_bfd_open;
 }

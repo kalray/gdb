@@ -17,20 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
-#include "server.h"
+#include "linux-k1-low.h"
 #include "linux-low.h"
 #include "regdef.h"
+#include "server.h"
 #include "tdesc.h"
-#include "linux-k1-low.h"
 
-#include <sys/ptrace.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/procfs.h>
 #include <elf.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/procfs.h>
+#include <sys/ptrace.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifndef PTRACE_GET_HW_PT_REGS
 #define PTRACE_GET_HW_PT_REGS 20
@@ -42,16 +41,16 @@
 #endif
 
 #define get_hw_pt_idx(v) ((v) >> 2)
-#define hw_pt_is_bkp(v) (((v) & 1) != 0)
+#define hw_pt_is_bkp(v) (((v) &1) != 0)
 
 #define MAX_WPTS 2
 #define MAX_BPTS 2
 #define HW_PT_ENABLE 1
 
-#define HW_PT_CMD_GET_CAPS	0
-#define HW_PT_CMD_GET_PT	1
-#define HW_PT_CMD_SET_RESERVE	0
-#define HW_PT_CMD_SET_ENABLE	1
+#define HW_PT_CMD_GET_CAPS 0
+#define HW_PT_CMD_GET_PT 1
+#define HW_PT_CMD_SET_RESERVE 0
+#define HW_PT_CMD_SET_ENABLE 1
 
 /* Information describing the hardware breakpoint capabilities. */
 static struct
@@ -92,7 +91,16 @@ static const char *xmltarget_k1_linux = 0;
 void init_registers_k1 (void);
 extern const struct target_desc *tdesc_k1;
 
-enum regnum {R0 = 0, R_LC = 64, R_LE, R_LS, R_RA, R_CS, R_PC};
+enum regnum
+{
+  R0 = 0,
+  R_LC = 64,
+  R_LE,
+  R_LS,
+  R_RA,
+  R_CS,
+  R_PC
+};
 
 static void
 k1_fill_gregset (struct regcache *regcache, void *buf)
@@ -108,23 +116,23 @@ k1_fill_gregset (struct regcache *regcache, void *buf)
   ptr = (char *) &rset[R0];
 
   for (i = r0_regnum; i < r0_regnum + 64; i++)
-  {
-    collect_register (regcache, i, ptr);
-    ptr += register_size (tdesc, i);
-  }
+    {
+      collect_register (regcache, i, ptr);
+      ptr += register_size (tdesc, i);
+    }
 
-  collect_register_by_name (regcache, "lc", (char*) &rset[R_LC]);
-  collect_register_by_name (regcache, "le", (char*) &rset[R_LE]);
-  collect_register_by_name (regcache, "ls", (char*) &rset[R_LS]);
-  collect_register_by_name (regcache, "ra", (char*) &rset[R_RA]);
-  collect_register_by_name (regcache, "cs", (char*) &rset[R_CS]);
-  collect_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
+  collect_register_by_name (regcache, "lc", (char *) &rset[R_LC]);
+  collect_register_by_name (regcache, "le", (char *) &rset[R_LE]);
+  collect_register_by_name (regcache, "ls", (char *) &rset[R_LS]);
+  collect_register_by_name (regcache, "ra", (char *) &rset[R_RA]);
+  collect_register_by_name (regcache, "cs", (char *) &rset[R_CS]);
+  collect_register_by_name (regcache, "pc", (char *) &rset[R_PC]);
 }
 
 static void
 k1_store_gregset (struct regcache *regcache, const void *buf)
 {
-  const elf_greg_t *rset = (const elf_greg_t*) buf;
+  const elf_greg_t *rset = (const elf_greg_t *) buf;
   const struct target_desc *tdesc = regcache->tdesc;
   int r0_regnum;
   char *ptr;
@@ -135,35 +143,32 @@ k1_store_gregset (struct regcache *regcache, const void *buf)
   ptr = (char *) &rset[R0];
 
   for (i = r0_regnum; i < r0_regnum + 64; i++)
-  {
-    supply_register (regcache, i, ptr);
-    ptr += register_size (tdesc, i);
-  }
+    {
+      supply_register (regcache, i, ptr);
+      ptr += register_size (tdesc, i);
+    }
 
-  supply_register_by_name (regcache, "lc", (char*) &rset[R_LC]);
-  supply_register_by_name (regcache, "le", (char*) &rset[R_LE]);
-  supply_register_by_name (regcache, "ls", (char*) &rset[R_LS]);
-  supply_register_by_name (regcache, "ra", (char*) &rset[R_RA]);
-  supply_register_by_name (regcache, "cs", (char*) &rset[R_CS]);
-  supply_register_by_name (regcache, "pc", (char*) &rset[R_PC]);
+  supply_register_by_name (regcache, "lc", (char *) &rset[R_LC]);
+  supply_register_by_name (regcache, "le", (char *) &rset[R_LE]);
+  supply_register_by_name (regcache, "ls", (char *) &rset[R_LS]);
+  supply_register_by_name (regcache, "ra", (char *) &rset[R_RA]);
+  supply_register_by_name (regcache, "cs", (char *) &rset[R_CS]);
+  supply_register_by_name (regcache, "pc", (char *) &rset[R_PC]);
 }
 
-struct regset_info k1_regsets[] =
-{
-  {
-    PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PRSTATUS, sizeof (elf_gregset_t),
-    GENERAL_REGS,
-    k1_fill_gregset, k1_store_gregset
-  },
-  NULL_REGSET
-};
+struct regset_info k1_regsets[]
+  = {{PTRACE_GETREGSET, PTRACE_SETREGSET, NT_PRSTATUS, sizeof (elf_gregset_t),
+      GENERAL_REGS, k1_fill_gregset, k1_store_gregset},
+     NULL_REGSET};
 
-/*__attribute__((naked)) */void k1_breakpoint_opcode (void)
+/*__attribute__((naked)) */ void
+k1_breakpoint_opcode (void)
 {
-  __asm ("set $vsfr0=$r63\n;;\n");
+  __asm("set $vsfr0=$r63\n;;\n");
 }
 
-static const gdb_byte *k1_breakpoint = (gdb_byte *) (void *) &k1_breakpoint_opcode;
+static const gdb_byte *k1_breakpoint
+  = (gdb_byte *) (void *) &k1_breakpoint_opcode;
 #define k1_breakpoint_len 4
 
 static CORE_ADDR
@@ -187,23 +192,20 @@ k1_breakpoint_at (CORE_ADDR where)
 {
   unsigned long insn;
 
-  (*the_target->read_memory) (where, (unsigned char *) &insn, k1_breakpoint_len);
-  return memcmp((char *) &insn, k1_breakpoint, k1_breakpoint_len) == 0;
+  (*the_target->read_memory) (where, (unsigned char *) &insn,
+			      k1_breakpoint_len);
+  return memcmp ((char *) &insn, k1_breakpoint, k1_breakpoint_len) == 0;
 }
 
-static struct regsets_info k1_regsets_info =
-{
+static struct regsets_info k1_regsets_info = {
   k1_regsets, /* regsets */
-  0, /* num_regsets */
-  NULL, /* disabled_regsets */
+  0,	  /* num_regsets */
+  NULL,       /* disabled_regsets */
 };
 
-static struct regs_info vregs_info =
-{
-  NULL, /* regset_bitmap */
-  NULL, /* usrregs_info */
-  &k1_regsets_info
-};
+static struct regs_info vregs_info = {NULL, /* regset_bitmap */
+				      NULL, /* usrregs_info */
+				      &k1_regsets_info};
 
 /* Query Hardware Breakpoint information for the target we are attached to */
 static void
@@ -242,12 +244,12 @@ int
 k1_supports_z_point_type (char z_type)
 {
   switch (z_type)
-  {
-  case Z_PACKET_SW_BP:
-  case Z_PACKET_HW_BP:
-  case Z_PACKET_WRITE_WP:
-    return 1;
-  }
+    {
+    case Z_PACKET_SW_BP:
+    case Z_PACKET_HW_BP:
+    case Z_PACKET_WRITE_WP:
+      return 1;
+    }
 
   return 0;
 }
@@ -269,19 +271,19 @@ update_registers_callback (struct inferior_list_entry *entry, void *arg)
 
   /* Only update the threads of the current process.  */
   if (pid_of (thread) == pid_of (current_thread))
-  {
-    /* The actual update is done later just before resuming the lwp,
-    we just mark that the registers need updating.  */
-    if (data->type == raw_bkpt_type_hw)
-      lwp->arch_private->bpts_changed[data->i] = 1;
-    else
-      lwp->arch_private->wpts_changed[data->i] = 1;
+    {
+      /* The actual update is done later just before resuming the lwp,
+      we just mark that the registers need updating.  */
+      if (data->type == raw_bkpt_type_hw)
+	lwp->arch_private->bpts_changed[data->i] = 1;
+      else
+	lwp->arch_private->wpts_changed[data->i] = 1;
 
-    /* If the lwp isn't stopped, force it to momentarily pause, so
-       we can update its breakpoint registers.  */
-    if (!lwp->stopped)
-      linux_stop_lwp (lwp);
-  }
+      /* If the lwp isn't stopped, force it to momentarily pause, so
+	 we can update its breakpoint registers.  */
+      if (!lwp->stopped)
+	linux_stop_lwp (lwp);
+    }
 
   return 0;
 }
@@ -310,7 +312,8 @@ compute_ptrace_data_arg (struct k1_linux_hw_pt *p)
 }
 
 int
-k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size,
+		 struct raw_breakpoint *bp)
 {
   struct process_info *proc;
   struct arch_process_info *proc_info;
@@ -324,43 +327,44 @@ k1_insert_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_b
   proc = current_process ();
   proc_info = proc->priv->arch_private;
   if (type == raw_bkpt_type_hw)
-  {
-    /* breakpoint */
-    count = k1_linux_hw_pt_cap.bp_count;
-    pts = proc_info->bpts;
-  }
+    {
+      /* breakpoint */
+      count = k1_linux_hw_pt_cap.bp_count;
+      pts = proc_info->bpts;
+    }
   else
-  {
-    count = k1_linux_hw_pt_cap.wp_count;
-    pts = proc_info->wpts;
-  }
+    {
+      count = k1_linux_hw_pt_cap.wp_count;
+      pts = proc_info->wpts;
+    }
 
   for (i = 0; i < count; i++)
-  {
-    if (!pts[i].enabled)
     {
-      struct update_registers_data data = {type, i};
+      if (!pts[i].enabled)
+	{
+	  struct update_registers_data data = {type, i};
 
-      if (ptrace (PTRACE_SET_HW_PT_REGS, pid,
-        compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE, type, i),
-        compute_ptrace_data_arg (&pts[i])))
-        continue;
+	  if (ptrace (PTRACE_SET_HW_PT_REGS, pid,
+		      compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE, type, i),
+		      compute_ptrace_data_arg (&pts[i])))
+	    continue;
 
-      pts[i].address = addr;
-      pts[i].size = size;
-      pts[i].enabled = 1;
+	  pts[i].address = addr;
+	  pts[i].size = size;
+	  pts[i].enabled = 1;
 
-      find_inferior (&all_threads, update_registers_callback, &data);
-      return 0;
+	  find_inferior (&all_threads, update_registers_callback, &data);
+	  return 0;
+	}
     }
-  }
 
   /* We're out of watchpoints.  */
   return -1;
 }
 
 int
-k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size,
+		 struct raw_breakpoint *bp)
 {
   struct process_info *proc;
   struct k1_linux_hw_pt *pts;
@@ -371,27 +375,27 @@ k1_remove_point (enum raw_bkpt_type type, CORE_ADDR addr, int size, struct raw_b
 
   proc = current_process ();
   if (type == raw_bkpt_type_hw)
-  {
-    /* breakpoint */
-    count = k1_linux_hw_pt_cap.bp_count;
-    pts = proc->priv->arch_private->bpts;
-  }
+    {
+      /* breakpoint */
+      count = k1_linux_hw_pt_cap.bp_count;
+      pts = proc->priv->arch_private->bpts;
+    }
   else
-  {
-    count = k1_linux_hw_pt_cap.wp_count;
-    pts = proc->priv->arch_private->wpts;
-  }
+    {
+      count = k1_linux_hw_pt_cap.wp_count;
+      pts = proc->priv->arch_private->wpts;
+    }
 
   for (i = 0; i < count; i++)
-  {
-    if (pts[i].address == addr && pts[i].size == size && pts[i].enabled == 1)
     {
-      struct update_registers_data data = {type, i};
-      pts[i].enabled = 0;
-      find_inferior (&all_threads, update_registers_callback, &data);
-      return 0;
+      if (pts[i].address == addr && pts[i].size == size && pts[i].enabled == 1)
+	{
+	  struct update_registers_data data = {type, i};
+	  pts[i].enabled = 0;
+	  find_inferior (&all_threads, update_registers_callback, &data);
+	  return 0;
+	}
     }
-  }
 
   /* No watchpoint matched.  */
   return -1;
@@ -525,62 +529,68 @@ k1_prepare_to_resume (struct lwp_info *lwp)
   int i, ret;
 
   for (i = 0; i < k1_linux_hw_pt_cap.bp_count; i++)
-  {
-    if (lwp_info->bpts_changed[i])
     {
-      errno = 0;
-      ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
-        compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE, raw_bkpt_type_hw, i),
-        compute_ptrace_data_arg (&proc_info->bpts[i]));
-      if (ret < 0)
-          perror_with_name ("Error setting breakpoint");
+      if (lwp_info->bpts_changed[i])
+	{
+	  errno = 0;
+	  ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
+			compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE,
+						 raw_bkpt_type_hw, i),
+			compute_ptrace_data_arg (&proc_info->bpts[i]));
+	  if (ret < 0)
+	    perror_with_name ("Error setting breakpoint");
 
-      lwp_info->bpts_changed[i] = 0;
+	  lwp_info->bpts_changed[i] = 0;
+	}
     }
-  }
 
   for (i = 0; i < k1_linux_hw_pt_cap.wp_count; i++)
-  {
-    if (lwp_info->wpts_changed[i])
     {
-      errno = 0;
-      ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
-        compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE, raw_bkpt_type_write_wp, i),
-        compute_ptrace_data_arg (&proc_info->wpts[i]));
-      if (ret < 0)
-        perror_with_name ("Error setting watchpoint");
+      if (lwp_info->wpts_changed[i])
+	{
+	  errno = 0;
+	  ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
+			compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE,
+						 raw_bkpt_type_write_wp, i),
+			compute_ptrace_data_arg (&proc_info->wpts[i]));
+	  if (ret < 0)
+	    perror_with_name ("Error setting watchpoint");
 
-      lwp_info->wpts_changed[i] = 0;
+	  lwp_info->wpts_changed[i] = 0;
+	}
     }
-  }
 }
 
 struct linux_target_ops the_low_target = {
   k1_arch_setup, /* void (*arch_setup) (void) */
-  k1_regs_info, /* const struct regs_info *(*regs_info) (void) */
-  NULL, /* int (*cannot_fetch_register) (int) */
-  NULL, /* int (*cannot_store_register) (int) */
-  NULL, /* int (*fetch_register) (struct regcache *regcache, int regno) */
+  k1_regs_info,  /* const struct regs_info *(*regs_info) (void) */
+  NULL,		 /* int (*cannot_fetch_register) (int) */
+  NULL,		 /* int (*cannot_store_register) (int) */
+  NULL,      /* int (*fetch_register) (struct regcache *regcache, int regno) */
   k1_get_pc, /* CORE_ADDR (*get_pc) (struct regcache *regcache) */
   k1_set_pc, /* void (*set_pc) (struct regcache *regcache, CORE_ADDR newpc) */
-  NULL, /* int (*breakpoint_kind_from_pc) (CORE_ADDR *pcptr) */
-  k1_sw_breakpoint_from_kind, /* const gdb_byte *(*sw_breakpoint_from_kind) (int kind, int *size) */
+  NULL,      /* int (*breakpoint_kind_from_pc) (CORE_ADDR *pcptr) */
+  k1_sw_breakpoint_from_kind, /* const gdb_byte *(*sw_breakpoint_from_kind)
+				 (int kind, int *size) */
   NULL, /* VEC (CORE_ADDR) *(*get_next_pcs) (struct regcache *regcache) */
-  0, /* int decr_pc_after_break */
-  k1_breakpoint_at, /* int (*breakpoint_at) (CORE_ADDR pc) */
+  0,    /* int decr_pc_after_break */
+  k1_breakpoint_at,	 /* int (*breakpoint_at) (CORE_ADDR pc) */
   k1_supports_z_point_type, /* int (*supports_z_point_type) (char z_type) */
-  k1_insert_point, /* int (*insert_point) (enum raw_bkpt_type type,
-                    *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
-  k1_remove_point, /* int (*remove_point) (enum raw_bkpt_type type,
-                    *   CORE_ADDR addr, int size, struct raw_breakpoint *bp) */
+  k1_insert_point,	  /* int (*insert_point) (enum raw_bkpt_type type,
+			     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+			     */
+  k1_remove_point,	  /* int (*remove_point) (enum raw_bkpt_type type,
+			     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp)
+			     */
   k1_stopped_by_watchpoint, /* int (*stopped_by_watchpoint) (void) */
-  k1_stopped_data_address, /* CORE_ADDR (*stopped_data_address) (void) */
-  NULL, /* collect_ptrace_register */
-  NULL, /* supply_ptrace_register */
-  NULL, /* siginfo_fixup*/
-  k1_new_process, /* struct new_process_info *(*new_process) (void) */
-  k1_new_thread, /* void (*new_thread) (struct lwp_info *) */
-  k1_new_fork, /* void (*new_fork) (struct process_info *parent, struct process_info *child) */
+  k1_stopped_data_address,  /* CORE_ADDR (*stopped_data_address) (void) */
+  NULL,			    /* collect_ptrace_register */
+  NULL,			    /* supply_ptrace_register */
+  NULL,			    /* siginfo_fixup*/
+  k1_new_process,	   /* struct new_process_info *(*new_process) (void) */
+  k1_new_thread,	    /* void (*new_thread) (struct lwp_info *) */
+  k1_new_fork,		/* void (*new_fork) (struct process_info *parent, struct
+			   process_info *child) */
   k1_prepare_to_resume, /* void (*prepare_to_resume) (struct lwp_info *lwp) */
 };
 
@@ -592,47 +602,48 @@ create_xml (void)
   int i, nr, pos;
 
   nr = tdesc_k1->num_registers;
-  buf   = malloc (nr * 150 + 1000);
+  buf = malloc (nr * 150 + 1000);
   strcpy (buf, "@<target><architecture>k1:k1c:usr</architecture>"
-    "<feature name=\"eu.kalray.core.k1c\">");
+	       "<feature name=\"eu.kalray.core.k1c\">");
   pos = strlen (buf);
 
   for (i = 0; i < nr; i++)
-  {
-    r = &tdesc_k1->reg_defs[i];
-    if (!strcmp (r->name, "cs"))
     {
-      pos += sprintf (buf + pos,
-        "<struct id=\"cs_type\" size=\"8\">\n"
-        " <field name=\"ic\" start=\"0\" end=\"0\" />"
-        " <field name=\"io\" start=\"1\" end=\"1\" />"
-        " <field name=\"dz\" start=\"2\" end=\"2\" />"
-        " <field name=\"ov\" start=\"3\" end=\"3\" />"
-        " <field name=\"un\" start=\"4\" end=\"4\" />"
-        " <field name=\"in\" start=\"5\" end=\"5\" />"
-        " <field name=\"xio\" start=\"9\" end=\"9\" />"
-        " <field name=\"xdz\" start=\"10\" end=\"10\" />"
-        " <field name=\"xov\" start=\"11\" end=\"11\" />"
-        " <field name=\"xun\" start=\"12\" end=\"12\" />"
-        " <field name=\"xin\" start=\"13\" end=\"13\" />"
-        " <field name=\"rm\" start=\"16\" end=\"17\" />"
-        " <field name=\"xrm\" start=\"20\" end=\"21\" />"
-        " <field name=\"xmf\" start=\"24\" end=\"24\" />"
-        " <field name=\"cc\" start=\"32\" end=\"47\" />"
-        " <field name=\"xdrop\" start=\"48\" end=\"53\" />"
-        " <field name=\"xpow2\" start=\"54\" end=\"59\" />"
-        "</struct>");
-      strcpy (reg_type, "cs_type");
-    }
-    else if (!strcmp (r->name, "pc") || !strcmp (r->name, "ra"))
-      strcpy (reg_type, "code_ptr");
-    else
-      sprintf (reg_type, "int%d", r->size);
+      r = &tdesc_k1->reg_defs[i];
+      if (!strcmp (r->name, "cs"))
+	{
+	  pos += sprintf (buf + pos,
+			  "<struct id=\"cs_type\" size=\"8\">\n"
+			  " <field name=\"ic\" start=\"0\" end=\"0\" />"
+			  " <field name=\"io\" start=\"1\" end=\"1\" />"
+			  " <field name=\"dz\" start=\"2\" end=\"2\" />"
+			  " <field name=\"ov\" start=\"3\" end=\"3\" />"
+			  " <field name=\"un\" start=\"4\" end=\"4\" />"
+			  " <field name=\"in\" start=\"5\" end=\"5\" />"
+			  " <field name=\"xio\" start=\"9\" end=\"9\" />"
+			  " <field name=\"xdz\" start=\"10\" end=\"10\" />"
+			  " <field name=\"xov\" start=\"11\" end=\"11\" />"
+			  " <field name=\"xun\" start=\"12\" end=\"12\" />"
+			  " <field name=\"xin\" start=\"13\" end=\"13\" />"
+			  " <field name=\"rm\" start=\"16\" end=\"17\" />"
+			  " <field name=\"xrm\" start=\"20\" end=\"21\" />"
+			  " <field name=\"xmf\" start=\"24\" end=\"24\" />"
+			  " <field name=\"cc\" start=\"32\" end=\"47\" />"
+			  " <field name=\"xdrop\" start=\"48\" end=\"53\" />"
+			  " <field name=\"xpow2\" start=\"54\" end=\"59\" />"
+			  "</struct>");
+	  strcpy (reg_type, "cs_type");
+	}
+      else if (!strcmp (r->name, "pc") || !strcmp (r->name, "ra"))
+	strcpy (reg_type, "code_ptr");
+      else
+	sprintf (reg_type, "int%d", r->size);
 
-    pos += sprintf (buf + pos,
-      "<reg name=\"%s\" regnum=\"%d\" bitsize=\"%d\" type=\"%s\"/>",
-      r->name, i, r->size, reg_type);
-  }
+      pos += sprintf (
+	buf + pos,
+	"<reg name=\"%s\" regnum=\"%d\" bitsize=\"%d\" type=\"%s\"/>", r->name,
+	i, r->size, reg_type);
+    }
 
   strcpy (buf + pos, "</feature></target>");
 
@@ -649,11 +660,10 @@ initialize_low_arch (void)
   init_registers_k1 ();
 
   if (!tdesc_k1->xmltarget)
-  {
-    xmltarget_k1_linux = create_xml ();
-    ((struct target_desc *) tdesc_k1)->xmltarget = xmltarget_k1_linux;
-  }
+    {
+      xmltarget_k1_linux = create_xml ();
+      ((struct target_desc *) tdesc_k1)->xmltarget = xmltarget_k1_linux;
+    }
 
   initialize_regsets_info (&k1_regsets_info);
 }
-
