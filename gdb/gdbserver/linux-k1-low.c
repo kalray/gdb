@@ -17,10 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "linux-k1-low.h"
+#include "server.h"
 #include "linux-low.h"
 #include "regdef.h"
-#include "server.h"
 #include "tdesc.h"
 
 #include <elf.h>
