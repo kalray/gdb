@@ -59,6 +59,7 @@ struct displaced_step_closure
 
   int has_pcrel;
   int pcrel_reg;
+  int execute_inplace;
 
   /* The destination address when the branch is taken. */
   uint64_t dest;
@@ -101,13 +102,23 @@ k1_inferior_created (struct target_ops *target, int from_tty)
   k1_current_arch = K1_NUM_ARCHES;
 }
 
+static int
+k1_is_mmu_enabled (struct gdbarch *gdbarch, struct regcache *regs)
+{
+  ULONGEST ps;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  if (regs == NULL)
+    regs = get_current_regcache ();
+
+  regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
+  return (ps & (1 << PS_MME_BIT)) != 0;
+}
+
 static CORE_ADDR
 k1_displaced_step_location (struct gdbarch *gdbarch)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   struct k1_inferior_data *data = k1_inferior_data (current_inferior ());
-  struct regcache *regs = get_current_regcache ();
-  ULONGEST ps;
 
   if (!data->has_step_pad_area_p)
     {
@@ -132,9 +143,7 @@ k1_displaced_step_location (struct gdbarch *gdbarch)
 
   if (data->has_step_pad_area_lma_p)
     {
-      regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
-      /* MMU active ? */
-      if ((ps & (1 << 11)) != 0)
+      if (k1_is_mmu_enabled (gdbarch, NULL))
 	return data->step_pad_area_lma;
     }
 
@@ -218,6 +227,19 @@ send_cluster_debug_ring (struct inferior *inf, int v)
 
   buf = (char *) malloc (size);
   sprintf (buf, "kR%dp%x.1", v, inf->pid);
+  putpkt (buf);
+  getpkt (&buf, &size, 0);
+  free (buf);
+}
+
+static void
+k1_enable_hbkp_on_cpu (CORE_ADDR addr, int enable)
+{
+  char *buf;
+  long size = 256;
+
+  buf = (char *) malloc (size);
+  sprintf (buf, "kH0x%llx,%d", (unsigned long long) addr, enable);
   putpkt (buf);
   getpkt (&buf, &size, 0);
   free (buf);
@@ -436,18 +458,40 @@ k1_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 {
   struct displaced_step_closure *dsc
     = xzalloc (sizeof (struct displaced_step_closure));
-  struct k1_inferior_data *data = k1_inferior_data (current_inferior ());
   int i;
 
   if (debug_displaced)
     printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
 
-  do
-    {
-      read_memory (from + dsc->num_insn_words * 4,
-		   (gdb_byte *) (dsc->insn_words + dsc->num_insn_words), 4);
-    }
-  while (dsc->insn_words[dsc->num_insn_words++] & (1 << 31));
+  TRY
+  {
+    do
+      {
+	read_memory (from + dsc->num_insn_words * 4,
+		     (gdb_byte *) (dsc->insn_words + dsc->num_insn_words), 4);
+      }
+    while (dsc->insn_words[dsc->num_insn_words++] & (1 << 31));
+  }
+  CATCH (ex, RETURN_MASK_ERROR)
+  {
+    int mme = k1_is_mmu_enabled (gdbarch, regs);
+    int hbp
+      = hardware_breakpoint_inserted_here_p (get_regcache_aspace (regs), from);
+
+    if (!mme || !hbp
+	|| (ex.error != MEMORY_ERROR && ex.error != NOT_SUPPORTED_ERROR))
+      throw_exception (ex);
+
+    if (debug_displaced)
+      printf_filtered ("displaced: stepping inplace a hardware breakpoint "
+		       "on an unmapped address\n");
+
+    k1_enable_hbkp_on_cpu (from, 0);
+
+    dsc->execute_inplace = 1;
+    return dsc;
+  }
+  END_CATCH
 
   if (debug_displaced)
     {
@@ -523,6 +567,14 @@ k1_displaced_step_fixup (struct gdbarch *gdbarch,
   pc = regcache_read_pc (regs);
   if (debug_displaced)
     printf_filtered ("displaced: new pc %s\n", paddress (gdbarch, pc));
+
+  if (dsc->execute_inplace)
+    {
+      k1_enable_hbkp_on_cpu (from, 1);
+      if (debug_displaced)
+	printf_filtered ("displaced: inplace executed finished\n");
+      return;
+    }
 
   if (dsc->has_pcrel)
     {
@@ -779,6 +831,24 @@ k1_memory_remove_breakpoint (struct gdbarch *gdbarch,
   return ret;
 }
 
+static void
+k1_write_pc (struct regcache *regcache, CORE_ADDR pc)
+{
+  struct displaced_step_closure *dsc = get_displaced_step_closure_by_addr (pc);
+
+  if (dsc && dsc->execute_inplace)
+    {
+      if (debug_displaced)
+	printf_filtered ("The PC was not written because the displace "
+			 "will be executed inplace\n");
+
+      return;
+    }
+
+  regcache_cooked_write_unsigned (
+    regcache, gdbarch_pc_regnum (get_regcache_arch (regcache)), pc);
+}
+
 static struct gdbarch *
 k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -835,6 +905,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 		       gdbarch_bfd_arch_info (gdbarch)->bits_per_address);
   set_gdbarch_memory_insert_breakpoint (gdbarch, k1_memory_insert_breakpoint);
   set_gdbarch_memory_remove_breakpoint (gdbarch, k1_memory_remove_breakpoint);
+  set_gdbarch_write_pc (gdbarch, k1_write_pc);
 
   /* Get the k1 target description from INFO.  */
   tdesc = info.target_desc;

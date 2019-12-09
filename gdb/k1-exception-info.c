@@ -164,9 +164,6 @@ const char *es_sfri[] = {
   [7] = "RSWAP",
 };
 
-#define PS_ET_BIT 2
-#define PS_MME_BIT 11
-
 union reg_es_s
 {
   uint64_t reg;

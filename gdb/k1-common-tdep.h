@@ -6,6 +6,9 @@
 #include "opcode/k1c.h"
 #include "gdbtypes.h"
 
+#define PS_ET_BIT 2
+#define PS_MME_BIT 11
+
 enum K1_ARCH
 {
   K1_K1C,
