@@ -3290,6 +3290,54 @@ elfNN_k1_gc_sweep_hook (bfd *abfd,
 	{
 	default:
 	  break;
+	case BFD_RELOC_K1_S37_GOT_LO10:
+	case BFD_RELOC_K1_S37_GOT_UP27:
+
+	case BFD_RELOC_K1_S37_GOTOFF_LO10:
+	case BFD_RELOC_K1_S37_GOTOFF_UP27:
+
+	case BFD_RELOC_K1_S43_GOT_LO10:
+	case BFD_RELOC_K1_S43_GOT_UP27:
+	case BFD_RELOC_K1_S43_GOT_EX6:
+
+	case BFD_RELOC_K1_S43_GOTOFF_LO10:
+	case BFD_RELOC_K1_S43_GOTOFF_UP27:
+	case BFD_RELOC_K1_S43_GOTOFF_EX6:
+
+	case BFD_RELOC_K1_S37_TLS_GD_LO10:
+	case BFD_RELOC_K1_S37_TLS_GD_UP27:
+
+	case BFD_RELOC_K1_S43_TLS_GD_LO10:
+	case BFD_RELOC_K1_S43_TLS_GD_UP27:
+	case BFD_RELOC_K1_S43_TLS_GD_EX6:
+
+	case BFD_RELOC_K1_S37_TLS_IE_LO10:
+	case BFD_RELOC_K1_S37_TLS_IE_UP27:
+
+	case BFD_RELOC_K1_S43_TLS_IE_LO10:
+	case BFD_RELOC_K1_S43_TLS_IE_UP27:
+	case BFD_RELOC_K1_S43_TLS_IE_EX6:
+
+	case BFD_RELOC_K1_S37_TLS_LD_LO10:
+	case BFD_RELOC_K1_S37_TLS_LD_UP27:
+
+	case BFD_RELOC_K1_S43_TLS_LD_LO10:
+	case BFD_RELOC_K1_S43_TLS_LD_UP27:
+	case BFD_RELOC_K1_S43_TLS_LD_EX6:
+	{
+	  if (h != NULL)
+	    {
+	      if (h->got.refcount > 0)
+		h->got.refcount -= 1;
+	    }
+	  else if (locals != NULL)
+	    {
+	      if (locals[r_symndx].got_refcount > 0)
+		locals[r_symndx].got_refcount -= 1;
+	    }
+
+	  break;
+	}
 	}
     }
 
