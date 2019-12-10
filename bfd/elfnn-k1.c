@@ -2440,6 +2440,14 @@ elfNN_k1_final_link_relocate (reloc_howto_type *howto,
 
       /* PCREL 32 are used in dwarf2 table for exception handling */
     case BFD_RELOC_K1_32_PCREL:
+    case BFD_RELOC_K1_S64_PCREL_LO10:
+    case BFD_RELOC_K1_S64_PCREL_UP27:
+    case BFD_RELOC_K1_S64_PCREL_EX27:
+    case BFD_RELOC_K1_S37_PCREL_LO10:
+    case BFD_RELOC_K1_S37_PCREL_UP27:
+    case BFD_RELOC_K1_S43_PCREL_LO10:
+    case BFD_RELOC_K1_S43_PCREL_UP27:
+    case BFD_RELOC_K1_S43_PCREL_EX6:
       return _bfd_final_link_relocate (howto, input_bfd, input_section,
 				       contents, rel->r_offset, value,
 				       signed_addend);

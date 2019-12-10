@@ -49,6 +49,7 @@ run_dump_test "farcall-goto-none-function"
 run_dump_test "farcall-call-none-function"
 run_dump_test "farcall-goto-section"
 run_dump_test "farcall-call-section"
+run_dump_test "pcrel-reloc"
 
 ## 32bits tests
 set extra_32bits [list [list as -m32] [list ld -melf32k1]]
@@ -66,3 +67,4 @@ run_dump_test "farcall-goto-none-function" $extra_32bits
 run_dump_test "farcall-call-none-function" $extra_32bits
 run_dump_test "farcall-goto-section" $extra_32bits
 run_dump_test "farcall-call-section" $extra_32bits
+run_dump_test "pcrel-reloc" [list [list as -m32] [list ld -melf32k1] [list dump pcrel-reloc-32bits.d]]
