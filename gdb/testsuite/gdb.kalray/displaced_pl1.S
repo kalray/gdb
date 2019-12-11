@@ -56,12 +56,16 @@ add_pl2:
   get $r0 = $ps
   make $r1 = 1
   ;;
-  insf $r0 = $r1, 1, 0 /* set PL + 1 */
-  make $r1 = 0xfffffffffff3ffff // ~(K1_SFR_PS_SME_MASK | K1_SFR_PS_SMR_MASK)
+  insf $r0 = $r1, 1, 0 /* sps.pl = ps.pl + 1 */
+  make $r1 = 0xfff3ffff // sps = ps & ~(K1_SFR_PS_SME_MASK | K1_SFR_PS_SMR_MASK)
   ;;
-  andd $r0 = $r0, $r1
+  andd $r0 = $r0, $r1 // compute the sps wfxl set part
   ;;
-  set $sps = $r0
+  slld $r0 = $r0, 32 // move the sps wfxl set part to its location
+  ;;
+  ord $r0 = $r0, $r1 // add the sps wfxl clear part
+  ;;
+  wfxl $sps, $r0
   ;;
   rfe
   ;;
