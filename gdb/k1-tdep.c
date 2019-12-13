@@ -768,20 +768,7 @@ k1_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr,
 }
 
 static int
-is_inferior_unified (void)
-{
-  struct inferior_data *data;
-
-  if (ptid_equal (inferior_ptid, null_ptid))
-    return 0;
-
-  data = mppa_inferior_data (current_inferior ());
-
-  return data->unified;
-}
-
-static int
-insert_remove_unified_breakpoint (CORE_ADDR addr, int len, uint32_t value)
+sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value)
 {
   char *buf;
   long size = 256;
@@ -802,13 +789,13 @@ k1_memory_insert_breakpoint (struct gdbarch *gdbarch,
 {
   int ret = default_memory_insert_breakpoint (gdbarch, bp_tgt);
 
-  if (!ret && is_inferior_unified ())
+  if (!ret)
     {
       int len = 0;
       CORE_ADDR pc = bp_tgt->placed_address;
       const gdb_byte *bp = k1_bare_breakpoint_from_pc (gdbarch, &pc, &len);
 
-      insert_remove_unified_breakpoint (bp_tgt->placed_address, len,
+      sync_insert_remove_breakpoint (bp_tgt->placed_address, len,
 					*(uint32_t *) bp);
     }
 
@@ -821,9 +808,9 @@ k1_memory_remove_breakpoint (struct gdbarch *gdbarch,
 {
   int ret = default_memory_remove_breakpoint (gdbarch, bp_tgt);
 
-  if (!ret && is_inferior_unified ())
+  if (!ret)
     {
-      insert_remove_unified_breakpoint (bp_tgt->placed_address,
+      sync_insert_remove_breakpoint (bp_tgt->placed_address,
 					bp_tgt->placed_size,
 					*(uint32_t *) bp_tgt->shadow_contents);
     }
