@@ -8,6 +8,7 @@
 
 #define PS_ET_BIT 2
 #define PS_MME_BIT 11
+#define PS_V64_BIT 16
 
 enum K1_ARCH
 {

@@ -115,6 +115,33 @@ k1_is_mmu_enabled (struct gdbarch *gdbarch, struct regcache *regs)
   return (ps & (1 << PS_MME_BIT)) != 0;
 }
 
+void
+enable_ps_v64_at_boot (struct regcache *regs)
+{
+  struct gdbarch_tdep *tdep;
+  struct gdbarch *gdbarch;
+  ULONGEST ps;
+
+  if (regcache_read_pc (regs) != 0)
+    return;
+
+  gdbarch = target_gdbarch ();
+  if (!gdbarch)
+    return;
+  tdep = gdbarch_tdep (gdbarch);
+  if (!tdep)
+    return;
+
+  regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
+
+  // enable the 64bit mode
+  if ((ps & (1 << PS_V64_BIT)) == 0)
+    {
+      ps |= (1 << PS_V64_BIT);
+      regcache_raw_write_unsigned (regs, tdep->ps_regnum, ps);
+    }
+}
+
 static CORE_ADDR
 k1_displaced_step_location (struct gdbarch *gdbarch)
 {

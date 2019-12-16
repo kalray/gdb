@@ -22,6 +22,7 @@ void send_intercept_trap (struct inferior *inf, unsigned int v);
 void send_cluster_stop_all (struct inferior *inf, int v);
 void send_cluster_debug_ring (struct inferior *inf, int v);
 char get_jtag_over_iss (void);
+void enable_ps_v64_at_boot (struct regcache *regs);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);
 

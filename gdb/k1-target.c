@@ -717,6 +717,8 @@ k1_fetch_registers (struct target_ops *target, struct regcache *regcache,
   // get the registers of the current thread (CPU) in the usual way
   remote_target = find_target_beneath (target);
   remote_target->to_fetch_registers (target, regcache, regnum);
+
+  enable_ps_v64_at_boot (regcache);
 }
 
 static void
