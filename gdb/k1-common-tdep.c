@@ -277,7 +277,7 @@ k1_print_insn (bfd_vma pc, disassemble_info *di)
 static CORE_ADDR
 k1_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
-  return addr - addr % 16;
+  return addr & K1_STACK_ALIGN_MASK;
 }
 
 struct frame_id
@@ -300,45 +300,66 @@ k1_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    struct value **args, CORE_ADDR sp, int struct_return,
 		    CORE_ADDR struct_addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   gdb_byte *argslotsbuf = NULL;
   unsigned int argslotsnb = 0;
-  int i, len;
-  int r0_regnum
-    = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
-  int gpr_reg_sz = register_size (gdbarch, 0);
+  int i, n, r0_regnum, gpr_reg_sz, by_ref;
   const int params_regs = 12;
+  const int by_ref_arg_min_nb_regs = 5;
+
+  r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
+  gpr_reg_sz = register_size (gdbarch, r0_regnum);
+
+  sp = k1_frame_align (gdbarch, sp);
 
   /* Allocate arguments to the virtual argument slots  */
   for (i = 0; i < nargs; i++)
     {
-      int typelen = TYPE_LENGTH (value_enclosing_type (args[i]));
-      int newslots = (typelen + gpr_reg_sz - 1) / gpr_reg_sz;
+      int newslots, typelen = TYPE_LENGTH (value_enclosing_type (args[i]));
 
-      if (typelen > gpr_reg_sz && argslotsnb & 1)
-	++argslotsnb;
+      newslots = (typelen + gpr_reg_sz - 1) / gpr_reg_sz;
+      by_ref = 0;
+      if (newslots >= by_ref_arg_min_nb_regs)
+	{
+	  n = (newslots * gpr_reg_sz + K1_STACK_ALIGN_BYTES - 1)
+	      & K1_STACK_ALIGN_MASK;
+	  if (sp < n)
+	    error (
+	      _ ("Not enough place in stack to store argument %d (size %d)"), i,
+	      typelen);
+	  sp -= n;
+	  write_memory (sp, value_contents (args[i]), typelen);
+	  newslots = 1;
+	  by_ref = 1;
+	}
 
       argslotsbuf
 	= xrealloc (argslotsbuf, (argslotsnb + newslots) * gpr_reg_sz);
       memset (&argslotsbuf[argslotsnb * gpr_reg_sz], 0, newslots * gpr_reg_sz);
-      memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz], value_contents (args[i]),
-	      typelen);
+      if (by_ref)
+	memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz], &sp, sizeof (sp));
+      else
+	memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz], value_contents (args[i]),
+		typelen);
+
       argslotsnb += newslots;
     }
 
-  for (i = 0; i < (argslotsnb > params_regs ? params_regs : argslotsnb); i++)
+  n = argslotsnb - params_regs;
+  if (n > 0)
+    {
+      if (sp < n * gpr_reg_sz)
+	error (_ ("Not enough place in stack to store arguments not passed "
+		  "in registers"));
+
+      sp -= n * gpr_reg_sz;
+      write_memory (sp, argslotsbuf + params_regs * gpr_reg_sz, n * gpr_reg_sz);
+    }
+
+  n = argslotsnb > params_regs ? params_regs : argslotsnb;
+  for (i = 0; i < n; i++)
     regcache_cooked_write (regcache, i + r0_regnum,
 			   &argslotsbuf[i * gpr_reg_sz]);
-
-  sp = k1_frame_align (gdbarch, sp);
-  len = argslotsnb - params_regs;
-  if (len > 0)
-    {
-      sp -= len * gpr_reg_sz;
-      write_memory (sp, argslotsbuf + params_regs * gpr_reg_sz,
-		    len * gpr_reg_sz);
-    }
 
   if (struct_return)
     regcache_cooked_write_unsigned (regcache, r0_regnum + 15, struct_addr);
@@ -354,11 +375,10 @@ k1_store_return_value (struct gdbarch *gdbarch, struct type *type,
 		       struct regcache *regcache, const gdb_byte *buf)
 {
   int i, len = TYPE_LENGTH (type);
-  int r0_regnum
-    = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
+  int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
   int sz = register_size (gdbarch, r0_regnum);
 
-  for (i = 0; len > sz; i++, len -= sz)
+  for (i = 0; len >= sz; i++, len -= sz)
     regcache_raw_write (regcache, i + r0_regnum, buf + i * sz);
 
   if (len > 0)
@@ -376,11 +396,10 @@ k1_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 			 struct regcache *regcache, gdb_byte *buf)
 {
   int i, len = TYPE_LENGTH (type);
-  int r0_regnum
-    = user_reg_map_name_to_regnum (get_regcache_arch (regcache), "r0", -1);
+  int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
   int sz = register_size (gdbarch, r0_regnum);
 
-  for (i = 0; len > sz; i++, len -= sz)
+  for (i = 0; len >= sz; i++, len -= sz)
     regcache_raw_read (regcache, i + r0_regnum, buf + i * sz);
 
   if (len > 0)

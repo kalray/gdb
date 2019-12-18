@@ -765,28 +765,29 @@ k1_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr,
 		    CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
 		    struct regcache *regcache)
 {
-  int nop = nop_op[k1_arch ()];
-  uint32_t nops[4] = {nop, nop, nop, nop};
+  int i, sz;
+  uint32_t nop = nop_op[k1_arch ()];
 
-  if (sp < 32)
+  // allocate space for a breakpoint and a nop, keep the stack aligned
+  sp &= K1_STACK_ALIGN_MASK;
+  sz = (2 * sizeof (nop) + K1_STACK_ALIGN_BYTES - 1) & K1_STACK_ALIGN_MASK;
+  if (sp < sz)
     {
       error (_ ("Cannot call yet a function from gdb prompt because the stack "
 		"pointer is not set yet (sp=0x%llx)"),
 	     (unsigned long long) sp);
     }
+  sp -= sz;
 
-  // allocate space for a breakpoint, keep the stack aligned
-  sp &= ~15ULL;
-  sp -= 16;
-
-  // write 4 NOPs on the reserved stack place
-  write_memory (sp, (gdb_byte *) nops, sizeof (nops));
+  // write NOPs on the reserved stack place
+  for (i = 0; i < sz / sizeof (nop); i++)
+    write_memory (sp + i * sizeof (nop), (gdb_byte *) &nop, sizeof (nop));
 
   // the breakpoint will be on the second NOP (beginning from the lowest
   // address) when the breakpoint will be inserted, it will search the end of
   // the previous bundle (bit parallel 0) so, it will find our first unparallel
   // NOP
-  *bp_addr = sp + 4;
+  *bp_addr = sp + sizeof (nop);
 
   // inferior resumes at the function entry point
   *real_pc = funcaddr;

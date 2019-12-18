@@ -9,6 +9,8 @@
 #define PS_ET_BIT 2
 #define PS_MME_BIT 11
 #define PS_V64_BIT 16
+#define K1_STACK_ALIGN_BYTES 8ULL
+#define K1_STACK_ALIGN_MASK ~(K1_STACK_ALIGN_BYTES - 1)
 
 enum K1_ARCH
 {
