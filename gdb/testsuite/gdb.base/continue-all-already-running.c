@@ -22,7 +22,7 @@ main (void)
 {
   #ifdef K1_ISS
   #ifndef __CLUSTER_OS__
-  usleep (20000);
+  usleep (70000);
   #else
   sleep(1);
   #endif

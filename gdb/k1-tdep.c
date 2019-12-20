@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include "arch-utils.h"
 #include "cli/cli-decode.h"
+#include "event-top.h"
 #include "frame-unwind.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
@@ -94,12 +95,6 @@ k1_fetch_tls_load_module_address (struct objfile *objfile)
 			      gdbarch_tdep (target_gdbarch ())->local_regnum,
 			      &val);
   return val;
-}
-
-static void
-k1_inferior_created (struct target_ops *target, int from_tty)
-{
-  k1_current_arch = K1_NUM_ARCHES;
 }
 
 static int
@@ -757,6 +752,131 @@ k1_bare_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pc, int *len)
     error ("Cannot find the break instruction for the current architecture.");
 
   return (gdb_byte *) &break_op[k1_arch ()];
+}
+
+static void
+k1_timeout_os_init_done_cb (void *arg)
+{
+  *(int *) arg = 1;
+}
+
+int
+k1_prepare_os_init_done (void)
+{
+  static int s_cnt_wait_os_init_done = 0;
+  CORE_ADDR gdb_os_init_done_addr;
+  uint32_t saved_os_init_done_syl;
+  struct bound_minimal_symbol msym;
+  const gdb_byte *bp_opcode;
+  struct inferior *inf;
+  struct inferior_data *data;
+  struct regcache *rc;
+  int bp_len;
+
+  inf = current_inferior ();
+  if (!inf)
+    return 0;
+
+  // continue to gdb_os_init_done only for the clusters by spawned by runner
+  // and only if the "kalray cont_os_init_done" option is on
+  if (after_first_resume || !opt_cont_os_init_done)
+    return 0;
+
+  // continue to gdb_os_init_done only after reboot (pc = 0)
+  rc = get_thread_regcache (inferior_ptid);
+  if (regcache_read_pc (rc) != 0)
+    return 0;
+
+  // search the gdb_os_init_done symbol
+  msym = lookup_minimal_symbol ("gdb_os_init_done", NULL, NULL);
+  if (!msym.minsym)
+    return 0;
+  gdb_os_init_done_addr = BMSYMBOL_VALUE_ADDRESS (msym);
+  if (!gdb_os_init_done_addr)
+    return 0;
+
+  // add the breakpoint opcode at the gdb_os_init_done address
+  // w/o adding a breakpoint in gdb. This prevents the gdb breakpoints
+  // counter increment
+  bp_opcode = k1_bare_breakpoint_from_pc (target_gdbarch (),
+					  &gdb_os_init_done_addr, &bp_len);
+  gdb_assert (bp_len == 4);
+  read_memory (gdb_os_init_done_addr, (gdb_byte *) &saved_os_init_done_syl,
+	       bp_len);
+  write_memory (gdb_os_init_done_addr, bp_opcode, bp_len);
+
+  // save the info to the inferior data
+  wait_os_init_done++;
+  data = mppa_inferior_data (inf);
+  data->gdb_os_init_done_addr = gdb_os_init_done_addr;
+  data->saved_os_init_done_syl = saved_os_init_done_syl;
+  data->os_init_done = ++s_cnt_wait_os_init_done;
+
+  return 1;
+}
+
+static void
+k1_inferior_created (struct target_ops *target, int from_tty)
+{
+  struct bound_minimal_symbol msym;
+  int timedout, timer_id;
+  struct inferior *inf;
+  struct thread_info *thread;
+  struct target_waitstatus ws;
+  const int timeout_ms_os_init_done = 1000;
+
+  k1_current_arch = K1_NUM_ARCHES;
+
+  if (ptid_get_pid (inferior_ptid) != 1)
+    return;
+
+  if (!k1_prepare_os_init_done ())
+    return;
+
+  inf = current_inferior ();
+  if (!inf)
+    return;
+
+  // save the initial stopped thread waitstatus
+  thread = find_thread_ptid (inferior_ptid);
+  ws = thread->suspend.waitstatus;
+
+  // continue to gdb_os_init_done
+  continue_1 (0);
+
+  // wait to arrive at gdb_os_init_done (or any other stop reason)
+  // with any thread of the current inferior
+  async_disable_stdin ();
+  // avoid printing the stop info, it will be printed later by
+  // process_initial_stop_replies
+  inf->control.stop_soon = STOP_QUIETLY;
+  timedout = 0;
+  // if for the execution does not arrive at gdb_os_init_done, avoid
+  // gdb stalling by creating a timer
+  timer_id = create_timer (timeout_ms_os_init_done, &k1_timeout_os_init_done_cb,
+			   &timedout);
+  while (gdb_do_one_event () >= 0)
+    {
+      // update stopped threads list
+      update_thread_list ();
+      finish_thread_state (minus_one_ptid);
+      // search a stopped thread in the current inferior
+      thread = any_live_thread_of_process (inf->pid);
+      if (is_stopped (thread->ptid))
+	{
+	  // set the initial stopped thread waitstatus
+	  thread->suspend.waitstatus = ws;
+	  break;
+	}
+
+      if (timedout)
+	break;
+    }
+  if (!timedout)
+    delete_timer (timer_id);
+  // restore the gdb state
+  inf->control.stop_soon = NO_STOP_QUIETLY;
+  async_enable_stdin ();
 }
 
 static CORE_ADDR

@@ -36,6 +36,7 @@
 #include "location.h"
 #include "regcache.h"
 #include "objfiles.h"
+#include "thread-fsm.h"
 
 #include "elf/k1c.h"
 #include "elf-bfd.h"
@@ -87,6 +88,7 @@ static const char *traps_name[] = {"opcode",
 static int no_traps_name = sizeof (traps_name) / sizeof (traps_name[0]);
 char cjtag_over_iss = 'n';
 int opt_break_on_spawn = 0;
+int opt_cont_os_init_done = 1;
 int opt_cluster_stop_all = 0;
 int in_info_thread = 0;
 int in_attach_mppa = 0;
@@ -94,6 +96,7 @@ int new_attach_requested = 0;
 static pid_t server_pid;
 int after_first_resume = 0;
 int opt_trap = 0;
+int wait_os_init_done = 0;
 
 static const struct inferior_data *k1_attached_inf_data;
 
@@ -468,7 +471,7 @@ mppa_target_resume (struct target_ops *ops, ptid_t ptid, int step,
 {
   struct target_ops *remote_target = find_target_beneath (ops);
 
-  if (!after_first_resume)
+  if (!after_first_resume && !wait_os_init_done)
     {
       after_first_resume = 1;
       iterate_over_inferiors (mppa_mark_clusters_booted, &ptid);
@@ -595,6 +598,49 @@ custom_notification_cb (char *arg)
     create_timer (0, &k1_new_inferiors_cb, NULL);
 }
 
+static void
+change_thread_cb (void *p)
+{
+  struct inferior *inf = (struct inferior *) p;
+  struct thread_info *th;
+
+  if (is_stopped (inferior_ptid))
+    return;
+
+  th = any_live_thread_of_process (inf->pid);
+  if (!is_stopped (th->ptid))
+    return;
+
+  switch_to_thread (th->ptid);
+}
+
+static int
+os_init_done_fsm_should_stop (struct thread_fsm *self)
+{
+  struct regcache *rc = get_thread_regcache (inferior_ptid);
+
+  return regcache_read_pc (rc) != 0;
+}
+
+static void
+os_init_done_fsm_clean_up (struct thread_fsm *self)
+{
+}
+
+static enum async_reply_reason
+os_init_done_fsm_async_reply_reason (struct thread_fsm *self)
+{
+  return EXEC_ASYNC_LOCATION_REACHED;
+}
+
+static struct thread_fsm_ops os_init_done_fsm_ops = {
+  NULL,			      /* dtor */
+  &os_init_done_fsm_clean_up, /* clean_up */
+  os_init_done_fsm_should_stop,
+  NULL, /* return_value */
+  os_init_done_fsm_async_reply_reason,
+};
+
 static ptid_t
 k1_target_wait (struct target_ops *target, ptid_t ptid,
 		struct target_waitstatus *status, int options)
@@ -602,14 +648,18 @@ k1_target_wait (struct target_ops *target, ptid_t ptid,
   struct target_ops *remote_target = find_target_beneath (target);
   ptid_t res;
   struct inferior *inferior;
+  struct inferior_data *data;
+  struct regcache *rc;
   int ix_items;
 
   res = remote_target->to_wait (remote_target, ptid, status, options);
 
   inferior = find_inferior_pid (ptid_get_pid (res));
+  if (!inferior || !find_thread_ptid (res))
+    return res;
 
-  if (inferior && find_thread_ptid (res)
-      && !mppa_inferior_data (inferior)->booted)
+  data = mppa_inferior_data (inferior);
+  if (!data->booted)
     {
       char *endptr;
       struct osdata *osdata;
@@ -656,6 +706,52 @@ k1_target_wait (struct target_ops *target, ptid_t ptid,
 		status->kind = TARGET_WAITKIND_SPURIOUS;
 	    }
 	  break;
+	}
+    }
+
+  // restore the first syllab of gdb_os_init_done
+  if (data->os_init_done)
+    {
+      int crt_os_init_done = data->os_init_done;
+
+      wait_os_init_done--;
+      data->os_init_done = 0;
+      rc = get_thread_regcache (res);
+      if (regcache_read_pc (rc) == data->gdb_os_init_done_addr)
+	{
+	  ptid_t save_ptid = inferior_ptid;
+
+	  switch_to_thread (res);
+	  write_memory (data->gdb_os_init_done_addr,
+			(bfd_byte *) &data->saved_os_init_done_syl, 4);
+	  switch_to_thread (save_ptid);
+	}
+
+      // change the thread to stopped one after continue to
+      // gdb_os_init_done
+      if (crt_os_init_done == 1)
+	create_timer (0, &change_thread_cb, inferior);
+    }
+  else
+    {
+      // for the first inferior, the continue to os_init_done
+      // is done from k1_inferior_created
+      if (!after_first_resume && opt_cont_os_init_done
+	  && ptid_get_pid (res) != 1)
+	{
+	  struct thread_info *tp;
+	  ptid_t save_ptid = inferior_ptid;
+
+	  switch_to_thread (res);
+
+	  tp = inferior_thread ();
+	  if (tp && !tp->thread_fsm && k1_prepare_os_init_done ())
+	    {
+	      tp->thread_fsm = XCNEW (struct thread_fsm);
+	      thread_fsm_ctor (tp->thread_fsm, &os_init_done_fsm_ops);
+	    }
+
+	  switch_to_thread (save_ptid);
 	}
     }
 
@@ -777,6 +873,14 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty,
   data = mppa_inferior_data (find_inferior_pid (inferior_ptid.pid));
   fprintf_filtered (file, "The cluster break on reset is %d.\n",
 		    data->cluster_break_on_spawn);
+}
+
+static void
+show_cont_os_init_done (struct ui_file *file, int from_tty,
+			struct cmd_list_element *c, const char *value)
+{
+  fprintf_filtered (file, "Continue until OS initialization is done is %d.\n",
+		    opt_cont_os_init_done);
 }
 
 static int
@@ -1184,6 +1288,13 @@ _initialize__k1_target (void)
 			   set_cluster_break_on_spawn,
 			   show_cluster_break_on_spawn, &kalray_set_cmdlist,
 			   &kalray_show_cmdlist);
+
+  add_setshow_boolean_cmd ("cont_os_init_done", class_maintenance,
+			   &opt_cont_os_init_done,
+			   _ ("Set continue until OS initialization is done."),
+			   _ ("Show continue until OS initialization is done."),
+			   NULL, NULL, show_cont_os_init_done,
+			   &kalray_set_cmdlist, &kalray_show_cmdlist);
 
   add_com ("attach-mppa", class_run, attach_mppa_command,
 	   _ ("Connect to a MPPA TLM platform and start debugging it.\nUsage "
