@@ -844,7 +844,6 @@ case "${targ}" in
 #ifdef BFD64
     targ64_selvecs=k1_elf64_vec
 #endif
-    targ_cflags="-DK1_TCB_SIZE=0"
     ;;
 
   lm32-*-elf | lm32-*-rtems*)

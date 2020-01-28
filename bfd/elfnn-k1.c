@@ -393,14 +393,6 @@ _k1_elf_section_data;
 #define elf_k1_section_data(sec) \
   ((_k1_elf_section_data *) elf_section_data (sec))
 
-#ifndef K1_TCB_SIZE
-/* The size of the thread control block which is defined to be two pointers.  */
-#define TCB_SIZE	(ARCH_SIZE/8)*2
-#else
-/* Currently not using TCB on anything but Linux */
-#define TCB_SIZE	(K1_TCB_SIZE)
-#endif
-
 struct elf_k1_local_symbol
 {
   unsigned int got_type;
@@ -1960,7 +1952,7 @@ tpoff_base (struct bfd_link_info *info)
   /* If tls_sec is NULL, we should have signalled an error already.  */
   BFD_ASSERT (htab->tls_sec != NULL);
 
-  bfd_vma base = align_power ((bfd_vma) TCB_SIZE,
+  bfd_vma base = align_power ((bfd_vma) 0,
 			      htab->tls_sec->alignment_power);
   return htab->tls_sec->vma - base;
 }
