@@ -229,7 +229,7 @@ proc gdbserver_spawn { child_args } {
     # be debugged, and any arguments.
     # xraynaud: it's not the way k1-jtag-runner works.
     # set arguments "$target_exec"
-    set arguments "--only_taps=Cluster0 --exec-file=Cluster0:$last_loaded_file"
+    set arguments "--only_taps=Cluster0 --fsbl=none --exec-file=Cluster0:$last_loaded_file"
     if { $child_args != "" } {
         append arguments " $child_args"
     }
