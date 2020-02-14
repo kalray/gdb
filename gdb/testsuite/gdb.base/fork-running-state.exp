@@ -19,8 +19,8 @@
 
 standard_testfile
 
-# K1: does not compile (getppid, alarm)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (getppid, alarm)
+if [istarget kvx-*-*] then {
   unsupported "fork-running-state.exp"
   return 1
 }

@@ -638,8 +638,8 @@ do_nested_struct_union_tests (void)
 int
 main (int argc, char *argv [])
 {
-  #ifdef __k1__
-  // K1 specific - avoid interpreting the opcode near 0 as an address.
+  #ifdef __kvx__
+  // KVX specific - avoid interpreting the opcode near 0 as an address.
   // The test intialize some pointers to addresses near 0
   // (e.g. anon->h = (const char **) 6;) and, then, it tries to deference them
   // (-var-list-children  ptr1.*ptr.1_anonymous.2_anonymous.3_anonymous.h).

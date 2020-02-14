@@ -16,8 +16,8 @@
 
 standard_testfile .c
 
-# K1: does not compile (undefined __stack_overflow_detected)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (undefined __stack_overflow_detected)
+if [istarget kvx-*-*] then {
   unsupported "stack-checking.exp"
   return 1
 }

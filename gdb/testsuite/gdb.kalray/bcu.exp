@@ -9,7 +9,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1} ${srcdir}/${subdir}/${srcfil
      return -1
 }
 
-global is_k1_server
+global is_kvx_server
 
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir

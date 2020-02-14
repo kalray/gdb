@@ -408,10 +408,10 @@ ip2k-*-elf)		targ_emul=elf32ip2k
 			;;
 iq2000-*-elf)           targ_emul=elf32iq2000 ; targ_extra_emuls="elf32iq10"
 			;;
-k1-*-linux*)		targ_emul=elf64k1_linux
-			targ_extra_emuls="elf64k1"
+kvx-*-linux*)		targ_emul=elf64kvx_linux
+			targ_extra_emuls="elf64kvx"
 			;;
-k1-*-*)		targ_emul=elf64k1; targ_extra_emuls="elf64k1_linux elf32k1"
+kvx-*-*)		targ_emul=elf64kvx; targ_extra_emuls="elf64kvx_linux elf32kvx"
 			;;
 lm32-*-*linux*)         targ_emul=elf32lm32fd ;;
 lm32-*-*)               targ_emul=elf32lm32 ; targ_extra_emuls="elf32lm32fd"

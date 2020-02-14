@@ -15,8 +15,8 @@
 
 standard_testfile
 
-# K1: does not compile (include sys/sdt.h)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (include sys/sdt.h)
+if [istarget kvx-*-*] then {
   unsupported "stap-probe.exp"
   return 1
 }

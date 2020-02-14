@@ -17,8 +17,8 @@
 
 standard_testfile
 
-# K1: does not compile (alarm)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (alarm)
+if [istarget kvx-*-*] then {
   unsupported "gdb-sigterm.exp"
   return 1
 }

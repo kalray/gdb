@@ -40,8 +40,8 @@ struct foo struct1, struct2, *ptr1, *ptr2;
 int doread = 0;
 
 char *global_ptr;
-#ifdef __k1__
-// K1 specific - avoid interpreting the opcode at 0 as an address.
+#ifdef __kvx__
+// KVX specific - avoid interpreting the opcode at 0 as an address.
 // The test adds a watchpoint (watch **global_ptr_ptr) before initializing
 // this variable (global_ptr_ptr = &global_ptr;). When the initial value of
 // the watched address is requested, the opcode at address 0 is used as an

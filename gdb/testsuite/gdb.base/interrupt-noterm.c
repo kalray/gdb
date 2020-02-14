@@ -20,7 +20,7 @@
 int
 main ()
 {
-  #ifdef K1_ISS
+  #ifdef KVX_ISS
   usleep (3000);
   #else
   sleep (3);

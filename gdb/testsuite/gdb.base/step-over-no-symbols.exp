@@ -18,8 +18,8 @@
 
 standard_testfile start.c
 
-# K1: set displaced-stepping off not supported
-if [istarget k1*-*-*] then {
+# KVX: set displaced-stepping off not supported
+if [istarget kvx-*-*] then {
   unsupported "step-over-no-symbols.exp"
   return 1
 }

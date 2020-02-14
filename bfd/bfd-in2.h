@@ -1031,33 +1031,33 @@ extern bfd_boolean v850_elf_set_note
   (bfd *, unsigned int, unsigned int);
 
 /* K1C stub generation support for ELF64.  Called from the linker.  */
-extern int elf64_k1_setup_section_lists
+extern int elf64_kvx_setup_section_lists
   (bfd *, struct bfd_link_info *);
 
-extern void elf64_k1_next_input_section
+extern void elf64_kvx_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
 
-extern bfd_boolean elf64_k1_size_stubs
+extern bfd_boolean elf64_kvx_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
 
-extern bfd_boolean elf64_k1_build_stubs
+extern bfd_boolean elf64_kvx_build_stubs
   (struct bfd_link_info *);
 
 /* K1C stub generation support for ELF32.  Called from the linker.  */
-extern int elf32_k1_setup_section_lists
+extern int elf32_kvx_setup_section_lists
   (bfd *, struct bfd_link_info *);
 
-extern void elf32_k1_next_input_section
+extern void elf32_kvx_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
 
-extern bfd_boolean elf32_k1_size_stubs
+extern bfd_boolean elf32_kvx_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
 
-extern bfd_boolean elf32_k1_build_stubs
+extern bfd_boolean elf32_kvx_build_stubs
   (struct bfd_link_info *);
 /* Extracted from init.c.  */
 void bfd_init (void);
@@ -2340,10 +2340,10 @@ enum bfd_architecture
   bfd_arch_lm32,      /* Lattice Mico32 */
 #define bfd_mach_lm32      1
   bfd_arch_microblaze,/* Xilinx MicroBlaze. */
-  bfd_arch_k1,        /* Kalray k1 */
-#define bfd_mach_k1c                0
-#define bfd_mach_k1c_64             1
-#define bfd_mach_k1c_usr            2
+  bfd_arch_kvx,        /* Kalray VLIW core of the MPPA processor family */
+#define bfd_mach_kv3_1                0
+#define bfd_mach_kv3_1_64             1
+#define bfd_mach_kv3_1_usr            2
   bfd_arch_tilepro,   /* Tilera TILEPro */
   bfd_arch_tilegx, /* Tilera TILE-Gx */
 #define bfd_mach_tilepro   1
@@ -5742,104 +5742,104 @@ to two words (uses imm instruction).  */
 to two words (uses imm instruction).  */
   BFD_RELOC_MICROBLAZE_64_TLSTPREL,
 
-/* K1 pseudo relocation code to mark the start of the K1
+/* KVX pseudo relocation code to mark the start of the KVX
 relocation enumerators.  N.B. the order of the enumerators is
-important as several tables in the K1 bfd backend are indexed
+important as several tables in the KVX bfd backend are indexed
 by these enumerators; make sure they are all synced.";  */
-  BFD_RELOC_K1_RELOC_START,
+  BFD_RELOC_KVX_RELOC_START,
 
-/* K1 null relocation code.  */
-  BFD_RELOC_K1_NONE,
+/* KVX null relocation code.  */
+  BFD_RELOC_KVX_NONE,
 
-/* K1 Relocations.  */
-  BFD_RELOC_K1_16,
-  BFD_RELOC_K1_32,
-  BFD_RELOC_K1_64,
-  BFD_RELOC_K1_S16_PCREL,
-  BFD_RELOC_K1_PCREL17,
-  BFD_RELOC_K1_PCREL27,
-  BFD_RELOC_K1_32_PCREL,
-  BFD_RELOC_K1_S37_PCREL_LO10,
-  BFD_RELOC_K1_S37_PCREL_UP27,
-  BFD_RELOC_K1_S43_PCREL_LO10,
-  BFD_RELOC_K1_S43_PCREL_UP27,
-  BFD_RELOC_K1_S43_PCREL_EX6,
-  BFD_RELOC_K1_S64_PCREL_LO10,
-  BFD_RELOC_K1_S64_PCREL_UP27,
-  BFD_RELOC_K1_S64_PCREL_EX27,
-  BFD_RELOC_K1_64_PCREL,
-  BFD_RELOC_K1_S16,
-  BFD_RELOC_K1_S32_LO5,
-  BFD_RELOC_K1_S32_UP27,
-  BFD_RELOC_K1_S37_LO10,
-  BFD_RELOC_K1_S37_UP27,
-  BFD_RELOC_K1_S37_GOTOFF_LO10,
-  BFD_RELOC_K1_S37_GOTOFF_UP27,
-  BFD_RELOC_K1_S43_GOTOFF_LO10,
-  BFD_RELOC_K1_S43_GOTOFF_UP27,
-  BFD_RELOC_K1_S43_GOTOFF_EX6,
-  BFD_RELOC_K1_32_GOTOFF,
-  BFD_RELOC_K1_64_GOTOFF,
-  BFD_RELOC_K1_32_GOT,
-  BFD_RELOC_K1_S37_GOT_LO10,
-  BFD_RELOC_K1_S37_GOT_UP27,
-  BFD_RELOC_K1_S43_GOT_LO10,
-  BFD_RELOC_K1_S43_GOT_UP27,
-  BFD_RELOC_K1_S43_GOT_EX6,
-  BFD_RELOC_K1_64_GOT,
-  BFD_RELOC_K1_GLOB_DAT,
-  BFD_RELOC_K1_COPY,
-  BFD_RELOC_K1_JMP_SLOT,
-  BFD_RELOC_K1_RELATIVE,
-  BFD_RELOC_K1_S43_LO10,
-  BFD_RELOC_K1_S43_UP27,
-  BFD_RELOC_K1_S43_EX6,
-  BFD_RELOC_K1_S64_LO10,
-  BFD_RELOC_K1_S64_UP27,
-  BFD_RELOC_K1_S64_EX27,
-  BFD_RELOC_K1_S37_GOTADDR_LO10,
-  BFD_RELOC_K1_S37_GOTADDR_UP27,
-  BFD_RELOC_K1_S43_GOTADDR_LO10,
-  BFD_RELOC_K1_S43_GOTADDR_UP27,
-  BFD_RELOC_K1_S43_GOTADDR_EX6,
-  BFD_RELOC_K1_S64_GOTADDR_LO10,
-  BFD_RELOC_K1_S64_GOTADDR_UP27,
-  BFD_RELOC_K1_S64_GOTADDR_EX27,
-  BFD_RELOC_K1_64_DTPMOD,
-  BFD_RELOC_K1_64_DTPOFF,
-  BFD_RELOC_K1_S37_TLS_DTPOFF_LO10,
-  BFD_RELOC_K1_S37_TLS_DTPOFF_UP27,
-  BFD_RELOC_K1_S43_TLS_DTPOFF_LO10,
-  BFD_RELOC_K1_S43_TLS_DTPOFF_UP27,
-  BFD_RELOC_K1_S43_TLS_DTPOFF_EX6,
-  BFD_RELOC_K1_S37_TLS_GD_LO10,
-  BFD_RELOC_K1_S37_TLS_GD_UP27,
-  BFD_RELOC_K1_S43_TLS_GD_LO10,
-  BFD_RELOC_K1_S43_TLS_GD_UP27,
-  BFD_RELOC_K1_S43_TLS_GD_EX6,
-  BFD_RELOC_K1_S37_TLS_LD_LO10,
-  BFD_RELOC_K1_S37_TLS_LD_UP27,
-  BFD_RELOC_K1_S43_TLS_LD_LO10,
-  BFD_RELOC_K1_S43_TLS_LD_UP27,
-  BFD_RELOC_K1_S43_TLS_LD_EX6,
-  BFD_RELOC_K1_64_TPOFF,
-  BFD_RELOC_K1_S37_TLS_IE_LO10,
-  BFD_RELOC_K1_S37_TLS_IE_UP27,
-  BFD_RELOC_K1_S43_TLS_IE_LO10,
-  BFD_RELOC_K1_S43_TLS_IE_UP27,
-  BFD_RELOC_K1_S43_TLS_IE_EX6,
-  BFD_RELOC_K1_S37_TLS_LE_LO10,
-  BFD_RELOC_K1_S37_TLS_LE_UP27,
-  BFD_RELOC_K1_S43_TLS_LE_LO10,
-  BFD_RELOC_K1_S43_TLS_LE_UP27,
-  BFD_RELOC_K1_S43_TLS_LE_EX6,
+/* KVX Relocations.  */
+  BFD_RELOC_KVX_16,
+  BFD_RELOC_KVX_32,
+  BFD_RELOC_KVX_64,
+  BFD_RELOC_KVX_S16_PCREL,
+  BFD_RELOC_KVX_PCREL17,
+  BFD_RELOC_KVX_PCREL27,
+  BFD_RELOC_KVX_32_PCREL,
+  BFD_RELOC_KVX_S37_PCREL_LO10,
+  BFD_RELOC_KVX_S37_PCREL_UP27,
+  BFD_RELOC_KVX_S43_PCREL_LO10,
+  BFD_RELOC_KVX_S43_PCREL_UP27,
+  BFD_RELOC_KVX_S43_PCREL_EX6,
+  BFD_RELOC_KVX_S64_PCREL_LO10,
+  BFD_RELOC_KVX_S64_PCREL_UP27,
+  BFD_RELOC_KVX_S64_PCREL_EX27,
+  BFD_RELOC_KVX_64_PCREL,
+  BFD_RELOC_KVX_S16,
+  BFD_RELOC_KVX_S32_LO5,
+  BFD_RELOC_KVX_S32_UP27,
+  BFD_RELOC_KVX_S37_LO10,
+  BFD_RELOC_KVX_S37_UP27,
+  BFD_RELOC_KVX_S37_GOTOFF_LO10,
+  BFD_RELOC_KVX_S37_GOTOFF_UP27,
+  BFD_RELOC_KVX_S43_GOTOFF_LO10,
+  BFD_RELOC_KVX_S43_GOTOFF_UP27,
+  BFD_RELOC_KVX_S43_GOTOFF_EX6,
+  BFD_RELOC_KVX_32_GOTOFF,
+  BFD_RELOC_KVX_64_GOTOFF,
+  BFD_RELOC_KVX_32_GOT,
+  BFD_RELOC_KVX_S37_GOT_LO10,
+  BFD_RELOC_KVX_S37_GOT_UP27,
+  BFD_RELOC_KVX_S43_GOT_LO10,
+  BFD_RELOC_KVX_S43_GOT_UP27,
+  BFD_RELOC_KVX_S43_GOT_EX6,
+  BFD_RELOC_KVX_64_GOT,
+  BFD_RELOC_KVX_GLOB_DAT,
+  BFD_RELOC_KVX_COPY,
+  BFD_RELOC_KVX_JMP_SLOT,
+  BFD_RELOC_KVX_RELATIVE,
+  BFD_RELOC_KVX_S43_LO10,
+  BFD_RELOC_KVX_S43_UP27,
+  BFD_RELOC_KVX_S43_EX6,
+  BFD_RELOC_KVX_S64_LO10,
+  BFD_RELOC_KVX_S64_UP27,
+  BFD_RELOC_KVX_S64_EX27,
+  BFD_RELOC_KVX_S37_GOTADDR_LO10,
+  BFD_RELOC_KVX_S37_GOTADDR_UP27,
+  BFD_RELOC_KVX_S43_GOTADDR_LO10,
+  BFD_RELOC_KVX_S43_GOTADDR_UP27,
+  BFD_RELOC_KVX_S43_GOTADDR_EX6,
+  BFD_RELOC_KVX_S64_GOTADDR_LO10,
+  BFD_RELOC_KVX_S64_GOTADDR_UP27,
+  BFD_RELOC_KVX_S64_GOTADDR_EX27,
+  BFD_RELOC_KVX_64_DTPMOD,
+  BFD_RELOC_KVX_64_DTPOFF,
+  BFD_RELOC_KVX_S37_TLS_DTPOFF_LO10,
+  BFD_RELOC_KVX_S37_TLS_DTPOFF_UP27,
+  BFD_RELOC_KVX_S43_TLS_DTPOFF_LO10,
+  BFD_RELOC_KVX_S43_TLS_DTPOFF_UP27,
+  BFD_RELOC_KVX_S43_TLS_DTPOFF_EX6,
+  BFD_RELOC_KVX_S37_TLS_GD_LO10,
+  BFD_RELOC_KVX_S37_TLS_GD_UP27,
+  BFD_RELOC_KVX_S43_TLS_GD_LO10,
+  BFD_RELOC_KVX_S43_TLS_GD_UP27,
+  BFD_RELOC_KVX_S43_TLS_GD_EX6,
+  BFD_RELOC_KVX_S37_TLS_LD_LO10,
+  BFD_RELOC_KVX_S37_TLS_LD_UP27,
+  BFD_RELOC_KVX_S43_TLS_LD_LO10,
+  BFD_RELOC_KVX_S43_TLS_LD_UP27,
+  BFD_RELOC_KVX_S43_TLS_LD_EX6,
+  BFD_RELOC_KVX_64_TPOFF,
+  BFD_RELOC_KVX_S37_TLS_IE_LO10,
+  BFD_RELOC_KVX_S37_TLS_IE_UP27,
+  BFD_RELOC_KVX_S43_TLS_IE_LO10,
+  BFD_RELOC_KVX_S43_TLS_IE_UP27,
+  BFD_RELOC_KVX_S43_TLS_IE_EX6,
+  BFD_RELOC_KVX_S37_TLS_LE_LO10,
+  BFD_RELOC_KVX_S37_TLS_LE_UP27,
+  BFD_RELOC_KVX_S43_TLS_LE_LO10,
+  BFD_RELOC_KVX_S43_TLS_LE_UP27,
+  BFD_RELOC_KVX_S43_TLS_LE_EX6,
 
-/* K1 pseudo relocation code to mark the end of the K1
+/* KVX pseudo relocation code to mark the end of the KVX
 relocation enumerators that have direct mapping to ELF reloc codes.
 There are a few more enumerators after this one; those are mainly
-used by the K1 assembler for the internal fixup or to select
+used by the KVX assembler for the internal fixup or to select
 one of the above enumerators.  */
-  BFD_RELOC_K1_RELOC_END,
+  BFD_RELOC_KVX_RELOC_END,
 
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is

@@ -113,7 +113,7 @@ ALL_MACHINES = \
 	cpu-i386.lo \
 	cpu-iamcu.lo \
 	cpu-l1om.lo \
-	cpu-k1.lo \
+	cpu-kvx.lo \
 	cpu-k1om.lo \
 	cpu-i860.lo \
 	cpu-i960.lo \
@@ -202,7 +202,7 @@ ALL_MACHINES_CFILES = \
 	cpu-iamcu.c \
 	cpu-l1om.c \
 	cpu-k1om.c \
-	cpu-k1.c \
+	cpu-kvx.c \
 	cpu-i860.c \
 	cpu-i960.c \
 	cpu-ia64.c \
@@ -345,8 +345,8 @@ BFD32_BACKENDS = \
 	elf32-i960.lo \
 	elf32-ip2k.lo \
 	elf32-iq2000.lo \
-	elf32-k1.lo \
-	elfxx-k1.lo \
+	elf32-kvx.lo \
+	elfxx-kvx.lo \
 	elf32-lm32.lo \
 	elf32-m32c.lo \
 	elf32-m32r.lo \
@@ -539,7 +539,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-i960.c \
 	elf32-ip2k.c \
 	elf32-iq2000.c \
-	elfxx-k1.c \
+	elfxx-kvx.c \
 	elf32-lm32.c \
 	elf32-m32c.c \
 	elf32-m32r.c \
@@ -676,8 +676,8 @@ BFD64_BACKENDS = \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
 	elf64-ia64-vms.lo \
-	elf64-k1.lo \
-	elfxx-k1.lo \
+	elf64-kvx.lo \
+	elfxx-kvx.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
@@ -728,7 +728,7 @@ BFD64_BACKENDS_CFILES = \
 	elfn32-mips.c \
 	elfxx-aarch64.c \
 	elfxx-ia64.c \
-	elfxx-k1.c \
+	elfxx-kvx.c \
 	elfxx-mips.c \
 	mach-o-aarch64.c \
 	mach-o-x86-64.c \
@@ -793,7 +793,7 @@ SOURCE_CFILES = \
 
 BUILD_CFILES = \
 	elf32-aarch64.c elf64-aarch64.c \
-	elf32-k1.c elf64-k1.c \
+	elf32-kvx.c elf64-kvx.c \
 	elf32-ia64.c elf64-ia64.c peigen.c pepigen.c pex64igen.c
 
 CFILES = $(SOURCE_CFILES) $(BUILD_CFILES)
@@ -954,17 +954,17 @@ elf64-aarch64.c : elfnn-aarch64.c
 	$(SED) -e s/NN/64/g < $(srcdir)/elfnn-aarch64.c >> elf64-aarch64.new
 	mv -f elf64-aarch64.new elf64-aarch64.c
 
-elf32-k1.c : elfnn-k1.c
-	rm -f elf32-k1.c
-	echo "#line 1 \"$(srcdir)/elfnn-k1.c\"" > elf32-k1.new
-	sed -e s/NN/32/g < $(srcdir)/elfnn-k1.c >> elf32-k1.new
-	mv -f elf32-k1.new elf32-k1.c
+elf32-kvx.c : elfnn-kvx.c
+	rm -f elf32-kvx.c
+	echo "#line 1 \"$(srcdir)/elfnn-kvx.c\"" > elf32-kvx.new
+	sed -e s/NN/32/g < $(srcdir)/elfnn-kvx.c >> elf32-kvx.new
+	mv -f elf32-kvx.new elf32-kvx.c
 
-elf64-k1.c : elfnn-k1.c
-	rm -f elf64-k1.c
-	echo "#line 1 \"$(srcdir)/elfnn-k1.c\"" > elf64-k1.new
-	sed -e s/NN/64/g < $(srcdir)/elfnn-k1.c >> elf64-k1.new
-	mv -f elf64-k1.new elf64-k1.c
+elf64-kvx.c : elfnn-kvx.c
+	rm -f elf64-kvx.c
+	echo "#line 1 \"$(srcdir)/elfnn-kvx.c\"" > elf64-kvx.new
+	sed -e s/NN/64/g < $(srcdir)/elfnn-kvx.c >> elf64-kvx.new
+	mv -f elf64-kvx.new elf64-kvx.c
 
 elf32-ia64.c : elfnn-ia64.c
 	rm -f elf32-ia64.c

@@ -17,8 +17,8 @@
 
 standard_testfile .c
 
-# K1: does not compile (vfork)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (vfork)
+if [istarget kvx-*-*] then {
   unsupported "watch-vfork.exp"
   return 1
 }

@@ -510,9 +510,9 @@ do
     ieee_vec)			 tb="$tb ieee.lo" ;;
     ip2k_elf32_vec)		 tb="$tb elf32-ip2k.lo elf32.lo $elf" ;;
     iq2000_elf32_vec)		 tb="$tb elf32-iq2000.lo elf32.lo $elf" ;;
-    k1_elf32_vec)		 tb="$tb elf32-k1.lo elfxx-k1.lo elf32.lo $elf $ipa" ;;
-    k1_elf64_vec)		 tb="$tb elf64-k1.lo elfxx-k1.lo elf64.lo $elf $ipa" ;;
-    k1_elf64_linux_vec)		 tb="$tb elf64-k1.lo elfxx-k1.lo elf64.lo $elf $ipa" ;;
+    kvx_elf32_vec)		 tb="$tb elf32-kvx.lo elfxx-kvx.lo elf32.lo $elf $ipa" ;;
+    kvx_elf64_vec)		 tb="$tb elf64-kvx.lo elfxx-kvx.lo elf64.lo $elf $ipa" ;;
+    kvx_elf64_linux_vec)	 tb="$tb elf64-kvx.lo elfxx-kvx.lo elf64.lo $elf $ipa" ;;
     k1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     k1om_elf64_fbsd_vec)	 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;
     l1om_elf64_vec)		 tb="$tb elf64-x86-64.lo elf-ifunc.lo elf-nacl.lo elf64.lo $elf"; target_size=64 ;;

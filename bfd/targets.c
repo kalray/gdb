@@ -685,9 +685,9 @@ extern const bfd_target icoff_le_vec;
 extern const bfd_target ieee_vec;
 extern const bfd_target ip2k_elf32_vec;
 extern const bfd_target iq2000_elf32_vec;
-extern const bfd_target k1_elf32_vec;
-extern const bfd_target k1_elf64_vec;
-extern const bfd_target k1_elf64_linux_vec;
+extern const bfd_target kvx_elf32_vec;
+extern const bfd_target kvx_elf64_vec;
+extern const bfd_target kvx_elf64_linux_vec;
 extern const bfd_target k1om_elf64_vec;
 extern const bfd_target k1om_elf64_fbsd_vec;
 extern const bfd_target l1om_elf64_vec;
@@ -1135,11 +1135,11 @@ static const bfd_target * const _bfd_target_vector[] =
 	&ip2k_elf32_vec,
 	&iq2000_elf32_vec,
 
-	&k1_elf32_vec,
+	&kvx_elf32_vec,
 
 #ifdef BFD64
-	&k1_elf64_vec,
-	&k1_elf64_linux_vec,
+	&kvx_elf64_vec,
+	&kvx_elf64_linux_vec,
 #endif
 
 #ifdef BFD64

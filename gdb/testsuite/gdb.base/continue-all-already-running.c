@@ -20,7 +20,7 @@
 int
 main (void)
 {
-  #ifdef K1_ISS
+  #ifdef KVX_ISS
   #ifndef __CLUSTER_OS__
   usleep (70000);
   #else

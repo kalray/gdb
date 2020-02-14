@@ -16,8 +16,8 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-# K1: does not compile (pthread_barrier_t)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (pthread_barrier_t)
+if [istarget kvx-*-*] then {
   unsupported "mi-threads-interrupt.exp"
   return 1
 }

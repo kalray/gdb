@@ -1,6 +1,6 @@
 set testfile "abi"
 
-global is_k1_server
+global is_kvx_server
 
 set tests_dir "$srcdir/$subdir/abi"
 

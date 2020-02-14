@@ -18,8 +18,8 @@ load_lib dwarf.exp
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-# K1: does not compile .S (unsupported relocation type)
-if [istarget k1*-*-*] then {
+# KVX: does not compile .S (unsupported relocation type)
+if [istarget kvx-*-*] then {
   unsupported "dw2-ref-missing-frame.exp"
   return 1
 }

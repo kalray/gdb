@@ -2,7 +2,7 @@
 
 .global _start
 _start:
-  make $r0=0x1050000000204 // K1_SFR_PS_ET_WFXL_CLEAR | K1_SFR_PS_USE_WFXL_CLEAR | K1_SFR_PS_V64_WFXL_SET | K1_SFR_PS_DCE_WFXL_SET | K1_SFR_PS_ICE_WFXL_SET
+  make $r0=0x1050000000204 // KVX_SFR_PS_ET_WFXL_CLEAR | KVX_SFR_PS_USE_WFXL_CLEAR | KVX_SFR_PS_V64_WFXL_SET | KVX_SFR_PS_DCE_WFXL_SET | KVX_SFR_PS_ICE_WFXL_SET
   ;;
   wfxl $ps, $r0
   ;;
@@ -57,7 +57,7 @@ add_pl2:
   make $r1 = 1
   ;;
   insf $r0 = $r1, 1, 0 /* sps.pl = ps.pl + 1 */
-  make $r1 = 0xfff3ffff // sps = ps & ~(K1_SFR_PS_SME_MASK | K1_SFR_PS_SMR_MASK)
+  make $r1 = 0xfff3ffff // sps = ps & ~(KVX_SFR_PS_SME_MASK | KVX_SFR_PS_SMR_MASK)
   ;;
   andd $r0 = $r0, $r1 // compute the sps wfxl set part
   ;;

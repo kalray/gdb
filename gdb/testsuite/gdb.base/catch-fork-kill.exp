@@ -32,8 +32,8 @@
 
 standard_testfile
 
-# K1: does not compile (pipe, alarm)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (pipe, alarm)
+if [istarget kvx-*-*] then {
   unsupported "catch-fork-kill.exp"
   return 1
 }

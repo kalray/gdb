@@ -19,8 +19,8 @@
 
 standard_testfile
 
-# K1: Elf Type not supported 3
-if [istarget k1*-*-*] then {
+# KVX: Elf Type not supported 3
+if [istarget kvx-*-*] then {
   unsupported "gcore-relro-pie.exp"
   return 1
 }

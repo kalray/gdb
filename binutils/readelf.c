@@ -113,7 +113,7 @@
 #include "elf/i960.h"
 #include "elf/ia64.h"
 #include "elf/ip2k.h"
-#include "elf/k1c.h"
+#include "elf/kv3.h"
 #include "elf/lm32.h"
 #include "elf/iq2000.h"
 #include "elf/m32c.h"
@@ -751,7 +751,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_IP2K:
     case EM_IP2K_OLD:
     case EM_IQ2000:
-    case EM_K1:
+    case EM_KVX:
     case EM_LATTICEMICO32:
     case EM_M32C_OLD:
     case EM_M32C:
@@ -1347,8 +1347,8 @@ dump_relocations (FILE * file,
 	  rtype = elf_ia64_reloc_type (type);
 	  break;
 
-	case EM_K1:
-	  rtype = elf_k1_reloc_type (type);
+	case EM_KVX:
+	  rtype = elf_kvx_reloc_type (type);
 	  break;
 
 	case EM_CRIS:
@@ -2201,7 +2201,7 @@ get_machine_name (unsigned e_machine)
     case EM_IP2K_OLD:
     case EM_IP2K:		return "Ubicom IP2xxx 8-bit microcontrollers";
     case EM_IQ2000:       	return "Vitesse IQ2000";
-    case EM_K1:                 return "Kalray-1 Processor";
+    case EM_KVX:                return "Kalray VLIW Processor";
     case EM_XTENSA_OLD:
     case EM_XTENSA:		return "Tensilica Xtensa Processor";
     case EM_VIDEOCORE:		return "Alphamosaic VideoCore processor";
@@ -3417,11 +3417,9 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", relocatable module");
 	  break;
 
-	case EM_K1:
-	  if ((e_flags & ELF_K1_CORE_MASK) == ELF_K1_CORE_C_C)
-	    strcat (buf, ", Coolidge (k1c) k1c");
-	  else
-	    strcat (buf, ", unknown K1 MPPA");
+	case EM_KVX:
+	  if ((e_flags & (ELF_KVX_CORE_MAJOR_MASK | ELF_KVX_CORE_MINOR_MASK)) == ELF_KVX_CORE_KV3_1)
+	    strcat (buf, ", Kalray VLIW kv3-1");
 	  break;
 
 	case EM_MSP430:
@@ -11439,8 +11437,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 2; /* R_IP2K_32.  */
     case EM_IQ2000:
       return reloc_type == 2; /* R_IQ2000_32.  */
-    case EM_K1:
-      return reloc_type == 2; /* R_K1_32.  */
+    case EM_KVX:
+      return reloc_type == 2; /* R_KVX_32.  */
     case EM_LATTICEMICO32:
       return reloc_type == 3; /* R_LM32_32.  */
     case EM_M32C_OLD:
@@ -11612,8 +11610,8 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
     case EM_XTENSA_OLD:
     case EM_XTENSA:
       return reloc_type == 14; /* R_XTENSA_32_PCREL.  */
-    case EM_K1:
-      return reloc_type == 7; /* R_K1_32_PCREL */
+    case EM_KVX:
+      return reloc_type == 7; /* R_KVX_32_PCREL */
     default:
       /* Do not abort or issue an error message here.  Not all targets use
 	 pc-relative 32-bit relocs in their DWARF debug information and we
@@ -11657,8 +11655,8 @@ is_64bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_TILEGX_64.  */
     case EM_MIPS:
       return reloc_type == 18;	/* R_MIPS_64.  */
-    case EM_K1:
-      return reloc_type == 3; /* R_K1_64 */
+    case EM_KVX:
+      return reloc_type == 3; /* R_KVX_64 */
     default:
       return FALSE;
     }
@@ -11774,8 +11772,8 @@ is_16bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 2; /* R_VISIUM_16. */
     case EM_XGATE:
       return reloc_type == 3; /* R_XGATE_16.  */
-    case EM_K1:
-      return reloc_type == 1; /* R_K1_16 */
+    case EM_KVX:
+      return reloc_type == 1; /* R_KVX_16 */
     default:
       return FALSE;
     }
@@ -11821,7 +11819,7 @@ is_none_reloc (unsigned int reloc_type)
     case EM_TILEPRO: /* R_TILEPRO_NONE.  */
     case EM_XC16X:
     case EM_C166:    /* R_XC16X_NONE.  */
-    case EM_K1:      /* R_K1_NONE.  */
+    case EM_KVX:      /* R_KVX_NONE.  */
     case EM_ALTERA_NIOS2: /* R_NIOS2_NONE.  */
     case EM_NIOS32:  /* R_NIOS_NONE.  */
     case EM_OR1K:    /* R_OR1K_NONE. */

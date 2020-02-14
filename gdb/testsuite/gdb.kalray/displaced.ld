@@ -2,7 +2,7 @@
 /* Entry point */
 ENTRY(_start)
 
-K1_BOOT_ADDRESS      = DEFINED(K1_BOOT_ADDRESS) ? K1_BOOT_ADDRESS : 0x0;
+KVX_BOOT_ADDRESS      = DEFINED(KVX_BOOT_ADDRESS) ? KVX_BOOT_ADDRESS : 0x0;
 DEBUG_SIZE           = DEFINED(DEBUG_SIZE) ? DEBUG_SIZE : 32;
 
 STACK_SIZE        = 20K;
@@ -11,7 +11,7 @@ STACK_SIZE        = 20K;
 /* Definition of sections */
 SECTIONS
 {
-  . = K1_BOOT_ADDRESS;
+  . = KVX_BOOT_ADDRESS;
 
   /* The rest of the boot stuff */
   .boot :

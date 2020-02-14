@@ -1881,7 +1881,7 @@ handle_qxfer (char *own_buf, int packet_len, int *new_packet_len_p)
 		  return 1;
 		}
 
-	      len = 250; /* K1: workaround TTY bug T2265 */
+	      len = 250; /* KVX: workaround TTY bug T2265 */
 
 	      /* Read one extra byte, as an indicator of whether there is
 		 more.  */

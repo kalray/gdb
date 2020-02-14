@@ -1023,32 +1023,32 @@ extern bfd_boolean v850_elf_create_sections
 extern bfd_boolean v850_elf_set_note
   (bfd *, unsigned int, unsigned int);
 
-/* K1C stub generation support for ELF64.  Called from the linker.  */
-extern int elf64_k1_setup_section_lists
+/* KVX stub generation support for ELF64.  Called from the linker.  */
+extern int elf64_kvx_setup_section_lists
   (bfd *, struct bfd_link_info *);
 
-extern void elf64_k1_next_input_section
+extern void elf64_kvx_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
 
-extern bfd_boolean elf64_k1_size_stubs
+extern bfd_boolean elf64_kvx_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
 
-extern bfd_boolean elf64_k1_build_stubs
+extern bfd_boolean elf64_kvx_build_stubs
   (struct bfd_link_info *);
 
-/* K1C stub generation support for ELF32.  Called from the linker.  */
-extern int elf32_k1_setup_section_lists
+/* KVX stub generation support for ELF32.  Called from the linker.  */
+extern int elf32_kvx_setup_section_lists
   (bfd *, struct bfd_link_info *);
 
-extern void elf32_k1_next_input_section
+extern void elf32_kvx_next_input_section
   (struct bfd_link_info *, struct bfd_section *);
 
-extern bfd_boolean elf32_k1_size_stubs
+extern bfd_boolean elf32_kvx_size_stubs
   (bfd *, bfd *, struct bfd_link_info *, bfd_signed_vma,
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
 
-extern bfd_boolean elf32_k1_build_stubs
+extern bfd_boolean elf32_kvx_build_stubs
   (struct bfd_link_info *);

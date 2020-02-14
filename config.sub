@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2016 Free Software Foundation, Inc.
 
-timestamp='2016-01-11'
+timestamp='2020-02-06'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -265,7 +265,7 @@ case $basic_machine in
 	| hexagon \
 	| i370 | i860 | i960 | ia64 \
 	| ip2k | iq2000 \
-	| k1 \
+	| kvx \
 	| k1om \
 	| le32 | le64 \
 	| lm32 \
@@ -390,7 +390,7 @@ case $basic_machine in
 	| hexagon-* \
 	| i*86-* | i860-* | i960-* | ia64-* \
 	| ip2k-* | iq2000-* \
-	| k1-* \
+	| kvx-* \
 	| k1om-* \
 	| le32-* | le64-* \
 	| lm32-* \

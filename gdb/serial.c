@@ -46,7 +46,7 @@ static struct serial *scb_base;
 static char *serial_logfile = NULL;
 static struct ui_file *serial_logfp = NULL;
 
-/* K1 specific: used in k1-linux-tdep.c */
+/* KVX specific: used in kvx-linux-tdep.c */
 /*static*/ const struct serial_ops *serial_interface_lookup (const char *);
 static void serial_logchar (struct ui_file *stream,
 			    int ch_type, int ch, int timeout);
@@ -146,7 +146,7 @@ serial_log_command (struct target_ops *self, const char *cmd)
 }
 
 
-/* K1 specific: used in k1-linux-tdep.c */
+/* KVX specific: used in kvx-linux-tdep.c */
 /*static*/ const struct serial_ops *
 serial_interface_lookup (const char *name)
 {

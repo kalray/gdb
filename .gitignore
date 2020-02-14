@@ -49,6 +49,3 @@ lost+found
 # ignore ./contrib/gcc_update output
 LAST_UPDATED
 REVISION
-
-# ignore the kalray build directories
-k1_build_*

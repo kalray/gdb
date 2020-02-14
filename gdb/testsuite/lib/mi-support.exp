@@ -35,8 +35,8 @@ set gdbindex_warning_re "&\"warning: Skipping \[^\r\n\]+ \.gdb_index section in 
 set library_loaded_re "=library-loaded\[^\n\]+\"\r\n(?:$gdbindex_warning_re)?"
 set breakpoint_re "=(?:breakpoint-created|breakpoint-deleted)\[^\n\]+\"\r\n"
 
-# K1: ISS needs a greater timeout
-if [istarget k1*-*-*] then {
+# KVX: ISS needs a greater timeout
+if [istarget kvx-*-*] then {
   set timeout 20
 }
 
@@ -997,8 +997,8 @@ proc mi_runto_helper {func run_or_continue} {
       mi_send_resuming_command "exec-continue" "$test"
   }
 
-  # K1 ISS: wait for breakpoint message
-  if {[istarget k1*-*-*] && [target_info gdb_protocol] != "remote"} {
+  # KVX ISS: wait for breakpoint message
+  if {[istarget kvx-*-*] && [target_info gdb_protocol] != "remote"} {
     after 1000
   }
 

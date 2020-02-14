@@ -23,8 +23,8 @@ if [target_info exists use_gdb_stub] {
     return
 }
 
-# K1: cannot step breakpoint (no step pad area for nostdlib)
-if [istarget k1*-*-*] then {
+# KVX: cannot step breakpoint (no step pad area for nostdlib)
+if [istarget kvx-*-*] then {
   unsupported "nostdlib.exp"
   return 0
 }

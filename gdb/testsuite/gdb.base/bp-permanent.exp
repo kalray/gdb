@@ -19,8 +19,8 @@
 
 standard_testfile
 
-# K1: incompatible dissamble output format
-if [istarget k1*-*-*] then {
+# KVX: incompatible dissamble output format
+if [istarget kvx-*-*] then {
   unsupported "bp-permanent.exp"
   return 1
 }

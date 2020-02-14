@@ -270,14 +270,14 @@ iq2000-*-*)
 	gdb_sim=../sim/iq2000/libsim.a
 	;;
 
-k1*-*-linux*)
-	gdb_target_obs="k1-linux-tdep.o k1-common-tdep.o k1c-mds-tdep.o\
+kvx*-*-linux*)
+	gdb_target_obs="kvx-linux-tdep.o kvx-common-tdep.o kv3-mds-tdep.o\
 		solib-svr4.o symfile-mem.o linux-tdep.o"
 	build_gdbserver=yes
 	;;
 
-k1-*-*)
-	gdb_target_obs="k1c-mds-tdep.o k1-common-tdep.o k1-tdep.o k1-exception-info.o k1-dump-tlb.o k1-target.o solib-k1-bare.o"
+kvx-*-*)
+	gdb_target_obs="kv3-mds-tdep.o kvx-common-tdep.o kvx-tdep.o kvx-exception-info.o kvx-dump-tlb.o kvx-target.o solib-kvx-bare.o"
 	;;
 
 lm32-*-*)		

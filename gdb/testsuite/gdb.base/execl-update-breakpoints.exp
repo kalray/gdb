@@ -18,8 +18,8 @@
 
 standard_testfile
 
-# K1: does not commpile (execl)
-if [istarget k1*-*-*] then {
+# KVX: does not commpile (execl)
+if [istarget kvx-*-*] then {
   unsupported "execl-update-breakpoints.exp"
   return 1
 }

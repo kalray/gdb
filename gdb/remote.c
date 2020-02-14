@@ -145,7 +145,7 @@ static void sync_remote_interrupt_twice (int signo);
 
 static void interrupt_query (void);
 
-/* K1 specific : need this function in k1-target.c */
+/* KVX specific : need this function in kvx-target.c */
 void set_general_thread (struct ptid ptid);
 
 static void set_continue_thread (struct ptid ptid);

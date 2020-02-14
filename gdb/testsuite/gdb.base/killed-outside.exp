@@ -18,8 +18,8 @@
 
 standard_testfile
 
-# K1: getpid returns -1
-if [istarget k1*-*-*] then {
+# KVX: getpid returns -1
+if [istarget kvx-*-*] then {
   unsupported "killed-outside.exp"
   return 1
 }

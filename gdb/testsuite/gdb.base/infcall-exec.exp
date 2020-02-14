@@ -18,8 +18,8 @@
 
 standard_testfile
 
-# K1: does not compile (execlp)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (execlp)
+if [istarget kvx-*-*] then {
   unsupported "infcall-exec.exp"
   return 1
 }

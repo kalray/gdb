@@ -25,8 +25,8 @@ if { [target_info exists use_gdb_stub] } then {
     return 0
 }
 
-# K1: getpid
-if [istarget k1*-*-*] then {
+# KVX: getpid
+if [istarget kvx-*-*] then {
   unsupported "dprintf-detach.exp"
   return 0
 }

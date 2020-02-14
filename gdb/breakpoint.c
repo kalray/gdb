@@ -3497,20 +3497,20 @@ create_overlay_event_breakpoint (void)
 static void
 create_longjmp_master_breakpoint (void)
 {
-  // K1: called by breakpoint_re_set who says:
+  // KVX: called by breakpoint_re_set who says:
   // Re-set breakpoint locations for the current program space ONLY!
   // Why the ALL_PSPACES iteration?
   // we cannot access memory of other inferiors while running
-  // K1 struct program_space *pspace;
+  // KVX struct program_space *pspace;
   struct cleanup *old_chain;
 
   old_chain = save_current_program_space ();
 
-  // K1 ALL_PSPACES (pspace)
+  // KVX ALL_PSPACES (pspace)
   {
     struct objfile *objfile;
 
-    // K1 set_current_program_space (pspace);
+    // KVX set_current_program_space (pspace);
 
     ALL_OBJFILES (objfile)
     {
@@ -3617,22 +3617,22 @@ create_longjmp_master_breakpoint (void)
 static void
 create_std_terminate_master_breakpoint (void)
 {
-  // K1: called by breakpoint_re_set who says:
+  // KVX: called by breakpoint_re_set who says:
   // Re-set breakpoint locations for the current program space ONLY!
   // Why the ALL_PSPACES iteration?
   // we cannot access memory of other inferiors while running
-  // K1 struct program_space *pspace;
+  // KVX struct program_space *pspace;
   struct cleanup *old_chain;
   const char *const func_name = "std::terminate()";
 
   old_chain = save_current_program_space ();
 
-  // K1 ALL_PSPACES (pspace)
+  // KVX ALL_PSPACES (pspace)
   {
     struct objfile *objfile;
     CORE_ADDR addr;
 
-    // K1 set_current_program_space (pspace);
+    // KVX set_current_program_space (pspace);
 
     ALL_OBJFILES (objfile)
     {

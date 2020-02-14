@@ -18,8 +18,8 @@
 /* An instruction with the same length as decr_pc_after_break.  This
    is 1-byte on x86.  */
 
-/* K1: finish the bundle after NOP */
-#ifdef __k1__
+/* KVX: finish the bundle after NOP */
+#ifdef __kvx__
 #define INSN asm ("nop\n;;\n")
 #else
 #define INSN asm ("nop")

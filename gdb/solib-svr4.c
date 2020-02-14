@@ -2644,7 +2644,7 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
      being executed themselves and PIE (Position Independent Executable)
      executables are ET_DYN.  */
 
-  // K1: temporary disable this test as K1 elfs does not have yet this flag
+  // KVX: temporary disable this test as KVX elfs does not have yet this flag
   if (0 && (bfd_get_file_flags (exec_bfd) & DYNAMIC) == 0)
     return 0;
 

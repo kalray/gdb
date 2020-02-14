@@ -142,7 +142,7 @@ handle_notification (struct remote_notif_state *state, char *buf)
      with newer stubs.  */
   if (i == ARRAY_SIZE (notifs))
     {
-      // K1: custom notif
+      // KVX: custom notif
       if (startswith (buf, "custom:"))
         {
           extern void custom_notification_cb (char *) __attribute__ ((weak));

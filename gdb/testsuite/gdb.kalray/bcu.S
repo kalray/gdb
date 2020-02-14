@@ -1,7 +1,7 @@
 .section .text
 
 .macro get_got_addr reg var
-  #ifdef __K1_FDPIC__
+  #ifdef __KVX_FDPIC__
   addd \reg = $r14, @got(\var)
   ;;
   ld \reg = 0[\reg]

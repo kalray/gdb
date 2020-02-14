@@ -413,8 +413,8 @@
 
 /* See the above comment before you add a new EM_* value here.  */
 
-/* Kalray K1 */
-#define EM_K1                   0x1337
+/* Kalray VLIW core */
+#define EM_KVX                   0x1337
 
 /* Values for e_version.  */
 

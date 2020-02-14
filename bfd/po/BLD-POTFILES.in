@@ -2,11 +2,11 @@ bfd_stdint.h
 bfdver.h
 elf32-aarch64.c
 elf32-ia64.c
-elf32-k1.c
+elf32-kvx.c
 elf32-target.h
 elf64-aarch64.c
 elf64-ia64.c
-elf64-k1.c
+elf64-kvx.c
 elf64-target.h
 peigen.c
 pepigen.c

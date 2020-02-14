@@ -17,8 +17,8 @@
 
 standard_testfile
 
-# K1: does not compile (include sys/mman.h)
-if [istarget k1*-*-*] then {
+# KVX: does not compile (include sys/mman.h)
+if [istarget kvx-*-*] then {
   unsupported "dcache-line-read-error.exp"
   return 1
 }

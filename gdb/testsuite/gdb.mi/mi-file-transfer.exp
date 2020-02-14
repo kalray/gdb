@@ -20,8 +20,8 @@ load_lib gdbserver-support.exp
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-# K1: file transfer not implemented by our gdbserver
-if [istarget k1*-*-*] then {
+# KVX: file transfer not implemented by our gdbserver
+if [istarget kvx-*-*] then {
   unsupported "mi-file-transfer.exp"
   return 1
 }
