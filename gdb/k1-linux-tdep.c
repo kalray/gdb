@@ -1,6 +1,6 @@
 /* Target-dependent code for the Kalray K1 for GDB, the GNU debugger.
 
-   Copyright (C) 2016 Kalray
+   Copyright (C) 2020 Kalray
 
    This file is part of GDB.
 
@@ -11,11 +11,11 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "defs.h"
 
@@ -41,6 +41,7 @@
 #include "cli/cli-cmds.h"
 #include "remote.h"
 #include "cli/cli-decode.h"
+#include "features/k1-linux.c"
 
 extern int remote_hw_breakpoint_limit;
 extern int remote_hw_watchpoint_limit;
@@ -60,8 +61,8 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep;
-  const struct target_desc *tdesc;
-  struct tdesc_arch_data *tdesc_data;
+  const struct target_desc *tdesc = info.target_desc;
+  struct tdesc_arch_data *tdesc_data = NULL;
   int i;
   unsigned long mach;
   int has_lc = -1, has_le = -1, has_ls = -1;
@@ -76,10 +77,12 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   const char *pc_name;
   const char *sp_name;
 
-  /* If there is already a candidate, use it.  */
+  /* If there is already a candidate, use it. */
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
     return arches->gdbarch;
+  if (tdesc == NULL)
+    tdesc = tdesc_k1_linux;
 
   tdep = xzalloc (sizeof (struct gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
@@ -98,8 +101,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_double_bit (gdbarch, 64);
   set_gdbarch_ptr_bit (gdbarch, 64);
 
-  /* Get the k1 target description from INFO.  */
-  tdesc = info.target_desc;
+  /* Get the k1 target description from INFO. */
   if (tdesc_has_registers (tdesc))
     {
       set_gdbarch_num_regs (gdbarch, 0);
@@ -182,7 +184,7 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_breakpoint_from_pc (gdbarch, k1_bare_breakpoint_from_pc);
   set_gdbarch_adjust_breakpoint_address (gdbarch, k1_adjust_breakpoint_address);
-  /* Settings that should be unnecessary.  */
+  /* Settings that should be unnecessary. */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_print_insn (gdbarch, k1_print_insn);
 
@@ -190,17 +192,19 @@ k1_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_get_longjmp_target (gdbarch, k1_get_longjmp_target);
 
-  if (tdesc_has_registers (tdesc))
+  if (tdesc_has_registers (tdesc) && info.bfd_arch_info)
     {
-      set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					     svr4_ilp32_fetch_link_map_offsets);
-      /* Hook in the ABI-specific overrides, if they have been registered.  */
-      gdbarch_init_osabi (info, gdbarch);
+      unsigned long mach = info.bfd_arch_info->mach;
+
+      /* Hook in the ABI-specific overrides, if they have been registered. */
+      if (mach == bfd_mach_k1c_64 || mach == bfd_mach_k1c_usr)
+	gdbarch_init_osabi (info, gdbarch);
     }
 
   return gdbarch;
 }
 
+#ifndef __K1__
 static void
 attach_user_command (char *args, int from_tty)
 {
@@ -291,6 +295,7 @@ attach_user_command (char *args, int from_tty)
 
   fprintf (stderr, "Attached to K1 linux user debug using %s.\n", k1_comm);
 }
+#endif
 
 static void
 k1_inferior_created (struct target_ops *target, int from_tty)
@@ -298,16 +303,16 @@ k1_inferior_created (struct target_ops *target, int from_tty)
   k1_current_arch = K1_NUM_ARCHES;
 }
 
-/* OS specific initialization of gdbarch.  */
+/* OS specific initialization of gdbarch. */
 static void
 k1_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   linux_init_abi (info, gdbarch);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_ilp32_fetch_link_map_offsets);
+					 svr4_lp64_fetch_link_map_offsets);
 
-  /* Enable TLS support.  */
+  /* Enable TLS support. */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
 }
@@ -315,10 +320,12 @@ k1_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 static void
 add_k1_commands (void)
 {
+#ifndef __K1__
   add_com (
     "attach-user", class_run, attach_user_command,
     "Connect to gdbserver running on MPPA.\n"
     "Usage is 'attach-user <comm> [<path_in_initrd_k1_linux_program>]'.");
+#endif
 }
 
 extern initialize_file_ftype _initialize_k1_linux_tdep;
@@ -328,6 +335,8 @@ _initialize_k1_linux_tdep (void)
   remote_hw_breakpoint_limit = 2;
   remote_hw_watchpoint_limit = 1;
 
+  gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1c_64, GDB_OSABI_LINUX,
+			  k1_linux_init_abi);
   gdbarch_register_osabi (bfd_arch_k1, bfd_mach_k1c_usr, GDB_OSABI_LINUX,
 			  k1_linux_init_abi);
   add_k1_commands ();
@@ -340,4 +349,6 @@ _initialize_k1_tdep (void)
   k1_look_for_insns ();
   gdbarch_register (bfd_arch_k1, k1_gdbarch_init, NULL);
   observer_attach_inferior_created (k1_inferior_created);
+
+  initialize_tdesc_k1_linux ();
 }

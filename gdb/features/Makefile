@@ -70,6 +70,7 @@ WHICH = aarch64 \
 	s390-linux32v2 s390-linux64v2 s390x-linux64v2 \
 	s390-te-linux64 s390x-te-linux64 s390-vx-linux64 s390x-vx-linux64 \
 	s390-tevx-linux64 s390x-tevx-linux64 \
+	k1-linux \
 	tic6x-c64xp tic6x-c64x tic6x-c62x \
 	tic6x-c64xp-linux tic6x-c64x-linux tic6x-c62x-linux
 
@@ -124,6 +125,7 @@ s390x-linux64v2-expedite = r14,r15,pswa
 s390x-te-linux64-expedite = r14,r15,pswa
 s390x-vx-linux64-expedite = r14,r15,pswa
 s390x-tevx-linux64-expedite = r14,r15,pswa
+k1-linux-expedite = pc,r12,ra,r0,r1,r2,r3
 tic6x-c64xp-expedite = A15,PC
 tic6x-c64x-expedite = A15,PC
 tic6x-c62x-expedite = A15,PC
@@ -226,6 +228,7 @@ XMLTOC = \
 	s390x-linux64v1.xml \
 	s390x-linux64v2.xml \
 	s390x-te-linux64.xml \
+	k1-linux.xml \
 	tic6x-c62x-linux.xml \
 	tic6x-c62x.xml \
 	tic6x-c64x-linux.xml \
@@ -299,6 +302,7 @@ $(outdir)/i386/x32-avx512.dat: i386/x32-core.xml i386/64bit-avx.xml \
 			       i386/64bit-mpx.xml i386/64bit-avx512.xml
 $(outdir)/i386/x32-avx512-linux.dat: i386/x32-core.xml i386/64bit-avx.xml \
 			       i386/64bit-mpx.xml i386/64bit-avx512.xml i386/64bit-linux.xml
+$(outdir)/k1-linux.dat: k1-linux-core.xml
 
 # 'all' doesn't build the C files, so don't delete them in 'clean'
 # either.

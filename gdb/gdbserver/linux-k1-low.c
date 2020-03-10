@@ -29,42 +29,7 @@
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#ifndef PTRACE_GET_HW_PT_REGS
-#define PTRACE_GET_HW_PT_REGS 20
-#define PTRACE_SET_HW_PT_REGS 21
-#endif
-
-#ifndef TRAP_HWBKPT
-#define TRAP_HWBKPT 4
-#endif
-
-#define get_hw_pt_idx(v) ((v) >> 2)
-#define hw_pt_is_bkp(v) (((v) &1) != 0)
-
-#define MAX_WPTS 2
-#define MAX_BPTS 2
-#define HW_PT_ENABLE 1
-
-#define HW_PT_CMD_GET_CAPS 0
-#define HW_PT_CMD_GET_PT 1
-#define HW_PT_CMD_SET_RESERVE 0
-#define HW_PT_CMD_SET_ENABLE 1
-
-/* Information describing the hardware breakpoint capabilities. */
-static struct
-{
-  int wp_count;
-  int bp_count;
-} k1_linux_hw_pt_cap;
-
-/* Structure used to keep track of hardware breakpoints/watchpoints. */
-struct k1_linux_hw_pt
-{
-  uint64_t address;
-  int size;
-  int enabled;
-};
+#include "k1-linux-nat.h"
 
 /* Per-process arch-specific data we want to keep.  */
 struct arch_process_info
@@ -75,31 +40,11 @@ struct arch_process_info
   struct k1_linux_hw_pt wpts[MAX_WPTS];
 };
 
-/* Per-thread arch-specific data we want to keep.  */
-struct arch_lwp_info
-{
-  /* Non-zero if our copy differs from what's recorded in the thread.  */
-  char bpts_changed[MAX_BPTS];
-  char wpts_changed[MAX_WPTS];
-  /* Cached stopped data address.  */
-  uint64_t stopped_data_address;
-};
-
 static const char *xmltarget_k1_linux = 0;
+struct k1_linux_hw_pt_cap_s k1_linux_hw_pt_cap;
 
 void init_registers_k1 (void);
 extern const struct target_desc *tdesc_k1;
-
-enum regnum
-{
-  R0 = 0,
-  R_LC = 64,
-  R_LE,
-  R_LS,
-  R_RA,
-  R_CS,
-  R_PC
-};
 
 static void
 k1_fill_gregset (struct regcache *regcache, void *buf)
@@ -112,7 +57,7 @@ k1_fill_gregset (struct regcache *regcache, void *buf)
 
   // R0 - R63
   r0_regnum = find_regno (tdesc, "r0");
-  ptr = (char *) &rset[R0];
+  ptr = (char *) &rset[R_R0];
 
   for (i = r0_regnum; i < r0_regnum + 64; i++)
     {
@@ -139,7 +84,7 @@ k1_store_gregset (struct regcache *regcache, const void *buf)
 
   // R0 - R63
   r0_regnum = find_regno (tdesc, "r0");
-  ptr = (char *) &rset[R0];
+  ptr = (char *) &rset[R_R0];
 
   for (i = r0_regnum; i < r0_regnum + 64; i++)
     {
@@ -253,13 +198,6 @@ k1_supports_z_point_type (char z_type)
   return 0;
 }
 
-/* Callback to mark a watch-/breakpoint to be updated in all threads of
-   the current process.  */
-struct update_registers_data
-{
-  int type;
-  int i;
-};
 
 static int
 update_registers_callback (struct inferior_list_entry *entry, void *arg)
@@ -560,25 +498,60 @@ k1_prepare_to_resume (struct lwp_info *lwp)
     }
 }
 
+static int
+k1_get_thread_area (int lwpid, CORE_ADDR *addrp)
+{
+  uint64_t regs[NB_GREGSET_REGS];
+  struct iovec iovec;
+
+  iovec.iov_base = &regs;
+  iovec.iov_len = sizeof (regs);
+  if (ptrace (PTRACE_GETREGSET, lwpid, NT_PRSTATUS, &iovec) < 0)
+    {
+      perror_with_name (_ ("Couldn't get general registers"));
+      return 1;
+    }
+
+  *addrp = regs[R_TLS];
+  return 0;
+}
+
+/* Fetch the thread-local storage pointer for libthread_db.  */
+ps_err_e
+ps_get_thread_area (struct ps_prochandle *ph, lwpid_t lwpid, int idx,
+		    void **base)
+{
+  int ret;
+  CORE_ADDR addr;
+
+  ret = k1_get_thread_area (lwpid, &addr);
+  if (ret)
+    return ret;
+
+  *base = (void *) (uintptr_t) (addr - idx - K1_TLS_TCB_SIZE);
+
+  return ret;
+}
+
 struct linux_target_ops the_low_target = {
   k1_arch_setup, /* void (*arch_setup) (void) */
-  k1_regs_info,  /* const struct regs_info *(*regs_info) (void) */
+  k1_regs_info,	 /* const struct regs_info *(*regs_info) (void) */
   NULL,		 /* int (*cannot_fetch_register) (int) */
   NULL,		 /* int (*cannot_store_register) (int) */
-  NULL,      /* int (*fetch_register) (struct regcache *regcache, int regno) */
+  NULL,	     /* int (*fetch_register) (struct regcache *regcache, int regno) */
   k1_get_pc, /* CORE_ADDR (*get_pc) (struct regcache *regcache) */
   k1_set_pc, /* void (*set_pc) (struct regcache *regcache, CORE_ADDR newpc) */
-  NULL,      /* int (*breakpoint_kind_from_pc) (CORE_ADDR *pcptr) */
+  NULL,	     /* int (*breakpoint_kind_from_pc) (CORE_ADDR *pcptr) */
   k1_sw_breakpoint_from_kind, /* const gdb_byte *(*sw_breakpoint_from_kind)
 				 (int kind, int *size) */
   NULL, /* VEC (CORE_ADDR) *(*get_next_pcs) (struct regcache *regcache) */
-  0,    /* int decr_pc_after_break */
-  k1_breakpoint_at,	 /* int (*breakpoint_at) (CORE_ADDR pc) */
+  0,	/* int decr_pc_after_break */
+  k1_breakpoint_at,	    /* int (*breakpoint_at) (CORE_ADDR pc) */
   k1_supports_z_point_type, /* int (*supports_z_point_type) (char z_type) */
-  k1_insert_point,	  /* int (*insert_point) (enum raw_bkpt_type type,
+  k1_insert_point,	    /* int (*insert_point) (enum raw_bkpt_type type,
 			     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 			     */
-  k1_remove_point,	  /* int (*remove_point) (enum raw_bkpt_type type,
+  k1_remove_point,	    /* int (*remove_point) (enum raw_bkpt_type type,
 			     *   CORE_ADDR addr, int size, struct raw_breakpoint *bp)
 			     */
   k1_stopped_by_watchpoint, /* int (*stopped_by_watchpoint) (void) */
@@ -586,11 +559,14 @@ struct linux_target_ops the_low_target = {
   NULL,			    /* collect_ptrace_register */
   NULL,			    /* supply_ptrace_register */
   NULL,			    /* siginfo_fixup*/
-  k1_new_process,	   /* struct new_process_info *(*new_process) (void) */
+  k1_new_process,	    /* struct new_process_info *(*new_process) (void) */
   k1_new_thread,	    /* void (*new_thread) (struct lwp_info *) */
   k1_new_fork,		/* void (*new_fork) (struct process_info *parent, struct
 			   process_info *child) */
   k1_prepare_to_resume, /* void (*prepare_to_resume) (struct lwp_info *lwp) */
+  NULL,			/* void (*process_qsupported) (char **, int count) */
+  NULL,			/* int (*supports_tracepoints) (void) */
+  k1_get_thread_area, /* int (*get_thread_area) (int lwpid, CORE_ADDR *addrp) */
 };
 
 static char *
