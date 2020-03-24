@@ -1015,6 +1015,17 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   const char *pc_name;
   const char *sp_name;
 
+  if (ptid_equal (inferior_ptid, null_ptid))
+    {
+      static int non_stop_set = 0;
+      char set_non_stop_cmd[] = "set non-stop";
+      if (!non_stop_set)
+	{
+	  non_stop_set = 1;
+	  execute_command (set_non_stop_cmd, 0);
+	}
+    }
+
   /* If there is already a candidate, use it.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
