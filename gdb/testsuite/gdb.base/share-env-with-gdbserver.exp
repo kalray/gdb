@@ -21,6 +21,12 @@ if { [use_gdb_stub] } {
     return
 }
 
+# KVX: host env vars not passed to application
+if [istarget kvx-*-*] then {
+  unsupported "share-env-with-gdbserver.exp"
+  return 1
+}
+
 standard_testfile
 
 if { [build_executable "failed to prepare" $testfile $srcfile debug] } {

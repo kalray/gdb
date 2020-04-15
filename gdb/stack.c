@@ -2872,10 +2872,12 @@ find_frame_for_function (const char *function_name)
 
   gdb_assert (function_name != NULL);
 
-  frame = get_current_frame ();
   std::vector<symtab_and_line> sals
     = decode_line_with_current_source (function_name,
 				       DECODE_LINE_FUNFIRSTLINE);
+  /* possible upstream bug "frame destroyed by
+     decode_line_with_current_source" */
+  frame = get_current_frame ();
   gdb::def_vector<function_bounds> func_bounds (sals.size ());
   for (size_t i = 0; i < sals.size (); i++)
     {

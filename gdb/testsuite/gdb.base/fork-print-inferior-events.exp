@@ -25,6 +25,12 @@ if { [use_gdb_stub] } {
     return
 }
 
+# KVX: fork not supported
+if [istarget kvx-*-*] then {
+  unsupported "fork-print-inferior-events.exp"
+  return 1
+}
+
 # Test relies on checking follow-fork output. Do not run if gdb debug is
 # enabled as it will be redirected to the log.
 if [gdb_debug_enabled] {

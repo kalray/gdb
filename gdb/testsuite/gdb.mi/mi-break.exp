@@ -425,7 +425,7 @@ proc test_break {mi_mode} {
     test_forced_conditions
 }
 
-if [gdb_debug_enabled] {
+if {[gdb_debug_enabled] || [istarget kvx-*-*]} {
   # gdb debug doesn't work for separate-mi-tty.
   set modes {"main"}
 } else {

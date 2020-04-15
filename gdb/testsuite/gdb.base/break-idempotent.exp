@@ -156,6 +156,11 @@ proc test_break { always_inserted break_command } {
 # breakpoint re-set when reloading PIEs.
 foreach_with_prefix pie { "nopie" "pie" } {
 
+    # KVX: pie not supported
+    if {[istarget kvx-*-*] && $pie == "pie"} then {
+      continue
+    }
+
     set opts {debug}
     lappend opts $pie
 

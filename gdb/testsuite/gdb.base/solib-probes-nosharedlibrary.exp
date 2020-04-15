@@ -36,7 +36,7 @@ if {$use_gdb_stub && [target_info exists gdb,do_reload_on_run]} {
 	untested "could not run to initial instruction"
 	return
     }
-    gdb_test "" "Program stopped.*" "stopped at entry"
+    gdb_test "" "(Program)? stopped.*" "stopped at entry"
 }
 
 # The program should stop at the first instruction, before the shared

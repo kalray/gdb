@@ -13,6 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# KVX: on ISS, the simulation time != simulating time (for sleep)
+if {[istarget kvx-*-*] && [target_info gdb_protocol] != "remote"} then {
+    unsupported "dprintf-non-stop.exp"
+    return 0
+}
+
 standard_testfile
 set executable ${testfile}
 
@@ -57,7 +63,7 @@ gdb_test_multiple $test $test {
 
 set test "inferior stopped"
 gdb_test_multiple "" $test {
-    -re "Program stopped\\\.\r\n" {
+    -re "stopped\\\.\r\n" {
 	pass $test
     }
 }

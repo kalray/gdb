@@ -364,6 +364,10 @@ gdb_test_multiple "info inferior 1" "$test" {
 	set pid $expect_out(1,string)
 	pass "$test"
     }
+    -re "\n\\* (\[0-9\]+).*$gdb_prompt$" {
+	set pid $expect_out(1,string)
+	pass "$test"
+    }
 }
 
 # Send a signal that is not handled

@@ -72,7 +72,7 @@ with_test_prefix "file symlink" {
     set full_filelink [standard_output_file $filelink]
     set lastdir [file tail [file dirname $full_filelink]]
 
-    gdb_test "info inferiors" "/$lastdir/$filelink *" \
+    gdb_test "info inferiors" "/$lastdir/$filelink.*" \
 	"$test for info inferiors"
 }
 
@@ -112,6 +112,6 @@ with_test_prefix "dir symlink" {
 	unsupported $test
     }
 
-    gdb_test "info inferiors" "/$lastdir/$filelink *" \
+    gdb_test "info inferiors" "/$lastdir/$filelink.*" \
 	"$test for info inferiors"
 }

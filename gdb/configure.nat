@@ -311,6 +311,10 @@ case ${gdb_host} in
 		# Host: Xtensa, running GNU/Linux.
 		NATDEPFILES="${NATDEPFILES} xtensa-linux-nat.o"
 		;;
+	    kvx)
+		#  Host: KVX based machine running GNU/Linux
+		NATDEPFILES="${NATDEPFILES} kvx-linux-nat.o"
+		;;
 	esac
 	;;
     linux64)

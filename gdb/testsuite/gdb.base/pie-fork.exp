@@ -16,6 +16,12 @@
 # Test that we can follow forks properly when the executable is
 # position-independent.
 
+# KVX: pie not supported
+if [istarget kvx-*-*] then {
+  unsupported "pie-fork.exp"
+  return 1
+}
+
 standard_testfile
 
 set opts [list debug pie]

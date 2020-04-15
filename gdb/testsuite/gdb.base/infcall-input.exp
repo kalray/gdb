@@ -16,6 +16,12 @@
 # Test that gdb does not process input while a (synchronous) infcall
 # is in progress.
 
+# KVX: on ISS, the simulation time != simulating time (for sleep)
+if {[istarget kvx-*-*] && [target_info gdb_protocol] != "remote"} then {
+    unsupported "infcall-input.exp"
+    return 0
+}
+
 standard_testfile
 
 if [target_info exists gdb,cannot_call_functions] {

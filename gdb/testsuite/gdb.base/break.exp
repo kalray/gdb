@@ -462,13 +462,13 @@ proc_with_prefix test_no_break_on_catchpoint {} {
 	return
     }
 
-    gdb_test "catch fork" "Catchpoint \[0-9\]+ \\(fork\\)" \
+    gdb_test "catch fork" "Catchpoint \[0-9\]+ \\(fork\\).*" \
 	"set catch fork, never expected to trigger"
 
-    gdb_test "catch vfork" "Catchpoint \[0-9\]+ \\(vfork\\)" \
+    gdb_test "catch vfork" "Catchpoint \[0-9\]+ \\(vfork\\).*" \
 	"set catch vfork, never expected to trigger"
 
-    gdb_test "catch exec" "Catchpoint \[0-9\]+ \\(exec\\)" \
+    gdb_test "catch exec" "Catchpoint \[0-9\]+ \\(exec\\).*" \
 	"set catch exec, never expected to trigger"
 
     gdb_continue_to_end
@@ -556,7 +556,7 @@ proc_with_prefix test_break_silent_and_more {} {
     gdb_test "commands $bpno\nsilent\nend" ">end" "set silent break bp_location1"
 
     gdb_test "info break $bpno" \
-	"\[0-9\]*\[ \t\]*breakpoint.*:$::bp_location1\r\n\[ \t\]*silent.*" \
+	"\[0-9\]*\[ \t\]*breakpoint.*:$::bp_location1( inf \[0-9\]+)?\r\n\[ \t\]*silent.*" \
 	"info silent break bp_location1"
 
     gdb_test "continue" "Continuing." \
@@ -575,7 +575,7 @@ proc_with_prefix test_break_silent_and_more {} {
     # The gdb.threads subdirectory contains tests for that.)
     #
     set bp_location12 [gdb_get_line_number "set breakpoint 12 here"]
-    gdb_test "break $bp_location12 thread 999" "Unknown thread 999.*" \
+    gdb_test "break $bp_location12 thread 999" "Unknown thread .*999.*" \
 	"thread-specific breakpoint on non-existent thread disallowed"
 
     gdb_test "break $bp_location12 thread foo" \

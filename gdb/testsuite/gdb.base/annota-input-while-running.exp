@@ -16,6 +16,12 @@
 # Test that annotations support doesn't leave GDB's terminal settings
 # into effect when we run a foreground command.
 
+# KVX: extra output
+if [istarget kvx-*-*] then {
+  unsupported "annota-input-while-running.exp.exp"
+  return 1
+}
+
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug] == -1} {

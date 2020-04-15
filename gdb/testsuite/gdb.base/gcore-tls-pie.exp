@@ -17,6 +17,12 @@
 # Generate a core file from the stripped version of the program,
 # and then try to debug the core with the unstripped version.
 
+# KVX: pie not supported
+if [istarget kvx-*-*] then {
+  unsupported "gcore-tls-pie.exp"
+  return 1
+}
+
 standard_testfile
 
 if { [have_fuse_ld_gold] == 0} {

@@ -16,6 +16,12 @@
 # Build programs in PIE mode, to reproduce PR 21555.
 foreach_with_prefix opts { "" "pie" } {
 
+	# KVX: does not support pie
+	if {[istarget kvx-*-*] && \
+	  [string match -nocase "*pie*" [lindex $opts 1]]} then {
+	  continue
+	}
+
 	# build the first test case
 
 	set testfile1 "reread1"

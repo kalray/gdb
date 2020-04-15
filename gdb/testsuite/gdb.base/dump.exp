@@ -46,6 +46,7 @@ proc print_zero_all { } {
 # Debian9/Ubuntu16.10 onwards default to PIE enabled. Ensure it is disabled as
 # this causes addresses to be out of range for IHEX.
 lappend options {nopie}
+lappend options {additional_flags=-Wno-unused-command-line-argument}
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable ${options}] != "" } {
      untested "failed to compile"

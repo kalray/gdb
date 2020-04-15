@@ -208,6 +208,7 @@ SFILES = \
 	$(srcdir)/win32-i386-low.cc \
 	$(srcdir)/win32-low.cc \
 	$(srcdir)/x86-low.cc \
+	$(srcdir)/linux-kvx-low.c \
 	$(srcdir)/../gdb/alloc.c \
 	$(srcdir)/../gdb/arch/arc.c \
 	$(srcdir)/../gdb/arch/arm.c \

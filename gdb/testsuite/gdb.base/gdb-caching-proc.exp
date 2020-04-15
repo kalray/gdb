@@ -22,6 +22,12 @@
 # number of reruns is constant-bounded, and the increase in runtime is bound to
 # this test-case, and could be disabled on slow targets.
 
+# KVX: compilation error
+if [istarget kvx-*-*] then {
+  unsupported "gdb-caching-proc.exp"
+  return 1
+}
+
 # Test gdb_caching_proc NAME
 proc test_proc { name } {
     set real_name gdb_real__$name

@@ -51,9 +51,9 @@ proc test_disassembly_only {} {
     foreach { test_name option_string } [list "mode 0" "-- 0" \
 					     "default mode" "" ] {
 	with_test_prefix $test_name {
-	    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" ${option_string}" \
+	    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 40\" ${option_string}" \
 		"111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
-		"data-disassemble from pc to pc+12 assembly only"
+		"data-disassemble from pc to pc+40 assembly only"
 
 	    mi_gdb_test "112-data-disassemble -a \$pc ${option_string}" \
 		"112\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",inst=\".*\"\}.*\]" \
@@ -89,9 +89,9 @@ proc test_disassembly_with_opcodes {} {
 					    "mode 0 and --opcodes bytes" "--opcodes bytes -- 0" \
 					    "default mode and --opcodes bytes" "--opcodes bytes"] {
 	with_test_prefix $test_name {
-	    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 12\" ${option_string}" \
+	    mi_gdb_test "111-data-disassemble -s \$pc -e \"\$pc + 40\" ${option_string}" \
 		"111\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\},\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\}.*\]" \
-		"data-disassemble from pc to pc+12 assembly"
+		"data-disassemble from pc to pc+40 assembly"
 
 	    mi_gdb_test "222-data-disassemble  -f basics.c -l $line_main_body ${option_string}" \
 		"222\\^done,asm_insns=\\\[\{address=\"$hex\",func-name=\"main\",offset=\"0\",opcodes=\".*\",inst=\".*\"\},.*,\{address=\"$hex\",func-name=\"main\",offset=\"$decimal\",opcodes=\".*\",inst=\".*\"\}\\\]" \

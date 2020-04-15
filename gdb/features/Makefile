@@ -66,6 +66,7 @@ WHICH = mips-linux mips-dsp-linux \
 	s390-te-linux64 s390x-te-linux64 s390-vx-linux64 s390x-vx-linux64 \
 	s390-tevx-linux64 s390x-tevx-linux64 \
 	s390-gs-linux64 s390x-gs-linux64 \
+	kvx-linux \
 	tic6x-c64xp-linux tic6x-c64x-linux tic6x-c62x-linux
 
 # Record which registers should be sent to GDB by default after stop.
@@ -88,6 +89,7 @@ s390-tevx-linux64-expedite = r14l,r15l,pswa
 s390-gs-linux64-expedite = r14,r15,pswa
 s390x-expedite = r14,r15,pswa
 tic6x-expedite = A15,PC
+kvx-linux-expedite = pc,r12,ra,r0,r1,r2,r3
 
 
 XSLTPROC = xsltproc
@@ -163,6 +165,7 @@ XMLTOC = \
 	s390-tevx-linux64.xml \
 	s390-vx-linux64.xml \
 	s390x-tevx-linux64.xml \
+	kvx-linux.xml \
 	s390x-vx-linux64.xml \
 	s390-gs-linux64.xml \
 	s390x-gs-linux64.xml \

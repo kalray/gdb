@@ -60,6 +60,7 @@ proc breakpoint_address {bpnum} {
 proc_with_prefix do_floating_varobj_test {} {
     global srcfile binfile
     global hex
+    global decimal
     global expect_out
 
     if {[mi_clean_restart $binfile]} {
@@ -71,7 +72,7 @@ proc_with_prefix do_floating_varobj_test {} {
 
     # Create a floating varobj for $pc.
     mi_gdb_test "-var-create --thread 1 --frame 0 - @ \$pc" \
-	"\\^done,.*value=\"$hex.*" \
+	"\\^done,.*value=\"($hex|$decimal).*" \
 	"create varobj for pc in frame 0"
 
     set nframes 4
@@ -92,7 +93,7 @@ proc_with_prefix do_floating_varobj_test {} {
 
 	# Get the value of $pc from the floating varobj.
 	mi_gdb_test "-var-update 1 var1" \
-	    "\\^done,.*value=\"($hex) .*" \
+	    "\\^done,.*value=\"($hex|$decimal)\".*" \
 	    "-var-update for frame $i"
 	set pcval $expect_out(3,string)
 
@@ -111,6 +112,8 @@ proc_with_prefix do_floating_varobj_test {} {
 
 proc_with_prefix do_fixed_varobj_test {} {
     global srcfile binfile
+    global srcfile
+    global decimal
     global hex
 
     if {[mi_clean_restart $binfile] != 0} {
@@ -148,12 +151,12 @@ proc_with_prefix do_fixed_varobj_test {} {
 	if {$i == 1} { set first_unchanging_varnum $varnum }
 
 	mi_gdb_test "-var-create --thread 1 --frame $i - \* \$pc" \
-	    "\\^done,.*value=\"$hex.*" \
+	    "\\^done,.*value=\"($hex|$decimal).*" \
 	    "create varobj for \$pc in frame $i"
 	incr varnum
 
 	mi_gdb_test "-var-create --thread 1 --frame $i - \* \"global_zero + \$pc\"" \
-	    "\\^done,.*value=\"$hex.*" \
+	    "\\^done,.*value=\"($hex|$decimal).*" \
 	    "create varobj for 'global_zero + \$pc' in frame $i"
 	incr varnum
     }

@@ -74,4 +74,7 @@ gdb_test "info variables -n global" \
 	 "All variables matching regular expression \"global\":" \
 	 "" \
 	 "File .*${srcfile2}:" \
-	 "18:\[ \t\]+int global_var;" ]
+	 "18:\[ \t\]+int global_var;(" \
+	 "" \
+	 "File .*:(" \
+	 "$decimal:.*)+)*"]
