@@ -204,7 +204,30 @@ _bfd_elf_link_create_dynstrtab (bfd *abfd, struct bfd_link_info *info)
 
   hash_table = elf_hash_table (info);
   if (hash_table->dynobj == NULL)
+    {
+          /* We may not set dynobj, an input file holding linker created
+         dynamic sections to abfd, which may be a dynamic object with
+         its own dynamic sections.  We need to find a normal input file
+         to hold linker created sections if possible.  */
+      if ((abfd->flags & (DYNAMIC | BFD_PLUGIN)) != 0) 
+        {
+          bfd *ibfd;
+          asection *s;
+          for (ibfd = info->input_bfds; ibfd; ibfd = ibfd->link.next)
+            if ((ibfd->flags
+                 & (DYNAMIC | BFD_LINKER_CREATED | BFD_PLUGIN)) == 0
+                && bfd_get_flavour (ibfd) == bfd_target_elf_flavour
+                && elf_object_id (ibfd) == elf_hash_table_id (hash_table)
+                && !((s = ibfd->sections) != NULL
+                     && s->sec_info_type == SEC_INFO_TYPE_JUST_SYMS))
+              {
+                abfd = ibfd; 
+                break;
+              }
+        }
+
     hash_table->dynobj = abfd;
+    }
 
   if (hash_table->dynstr == NULL)
     {
