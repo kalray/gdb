@@ -2992,7 +2992,6 @@ fi
  PACKAGE='gas'
  VERSION='2.39.50'
 
-
 cat >>confdefs.h <<_ACEOF
 #define PACKAGE "$PACKAGE"
 _ACEOF
@@ -3121,6 +3120,12 @@ else
   AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
 fi
 AM_BACKSLASH='\'
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define KALRAY_VERSION "$KALRAY_VERSION"
+_ACEOF
 
 
 ac_ext=c

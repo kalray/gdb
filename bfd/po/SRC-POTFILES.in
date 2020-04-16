@@ -266,6 +266,7 @@ elfxx-ia64.h
 elfxx-loongarch.c
 elfxx-loongarch.h
 elfxx-kvx.c
+elfxx-kvx.h
 elfxx-mips.c
 elfxx-mips.h
 elfxx-riscv.c
