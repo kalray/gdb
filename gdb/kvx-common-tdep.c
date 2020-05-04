@@ -72,7 +72,7 @@ kvx_arch (void)
   else if (desc && tdesc_architecture (desc))
     {
       const char *name = tdesc_architecture (desc)->printable_name;
-      if (!strncmp (name, "kv3", 6))
+      if (strstr (name, "kv3"))
 	kvx_current_arch = KVX_KV3;
       else
 	error ("unable to find the current kvx architecture.");
