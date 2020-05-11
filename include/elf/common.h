@@ -307,6 +307,9 @@
 #define EM_FT32         222     /* FTDI Chip FT32 high performance 32-bit RISC architecture */
 #define EM_MOXIE        223     /* Moxie processor family */
 
+/* The number has been attributed officially but we are still waiting for publication */
+#define EM_KVX          256     /* Kalray VLIW core of the MPPA processor family */
+
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision
    with official or non-GNU unofficial values.
@@ -412,9 +415,6 @@
 #define EM_OPENRISC		EM_OR1K
 
 /* See the above comment before you add a new EM_* value here.  */
-
-/* Kalray VLIW core */
-#define EM_KVX                   0x1337
 
 /* Values for e_version.  */
 
