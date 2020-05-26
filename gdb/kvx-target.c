@@ -432,9 +432,9 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
       waitpid (server_pid, NULL, 0);
     }
 
+  opt_cont_os_init_done = 0;
   if (pipe (pipefds))
     error ("Cannot create pipe.");
-
   server_pid = fork ();
 
   if (server_pid < 0)
