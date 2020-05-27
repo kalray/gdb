@@ -20,10 +20,6 @@
 int
 main (void)
 {
-  #ifdef KVX_ISS
-  usleep (3000);
-  #else
   sleep (10);
-  #endif
   return 0; /* after sleep */
 }
