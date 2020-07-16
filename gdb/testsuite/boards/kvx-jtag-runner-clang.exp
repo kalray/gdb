@@ -22,6 +22,7 @@
 
 source [file dirname [info script]]/kvx-jtag-runner-common.exp
 
-set jtag_runner_extra_args "--only_taps=Cluster0 --fsbl=pcie_only"
-set_board_info compiler "kvx-elf-gcc"
+set jtag_runner_extra_args "--only_taps=Cluster0"
+set_board_info compiler "clang"
+set_board_info ldflags "-Wl,--defsym=MPPA_COS_THREAD_PER_CORE_LOG2=0 -Wl,--defsym=MPPA_COS_NB_CORES_LOG2=0"
 

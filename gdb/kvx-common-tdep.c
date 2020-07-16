@@ -152,7 +152,7 @@ kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
   struct linetable *l;
   struct symtab_and_line sal;
   struct compunit_symtab *cust;
-  int ind, i, gcc_compiled = 0;
+  int ind, i, gcc_compiled = 0, clang_compiled = 0;
 
   sal = find_pc_line (func_addr, 0);
   if (sal.symtab == NULL)
@@ -161,6 +161,8 @@ kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
   cust = find_pc_compunit_symtab (func_addr);
   if (cust->producer && strncmp (cust->producer, "GNU C", 5) == 0)
     gcc_compiled = 1;
+  else if (cust->producer && !strncmp (cust->producer, "Kalray clang", 12))
+    clang_compiled = 1;
 
   /* Give up if this symbol has no lineinfo table.  */
   l = SYMTAB_LINETABLE (sal.symtab);
@@ -194,6 +196,7 @@ kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
     }
   else
     {
+      ind = 0;
       for (i = 0; i < l->nitems; i++)
 	{
 	  struct linetable_entry *item = &(l->item[i]);
@@ -201,8 +204,12 @@ kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 	  /* Don't use line numbers of zero, they mark special entries in
 	    the table.  See the commentary on symtab.h before the
 	    definition of struct linetable.  */
-	  if (item->line > 0 && func_start < item->pc && item->pc < func_end)
-	    return item->pc;
+	  if (item->line > 0 && func_start <= item->pc && item->pc < func_end)
+	    {
+	      if (item->pc == func_start && (!clang_compiled || ind++ == 0))
+		continue;
+	      return item->pc;
+	    }
 	}
     }
 
