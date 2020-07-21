@@ -39,6 +39,10 @@ if ![runto_main] {
     return -1
 }
 
+if ![runto_main] {
+    return -1
+}
+
 gdb_breakpoint "marker_hit"
 gdb_breakpoint "marker_miss"
 
