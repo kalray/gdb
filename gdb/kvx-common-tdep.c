@@ -66,6 +66,8 @@ kvx_arch (void)
       switch (elf_elfheader (exec_bfd)->e_flags & ELF_KVX_CORE_MASK)
 	{
 	case ELF_KVX_CORE_KV3_1:
+	case ELF_KVX_CORE_KV3_2:
+	  // TODO: defines architecture for KV3-2
 	  kvx_current_arch = KVX_KV3;
 	  break;
 	default:
