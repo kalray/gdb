@@ -57,6 +57,7 @@ extern uint32_t break_jtag_over_iss[KVX_NUM_ARCHES];
 extern uint32_t nop_op[KVX_NUM_ARCHES];
 
 enum KVX_ARCH kvx_arch (void);
+int get_kvx_arch (void);
 void kvx_look_for_insns (void);
 const char *kv3_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
 struct type *kv3_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);

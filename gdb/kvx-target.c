@@ -406,7 +406,10 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
       switch (core)
 	{
 	case ELF_KVX_CORE_KV3_1:
-	  stub_args[argidx++] = (char *) "--march=coolidge";
+	  stub_args[argidx++] = (char *) "--march=kv3-1";
+	  break;
+	case ELF_KVX_CORE_KV3_2:
+	  stub_args[argidx++] = (char *) "--march=kv3-2";
 	  break;
 	default:
 	  error (_ ("The KVX binary is compiled for an unknown core."));
@@ -472,6 +475,8 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
     {
       int port = -1;
       char cmd_port[10];
+
+      free (stub_args);
 
       ::close (pipefds[1]);
       if (read (pipefds[0], &port, sizeof (port)) != sizeof (port))
