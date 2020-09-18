@@ -6,11 +6,12 @@
 #include "defs.h"
 #include <assert.h>
 #include <libgen.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <limits.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "target.h"
 #include "environ.h"
@@ -679,6 +680,7 @@ kvx_change_file (const char *file_path, const char *cluster_name)
     }
 
   cjtag_over_iss = get_jtag_over_iss ();
+
   try
     {
       // remove no executable warning hack
@@ -691,21 +693,27 @@ kvx_change_file (const char *file_path, const char *cluster_name)
       symbol_file_add_main (file_path, 0);
       if (cjtag_over_iss == 'i')
 	{
-	  const char *rel_debug_handlers = "/" STRINGIFY (
-	    INSTALL_LIB) "/kalray-oce/kv3/v1_node_debug_handlers.u";
-	  char path[1024], *dn;
+	  char path[PATH_MAX], *dn;
 	  int sz = readlink ("/proc/self/exe", path, sizeof (path) - 1);
+	  int len_path, nb_bytes;
 	  path[sz] = 0;
 	  dn = dirname (path);
 	  if (dn != path)
 	    strcpy (path, dn);
 	  dn = dirname (path);
 	  if (dn != path)
-	    sprintf (path, "%s%s", dn, rel_debug_handlers);
-	  else
-	    strcat (path, rel_debug_handlers);
+	    strcpy (path, dn);
 
-	  if (access (path, R_OK))
+	  len_path = strlen (path);
+	  nb_bytes = snprintf (
+	    path + len_path, sizeof (path) - len_path,
+	    "/" STRINGIFY (
+	      INSTALL_LIB) "/kalray-oce/kv3/v%d_node_debug_handlers.u",
+	    get_kvx_arch () + 1);
+
+	  if (nb_bytes >= sizeof (path) - len_path)
+	    fprintf (stderr, "Error: the debug handlers path is too long\n");
+	  else if (access (path, R_OK))
 	    fprintf (stderr, "Warning: cannot find the debug handlers at %s\n",
 		     path);
 	  else
