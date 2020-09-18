@@ -66,9 +66,10 @@ kvx_arch (void)
       switch (elf_elfheader (exec_bfd)->e_flags & ELF_KVX_CORE_MASK)
 	{
 	case ELF_KVX_CORE_KV3_1:
+	  kvx_current_arch = KVX_KV3_1;
+	  break;
 	case ELF_KVX_CORE_KV3_2:
-	  // TODO: defines architecture for KV3-2
-	  kvx_current_arch = KVX_KV3;
+	  kvx_current_arch = KVX_KV3_2;
 	  break;
 	default:
 	  error (_ ("The KVX binary is compiled for an unknown core."));
@@ -77,16 +78,24 @@ kvx_arch (void)
   else if (desc && tdesc_architecture (desc))
     {
       const char *name = tdesc_architecture (desc)->printable_name;
-      if (strstr (name, "kv3"))
-	kvx_current_arch = KVX_KV3;
+      if (strstr (name, "kv3-1"))
+	kvx_current_arch = KVX_KV3_1;
+      else if (strstr (name, "kv3-2"))
+	kvx_current_arch = KVX_KV3_2;
       else
 	error ("unable to find the current kvx architecture.");
     }
 
   if (kvx_current_arch == KVX_NUM_ARCHES)
-    return KVX_KV3;
+    return KVX_KV3_1;
 
   return kvx_current_arch;
+}
+
+int
+get_kvx_arch (void)
+{
+  return kvx_arch ();
 }
 
 const char *
@@ -474,8 +483,11 @@ kvx_look_for_insns (void)
 
       switch (i)
 	{
-	case KVX_KV3:
+	case KVX_KV3_1:
 	  op = kv3_v1_optab;
+	  break;
+	case KVX_KV3_2:
+	  op = kv3_v2_optab;
 	  break;
 	default:
 	  internal_error (__FILE__, __LINE__, "Unknown arch id.");
