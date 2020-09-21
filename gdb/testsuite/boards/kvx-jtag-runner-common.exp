@@ -23,8 +23,8 @@ proc gdbserver_gdb_load { } {
     return [gdbserver_spawn ""]
 }
 
-proc gdb_reload { } {
-    return [gdbserver_run ""]
+proc gdb_reload { {inferior_args {}} } {
+    return [gdbserver_run "-- $inferior_args"]
 }
 
 proc gdb_reconnect { } {
