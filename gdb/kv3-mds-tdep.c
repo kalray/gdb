@@ -1243,7 +1243,7 @@ static int init_v2_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[93].gdb_regno = 29;
 	dwarf2gdb[94].name = "teh";
 	dwarf2gdb[94].gdb_regno = 30;
-	dwarf2gdb[95].name = "res31";
+	dwarf2gdb[95].name = "ixc";
 	dwarf2gdb[95].gdb_regno = 31;
 	dwarf2gdb[96].name = "syo";
 	dwarf2gdb[96].gdb_regno = 32;
@@ -1357,13 +1357,13 @@ static int init_v2_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[150].gdb_regno = 86;
 	dwarf2gdb[151].name = "es_pl3";
 	dwarf2gdb[151].gdb_regno = 87;
-	dwarf2gdb[152].name = "res88";
+	dwarf2gdb[152].name = "sid_pl0";
 	dwarf2gdb[152].gdb_regno = 88;
-	dwarf2gdb[153].name = "res89";
+	dwarf2gdb[153].name = "sid_pl1";
 	dwarf2gdb[153].gdb_regno = 89;
-	dwarf2gdb[154].name = "res90";
+	dwarf2gdb[154].name = "sid_pl2";
 	dwarf2gdb[154].gdb_regno = 90;
-	dwarf2gdb[155].name = "res91";
+	dwarf2gdb[155].name = "sid_pl3";
 	dwarf2gdb[155].gdb_regno = 91;
 	dwarf2gdb[156].name = "res92";
 	dwarf2gdb[156].gdb_regno = 92;
@@ -1485,7 +1485,7 @@ static int init_v2_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[214].gdb_regno = 150;
 	dwarf2gdb[215].name = "res151";
 	dwarf2gdb[215].gdb_regno = 151;
-	dwarf2gdb[216].name = "res152";
+	dwarf2gdb[216].name = "sid";
 	dwarf2gdb[216].gdb_regno = 152;
 	dwarf2gdb[217].name = "res153";
 	dwarf2gdb[217].gdb_regno = 153;
