@@ -33,6 +33,11 @@ if [use_gdb_stub] {
      return -1
 }
 
+if {[istarget kvx-*-*]} {
+    untested "force fail does not work"
+    return 0
+}
+
 standard_testfile mi-start.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {

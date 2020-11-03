@@ -221,6 +221,8 @@ static void insert_breakpoint_locations (void);
 
 static void trace_pass_command (const char *, int);
 
+static void bp_locations_target_extensions_update (void);
+
 static void set_tracepoint_count (int num);
 
 static bool is_masked_watchpoint (const struct breakpoint *b);
@@ -2991,6 +2993,8 @@ You may have requested too many hardware breakpoints/watchpoints.\n");
       target_terminal::ours_for_output ();
       error_stream (tmp_error_stream);
     }
+
+  bp_locations_target_extensions_update ();
 }
 
 /* Used when the program stops.
@@ -3213,11 +3217,17 @@ create_overlay_event_breakpoint (void)
 static void
 create_longjmp_master_breakpoint (void)
 {
+  // KVX struct program_space *pspace;
+  // KVX: called by breakpoint_re_set who says:
+  // Re-set breakpoint locations for the current program space ONLY!
+  // Why the ALL_PSPACES iteration?
+  // we cannot access memory of other inferiors while running
+
   scoped_restore_current_program_space restore_pspace;
 
-  for (struct program_space *pspace : program_spaces)
-    {
-      set_current_program_space (pspace);
+  // KVX ALL_PSPACES (pspace)
+  {
+    // KVX set_current_program_space (pspace);
 
       for (objfile *objfile : current_program_space->objfiles ())
 	{
@@ -3312,15 +3322,20 @@ create_longjmp_master_breakpoint (void)
 static void
 create_std_terminate_master_breakpoint (void)
 {
+  // KVX struct program_space *pspace;
+  // KVX: called by breakpoint_re_set who says:
+  // Re-set breakpoint locations for the current program space ONLY!
+  // Why the ALL_PSPACES iteration?
+  // we cannot access memory of other inferiors while running
   const char *const func_name = "std::terminate()";
 
   scoped_restore_current_program_space restore_pspace;
 
-  for (struct program_space *pspace : program_spaces)
-    {
-      CORE_ADDR addr;
+  // KVX ALL_PSPACES (pspace)
+  {
+    CORE_ADDR addr;
 
-      set_current_program_space (pspace);
+    // KVX set_current_program_space (pspace);
 
       for (objfile *objfile : current_program_space->objfiles ())
 	{
@@ -8578,6 +8593,12 @@ add_location_to_breakpoint (struct breakpoint *b,
 
   if (loc_gdbarch == NULL)
     loc_gdbarch = b->gdbarch;
+
+  /* Adjust_breakpoint_address may call target_read_memory. Make sure
+     that it is called from the correct context */
+  scoped_restore_current_pspace_and_thread restore_pspace_thread;
+  if (sal && sal->pspace)
+    switch_to_program_space_and_thread (sal->pspace);
 
   /* Adjust the breakpoint's address prior to allocating a location.
      Once we call allocate_bp_location(), that mostly uninitialized

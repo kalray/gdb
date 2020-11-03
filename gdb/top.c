@@ -1405,6 +1405,7 @@ print_gdb_version (struct ui_file *stream, bool interactive)
       style = nstyle;
     }
   fprintf_styled (stream, style, "GNU gdb %s%s\n", PKGVERSION, version);
+  fprintf_styled (stream, style, "Kalray gdb version %s\n", KALRAY_VERSION);
 
   /* Second line is a copyright notice.  */
 

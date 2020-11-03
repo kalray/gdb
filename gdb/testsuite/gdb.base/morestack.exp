@@ -27,6 +27,12 @@ if { [have_fuse_ld_gold] == 0} {
 
 standard_testfile
 
+# KVX: does not compile (-fsplit-stack not supported)
+if [istarget kvx-*-*] then {
+  unsupported "more-stack.exp"
+  return 1
+}
+
 # -fuse-ld=gold is used for calling printf code built without -fsplit-stack
 # which could crash otherwise.  See GCC documentation of -fsplit-stack.
 set opts "additional_flags=-fsplit-stack"

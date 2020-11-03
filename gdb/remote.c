@@ -75,6 +75,7 @@
 #include "gdbsupport/scoped_restore.h"
 #include "gdbsupport/environ.h"
 #include "gdbsupport/byte-vector.h"
+#include "../gdbsupport/ptid.h"
 #include <algorithm>
 #include <unordered_map>
 #include "async-event.h"
@@ -1381,7 +1382,7 @@ remote_arch_state::remote_arch_state (struct gdbarch *gdbarch)
 /* Get a pointer to the current remote target.  If not connected to a
    remote target, return NULL.  */
 
-static remote_target *
+remote_target *
 get_current_remote_target ()
 {
   target_ops *proc_target = current_inferior ()->process_target ();
@@ -4401,6 +4402,7 @@ print_one_stopped_thread (struct thread_info *thread)
   gdb::observers::normal_stop.notify (NULL, 1);
 }
 
+int print_stopped_thread = 1; // allows to not print the initial stopped threads
 /* Process all initial stop replies the remote side sent in response
    to the ? packet.  These indicate threads that were already stopped
    on initial connection.  We mark these threads as stopped and print
@@ -4530,7 +4532,7 @@ remote_target::process_initial_stop_replies (int from_tty)
 	  || thread->per_inf_num < lowest_stopped->per_inf_num)
 	lowest_stopped = thread;
 
-      if (non_stop)
+      if (non_stop && print_stopped_thread)
 	print_one_stopped_thread (thread);
     }
 
@@ -9211,6 +9213,28 @@ int
 putpkt (remote_target *remote, const char *buf)
 {
   return remote->putpkt (buf);
+}
+
+void
+getpkt (remote_target *remote, char **buf, long *sizeof_buf, int forever)
+{
+  struct remote_state *rs = remote->get_remote_state ();
+  size_t sz;
+
+  remote->getpkt (&rs->buf, 0);
+  sz = rs->buf.size ();
+  if (sz > *sizeof_buf)
+    {
+      *buf = (char *) realloc (*buf, sz);
+      *sizeof_buf = sz;
+    }
+  strcpy (*buf, rs->buf.data ());
+}
+
+void
+set_general_thread (remote_target *remote, ptid_t ptid)
+{
+  remote->set_general_thread (ptid);
 }
 
 /* Send a packet to the remote machine, with error checking.  The data
@@ -14163,9 +14187,11 @@ remote_async_serial_handler (struct serial *scb, void *context)
 static void
 remote_async_inferior_event_handler (gdb_client_data data)
 {
+  remote_target *remote = (remote_target *) data;
+  remote->incref ();
+
   inferior_event_handler (INF_REG_EVENT);
 
-  remote_target *remote = (remote_target *) data;
   remote_state *rs = remote->get_remote_state ();
 
   /* inferior_event_handler may have consumed an event pending on the
@@ -14177,6 +14203,8 @@ remote_async_inferior_event_handler (gdb_client_data data)
   if (rs->notif_state->pending_event[notif_client_stop.id] != NULL
       || !rs->stop_reply_queue.empty ())
     mark_async_event_handler (rs->remote_async_inferior_event_token);
+
+  decref_target (remote);
 }
 
 int

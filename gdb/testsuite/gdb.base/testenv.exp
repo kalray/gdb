@@ -24,6 +24,12 @@ if [use_gdb_stub] {
     return
 }
 
+# KVX: host env vars not passed to application
+if [istarget kvx-*-*] then {
+  unsupported "testenv.exp"
+  return 1
+}
+
 standard_testfile .c
 
 # Compile binary

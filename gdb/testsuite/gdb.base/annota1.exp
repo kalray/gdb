@@ -23,6 +23,12 @@ if ![target_can_use_run_cmd] {
     return 0
 }
 
+# KVX: different annotation
+if [istarget kvx-*-*] then {
+  unsupported "annota1.exp"
+  return 1
+}
+
 set breakpoints_invalid "\r\n\032\032breakpoints-invalid\r\n"
 
 #

@@ -16,6 +16,11 @@
 # Verify that debugging with "maintenance target-async off" works somewhat.  At
 # least running to main and to the end of the program.
 
+if [istarget kvx-*-*] then {
+    unsupported "maint-target-async-off.exp"
+    return 1
+}
+
 standard_testfile
 
 save_vars { GDBFLAGS } {

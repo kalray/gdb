@@ -37,7 +37,7 @@ if { [gdb_starti_cmd] < 0 } {
 # should not have run yet and 'x' should be 0.
 
 gdb_test_sequence "" "starti" {
-    "Program stopped."
+    "(Program)? stopped."
     "\\$1 = 0"
 }
 
