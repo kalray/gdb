@@ -32,17 +32,43 @@ extern "C" {
 }
 #include "elf/kv3.h"
 #include "opcode/kv3.h"
+extern "C" {
+#include "opcodes/kv3-dis.h"
+}
 #include "kvx-common-tdep.h"
 
 #define __NR_BREAKPOINT_PL0 4050
 #define __NR_BREAKPOINT_JTAGISS 4054
 
+enum kvx_frm_cache_reg_saved_loc_type
+{
+  KVX_FRM_CACHE_REG_LOC_REG,
+  KVX_FRM_CACHE_REG_LOC_MEM,
+  KVX_FRM_CACHE_REG_LOC_NONE,
+};
+
+struct kvx_frm_cache_reg_saved
+{
+  enum kvx_frm_cache_reg_saved_loc_type loc_type;
+  int reg;
+  CORE_ADDR offset;
+};
+
 struct kvx_frame_cache
 {
-  CORE_ADDR base; // base address
-  CORE_ADDR pc;
-  LONGEST framesize;
-  CORE_ADDR saved_sp;
+  struct frame_info *frame;
+
+  struct kvx_frm_cache_reg_saved base;
+  struct kvx_frm_cache_reg_saved ra;
+  struct kvx_frm_cache_reg_saved fp;
+
+  CORE_ADDR function_pc;
+  CORE_ADDR frame_pc;
+  CORE_ADDR sp_fp_offset;
+  CORE_ADDR sp_entry_offset;
+
+  int has_frame;
+  int is_invalid;
 };
 
 enum KVX_ARCH kvx_current_arch = KVX_NUM_ARCHES;
@@ -223,32 +249,520 @@ kvx_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 					 gdbarch_pc_regnum (gdbarch));
 }
 
+/* Initialize the cache struct of a frame */
+static void
+kvx_init_frame_cache (struct kvx_frame_cache *cache, struct frame_info *frame)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+
+  cache->frame = frame;
+
+  cache->function_pc = 0;
+  cache->frame_pc = 0;
+  cache->sp_fp_offset = 0;
+  cache->sp_entry_offset = 0;
+
+  /* at the function beginning, the previous frame PC is in RA */
+  cache->ra.loc_type = KVX_FRM_CACHE_REG_LOC_REG;
+  cache->ra.reg = user_reg_map_name_to_regnum (gdbarch, "ra", -1);
+  cache->ra.offset = 0;
+
+  /* the previous frame R12 is still in R12 */
+  cache->base.loc_type = KVX_FRM_CACHE_REG_LOC_REG;
+  cache->base.reg
+    = user_reg_map_name_to_regnum (gdbarch, "r0", -1) + KVX_GPR_REG_SP;
+  cache->base.offset = 0;
+
+  /* the previous frame R14 is still in R14 */
+  cache->fp.loc_type = KVX_FRM_CACHE_REG_LOC_REG;
+  cache->fp.reg
+    = user_reg_map_name_to_regnum (gdbarch, "r0", -1) + KVX_GPR_REG_FP;
+  cache->fp.offset = 0;
+
+  cache->is_invalid = 0;
+  cache->has_frame = 0;
+}
+
+/* Allocate and initialize a frame cache */
+static struct kvx_frame_cache *
+kvx_alloc_frame_cache (struct frame_info *frame)
+{
+  struct kvx_frame_cache *cache;
+
+  cache = FRAME_OBSTACK_ZALLOC (struct kvx_frame_cache);
+  kvx_init_frame_cache (cache, frame);
+
+  return cache;
+}
+
+/* Like target_read_memory, but slightly different parameters */
+static int
+kvx_dis_asm_read_memory (bfd_vma memaddr, gdb_byte *myaddr, unsigned int len,
+			 struct disassemble_info *info)
+{
+  return target_read_code (memaddr, myaddr, len);
+}
+
+#define NB_BUNDLES_PROL_MAX 10
+#define NB_BUNDLES_EPIL_MAX 10
+static void
+kvx_scan_prologue_epilogue (struct frame_info *frame,
+			    struct kvx_frame_cache *cache)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct disassemble_info di;
+  struct kvx_prologue_epilogue_bundle peb;
+  int nb_bytes_bundle, idx_bundle, idx_insn, idx_insn1;
+  CORE_ADDR crt_pc;
+  int r0_regnum, sp_regnum, fp_regnum;
+  int sp_restore_to_entry, ret_from_fc, sp_restore_from_fp;
+  int end_scan = 0, sp_changed = 0, ra_in_gpr = 0, ra_in_mem = 0;
+  int fp_in_mem = 0, fp_used = 0;
+
+  /* get the PC of the current frame */
+  cache->frame_pc = get_frame_pc (frame);
+
+  /* get the function beginnig PC of the current frame */
+  cache->function_pc = get_frame_func (frame);
+  if (!cache->function_pc || cache->frame_pc < cache->function_pc)
+    {
+      cache->is_invalid = 1;
+      return;
+    }
+
+  /* for the first bundle of the function, the frame cache is already correct */
+  if (cache->frame_pc == cache->function_pc)
+    return;
+
+  /* get the required registers numbers */
+  r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
+  sp_regnum = r0_regnum + KVX_GPR_REG_SP;
+  fp_regnum = r0_regnum + KVX_GPR_REG_FP;
+
+  /* init the disassemble_info struct */
+  memset (&di, 0, sizeof (di));
+  di.arch = gdbarch_bfd_arch_info (gdbarch)->arch;
+  di.flavour = bfd_target_unknown_flavour;
+  di.endian = gdbarch_byte_order (gdbarch);
+  di.endian_code = gdbarch_byte_order_for_code (gdbarch);
+  di.mach = gdbarch_bfd_arch_info (gdbarch)->mach;
+  di.read_memory_func = kvx_dis_asm_read_memory;
+
+  /* scan the prologue for instructions changing/saving R12, R14 and RA */
+  /* the searched prologue instructions are:
+     (1) addd $r12 = $r12, <res_stack> - taken into account only if (1) hasn't
+     been parsed yet
+     (2) get <gpr_reg> = $ra - only if not (2) and not (3)
+     (3) sd <ofs>[$r12] = <gpr_reg> - only if (2) and not (3); sq, so supported
+     (4) sd <ofs>[$r12] = $r14 - only if not (4); sq, so also supported
+     (5) addd $r14 = $r12, <fp_ofs> - only if (1), (4) and not (5)
+     (6) call, icall, goto, igoto, cb., ret - stop scanning */
+
+  for (crt_pc = cache->function_pc, idx_bundle = 0;
+       crt_pc < cache->frame_pc && idx_bundle < NB_BUNDLES_PROL_MAX;
+       crt_pc += nb_bytes_bundle, idx_bundle++)
+    {
+      int insn_order[sizeof (peb.insn) / sizeof (peb.insn[0])];
+
+      /* get the instructions of the current scanned bundle */
+      nb_bytes_bundle = decode_prologue_epilogue_bundle (crt_pc, &di, &peb);
+      if (nb_bytes_bundle == -1)
+	{
+	  cache->is_invalid = 1;
+	  return;
+	}
+
+      if (!peb.nb_insn)
+	continue;
+
+      /* sort the bundle instructions by their type */
+      for (idx_insn = 0; idx_insn < peb.nb_insn; idx_insn++)
+	insn_order[idx_insn] = idx_insn;
+
+      for (idx_insn = 0; idx_insn < peb.nb_insn - 1; idx_insn++)
+	for (idx_insn1 = idx_insn + 1; idx_insn1 < peb.nb_insn; idx_insn1++)
+	  if (peb.insn[insn_order[idx_insn]].insn_type
+	      > peb.insn[insn_order[idx_insn1]].insn_type)
+	    {
+	      int tinstr_order = insn_order[idx_insn];
+	      insn_order[idx_insn] = insn_order[idx_insn1];
+	      insn_order[idx_insn1] = tinstr_order;
+	    }
+
+      /* update the cache struct fields based on the bundle instructions */
+      for (idx_insn = 0; idx_insn < peb.nb_insn; idx_insn++)
+	{
+	  struct kvx_prologue_epilogue_insn *insn
+	    = &peb.insn[insn_order[idx_insn]];
+	  int store_nb_gprs = 0;
+
+	  switch (insn->insn_type)
+	    {
+	    case KVX_PROL_EPIL_INSN_ADD_SP:
+	      /* addd $r12 = $r12, <res_stack> -> <res_stack>: immediate */
+	      if (!sp_changed)
+		{
+		  cache->base.loc_type = KVX_FRM_CACHE_REG_LOC_REG;
+		  cache->base.reg = sp_regnum;
+		  cache->base.offset = -insn->immediate;
+		  cache->sp_entry_offset = cache->base.offset;
+		  sp_changed = 1;
+		}
+	      break;
+	    case KVX_PROL_EPIL_INSN_ADD_FP:
+	      /* addd $r14 = $r12, <ofs> -> <ofs>: immediate */
+	      if (sp_changed && fp_in_mem && !fp_used)
+		{
+		  cache->base.reg = fp_regnum;
+		  cache->base.offset -= insn->immediate;
+		  cache->sp_fp_offset = insn->immediate;
+		  if (ra_in_mem)
+		    {
+		      cache->ra.reg = fp_regnum;
+		      cache->ra.offset -= insn->immediate;
+		    }
+		  if (fp_in_mem)
+		    {
+		      cache->fp.reg = fp_regnum;
+		      cache->fp.offset -= insn->immediate;
+		    }
+		  fp_used = 1;
+		}
+	      break;
+	    case KVX_PROL_EPIL_INSN_GET_RA:
+	      /* get <gpr_get_ra> = $ra -> <gpr_get_ra>: gpr_reg[0] */
+	      if (!ra_in_gpr && !ra_in_mem)
+		{
+		  cache->ra.loc_type = KVX_FRM_CACHE_REG_LOC_REG;
+		  cache->ra.reg = r0_regnum + insn->gpr_reg[0];
+		  cache->ra.offset = 0;
+		  ra_in_gpr = 1;
+		}
+	      break;
+	    case KVX_PROL_EPIL_INSN_SD:
+	      store_nb_gprs = 1;
+	      break;
+	    case KVX_PROL_EPIL_INSN_SQ:
+	      store_nb_gprs = 2;
+	      break;
+	    case KVX_PROL_EPIL_INSN_SO:
+	      store_nb_gprs = 4;
+	      break;
+	    case KVX_PROL_EPIL_INSN_RET:
+	    case KVX_PROL_EPIL_INSN_GOTO:
+	    case KVX_PROL_EPIL_INSN_IGOTO:
+	    case KVX_PROL_EPIL_INSN_CB:
+	    case KVX_PROL_EPIL_INSN_CALL:
+	      end_scan = 1;
+	      break;
+	    default:
+	      break;
+	    } /* switch bundle instruction type */
+
+	  /* invalid frame if there is a store into the stack without a previous
+	     stack allocation */
+	  if (store_nb_gprs && !sp_changed && insn->nb_gprs
+	      && insn->gpr_reg[0] == KVX_GPR_REG_SP)
+	    {
+	      cache->is_invalid = 1;
+	      return;
+	    }
+
+	  if (store_nb_gprs)
+	    {
+	      /* sd <ofs>[r12|r14] = <gpr_get_ra> -> ofs: immediate,
+		 r12|r14: gpr_reg[0], <gpr_get_ra>: gpr_reg[1] */
+	      if (ra_in_gpr && insn->nb_gprs == 2
+		  && (insn->gpr_reg[0] == KVX_GPR_REG_SP
+		      || insn->gpr_reg[0] == KVX_GPR_REG_FP)
+		  && insn->gpr_reg[1] + r0_regnum <= cache->ra.reg
+		  && insn->gpr_reg[1] + r0_regnum + store_nb_gprs
+		       > cache->ra.reg)
+		{
+		  cache->ra.loc_type = KVX_FRM_CACHE_REG_LOC_MEM;
+		  if (fp_used && insn->gpr_reg[0] == KVX_GPR_REG_SP)
+		    {
+		      cache->ra.offset
+			= insn->immediate - cache->sp_fp_offset
+			  + (cache->ra.reg - (insn->gpr_reg[1] + r0_regnum))
+			      * 8;
+		      cache->ra.reg = fp_regnum;
+		    }
+		  else
+		    {
+		      cache->ra.offset
+			= insn->immediate
+			  + (cache->ra.reg - (insn->gpr_reg[1] + r0_regnum))
+			      * 8;
+		      cache->ra.reg = r0_regnum + insn->gpr_reg[0];
+		    }
+		  ra_in_mem = 1;
+		}
+
+	      /* sd <ofs>[r12] = <r14> -> ofs: immediate,
+		 r12: gpr_reg[0], r14: gpr_reg[1] */
+	      if (!fp_in_mem && insn->gpr_reg[0] == KVX_GPR_REG_SP
+		  && insn->gpr_reg[1] <= KVX_GPR_REG_FP
+		  && insn->gpr_reg[1] + store_nb_gprs > KVX_GPR_REG_FP)
+		{
+		  cache->fp.loc_type = KVX_FRM_CACHE_REG_LOC_MEM;
+		  cache->fp.reg = sp_regnum;
+		  cache->fp.offset
+		    = insn->immediate + (KVX_GPR_REG_FP - insn->gpr_reg[1]) * 8;
+		  fp_in_mem = 1;
+		}
+	    }
+	} /* foreach instruction in the current bundle */
+
+      cache->has_frame
+	= (sp_changed && ra_in_mem) || (!sp_changed && ra_in_gpr);
+
+      /* stop scanning if a PC changing instruction was parsed or if the frame
+	 cache struct is completely updated */
+      if (end_scan || (fp_used && ra_in_mem))
+	break;
+    } /* foreach bundle in prologue */
+
+  /* scan for the epilogue only for the top frame */
+  if (frame_relative_level (frame) != 0)
+    return;
+
+  /* scan epilogue: search for ret and SP restoring instructions */
+  /* the searched epilogue instructions are:
+     (1) addd $r12 = $r12, <res_stack> - if not (1) and SP changed in prologue
+     (2) addd $r12 = $r14, <offset> - if not (1) and FP is used
+     (3) ret, goto <function> - epilogue found
+     (4) call, icall, igoto, cb., goto <label_in_function> - stop scanning */
+  end_scan = 0;
+  ret_from_fc = 0;
+  sp_restore_to_entry = 0;
+  sp_restore_from_fp = 0;
+  for (crt_pc = cache->frame_pc, idx_bundle = 0;
+       idx_bundle < NB_BUNDLES_EPIL_MAX;
+       crt_pc += nb_bytes_bundle, idx_bundle++)
+    {
+      nb_bytes_bundle = decode_prologue_epilogue_bundle (crt_pc, &di, &peb);
+      if (nb_bytes_bundle == -1)
+	{
+	  cache->is_invalid = 1;
+	  return;
+	}
+
+      if (!peb.nb_insn)
+	continue;
+
+      for (idx_insn = 0; idx_insn < peb.nb_insn; idx_insn++)
+	{
+	  struct kvx_prologue_epilogue_insn *insn = &peb.insn[idx_insn];
+
+	  switch (insn->insn_type)
+	    {
+	    case KVX_PROL_EPIL_INSN_ADD_SP:
+	      /* addd $r12 = $r12, <res_stack> -> <res_stack>: immediate */
+	      if (sp_changed && !sp_restore_to_entry)
+		sp_restore_to_entry = 1;
+	      break;
+	    case KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP:
+	      /* addd $r12 = $r14, <ofs> */
+	      if (fp_used && !sp_restore_from_fp)
+		sp_restore_from_fp = 1;
+	      break;
+	    case KVX_PROL_EPIL_INSN_RET:
+	      ret_from_fc = 1;
+	      end_scan = 1;
+	      break;
+	    case KVX_PROL_EPIL_INSN_GOTO:
+	      /* check if goto jumps to outside this function */
+	      if (get_pc_function_start (insn->immediate) != cache->function_pc
+		  || insn->immediate == cache->function_pc)
+		ret_from_fc = 1;
+	      end_scan = 1;
+	      break;
+	    case KVX_PROL_EPIL_INSN_CB:
+	    case KVX_PROL_EPIL_INSN_IGOTO:
+	    case KVX_PROL_EPIL_INSN_CALL:
+	      end_scan = 1;
+	    default:
+	      break;
+	    }
+	}
+
+      if (end_scan)
+	break;
+    }
+
+  /* the epilogue stack instructions have not been yet executed */
+  if (!ret_from_fc || (!fp_used && sp_restore_to_entry)
+      || (fp_used && sp_restore_from_fp))
+    return;
+
+  if (fp_used && sp_restore_to_entry)
+    {
+      /* sp was restored from fp, but not to its value at the function entry */
+      cache->base.reg = sp_regnum;
+      cache->base.offset += cache->sp_fp_offset;
+      if (cache->ra.loc_type == KVX_FRM_CACHE_REG_LOC_MEM
+	  && cache->ra.reg == fp_regnum)
+	{
+	  cache->ra.reg = sp_regnum;
+	  cache->ra.offset += cache->sp_fp_offset;
+	}
+      if (cache->fp.loc_type == KVX_FRM_CACHE_REG_LOC_MEM
+	  && cache->fp.reg == fp_regnum)
+	{
+	  cache->fp.reg = sp_regnum;
+	  cache->fp.offset += cache->sp_fp_offset;
+	}
+    }
+  else if (!sp_restore_to_entry)
+    {
+      /* sp was restored to its value at the function entry */
+      cache->base.reg = sp_regnum;
+      cache->base.offset = 0;
+      if (cache->ra.loc_type == KVX_FRM_CACHE_REG_LOC_MEM)
+	{
+	  cache->ra.reg = sp_regnum;
+	  cache->ra.offset += cache->sp_fp_offset - cache->sp_entry_offset;
+	}
+      if (cache->fp.loc_type == KVX_FRM_CACHE_REG_LOC_MEM)
+	{
+	  cache->fp.reg = sp_regnum;
+	  cache->fp.offset += cache->sp_fp_offset - cache->sp_entry_offset;
+	}
+    }
+}
+
+/* Returns/computes a cache struct for the provided frame */
+static struct kvx_frame_cache *
+kvx_get_frame_cache (struct frame_info *frame, void **this_cache)
+{
+  struct kvx_frame_cache *cache;
+
+  if (*this_cache)
+    return (struct kvx_frame_cache *) *this_cache;
+
+  cache = kvx_alloc_frame_cache (frame);
+  *this_cache = cache;
+
+  kvx_scan_prologue_epilogue (frame, cache);
+
+  return cache;
+}
+
+/* Returns the register of a frame based on the cache struct info */
+static int
+kvx_get_frame_cache_reg (struct frame_info *frame,
+			 struct kvx_frm_cache_reg_saved *rs, CORE_ADDR *v)
+{
+  CORE_ADDR t;
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
+  int gpr_reg_sz = register_size (gdbarch, r0_regnum);
+  gdb_byte buf[gpr_reg_sz];
+
+  switch (rs->loc_type)
+    {
+    case KVX_FRM_CACHE_REG_LOC_REG:
+      try
+	{
+	  get_frame_register (frame, rs->reg, buf);
+	}
+      catch (...)
+	{
+	  return -1;
+	}
+
+      *v = extract_unsigned_integer (buf, gpr_reg_sz, byte_order);
+      *v += rs->offset;
+      break;
+    case KVX_FRM_CACHE_REG_LOC_MEM:
+      try
+	{
+	  get_frame_register (frame, rs->reg, buf);
+	}
+      catch (...)
+	{
+	  return -1;
+	}
+
+      t = extract_unsigned_integer (buf, gpr_reg_sz, byte_order);
+      t += rs->offset;
+      *v = 0;
+      if (target_read_memory (t, (gdb_byte *) v, gpr_reg_sz) < 0)
+	return -1;
+      break;
+    case KVX_FRM_CACHE_REG_LOC_NONE:
+      return -1;
+    default:
+      break;
+    }
+
+  /* address registers should be multiple of 4 */
+  if (*v & 3)
+    return -1;
+
+  return 0;
+}
+
 /* Given a GDB frame, determine the address of the calling function's
    frame.  This will be used to create a new GDB frame struct.  */
 static void
-kvx_frame_this_id (struct frame_info *this_frame, void **this_prologue_cache,
+kvx_frame_this_id (struct frame_info *this_frame, void **this_cache,
 		   struct frame_id *this_id)
 {
-  if (get_frame_func (this_frame) == get_frame_pc (this_frame))
-    *this_id
-      = frame_id_build (get_frame_sp (this_frame), get_frame_func (this_frame));
+  struct kvx_frame_cache *cache = kvx_get_frame_cache (this_frame, this_cache);
+  CORE_ADDR base, ra;
+
+  if (cache->is_invalid)
+    return;
+
+  /* mark the frame cache as invalid if the required registers cannot be
+     obtained  */
+  if (kvx_get_frame_cache_reg (this_frame, &cache->base, &base)
+      || kvx_get_frame_cache_reg (this_frame, &cache->ra, &ra))
+    {
+      cache->is_invalid = 1;
+      return;
+    }
+
+  *this_id = frame_id_build (base, cache->frame_pc);
 }
 
 /* Get the value of register regnum in the previous stack frame.  */
 static struct value *
-kvx_frame_prev_register (struct frame_info *this_frame,
-			 void **this_prologue_cache, int regnum)
+kvx_frame_prev_register (struct frame_info *this_frame, void **this_cache,
+			 int regnum)
 {
-  if (get_frame_func (this_frame) == get_frame_pc (this_frame))
+  CORE_ADDR value;
+  struct kvx_frame_cache *cache = kvx_get_frame_cache (this_frame, this_cache);
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+  int pc_regnum = gdbarch_pc_regnum (gdbarch);
+  int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
+  int sp_regnum = r0_regnum + KVX_GPR_REG_SP;
+
+  if (cache->is_invalid)
+    return frame_unwind_got_optimized (this_frame, regnum);
+
+  if (regnum == pc_regnum)
     {
-      if (regnum == gdbarch_pc_regnum (get_frame_arch (this_frame)))
-	{
-	  return frame_unwind_got_register (
-	    this_frame, regnum,
-	    user_reg_map_name_to_regnum (get_frame_arch (this_frame), "ra",
-					 -1));
-	}
-      return frame_unwind_got_register (this_frame, regnum, regnum);
+      if (!kvx_get_frame_cache_reg (this_frame, &cache->ra, &value))
+	return frame_unwind_got_constant (this_frame, regnum, value);
+    }
+
+  if (cache->frame_pc == cache->function_pc)
+    return frame_unwind_got_register (this_frame, regnum, regnum);
+
+  if (regnum == sp_regnum)
+    {
+      if (!kvx_get_frame_cache_reg (this_frame, &cache->base, &value))
+	return frame_unwind_got_constant (this_frame, regnum, value);
+    }
+
+  if (regnum == r0_regnum + KVX_GPR_REG_FP)
+    {
+      if (!kvx_get_frame_cache_reg (this_frame, &cache->fp, &value))
+	return frame_unwind_got_constant (this_frame, regnum, value);
     }
 
   return frame_unwind_got_optimized (this_frame, regnum);
