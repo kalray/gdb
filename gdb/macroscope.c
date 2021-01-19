@@ -53,6 +53,9 @@ sal_macro_scope (struct symtab_and_line sal)
   main_file = macro_main (cust->macro_table ());
   inclusion = macro_lookup_inclusion (main_file, sal.symtab->filename_for_id);
 
+  if (!inclusion)
+    inclusion = macro_lookup_inclusion (main_file, sal.symtab->fullname);
+
   if (inclusion)
     {
       ms->file = inclusion;
