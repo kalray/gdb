@@ -29,6 +29,7 @@ void send_cluster_debug_ring (struct inferior *inf, int v);
 char get_jtag_over_iss (void);
 void enable_ps_v64_at_boot (struct regcache *regs);
 int kvx_prepare_os_init_done (void);
+int sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value);
 int get_kvx_arch (void);
 
 struct inferior_data *mppa_inferior_data (struct inferior *inf);

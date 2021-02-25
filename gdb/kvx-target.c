@@ -705,11 +705,9 @@ kvx_change_file (const char *file_path, const char *cluster_name)
 	    strcpy (path, dn);
 
 	  len_path = strlen (path);
-	  nb_bytes = snprintf (
-	    path + len_path, sizeof (path) - len_path,
-	    "/" STRINGIFY (
-	      INSTALL_LIB) "/kalray-oce/kv3/v%d_node_debug_handlers.u",
-	    get_kvx_arch () + 1);
+	  nb_bytes = snprintf (path + len_path, sizeof (path) - len_path,
+			       "/lib/kalray-oce/kv3/v%d_node_debug_handlers.u",
+			       get_kvx_arch () + 1);
 
 	  if (nb_bytes >= sizeof (path) - len_path)
 	    fprintf (stderr, "Error: the debug handlers path is too long\n");
@@ -838,7 +836,7 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
   struct inferior *inferior;
   struct inferior_data *data;
   struct regcache *rc;
-  int idx_items;
+  int idx_items, booted;
 
   res = remote_target->wait (ptid, status, options);
 
@@ -849,7 +847,8 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
   sigint_already_sent = false;
 
   data = mppa_inferior_data (inferior);
-  if (!data->booted)
+  booted = data->booted;
+  if (!booted)
     {
       char *endptr;
       std::unique_ptr<osdata> od;
@@ -910,6 +909,11 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
 	  switch_to_thread (proc_target, res);
 	  write_memory (data->gdb_os_init_done_addr,
 			(bfd_byte *) &data->saved_os_init_done_syl, 4);
+	  sync_insert_remove_breakpoint (data->gdb_os_init_done_addr, 4,
+					 data->saved_os_init_done_syl);
+	  kvx_bare_solib_load_debug_info ();
+	  if (after_first_resume)
+	    status->kind = TARGET_WAITKIND_SPURIOUS;
 	  if (save_ptid != null_ptid)
 	    switch_to_thread (proc_target, save_ptid);
 	}
@@ -921,6 +925,11 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
     }
   else
     {
+      if (after_first_resume && !booted)
+	{
+	  if (status->kind == TARGET_WAITKIND_SPURIOUS)
+	    kvx_prepare_os_init_done ();
+	}
       // for the first inferior, the continue to os_init_done
       // is done from kvx_inferior_created
       if (!after_first_resume && opt_cont_os_init_done && res.pid () != 1)
