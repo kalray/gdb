@@ -97,11 +97,16 @@ kvx_fetch_tls_load_module_address (struct objfile *objfile)
   return val;
 }
 
-static int
+int
 kvx_is_mmu_enabled (struct gdbarch *gdbarch, struct regcache *regs)
 {
   ULONGEST ps;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  struct gdbarch_tdep *tdep;
+
+  if (gdbarch == NULL)
+    gdbarch = target_gdbarch ();
+
+  tdep = gdbarch_tdep (gdbarch);
 
   if (regs == NULL)
     regs = get_current_regcache ();
@@ -795,7 +800,7 @@ kvx_prepare_os_init_done (void)
 
   // continue to gdb_os_init_done only for the clusters by spawned by runner
   // and only if the "kalray cont_os_init_done" option is on
-  if (after_first_resume || !opt_cont_os_init_done)
+  if (!opt_cont_os_init_done)
     return 0;
 
   // continue to gdb_os_init_done only after reboot (pc = 0)
@@ -847,7 +852,7 @@ kvx_inferior_created (struct target_ops *target, int from_tty)
   if (inferior_ptid.pid () != 1)
     return;
 
-  if (!kvx_prepare_os_init_done ())
+  if (after_first_resume || !kvx_prepare_os_init_done ())
     return;
 
   inf = current_inferior ();
@@ -932,7 +937,7 @@ kvx_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr,
   return sp;
 }
 
-static int
+int
 sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value)
 {
   char *buf;

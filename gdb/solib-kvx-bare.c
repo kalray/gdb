@@ -101,6 +101,7 @@ kvx_bare_solib_load_debug_info (void)
   CORE_ADDR mppa_dl_debug_addr;
   struct mppa_dl_debug_s dl_debug;
   struct kvx_bare_solib_info *info;
+  struct obj_section *dl_debug_sect;
 
   info = kvx_bare_solib_get_info ();
   if (info->head_addr)
@@ -109,6 +110,16 @@ kvx_bare_solib_load_debug_info (void)
   msym = lookup_minimal_symbol ("mppa_dl_debug", NULL, NULL);
   if (msym.minsym == NULL)
     return;
+
+  dl_debug_sect = MSYMBOL_OBJ_SECTION (msym.objfile, msym.minsym);
+  if (!dl_debug_sect || !dl_debug_sect->the_bfd_section)
+    return;
+  if (bfd_section_lma (dl_debug_sect->the_bfd_section)
+      != bfd_section_vma (dl_debug_sect->the_bfd_section))
+    {
+      if (!kvx_is_mmu_enabled (NULL, NULL))
+	return;
+    }
 
   mppa_dl_debug_addr = BMSYMBOL_VALUE_ADDRESS (msym);
 
