@@ -928,7 +928,14 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
       if (after_first_resume && !booted)
 	{
 	  if (status->kind == TARGET_WAITKIND_SPURIOUS)
-	    kvx_prepare_os_init_done ();
+	    {
+	      ptid_t save_ptid = inferior_ptid;
+
+	      switch_to_thread (proc_target, res);
+	      kvx_prepare_os_init_done ();
+	      if (save_ptid != null_ptid)
+		switch_to_thread (proc_target, save_ptid);
+	    }
 	}
       // for the first inferior, the continue to os_init_done
       // is done from kvx_inferior_created
