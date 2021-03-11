@@ -17,19 +17,19 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#include "sysdep.h"
 #define STATIC_TABLE
 #define DEFINE_TABLE
 
+#include "sysdep.h"
+#include "bfd_stdint.h"
 #include "disassemble.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdint.h>
+#include "libiberty.h"
+#include "opintl.h"
 #include <assert.h>
+#include "elf-bfd.h"
+
 #include "elf/kv3.h"
 #include "opcode/kv3.h"
-#include "dis-asm.h"
 #include "kv3-dis.h"
 
 // Steering values for the kv3 VLIW architecture.
@@ -153,7 +153,6 @@ kv3_reassemble_bundle(int wordcount, int *_insncount) {
   for (i = 0; i < wordcount ; i++) {
     uint32_t syllable = bundle_words[i];
     switch (kv3_steering(syllable)) {
-      
     case Steering_BCU:
       // BCU or TCA instruction
       if (i == 0) {
@@ -202,7 +201,7 @@ kv3_reassemble_bundle(int wordcount, int *_insncount) {
         }
       }
       break;
-      
+
     case Steering_ALU:
       if (alu0_taken == 0) {
         if(debug) fprintf(stderr,"Set valid on ALU0 for instr %d with 0x%x\n",BundleIssue_ALU0,syllable);
@@ -235,7 +234,7 @@ kv3_reassemble_bundle(int wordcount, int *_insncount) {
         return 1;
       }
       break;
-      
+
     case Steering_MAU:
       if (mau_taken == 1) {
         if(debug) fprintf(stderr,"Too many MAU instructions");
@@ -248,7 +247,7 @@ kv3_reassemble_bundle(int wordcount, int *_insncount) {
         mau_taken = 1;
       }
       break;
-      
+
     case Steering_LSU:
       if (lsu_taken == 1) {
         if(debug) fprintf(stderr,"Too many LSU instructions");
@@ -266,7 +265,7 @@ kv3_reassemble_bundle(int wordcount, int *_insncount) {
       break;
     }
     if(debug) fprintf(stderr,"Continue %d < %d?\n",i,wordcount);
-    
+
   }
   if (kv3_has_parallel_bit(bundle_words[i])) {
       if(debug) fprintf(stderr,"bundle exceeds maximum size");
@@ -302,6 +301,66 @@ kv3_reassemble_bundle(int wordcount, int *_insncount) {
   return 0;
 }
 
+/* Option for "pretty printing", ie, not the usual little endian objdump output */
+static int opt_pretty = 0;
+/* Option for not emiting a new line between all bundles */
+static int opt_compact_assembly = 0;
+
+static void
+parse_kvx_dis_option (const char *option)
+{
+  /* Try to match options that are simple flags */
+  if (CONST_STRNEQ (option, "pretty"))
+    {
+      opt_pretty = 1;
+      return;
+    }
+
+  if (CONST_STRNEQ (option, "compact-assembly"))
+    {
+      opt_compact_assembly = 1;
+      return;
+    }
+
+  if (CONST_STRNEQ (option, "no-compact-assembly"))
+    {
+      opt_compact_assembly = 0;
+      return;
+    }
+
+  /* Invalid option.  */
+  opcodes_error_handler (_("unrecognised disassembler option: %s"), option);
+}
+
+static void
+parse_kvx_dis_options (const char *options)
+{
+  const char *option_end;
+
+  if (options == NULL)
+    return;
+
+  while (*options != '\0')
+    {
+      /* Skip empty options.  */
+      if (*options == ',')
+	{
+	  options++;
+	  continue;
+	}
+
+      /* We know that *options is neither NUL or a comma.  */
+      option_end = options + 1;
+      while (*option_end != ',' && *option_end != '\0')
+	option_end++;
+
+      parse_kvx_dis_option (options);
+
+      /* Go on to the next one.  If option_end points to a comma, it
+	 will be skipped above.  */
+      options = option_end;
+    }
+}
 
 int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   static int insnindex = 0;
@@ -316,10 +375,17 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   unsigned int  kvx_max_dec_registers = 0;
   int kvx_arch_size = 32;
   int readsofar = 0;
-  int opt_pretty = 0;
   int found = 0;
   int invalid_bundle = 0;
   int i;
+
+  /* Clear instruction information field.  */
+  info->insn_info_valid = 0;
+  info->branch_delay_insns = 0;
+  info->data_size = 0;
+  info->insn_type = dis_noninsn;
+  info->target = 0;
+  info->target2 = 0;
 
   /* check that tables are initialized */
 
@@ -368,10 +434,13 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   // Set line length
   info->bytes_per_line = 16;
 
-  // Use -Mpretty when calling objdump
-  if(info->disassembler_options && strstr(info->disassembler_options, "pretty")){
-    opt_pretty = 1;
-  }
+  if (info->disassembler_options)
+    {
+      parse_kvx_dis_options (info->disassembler_options);
+
+      /* To avoid repeated parsing of these options, we remove them here.  */
+      info->disassembler_options = NULL;
+    }
 
   /* read the instruction */
 
@@ -423,7 +492,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
       if (opcode_match) {
           /* print the operands using the instructions format string. */
           fmtp = op->fmtstring;
-          // If the user wants "pretty printing", ie, not the usual little endian objdump output
+
           if(opt_pretty){
               (*info->fprintf_func) (info->stream, "[ ");
               for(i = 0; i < insn->len; i++){
@@ -493,11 +562,16 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
                       KVX_PRINT_REG(KVX_REGFILE_DEC_QGR,value)
                       break;
                   case RegClass_kv3_systemReg:
+                  case RegClass_v2_systemReg:
                   case RegClass_kv3_aloneReg:
+                  case RegClass_v2_aloneReg:
                   case RegClass_kv3_onlyraReg:
                   case RegClass_kv3_onlygetReg:
+                  case RegClass_v2_onlygetReg:
                   case RegClass_kv3_onlysetReg:
+                  case RegClass_v2_onlysetReg:
                   case RegClass_kv3_onlyfxReg:
+                  case RegClass_v2_onlyfxReg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_SFR,value)
                       break;
                   case RegClass_kv3_coproReg:
@@ -534,6 +608,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
                       KVX_PRINT_REG(KVX_REGFILE_DEC_XMR,value)
                       break;
 
+                  case Immediate_kv3_brknumber:
                   case Immediate_kv3_sysnumber:
                   case Immediate_kv3_signed6:
                   case Immediate_kv3_signed10:
@@ -562,9 +637,31 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
                       }
                       break;
                   case Immediate_kv3_pcrel17:
+                    {
+                      bfd_vma target = value + memaddr;
+
+                      /* Fill in instruction information.  */
+                      info->insn_info_valid = 1;
+                      info->insn_type = dis_condbranch;
+                      info->target = target;
+
+                      info->print_address_func(value + memaddr, info);
+                    }
+                    break;
+
                   case Immediate_kv3_pcrel27:
-                      (*info->print_address_func)(value + memaddr, info);
-                      break;
+                    {
+                      bfd_vma target = value + memaddr;
+
+                      /* Fill in instruction information.  */
+                      info->insn_info_valid = 1;
+                      info->insn_type = dis_branch;
+                      info->target = target;
+
+                      info->print_address_func(value + memaddr, info);
+                    }
+                    break;
+
                   default:
                       fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
                       exit(-1);
@@ -585,7 +682,9 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   }
 
   if (found && (insnindex == insncount)){
-      (*info->fprintf_func) (info->stream, ";;\n");
+    (*info->fprintf_func) (info->stream, ";;");
+      if (!opt_compact_assembly)
+        (*info->fprintf_func) (info->stream, "\n");
       insnindex = 0;
   }
   // couldn't find the opcode, skip this word
@@ -945,7 +1044,21 @@ decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
   return nb_syl * 4;
 }
 
-void print_kvx_disassembler_options(FILE *stream){
-    fprintf(stream, "\nThe following KVX specific disassembler options are supported for use\nwith the -M switch (multiple options should be separated by commas):\n");
-    fprintf(stream, "\npretty             Print 32-bit words in natural order corresponding to re-ordered instruction.\n\n");
+void
+print_kvx_disassembler_options (FILE *stream)
+{
+  fprintf (stream, _("\n\
+The following KVX specific disassembler options are supported for use\n\
+with the -M switch (multiple options should be separated by commas):\n"));
+
+  fprintf (stream, _("\n\
+  pretty               Print 32-bit words in natural order corresponding to re-ordered instruction.\n"));
+
+  fprintf (stream, _("\n\
+  compact-assembly     Do not emit a new line between bundles of instructions.\n"));
+
+  fprintf (stream, _("\n\
+  no-compact-assembly  Emit a new line between bundles of instructions.\n"));
+
+  fprintf (stream, _("\n"));
 }
