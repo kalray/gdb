@@ -13,7 +13,6 @@
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
 #define MSG_FROM_ARRAY(a, i)                                                   \
   ((i >= ARRAY_SIZE (a) || !a[i]) ? "[unknown]" : a[i])
-#define NO_GPRS 64
 
 #define MB (1024ULL * 1024)
 #define GB (1024ULL * 1024 * 1024)
@@ -122,13 +121,15 @@ enum
   EN_ES_DC_WATCHPOINT = 1,
   EN_ES_DC_STEPI = 2,
   EN_ES_DC_DSU_BREAK = 3,
+  EN_ES_DC_BREAKPOINT_INSTRUCTION = 4,
 };
 
 const char *es_dc_msg[] = {
-  "hardware breakpoint", // 0
-  "hardware watchpoint", // 1
-  "stepi",		 // 2
-  "dsu break",		 // 3
+  "hardware breakpoint",    // 0
+  "hardware watchpoint",    // 1
+  "stepi",		    // 2
+  "dsu break",		    // 3
+  "breakpoint instruction", // 4
 };
 
 const char *es_nta_msg[] = {
@@ -264,17 +265,31 @@ union reg_es_s
       uint64_t bs : 4;	  // 50 - 53
       uint64_t dri : 6;	  // 54 - 59
     } sys_si;
-    struct
+    union
     {
-      uint64_t ec : 4;	  // 0 - 3
-      uint64_t oapl : 2;  // 4 - 5
-      uint64_t orpl : 2;  // 6 - 7
-      uint64_t ptapl : 2; // 8 - 9
-      uint64_t ptrpl : 2; // 10 - 11
+      struct
+      {
+	uint64_t ec : 4;    // 0 - 3
+	uint64_t oapl : 2;  // 4 - 5
+	uint64_t orpl : 2;  // 6 - 7
+	uint64_t ptapl : 2; // 8 - 9
+	uint64_t ptrpl : 2; // 10 - 11
 
-      uint64_t dc : 2; // 12 - 13
-      uint64_t bn : 2; // 14
-      uint64_t wn : 2; // 15
+	uint64_t dc : 2; // 12 - 13
+	uint64_t bn : 1; // 14
+	uint64_t wn : 1; // 15
+      } v1;
+      struct
+      {
+	uint64_t ec : 4;    // 0 - 3
+	uint64_t oapl : 2;  // 4 - 5
+	uint64_t orpl : 2;  // 6 - 7
+	uint64_t ptapl : 2; // 8 - 9
+	uint64_t ptrpl : 2; // 10 - 11
+
+	uint64_t dcf : 3; // 12 - 14
+	uint64_t wbn : 2; // 15 - 16
+      } v2;
     } debug;
   };
 };
@@ -341,8 +356,8 @@ get_sfr_reg_name (int regnum)
   const char *ret = NULL;
   struct gdbarch *gdbarch = target_gdbarch ();
 
-  if (gdbarch && regnum + NO_GPRS < gdbarch_num_regs (gdbarch))
-    ret = tdesc_register_name (gdbarch, regnum + NO_GPRS);
+  if (gdbarch && regnum < gdbarch_num_regs (gdbarch))
+    ret = tdesc_register_name (gdbarch, regnum);
 
   if (ret == NULL)
     {
@@ -404,20 +419,52 @@ show_trap_info (union reg_es_s es)
 static void
 show_debug_trap_info (union reg_es_s es)
 {
-  printf ("Debug cause: %s (es.dc=%d)\n",
-	  MSG_FROM_ARRAY (es_dc_msg, es.debug.dc), (unsigned int) es.debug.dc);
-  switch (es.debug.dc)
+  int core_ver = get_kvx_arch () + 1;
+
+  if (core_ver == 1)
     {
-    case EN_ES_DC_BREAKPOINT:
-      printf ("\tbreakpoint number: %d (es.bn=%d)\n",
-	      (unsigned int) es.debug.bn, (unsigned int) es.debug.bn);
-      break;
-    case EN_ES_DC_WATCHPOINT:
-      printf ("\twatchpoint number: %d (es.wn=%d)\n",
-	      (unsigned int) es.debug.wn, (unsigned int) es.debug.wn);
-      break;
-    default:
-      break;
+      printf ("Debug cause: %s (es.dc=%d)\n",
+	      MSG_FROM_ARRAY (es_dc_msg, es.debug.v1.dc),
+	      (unsigned int) es.debug.v1.dc);
+      switch (es.debug.v1.dc)
+	{
+	case EN_ES_DC_BREAKPOINT:
+	  printf ("\tbreakpoint number: %d (es.bn=%d)\n",
+		  (unsigned int) es.debug.v1.bn, (unsigned int) es.debug.v1.bn);
+	  break;
+	case EN_ES_DC_WATCHPOINT:
+	  printf ("\twatchpoint number: %d (es.wn=%d)\n",
+		  (unsigned int) es.debug.v1.wn, (unsigned int) es.debug.v1.wn);
+	  break;
+	default:
+	  break;
+	}
+    }
+  else
+    {
+      printf ("Debug cause: %s (es.dcf=%d)\n",
+	      MSG_FROM_ARRAY (es_dc_msg, es.debug.v2.dcf),
+	      (unsigned int) es.debug.v2.dcf);
+      switch (es.debug.v2.dcf)
+	{
+	case EN_ES_DC_BREAKPOINT:
+	  printf ("\tbreakpoint number: %d (es.wbn=%d)\n",
+		  (unsigned int) es.debug.v2.wbn,
+		  (unsigned int) es.debug.v2.wbn);
+	  break;
+	case EN_ES_DC_WATCHPOINT:
+	  printf ("\twatchpoint number: %d (es.wbn=%d)\n",
+		  (unsigned int) es.debug.v2.wbn,
+		  (unsigned int) es.debug.v2.wbn);
+	  break;
+	case EN_ES_DC_BREAKPOINT_INSTRUCTION:
+	  printf ("\tbreakpoint instruction number: %d (es.wbn=%d)\n",
+		  (unsigned int) es.debug.v2.wbn,
+		  (unsigned int) es.debug.v2.wbn);
+	  break;
+	default:
+	  break;
+	}
     }
 }
 
