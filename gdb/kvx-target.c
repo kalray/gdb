@@ -140,19 +140,52 @@ public:
     return 1;
   }
 
+  static int
+  can_use_hw_breakpoint_cb (struct breakpoint *b, void *d)
+  {
+    int *cb_par = (int *) d;
+
+    if (!cb_par || b->enable_state != bp_enabled || b->type == cb_par[1])
+      return 0;
+
+    if (b->type == bp_hardware_watchpoint || b->type == bp_read_watchpoint
+	|| b->type == bp_access_watchpoint)
+      cb_par[0]++;
+
+    return 0;
+  }
+
   virtual int
   can_use_hw_breakpoint (enum bptype type, int cnt, int ot) override
   {
-    if (type == bp_hardware_breakpoint)
+    int no_wb, cb_par[2] = {0, type};
+
+    /* Software watchpoint always possible */
+    if (type == bp_watchpoint)
+      return 1;
+
+    if (get_kvx_arch () == 0)
       {
-	return cnt <= 1;
-      }
-    else // if (type == bp_hardware_watchpoint)
-      {
-	return cnt <= 1;
+	/* Coolidge V1 */
+	no_wb = 1;
+	if (type == bp_hardware_breakpoint || type == bp_hardware_watchpoint)
+	  return (cnt <= no_wb) ? 1 : -1;
+
+	return 0;
       }
 
-    return -1;
+    /* Coolidge V2 */
+    if (type != bp_hardware_breakpoint && type != bp_hardware_watchpoint
+	&& type != bp_access_watchpoint && type != bp_read_watchpoint)
+      return 0;
+
+    no_wb = 2;
+    if (type == bp_hardware_breakpoint || ot == 0)
+      return (cnt <= no_wb) ? 1 : -1;
+
+    /* Count the number of hardware watchpoints of other types*/
+    breakpoint_find_if (&can_use_hw_breakpoint_cb, cb_par);
+    return (cb_par[0] + cnt <= no_wb) ? 1 : -1;
   }
 
   virtual void
