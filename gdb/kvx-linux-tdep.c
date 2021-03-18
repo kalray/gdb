@@ -28,6 +28,7 @@
 
 #include "inferior.h"
 #include "osabi.h"
+#include "regset.h"
 #include "linux-tdep.h"
 #include "solib-svr4.h"
 #include "symtab.h"
@@ -78,13 +79,15 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   const struct target_desc *tdesc = info.target_desc;
   struct tdesc_arch_data *tdesc_data = NULL;
   int i;
-  int has_lc = -1, has_le = -1, has_ls = -1;
-  int has_ra = -1, has_pc = -1, has_sp = -1, has_local = -1;
+  int has_lc = -1, has_le = -1, has_ls = -1, has_cs = -1;
+  int has_ra = -1, has_pc = -1, has_sp = -1, has_local = -1, has_r0 = -1;
 
+  static const char kvx_r0_name[] = "r0";
   static const char kvx_lc_name[] = "lc";
   static const char kvx_le_name[] = "le";
   static const char kvx_ls_name[] = "ls";
   static const char kvx_ra_name[] = "ra";
+  static const char kvx_cs_name[] = "cs";
   static const char kvx_local_name[] = "r13";
 
   const char *pc_name;
@@ -122,7 +125,9 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
       for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
 	{
-	  if (strcmp (tdesc_register_name (gdbarch, i), kvx_lc_name) == 0)
+	  if (strcmp (tdesc_register_name (gdbarch, i), kvx_r0_name) == 0)
+	    has_r0 = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), kvx_lc_name) == 0)
 	    has_lc = i;
 	  else if (strcmp (tdesc_register_name (gdbarch, i), kvx_le_name) == 0)
 	    has_le = i;
@@ -130,6 +135,8 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	    has_ls = i;
 	  else if (strcmp (tdesc_register_name (gdbarch, i), kvx_ra_name) == 0)
 	    has_ra = i;
+	  else if (strcmp (tdesc_register_name (gdbarch, i), kvx_cs_name) == 0)
+	    has_cs = i;
 	  if (strcmp (tdesc_register_name (gdbarch, i), pc_name) == 0)
 	    has_pc = i;
 	  else if (strcmp (tdesc_register_name (gdbarch, i), sp_name) == 0)
@@ -139,6 +146,8 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 	    has_local = i;
 	}
 
+      if (has_r0 < 0)
+	error ("There's no '%s' register!", kvx_r0_name);
       if (has_lc < 0)
 	error ("There's no '%s' register!", kvx_lc_name);
       if (has_le < 0)
@@ -154,10 +163,12 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       if (has_local < 0)
 	error ("There's no '%s' register!", kvx_local_name);
 
+      tdep->r0_regnum = has_r0;
       tdep->lc_regnum = has_lc;
       tdep->le_regnum = has_le;
       tdep->ls_regnum = has_ls;
       tdep->ra_regnum = has_ra;
+      tdep->cs_regnum = has_cs;
       tdep->local_regnum = has_local;
       set_gdbarch_pc_regnum (gdbarch, has_pc);
       set_gdbarch_sp_regnum (gdbarch, has_sp);
@@ -322,6 +333,86 @@ kvx_inferior_created (struct target_ops *target, int from_tty)
   kvx_current_arch = KVX_NUM_ARCHES;
 }
 
+/* Core file and register set support.  */
+#define KVX_LINUX_SIZEOF_GREGSET ((64 + 6) * sizeof (uint64_t))
+
+static void
+kvx_linux_supply_collect_gregset (struct regcache *rc, int regnum,
+				  const void *gregs_buf, int to_supply)
+{
+  uint64_t *p = (uint64_t *) gregs_buf;
+  gdbarch *gdbarch = rc->arch ();
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  int pc_regnum = gdbarch_pc_regnum (gdbarch);
+  const int sfrs[] = {tdep->lc_regnum, tdep->le_regnum, tdep->ls_regnum,
+		      tdep->ra_regnum, tdep->cs_regnum, pc_regnum};
+  const int no_sfrs = sizeof (sfrs) / sizeof (sfrs[0]);
+  int i, regno;
+
+  for (regno = tdep->r0_regnum; regno < tdep->r0_regnum + 64; regno++)
+    if (regnum == -1 || regnum == regno)
+      {
+	if (to_supply)
+	  rc->raw_supply (regno, p++);
+	else
+	  rc->raw_collect (regno, p++);
+      }
+
+  for (i = 0; i < no_sfrs; i++)
+    {
+      regno = sfrs[i];
+      if (regnum == -1 || regnum == regno)
+	{
+	  if (to_supply)
+	    rc->raw_supply (regno, p++);
+	  else
+	    rc->raw_collect (regno, p++);
+	}
+    }
+}
+
+static void
+kvx_linux_supply_gregset (const struct regset *regset, struct regcache *rc,
+			  int regnum, const void *gregs_buf, size_t len)
+{
+  kvx_linux_supply_collect_gregset (rc, regnum, gregs_buf, 1);
+}
+
+static void
+kvx_linux_collect_gregset (const struct regset *regset,
+			   const struct regcache *rc, int regnum,
+			   void *gregs_buf, size_t len)
+{
+  kvx_linux_supply_collect_gregset ((struct regcache *) rc, regnum, gregs_buf,
+				    0);
+}
+
+static const struct regset kvx_linux_gregset
+  = {NULL, kvx_linux_supply_gregset, kvx_linux_collect_gregset};
+
+/* Iterate over core file register note sections.  */
+
+static void
+kvx_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					iterate_over_regset_sections_cb *cb,
+					void *cb_data,
+					const struct regcache *regcache)
+{
+  cb (".reg", KVX_LINUX_SIZEOF_GREGSET, KVX_LINUX_SIZEOF_GREGSET,
+      &kvx_linux_gregset, NULL, cb_data);
+}
+
+/* Determine target description from core file.  */
+
+static const struct target_desc *
+kvx_linux_core_read_description (struct gdbarch *gdbarch,
+				 struct target_ops *target, bfd *abfd)
+{
+  const struct target_desc *tdesc = gdbarch_target_desc (gdbarch);
+
+  return tdesc;
+}
+
 /* OS specific initialization of gdbarch. */
 static void
 kvx_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -334,6 +425,11 @@ kvx_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable TLS support. */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
+
+  /* Core file support.  */
+  set_gdbarch_iterate_over_regset_sections (
+    gdbarch, kvx_linux_iterate_over_regset_sections);
+  set_gdbarch_core_read_description (gdbarch, kvx_linux_core_read_description);
 }
 
 static void
