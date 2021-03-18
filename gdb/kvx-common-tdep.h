@@ -29,6 +29,7 @@ struct gdbarch_tdep
   int lc_regnum;
   int ps_regnum;
   int ra_regnum;
+  int cs_regnum;
   int spc_regnum;
   int syo_regnum;
   int ea_pl0_regnum;
