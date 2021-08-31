@@ -32,6 +32,7 @@
 #include "gdbsupport/event-loop.h"
 #include "gdbsupport/rsp-low.h"
 #include "observable.h"
+#include "elf-bfd.h"
 
 #include "kvx-target.h"
 #include "gdbthread.h"
@@ -123,6 +124,9 @@ enable_ps_v64_at_boot (struct regcache *regs)
   ULONGEST ps;
 
   if (regcache_read_pc (regs) != 0)
+    return;
+
+  if (exec_bfd && elf_elfheader (exec_bfd)->e_ident[EI_CLASS] != ELFCLASS64)
     return;
 
   gdbarch = target_gdbarch ();
