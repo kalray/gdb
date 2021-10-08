@@ -162,14 +162,10 @@ update_registers_callback (thread_info *thread, update_registers_data *data)
 }
 
 static PTRACE_TYPE_ARG3
-compute_ptrace_addr_arg (int cmd, int type, int idx)
+compute_ptrace_addr_arg (int cmd, int type, int idx, int krn_wp_type)
 {
-  uint64_t ret = cmd;
-
-  if (type == raw_bkpt_type_write_wp)
-    ret |= 1 << 2;
-  ret |= idx << 3;
-
+  uint64_t ret = ((uint64_t) cmd) | (type << 2) | (krn_wp_type << 3);
+  ret |= (idx << 5);
   return (PTRACE_TYPE_ARG3) ret;
 }
 
@@ -212,6 +208,7 @@ protected:
   void low_prepare_to_resume (lwp_info *lwp) override;
   bool low_cannot_fetch_register (int regno) override;
   bool low_cannot_store_register (int regno) override;
+  bool low_supports_breakpoints () override;
 
 public:
   int low_get_thread_area (int lwpid, CORE_ADDR *addrp) override;
@@ -281,6 +278,10 @@ kvx_target::supports_z_point_type (char z_type)
     case Z_PACKET_SW_BP:
     case Z_PACKET_HW_BP:
     case Z_PACKET_WRITE_WP:
+#if !defined(__kvxarch_kv3_1)
+    case Z_PACKET_READ_WP:
+    case Z_PACKET_ACCESS_WP:
+#endif
       return true;
     }
 
@@ -294,13 +295,14 @@ kvx_target::low_insert_point (raw_bkpt_type type, CORE_ADDR addr, int size,
   process_info *proc;
   arch_process_info *proc_info;
   kvx_linux_hw_pt *pts;
-  int pid, i, count;
+  int tid, pid, i, count;
 
   if (type == raw_bkpt_type_sw)
     return insert_memory_breakpoint (bp);
 
-  pid = lwpid_of (current_thread);
+  tid = lwpid_of (current_thread);
   proc = current_process ();
+  pid = pid_of (proc);
   proc_info = proc->priv->arch_private;
   if (type == raw_bkpt_type_hw)
     {
@@ -319,14 +321,27 @@ kvx_target::low_insert_point (raw_bkpt_type type, CORE_ADDR addr, int size,
       if (!pts[i].enabled)
 	{
 	  update_registers_data data = {type, i};
+	  int krn_wp_type = 0;
 
-	  if (ptrace (PTRACE_SET_HW_PT_REGS, pid,
-		      compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE, type, i),
+	  if (type == raw_bkpt_type_write_wp)
+	    krn_wp_type = KRN_HW_BREAKPOINT_W;
+	  else if (type == raw_bkpt_type_read_wp)
+	    krn_wp_type = KRN_HW_BREAKPOINT_R;
+	  else if (type == raw_bkpt_type_access_wp)
+	    krn_wp_type = KRN_HW_BREAKPOINT_RW;
+
+	  if (ptrace (PTRACE_SET_HW_PT_REGS, tid,
+		      compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE,
+					       (type == raw_bkpt_type_hw)
+						 ? HW_BKP_TYPE
+						 : HW_WP_TYPE,
+					       i, krn_wp_type),
 		      compute_ptrace_data_arg (&pts[i])))
 	    continue;
 
 	  pts[i].address = addr;
 	  pts[i].size = size;
+	  pts[i].krn_wp_type = krn_wp_type;
 	  pts[i].enabled = 1;
 
 	  for_each_thread (pid, [&] (thread_info *thread) {
@@ -365,7 +380,7 @@ kvx_target::low_remove_point (raw_bkpt_type type, CORE_ADDR addr, int size,
       pts = proc->priv->arch_private->wpts;
     }
 
-  pid = lwpid_of (current_thread);
+  pid = pid_of (proc);
   for (i = 0; i < count; i++)
     {
       if (pts[i].address == addr && pts[i].size == size && pts[i].enabled == 1)
@@ -409,7 +424,7 @@ kvx_target::low_stopped_by_watchpoint (void)
 
   /* If we are in a positive slot then we're looking at a breakpoint and not
      a watchpoint.  */
-  if (hw_pt_is_bkp (siginfo.si_errno))
+  if (hw_pt_trap_is_bkp (siginfo.si_errno))
     return false;
 
   /* Cache stopped data address for use by kvx_stopped_data_address.  */
@@ -515,17 +530,19 @@ kvx_target::low_prepare_to_resume (lwp_info *lwp)
   process_info *proc = find_process_pid (pid_of (thread));
   arch_process_info *proc_info = proc->priv->arch_private;
   arch_lwp_info *lwp_info = lwp->arch_private;
+  struct kvx_linux_hw_pt *pt;
   int i, ret;
 
   for (i = 0; i < kvx_linux_hw_pt_cap.bp_count; i++)
     {
       if (lwp_info->bpts_changed[i])
 	{
+	  pt = &proc_info->bpts[i];
 	  errno = 0;
 	  ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
 			compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE,
-						 raw_bkpt_type_hw, i),
-			compute_ptrace_data_arg (&proc_info->bpts[i]));
+						 HW_BKP_TYPE, i, 0),
+			compute_ptrace_data_arg (pt));
 	  if (ret < 0)
 	    perror_with_name ("Error setting breakpoint");
 
@@ -537,11 +554,13 @@ kvx_target::low_prepare_to_resume (lwp_info *lwp)
     {
       if (lwp_info->wpts_changed[i])
 	{
+	  pt = &proc_info->wpts[i];
 	  errno = 0;
-	  ret = ptrace (PTRACE_SET_HW_PT_REGS, pid,
-			compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE,
-						 raw_bkpt_type_write_wp, i),
-			compute_ptrace_data_arg (&proc_info->wpts[i]));
+	  ret
+	    = ptrace (PTRACE_SET_HW_PT_REGS, pid,
+		      compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE, HW_WP_TYPE,
+					       i, pt->krn_wp_type),
+		      compute_ptrace_data_arg (pt));
 	  if (ret < 0)
 	    perror_with_name ("Error setting watchpoint");
 
@@ -599,6 +618,12 @@ bool
 kvx_target::low_cannot_store_register (int regno)
 {
   return false;
+}
+
+bool
+kvx_target::low_supports_breakpoints ()
+{
+  return true;
 }
 
 static char *

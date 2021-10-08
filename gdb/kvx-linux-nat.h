@@ -21,19 +21,9 @@
 #define _KVX_LINUX_NAT_H_
 
 #define NB_GPRS 64
-enum regnum
-{
-  R_R0 = 0,
-  R_LC = NB_GPRS,
-  R_LE,
-  R_LS,
-  R_RA,
-  R_CS,
-  R_PC,
-  NB_GREGSET_REGS
-};
 
 #define R_TLS (R_R0 + 13)
+#define KVX_TLS_TCB_SIZE 8
 
 #ifndef PTRACE_GET_HW_PT_REGS
 #define PTRACE_GET_HW_PT_REGS 20
@@ -43,9 +33,6 @@ enum regnum
 #ifndef TRAP_HWBKPT
 #define TRAP_HWBKPT 4
 #endif
-
-#define get_hw_pt_idx(v) ((v) >> 2)
-#define hw_pt_is_bkp(v) (((v) &1) != 0)
 
 #define MAX_WPTS 2
 #define MAX_BPTS 2
@@ -70,6 +57,7 @@ struct kvx_linux_hw_pt
   int size;
   int enabled;
   int used;
+  int krn_wp_type;
 };
 
 /* Per-thread arch-specific data we want to keep.  */
@@ -90,6 +78,34 @@ struct update_registers_data
   int i;
 };
 
-#define KVX_TLS_TCB_SIZE 8
+enum
+{
+  KRN_HW_BREAKPOINT_EMPTY = 0,
+  KRN_HW_BREAKPOINT_R = 1,
+  KRN_HW_BREAKPOINT_W = 2,
+  KRN_HW_BREAKPOINT_RW = (KRN_HW_BREAKPOINT_R | KRN_HW_BREAKPOINT_W),
+  KRN_HW_BREAKPOINT_X = 4,
+};
+
+enum regnum
+{
+  R_R0 = 0,
+  R_LC = NB_GPRS,
+  R_LE,
+  R_LS,
+  R_RA,
+  R_CS,
+  R_PC,
+  NB_GREGSET_REGS
+};
+
+enum
+{
+  HW_BKP_TYPE = 0,
+  HW_WP_TYPE = 1
+};
+
+#define get_hw_pt_idx(v) ((v) >> 2)
+#define hw_pt_trap_is_bkp(v) (((v) &1) == HW_BKP_TYPE)
 
 #endif // _KVX_LINUX_NAT_H_

@@ -28,12 +28,6 @@
 #include "gregset.h"
 #include "gdb_proc_service.h"
 
-enum
-{
-  HW_BKP_TYPE = 1,
-  HW_WRITE_WP_TYPE = 2
-};
-
 struct inferior_data
 {
   /* Hardware breakpoints for this process.  */
@@ -75,7 +69,7 @@ public:
   struct inferior_data *get_inferior_data (int pid);
   int get_hw_point_type_info (int pid, int type, struct kvx_linux_hw_pt **pts,
 			      int *count);
-  int insert_hw_point (CORE_ADDR addr, int len, int type);
+  int insert_hw_point (CORE_ADDR addr, int len, int type, int krn_wp_type);
   int remove_hw_point (CORE_ADDR addr, int len, int type);
   struct arch_lwp_info *get_thread_info (struct lwp_info *lwp);
 };
@@ -214,31 +208,62 @@ kvx_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
     }
 }
 
+#if defined(__kvxarch_kv3_2)
+static int
+can_use_hw_breakpoint_cb (struct breakpoint *b, void *d)
+{
+  int *cb_par = (int *) d;
+
+  if (!cb_par || b->enable_state != bp_enabled || b->type == cb_par[1])
+    return 0;
+
+  if (b->type == bp_hardware_watchpoint || b->type == bp_read_watchpoint
+      || b->type == bp_access_watchpoint)
+    cb_par[0]++;
+
+  return 0;
+}
+#endif
+
 int
 kvx_linux_nat_target::can_use_hw_breakpoint (enum bptype type, int cnt,
 					     int othertype)
 {
-  if (type == bp_hardware_breakpoint)
-    {
-      return cnt <= 2;
-    }
-  else if (type == bp_hardware_watchpoint)
-    {
-      return cnt <= 1;
-    }
+  /* Software watchpoint always possible */
+  if (type == bp_watchpoint)
+    return 1;
 
-  return -1;
+#if defined(__kvxarch_kv3_1)
+  if (type == bp_hardware_breakpoint)
+    return (cnt <= 2) ? 1 : -1;
+  else if (type == bp_hardware_watchpoint)
+    return (cnt <= 1) ? 1 : -1;
+#elif defined(__kvxarch_kv3_2)
+  if (type == bp_hardware_breakpoint || type == bp_hardware_watchpoint
+      || type == bp_access_watchpoint || type == bp_read_watchpoint)
+    {
+      int no_wb, cb_par[2] = {0, type};
+
+      no_wb = 2;
+      if (type == bp_hardware_breakpoint || othertype == 0)
+	return (cnt <= no_wb) ? 1 : -1;
+
+      /* Count the number of hardware watchpoints of other types*/
+      breakpoint_find_if (&can_use_hw_breakpoint_cb, cb_par);
+      return (cb_par[0] + cnt <= no_wb) ? 1 : -1;
+    }
+#else
+#error Unsupported arch
+#endif
+
+  return 0;
 }
 
 static PTRACE_TYPE_ARG3
-compute_ptrace_addr_arg (int cmd, int type, int idx)
+compute_ptrace_addr_arg (int cmd, int type, int idx, int krn_wp_type)
 {
-  uint64_t ret = cmd;
-
-  if (type == HW_WRITE_WP_TYPE)
-    ret |= 1 << 2;
-  ret |= idx << 3;
-
+  uint64_t ret = ((uint64_t) cmd) | (type << 2) | (krn_wp_type << 3);
+  ret |= (idx << 5);
   return (PTRACE_TYPE_ARG3) ret;
 }
 
@@ -324,7 +349,8 @@ kvx_update_thread_inf_cb (struct lwp_info *lwp)
 }
 
 int
-kvx_linux_nat_target::insert_hw_point (CORE_ADDR addr, int len, int type)
+kvx_linux_nat_target::insert_hw_point (CORE_ADDR addr, int len, int type,
+				       int krn_wp_type)
 {
   struct kvx_linux_hw_pt *pts;
   int i, count;
@@ -342,12 +368,14 @@ kvx_linux_nat_target::insert_hw_point (CORE_ADDR addr, int len, int type)
 	  cb_data_cb.i = i;
 
 	  if (ptrace ((enum __ptrace_request) PTRACE_SET_HW_PT_REGS, tid,
-		      compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE, type, i),
+		      compute_ptrace_addr_arg (HW_PT_CMD_SET_RESERVE, type, i,
+					       krn_wp_type),
 		      compute_ptrace_data_arg (addr, len, 1)))
 	    continue;
 
 	  pts[i].address = addr;
 	  pts[i].size = len;
+	  pts[i].krn_wp_type = krn_wp_type;
 	  pts[i].enabled = 1;
 	  pts[i].used = 1;
 
@@ -375,7 +403,7 @@ kvx_linux_nat_target::insert_hw_breakpoint (struct gdbarch *gdbarch,
   bp_tgt->placed_address = addr;
   bp_tgt->length = len;
 
-  return this->insert_hw_point (addr, len, HW_BKP_TYPE);
+  return this->insert_hw_point (addr, len, HW_BKP_TYPE, 0);
 }
 
 /* Insert a watchpoint to watch a memory region which starts at
@@ -386,10 +414,20 @@ kvx_linux_nat_target::insert_watchpoint (CORE_ADDR addr, int len,
 					 enum target_hw_bp_type type,
 					 struct expression *cond)
 {
-  if (type != hw_write)
+  int krn_wp_type = 0;
+
+  if (type == hw_write)
+    krn_wp_type = KRN_HW_BREAKPOINT_W;
+#if !defined(__kvxarch_kv3_1)
+  else if (type == hw_read)
+    krn_wp_type = KRN_HW_BREAKPOINT_R;
+  else if (type == hw_access)
+    krn_wp_type = KRN_HW_BREAKPOINT_RW;
+#endif
+  else
     return -1;
 
-  return this->insert_hw_point (addr, len, HW_WRITE_WP_TYPE);
+  return this->insert_hw_point (addr, len, HW_WP_TYPE, krn_wp_type);
 }
 
 int
@@ -443,7 +481,7 @@ kvx_linux_nat_target::remove_watchpoint (CORE_ADDR addr, int len,
 					 enum target_hw_bp_type type,
 					 struct expression *cond)
 {
-  return this->remove_hw_point (addr, len, HW_WRITE_WP_TYPE);
+  return this->remove_hw_point (addr, len, HW_WP_TYPE);
 }
 
 bool
@@ -468,7 +506,7 @@ kvx_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
 
   /* If we are in a positive slot then we're looking at a breakpoint and not
      a watchpoint. */
-  if (hw_pt_is_bkp (siginfo.si_errno))
+  if (hw_pt_trap_is_bkp (siginfo.si_errno))
     return false;
 
   *addr_p = (CORE_ADDR) (uintptr_t) siginfo.si_addr;
@@ -507,7 +545,7 @@ kvx_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
   int i, j, ret;
   int tid = lwp->ptid.lwp ();
   int pid = lwp->ptid.pid ();
-  int hw_points_types[] = {HW_BKP_TYPE, HW_WRITE_WP_TYPE};
+  int hw_points_types[] = {HW_BKP_TYPE, HW_WP_TYPE};
   int nb_hw_points_types
     = sizeof (hw_points_types) / sizeof (hw_points_types[0]);
 
@@ -528,7 +566,7 @@ kvx_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
 	      errno = 0;
 	      ret = ptrace ((enum __ptrace_request) PTRACE_SET_HW_PT_REGS, tid,
 			    compute_ptrace_addr_arg (HW_PT_CMD_SET_ENABLE, type,
-						     j),
+						     j, pt->krn_wp_type),
 			    compute_ptrace_data_arg (pt->address, pt->size,
 						     pt->enabled));
 	      if (ret < 0)
