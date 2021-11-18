@@ -1,6 +1,41 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes since GDB 13
+
+* Multi-target feature configuration
+
+  GDB now supports the individual configuration of remote targets' feature
+  sets.  Based on the current selection of a target, the commands 'set remote
+  <name>-packet (on|off|auto)' and 'show remote <name>-packet' can be used to
+  configure a target's feature packet and to display its configuration,
+  respectively.
+
+  The configuration of the packet itself applies to the currently selected
+  target (if available).  If no target is selected, it applies to future remote
+  connections.  Similarly, the show commands print the configuration of the
+  currently selected target.  If no remote target is selected, the default
+  configuration for future connections is shown.
+
+* MI version 1 has been removed.
+
+* GDB has initial built-in support for the Debugger Adapter Protocol.
+  This support requires that GDB be built with Python scripting
+  enabled.
+
+* New commands
+
+maintenance print record-instruction [ N ]
+  Print the recorded information for a given instruction.  If N is not given
+  prints how GDB would undo the last instruction executed.  If N is negative,
+  prints how GDB would undo the N-th previous instruction, and if N is
+  positive, it prints how GDB will redo the N-th following instruction.
+
+* MI changes
+
+** mi now reports 'no-history' as a stop reason when hitting the end of the
+   reverse execution history.
+
 *** Changes in GDB 13
 
 * MI version 1 is deprecated, and will be removed in GDB 14.
