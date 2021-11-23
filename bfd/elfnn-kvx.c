@@ -133,7 +133,11 @@ static const uint32_t elfNN_kvx_long_branch_stub[] =
    in reloc.c.   */
 
 #define KV3_V1_V2
+#define true TRUE
+#define false FALSE
 #include "elfxx-kv3-relocs.h"
+#undef true
+#undef false
 #undef KV3_V1_V2
 
 /* Given HOWTO, return the bfd internal relocation enumerator.  */
