@@ -21,7 +21,11 @@
 #ifndef KV3_BOOLEAN_H
 #define KV3_BOOLEAN_H
 
-#define TRUE true
-#define FALSE false
+/* Defines only in gdb to use new architecture description generated files
+ * This is due to remove of bfd_boolean type in recent versions of 
+ * binutils and gdb.
+ */
+#define true  TRUE
+#define false FALSE
 
 #endif /* KV3_BOOLEAN_H */
