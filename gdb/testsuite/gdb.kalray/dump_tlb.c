@@ -55,8 +55,13 @@ init_mmu (void)
   __builtin_kvx_set (KVX_SFR_TEH, teh);
 
   tel = KVX_SFR_SET_FIELD (0, TEL_FN, 0x80000000 >> 12);
+#ifdef __kvxarch_kv3_1
   tel = KVX_SFR_SET_FIELD (tel, TEL_PA, 4); /* PM: RWX, USER: NA */
   tel = KVX_SFR_SET_FIELD (tel, TEL_CP, 1); /* D: uncached, I: uncached */
+#else
+  tel = KVX_SFR_SET_FIELD (tel, TEL_PA2, 4); /* PM: RWX, USER: NA */
+  tel = KVX_SFR_SET_FIELD (tel, TEL_CP2, 0); /* D: uncached, I: uncached */
+#endif
   tel = KVX_SFR_SET_FIELD (tel, TEL_ES, 3); /* A-modified */
   __builtin_kvx_set (KVX_SFR_TEL, tel);
 
@@ -78,8 +83,13 @@ init_mmu (void)
   __builtin_kvx_set (KVX_SFR_TEH, teh);
 
   tel = KVX_SFR_SET_FIELD (0, TEL_FN, 0x80000000 >> 12);
+#ifdef __kvxarch_kv3_1
   tel = KVX_SFR_SET_FIELD (tel, TEL_PA, 4); /* PM: RWX, USER: NA */
   tel = KVX_SFR_SET_FIELD (tel, TEL_CP, 2); /* D: WT, I: cached */
+#else
+  tel = KVX_SFR_SET_FIELD (tel, TEL_PA2, 4); /* PM: RWX, USER: NA */
+  tel = KVX_SFR_SET_FIELD (tel, TEL_CP2, 3); /* D: cached, I: cached */
+#endif
   tel = KVX_SFR_SET_FIELD (tel, TEL_ES, 3); /* A-modified */
   __builtin_kvx_set (KVX_SFR_TEL, tel);
 
