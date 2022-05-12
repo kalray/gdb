@@ -620,7 +620,7 @@ show_debug_sfr_regs (void)
   int i, n, offset;
   remote_target *rt = get_current_remote_target ();
 
-  sprintf (buf, "kfp%x.%lx", inferior_ptid.pid (), inferior_ptid.lwp ());
+  sprintf (buf, "qkalray.cpu_debug_sfrs:p%x.%lx", inferior_ptid.pid (), inferior_ptid.lwp ());
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
 

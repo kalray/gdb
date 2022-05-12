@@ -94,7 +94,7 @@ readtlb_entry (int tlb_type, int iset, int iway, struct tlb_entry_s *e,
   long size = 512;
   remote_target *rt = get_current_remote_target ();
 
-  sprintf (buf, "kbp%x.%lx:%d:%d:%d", inferior_ptid.pid (),
+  sprintf (buf, "qkalray.tlb:p%x.%lx:%d:%d:%d", inferior_ptid.pid (),
 	   inferior_ptid.lwp (), tlb_type, iset, iway);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
