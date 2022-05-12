@@ -216,7 +216,7 @@ send_cluster_break_on_spawn (struct inferior *inf, int v)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "kS%dp%x.1", v, inf->pid);
+  sprintf (buf, "Qkalray.break_on_spawn:%dp%x.1", v, inf->pid);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   free (buf);
@@ -230,7 +230,7 @@ send_intercept_trap (struct inferior *inf, unsigned int v)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "kT%04xp%x.1", v, inf->pid);
+  sprintf (buf, "Qkalray.intercept_hto_mask:%04xp%x.1", v, inf->pid);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   if (!strcmp (buf, "KO"))
@@ -247,7 +247,7 @@ send_cluster_stop_all (struct inferior *inf, int v)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "kA%dp%x.1", v, inf->pid);
+  sprintf (buf, "Qkalray.stop_all:%dp%x.1", v, inf->pid);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   free (buf);
@@ -261,7 +261,7 @@ send_cluster_debug_ring (struct inferior *inf, int v)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "kR%dp%x.1", v, inf->pid);
+  sprintf (buf, "Qkalray.cluster_debug_ring:%dp%x.1", v, inf->pid);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   free (buf);
@@ -275,7 +275,7 @@ kvx_enable_hbkp_on_cpu (CORE_ADDR addr, int enable)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "kH0x%llx,%d", (unsigned long long) addr, enable);
+  sprintf (buf, "Qkalray.enable_hbkp_on_cpu:0x%llx,%d", (unsigned long long) addr, enable);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   free (buf);
@@ -293,7 +293,7 @@ read_memory_no_dcache (uint64_t addr, gdb_byte *user_buf, int len)
 
   size = 256;
   buf = (char *) malloc (size);
-  sprintf (buf, "ku%llx,%d", (unsigned long long) addr, len);
+  sprintf (buf, "qkalray.mem_no_cache:%llx,%d", (unsigned long long) addr, len);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
 
@@ -316,7 +316,7 @@ get_jtag_over_iss (void)
   long size = 256;
   remote_target *rt = get_current_remote_target ();
 
-  strcpy (buf, "kj");
+  strcpy (buf, "qkalray.jtag_over_iss");
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   ret = *buf;
@@ -949,7 +949,7 @@ sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "kB%llx,%d:%llx", (unsigned long long) addr, len,
+  sprintf (buf, "Qkalray.unified_write:%llx,%d:%llx", (unsigned long long) addr, len,
 	   (unsigned long long) value);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
