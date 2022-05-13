@@ -60,6 +60,7 @@ static struct target_info kvx_target_info = {
   "Kalray MPPA connection",  // longname
   "Connect to a Kalray MPPA" // doc
 };
+static bool use_all_stop = false;
 
 struct kvx_target final : public target_ops
 {
@@ -119,7 +120,7 @@ public:
   virtual bool
   supports_non_stop (void) override
   {
-    return true;
+    return !use_all_stop;
   }
 
   virtual bool
@@ -295,7 +296,7 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
   const gdb::observers::token new_thread_token;
   int print_thread_events_save = print_thread_events;
   char *args_copy, *host, *port, *tar_remote_cmd;
-  bool hide_attach_warning = (exec_filename == NULL);
+  bool retry_connection = false, hide_attach_warning = (exec_filename == NULL);
   char *temp_exec_file = NULL;
 
   if (!args)
@@ -334,35 +335,54 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
    */
   gdb::observers::new_thread.attach (kvx_target_new_thread, new_thread_token);
   async_disable_stdin ();
-  try
+  // apply no executable warning hack
+  if (hide_attach_warning)
     {
-      // apply no executable warning hack
-      if (hide_attach_warning)
+      temp_exec_file = strdup ("");
+      exec_filename = temp_exec_file;
+    }
+
+  do
+    {
+      try
 	{
-	  temp_exec_file = strdup ("");
-	  exec_filename = temp_exec_file;
+	  execute_command (tar_remote_cmd, 0);
+	  retry_connection = false;
+	  // remove no executable warning hack
+	  if (hide_attach_warning && exec_filename == temp_exec_file)
+	    {
+	      free (exec_filename);
+	      exec_filename = NULL;
+	    }
 	}
-      execute_command (tar_remote_cmd, 0);
-      // remove no executable warning hack
-      if (hide_attach_warning && exec_filename == temp_exec_file)
+      catch (gdb_exception &ex)
 	{
-	  free (exec_filename);
-	  exec_filename = NULL;
+	  const char *prefix_non_stop = "Non-stop mode requested";
+	  if (!retry_connection
+	      && !strncmp (ex.message->c_str (), prefix_non_stop,
+			   strlen (prefix_non_stop)))
+	    {
+	      execute_command ("set non-stop 0", 0);
+	      retry_connection = true;
+	      use_all_stop = true;
+	    }
+	  else
+	    {
+	      gdb::observers::new_thread.detach (new_thread_token);
+	      free (tar_remote_cmd);
+	      print_thread_events = print_thread_events_save;
+	      // remove no executable warning hack
+	      if (hide_attach_warning && exec_filename == temp_exec_file)
+		{
+		  free (exec_filename);
+		  exec_filename = NULL;
+		}
+
+	      throw;
+	    }
 	}
     }
-  catch (...)
-    {
-      gdb::observers::new_thread.detach (new_thread_token);
-      free (tar_remote_cmd);
-      print_thread_events = print_thread_events_save;
-      // remove no executable warning hack
-      if (hide_attach_warning && exec_filename == temp_exec_file)
-	{
-	  free (exec_filename);
-	  exec_filename = NULL;
-	}
-      throw;
-    }
+  while (retry_connection);
 
   free (tar_remote_cmd);
 
@@ -405,7 +425,8 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
 	      "\"exec-file\" command."));
 
   kvx_push_arch_stratum (NULL, 0);
-  execute_command (set_non_stop_cmd, 0);
+  if (!use_all_stop)
+    execute_command (set_non_stop_cmd, 0);
   execute_command (set_pagination_off_cmd, 0);
 
   arg = argv_args;
@@ -1299,7 +1320,8 @@ attach_mppa_command (const char *args, int from_tty)
   in_attach_mppa = 1;
 
   kvx_push_arch_stratum (NULL, 0);
-  execute_command (set_non_stop_cmd, 0);
+  if (!use_all_stop)
+    execute_command (set_non_stop_cmd, 0);
   execute_command (set_pagination_off_cmd, 0);
 
   kvx_target_attach (&the_kvx_target, args, from_tty);
@@ -1432,7 +1454,8 @@ run_mppa_command (const char *args, int from_tty)
   dont_repeat ();
 
   kvx_push_arch_stratum (NULL, 0);
-  execute_command (set_non_stop_cmd, 0);
+  if (!use_all_stop)
+    execute_command (set_non_stop_cmd, 0);
   execute_command (set_pagination_off_cmd, 0);
   execute_command (run_cmd, 0);
 }
