@@ -365,6 +365,7 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
 	      execute_command ("set non-stop 0", 0);
 	      retry_connection = true;
 	      use_all_stop = true;
+	      opt_cont_os_init_done = false;
 	    }
 	  else
 	    {
