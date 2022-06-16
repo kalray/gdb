@@ -15,7 +15,7 @@
 
 struct target_so_ops kvx_bare_solib_ops;
 
-#define DL_VERSION 1
+#define DL_VERSION 2
 
 struct mppa_dl_debug_s
 {
@@ -27,10 +27,13 @@ struct mppa_dl_debug_s
 
 struct mppa_dl_debug_map_s
 {
-  uint64_t load_addr;     /* Load address for the dynamic object */
-  uint64_t file_name;     /* File name of the dynamic object */
-  uint64_t file_name_len; /* File name length of the dynamic object */
-  uint64_t next;	  /* Chain of loaded objects */
+  uint64_t load_addr;	       /* Load address for the dynamic object */
+  uint64_t file_name;	       /* File name of the dynamic object */
+  uint64_t file_name_len;      /* File name length of the dynamic object */
+  uint64_t text_sect_vma;      /* VMA of the .text section */
+  uint64_t text_sect_size;     /* .text section size */
+  uint64_t text_sect_checksum; /* The checksum value of the .text section */
+  uint64_t next;	       /* Chain of loaded objects */
 } __attribute__ ((packed));
 
 /* KVX specific data */
@@ -226,6 +229,94 @@ kvx_bare_solib_free_chain (struct so_list *head)
     }
 }
 
+static uint64_t
+mppa_dl_checksum (const uint8_t *buf, int sz)
+{
+  uint64_t ret = 0;
+
+  for (; sz; sz--, buf++)
+    ret += *buf;
+
+  return ret;
+}
+
+static int
+kvx_bare_check_so (const char *file_name, struct mppa_dl_debug_map_s *mppadl)
+{
+  asection *text_sect;
+  bfd *hbfd;
+  uint64_t cs;
+  int found_file = 0, ret = 1;
+  bfd_byte *text_data = NULL;
+  gdb::unique_xmalloc_ptr<char> found_pathname
+    = solib_find (file_name, &found_file);
+
+  if (found_pathname == NULL)
+    return 1;
+
+  hbfd = bfd_openr (found_pathname.get (), NULL);
+  if (hbfd == NULL)
+    return 1;
+
+  // check if the file is in format
+  if (!bfd_check_format (hbfd, bfd_object))
+    {
+      printf_unfiltered ("Incompatible shared library file format %s\n",
+			 file_name);
+      goto label_end;
+    }
+
+  text_sect = bfd_get_section_by_name (hbfd, ".text");
+
+  if (text_sect)
+    {
+      if (bfd_section_vma (text_sect) != mppadl->text_sect_vma)
+	{
+	  printf_unfiltered (
+	    "The VMA (0x%lx) of the .text section of the shared library %s is "
+	    "different from the VMA of the section loaded in the target memory "
+	    "(0x%lx)\n",
+	    bfd_section_vma (text_sect), file_name, mppadl->text_sect_vma);
+	  goto label_end;
+	}
+
+      if (bfd_section_size (text_sect) != mppadl->text_sect_size)
+	{
+	  printf_unfiltered (
+	    "The .text section size (0x%lx) of the shared library %s is "
+	    "different from the size loaded in the target memory (0x%lx)\n",
+	    bfd_section_size (text_sect), file_name, mppadl->text_sect_size);
+	  goto label_end;
+	}
+    }
+
+  if (!text_sect
+      || !bfd_get_full_section_contents (hbfd, text_sect, &text_data))
+    {
+      printf_unfiltered (
+	"Cannot get the .text section of the shared library %s\n", file_name);
+      goto label_end;
+    }
+
+  cs = mppa_dl_checksum (text_data, mppadl->text_sect_size);
+  if (cs != mppadl->text_sect_checksum)
+    {
+      printf_unfiltered (
+	"The .text checksum of the shared library %s is different from the "
+	"checksum of the section loaded in the target memory\n",
+	file_name);
+      goto label_end;
+    }
+
+  ret = 0;
+label_end:
+  bfd_close (hbfd);
+  if (text_data)
+    free (text_data);
+
+  return ret;
+}
+
 /* Build a list of currently loaded shared objects.  See solib-svr4.c */
 static struct so_list *
 kvx_bare_solib_current_sos (void)
@@ -295,6 +386,9 @@ kvx_bare_solib_current_sos (void)
       if (target_read_memory (crt_debug_map.file_name,
 			      (gdb_byte *) crt_file_name,
 			      crt_debug_map.file_name_len))
+	continue;
+
+      if (kvx_bare_check_so (crt_file_name, &crt_debug_map))
 	continue;
 
       sl = (struct so_list *) xzalloc (sizeof (struct so_list));
