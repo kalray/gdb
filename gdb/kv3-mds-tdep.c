@@ -1307,7 +1307,7 @@ static int init_v2_dwarf2gdb(struct gdbarch *gdbarch)
 	dwarf2gdb[125].gdb_regno = 61;
 	dwarf2gdb[126].name = "srhpc";
 	dwarf2gdb[126].gdb_regno = 62;
-	dwarf2gdb[127].name = "cc";
+	dwarf2gdb[127].name = "frcc";
 	dwarf2gdb[127].gdb_regno = 63;
 	dwarf2gdb[128].name = "spc_pl0";
 	dwarf2gdb[128].gdb_regno = 64;
