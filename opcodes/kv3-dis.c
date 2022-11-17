@@ -593,16 +593,16 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
                   case RegClass_kv3_vectorReg:
                   case RegClass_kv3_vectorRegE:
                   case RegClass_kv3_vectorRegO:
-                  case RegClass_kv3_wideReg_0:
-                  case RegClass_kv3_wideReg_1:
+                  case RegClass_kv3_tileReg_0:
+                  case RegClass_kv3_tileReg_1:
                   case RegClass_kv3_matrixReg_0:
                   case RegClass_kv3_matrixReg_1:
                   case RegClass_kv3_matrixReg_2:
                   case RegClass_kv3_matrixReg_3:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_XVR,value)
                       break;
-                  case RegClass_kv3_wideReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_XWR,value)
+                  case RegClass_kv3_tileReg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_XTR,value)
                       break;
                   case RegClass_kv3_matrixReg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_XMR,value)
@@ -1020,14 +1020,14 @@ decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
 		case RegClass_kv3_vectorReg:
 		case RegClass_kv3_vectorRegE:
 		case RegClass_kv3_vectorRegO:
-		case RegClass_kv3_wideReg_0:
-		case RegClass_kv3_wideReg_1:
+		case RegClass_kv3_tileReg_0:
+		case RegClass_kv3_tileReg_1:
 		case RegClass_kv3_matrixReg_0:
 		case RegClass_kv3_matrixReg_1:
 		case RegClass_kv3_matrixReg_2:
 		case RegClass_kv3_matrixReg_3:
 		  break;
-		case RegClass_kv3_wideReg:
+		case RegClass_kv3_tileReg:
 		  break;
 		case RegClass_kv3_matrixReg:
 		  break;
