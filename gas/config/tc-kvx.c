@@ -1135,8 +1135,8 @@ match_operands(const kv3opc_t * op, const expressionS * tok,
                                 && (((tok).X_add_number) <= kvx_regfiles[KVX_REGFILE_LAST_XBR]))
 #define IS_KVX_REGFILE_XVR(tok) ((((tok).X_add_number) >= kvx_regfiles[KVX_REGFILE_FIRST_XVR]) \
                                 && (((tok).X_add_number) <= kvx_regfiles[KVX_REGFILE_LAST_XVR]))
-#define IS_KVX_REGFILE_XWR(tok) ((((tok).X_add_number) >= kvx_regfiles[KVX_REGFILE_FIRST_XWR]) \
-                                && (((tok).X_add_number) <= kvx_regfiles[KVX_REGFILE_LAST_XWR]))
+#define IS_KVX_REGFILE_XTR(tok) ((((tok).X_add_number) >= kvx_regfiles[KVX_REGFILE_FIRST_XTR]) \
+                                && (((tok).X_add_number) <= kvx_regfiles[KVX_REGFILE_LAST_XTR]))
 #define IS_KVX_REGFILE_XMR(tok) ((((tok).X_add_number) >= kvx_regfiles[KVX_REGFILE_FIRST_XMR]) \
                                 && (((tok).X_add_number) <= kvx_regfiles[KVX_REGFILE_LAST_XMR]))
 #define IS_KVX_REGFILE_X2R(tok) ((((tok).X_add_number) >= kvx_regfiles[KVX_REGFILE_FIRST_X2R]) \
@@ -1235,15 +1235,15 @@ match_operands(const kv3opc_t * op, const expressionS * tok,
             case RegClass_kv3_vectorReg:
             case RegClass_kv3_vectorRegE:
             case RegClass_kv3_vectorRegO:
-            case RegClass_kv3_wideReg_0:
-            case RegClass_kv3_wideReg_1:
+            case RegClass_kv3_tileReg_0:
+            case RegClass_kv3_tileReg_1:
             case RegClass_kv3_matrixReg_0:
             case RegClass_kv3_matrixReg_1:
             case RegClass_kv3_matrixReg_2:
             case RegClass_kv3_matrixReg_3:
                 MATCH_KVX_REGFILE(tok[jj],IS_KVX_REGFILE_XVR)
-            case RegClass_kv3_wideReg:
-                MATCH_KVX_REGFILE(tok[jj],IS_KVX_REGFILE_XWR)
+            case RegClass_kv3_tileReg:
+                MATCH_KVX_REGFILE(tok[jj],IS_KVX_REGFILE_XTR)
             case RegClass_kv3_matrixReg:
                 MATCH_KVX_REGFILE(tok[jj],IS_KVX_REGFILE_XMR)
             case RegClass_kv3_buffer2Reg:
@@ -1339,7 +1339,7 @@ match_operands(const kv3opc_t * op, const expressionS * tok,
 #undef IS_KVX_REGFILE_XCR
 #undef IS_KVX_REGFILE_XBR
 #undef IS_KVX_REGFILE_XVR
-#undef IS_KVX_REGFILE_XWR
+#undef IS_KVX_REGFILE_XTR
 #undef IS_KVX_REGFILE_XMR
 #undef IS_KVX_REGFILE_X2R
 #undef IS_KVX_REGFILE_X4R
@@ -2026,8 +2026,8 @@ insn_syntax(kv3opc_t *op, char *buf, int buf_size)
     case RegClass_kv3_vectorReg:
     case RegClass_kv3_vectorRegE:
     case RegClass_kv3_vectorRegO:
-    case RegClass_kv3_wideReg_0:
-    case RegClass_kv3_wideReg_1:
+    case RegClass_kv3_tileReg_0:
+    case RegClass_kv3_tileReg_1:
     case RegClass_kv3_matrixReg_0:
     case RegClass_kv3_matrixReg_1:
     case RegClass_kv3_matrixReg_2:
