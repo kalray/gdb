@@ -182,7 +182,7 @@ kvx_displaced_step_location (struct gdbarch *gdbarch)
 }
 
 static uint64_t
-extract_mds_bitfield (kv3opc_t *op, uint32_t syllab, int bitfield, int sign)
+extract_mds_bitfield (kvxopc_t *op, uint32_t syllab, int bitfield, int sign)
 {
   kvx_bitfield_t *bfield;
   uint64_t res;
@@ -197,7 +197,7 @@ extract_mds_bitfield (kv3opc_t *op, uint32_t syllab, int bitfield, int sign)
 }
 
 static void
-patch_mds_bitfield (kv3opc_t *op, uint32_t *syllab, int bitfield, int value)
+patch_mds_bitfield (kvxopc_t *op, uint32_t *syllab, int bitfield, int value)
 {
   kvx_bitfield_t *bfield;
   uint32_t mask;
@@ -346,7 +346,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
 
   while (insn)
     {
-      kv3opc_t *op = insn->op;
+      kvxopc_t *op = insn->op;
 
       if ((dsc->insn_words[0] & op->codewords[0].mask)
 	  != op->codewords[0].opcode)
@@ -556,7 +556,7 @@ kvx_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 
 	  while (insn)
 	    {
-	      kv3opc_t *op = insn->op;
+	      kvxopc_t *op = insn->op;
 
 	      if ((crt_word & op->codewords[0].mask) != op->codewords[0].opcode)
 		{
@@ -1061,8 +1061,8 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep = (struct gdbarch_tdep *) xzalloc (sizeof (struct gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
 
-  pc_name = kv3_pc_name (gdbarch);
-  sp_name = kv3_sp_name (gdbarch);
+  pc_name = kvx_pc_name (gdbarch);
+  sp_name = kvx_sp_name (gdbarch);
 
   /* This could (should?) be extracted from MDS */
   set_gdbarch_short_bit (gdbarch, 16);
@@ -1190,15 +1190,15 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_register_reggroup_p (gdbarch, kvx_register_reggroup_p);
 
-  set_gdbarch_num_pseudo_regs (gdbarch, kv3_num_pseudos (gdbarch));
-  set_tdesc_pseudo_register_name (gdbarch, kv3_pseudo_register_name);
-  set_tdesc_pseudo_register_type (gdbarch, kv3_pseudo_register_type);
+  set_gdbarch_num_pseudo_regs (gdbarch, kvx_num_pseudos (gdbarch));
+  set_tdesc_pseudo_register_name (gdbarch, kvx_pseudo_register_name);
+  set_tdesc_pseudo_register_type (gdbarch, kvx_pseudo_register_type);
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
-					kv3_pseudo_register_reggroup_p);
+					kvx_pseudo_register_reggroup_p);
 
-  set_gdbarch_pseudo_register_read (gdbarch, kv3_pseudo_register_read);
-  set_gdbarch_pseudo_register_write (gdbarch, kv3_pseudo_register_write);
-  set_gdbarch_dwarf2_reg_to_regnum (gdbarch, kv3_dwarf2_reg_to_regnum);
+  set_gdbarch_pseudo_register_read (gdbarch, kvx_pseudo_register_read);
+  set_gdbarch_pseudo_register_write (gdbarch, kvx_pseudo_register_write);
+  set_gdbarch_dwarf2_reg_to_regnum (gdbarch, kvx_dwarf2_reg_to_regnum);
   dwarf2_frame_set_init_reg (gdbarch, kvx_dwarf2_frame_init_reg);
 
   set_gdbarch_return_value (gdbarch, kvx_return_value);

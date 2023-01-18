@@ -30,10 +30,10 @@
 extern "C" {
 #include "opcodes/disassemble.h"
 }
-#include "elf/kv3.h"
-#include "opcode/kv3.h"
+#include "elf/kvx.h"
+#include "opcode/kvx.h"
 extern "C" {
-#include "opcodes/kv3-dis.h"
+#include "opcodes/kvx-dis.h"
 }
 #include "kvx-common-tdep.h"
 
@@ -983,7 +983,7 @@ kvx_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
 }
 
 static void
-add_op (struct op_list **list, kv3opc_t *op)
+add_op (struct op_list **list, kvxopc_t *op)
 {
   struct op_list *op_l = (struct op_list *) malloc (sizeof (struct op_list));
 
@@ -1000,15 +1000,15 @@ kvx_look_for_insns (void)
 
   for (i = 0; i < KVX_NUM_ARCHES; ++i)
     {
-      kv3opc_t *op;
+      kvxopc_t *op;
 
       switch (i)
 	{
 	case KVX_KV3_1:
-	  op = kv3_v1_optab;
+	  op = kvx_kv3_v1_optab;
 	  break;
 	case KVX_KV3_2:
-	  op = kv3_v2_optab;
+	  op = kvx_kv3_v2_optab;
 	  break;
 	default:
 	  internal_error (__FILE__, __LINE__, "Unknown arch id.");

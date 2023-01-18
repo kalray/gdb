@@ -4,7 +4,7 @@
 #include "dwarf2/frame.h"
 #include "gdbsupport/common-regcache.h"
 #include "dis-asm.h"
-#include "opcode/kv3.h"
+#include "opcode/kvx.h"
 #include "gdbtypes.h"
 #include "gdbarch.h"
 
@@ -46,7 +46,7 @@ struct gdbarch_tdep
 
 struct op_list
 {
-  kv3opc_t *op;
+  kvxopc_t *op;
   struct op_list *next;
 };
 
@@ -61,21 +61,21 @@ extern uint32_t nop_op[KVX_NUM_ARCHES];
 enum KVX_ARCH kvx_arch (void);
 int get_kvx_arch (void);
 void kvx_look_for_insns (void);
-const char *kv3_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
-struct type *kv3_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
-int kv3_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
+const char *kvx_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
+struct type *kvx_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
+int kvx_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 				    struct reggroup *reggroup);
 enum register_status
-kv3_pseudo_register_read (struct gdbarch *gdbarch,
+kvx_pseudo_register_read (struct gdbarch *gdbarch,
 			  struct readable_regcache *regcache, int regnum,
 			  gdb_byte *buf);
-void kv3_pseudo_register_write (struct gdbarch *gdbarch,
+void kvx_pseudo_register_write (struct gdbarch *gdbarch,
 				struct regcache *regcache, int regnum,
 				const gdb_byte *buf);
-int kv3_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
-int kv3_num_pseudos (struct gdbarch *);
-const char *kv3_pc_name (struct gdbarch *);
-const char *kv3_sp_name (struct gdbarch *);
+int kvx_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
+int kvx_num_pseudos (struct gdbarch *);
+const char *kvx_pc_name (struct gdbarch *);
+const char *kvx_sp_name (struct gdbarch *);
 const char *kvx_dummy_register_name (struct gdbarch *gdbarch, int regno);
 struct type *kvx_dummy_register_type (struct gdbarch *gdbarch, int regno);
 void kvx_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,

@@ -38,9 +38,9 @@
 #include "progspace-and-thread.h"
 #include "remote.h"
 
-#include "elf/kv3.h"
+#include "elf/kvx.h"
 #include "elf-bfd.h"
-#include "elf/kv3.h"
+#include "elf/kvx.h"
 #include "kvx-target.h"
 #include "kvx-exception-info.h"
 #include "kvx-dump-tlb.h"
@@ -761,7 +761,7 @@ kvx_change_file (const char *file_path, const char *cluster_name)
 
 	  len_path = strlen (path);
 	  nb_bytes = snprintf (path + len_path, sizeof (path) - len_path,
-			       "/lib/kalray-oce/kv3/v%d_node_debug_handlers.u",
+			       "/lib/kalray-oce/kvx/kv3_v%d_node_debug_handlers.u",
 			       get_kvx_arch () + 1);
 
 	  if (nb_bytes >= sizeof (path) - len_path)

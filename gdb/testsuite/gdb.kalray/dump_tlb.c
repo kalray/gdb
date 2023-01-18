@@ -1,4 +1,4 @@
-#include <libmppahal/kv3/registers.h>
+#include <libmppahal/kvx/registers.h>
 #include <stdio.h>
 
 #define JTLB_NB_SET 64

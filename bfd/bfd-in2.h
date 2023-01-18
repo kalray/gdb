@@ -1824,6 +1824,9 @@ enum bfd_architecture
 #define bfd_mach_kv3_2             4
 #define bfd_mach_kv3_2_64          5
 #define bfd_mach_kv3_2_usr         6
+#define bfd_mach_kv4_1             7
+#define bfd_mach_kv4_1_64          8
+#define bfd_mach_kv4_1_usr         9
   bfd_arch_tilepro,   /* Tilera TILEPro.  */
   bfd_arch_tilegx,    /* Tilera TILE-Gx.  */
 #define bfd_mach_tilepro       1
@@ -5528,6 +5531,7 @@ by these enumerators; make sure they are all synced.";  */
   BFD_RELOC_KVX_S43_TLS_LE_LO10,
   BFD_RELOC_KVX_S43_TLS_LE_UP27,
   BFD_RELOC_KVX_S43_TLS_LE_EX6,
+  BFD_RELOC_KVX_8,
 
 /* KVX pseudo relocation code to mark the end of the KVX
 relocation enumerators that have direct mapping to ELF reloc codes.
