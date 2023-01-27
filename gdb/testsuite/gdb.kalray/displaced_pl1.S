@@ -28,11 +28,11 @@ reserve_resources_pl1:
   ;;
   make $r0 = 0x55555555 << 32 /* delegate all ps fields excepting for sme and smr*/
   ;;
-  wfxl $psow = $r0
+  wfxl $psow, $r0
   ;;
   make $r0 = 0x55555505 << 32
   ;;
-  wfxm $psow = $r0
+  wfxm $psow, $r0
   ;;
   // take scall Q2
   make $r0 = 5 << 32

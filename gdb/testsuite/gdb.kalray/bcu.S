@@ -100,7 +100,7 @@ cb_taken_test:
   make $r41 = 0
   ;;
 bpbcu_cb_taken_test:
-  cb.deqz $r41, label_cb_taken_test
+  cb.deqz $r41? label_cb_taken_test
   ;;
   copyd $r42 = $r43
   ;;
@@ -114,7 +114,7 @@ cb_skip_test:
   make $r41 = 1
   ;;
 bpbcu_cb_skip_test:
-  cb.deqz $r41, label_cb_skip_test
+  cb.deqz $r41? label_cb_skip_test
   ;;
   copyd $r42 = $r43
   ;;
@@ -186,7 +186,7 @@ label_loopdo_test:
 bpbcu_loopdo_test_2:
   get_got_addr $r42 ret_val
   ;;
-  sd 0[$r42], $r41
+  sd 0[$r42] = $r41
   ;;
   goto ret_from_test
   ;;
@@ -269,26 +269,26 @@ verify_test_regs:
   ;;
   compd.eq $r41 = $r41, $r0
   ;;
-  cb.deqz $r41, reg_0_changed
+  cb.deqz $r41? reg_0_changed
   ;;
   ld $r41 = 8[$r40] //test r1
   ;;
   compd.eq $r41 = $r41, $r1
   ;;
-  cb.deqz $r41, reg_1_changed
+  cb.deqz $r41? reg_1_changed
   ;;
   ld $r41 = 24[$r40] //test r12
   ;;
   compd.eq $r41 = $r41, $r12
   ;;
-  cb.deqz $r41, reg_12_changed
+  cb.deqz $r41? reg_12_changed
   ;;
   ld $r41 = 16[$r40] //test ra
   get $r43 = $ra
   ;;
   compd.eq $r41 = $r41, $r43
   ;;
-  cb.deqz $r41, reg_ra_changed
+  cb.deqz $r41? reg_ra_changed
   ;;
   goto exit_test_regs // no reg changed
   ;;
