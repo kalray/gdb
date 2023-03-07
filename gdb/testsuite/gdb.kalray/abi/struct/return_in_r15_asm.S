@@ -25,8 +25,10 @@ check_return_is_correct:
     sd 8[$r12] = $r1
     ;;
     icall $r0
+    copyd $r31 = $r15
     ;;
     ld $r16 = 16[$r12]
+    copyd $r0 = $r31
     ;;
     compd.eq $r16 = $r0, $r16
     ;;
