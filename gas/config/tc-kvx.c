@@ -2473,6 +2473,9 @@ kvx_set_cpu(void) {
     case ELF_KVX_CORE_KV3_2:
       kvx_bfd_mach = kvx_arch_size == 32 ? bfd_mach_kv3_2 : bfd_mach_kv3_2_64;
       break;
+    case ELF_KVX_CORE_KV4_1:
+      kvx_bfd_mach = kvx_arch_size == 32 ? bfd_mach_kv4_1 : bfd_mach_kv4_1_64;
+      break;
     default:
       as_fatal("Unknown elf core: 0x%x\n",kvx_core_info->elf_cores[subcore_id]);
     }
