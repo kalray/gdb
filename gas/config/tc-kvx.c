@@ -1206,17 +1206,29 @@ match_operands(const kvxopc_t * op, const expressionS * tok,
             case RegClass_kvx_quadReg:
                 MATCH_KVX_REGFILE(tok[jj],IS_KVX_REGFILE_QGR)
             case RegClass_kvx_systemReg:
+            case RegClass_kv3_v2_systemReg:
+            case RegClass_kv4_v1_systemReg:
 		 if( ! allow_all_sfr ) {
 		      /* If option all-sfr not set, doest not match systemReg for SET/GET/WFX: used only for HW validation. */
 		      return MATCH_NOT_FOUND;
 		 }
                  /* fallthrough */
             case RegClass_kvx_aloneReg:
+            case RegClass_kv3_v2_aloneReg:
+            case RegClass_kv4_v1_aloneReg:
             case RegClass_kvx_onlyraReg:
             case RegClass_kvx_onlyfxReg:
+            case RegClass_kv3_v2_onlyfxReg:
+            case RegClass_kv4_v1_onlyfxReg:
             case RegClass_kvx_onlygetReg:
+            case RegClass_kv3_v2_onlygetReg:
+            case RegClass_kv4_v1_onlygetReg:
             case RegClass_kvx_onlysetReg:
-	    case RegClass_kvx_onlyswapReg:
+            case RegClass_kv3_v2_onlysetReg:
+            case RegClass_kv4_v1_onlysetReg:
+            case RegClass_kvx_onlyswapReg:
+            case RegClass_kv3_v2_onlyswapReg:
+            case RegClass_kv4_v1_onlyswapReg:
                 MATCH_KVX_REGFILE(tok[jj],IS_KVX_REGFILE_SFR)
             case RegClass_kvx_coproReg:
             case RegClass_kvx_coproReg0M4:
@@ -1270,6 +1282,7 @@ match_operands(const kvxopc_t * op, const expressionS * tok,
             case Immediate_kvx_signed43:
             case Immediate_kvx_signed54:
             case Immediate_kvx_wrapped64:
+            case Immediate_kvx_brknumber:
             case Immediate_kvx_sysnumber:
             case Immediate_kvx_unsigned6:
                 if(tok[jj].X_op == O_symbol || tok[jj].X_op == O_pseudo_fixup){

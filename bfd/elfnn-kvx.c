@@ -3030,6 +3030,8 @@ elfNN_kvx_print_private_bfd_data (bfd *abfd, void *ptr)
 	fprintf (file, _("Coolidge (kv3) V1 64 bits"));
       else if (ELF_KVX_CHECK_CORE(flags,ELF_KVX_CORE_KV3_2))
 	fprintf (file, _("Coolidge (kv3) V2 64 bits"));
+      else if (ELF_KVX_CHECK_CORE(flags,ELF_KVX_CORE_KV4_1))
+	fprintf (file, _("Coolidge (kv4) V1 64 bits"));
     }
   else
     {
@@ -3037,6 +3039,8 @@ elfNN_kvx_print_private_bfd_data (bfd *abfd, void *ptr)
 	fprintf (file, _("Coolidge (kv3) V1 32 bits"));
       else if (ELF_KVX_CHECK_CORE(flags,ELF_KVX_CORE_KV3_2))
 	fprintf (file, _("Coolidge (kv3) V2 32 bits"));
+      else if (ELF_KVX_CHECK_CORE(flags,ELF_KVX_CORE_KV4_1))
+	fprintf (file, _("Coolidge (kv4) V1 32 bits"));
     }
   
   fputc ('\n', file);
