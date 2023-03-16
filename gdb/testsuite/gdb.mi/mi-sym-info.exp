@@ -249,15 +249,18 @@ mi_gdb_test "121-symbol-info-functions --max-results 0" \
     "121\\^done,symbols=\{\}" \
     "-symbol-info-functions --max-results 0"
 
-mi_gdb_test "122-symbol-info-functions --max-results 1 --name ^\[^_\]" \
+# KVX: newlib is compiled with debug info
+mi_gdb_test "122-symbol-info-functions --max-results 1 --name ^f\[0-9\]" \
     "122\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[(?:$f2_re|$f3_re)\\\]\}\\\]\}" \
     "-symbol-info-functions --max-results 1"
 
-mi_gdb_test "123-symbol-info-functions --max-results 2 --name ^\[^_\]" \
+# KVX: newlib is compiled with debug info
+mi_gdb_test "123-symbol-info-functions --max-results 2 --name ^f\[0-9\]" \
     "123\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[$f2_re,$f3_re\\\]\}\\\]\}" \
     "-symbol-info-functions --max-results 2"
 
-mi_gdb_test "124-symbol-info-variables --max-results 3 --name ^\[^_\]" \
+# KVX: newlib is compiled with debug info
+mi_gdb_test "124-symbol-info-variables --max-results 3 --name ^\glo" \
     "124\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[$global_f2_re,$global_i2_re,(?:$global_i1_re|$global_f1_s2_re)\\\]\}\\\]\}" \
     "-symbol-info-types --max-results 3"
 

@@ -24,7 +24,6 @@
 #include "bfd.h"
 #include "libiberty.h"
 #include "libbfd.h"
-#include "bfd_stdint.h"
 #include "elf-bfd.h"
 #include "bfdlink.h"
 #include "objalloc.h"
@@ -133,11 +132,7 @@ static const uint32_t elfNN_kvx_long_branch_stub[] =
    in reloc.c.   */
 
 #define KVX_KV3_V1_KV3_V2_KV4_V1
-#define true TRUE
-#define false FALSE
 #include "elfxx-kvx-relocs.h"
-#undef true
-#undef false
 #undef KVX_KV3_V1_KV3_V2_KV4_V1
 
 /* Given HOWTO, return the bfd internal relocation enumerator.  */
@@ -159,9 +154,9 @@ elfNN_kvx_bfd_reloc_from_howto (reloc_howto_type *howto)
 /* Given R_TYPE, return the bfd internal relocation enumerator.  */
 
 static bfd_reloc_code_real_type
-elfNN_kvx_bfd_reloc_from_type (bfd *abfd, unsigned int r_type)
+elfNN_kvx_bfd_reloc_from_type (bfd *abfd ATTRIBUTE_UNUSED, unsigned int r_type)
 {
-  static bfd_boolean initialized_p = FALSE;
+  static bool initialized_p = false;
   /* Indexed by R_TYPE, values are offsets in the howto_table.  */
   static unsigned int offsets[R_KVX_end];
 
@@ -172,16 +167,14 @@ elfNN_kvx_bfd_reloc_from_type (bfd *abfd, unsigned int r_type)
       for (i = 1; i < ARRAY_SIZE (elf_kvx_howto_table) - 1; ++i)
         offsets[elf_kvx_howto_table[i].type] = i;
 
-      initialized_p = TRUE;
+      initialized_p = true;
     }
 
   /* PR 17512: file: b371e70a.  */
   if (r_type >= R_KVX_end)
     {
-      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
-			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      return BFD_RELOC_KVX_NONE;
+      return BFD_RELOC_KVX_RELOC_END;
     }
 
   return BFD_RELOC_KVX_RELOC_START + offsets[r_type];
@@ -203,6 +196,7 @@ static const struct elf_kvx_reloc_map elf_kvx_reloc_map[] =
   {BFD_RELOC_64, BFD_RELOC_KVX_64},
   {BFD_RELOC_32, BFD_RELOC_KVX_32},
   {BFD_RELOC_16, BFD_RELOC_KVX_16},
+  {BFD_RELOC_8,  BFD_RELOC_KVX_8},
 
   {BFD_RELOC_64_PCREL, BFD_RELOC_KVX_64_PCREL},
   {BFD_RELOC_32_PCREL, BFD_RELOC_KVX_32_PCREL},
@@ -257,7 +251,7 @@ elfNN_kvx_howto_from_type (bfd *abfd, unsigned int r_type)
   return NULL;
 }
 
-static bfd_boolean
+static bool
 elfNN_kvx_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
 			     Elf_Internal_Rela *elf_reloc)
 {
@@ -270,9 +264,9 @@ elfNN_kvx_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *bfd_reloc,
     {
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"), abfd, r_type);
-      return FALSE;
+      return false;
     }
-  return TRUE;
+  return true;
 }
 
 static reloc_howto_type *
@@ -430,7 +424,7 @@ struct elf_kvx_obj_tdata
    && elf_tdata (bfd) != NULL				\
    && elf_object_id (bfd) == KVX_ELF_DATA)
 
-static bfd_boolean
+static bool
 elfNN_kvx_mkobject (bfd *abfd)
 {
   return bfd_elf_allocate_object (abfd, sizeof (struct elf_kvx_obj_tdata),
@@ -677,7 +671,7 @@ elfNN_kvx_link_hash_table_create (bfd *abfd)
   return &ret->root.root;
 }
 
-static bfd_boolean
+static bfd_reloc_status_type
 kvx_relocate (unsigned int r_type, bfd *input_bfd, asection *input_section,
               bfd_vma offset, bfd_vma value)
 {
@@ -689,7 +683,7 @@ kvx_relocate (unsigned int r_type, bfd *input_bfd, asection *input_section,
 	   + offset);
 
   r_type = elfNN_kvx_bfd_reloc_from_type (input_bfd, r_type);
-  value = _bfd_kvx_elf_resolve_relocation (r_type, place, value, 0, FALSE);
+  value = _bfd_kvx_elf_resolve_relocation (r_type, place, value, 0, false);
   return _bfd_kvx_elf_put_addend (input_bfd,
                                   input_section->contents + offset, r_type,
                                   howto, value);
@@ -750,7 +744,7 @@ elfNN_kvx_stub_name (const asection *input_section,
       len = 8 + 1 + strlen (hash->root.root.root.string) + 1 + 16 + 1;
       stub_name = bfd_malloc (len);
       if (stub_name != NULL)
-	snprintf (stub_name, len, "%08x_%s+%" BFD_VMA_FMT "x",
+	snprintf (stub_name, len, "%08x_%s+%" PRIx64 "x",
 		  (unsigned int) input_section->id,
 		  hash->root.root.root.string,
 		  rel->r_addend);
@@ -760,7 +754,7 @@ elfNN_kvx_stub_name (const asection *input_section,
       len = 8 + 1 + 8 + 1 + 8 + 1 + 16 + 1;
       stub_name = bfd_malloc (len);
       if (stub_name != NULL)
-	snprintf (stub_name, len, "%08x_%x:%x+%" BFD_VMA_FMT "x",
+	snprintf (stub_name, len, "%08x_%x:%x+%" PRIx64 "x",
 		  (unsigned int) input_section->id,
 		  (unsigned int) sym_sec->id,
 		  (unsigned int) ELFNN_R_SYM (rel->r_info),
@@ -770,17 +764,17 @@ elfNN_kvx_stub_name (const asection *input_section,
   return stub_name;
 }
 
-/* Return TRUE if symbol H should be hashed in the `.gnu.hash' section.  For
+/* Return true if symbol H should be hashed in the `.gnu.hash' section.  For
    executable PLT slots where the executable never takes the address of those
    functions, the function symbols are not added to the hash table.  */
 
-static bfd_boolean
+static bool
 elf_kvx_hash_symbol (struct elf_link_hash_entry *h)
 {
   if (h->plt.offset != (bfd_vma) -1
       && !h->def_regular
       && !h->pointer_equality_needed)
-    return FALSE;
+    return false;
 
   return _bfd_elf_hash_symbol (h);
 }
@@ -825,7 +819,7 @@ elfNN_kvx_get_stub_entry (const asection *input_section,
 	return NULL;
 
       stub_entry = kvx_stub_hash_lookup (&htab->stub_hash_table,
-                                         stub_name, FALSE, FALSE);
+                                         stub_name, false, false);
       if (h != NULL)
 	h->stub_cache = stub_entry;
 
@@ -905,7 +899,7 @@ _bfd_kvx_add_stub_entry_in_group (const char *stub_name,
 
   /* Enter this entry into the linker stub hash table.  */
   stub_entry = kvx_stub_hash_lookup (&htab->stub_hash_table, stub_name,
-                                     TRUE, FALSE);
+                                     true, false);
   if (stub_entry == NULL)
     {
       /* xgettext:c-format */
@@ -921,7 +915,7 @@ _bfd_kvx_add_stub_entry_in_group (const char *stub_name,
   return stub_entry;
 }
 
-static bfd_boolean
+static bool
 kvx_build_one_stub (struct bfd_hash_entry *gen_entry,
                     void *in_arg)
 {
@@ -1004,13 +998,13 @@ kvx_build_one_stub (struct bfd_hash_entry *gen_entry,
       abort ();
     }
 
-  return TRUE;
+  return true;
 }
 
 /* As above, but don't actually build the stub.  Just bump offset so
    we know stub section sizes.  */
 
-static bfd_boolean
+static bool
 kvx_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_UNUSED)
 {
   struct elf_kvx_stub_hash_entry *stub_entry;
@@ -1029,7 +1023,7 @@ kvx_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_UNUS
     }
 
   stub_entry->stub_sec->size += size;
-  return TRUE;
+  return true;
 }
 
 /* External entry points for sizing and building linker stubs.  */
@@ -1051,7 +1045,7 @@ elfNN_kvx_setup_section_lists (bfd *output_bfd,
   struct elf_kvx_link_hash_table *htab =
     elf_kvx_hash_table (info);
 
-  if (!is_elf_hash_table (htab))
+  if (!is_elf_hash_table ((const struct bfd_link_hash_table *)htab))
     return 0;
 
   /* Count the number of input BFDs and find the top input section id.  */
@@ -1146,7 +1140,7 @@ elfNN_kvx_next_input_section (struct bfd_link_info *info, asection *isec)
 static void
 group_sections (struct elf_kvx_link_hash_table *htab,
 		bfd_size_type stub_group_size,
-		bfd_boolean stubs_always_after_branch)
+		bool stubs_always_after_branch)
 {
   asection **list = htab->input_list;
 
@@ -1256,7 +1250,7 @@ _bfd_kvx_resize_stubs (struct elf_kvx_link_hash_table *htab)
 
 /* Satisfy the ELF linker by filling in some fields in our fake bfd.  */
 
-bfd_boolean
+bool
 kvx_elfNN_init_stub_bfd (struct bfd_link_info *info,
 			bfd *stub_bfd)
 {
@@ -1269,9 +1263,9 @@ kvx_elfNN_init_stub_bfd (struct bfd_link_info *info,
    the start of the output TOC section.  */
   htab = elf_kvx_hash_table (info);
   if (htab == NULL)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 /* Determine and set the size of the stub section for a final link.
@@ -1280,7 +1274,7 @@ kvx_elfNN_init_stub_bfd (struct bfd_link_info *info,
    PC-relative calls to a target that is unreachable with a 27bits
    immediate (found in call and goto).  */
 
-bfd_boolean
+bool
 elfNN_kvx_size_stubs (bfd *output_bfd,
 		     bfd *stub_bfd,
 		     struct bfd_link_info *info,
@@ -1290,8 +1284,8 @@ elfNN_kvx_size_stubs (bfd *output_bfd,
 		     void (*layout_sections_again) (void))
 {
   bfd_size_type stub_group_size;
-  bfd_boolean stubs_always_before_branch;
-  bfd_boolean stub_changed = FALSE;
+  bool stubs_always_before_branch;
+  bool stub_changed = false;
   struct elf_kvx_link_hash_table *htab = elf_kvx_hash_table (info);
 
   /* Propagate mach to stub bfd, because it may not have been
@@ -1312,7 +1306,7 @@ elfNN_kvx_size_stubs (bfd *output_bfd,
   if (stub_group_size == 1)
     {
       /* Default values.  */
-      /* KV3 branch range is +-256MB. The value used is 1MB less.  */
+      /* KVX branch range is +-256MB. The value used is 1MB less.  */
       stub_group_size = 255 * 1024 * 1024;
     }
 
@@ -1538,7 +1532,7 @@ elfNN_kvx_size_stubs (bfd *output_bfd,
 
 		  stub_entry =
 		    kvx_stub_hash_lookup (&htab->stub_hash_table,
-					 stub_name, FALSE, FALSE);
+					 stub_name, false, false);
 		  if (stub_entry != NULL)
 		    {
 		      /* The proper stub has already been created.  */
@@ -1576,7 +1570,7 @@ elfNN_kvx_size_stubs (bfd *output_bfd,
 		  snprintf (stub_entry->output_name, len, STUB_ENTRY_NAME,
 			    sym_name);
 
-		  stub_changed = TRUE;
+		  stub_changed = true;
 		}
 
 	      /* We're done with the internal relocs, free them.  */
@@ -1592,13 +1586,13 @@ elfNN_kvx_size_stubs (bfd *output_bfd,
 
       /* Ask the linker to do its stuff.  */
       (*htab->layout_sections_again) ();
-      stub_changed = FALSE;
+      stub_changed = false;
     }
 
-  return TRUE;
+  return true;
 
 error_ret_free_local:
-  return FALSE;
+  return false;
 
 }
 
@@ -1608,7 +1602,7 @@ error_ret_free_local:
    functions here.  This function is called via kvx_elf_finish in the
    linker.  */
 
-bfd_boolean
+bool
 elfNN_kvx_build_stubs (struct bfd_link_info *info)
 {
   asection *stub_sec;
@@ -1630,7 +1624,7 @@ elfNN_kvx_build_stubs (struct bfd_link_info *info)
       size = stub_sec->size;
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
-	return FALSE;
+	return false;
       stub_sec->size = 0;
     }
 
@@ -1638,7 +1632,7 @@ elfNN_kvx_build_stubs (struct bfd_link_info *info)
   table = &htab->stub_hash_table;
   bfd_hash_traverse (table, kvx_build_one_stub, info);
 
-  return TRUE;
+  return true;
 }
 
 static bfd_vma
@@ -1646,11 +1640,11 @@ kvx_calculate_got_entry_vma (struct elf_link_hash_entry *h,
 				 struct elf_kvx_link_hash_table
 				 *globals, struct bfd_link_info *info,
 				 bfd_vma value, bfd *output_bfd,
-				 bfd_boolean *unresolved_reloc_p)
+				 bool *unresolved_reloc_p)
 {
   bfd_vma off = (bfd_vma) - 1;
   asection *basegot = globals->root.sgot;
-  bfd_boolean dyn = globals->root.dynamic_sections_created;
+  bool dyn = globals->root.dynamic_sections_created;
 
   if (h != NULL)
     {
@@ -1681,7 +1675,7 @@ kvx_calculate_got_entry_vma (struct elf_link_hash_entry *h,
 	    }
 	}
       else
-	*unresolved_reloc_p = FALSE;
+	*unresolved_reloc_p = false;
     }
 
   return off;
@@ -1737,7 +1731,7 @@ kvx_reloc_got_type (bfd_reloc_code_real_type r_type)
   return GOT_UNKNOWN;
 }
 
-static bfd_boolean
+static bool
 kvx_can_relax_tls (bfd *input_bfd ATTRIBUTE_UNUSED,
 		       struct bfd_link_info *info ATTRIBUTE_UNUSED,
 		       bfd_reloc_code_real_type r_type ATTRIBUTE_UNUSED,
@@ -1745,11 +1739,11 @@ kvx_can_relax_tls (bfd *input_bfd ATTRIBUTE_UNUSED,
 		       unsigned long r_symndx ATTRIBUTE_UNUSED)
 {
   if (! IS_KVX_TLS_RELAX_RELOC (r_type))
-    return FALSE;
+    return false;
 
   /* Relaxing hook. Disabled on KVX. */
   /* See elfnn-aarch64.c */
-  return TRUE;
+  return true;
 }
 
 /* Given the relocation code R_TYPE, return the relaxed bfd reloc
@@ -2005,8 +1999,8 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
 				   struct bfd_link_info *info,
 				   asection *sym_sec,
 				   struct elf_link_hash_entry *h,
-				   bfd_boolean *unresolved_reloc_p,
-				   bfd_boolean save_addend,
+				   bool *unresolved_reloc_p,
+				   bool save_addend,
 				   bfd_vma *saved_addend,
 				   Elf_Internal_Sym *sym)
 {
@@ -2020,7 +2014,7 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
   bfd_vma place, off;
   bfd_signed_vma signed_addend;
   struct elf_kvx_link_hash_table *globals;
-  bfd_boolean weak_undef_p;
+  bool weak_undef_p;
   asection *base_got;
   bfd_reloc_status_type rret = bfd_reloc_ok;
   globals = elf_kvx_hash_table (info);
@@ -2075,7 +2069,7 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
       /* When generating a shared object or relocatable executable, these
          relocations are copied into the output file to be resolved at
          run time.  */
-      if (((bfd_link_pic (info) == TRUE)
+      if (((bfd_link_pic (info) == true)
 	    || globals->root.is_relocatable_executable)
 	  && (input_section->flags & SEC_ALLOC)
 	  && (h == NULL
@@ -2084,24 +2078,24 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
 	{
 	  Elf_Internal_Rela outrel;
 	  bfd_byte *loc;
-	  bfd_boolean skip, relocate;
+	  bool skip, relocate;
 	  asection *sreloc;
 
-	  *unresolved_reloc_p = FALSE;
+	  *unresolved_reloc_p = false;
 
-	  skip = FALSE;
-	  relocate = FALSE;
+	  skip = false;
+	  relocate = false;
 
 	  outrel.r_addend = signed_addend;
 	  outrel.r_offset =
 	    _bfd_elf_section_offset (output_bfd, info, input_section,
 				     rel->r_offset);
 	  if (outrel.r_offset == (bfd_vma) - 1)
-	    skip = TRUE;
+	    skip = true;
 	  else if (outrel.r_offset == (bfd_vma) - 2)
 	    {
-	      skip = TRUE;
-	      relocate = TRUE;
+	      skip = true;
+	      relocate = true;
 	    }
 
 	  outrel.r_offset += (input_section->output_section->vma
@@ -2203,7 +2197,7 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
 	 */
 
 	asection *splt = globals->root.splt;
-	bfd_boolean via_plt_p =
+	bool via_plt_p =
 	  splt != NULL && h != NULL && h->plt.offset != (bfd_vma) - 1;
 
 	/* A call to an undefined weak symbol is converted to a jump to
@@ -2250,7 +2244,7 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
 	    signed_addend = 0;
 	  }
       }
-      *unresolved_reloc_p = FALSE;
+      *unresolved_reloc_p = false;
 
       /* FALLTHROUGH */
 
@@ -2318,7 +2312,7 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
       _bfd_final_link_relocate (howto, input_bfd, input_section,
 				contents, rel->r_offset, value,
 				signed_addend);
-      *unresolved_reloc_p = FALSE;
+      *unresolved_reloc_p = false;
       break;
 
     case BFD_RELOC_KVX_S37_GOTADDR_UP27:
@@ -2475,7 +2469,7 @@ elfNN_kvx_final_link_relocate (reloc_howto_type *howto,
 
 /* Relocate a KVX ELF section.  */
 
-static bfd_boolean
+static int
 elfNN_kvx_relocate_section (bfd *output_bfd,
 				struct bfd_link_info *info,
 				bfd *input_bfd,
@@ -2491,7 +2485,7 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
   Elf_Internal_Rela *relend;
   const char *name;
   struct elf_kvx_link_hash_table *globals;
-  bfd_boolean save_addend = FALSE;
+  bool save_addend = false;
   bfd_vma addend = 0;
 
   globals = elf_kvx_hash_table (info);
@@ -2514,7 +2508,7 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
       bfd_reloc_status_type r;
       arelent bfd_reloc;
       char sym_type;
-      bfd_boolean unresolved_reloc = FALSE;
+      bool unresolved_reloc = false;
       char *error_message = NULL;
 
       r_symndx = ELFNN_R_SYM (rel->r_info);
@@ -2555,13 +2549,13 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
                   (*info->callbacks->undefined_symbol)
                           (info, bfd_elf_string_from_elf_section
                                   (input_bfd, symtab_hdr->sh_link, sym->st_name),
-                                  input_bfd, input_section, rel->r_offset, TRUE);
+                                  input_bfd, input_section, rel->r_offset, true);
 
 	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bool warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
@@ -2615,9 +2609,9 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 	  && rel->r_offset == rel[1].r_offset
 	  && ELFNN_R_TYPE (rel[1].r_info) != R_KVX_NONE)
 
-	save_addend = TRUE;
+	save_addend = true;
       else
-	save_addend = FALSE;
+	save_addend = false;
 
       if (r == bfd_reloc_continue)
 	r = elfNN_kvx_final_link_relocate (howto, input_bfd, output_bfd,
@@ -2644,7 +2638,7 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 
       	  if (! symbol_got_offset_mark_p (input_bfd, h, r_symndx))
       	    {
-      	      bfd_boolean need_relocs = FALSE;
+      	      bool need_relocs = false;
       	      bfd_byte *loc;
       	      int indx;
       	      bfd_vma off;
@@ -2740,7 +2734,7 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
       	case BFD_RELOC_KVX_S43_TLS_IE_EX6:
 	  if (! symbol_got_offset_mark_p (input_bfd, h, r_symndx))
 	    {
-	      bfd_boolean need_relocs = FALSE;
+	      bool need_relocs = false;
 	      bfd_byte *loc;
 	      int indx;
 	      bfd_vma off;
@@ -2806,7 +2800,7 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 	       "unresolvable %s relocation against symbol `%s'"),
 	     input_bfd, input_section, (uint64_t) rel->r_offset, howto->name,
 	     h->root.root.string);
-	  return FALSE;
+	  return false;
 	}
 
       if (r != bfd_reloc_ok && r != bfd_reloc_continue)
@@ -2823,7 +2817,7 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 
 	    case bfd_reloc_undefined:
                     (*info->callbacks->undefined_symbol)
-                            (info, name, input_bfd, input_section, rel->r_offset, TRUE);
+                            (info, name, input_bfd, input_section, rel->r_offset, true);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -2854,12 +2848,12 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 	addend = 0;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Set the right machine number.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_object_p (bfd *abfd)
 {
   /* must be coherent with default arch in cpu-kvx.c */
@@ -2873,9 +2867,11 @@ elfNN_kvx_object_p (bfd *abfd)
 #if ARCH_SIZE == 64
 	case ELF_KVX_CORE_KV3_1 : e_set = bfd_mach_kv3_1_64; break;
 	case ELF_KVX_CORE_KV3_2 : e_set = bfd_mach_kv3_2_64; break;
+	case ELF_KVX_CORE_KV4_1 : e_set = bfd_mach_kv4_1_64; break;
 #else
 	case ELF_KVX_CORE_KV3_1 : e_set = bfd_mach_kv3_1; break;
 	case ELF_KVX_CORE_KV3_2 : e_set = bfd_mach_kv3_2; break;
+	case ELF_KVX_CORE_KV4_1 : e_set = bfd_mach_kv4_1; break;
 #endif
 	default:
 	  (*_bfd_error_handler)(_("%s: Bad ELF id: `%d'"),
@@ -2888,7 +2884,7 @@ elfNN_kvx_object_p (bfd *abfd)
 
 /* Function to keep KVX specific flags in the ELF header.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_set_private_flags (bfd *abfd, flagword flags)
 {
   if (elf_flags_init (abfd) && elf_elfheader (abfd)->e_flags != flags)
@@ -2897,30 +2893,30 @@ elfNN_kvx_set_private_flags (bfd *abfd, flagword flags)
   else
     {
       elf_elfheader (abfd)->e_flags = flags;
-      elf_flags_init (abfd) = TRUE;
+      elf_flags_init (abfd) = true;
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
         bfd *obfd = info->output_bfd;
   flagword out_flags;
   flagword in_flags;
-  bfd_boolean flags_compatible = TRUE;
+  bool flags_compatible = true;
   asection *sec;
 
   /* Check if we have the same endianess.  */
   if (!_bfd_generic_verify_endian_match (ibfd, info))
-    return FALSE;
+    return false;
 
   if (!is_kvx_elf (ibfd) || !is_kvx_elf (obfd))
-    return TRUE;
+    return true;
 
   /* The input BFD must have had its flags initialised.  */
   /* The following seems bogus to me -- The flags are initialized in
@@ -2944,7 +2940,7 @@ elfNN_kvx_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       (*_bfd_error_handler) (msg, bfd_get_filename (ibfd),
 			     bfd_get_filename (obfd));
       bfd_set_error (bfd_error_wrong_format);
-      return FALSE;
+      return false;
     }
 
   in_flags = elf_elfheader (ibfd)->e_flags;
@@ -2960,9 +2956,9 @@ elfNN_kvx_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
          to the default values.  */
       if (bfd_get_arch_info (ibfd)->the_default
 	  && elf_elfheader (ibfd)->e_flags == 0)
-	return TRUE;
+	return true;
 
-      elf_flags_init (obfd) = TRUE;
+      elf_flags_init (obfd) = true;
       elf_elfheader (obfd)->e_flags = in_flags;
 
       if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
@@ -2970,12 +2966,12 @@ elfNN_kvx_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	return bfd_set_arch_mach (obfd, bfd_get_arch (ibfd),
 				  bfd_get_mach (ibfd));
 
-      return TRUE;
+      return true;
     }
 
   /* Identical flags must be compatible.  */
   if (in_flags == out_flags)
-    return TRUE;
+    return true;
 
   /* Check to see if the input BFD actually contains any sections.  If
      not, its flags may not have been initialised either, but it
@@ -2989,29 +2985,29 @@ elfNN_kvx_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
      in data sections ?  */
   if (!(ibfd->flags & DYNAMIC))
           {
-                  bfd_boolean null_input_bfd = TRUE;
-                  bfd_boolean only_data_sections = TRUE;
+                  bool null_input_bfd = true;
+                  bool only_data_sections = true;
 
                   for (sec = ibfd->sections; sec != NULL; sec = sec->next)
                           {
                                   if ((bfd_section_flags (sec)
                                                   & (SEC_LOAD | SEC_CODE | SEC_HAS_CONTENTS))
                                           == (SEC_LOAD | SEC_CODE | SEC_HAS_CONTENTS))
-                                          only_data_sections = FALSE;
+                                          only_data_sections = false;
 
-                                  null_input_bfd = FALSE;
+                                  null_input_bfd = false;
                                   break;
                           }
 
                   if (null_input_bfd || only_data_sections)
-                          return TRUE;
+                          return true;
           }
   return flags_compatible;
 }
 
 /* Display the flags field.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_print_private_bfd_data (bfd *abfd, void *ptr)
 {
   FILE *file = (FILE *) ptr;
@@ -3045,7 +3041,7 @@ elfNN_kvx_print_private_bfd_data (bfd *abfd, void *ptr)
   
   fputc ('\n', file);
 
-  return TRUE;
+  return true;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -3054,7 +3050,7 @@ elfNN_kvx_print_private_bfd_data (bfd *abfd, void *ptr)
    change the definition to something the rest of the link can
    understand.	*/
 
-static bfd_boolean
+static bool
 elfNN_kvx_adjust_dynamic_symbol (struct bfd_link_info *info,
 				     struct elf_link_hash_entry *h)
 {
@@ -3080,7 +3076,7 @@ elfNN_kvx_adjust_dynamic_symbol (struct bfd_link_info *info,
 	  h->needs_plt = 0;
 	}
 
-      return TRUE;
+      return true;
     }
   else
     /* Otherwise, reset to -1.  */
@@ -3098,7 +3094,7 @@ elfNN_kvx_adjust_dynamic_symbol (struct bfd_link_info *info,
             h->root.u.def.value = def->root.u.def.value;
             if (ELIMINATE_COPY_RELOCS || info->nocopyreloc)
                     h->non_got_ref = def->non_got_ref;
-            return TRUE;
+            return true;
     }
 
   /* If we are creating a shared library, we must presume that the
@@ -3106,18 +3102,18 @@ elfNN_kvx_adjust_dynamic_symbol (struct bfd_link_info *info,
      For such cases we need not do anything here; the relocations will
      be handled correctly by relocate_section.  */
   if (bfd_link_pic (info))
-    return TRUE;
+    return true;
 
   /* If there are no references to this symbol that do not use the
      GOT, we don't need to generate a copy reloc.  */
   if (!h->non_got_ref)
-    return TRUE;
+    return true;
 
   /* If -z nocopyreloc was given, we won't generate them either.  */
   if (info->nocopyreloc)
     {
       h->non_got_ref = 0;
-      return TRUE;
+      return true;
     }
 
   /* We must allocate the symbol in our .dynbss section, which will
@@ -3147,7 +3143,7 @@ elfNN_kvx_adjust_dynamic_symbol (struct bfd_link_info *info,
 
 }
 
-static bfd_boolean
+static bool
 elfNN_kvx_allocate_local_symbols (bfd *abfd, unsigned number)
 {
   struct elf_kvx_local_symbol *locals;
@@ -3157,15 +3153,15 @@ elfNN_kvx_allocate_local_symbols (bfd *abfd, unsigned number)
       locals = (struct elf_kvx_local_symbol *)
 	bfd_zalloc (abfd, number * sizeof (struct elf_kvx_local_symbol));
       if (locals == NULL)
-	return FALSE;
+	return false;
       elf_kvx_locals (abfd) = locals;
     }
-  return TRUE;
+  return true;
 }
 
 /* Create the .got section to hold the global offset table.  */
 
-static bfd_boolean
+static bool
 kvx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 {
   const struct elf_backend_data *bed = get_elf_backend_data (abfd);
@@ -3177,7 +3173,7 @@ kvx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
   /* This function may be called more than once.  */
   s = bfd_get_linker_section (abfd, ".got");
   if (s != NULL)
-    return TRUE;
+    return true;
 
   flags = bed->dynamic_sec_flags;
 
@@ -3189,13 +3185,13 @@ kvx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
   if (s == NULL
           || !bfd_set_section_alignment (s, bed->s->log_file_align))
 
-    return FALSE;
+    return false;
   htab->srelgot = s;
 
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   if (s == NULL
       || !bfd_set_section_alignment (s, bed->s->log_file_align))
-    return FALSE;
+    return false;
   htab->sgot = s;
   htab->sgot->size += GOT_ENTRY_SIZE;
 
@@ -3209,7 +3205,7 @@ kvx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 				       "_GLOBAL_OFFSET_TABLE_");
       elf_hash_table (info)->hgot = h;
       if (h == NULL)
-	return FALSE;
+	return false;
     }
 
   if (bed->want_got_plt)
@@ -3218,7 +3214,7 @@ kvx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
       if (s == NULL
 	  || !bfd_set_section_alignment (s,
 					 bed->s->log_file_align))
-	return FALSE;
+	return false;
       htab->sgotplt = s;
     }
 
@@ -3230,12 +3226,12 @@ kvx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
     htab->dynobj = abfd;
   }
 
-  return TRUE;
+  return true;
 }
 
 /* Look through the relocs for a section during the first phase.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 			    asection *sec, const Elf_Internal_Rela *relocs)
 {
@@ -3248,7 +3244,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
   struct elf_kvx_link_hash_table *htab;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   BFD_ASSERT (is_kvx_elf (abfd));
 
@@ -3274,7 +3270,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	{
 	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%pB: bad symbol index: %d"), abfd, r_symndx);
-	  return FALSE;
+	  return false;
 	}
 
       if (r_symndx < symtab_hdr->sh_info)
@@ -3283,7 +3279,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
 					abfd, r_symndx);
 	  if (isym == NULL)
-	    return FALSE;
+	    return false;
 
           h = NULL;
 	}
@@ -3363,10 +3359,10 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  htab->root.dynobj = abfd;
 
 		sreloc = _bfd_elf_make_dynamic_reloc_section
-		  (sec, htab->root.dynobj, LOG_FILE_ALIGN, abfd, /*rela? */ TRUE);
+		  (sec, htab->root.dynobj, LOG_FILE_ALIGN, abfd, /*rela? */ true);
 
 		if (sreloc == NULL)
-		  return FALSE;
+		  return false;
 	      }
 
 	    /* If this is a global symbol, we count the number of
@@ -3387,7 +3383,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		isym = bfd_sym_from_r_symndx (&htab->sym_cache,
 					      abfd, r_symndx);
 		if (isym == NULL)
-		  return FALSE;
+		  return false;
 
 		s = bfd_section_from_elf_index (abfd, isym->st_shndx);
 		if (s == NULL)
@@ -3406,7 +3402,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		p = ((struct elf_dyn_relocs *)
 		     bfd_zalloc (htab->root.dynobj, amt));
 		if (p == NULL)
-		  return FALSE;
+		  return false;
 		p->next = *head;
 		*head = p;
 		p->sec = sec;
@@ -3468,7 +3464,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 
 		if (!elfNN_kvx_allocate_local_symbols
 		    (abfd, symtab_hdr->sh_info))
-		  return FALSE;
+		  return false;
 
 		locals = elf_kvx_locals (abfd);
 		BFD_ASSERT (r_symndx < symtab_hdr->sh_info);
@@ -3507,7 +3503,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	    if (htab->root.dynobj == NULL)
 	      htab->root.dynobj = abfd;
 	    if (! kvx_elf_create_got_section (htab->root.dynobj, info))
-	      return FALSE;
+	      return false;
 	    break;
 	  }
 
@@ -3525,7 +3521,7 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	    if (htab->root.dynobj == NULL)
 	      htab->root.dynobj = abfd;
 	    if (! kvx_elf_create_got_section (htab->root.dynobj, info))
-	      return FALSE;
+	      return false;
 	    break;
 
 	case BFD_RELOC_KVX_PCREL27:
@@ -3547,20 +3543,20 @@ elfNN_kvx_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
-static bfd_boolean
+static bool
 elfNN_kvx_init_file_header (bfd *abfd, struct bfd_link_info *link_info)
 {
   Elf_Internal_Ehdr *i_ehdrp;	/* ELF file header, internal form.  */
 
   if (!_bfd_elf_init_file_header (abfd, link_info))
-    return FALSE;
+    return false;
 
   i_ehdrp = elf_elfheader (abfd);
   i_ehdrp->e_ident[EI_ABIVERSION] = KVX_ELF_ABI_VERSION;
-  return TRUE;
+  return true;
 }
 
 static enum elf_reloc_type_class
@@ -3603,7 +3599,7 @@ typedef struct
 
 /* Output a single local symbol for a generated stub.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_output_stub_sym (output_arch_syminfo *osi, const char *name,
 			       bfd_vma offset, bfd_vma size)
 {
@@ -3618,7 +3614,7 @@ elfNN_kvx_output_stub_sym (output_arch_syminfo *osi, const char *name,
   return osi->func (osi->finfo, name, &sym, osi->sec, NULL) == 1;
 }
 
-static bfd_boolean
+static bool
 kvx_map_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
 {
   struct elf_kvx_stub_hash_entry *stub_entry;
@@ -3636,7 +3632,7 @@ kvx_map_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
   /* Ensure this stub is attached to the current section being
      processed.  */
   if (stub_sec != osi->sec)
-    return TRUE;
+    return true;
 
   addr = (bfd_vma) stub_entry->stub_offset;
 
@@ -3647,19 +3643,19 @@ kvx_map_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
     case kvx_stub_long_branch:
       if (!elfNN_kvx_output_stub_sym
 	  (osi, stub_name, addr, sizeof (elfNN_kvx_long_branch_stub)))
-	return FALSE;
+	return false;
       break;
 
     default:
       abort ();
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Output mapping symbols for linker generated sections.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_output_arch_local_syms (bfd *output_bfd,
 				      struct bfd_link_info *info,
 				      void *finfo,
@@ -3702,19 +3698,19 @@ elfNN_kvx_output_arch_local_syms (bfd *output_bfd,
 
   /* Finally, output mapping symbols for the PLT.  */
   if (!htab->root.splt || htab->root.splt->size == 0)
-    return TRUE;
+    return true;
 
   osi.sec_shndx = _bfd_elf_section_from_bfd_section
     (output_bfd, htab->root.splt->output_section);
   osi.sec = htab->root.splt;
 
-  return TRUE;
+  return true;
 
 }
 
 /* Allocate target specific section data.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_new_section_hook (bfd *abfd, asection *sec)
 {
   if (!sec->used_by_bfd)
@@ -3724,7 +3720,7 @@ elfNN_kvx_new_section_hook (bfd *abfd, asection *sec)
 
       sdata = bfd_zalloc (abfd, amt);
       if (sdata == NULL)
-	return FALSE;
+	return false;
       sec->used_by_bfd = sdata;
     }
 
@@ -3735,7 +3731,7 @@ elfNN_kvx_new_section_hook (bfd *abfd, asection *sec)
    the got, plt, gotplt and their relocation sections are all created in the
    standard part of the bfd elf backend.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_create_dynamic_sections (bfd *dynobj,
 				       struct bfd_link_info *info)
 {
@@ -3743,10 +3739,10 @@ elfNN_kvx_create_dynamic_sections (bfd *dynobj,
 
   /* We need to create .got section.  */
   if (!kvx_elf_create_got_section (dynobj, info))
-    return FALSE;
+    return false;
 
   if (!_bfd_elf_create_dynamic_sections (dynobj, info))
-    return FALSE;
+    return false;
 
   htab = elf_kvx_hash_table (info);
   htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
@@ -3756,14 +3752,14 @@ elfNN_kvx_create_dynamic_sections (bfd *dynobj,
   if (!htab->sdynbss || (!bfd_link_pic (info) && !htab->srelbss))
     abort ();
 
-  return TRUE;
+  return true;
 }
 
 
 /* Allocate space in .plt, .got and associated reloc sections for
    dynamic relocs.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
@@ -3781,7 +3777,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
      symbol instance.
    */
   if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
+    return true;
 
   if (h->root.type == bfd_link_hash_warning)
     h = (struct elf_link_hash_entry *) h->root.u.i.link;
@@ -3796,7 +3792,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       if (h->dynindx == -1 && !h->forced_local)
 	{
 	  if (!bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       if (bfd_link_pic (info) || WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, 0, h))
@@ -3861,7 +3857,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
   if (h->got.refcount > 0)
     {
-      bfd_boolean dyn;
+      bool dyn;
       unsigned got_type = elf_kvx_hash_entry (h)->got_type;
 
       h->got.offset = (bfd_vma) - 1;
@@ -3873,7 +3869,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       if (dyn && h->dynindx == -1 && !h->forced_local)
 	{
 	  if (!bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
       if (got_type == GOT_UNKNOWN)
@@ -3882,7 +3878,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	    (_("relocation against `%s' has faulty GOT type "),
 	     (h) ? h->root.root.string : "a local symbol");
 	  bfd_set_error (bfd_error_bad_value);
-	  return FALSE;
+	  return false;
 	}
       else if (got_type == GOT_NORMAL)
 	{
@@ -3937,7 +3933,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     }
 
   if (h->dyn_relocs == NULL)
-    return TRUE;
+    return true;
 
   /* In the shared -Bsymbolic case, discard space allocated for
      dynamic pc-relative relocs against symbols which turn out to be
@@ -3980,7 +3976,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  else if (h->dynindx == -1
 		   && !h->forced_local
 		   && !bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 	}
 
     }
@@ -4002,7 +3998,7 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  if (h->dynindx == -1
 	      && !h->forced_local
 	      && !bfd_elf_link_record_dynamic_symbol (info, h))
-	    return FALSE;
+	    return false;
 
 	  /* If that succeeded, we know we'll be keeping all the
 	     relocs.  */
@@ -4027,12 +4023,12 @@ elfNN_kvx_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
       sreloc->size += p->count * RELOC_SIZE (htab);
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Find any dynamic relocs that apply to read-only sections.  */
 
-static bfd_boolean
+static bool
 kvx_readonly_dynrelocs (struct elf_link_hash_entry * h, void * inf)
 {
   struct elf_dyn_relocs * p;
@@ -4048,22 +4044,22 @@ kvx_readonly_dynrelocs (struct elf_link_hash_entry * h, void * inf)
 	  info->flags |= DF_TEXTREL;
 
 	  /* Not an error, just cut short the traversal.  */
-	  return FALSE;
+	  return false;
 	}
     }
-  return TRUE;
+  return true;
 }
 
 /* This is the most important function of all . Innocuosly named
    though !  */
-static bfd_boolean
+static bool
 elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 				     struct bfd_link_info *info)
 {
   struct elf_kvx_link_hash_table *htab;
   bfd *dynobj;
   asection *s;
-  bfd_boolean relocs;
+  bool relocs;
   bfd *ibfd;
 
   htab = elf_kvx_hash_table ((info));
@@ -4132,13 +4128,13 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  if (locals[i].got_refcount > 0)
 	    {
 	      unsigned got_type = locals[i].got_type;
-	      if (got_type & GOT_TLS_GD)
+	      if (got_type & (GOT_TLS_GD | GOT_TLS_LD))
 	      	{
 	      	  locals[i].got_offset = htab->root.sgot->size;
 	      	  htab->root.sgot->size += GOT_ENTRY_SIZE * 2;
 	      	}
 
-	      if (got_type & (GOT_NORMAL | GOT_TLS_IE | GOT_TLS_LD))
+	      if (got_type & (GOT_NORMAL | GOT_TLS_IE ))
 		{
 		  locals[i].got_offset = htab->root.sgot->size;
 		  htab->root.sgot->size += GOT_ENTRY_SIZE;
@@ -4183,7 +4179,7 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   /* We now have determined the sizes of the various dynamic sections.
      Allocate memory for them.  */
-  relocs = FALSE;
+  relocs = false;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
       if ((s->flags & SEC_LINKER_CREATED) == 0)
@@ -4198,10 +4194,10 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
+      else if (startswith (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0 && s != htab->root.srelplt)
-	    relocs = TRUE;
+	    relocs = true;
 
 	  /* We use the reloc_count field as a counter if we need
 	     to copy relocs into the output file.  */
@@ -4240,7 +4236,7 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
          of garbage.  */
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
-	return FALSE;
+	return false;
     }
 
   if (htab->root.dynamic_sections_created)
@@ -4256,7 +4252,7 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       if (bfd_link_executable (info))
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
-	    return FALSE;
+	    return false;
 	}
 
       if (htab->root.splt->size != 0)
@@ -4265,7 +4261,7 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
 	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
 	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
+	    return false;
 	}
 
       if (relocs)
@@ -4273,7 +4269,7 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  if (!add_dynamic_entry (DT_RELA, 0)
 	      || !add_dynamic_entry (DT_RELASZ, 0)
 	      || !add_dynamic_entry (DT_RELAENT, RELOC_SIZE (htab)))
-	    return FALSE;
+	    return false;
 
 	  /* If any dynamic relocs apply to a read-only section,
 	     then we need a DT_TEXTREL entry.  */
@@ -4284,13 +4280,13 @@ elfNN_kvx_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  if ((info->flags & DF_TEXTREL) != 0)
 	    {
 	      if (!add_dynamic_entry (DT_TEXTREL, 0))
-		return FALSE;
+		return false;
 	    }
 	}
     }
 #undef add_dynamic_entry
 
-  return TRUE;
+  return true;
 }
 
 static inline void
@@ -4383,14 +4379,14 @@ elfNN_kvx_create_small_pltn_entry (struct elf_link_hash_entry *h,
 /* Size sections even though they're not dynamic.  We use it to setup
    _TLS_MODULE_BASE_, if needed.  */
 
-static bfd_boolean
+static bool
 elfNN_kvx_always_size_sections (bfd *output_bfd,
 				    struct bfd_link_info *info)
 {
   asection *tls_sec;
 
   if (bfd_link_relocatable (info))
-    return TRUE;
+    return true;
 
   tls_sec = elf_hash_table (info)->tls_sec;
 
@@ -4399,7 +4395,7 @@ elfNN_kvx_always_size_sections (bfd *output_bfd,
       struct elf_link_hash_entry *tlsbase;
 
       tlsbase = elf_link_hash_lookup (elf_hash_table (info),
-				      "_TLS_MODULE_BASE_", TRUE, TRUE, FALSE);
+				      "_TLS_MODULE_BASE_", true, true, false);
 
       if (tlsbase)
 	{
@@ -4409,23 +4405,23 @@ elfNN_kvx_always_size_sections (bfd *output_bfd,
 
 	  if (!(_bfd_generic_link_add_one_symbol
 		(info, output_bfd, "_TLS_MODULE_BASE_", BSF_LOCAL,
-		 tls_sec, 0, NULL, FALSE, bed->collect, &h)))
-	    return FALSE;
+		 tls_sec, 0, NULL, false, bed->collect, &h)))
+	    return false;
 
 	  tlsbase->type = STT_TLS;
 	  tlsbase = (struct elf_link_hash_entry *) h;
 	  tlsbase->def_regular = 1;
 	  tlsbase->other = STV_HIDDEN;
-	  (*bed->elf_backend_hide_symbol) (info, tlsbase, TRUE);
+	  (*bed->elf_backend_hide_symbol) (info, tlsbase, true);
 	}
     }
 
-  return TRUE;
+  return true;
 }
 
 /* Finish up dynamic symbol handling.  We set the contents of various
    dynamic sections here.  */
-static bfd_boolean
+static bool
 elfNN_kvx_finish_dynamic_symbol (bfd *output_bfd,
 				     struct bfd_link_info *info,
 				     struct elf_link_hash_entry *h,
@@ -4505,7 +4501,7 @@ elfNN_kvx_finish_dynamic_symbol (bfd *output_bfd,
 	if (bfd_link_pic (info) && SYMBOL_REFERENCES_LOCAL (info, h))
 	{
 	  if (!h->def_regular)
-	    return FALSE;
+	    return false;
 
 	  /* in case of PLT related GOT entry, it is not clear who is
 	     supposed to set the LSB of GOT entry...
@@ -4563,7 +4559,7 @@ elfNN_kvx_finish_dynamic_symbol (bfd *output_bfd,
 	  || h == elf_hash_table (info)->hgot))
     sym->st_shndx = SHN_ABS;
 
-  return TRUE;
+  return true;
 }
 
 static void
@@ -4577,7 +4573,7 @@ elfNN_kvx_init_small_plt0_entry (bfd *output_bfd ATTRIBUTE_UNUSED,
     PLT_ENTRY_SIZE;
 }
 
-static bfd_boolean
+static bool
 elfNN_kvx_finish_dynamic_sections (bfd *output_bfd,
 				       struct bfd_link_info *info)
 {
@@ -4660,7 +4656,7 @@ elfNN_kvx_finish_dynamic_sections (bfd *output_bfd,
 	{
 	  (*_bfd_error_handler)
 	    (_("discarded output section: `%pA'"), htab->root.sgotplt);
-	  return FALSE;
+	  return false;
 	}
 
       /* Fill in the first three entries in the global offset table.  */
@@ -4695,7 +4691,7 @@ elfNN_kvx_finish_dynamic_sections (bfd *output_bfd,
     elf_section_data (htab->root.sgot->output_section)->this_hdr.sh_entsize
       = GOT_ENTRY_SIZE;
 
-  return TRUE;
+  return true;
 }
 
 /* Return address for Ith PLT stub in section PLT, for relocation REL

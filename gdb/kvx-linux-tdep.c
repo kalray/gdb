@@ -75,9 +75,8 @@ static struct gdbarch *
 kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
+  kvx_gdbarch_tdep *tdep;
   const struct target_desc *tdesc = info.target_desc;
-  struct tdesc_arch_data *tdesc_data = NULL;
   int i;
   int has_lc = -1, has_le = -1, has_ls = -1, has_cs = -1;
   int has_ra = -1, has_pc = -1, has_sp = -1, has_local = -1, has_r0 = -1;
@@ -100,7 +99,7 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (tdesc == NULL)
     tdesc = tdesc_kvx_linux;
 
-  tdep = (struct gdbarch_tdep *) xzalloc (sizeof (struct gdbarch_tdep));
+  tdep = (kvx_gdbarch_tdep *) xzalloc (sizeof (kvx_gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
 
   pc_name = kvx_pc_name (gdbarch);
@@ -120,8 +119,8 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (tdesc_has_registers (tdesc))
     {
       set_gdbarch_num_regs (gdbarch, 0);
-      tdesc_data = tdesc_data_alloc ();
-      tdesc_use_registers (gdbarch, tdesc, tdesc_data);
+      tdesc_arch_data_up tdesc_data = tdesc_data_alloc ();
+      tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data));
 
       for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
 	{
@@ -237,7 +236,7 @@ static void
 attach_user_command (const char *args, int from_tty)
 {
   static const char *syntax
-    = "Syntax: attach-user <comm> [<path_in_initrd_kvx_linux_program>]\n";
+    = "Syntax: attach-user <comm> <path_in_initrd_kvx_linux_program>\n";
   const char *pargs;
   char file_dir[PATH_MAX];
   std::string kvx_comm, comm, file, cmd;
@@ -328,7 +327,7 @@ attach_user_command (const char *args, int from_tty)
 #endif
 
 static void
-kvx_inferior_created (struct target_ops *target, int from_tty)
+kvx_inferior_created (struct inferior *inf)
 {
   kvx_current_arch = KVX_NUM_ARCHES;
 }
@@ -342,7 +341,7 @@ kvx_linux_supply_collect_gregset (struct regcache *rc, int regnum,
 {
   uint64_t *p = (uint64_t *) gregs_buf;
   gdbarch *gdbarch = rc->arch ();
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
   int pc_regnum = gdbarch_pc_regnum (gdbarch);
   const int sfrs[] = {tdep->lc_regnum, tdep->le_regnum, tdep->ls_regnum,
 		      tdep->ra_regnum, tdep->cs_regnum, pc_regnum};
@@ -417,7 +416,7 @@ kvx_linux_core_read_description (struct gdbarch *gdbarch,
 static void
 kvx_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  linux_init_abi (info, gdbarch);
+  linux_init_abi (info, gdbarch, 0);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 					 svr4_lp64_fetch_link_map_offsets);
@@ -443,9 +442,17 @@ add_kvx_commands (void)
 #endif
 }
 
+int
+htab_eq_string (const void *a, const void *b) __attribute__ ((weak));
+int
+htab_eq_string (const void *a, const void *b)
+{
+  return strcmp ((const char *) a, (const char *) b) == 0;
+}
+
 extern initialize_file_ftype _initialize_kvx_linux_tdep;
 void
-_initialize_kvx_linux_tdep (void)
+_initialize_kvx_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_kvx, bfd_mach_kv3_1_64, GDB_OSABI_LINUX,
 			  kvx_linux_init_abi);
@@ -456,11 +463,12 @@ _initialize_kvx_linux_tdep (void)
 
 extern initialize_file_ftype _initialize_kvx_tdep;
 void
-_initialize_kvx_tdep (void)
+_initialize_kvx_tdep ()
 {
   kvx_look_for_insns ();
   gdbarch_register (bfd_arch_kvx, kvx_gdbarch_init, NULL);
-  gdb::observers::inferior_created.attach (kvx_inferior_created);
+  gdb::observers::inferior_created.attach (kvx_inferior_created,
+					   "kvx-linux-tdep");
 
   initialize_tdesc_kvx_linux ();
 }

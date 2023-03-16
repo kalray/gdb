@@ -35,6 +35,7 @@
 #include "regcache.h"
 #include "objfiles.h"
 #include "thread-fsm.h"
+#include "interps.h"
 #include "progspace-and-thread.h"
 #include "remote.h"
 
@@ -65,41 +66,20 @@ static bool use_all_stop = false;
 struct kvx_target final : public target_ops
 {
 public:
-  virtual strata
-  stratum (void) const override
-  {
-    return arch_stratum;
-  }
+  virtual strata stratum (void) const override { return arch_stratum; }
 
-  virtual const target_info &
-  info (void) const override
+  virtual const target_info &info (void) const override
   {
     return kvx_target_info;
   }
 
-  virtual bool
-  can_create_inferior (void) override
-  {
-    return true;
-  }
+  virtual bool can_create_inferior (void) override { return true; }
 
-  virtual bool
-  filesystem_is_local (void) override
-  {
-    return true;
-  }
+  virtual bool filesystem_is_local (void) override { return true; }
 
-  virtual bool
-  can_run (void) override
-  {
-    return true;
-  }
+  virtual bool can_run (void) override { return true; }
 
-  virtual bool
-  can_attach (void) override
-  {
-    return false;
-  }
+  virtual bool can_attach (void) override { return false; }
 
   virtual void attach (const char *args, int from_tty) override;
 
@@ -109,25 +89,16 @@ public:
   virtual void mourn_inferior (void) override;
 
   virtual ptid_t wait (ptid_t ptid, struct target_waitstatus *status,
-		       int TARGET_DEBUG_PRINTER (target_debug_print_options)
-			 options)
+		       target_wait_flags options)
     TARGET_DEFAULT_FUNC (default_target_wait) override;
 
   virtual void resume (ptid_t ptid,
 		       int TARGET_DEBUG_PRINTER (target_debug_print_step) step,
 		       enum gdb_signal signal) override;
 
-  virtual bool
-  supports_non_stop (void) override
-  {
-    return !use_all_stop;
-  }
+  virtual bool supports_non_stop (void) override { return !use_all_stop; }
 
-  virtual bool
-  can_async_p (void) override
-  {
-    return target_async_permitted;
-  }
+  virtual bool can_async_p (void) override { return target_async_permitted; }
 
   virtual std::string pid_to_str (ptid_t ptid) override;
 
@@ -135,14 +106,12 @@ public:
 
   virtual void fetch_registers (struct regcache *rc, int regnum) override;
 
-  virtual int
-  region_ok_for_hw_watchpoint (CORE_ADDR addr, int len) override
+  virtual int region_ok_for_hw_watchpoint (CORE_ADDR addr, int len) override
   {
     return 1;
   }
 
-  static int
-  can_use_hw_breakpoint_cb (struct breakpoint *b, void *d)
+  static int can_use_hw_breakpoint_cb (struct breakpoint *b, void *d)
   {
     int *cb_par = (int *) d;
 
@@ -156,8 +125,7 @@ public:
     return 0;
   }
 
-  virtual int
-  can_use_hw_breakpoint (enum bptype type, int cnt, int ot) override
+  virtual int can_use_hw_breakpoint (enum bptype type, int cnt, int ot) override
   {
     int no_wb, cb_par[2] = {0, type};
 
@@ -185,12 +153,13 @@ public:
       return (cnt <= no_wb) ? 1 : -1;
 
     /* Count the number of hardware watchpoints of other types*/
-    breakpoint_find_if (&can_use_hw_breakpoint_cb, cb_par);
+    for (breakpoint *b : all_breakpoints ())
+      can_use_hw_breakpoint_cb (b, cb_par);
+
     return (cb_par[0] + cnt <= no_wb) ? 1 : -1;
   }
 
-  virtual void
-  interrupt (void) override
+  virtual void interrupt (void) override
   {
     if (inferior_ptid == null_ptid)
       return;
@@ -214,19 +183,19 @@ public:
 };
 
 static struct kvx_target the_kvx_target;
-static char *da_options = NULL;
+static std::string da_options;
 
 static struct cmd_list_element *kalray_set_cmdlist;
 static struct cmd_list_element *kalray_set_traps_cmdlist;
 static struct cmd_list_element *kalray_show_traps_cmdlist;
 static struct cmd_list_element *kalray_show_cmdlist;
 static const char *simulation_vehicles[] = {"kvx-cluster", NULL};
-static const char *simulation_vehicle;
+static const char *simulation_vehicle = simulation_vehicles[0];
 static const char *sopts_cluster_stop_all[]
   = {"none", "jtag", "break_mask", NULL};
 static const char *sopts_cluster_debug_ring[] = {"all", "current", NULL};
-static const char *sopt_cluster_debug_ring;
-static const char *sopt_cluster_stop_all;
+static const char *sopt_cluster_debug_ring = sopts_cluster_debug_ring[0];
+static const char *sopt_cluster_stop_all = sopts_cluster_stop_all[0];
 static const char *traps_name[] = {"opcode",
 				   "misalign",
 				   "psys",
@@ -244,6 +213,7 @@ static int no_traps_name = sizeof (traps_name) / sizeof (traps_name[0]);
 char cjtag_over_iss = 'n';
 bool opt_break_on_spawn = false;
 bool opt_cont_os_init_done = true;
+bool opt_compact_asm = true;
 int opt_cluster_stop_all = 0;
 int in_attach_mppa = 0;
 int new_attach_requested = 0;
@@ -252,7 +222,13 @@ int after_first_resume = 0;
 bool opt_trap = false;
 int wait_os_init_done = 0;
 
-static const struct inferior_data *kvx_attached_inf_data;
+struct kvx_inf_data_deleter
+{
+  void operator() (kvx_inferior_data *inf_data) { xfree (inf_data); }
+};
+
+static const registry<inferior>::key<kvx_inferior_data, kvx_inf_data_deleter>
+  kvx_inf_data_key;
 
 static bool
 in_sync_execution (void)
@@ -269,8 +245,10 @@ in_sync_execution (void)
 static void
 kvx_push_arch_stratum (struct target_ops *ops, int from_tty)
 {
-  if (!target_is_pushed (&the_kvx_target))
-    push_target (&the_kvx_target);
+  inferior *inf = current_inferior ();
+
+  if (!inf->target_is_pushed (&the_kvx_target))
+    inf->push_target (&the_kvx_target);
 }
 
 static void
@@ -296,7 +274,8 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
   const gdb::observers::token new_thread_token;
   int print_thread_events_save = print_thread_events;
   char *args_copy, *host, *port, *tar_remote_cmd;
-  bool retry_connection = false, hide_attach_warning = (exec_filename == NULL);
+  bool retry_connection = false;
+  bool hide_attach_warning = (current_program_space->exec_filename == nullptr);
   char *temp_exec_file = NULL;
 
   if (!args)
@@ -333,13 +312,15 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
      inhibits the emission of the new_thread observer notification
      that prints the initial MI *stopped message.
    */
-  gdb::observers::new_thread.attach (kvx_target_new_thread, new_thread_token);
+  gdb::observers::new_thread.attach (kvx_target_new_thread, new_thread_token,
+				     "kvx");
   async_disable_stdin ();
   // apply no executable warning hack
   if (hide_attach_warning)
     {
       temp_exec_file = strdup ("");
-      exec_filename = temp_exec_file;
+      current_program_space->exec_filename
+	= gdb::unique_xmalloc_ptr<char> (temp_exec_file);
     }
 
   do
@@ -349,10 +330,10 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
 	  execute_command (tar_remote_cmd, 0);
 	  retry_connection = false;
 	  // remove no executable warning hack
-	  if (hide_attach_warning && exec_filename == temp_exec_file)
+	  if (hide_attach_warning
+	      && current_program_space->exec_filename.get () == temp_exec_file)
 	    {
-	      free (exec_filename);
-	      exec_filename = NULL;
+	      current_program_space->exec_filename.reset (nullptr);
 	    }
 	}
       catch (gdb_exception &ex)
@@ -373,10 +354,11 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
 	      free (tar_remote_cmd);
 	      print_thread_events = print_thread_events_save;
 	      // remove no executable warning hack
-	      if (hide_attach_warning && exec_filename == temp_exec_file)
+	      if (hide_attach_warning
+		  && current_program_space->exec_filename.get ()
+		       == temp_exec_file)
 		{
-		  free (exec_filename);
-		  exec_filename = NULL;
+		  current_program_space->exec_filename.reset (nullptr);
 		}
 
 	      throw;
@@ -410,7 +392,7 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
   char set_pagination_off_cmd[] = "set pagination off";
   gdb_argv build_argv (args.c_str ());
   char **argv_args = build_argv.get ();
-  gdb_argv build_da_args (da_options);
+  gdb_argv build_da_args (da_options.c_str ());
   char **da_args = build_da_args.get ();
   char **stub_args;
   char **arg;
@@ -443,9 +425,10 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
   stub_args = (char **) xmalloc ((nb_args + nb_da_args + 7) * sizeof (char *));
   stub_args[argidx++] = (char *) simulation_vehicle;
 
-  core = (elf_elfheader (exec_bfd)->e_flags & ELF_KVX_CORE_MASK);
+  core = (elf_elfheader (current_program_space->exec_bfd ())->e_flags
+	  & ELF_KVX_CORE_MASK);
 
-  if (nb_da_args && strlen (da_options))
+  if (nb_da_args && strlen (da_options.c_str ()))
     {
       arg = da_args;
       while (*arg)
@@ -555,17 +538,17 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
     }
 }
 
-static struct inferior_data *
+static kvx_inferior_data *
 mppa_init_inferior_data (struct inferior *inf)
 {
-  struct inferior_data *data
-    = (struct inferior_data *) xcalloc (1, sizeof (struct inferior_data));
+  kvx_inferior_data *data
+    = (kvx_inferior_data *) xcalloc (1, sizeof (kvx_inferior_data));
   char *endptr;
   std::unique_ptr<osdata> od;
   int idx_items;
 
   data->cluster_break_on_spawn = 0;
-  set_inferior_data (inf, kvx_attached_inf_data, data);
+  kvx_inf_data_key.set (inf, data);
 
   /* Cluster name */
   data->cluster = "Cluster ?";
@@ -583,18 +566,17 @@ mppa_init_inferior_data (struct inferior *inf)
       if (pid != inf->pid)
 	continue;
 
-      data->cluster = cluster;
+      data->cluster = strdup (cluster);
       data->unified = unified && !strcmp (unified, "yes");
     }
 
   return data;
 }
 
-struct inferior_data *
+kvx_inferior_data *
 mppa_inferior_data (struct inferior *inf)
 {
-  struct inferior_data *data
-    = (struct inferior_data *) inferior_data (inf, kvx_attached_inf_data);
+  kvx_inferior_data *data = (kvx_inferior_data *) kvx_inf_data_key.get (inf);
 
   if (!data)
     data = mppa_init_inferior_data (inf);
@@ -605,7 +587,7 @@ mppa_inferior_data (struct inferior *inf)
 const char *
 get_cluster_name (struct inferior *inf)
 {
-  struct inferior_data *data = mppa_inferior_data (inf);
+  kvx_inferior_data *data = mppa_inferior_data (inf);
   if (!data || !data->cluster)
     return "[cluster unknown]";
 
@@ -616,20 +598,20 @@ void
 kvx_target::mourn_inferior (void)
 {
   struct target_ops *remote_target = this->beneath ();
-  inferior *inf, *crt_inf = current_inferior ();
+  inferior *crt_inf = current_inferior ();
 
   /* Force disconnect even if we are in extended mode */
-  for (inf = inferior_list; inf; inf = inf->next)
+  for (inferior &inf : inferior_list)
     {
-      set_current_inferior (inf);
-      set_current_program_space (inf->pspace);
+      set_current_inferior (&inf);
+      set_current_program_space (inf.pspace);
       remote_target->mourn_inferior ();
-      unpush_target (remote_target);
-      unpush_target (this);
+      inf.unpush_target (remote_target);
+      inf.unpush_target (this);
     }
   set_current_inferior (crt_inf);
   set_current_program_space (crt_inf->pspace);
-  push_target (this);
+  crt_inf->push_target (this);
 
   if (server_pid)
     {
@@ -638,17 +620,17 @@ kvx_target::mourn_inferior (void)
     }
 }
 
-void kvx_target_open (const char *name, int from_tty);
+void
+kvx_target_open (const char *name, int from_tty);
 void
 kvx_target_open (const char *name, int from_tty)
-{
-}
+{}
 
-void kvx_target_close (struct target_ops *ops);
+void
+kvx_target_close (struct target_ops *ops);
 void
 kvx_target_close (struct target_ops *ops)
-{
-}
+{}
 
 std::string
 kvx_target::pid_to_str (ptid_t ptid)
@@ -739,13 +721,12 @@ kvx_change_file (const char *file_path, const char *cluster_name)
   try
     {
       // remove no executable warning hack
-      if (exec_filename && !*exec_filename)
+      if (current_program_space->exec_filename.get ())
 	{
-	  xfree (exec_filename);
-	  exec_filename = NULL;
+	  current_program_space->exec_filename.reset (nullptr);
 	}
       exec_file_attach ((char *) file_path, 0);
-      symbol_file_add_main (file_path, 0);
+      symbol_file_command (file_path, 0);
       if (cjtag_over_iss == 'i')
 	{
 	  char path[PATH_MAX], *dn;
@@ -760,9 +741,10 @@ kvx_change_file (const char *file_path, const char *cluster_name)
 	    strcpy (path, dn);
 
 	  len_path = strlen (path);
-	  nb_bytes = snprintf (path + len_path, sizeof (path) - len_path,
-			       "/lib/kalray-oce/kvx/kv3_v%d_node_debug_handlers.u",
-			       get_kvx_arch () + 1);
+	  nb_bytes
+	    = snprintf (path + len_path, sizeof (path) - len_path,
+			"/lib/kalray-oce/kvx/kv3_v%d_node_debug_handlers.u",
+			get_kvx_arch () + 1);
 
 	  if (nb_bytes >= sizeof (path) - len_path)
 	    fprintf (stderr, "Error: the debug handlers path is too long\n");
@@ -832,7 +814,8 @@ kvx_new_inferiors_cb (void *arg)
   while (new_attach_requested || found_new);
 }
 
-void custom_notification_cb (const char *arg);
+void
+custom_notification_cb (const char *arg);
 void
 custom_notification_cb (const char *arg)
 {
@@ -864,8 +847,7 @@ struct os_init_done_fsm : public thread_fsm
 {
   os_init_done_fsm (struct interp *interp) : thread_fsm (interp) {}
 
-  virtual bool
-  should_stop (struct thread_info *thread) override
+  virtual bool should_stop (struct thread_info *thread) override
   {
     process_stratum_target *proc_target
       = (process_stratum_target *) get_current_remote_target ();
@@ -874,22 +856,22 @@ struct os_init_done_fsm : public thread_fsm
     return regcache_read_pc (rc) != 0;
   }
 
-  virtual enum async_reply_reason
-  do_async_reply_reason (void) override
+  virtual enum async_reply_reason do_async_reply_reason (void) override
   {
     return EXEC_ASYNC_LOCATION_REACHED;
   }
 };
 
 ptid_t
-kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
+kvx_target::wait (ptid_t ptid, struct target_waitstatus *status,
+		  target_wait_flags options)
 {
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
   struct target_ops *remote_target = this->beneath ();
   ptid_t res;
   struct inferior *inferior;
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   struct regcache *rc;
   int idx_items, booted;
 
@@ -934,16 +916,13 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
 	    }
 
 	  if (!after_first_resume)
-	    status->value.sig = GDB_SIGNAL_TRAP;
+	    status->set_stopped (GDB_SIGNAL_TRAP);
 	  else
 	    {
 	      if (data->cluster_break_on_spawn)
-		{
-		  status->kind = TARGET_WAITKIND_STOPPED;
-		  status->value.sig = GDB_SIGNAL_TRAP;
-		}
+		status->set_stopped (GDB_SIGNAL_TRAP);
 	      else
-		status->kind = TARGET_WAITKIND_SPURIOUS;
+		status->set_spurious ();
 	    }
 	  break;
 	}
@@ -968,7 +947,7 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
 					 data->saved_os_init_done_syl);
 	  kvx_bare_solib_load_debug_info ();
 	  if (after_first_resume)
-	    status->kind = TARGET_WAITKIND_SPURIOUS;
+	    status->set_spurious ();
 	  if (save_ptid != null_ptid)
 	    switch_to_thread (proc_target, save_ptid);
 	}
@@ -982,7 +961,7 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
     {
       if (after_first_resume && !booted)
 	{
-	  if (status->kind == TARGET_WAITKIND_SPURIOUS)
+	  if (status->kind () == TARGET_WAITKIND_SPURIOUS)
 	    {
 	      ptid_t save_ptid = inferior_ptid;
 
@@ -1002,9 +981,10 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status, int options)
 	  switch_to_thread (proc_target, res);
 
 	  tp = inferior_thread ();
-	  if (tp && !tp->thread_fsm && kvx_prepare_os_init_done ())
+	  if (tp && !tp->thread_fsm () && kvx_prepare_os_init_done ())
 	    {
-	      tp->thread_fsm = new os_init_done_fsm (command_interp ());
+	      tp->set_thread_fsm (std::unique_ptr<thread_fsm> (
+		new os_init_done_fsm (command_interp ())));
 	    }
 
 	  if (save_ptid != null_ptid)
@@ -1052,23 +1032,23 @@ set_kalray_cmd (const char *args, int from_tty)
 }
 
 static void
+show_kalray_cmd (const char *args, int from_tty)
+{
+  help_list (kalray_show_cmdlist, "show kalray ", all_commands, gdb_stdout);
+}
+
+static void
 set_kalray_traps_cmd (const char *args, int from_tty)
 {
-  help_list (kalray_set_traps_cmdlist, "intercept-traps ", all_commands,
-	     gdb_stdout);
+  help_list (kalray_set_traps_cmdlist, "show kalray intercept-traps ",
+	     all_commands, gdb_stdout);
 }
 
 static void
 show_kalray_traps_cmd (const char *args, int from_tty)
 {
-  help_list (kalray_show_traps_cmdlist, "show kalray ", all_commands,
-	     gdb_stdout);
-}
-
-static void
-show_kalray_cmd (const char *args, int from_tty)
-{
-  help_list (kalray_show_cmdlist, "show kalray ", all_commands, gdb_stdout);
+  help_list (kalray_show_traps_cmdlist, "show kalray intercept-traps ",
+	     all_commands, gdb_stdout);
 }
 
 static void
@@ -1076,7 +1056,7 @@ set_cluster_break_on_spawn (const char *args, int from_tty,
 			    struct cmd_list_element *c)
 {
   struct inferior *inf;
-  struct inferior_data *data;
+  kvx_inferior_data *data;
 
   if (inferior_ptid == null_ptid)
     error (_ ("Cannot set break on reset without a selected thread."));
@@ -1091,7 +1071,7 @@ static void
 show_cluster_break_on_spawn (struct ui_file *file, int from_tty,
 			     struct cmd_list_element *c, const char *value)
 {
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
 
@@ -1104,16 +1084,29 @@ show_cluster_break_on_spawn (struct ui_file *file, int from_tty,
 
   data = mppa_inferior_data (
     find_inferior_pid (proc_target, inferior_ptid.pid ()));
-  fprintf_filtered (file, "The cluster break on reset is %d.\n",
-		    data->cluster_break_on_spawn);
+  gdb_printf (file, "The cluster break on reset is %d.\n",
+	      data->cluster_break_on_spawn);
 }
 
 static void
 show_cont_os_init_done (struct ui_file *file, int from_tty,
 			struct cmd_list_element *c, const char *value)
 {
-  fprintf_filtered (file, "Continue until OS initialization is done is %d.\n",
-		    opt_cont_os_init_done);
+  gdb_printf (file, "Continue until OS initialization is done is %d.\n",
+	      opt_cont_os_init_done);
+}
+
+static void
+show_compact_asm (struct ui_file *file, int from_tty,
+		  struct cmd_list_element *c, const char *value)
+{
+  gdb_printf (file, "Compact assembly is %d.\n", opt_compact_asm);
+}
+
+static void
+set_compact_asm (const char *args, int from_tty, struct cmd_list_element *c)
+{
+  set_parse_compact_asm (opt_compact_asm);
 }
 
 static int
@@ -1132,7 +1125,7 @@ static void
 set_intercept_trap (const char *args, int from_tty, struct cmd_list_element *c)
 {
   struct inferior *inf;
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   int trap_idx;
 
   trap_idx = get_trap_index (c->name);
@@ -1154,7 +1147,7 @@ static void
 show_intercept_trap (struct ui_file *file, int from_tty,
 		     struct cmd_list_element *c, const char *value)
 {
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   int trap_idx;
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
@@ -1172,8 +1165,8 @@ show_intercept_trap (struct ui_file *file, int from_tty,
 
   data = mppa_inferior_data (
     find_inferior_pid (proc_target, inferior_ptid.pid ()));
-  fprintf_filtered (file, "Intercept %s trap is %s.\n", c->name,
-		    ((data->intercept_trap >> trap_idx) & 1) ? "on" : "off");
+  gdb_printf (file, "Intercept %s trap is %s.\n", c->name,
+	      ((data->intercept_trap >> trap_idx) & 1) ? "on" : "off");
 }
 
 static void
@@ -1181,7 +1174,7 @@ set_intercept_trap_mask (const char *args, int from_tty,
 			 struct cmd_list_element *c)
 {
   struct inferior *inf;
-  struct inferior_data *data;
+  kvx_inferior_data *data;
 
   if (inferior_ptid == null_ptid)
     error (_ ("Cannot set intercept trap without a selected thread."));
@@ -1199,7 +1192,7 @@ static void
 show_intercept_trap_mask (struct ui_file *file, int from_tty,
 			  struct cmd_list_element *c, const char *value)
 {
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
 
@@ -1212,8 +1205,7 @@ show_intercept_trap_mask (struct ui_file *file, int from_tty,
 
   data = mppa_inferior_data (
     find_inferior_pid (proc_target, inferior_ptid.pid ()));
-  fprintf_filtered (file, "Intercept trap mask is 0x%04x.\n",
-		    data->intercept_trap);
+  gdb_printf (file, "Intercept trap mask is 0x%04x.\n", data->intercept_trap);
 }
 
 static int
@@ -1231,7 +1223,7 @@ set_cluster_stop_all (const char *args, int from_tty,
 		      struct cmd_list_element *c)
 {
   struct inferior *inf;
-  struct inferior_data *data;
+  kvx_inferior_data *data;
 
   if (inferior_ptid == null_ptid)
     error (_ ("Cannot set stop all cluster CPUs without a selected thread."));
@@ -1247,7 +1239,7 @@ static void
 show_cluster_stop_all (struct ui_file *file, int from_tty,
 		       struct cmd_list_element *c, const char *value)
 {
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
 
@@ -1260,8 +1252,8 @@ show_cluster_stop_all (struct ui_file *file, int from_tty,
 
   data = mppa_inferior_data (
     find_inferior_pid (proc_target, inferior_ptid.pid ()));
-  fprintf_filtered (file, "Stop all cluster CPUs is %s.\n",
-		    sopts_cluster_stop_all[data->cluster_stop_all]);
+  gdb_printf (file, "Stop all cluster CPUs is %s.\n",
+	      sopts_cluster_stop_all[data->cluster_stop_all]);
 }
 
 static void
@@ -1269,7 +1261,7 @@ set_cluster_debug_ring (const char *args, int from_tty,
 			struct cmd_list_element *c)
 {
   struct inferior *inf;
-  struct inferior_data *data;
+  kvx_inferior_data *data;
 
   if (inferior_ptid == null_ptid)
     error (_ ("Cannot set cluster debug ring without a selected thread."));
@@ -1285,7 +1277,7 @@ static void
 show_cluster_debug_ring (struct ui_file *file, int from_tty,
 			 struct cmd_list_element *c, const char *value)
 {
-  struct inferior_data *data;
+  kvx_inferior_data *data;
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
 
@@ -1298,8 +1290,8 @@ show_cluster_debug_ring (struct ui_file *file, int from_tty,
 
   data = mppa_inferior_data (
     find_inferior_pid (proc_target, inferior_ptid.pid ()));
-  fprintf_filtered (file, "Cluster debug ring is %s.\n",
-		    sopts_cluster_debug_ring[data->cluster_debug_ring]);
+  gdb_printf (file, "Cluster debug ring is %s.\n",
+	      sopts_cluster_debug_ring[data->cluster_debug_ring]);
 }
 
 static void
@@ -1348,6 +1340,7 @@ attach_mppa_command (const char *args, int from_tty)
 	  unsigned long pid
 	    = strtoul (get_osdata_column (item, "pid")->c_str (), &endptr, 10);
 	  bool saved_print_inferior_events = print_inferior_events;
+	  bool saved_commit_resumed_state;
 	  thread_info *first_inf_thread;
 
 	  if (pid == cur_inf->pid || find_inferior_pid (proc_target, pid))
@@ -1363,8 +1356,11 @@ attach_mppa_command (const char *args, int from_tty)
 	  // send stop for the RM and initialize the inf (solib etc.)
 	  inf->needs_setup = 1;
 	  first_inf_thread = first_thread_of_inferior (inf);
+	  saved_commit_resumed_state = proc_target->commit_resumed_state;
+	  proc_target->commit_resumed_state = false;
 	  notice_new_inferior (first_inf_thread,
 			       first_inf_thread->state == THREAD_RUNNING, 0);
+	  proc_target->commit_resumed_state = saved_commit_resumed_state;
 
 	  inf->control.stop_soon = NO_STOP_QUIETLY;
 	  inf->removable = 1;
@@ -1410,7 +1406,7 @@ attach_mppa_command (const char *args, int from_tty)
 
 	  if (file && file[0])
 	    {
-	      struct inferior_data *data;
+	      kvx_inferior_data *data;
 
 	      switch_to_thread (any_live_thread_of_inferior (inf));
 	      data = mppa_inferior_data (current_inferior ());
@@ -1461,35 +1457,25 @@ run_mppa_command (const char *args, int from_tty)
   execute_command (run_cmd, 0);
 }
 
-static void
-mppa_inferior_data_cleanup (struct inferior *inf, void *data)
-{
-  xfree (data);
-}
-
 void
-_initialize__kvx_target (void)
+_initialize_kvx_target ()
 {
   int i;
 
   simulation_vehicle = simulation_vehicles[0];
   cjtag_over_iss = 'n';
 
-  //§add_target (&the_kvx_target);
-
   print_stopped_thread = 1;
 
   add_prefix_cmd ("kalray", class_maintenance, set_kalray_cmd,
 		  _ ("Kalray specific variables\n            Configure various "
 		     "Kalray specific variables."),
-		  &kalray_set_cmdlist, "set kalray ", 0 /* allow-unknown */,
-		  &setlist);
+		  &kalray_set_cmdlist, 0 /* allow-unknown */, &setlist);
 
   add_prefix_cmd ("kalray", class_maintenance, show_kalray_cmd,
 		  _ ("Kalray specific variables\n            Configure various "
 		     "Kalray specific variables."),
-		  &kalray_show_cmdlist, "show kalray ", 0 /* allow-unknown */,
-		  &showlist);
+		  &kalray_show_cmdlist, 0 /* allow-unknown */, &showlist);
 
   add_setshow_string_noescape_cmd (
     "debug_agent_options", class_maintenance, &da_options,
@@ -1542,17 +1528,21 @@ _initialize__kvx_target (void)
 			set_cluster_debug_ring, show_cluster_debug_ring,
 			&kalray_set_cmdlist, &kalray_show_cmdlist);
 
-  add_prefix_cmd (
-    "intercept-trap", class_maintenance, set_kalray_traps_cmd,
-    _ ("Configure what traps should be intercepted for the current cluster."),
-    &kalray_set_traps_cmdlist, "set kalray intercept-traps ",
-    0 /* allow-unknown */, &kalray_set_cmdlist);
+  add_setshow_boolean_cmd ("compact-asm", class_maintenance, &opt_compact_asm,
+			   _ ("Set compact assembly."),
+			   _ ("Show compact assembly."), NULL, set_compact_asm,
+			   show_compact_asm, &kalray_set_cmdlist,
+			   &kalray_show_cmdlist);
 
   add_prefix_cmd (
-    "intercept-trap", class_maintenance, show_kalray_traps_cmd,
+    "intercept-traps", class_maintenance, set_kalray_traps_cmd,
     _ ("Configure what traps should be intercepted for the current cluster."),
-    &kalray_show_traps_cmdlist, "show kalray intercept-traps ",
-    0 /* allow-unknown */, &kalray_show_cmdlist);
+    &kalray_set_traps_cmdlist, 0 /* allow-unknown */, &kalray_set_cmdlist);
+
+  add_prefix_cmd (
+    "intercept-traps", class_maintenance, show_kalray_traps_cmd,
+    _ ("Configure what traps should be intercepted for the current cluster."),
+    &kalray_show_traps_cmdlist, 0 /* allow-unknown */, &kalray_show_cmdlist);
 
   for (i = 0; i < no_traps_name; i++)
     {
@@ -1589,8 +1579,6 @@ _initialize__kvx_target (void)
 	      "[--asn=<asn>]\nIf --asn is not specified, "
 	      "display all matching entries."));
 
-  gdb::observers::inferior_created.attach (kvx_push_arch_stratum);
-  gdb::observers::inferior_added.attach (kvx_inf_added);
-  kvx_attached_inf_data
-    = register_inferior_data_with_cleanup (NULL, mppa_inferior_data_cleanup);
+  gdb::observers::inferior_created.attach (kvx_inf_added, "kvx");
+  gdb::observers::inferior_added.attach (kvx_inf_added, "kvx");
 }

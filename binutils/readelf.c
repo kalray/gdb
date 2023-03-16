@@ -2978,7 +2978,6 @@ get_machine_name (unsigned e_machine)
     case EM_ARC_COMPACT3_64:	return "Synopsys ARCv2.3 64-bit";
     case EM_MCS6502:		return "MOS Technology MCS 6502 processor";
     case EM_ARC_COMPACT3:	return "Synopsys ARCv2.3 32-bit";
-    case EM_KVX:		return "Kalray VLIW core of the MPPA processor family";
     case EM_65816:		return "WDC 65816/65C816";
     case EM_LOONGARCH:		return "LoongArch";
     case EM_KF32:		return "ChipON KungFu32";

@@ -40,4 +40,6 @@ int decode_prologue_epilogue_bundle (bfd_vma memaddr,
 				     struct disassemble_info *info,
 				     struct kvx_prologue_epilogue_bundle *pb);
 
+void parse_kvx_dis_option (const char *option);
+
 #endif

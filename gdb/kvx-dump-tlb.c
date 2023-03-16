@@ -7,6 +7,7 @@
 #include "remote.h"
 #include "utils.h"
 #include "gdbthread.h"
+#include "gdbsupport/buildargv.h"
 #include "kvx-target.h"
 #include "kvx-dump-tlb.h"
 

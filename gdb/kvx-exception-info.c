@@ -305,7 +305,7 @@ show_addr_info (uint64_t addr, int mme)
   min_sym = lookup_minimal_symbol_by_pc_section (addr, NULL);
   if (min_sym.minsym)
     {
-      int mst = MSYMBOL_TYPE (min_sym.minsym);
+      int mst = min_sym.minsym->type ();
       if (mst == mst_text || mst == mst_text_gnu_ifunc
 	  || mst == mst_solib_trampoline || mst == mst_file_text)
 	sym_type = "function";
@@ -471,7 +471,7 @@ show_debug_trap_info (union reg_es_s es)
 static void
 stopped_cpu_status (void)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (target_gdbarch ());
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (target_gdbarch ());
   struct regcache *reg_cache = get_current_regcache ();
   union reg_es_s es;
   uint64_t pc, spc, ea, ps;
@@ -620,7 +620,8 @@ show_debug_sfr_regs (void)
   int i, n, offset;
   remote_target *rt = get_current_remote_target ();
 
-  sprintf (buf, "qkalray.cpu_debug_sfrs:p%x.%lx", inferior_ptid.pid (), inferior_ptid.lwp ());
+  sprintf (buf, "qkalray.cpu_debug_sfrs:p%x.%lx", inferior_ptid.pid (),
+	   inferior_ptid.lwp ());
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
 

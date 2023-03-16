@@ -40,9 +40,10 @@ mi_gdb_test "5-complete bogus" \
             "-complete bogus"
 
 # Check completions for commands with space.
-mi_gdb_test "4-complete \"b mai\"" \
-            "4\\^done,completion=\"b main\",matches=\\\[.*\"b main\".*\\\],max_completions_reached=\"0\"" \
-            "-complete \"b mai\""
+# KVX: newlib is compiled with debug info (use "b mitest_mai" instead of "b mai")
+mi_gdb_test "4-complete \"b mitest_mai\"" \
+            "4\\^done,completion=\"b mitest_main\[^\"\]*\",matches=\\\[.*\"b mitest_main\[^\"\]*\".*\\\],max_completions_reached=\"0\"" \
+            "-complete \"b mitest_mai\""
 
 # Check wildmatching.
 mi_gdb_test "5-complete \"b push_ba\"" \

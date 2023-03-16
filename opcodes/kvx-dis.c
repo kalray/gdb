@@ -21,7 +21,6 @@
 #define DEFINE_TABLE
 
 #include "sysdep.h"
-#include "bfd_stdint.h"
 #include "disassemble.h"
 #include "libiberty.h"
 #include "opintl.h"
@@ -306,23 +305,23 @@ static int opt_pretty = 0;
 /* Option for not emiting a new line between all bundles */
 static int opt_compact_assembly = 0;
 
-static void
+void
 parse_kvx_dis_option (const char *option)
 {
   /* Try to match options that are simple flags */
-  if (CONST_STRNEQ (option, "pretty"))
+  if (startswith (option, "pretty"))
     {
       opt_pretty = 1;
       return;
     }
 
-  if (CONST_STRNEQ (option, "compact-assembly"))
+  if (startswith (option, "compact-assembly"))
     {
       opt_compact_assembly = 1;
       return;
     }
 
-  if (CONST_STRNEQ (option, "no-compact-assembly"))
+  if (startswith (option, "no-compact-assembly"))
     {
       opt_compact_assembly = 0;
       return;
@@ -367,7 +366,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   static int insncount = 0;
   kvxopc_t *op = NULL;             /* operation table index */
   insn_t *insn;                   /* the instruction       */
-  char *fmtp;
+  const char *fmtp;
   kvxopc_t *opc_table = NULL;
   int          *kvx_regfiles = NULL;
   kvx_Register  *kvx_registers = NULL;
@@ -415,6 +414,16 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
       kvx_regfiles = kvx_kv3_v2_regfiles;
       kvx_registers = kvx_kv3_v2_registers;
       kvx_dec_registers = kvx_kv3_v2_dec_registers;
+      break;
+    case bfd_mach_kv4_1_64:
+      kvx_arch_size = 64;
+      /* fallthrough */
+    case bfd_mach_kv4_1_usr:
+    case bfd_mach_kv4_1:
+      opc_table = kvx_kv4_v1_optab;
+      kvx_regfiles = kvx_kv4_v1_regfiles;
+      kvx_registers = kvx_kv4_v1_registers;
+      kvx_dec_registers = kvx_kv4_v1_dec_registers;
       break;
 
     default:
@@ -503,14 +512,14 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 
 
           /* print the opcode   */
-          (*info->fprintf_func) (info->stream, "%s ", op->as_op);
+          (*info->fprintf_styled_func) (info->stream, dis_style_mnemonic, "%s ", op->as_op);
 
           for (i = 0; op->format[i]; i++){
               kvx_bitfield_t *bf = op->format[i]->bfield;
               int bf_nb = op->format[i]->bitfields;
               int width = op->format[i]->width;
               int type  = op->format[i]->type;
-              char *type_name  = op->format[i]->tname;
+              const char *type_name  = op->format[i]->tname;
               int flags = op->format[i]->flags;
               int shift = op->format[i]->shift;
               int bias = op->format[i]->bias;
@@ -520,7 +529,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 
               /* Print characters in the format string up to the following % or nul. */
               while((ch=*fmtp) && ch != '%'){
-                  (*info->fprintf_func) (info->stream, "%c", ch);
+                  (*info->fprintf_styled_func) (info->stream, dis_style_text, "%c", ch);
                   fmtp++;
               }
 
@@ -545,9 +554,9 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 
 #define KVX_PRINT_REG(regfile,value) \
     if(kvx_regfiles[regfile]+value < kvx_max_dec_registers) { \
-        (*info->fprintf_func) (info->stream, "%s", kvx_registers[kvx_dec_registers[kvx_regfiles[regfile]+value]].name); \
+        (*info->fprintf_styled_func) (info->stream, dis_style_register, "%s", kvx_registers[kvx_dec_registers[kvx_regfiles[regfile]+value]].name); \
     } else { \
-        (*info->fprintf_func) (info->stream, "$??"); \
+        (*info->fprintf_styled_func) (info->stream, dis_style_register, "$??"); \
     }
 
               switch (type) {
@@ -563,15 +572,20 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
                       break;
                   case RegClass_kvx_systemReg:
                   case RegClass_kv3_v2_systemReg:
+                  case RegClass_kv4_v1_systemReg:
                   case RegClass_kvx_aloneReg:
                   case RegClass_kv3_v2_aloneReg:
+                  case RegClass_kv4_v1_aloneReg:
                   case RegClass_kvx_onlyraReg:
                   case RegClass_kvx_onlygetReg:
                   case RegClass_kv3_v2_onlygetReg:
+                  case RegClass_kv4_v1_onlygetReg:
                   case RegClass_kvx_onlysetReg:
                   case RegClass_kv3_v2_onlysetReg:
+                  case RegClass_kv4_v1_onlysetReg:
                   case RegClass_kvx_onlyfxReg:
                   case RegClass_kv3_v2_onlyfxReg:
+                  case RegClass_kv4_v1_onlyfxReg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_SFR,value)
                       break;
                   case RegClass_kvx_coproReg:
@@ -640,17 +654,17 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
                   case Immediate_kvx_unsigned6:
                       if(flags & kvxSIGNED){
                           if(width <= 32) {
-                              (*info->fprintf_func) (info->stream, "%d (0x%x)", (int)value, (int)value);
+                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%d (0x%x)", (int)value, (int)value);
                           }
                           else {
-                              (*info->fprintf_func) (info->stream, "%lld (0x%llx)", value, value);
+                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%lld (0x%llx)", value, value);
                           }
                       } else {
                           if(width <= 32) {
-                              (*info->fprintf_func) (info->stream, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
+                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
                           }
                           else {
-                              (*info->fprintf_func) (info->stream, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
+                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
                           }
                       }
                       break;
@@ -690,7 +704,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 
           /* Print trailing characters in the format string, if any */
           while((ch=*fmtp)){
-              (*info->fprintf_func) (info->stream, "%c", ch);
+              (*info->fprintf_styled_func) (info->stream, dis_style_text, "%c", ch);
               fmtp++;
           }
 
@@ -700,9 +714,9 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   }
 
   if (found && (insnindex == insncount)){
-    (*info->fprintf_func) (info->stream, ";;");
+    (*info->fprintf_styled_func) (info->stream, dis_style_text, ";;");
       if (!opt_compact_assembly)
-        (*info->fprintf_func) (info->stream, "\n");
+        (*info->fprintf_styled_func) (info->stream, dis_style_text, "\n");
       insnindex = 0;
   }
   // couldn't find the opcode, skip this word
@@ -772,6 +786,16 @@ decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
       kvx_registers = kvx_kv3_v2_registers;
       kvx_dec_registers = kvx_kv3_v2_dec_registers;
       break;
+    case bfd_mach_kv4_1_64:
+      kvx_arch_size = 64;
+      /* fallthrough */
+    case bfd_mach_kv4_1_usr:
+    case bfd_mach_kv4_1:
+      opc_table = kvx_kv4_v1_optab;
+      kvx_regfiles = kvx_kv4_v1_regfiles;
+      kvx_registers = kvx_kv4_v1_registers;
+      kvx_dec_registers = kvx_kv4_v1_dec_registers;
+      break;
 
     default:
       return -1; /* Core not supported */
@@ -812,7 +836,7 @@ decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
 	  int encoding_space_flags = (kvx_arch_size == 32)
 				       ? kvxOPCODE_FLAG_MODE32
 				       : kvxOPCODE_FLAG_MODE64;
-	  char *op_name = op->as_op;
+	  const char *op_name = op->as_op;
 	  int is_add = 0, is_get = 0, is_a_peb_insn = 0, is_copyd = 0;
 
 	  if (op->wordcount != insn->len)
@@ -983,11 +1007,21 @@ decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
 		  crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value * 4;
 		  break;
 		case RegClass_kvx_systemReg:
+		case RegClass_kv3_v2_systemReg:
+		case RegClass_kv4_v1_systemReg:
 		case RegClass_kvx_aloneReg:
+		case RegClass_kv3_v2_aloneReg:
+		case RegClass_kv4_v1_aloneReg:
 		case RegClass_kvx_onlyraReg:
 		case RegClass_kvx_onlygetReg:
+		case RegClass_kv3_v2_onlygetReg:
+		case RegClass_kv4_v1_onlygetReg:
 		case RegClass_kvx_onlysetReg:
+		case RegClass_kv3_v2_onlysetReg:
+		case RegClass_kv4_v1_onlysetReg:
 		case RegClass_kvx_onlyfxReg:
+		case RegClass_kv3_v2_onlyfxReg:
+		case RegClass_kv4_v1_onlyfxReg:
 		  if (kvx_regfiles[KVX_REGFILE_DEC_GPR] + value
 		      >= kvx_max_dec_regs)
 		    return -1;

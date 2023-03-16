@@ -556,7 +556,7 @@ proc_with_prefix test_break_silent_and_more {} {
     gdb_test "commands $bpno\nsilent\nend" ">end" "set silent break bp_location1"
 
     gdb_test "info break $bpno" \
-	"\[0-9\]*\[ \t\]*breakpoint.*:$::bp_location1( inf \[0-9\]+)?\r\n\[ \t\]*silent.*" \
+	"\[0-9\]*\[ \t\]*breakpoint.*:${::bp_location1}( inf \[0-9\]+)?\r\n\[ \t\]*silent.*" \
 	"info silent break bp_location1"
 
     gdb_test "continue" "Continuing." \

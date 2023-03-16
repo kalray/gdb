@@ -751,6 +751,11 @@ disassemble_init_for_target (struct disassemble_info * info)
       disassemble_init_nds32 (info);
       break;
  #endif
+#ifdef ARCH_kvx
+    case bfd_arch_kvx:
+      info->created_styled_output = true;
+      break;
+#endif
     default:
       break;
     }

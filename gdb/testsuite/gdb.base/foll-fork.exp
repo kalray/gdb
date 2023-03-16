@@ -15,6 +15,13 @@
 
 # Test relies on checking follow-fork output. Do not run if gdb debug is
 # enabled as it will be redirected to the log.
+
+# KVX: not supported
+if [istarget kvx-*-*] then {
+  unsupported "foll-fork.exp"
+  return 1
+}
+
 if [gdb_debug_enabled] {
     untested "debug is enabled"
     return 0

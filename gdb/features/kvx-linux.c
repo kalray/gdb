@@ -9,12 +9,12 @@ struct target_desc *tdesc_kvx_linux;
 static void
 initialize_tdesc_kvx_linux (void)
 {
-  struct target_desc *result = allocate_target_description ();
-  set_tdesc_architecture (result, bfd_scan_arch ("kvx:kv3-1"));
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("kvx:kv3-1"));
 
   struct tdesc_feature *feature;
 
-  feature = tdesc_create_feature (result, "eu.kalray.core.kv3-1");
+  feature = tdesc_create_feature (result.get (), "eu.kalray.core.kv3-1");
   tdesc_type_with_fields *type_with_fields;
   type_with_fields = tdesc_create_flags (feature, "cs_type", 8);
   tdesc_add_flag (type_with_fields, 0, "ic");
@@ -106,5 +106,5 @@ initialize_tdesc_kvx_linux (void)
   tdesc_create_reg (feature, "cs", 68, 1, NULL, 64, "cs_type");
   tdesc_create_reg (feature, "pc", 69, 1, NULL, 64, "code_ptr");
 
-  tdesc_kvx_linux = result;
+  tdesc_kvx_linux = result.release ();
 }

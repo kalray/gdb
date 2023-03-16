@@ -138,9 +138,9 @@ kvx_linux_init_hwbp_cap (int pid)
   kvx_linux_hw_pt_cap.wp_count = val[1];
 
   if (kvx_linux_hw_pt_cap.wp_count > MAX_WPTS)
-    internal_error (__FILE__, __LINE__, "Unsupported number of watchpoints");
+    internal_error ("Unsupported number of watchpoints");
   if (kvx_linux_hw_pt_cap.bp_count > MAX_BPTS)
-    internal_error (__FILE__, __LINE__, "Unsupported number of breakpoints");
+    internal_error ("Unsupported number of breakpoints");
 }
 
 static void

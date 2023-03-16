@@ -29,9 +29,15 @@ A::push_back (void *value)
   /* nothing */
 }
 
+/* KVX: newlib is compiled with debug info */
+void
+mitest_main ()
+{}
+
 int
 main (int argc, char **argv)
 {
+  mitest_main (); /* KVX: newlib is compiled with debug info */
   std::vector < int >v;
   v.push_back (1);
   A a;

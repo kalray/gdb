@@ -8258,12 +8258,6 @@ code_breakpoint::add_location (const symtab_and_line &sal)
   if (loc_gdbarch == NULL)
     loc_gdbarch = gdbarch;
 
-  /* Adjust_breakpoint_address may call target_read_memory. Make sure
-     that it is called from the correct context */
-  scoped_restore_current_pspace_and_thread restore_pspace_thread;
-  if (sal && sal->pspace)
-    switch_to_program_space_and_thread (sal->pspace);
-
   /* Adjust the breakpoint's address prior to allocating a location.
      Once we call allocate_location(), that mostly uninitialized
      location will be placed on the location chain.  Adjustment of the

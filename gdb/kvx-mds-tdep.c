@@ -2216,12 +2216,15 @@ static int init_kv3_v2_dwarf2gdb(struct gdbarch *gdbarch)
 
 static struct pseudo_desc kv4_v1_pseudo_regs[] = {
 	{ "r0r1", NULL, 128, 2, { -1, -1, }, { "r0", "r1"}},
+	{ "r2r3", NULL, 128, 2, { -1, -1, }, { "r2", "r3"}},
+	{ "r4r5", NULL, 128, 2, { -1, -1, }, { "r4", "r5"}},
+	{ "r6r7", NULL, 128, 2, { -1, -1, }, { "r6", "r7"}},
+	{ "r8r9", NULL, 128, 2, { -1, -1, }, { "r8", "r9"}},
 	{ "r10r11", NULL, 128, 2, { -1, -1, }, { "r10", "r11"}},
 	{ "r12r13", NULL, 128, 2, { -1, -1, }, { "r12", "r13"}},
 	{ "r14r15", NULL, 128, 2, { -1, -1, }, { "r14", "r15"}},
 	{ "r16r17", NULL, 128, 2, { -1, -1, }, { "r16", "r17"}},
 	{ "r18r19", NULL, 128, 2, { -1, -1, }, { "r18", "r19"}},
-	{ "r2r3", NULL, 128, 2, { -1, -1, }, { "r2", "r3"}},
 	{ "r20r21", NULL, 128, 2, { -1, -1, }, { "r20", "r21"}},
 	{ "r22r23", NULL, 128, 2, { -1, -1, }, { "r22", "r23"}},
 	{ "r24r25", NULL, 128, 2, { -1, -1, }, { "r24", "r25"}},
@@ -2232,7 +2235,6 @@ static struct pseudo_desc kv4_v1_pseudo_regs[] = {
 	{ "r34r35", NULL, 128, 2, { -1, -1, }, { "r34", "r35"}},
 	{ "r36r37", NULL, 128, 2, { -1, -1, }, { "r36", "r37"}},
 	{ "r38r39", NULL, 128, 2, { -1, -1, }, { "r38", "r39"}},
-	{ "r4r5", NULL, 128, 2, { -1, -1, }, { "r4", "r5"}},
 	{ "r40r41", NULL, 128, 2, { -1, -1, }, { "r40", "r41"}},
 	{ "r42r43", NULL, 128, 2, { -1, -1, }, { "r42", "r43"}},
 	{ "r44r45", NULL, 128, 2, { -1, -1, }, { "r44", "r45"}},
@@ -2243,11 +2245,11 @@ static struct pseudo_desc kv4_v1_pseudo_regs[] = {
 	{ "r54r55", NULL, 128, 2, { -1, -1, }, { "r54", "r55"}},
 	{ "r56r57", NULL, 128, 2, { -1, -1, }, { "r56", "r57"}},
 	{ "r58r59", NULL, 128, 2, { -1, -1, }, { "r58", "r59"}},
-	{ "r6r7", NULL, 128, 2, { -1, -1, }, { "r6", "r7"}},
 	{ "r60r61", NULL, 128, 2, { -1, -1, }, { "r60", "r61"}},
 	{ "r62r63", NULL, 128, 2, { -1, -1, }, { "r62", "r63"}},
-	{ "r8r9", NULL, 128, 2, { -1, -1, }, { "r8", "r9"}},
 	{ "r0r1r2r3", NULL, 256, 4, { -1, -1, -1, -1, }, { "r0", "r1", "r2", "r3"}},
+	{ "r4r5r6r7", NULL, 256, 4, { -1, -1, -1, -1, }, { "r4", "r5", "r6", "r7"}},
+	{ "r8r9r10r11", NULL, 256, 4, { -1, -1, -1, -1, }, { "r8", "r9", "r10", "r11"}},
 	{ "r12r13r14r15", NULL, 256, 4, { -1, -1, -1, -1, }, { "r12", "r13", "r14", "r15"}},
 	{ "r16r17r18r19", NULL, 256, 4, { -1, -1, -1, -1, }, { "r16", "r17", "r18", "r19"}},
 	{ "r20r21r22r23", NULL, 256, 4, { -1, -1, -1, -1, }, { "r20", "r21", "r22", "r23"}},
@@ -2255,14 +2257,12 @@ static struct pseudo_desc kv4_v1_pseudo_regs[] = {
 	{ "r28r29r30r31", NULL, 256, 4, { -1, -1, -1, -1, }, { "r28", "r29", "r30", "r31"}},
 	{ "r32r33r34r35", NULL, 256, 4, { -1, -1, -1, -1, }, { "r32", "r33", "r34", "r35"}},
 	{ "r36r37r38r39", NULL, 256, 4, { -1, -1, -1, -1, }, { "r36", "r37", "r38", "r39"}},
-	{ "r4r5r6r7", NULL, 256, 4, { -1, -1, -1, -1, }, { "r4", "r5", "r6", "r7"}},
 	{ "r40r41r42r43", NULL, 256, 4, { -1, -1, -1, -1, }, { "r40", "r41", "r42", "r43"}},
 	{ "r44r45r46r47", NULL, 256, 4, { -1, -1, -1, -1, }, { "r44", "r45", "r46", "r47"}},
 	{ "r48r49r50r51", NULL, 256, 4, { -1, -1, -1, -1, }, { "r48", "r49", "r50", "r51"}},
 	{ "r52r53r54r55", NULL, 256, 4, { -1, -1, -1, -1, }, { "r52", "r53", "r54", "r55"}},
 	{ "r56r57r58r59", NULL, 256, 4, { -1, -1, -1, -1, }, { "r56", "r57", "r58", "r59"}},
 	{ "r60r61r62r63", NULL, 256, 4, { -1, -1, -1, -1, }, { "r60", "r61", "r62", "r63"}},
-	{ "r8r9r10r11", NULL, 256, 4, { -1, -1, -1, -1, }, { "r8", "r9", "r10", "r11"}},
 };
 
 static const int kv4_v1_num_pseudo_regs = 48;
@@ -3471,11 +3471,14 @@ struct type *kvx_pseudo_register_type (struct gdbarch *gdbarch,
 	else if (pseudo_regs[pseudo_num].size == 128)
 		pseudo_regs[pseudo_num].type = builtin_type (gdbarch)->builtin_int128;
 	else if (pseudo_regs[pseudo_num].size == 256)
-		pseudo_regs[pseudo_num].type = gdbarch_tdep (gdbarch)->uint256;
+		pseudo_regs[pseudo_num].type =
+			gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch)->uint256;
 	else if (pseudo_regs[pseudo_num].size == 512)
-		pseudo_regs[pseudo_num].type = gdbarch_tdep (gdbarch)->uint512;
+		pseudo_regs[pseudo_num].type =
+			gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch)->uint512;
 	else if (pseudo_regs[pseudo_num].size == 1024)
-		pseudo_regs[pseudo_num].type = gdbarch_tdep (gdbarch)->uint1024;
+		pseudo_regs[pseudo_num].type =
+			gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch)->uint1024;
 	else {
 		warning (_("Register \"%s\" has an unsupported size (%d bits)"),
 		pseudo_regs[pseudo_num].name, pseudo_regs[pseudo_num].size);
@@ -3486,10 +3489,10 @@ struct type *kvx_pseudo_register_type (struct gdbarch *gdbarch,
 
 int kvx_pseudo_register_reggroup_p (struct gdbarch *gdbarch, 
 				   int regnum, 
-				   struct reggroup *reggroup);
+				   const struct reggroup *reggroup);
 int kvx_pseudo_register_reggroup_p (struct gdbarch *gdbarch, 
 				   int regnum, 
-				   struct reggroup *reggroup)
+				   const struct reggroup *reggroup)
 {
 	return reggroup == general_reggroup;
 }
@@ -3555,8 +3558,8 @@ void kvx_pseudo_register_write (struct gdbarch *gdbarch,
 	}
 }
 
-void _initialize_kvx_mds_tdep (void);
+void _initialize_kvx_mds_tdep ();
 void
-_initialize_kvx_mds_tdep (void)
+_initialize_kvx_mds_tdep ()
 {
 }

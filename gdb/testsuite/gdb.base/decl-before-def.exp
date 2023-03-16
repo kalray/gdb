@@ -29,4 +29,7 @@ if {![runto_main]} {
     return 0
 }
 
+# KVX: the symbols are reloaded during the attach
+gdb_test "maint expand-symtab"
+
 gdb_test "p a" { = \{1, 2\}} "running process: p a"

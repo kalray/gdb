@@ -28,7 +28,7 @@
 #include "gregset.h"
 #include "gdb_proc_service.h"
 
-struct inferior_data
+struct kvx_linux_inf_data
 {
   /* Hardware breakpoints for this process.  */
   struct kvx_linux_hw_pt bpts[MAX_BPTS];
@@ -36,8 +36,15 @@ struct inferior_data
   struct kvx_linux_hw_pt wpts[MAX_WPTS];
 };
 
-struct kvx_linux_hw_pt_cap_s kvx_linux_hw_pt_cap;
-static const struct inferior_data *kvx_linux_inferior_data_token;
+struct kvx_linux_inf_data_deleter
+{
+  void operator() (kvx_linux_inf_data *inf_data) { xfree (inf_data); }
+};
+
+static const registry<inferior>::key<kvx_linux_inf_data,
+				     kvx_linux_inf_data_deleter>
+  kvx_linux_inf_data_key;
+static struct kvx_linux_hw_pt_cap_s kvx_linux_hw_pt_cap;
 
 class kvx_linux_nat_target final : public linux_nat_target
 {
@@ -66,7 +73,7 @@ public:
 public:
   /* custom methods */
   void init_hwbp_cap (int pid);
-  struct inferior_data *get_inferior_data (int pid);
+  kvx_linux_inf_data *get_inferior_data (int pid);
   int get_hw_point_type_info (int pid, int type, struct kvx_linux_hw_pt **pts,
 			      int *count);
   int insert_hw_point (CORE_ADDR addr, int len, int type, int krn_wp_type);
@@ -89,26 +96,25 @@ kvx_linux_nat_target::init_hwbp_cap (int pid)
   kvx_linux_hw_pt_cap.wp_count = val[1];
 
   if (kvx_linux_hw_pt_cap.wp_count > MAX_WPTS)
-    internal_error (__FILE__, __LINE__, "Unsupported number of watchpoints");
+    internal_error ("Unsupported number of watchpoints");
   if (kvx_linux_hw_pt_cap.bp_count > MAX_BPTS)
-    internal_error (__FILE__, __LINE__, "Unsupported number of breakpoints");
+    internal_error ("Unsupported number of breakpoints");
 }
 
-struct inferior_data *
+kvx_linux_inf_data *
 kvx_linux_nat_target::get_inferior_data (int pid)
 {
-  struct inferior_data *res;
+  kvx_linux_inf_data *res;
   struct inferior *inf = find_inferior_pid (this, pid);
 
   if (!inf)
     return NULL;
 
-  res = (struct inferior_data *) inferior_data (inf,
-						kvx_linux_inferior_data_token);
+  res = kvx_linux_inf_data_key.get (inf);
   if (!res)
     {
-      res = (struct inferior_data *) xcalloc (1, sizeof (*res));
-      set_inferior_data (inf, kvx_linux_inferior_data_token, res);
+      res = (kvx_linux_inf_data *) xcalloc (1, sizeof (kvx_linux_inf_data));
+      kvx_linux_inf_data_key.set (inf, res);
 
       this->init_hwbp_cap (pid);
     }
@@ -249,7 +255,9 @@ kvx_linux_nat_target::can_use_hw_breakpoint (enum bptype type, int cnt,
 	return (cnt <= no_wb) ? 1 : -1;
 
       /* Count the number of hardware watchpoints of other types*/
-      breakpoint_find_if (&can_use_hw_breakpoint_cb, cb_par);
+      for (breakpoint *b : all_breakpoints ())
+	can_use_hw_breakpoint_cb (b, cb_par);
+
       return (cb_par[0] + cnt <= no_wb) ? 1 : -1;
     }
 #else
@@ -283,7 +291,7 @@ kvx_linux_nat_target::get_hw_point_type_info (int pid, int type,
 					      struct kvx_linux_hw_pt **pts,
 					      int *count)
 {
-  struct inferior_data *data;
+  kvx_linux_inf_data *data;
 
   *pts = NULL;
   *count = 0;
@@ -570,7 +578,7 @@ kvx_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
 			    compute_ptrace_data_arg (pt->address, pt->size,
 						     pt->enabled));
 	      if (ret < 0)
-		perror_with_name ("Error setting breakpoint");
+		perror_with_name ("Error setting hardware breakpoint");
 	    }
 
 	  changed[j] = 0;
@@ -595,21 +603,12 @@ ps_get_thread_area (struct ps_prochandle *ph, lwpid_t lwpid, int idx,
   return PS_OK;
 }
 
-static void
-kvx_cleanup_linux_inferior_data (struct inferior *inf, void *data)
-{
-  xfree (data);
-}
-
-void _initialize_kvx_linux_nat (void);
 void
-_initialize_kvx_linux_nat (void)
+_initialize_kvx_linux_nat ();
+void
+_initialize_kvx_linux_nat ()
 {
   /* Register the target.  */
   linux_target = &the_kvx_linux_nat_target;
   add_inf_child_target (&the_kvx_linux_nat_target);
-
-  kvx_linux_inferior_data_token
-    = register_inferior_data_with_cleanup (NULL,
-					   kvx_cleanup_linux_inferior_data);
 }

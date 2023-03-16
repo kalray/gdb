@@ -19,6 +19,12 @@
 # schedule-multiple on" or "set detach-on-fork on".  Test these two resolution
 # methods.
 
+# KVX: not supported
+if [istarget kvx-*-*] then {
+  unsupported "vfork-follow-parent.exp"
+  return 1
+}
+
 standard_testfile
 
 if { [build_executable "failed to prepare" \

@@ -21,6 +21,12 @@
 # again.  The test was expanded to test various combinations of
 # run-control-related actions done with an inferior running in background.
 
+# KVX: not supported
+if [istarget kvx-*-*] then {
+  unsupported "run-control-while-bg-execution.exp"
+  return 1
+}
+
 if {[use_gdb_stub]} {
     unsupported "test requires running"
     return

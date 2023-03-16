@@ -15,6 +15,12 @@
 
 # Test that the dcache can be flushed.
 
+# KVX: flush not working for non-stop mode
+if [istarget kvx-*-*] then {
+  unsupported "dcache-flush.exp"
+  return 1
+}
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile}] } {

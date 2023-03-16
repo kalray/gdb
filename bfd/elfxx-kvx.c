@@ -73,8 +73,6 @@ _bfd_kvx_elf_put_addend (bfd *abfd,
   size = bfd_get_reloc_size (howto);
   switch (size)
     {
-    case 0:
-      return status;
     case 2:
       contents = bfd_get_16 (abfd, address);
       break;
@@ -155,12 +153,12 @@ _bfd_kvx_elf_put_addend (bfd *abfd,
 bfd_vma
 _bfd_kvx_elf_resolve_relocation (bfd_reloc_code_real_type r_type ATTRIBUTE_UNUSED,
         bfd_vma place ATTRIBUTE_UNUSED, bfd_vma value,
-        bfd_vma addend ATTRIBUTE_UNUSED, bfd_boolean weak_undef_p ATTRIBUTE_UNUSED)
+        bfd_vma addend ATTRIBUTE_UNUSED, bool weak_undef_p ATTRIBUTE_UNUSED)
 {
   return value;
 }
 
-bfd_boolean
+bool
 _bfd_kvx_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 {
   int offset;
@@ -181,7 +179,7 @@ _bfd_kvx_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
   /* Make a ".reg/999" section.  */
@@ -189,7 +187,7 @@ _bfd_kvx_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 					  note->descpos + offset);
 }
 
-bfd_boolean
+bool
 _bfd_kvx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 {
   switch (note->descsz)
@@ -203,7 +201,7 @@ _bfd_kvx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       break;
 
     default:
-      return FALSE;
+      return false;
     }
 
   /* Note that for some reason, a spurious space is tacked
@@ -218,5 +216,5 @@ _bfd_kvx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       command[n - 1] = 0;
   }
 
-  return TRUE;
+  return true;
 }

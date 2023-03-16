@@ -21,7 +21,7 @@ enum KVX_ARCH
   KVX_NUM_ARCHES
 };
 
-struct gdbarch_tdep
+struct kvx_gdbarch_tdep : gdbarch_tdep_base
 {
   int ev_regnum;
   int ls_regnum;
@@ -58,46 +58,65 @@ extern uint32_t break_op[KVX_NUM_ARCHES];
 extern uint32_t break_jtag_over_iss[KVX_NUM_ARCHES];
 extern uint32_t nop_op[KVX_NUM_ARCHES];
 
-enum KVX_ARCH kvx_arch (void);
-int get_kvx_arch (void);
-void kvx_look_for_insns (void);
-const char *kvx_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
-struct type *kvx_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
-int kvx_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-				    struct reggroup *reggroup);
+enum KVX_ARCH
+kvx_arch (void);
+int
+get_kvx_arch (void);
+void
+kvx_look_for_insns (void);
+const char *
+kvx_pseudo_register_name (struct gdbarch *gdbarch, int regnr);
+struct type *
+kvx_pseudo_register_type (struct gdbarch *gdbarch, int reg_nr);
+int
+kvx_pseudo_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
+				const struct reggroup *reggroup);
 enum register_status
 kvx_pseudo_register_read (struct gdbarch *gdbarch,
 			  struct readable_regcache *regcache, int regnum,
 			  gdb_byte *buf);
-void kvx_pseudo_register_write (struct gdbarch *gdbarch,
-				struct regcache *regcache, int regnum,
-				const gdb_byte *buf);
-int kvx_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
-int kvx_num_pseudos (struct gdbarch *);
-const char *kvx_pc_name (struct gdbarch *);
-const char *kvx_sp_name (struct gdbarch *);
-const char *kvx_dummy_register_name (struct gdbarch *gdbarch, int regno);
-struct type *kvx_dummy_register_type (struct gdbarch *gdbarch, int regno);
-void kvx_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
-				struct dwarf2_frame_state_reg *reg,
-				struct frame_info *this_frame);
+void
+kvx_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
+			   int regnum, const gdb_byte *buf);
+int
+kvx_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg);
+int
+kvx_num_pseudos (struct gdbarch *);
+const char *
+kvx_pc_name (struct gdbarch *);
+const char *
+kvx_sp_name (struct gdbarch *);
+const char *
+kvx_dummy_register_name (struct gdbarch *gdbarch, int regno);
+struct type *
+kvx_dummy_register_type (struct gdbarch *gdbarch, int regno);
+void
+kvx_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
+			   struct dwarf2_frame_state_reg *reg,
+			   frame_info_ptr this_frame);
 enum return_value_convention
 kvx_return_value (struct gdbarch *gdbarch, struct value *func_type,
 		  struct type *type, struct regcache *regcache,
 		  gdb_byte *readbuf, const gdb_byte *writebuf);
-struct frame_id kvx_dummy_id (struct gdbarch *gdbarch,
-			      struct frame_info *this_frame);
-CORE_ADDR kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
-			       struct regcache *regcache, CORE_ADDR bp_addr,
-			       int nargs, struct value **args, CORE_ADDR sp,
-			       function_call_return_method return_method,
-			       CORE_ADDR struct_addr);
-CORE_ADDR kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr);
-CORE_ADDR kvx_unwind_pc (struct gdbarch *gdbarch,
-			 struct frame_info *next_frame);
-CORE_ADDR kvx_adjust_breakpoint_address (struct gdbarch *gdbarch,
-					 CORE_ADDR bpaddr);
-int kvx_print_insn (bfd_vma pc, disassemble_info *di);
-int kvx_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc);
+struct frame_id
+kvx_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame);
+CORE_ADDR
+kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
+		     struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
+		     struct value **args, CORE_ADDR sp,
+		     function_call_return_method return_method,
+		     CORE_ADDR struct_addr);
+CORE_ADDR
+kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr);
+CORE_ADDR
+kvx_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame);
+CORE_ADDR
+kvx_adjust_breakpoint_address (struct gdbarch *gdbarch, CORE_ADDR bpaddr);
+int
+kvx_print_insn (bfd_vma pc, disassemble_info *di);
+int
+kvx_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc);
+void
+set_parse_compact_asm (bool v);
 
 #endif

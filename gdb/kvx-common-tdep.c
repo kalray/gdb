@@ -39,6 +39,7 @@ extern "C" {
 
 #define __NR_BREAKPOINT_PL0 4050
 #define __NR_BREAKPOINT_JTAGISS 4054
+#define REGNUM_STRUCT 15
 
 enum kvx_frm_cache_reg_saved_loc_type
 {
@@ -56,7 +57,7 @@ struct kvx_frm_cache_reg_saved
 
 struct kvx_frame_cache
 {
-  struct frame_info *frame;
+  frame_info_ptr frame;
 
   struct kvx_frm_cache_reg_saved base;
   struct kvx_frm_cache_reg_saved ra;
@@ -83,10 +84,12 @@ enum KVX_ARCH
 kvx_arch (void)
 {
   const struct target_desc *desc = target_current_description ();
+  bfd *exec_bfd;
 
   if (kvx_current_arch != KVX_NUM_ARCHES)
     return kvx_current_arch;
 
+  exec_bfd = current_program_space->exec_bfd ();
   if (exec_bfd)
     {
       switch (elf_elfheader (exec_bfd)->e_flags & ELF_KVX_CORE_MASK)
@@ -179,19 +182,21 @@ kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
   struct symtab_and_line sal;
   struct compunit_symtab *cust;
   int ind, i, gcc_compiled = 0, clang_compiled = 0;
+  const char *producer;
 
   sal = find_pc_line (func_addr, 0);
   if (sal.symtab == NULL)
     return func_addr;
 
   cust = find_pc_compunit_symtab (func_addr);
-  if (cust->producer && strncmp (cust->producer, "GNU C", 5) == 0)
+  producer = cust->producer ();
+  if (producer && strncmp (producer, "GNU C", 5) == 0)
     gcc_compiled = 1;
-  else if (cust->producer && !strncmp (cust->producer, "Kalray clang", 12))
+  else if (producer && !strncmp (producer, "Kalray clang", 12))
     clang_compiled = 1;
 
   /* Give up if this symbol has no lineinfo table.  */
-  l = SYMTAB_LINETABLE (sal.symtab);
+  l = sal.symtab->linetable ();
   if (l == NULL)
     return func_addr;
 
@@ -243,7 +248,7 @@ kvx_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR func_addr)
 }
 
 CORE_ADDR
-kvx_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
+kvx_unwind_pc (struct gdbarch *gdbarch, frame_info_ptr next_frame)
 {
   return frame_unwind_register_unsigned (next_frame,
 					 gdbarch_pc_regnum (gdbarch));
@@ -251,7 +256,7 @@ kvx_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 
 /* Initialize the cache struct of a frame */
 static void
-kvx_init_frame_cache (struct kvx_frame_cache *cache, struct frame_info *frame)
+kvx_init_frame_cache (struct kvx_frame_cache *cache, frame_info_ptr frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
@@ -285,7 +290,7 @@ kvx_init_frame_cache (struct kvx_frame_cache *cache, struct frame_info *frame)
 
 /* Allocate and initialize a frame cache */
 static struct kvx_frame_cache *
-kvx_alloc_frame_cache (struct frame_info *frame)
+kvx_alloc_frame_cache (frame_info_ptr frame)
 {
   struct kvx_frame_cache *cache;
 
@@ -306,8 +311,7 @@ kvx_dis_asm_read_memory (bfd_vma memaddr, gdb_byte *myaddr, unsigned int len,
 #define NB_BUNDLES_PROL_MAX 10
 #define NB_BUNDLES_EPIL_MAX 10
 static void
-kvx_scan_prologue_epilogue (struct frame_info *frame,
-			    struct kvx_frame_cache *cache)
+kvx_scan_prologue_epilogue (frame_info_ptr frame, struct kvx_frame_cache *cache)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct disassemble_info di;
@@ -634,7 +638,7 @@ kvx_scan_prologue_epilogue (struct frame_info *frame,
 
 /* Returns/computes a cache struct for the provided frame */
 static struct kvx_frame_cache *
-kvx_get_frame_cache (struct frame_info *frame, void **this_cache)
+kvx_get_frame_cache (frame_info_ptr frame, void **this_cache)
 {
   struct kvx_frame_cache *cache;
 
@@ -651,7 +655,7 @@ kvx_get_frame_cache (struct frame_info *frame, void **this_cache)
 
 /* Returns the register of a frame based on the cache struct info */
 static int
-kvx_get_frame_cache_reg (struct frame_info *frame,
+kvx_get_frame_cache_reg (frame_info_ptr frame,
 			 struct kvx_frm_cache_reg_saved *rs, CORE_ADDR *v)
 {
   CORE_ADDR t;
@@ -708,7 +712,7 @@ kvx_get_frame_cache_reg (struct frame_info *frame,
 /* Given a GDB frame, determine the address of the calling function's
    frame.  This will be used to create a new GDB frame struct.  */
 static void
-kvx_frame_this_id (struct frame_info *this_frame, void **this_cache,
+kvx_frame_this_id (frame_info_ptr this_frame, void **this_cache,
 		   struct frame_id *this_id)
 {
   struct kvx_frame_cache *cache = kvx_get_frame_cache (this_frame, this_cache);
@@ -731,7 +735,7 @@ kvx_frame_this_id (struct frame_info *this_frame, void **this_cache,
 
 /* Get the value of register regnum in the previous stack frame.  */
 static struct value *
-kvx_frame_prev_register (struct frame_info *this_frame, void **this_cache,
+kvx_frame_prev_register (frame_info_ptr this_frame, void **this_cache,
 			 int regnum)
 {
   CORE_ADDR value;
@@ -768,7 +772,8 @@ kvx_frame_prev_register (struct frame_info *this_frame, void **this_cache,
   return frame_unwind_got_optimized (this_frame, regnum);
 }
 
-const struct frame_unwind kvx_frame_unwind = {NORMAL_FRAME,
+const struct frame_unwind kvx_frame_unwind = {"kvx prologue",
+					      NORMAL_FRAME,
 					      default_frame_unwind_stop_reason,
 					      kvx_frame_this_id,
 					      kvx_frame_prev_register,
@@ -778,7 +783,7 @@ const struct frame_unwind kvx_frame_unwind = {NORMAL_FRAME,
 void
 kvx_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 			   struct dwarf2_frame_state_reg *reg,
-			   struct frame_info *this_frame)
+			   frame_info_ptr this_frame)
 {
   if (regnum == gdbarch_pc_regnum (gdbarch))
     reg->how = DWARF2_FRAME_REG_RA;
@@ -816,10 +821,10 @@ kvx_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
 }
 
 struct frame_id
-kvx_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
+kvx_dummy_id (struct gdbarch *gdbarch, frame_info_ptr this_frame)
 {
   CORE_ADDR sp;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
 
   // force read all registers to avoid writing all registers when returning the
   // dummy call
@@ -836,7 +841,7 @@ kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		     function_call_return_method return_method,
 		     CORE_ADDR struct_addr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
   gdb_byte *argslotsbuf = NULL;
   unsigned int argslotsnb = 0;
   int i, n, r0_regnum, gpr_reg_sz, by_ref;
@@ -851,7 +856,7 @@ kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   /* Allocate arguments to the virtual argument slots  */
   for (i = 0; i < nargs; i++)
     {
-      int newslots, typelen = TYPE_LENGTH (value_enclosing_type (args[i]));
+      int newslots, typelen = value_enclosing_type (args[i])->length ();
 
       newslots = (typelen + gpr_reg_sz - 1) / gpr_reg_sz;
       by_ref = 0;
@@ -864,7 +869,7 @@ kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	      _ ("Not enough place in stack to store argument %d (size %d)"), i,
 	      typelen);
 	  sp -= n;
-	  write_memory (sp, value_contents (args[i]), typelen);
+	  write_memory (sp, value_contents (args[i]).data (), typelen);
 	  newslots = 1;
 	  by_ref = 1;
 	}
@@ -875,8 +880,8 @@ kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       if (by_ref)
 	memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz], &sp, sizeof (sp));
       else
-	memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz], value_contents (args[i]),
-		typelen);
+	memcpy (&argslotsbuf[argslotsnb * gpr_reg_sz],
+		value_contents (args[i]).data (), typelen);
 
       argslotsnb += newslots;
     }
@@ -898,7 +903,8 @@ kvx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   if (return_method == return_method_hidden_param
       || return_method == return_method_struct)
-    regcache_cooked_write_unsigned (regcache, r0_regnum + 15, struct_addr);
+    regcache_cooked_write_unsigned (regcache, r0_regnum + REGNUM_STRUCT,
+				    struct_addr);
 
   regcache_cooked_write_unsigned (regcache, gdbarch_sp_regnum (gdbarch), sp);
   regcache_cooked_write_unsigned (regcache, tdep->ra_regnum, bp_addr);
@@ -910,7 +916,7 @@ static void
 kvx_store_return_value (struct gdbarch *gdbarch, struct type *type,
 			struct regcache *regcache, const gdb_byte *buf)
 {
-  int i, len = TYPE_LENGTH (type);
+  int i, len = type->length ();
   int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
   int sz = register_size (gdbarch, r0_regnum);
 
@@ -931,7 +937,7 @@ static void
 kvx_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 			  struct regcache *regcache, gdb_byte *buf)
 {
-  int i, len = TYPE_LENGTH (type);
+  int i, len = type->length ();
   int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
   int sz = register_size (gdbarch, r0_regnum);
 
@@ -952,8 +958,19 @@ kvx_return_value (struct gdbarch *gdbarch, struct value *func_type,
 		  struct type *type, struct regcache *regcache,
 		  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  if (TYPE_LENGTH (type) > 32)
-    return RETURN_VALUE_STRUCT_CONVENTION;
+  if (type->length () > 32)
+    {
+      if (readbuf && regcache)
+	{
+	  int r0_regnum = user_reg_map_name_to_regnum (gdbarch, "r0", -1);
+	  CORE_ADDR addr = 0;
+
+	  regcache->raw_read (r0_regnum + REGNUM_STRUCT, &addr);
+	  read_memory (addr, readbuf, type->length ());
+	}
+
+      return RETURN_VALUE_ABI_RETURNS_ADDRESS;
+    }
 
   if (writebuf)
     kvx_store_return_value (gdbarch, type, regcache, writebuf);
@@ -963,7 +980,7 @@ kvx_return_value (struct gdbarch *gdbarch, struct value *func_type,
 }
 
 int
-kvx_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+kvx_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
 {
   /* R0 point to the jmpbuf, and RA is at offset 0xA0 in the buf */
   gdb_byte buf[sizeof (uint64_t)];
@@ -994,6 +1011,12 @@ add_op (struct op_list **list, kvxopc_t *op)
 }
 
 void
+set_parse_compact_asm (bool v)
+{
+  parse_kvx_dis_option (v ? "compact-assembly" : "no-compact-assembly");
+}
+
+void
 kvx_look_for_insns (void)
 {
   int i;
@@ -1011,7 +1034,7 @@ kvx_look_for_insns (void)
 	  op = kvx_kv3_v2_optab;
 	  break;
 	default:
-	  internal_error (__FILE__, __LINE__, "Unknown arch id.");
+	  internal_error ("Unknown arch id.");
 	}
 
       while (op->as_op[0])

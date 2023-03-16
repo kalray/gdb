@@ -78,7 +78,7 @@ test_gdb_complete_unique "break my_fun" "break my_função"
 #
 # ... which is bogus.
 # KVX: ISS long timeout
-if {![istarget kvx-*-*] || [target_info gdb_protocol] == "remote"} then {
+if {![istarget kvx-*-*]} then {
 setup_kfail "gdb/23211" "*-*-*"
 test_gdb_complete_multiple "break " "fun" "ção" {"função1" "função2"}
 }

@@ -17,7 +17,7 @@
 
 # Test inserting read watchpoints on unaligned addresses.
 
-if {[skip_hw_watchpoint_tests]} {
+if {[skip_hw_watchpoint_tests] || [skip_hw_watchpoint_access_tests]} {
     return 0
 }
 

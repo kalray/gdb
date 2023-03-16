@@ -5017,12 +5017,12 @@ remote_target::start_remote_1 (int from_tty, int extended_p)
       /* Report all signals during attach/startup.  */
       pass_signals ({});
 
+      if (target_can_async_p ())
+	target_async (true);
+
       /* If there are already stopped threads, mark them stopped and
 	 report their stops before giving the prompt to the user.  */
       process_initial_stop_replies (from_tty);
-
-      if (target_can_async_p ())
-	target_async (true);
     }
 
   /* Give the target a chance to look up symbols.  */
@@ -14448,9 +14448,6 @@ remote_async_serial_handler (struct serial *scb, void *context)
 static void
 remote_async_inferior_event_handler (gdb_client_data data)
 {
-  remote_target *remote = (remote_target *) data;
-  remote->incref ();
-
   inferior_event_handler (INF_REG_EVENT);
 }
 

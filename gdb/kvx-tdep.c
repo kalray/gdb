@@ -39,15 +39,26 @@
 #include "kvx-common-tdep.h"
 #include "solib-kvx-bare.h"
 
-struct kvx_inferior_data
+static bool displaced_busy = false;
+
+struct kvx_step_inferior_data
 {
+  kvx_step_inferior_data ()
+  {
+    step_pad_area = 0;
+    step_pad_area_lma = 0;
+    has_step_pad_area_p = 0;
+    has_step_pad_area_lma_p = 0;
+  }
+
+  gdb::optional<displaced_step_buffers> disp_step_bufs;
   CORE_ADDR step_pad_area;
   CORE_ADDR step_pad_area_lma;
   int has_step_pad_area_p;
   int has_step_pad_area_lma_p;
 };
 
-struct kvx_displaced_step_closure : public displaced_step_closure
+struct kvx_displaced_step
 {
   /* Take into account that ALUs might have extensions. */
   uint32_t insn_words[8];
@@ -68,19 +79,23 @@ struct kvx_displaced_step_closure : public displaced_step_closure
   int reg;
 };
 
-static const struct inferior_data *kvx_inferior_data_token;
+struct kvx_step_inf_data_deleter
+{
+  void operator() (kvx_step_inferior_data *inf_data) { delete inf_data; }
+};
 
-static struct kvx_inferior_data *
+static const registry<inferior>::key<kvx_step_inferior_data,
+				     kvx_step_inf_data_deleter>
+  kvx_step_inf_data_key;
+
+static kvx_step_inferior_data *
 kvx_inferior_data (struct inferior *inf)
 {
-  struct kvx_inferior_data *res;
-
-  res
-    = (struct kvx_inferior_data *) inferior_data (inf, kvx_inferior_data_token);
+  kvx_step_inferior_data *res = kvx_step_inf_data_key.get (inf);
   if (!res)
     {
-      res = (struct kvx_inferior_data *) xcalloc (1, sizeof (*res));
-      set_inferior_data (inf, kvx_inferior_data_token, res);
+      res = new kvx_step_inferior_data;
+      kvx_step_inf_data_key.set (inf, res);
     }
 
   return res;
@@ -91,10 +106,9 @@ kvx_fetch_tls_load_module_address (struct objfile *objfile)
 {
   struct regcache *regs = get_current_regcache ();
   ULONGEST val;
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (target_gdbarch ());
 
-  regcache_raw_read_unsigned (regs,
-			      gdbarch_tdep (target_gdbarch ())->local_regnum,
-			      &val);
+  regcache_raw_read_unsigned (regs, tdep->local_regnum, &val);
   return val;
 }
 
@@ -102,12 +116,12 @@ int
 kvx_is_mmu_enabled (struct gdbarch *gdbarch, struct regcache *regs)
 {
   ULONGEST ps;
-  struct gdbarch_tdep *tdep;
+  kvx_gdbarch_tdep *tdep;
 
   if (gdbarch == NULL)
     gdbarch = target_gdbarch ();
 
-  tdep = gdbarch_tdep (gdbarch);
+  tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
 
   if (regs == NULL)
     regs = get_current_regcache ();
@@ -119,20 +133,22 @@ kvx_is_mmu_enabled (struct gdbarch *gdbarch, struct regcache *regs)
 void
 enable_ps_v64_at_boot (struct regcache *regs)
 {
-  struct gdbarch_tdep *tdep;
+  kvx_gdbarch_tdep *tdep;
   struct gdbarch *gdbarch;
   ULONGEST ps;
+  bfd *exec_bfd;
 
   if (regcache_read_pc (regs) != 0)
     return;
 
+  exec_bfd = current_program_space->exec_bfd ();
   if (exec_bfd && elf_elfheader (exec_bfd)->e_ident[EI_CLASS] != ELFCLASS64)
     return;
 
   gdbarch = target_gdbarch ();
   if (!gdbarch)
     return;
-  tdep = gdbarch_tdep (gdbarch);
+  tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
   if (!tdep)
     return;
 
@@ -146,39 +162,67 @@ enable_ps_v64_at_boot (struct regcache *regs)
     }
 }
 
-static CORE_ADDR
-kvx_displaced_step_location (struct gdbarch *gdbarch)
+static displaced_step_prepare_status
+kvx_displaced_step_prepare (struct gdbarch *gdbarch, thread_info *thread,
+			    CORE_ADDR &displaced_pc)
 {
-  struct kvx_inferior_data *data = kvx_inferior_data (current_inferior ());
+  kvx_step_inferior_data *data = kvx_inferior_data (current_inferior ());
+
+  if (displaced_busy)
+    return DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE;
+  displaced_busy = true;
 
   if (!data->has_step_pad_area_p)
     {
       struct bound_minimal_symbol msym
 	= lookup_minimal_symbol ("_debug_start", NULL, NULL);
       if (msym.minsym == NULL)
-	error ("Can not locate a suitable step pad area.");
-      if (BMSYMBOL_VALUE_ADDRESS (msym) % 4)
+	{
+	  gdb_printf (_ ("Can not locate a suitable step pad area."));
+	  return DISPLACED_STEP_PREPARE_STATUS_CANT;
+	}
+      if (msym.value_address () % 4)
 	warning ("Step pad area is not 4-byte aligned.");
-      data->step_pad_area = (BMSYMBOL_VALUE_ADDRESS (msym) + 3) & ~0x3;
+      data->step_pad_area = (msym.value_address () + 3) & ~0x3;
       data->has_step_pad_area_p = 1;
 
       msym = lookup_minimal_symbol ("_debug_start_lma", NULL, NULL);
       if (msym.minsym != NULL)
 	{
-	  if (BMSYMBOL_VALUE_ADDRESS (msym) % 4)
+	  if (msym.value_address () % 4)
 	    warning ("Physical step pad area is not 4-byte aligned.");
-	  data->step_pad_area_lma = (BMSYMBOL_VALUE_ADDRESS (msym) + 3) & ~0x3;
+	  data->step_pad_area_lma = (msym.value_address () + 3) & ~0x3;
 	  data->has_step_pad_area_lma_p = 1;
 	}
     }
 
-  if (data->has_step_pad_area_lma_p)
-    {
-      if (kvx_is_mmu_enabled (gdbarch, NULL))
-	return data->step_pad_area_lma;
-    }
+  std::vector<CORE_ADDR> buffers;
+  if (data->has_step_pad_area_lma_p && kvx_is_mmu_enabled (gdbarch, NULL))
+    buffers.push_back (data->step_pad_area_lma);
+  else
+    buffers.push_back (data->step_pad_area);
 
-  return data->step_pad_area;
+  data->disp_step_bufs.emplace (buffers);
+
+  return data->disp_step_bufs->prepare (thread, displaced_pc);
+}
+
+static bool
+kvx_displaced_step_hw_singlestep (struct gdbarch *gdbarch)
+{
+  return true;
+}
+
+static displaced_step_finish_status
+kvx_displaced_step_finish (gdbarch *arch, thread_info *thread, gdb_signal sig)
+{
+  kvx_step_inferior_data *data = kvx_inferior_data (current_inferior ());
+  displaced_step_finish_status ret;
+
+  ret = data->disp_step_bufs->finish (arch, thread, sig);
+  displaced_busy = false;
+
+  return ret;
 }
 
 static uint64_t
@@ -275,7 +319,7 @@ kvx_enable_hbkp_on_cpu (CORE_ADDR addr, int enable)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "Qkalray.enable_hbkp_on_cpu:0x%llx,%d", (unsigned long long) addr, enable);
+  sprintf (buf, "Qkalray.enable_hbkp_on_cpu:0x%" PRIx64 ",%d", addr, enable);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   free (buf);
@@ -293,7 +337,7 @@ read_memory_no_dcache (uint64_t addr, gdb_byte *user_buf, int len)
 
   size = 256;
   buf = (char *) malloc (size);
-  sprintf (buf, "qkalray.mem_no_cache:%llx,%d", (unsigned long long) addr, len);
+  sprintf (buf, "qkalray.mem_no_cache:%" PRIx64 ",%d", addr, len);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
 
@@ -327,14 +371,13 @@ get_jtag_over_iss (void)
 
 static void
 patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
-		       struct regcache *regs,
-		       struct kvx_displaced_step_closure *dsc)
+		       struct regcache *regs, struct kvx_displaced_step *dsc)
 {
   struct op_list *insn = branch_insns[kvx_arch ()];
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
 
   if (debug_displaced)
-    printf_filtered ("displaced: Looking at BCU instruction\n");
+    gdb_printf (_ ("displaced: Looking at BCU instruction\n"));
 
   /* In order to limit side effects, we patch every instruction or
      register in order to make branches target the step pad. This
@@ -356,7 +399,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
 	}
 
       if (debug_displaced)
-	printf_filtered ("displaced: found branchy BCU insn: %s\n", op->as_op);
+	gdb_printf (_ ("displaced: found branchy BCU insn: %s\n"), op->as_op);
 
       dsc->branchy = 1;
 
@@ -482,23 +525,28 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
 	}
       else
 	{
-	  internal_error (__FILE__, __LINE__, "Unknwon BCU insn");
+	  internal_error ("Unknwon BCU insn");
 	}
 
       break;
     }
 }
 
-static displaced_step_closure_up
+static displaced_step_copy_insn_closure_up
 kvx_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 			      CORE_ADDR to, struct regcache *regs)
 {
-  struct kvx_displaced_step_closure *dsc = new kvx_displaced_step_closure ();
+  size_t len = sizeof (kvx_displaced_step);
+  std::unique_ptr<buf_displaced_step_copy_insn_closure> closure (
+    new buf_displaced_step_copy_insn_closure (len));
+  struct kvx_displaced_step *dsc
+    = (struct kvx_displaced_step *) (void *) closure->buf.data ();
   int i;
 
   if (debug_displaced)
-    printf_filtered ("displaced: copying from %s\n", paddress (gdbarch, from));
+    gdb_printf (_ ("displaced: copying from %s\n"), paddress (gdbarch, from));
 
+  memset (dsc, 0, sizeof (*dsc));
   try
     {
       do
@@ -518,22 +566,22 @@ kvx_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 	throw;
 
       if (debug_displaced)
-	printf_filtered ("displaced: stepping inplace a hardware breakpoint "
-			 "on an unmapped address\n");
+	gdb_printf (_ ("displaced: stepping inplace a hardware breakpoint "
+		       "on an unmapped address\n"));
 
       kvx_enable_hbkp_on_cpu (from, 0);
 
       dsc->execute_inplace = 1;
-      return displaced_step_closure_up (dsc);
+      return displaced_step_copy_insn_closure_up (closure.release ());
     }
 
   if (debug_displaced)
     {
       int idx_words;
-      printf_filtered ("displaced: copied a %i word(s)\n", dsc->num_insn_words);
+      gdb_printf (_ ("displaced: copied a %i word(s)\n"), dsc->num_insn_words);
       for (idx_words = 0; idx_words < dsc->num_insn_words; idx_words++)
-	printf_filtered ("displaced: insn[%i] = %08x\n", idx_words,
-			 dsc->insn_words[idx_words]);
+	gdb_printf (_ ("displaced: insn[%i] = %08x\n"), idx_words,
+		    dsc->insn_words[idx_words]);
     }
 
   dsc->insn_words[0]
@@ -568,8 +616,8 @@ kvx_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 	      dsc->pcrel_reg = extract_mds_bitfield (op, crt_word, 0, 0);
 
 	      if (debug_displaced)
-		printf_filtered (
-		  "displaced: found pcrel insn: destination register r%d\n",
+		gdb_printf (
+		  _ ("displaced: found pcrel insn: destination register r%d\n"),
 		  dsc->pcrel_reg);
 	      break;
 	    }
@@ -582,34 +630,36 @@ kvx_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 
   write_memory (to, (gdb_byte *) dsc->insn_words, dsc->num_insn_words * 4);
 
-  return displaced_step_closure_up (dsc);
+  return displaced_step_copy_insn_closure_up (closure.release ());
 }
 
 static void
 kvx_displaced_step_fixup (struct gdbarch *gdbarch,
-			  struct displaced_step_closure *dsc_p, CORE_ADDR from,
-			  CORE_ADDR to, struct regcache *regs)
+			  displaced_step_copy_insn_closure *closure_,
+			  CORE_ADDR from, CORE_ADDR to, struct regcache *regs)
 {
   ULONGEST ps, lc, le, pc, pcrel_reg;
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  struct kvx_displaced_step_closure *dsc
-    = (struct kvx_displaced_step_closure *) dsc_p;
+  buf_displaced_step_copy_insn_closure *closure
+    = (buf_displaced_step_copy_insn_closure *) closure_;
+  struct kvx_displaced_step *dsc
+    = (struct kvx_displaced_step *) (void *) closure->buf.data ();
+  kvx_gdbarch_tdep *tdep = gdbarch_tdep<kvx_gdbarch_tdep> (gdbarch);
   int branched = 0;
   int exception = 0;
 
   if (debug_displaced)
-    printf_filtered ("displaced: Fixup\n");
+    gdb_printf (_ ("displaced: Fixup\n"));
 
   regcache_raw_read_unsigned (regs, tdep->ps_regnum, &ps);
   pc = regcache_read_pc (regs);
   if (debug_displaced)
-    printf_filtered ("displaced: new pc %s\n", paddress (gdbarch, pc));
+    gdb_printf (_ ("displaced: new pc %s\n"), paddress (gdbarch, pc));
 
   if (dsc->execute_inplace)
     {
       kvx_enable_hbkp_on_cpu (from, 1);
       if (debug_displaced)
-	printf_filtered ("displaced: inplace executed finished\n");
+	gdb_printf (_ ("displaced: inplace executed finished\n"));
       return;
     }
 
@@ -619,8 +669,9 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
 				  &pcrel_reg);
       pcrel_reg += from - to;
       if (debug_displaced)
-	printf_filtered ("displaced: pcrel patch register r%d to 0x%llx\n",
-			 dsc->pcrel_reg, (unsigned long long) pcrel_reg);
+	gdb_printf (_ ("displaced: pcrel patch register r%d to 0x%" PRIx64
+		       "\n"),
+		    dsc->pcrel_reg, pcrel_reg);
       regcache_raw_write_unsigned (regs, dsc->pcrel_reg + tdep->r0_regnum,
 				   pcrel_reg);
     }
@@ -629,7 +680,7 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
     {
       pc = from + (pc - to);
       if (debug_displaced)
-	printf_filtered ("displaced: Didn't branch\n");
+	gdb_printf (_ ("displaced: Didn't branch\n"));
     }
   else
     {
@@ -638,8 +689,9 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
       /* We branched. */
       branched = 1;
       if (debug_displaced)
-	printf_filtered ("displaced: we branched (predicted dest: %llx) \n",
-			 (unsigned long long) dsc->dest);
+	gdb_printf (_ ("displaced: we branched (predicted dest: %" PRIx64
+		       ") \n"),
+		    dsc->dest);
       if (dsc->branchy && (pc == to || (dsc->scall_jump && pc == dsc->dest)))
 	{
 	  /* The branchy instruction jumped to its destination. */
@@ -651,7 +703,7 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
 	      regcache_raw_write_unsigned (regs, tdep->ra_regnum,
 					   from + dsc->num_insn_words * 4);
 	      if (debug_displaced)
-		printf_filtered ("displaced: rewrite RA\n");
+		gdb_printf (_ ("displaced: rewrite RA\n"));
 	    }
 
 	  if (dsc->scall_jump)
@@ -659,7 +711,7 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
 	      regcache_raw_write_unsigned (regs, tdep->spc_regnum,
 					   from + dsc->num_insn_words * 4);
 	      if (debug_displaced)
-		printf_filtered ("displaced: rewrite SPC\n");
+		gdb_printf (_ ("displaced: rewrite SPC\n"));
 	    }
 	}
       else
@@ -668,8 +720,8 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
 	  // interrupt or H/W trap
 	  regcache_raw_read_unsigned (regs, tdep->spc_regnum, &spc);
 	  if (debug_displaced)
-	    printf_filtered ("displaced: trapped SPC=%lx\n",
-			     (unsigned long) spc);
+	    gdb_printf (_ ("displaced: trapped SPC=%lx\n"),
+			(unsigned long) spc);
 	  gdb_assert (spc == to);
 	  spc = from;
 	  regcache_raw_write_unsigned (regs, tdep->spc_regnum, spc);
@@ -682,13 +734,12 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
     {
       regcache_raw_write_unsigned (regs, dsc->reg, dsc->dest);
       if (debug_displaced)
-	printf_filtered ("displaced: rewrite %i with %llx\n", dsc->reg,
-			 (unsigned long long) dsc->dest);
+	gdb_printf (_ ("displaced: rewrite %i with %" PRIx64 "\n"), dsc->reg,
+		    dsc->dest);
     }
 
   if (((ps >> 5) & 1) /* HLE */)
     {
-
       /* The loop setup is done only if H/W loops are actually
 	 enabled. */
       if (!exception && dsc->rewrite_LE)
@@ -697,20 +748,21 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
 	  regcache_raw_write_unsigned (regs, tdep->ls_regnum,
 				       from + dsc->num_insn_words * 4);
 	  if (debug_displaced)
-	    printf_filtered ("displaced: rewrite LE\n");
+	    gdb_printf (_ ("displaced: rewrite LE\n"));
 	}
 
       if (!branched)
 	{
 	  regcache_raw_read_unsigned (regs, tdep->le_regnum, &le);
 	  if (debug_displaced)
-	    printf_filtered ("displaced: active loop pc(%llx) le(%llx)\n",
-			     (unsigned long long) pc, (unsigned long long) le);
+	    gdb_printf (_ ("displaced: active loop pc(%" PRIx64 ") le(%" PRIx64
+			   ")\n"),
+			pc, le);
 
 	  if (pc == le)
 	    {
 	      if (debug_displaced)
-		printf_filtered ("displaced: at loop end\n");
+		gdb_printf (_ ("displaced: at loop end\n"));
 	      regcache_raw_read_unsigned (regs, tdep->lc_regnum, &lc);
 	      if (lc - 1 == 0)
 		regcache_raw_read_unsigned (regs, tdep->le_regnum, &pc);
@@ -724,12 +776,12 @@ kvx_displaced_step_fixup (struct gdbarch *gdbarch,
 
   regcache_write_pc (regs, pc);
   if (debug_displaced)
-    printf_filtered ("displaced: writing PC %s\n", paddress (gdbarch, pc));
+    gdb_printf (_ ("displaced: writing PC %s\n"), paddress (gdbarch, pc));
 }
 
 static int
 kvx_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
-			 struct reggroup *group)
+			 const struct reggroup *group)
 {
   if (gdbarch_register_name (gdbarch, regnum) == NULL
       || *gdbarch_register_name (gdbarch, regnum) == '\0')
@@ -792,7 +844,7 @@ kvx_prepare_os_init_done (void)
   struct bound_minimal_symbol msym;
   const gdb_byte *bp_opcode;
   struct inferior *inf;
-  struct inferior_data *data;
+  struct kvx_inferior_data *data;
   struct regcache *rc;
   int bp_len;
   process_stratum_target *proc_target
@@ -816,7 +868,7 @@ kvx_prepare_os_init_done (void)
   msym = lookup_minimal_symbol ("gdb_os_init_done", NULL, NULL);
   if (!msym.minsym)
     return 0;
-  gdb_os_init_done_addr = BMSYMBOL_VALUE_ADDRESS (msym);
+  gdb_os_init_done_addr = msym.value_address ();
   if (!gdb_os_init_done_addr)
     return 0;
 
@@ -841,31 +893,26 @@ kvx_prepare_os_init_done (void)
 }
 
 static void
-kvx_inferior_created (struct target_ops *target, int from_tty)
+kvx_inferior_created (struct inferior *inf)
 {
   int timedout, timer_id;
-  struct inferior *inf;
   struct thread_info *thread;
-  struct target_waitstatus ws;
+  thread_suspend_state ss;
   const int timeout_ms_os_init_done = 1000;
   process_stratum_target *proc_target
     = (process_stratum_target *) get_current_remote_target ();
 
   kvx_current_arch = KVX_NUM_ARCHES;
 
-  if (inferior_ptid.pid () != 1)
+  if (!inf || inf->pid != 1)
     return;
 
   if (after_first_resume || !kvx_prepare_os_init_done ())
     return;
 
-  inf = current_inferior ();
-  if (!inf)
-    return;
-
   // save the initial stopped thread waitstatus
   thread = find_thread_ptid (proc_target, inferior_ptid);
-  ws = thread->suspend.waitstatus;
+  thread->save_suspend_to (ss);
 
   // continue to gdb_os_init_done
   continue_1 (0);
@@ -891,7 +938,7 @@ kvx_inferior_created (struct target_ops *target, int from_tty)
       if (thread->state == THREAD_STOPPED)
 	{
 	  // set the initial stopped thread waitstatus
-	  thread->suspend.waitstatus = ws;
+	  thread->restore_suspend_from (ss);
 	  break;
 	}
 
@@ -920,8 +967,8 @@ kvx_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp, CORE_ADDR funcaddr,
   if (sp < sz)
     {
       error (_ ("Cannot call yet a function from gdb prompt because the stack "
-		"pointer is not set yet (sp=0x%llx)"),
-	     (unsigned long long) sp);
+		"pointer is not set yet (sp=0x%" PRIx64 ")"),
+	     sp);
     }
   sp -= sz;
 
@@ -949,7 +996,7 @@ sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value)
   remote_target *rt = get_current_remote_target ();
 
   buf = (char *) malloc (size);
-  sprintf (buf, "Qkalray.unified_write:%llx,%d:%llx", (unsigned long long) addr, len,
+  sprintf (buf, "Qkalray.unified_write:%" PRIx64 ",%d:%" PRIx64, addr, len,
 	   (unsigned long long) value);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
@@ -995,15 +1042,24 @@ kvx_memory_remove_breakpoint (struct gdbarch *gdbarch,
 static void
 kvx_write_pc (struct regcache *regcache, CORE_ADDR pc)
 {
-  struct kvx_displaced_step_closure *dsc
-    = (struct kvx_displaced_step_closure *) get_displaced_step_closure_by_addr (
-      pc);
+  struct kvx_displaced_step *dsc = nullptr;
+  struct gdbarch *gdbarch = target_gdbarch ();
+  if (gdbarch_displaced_step_copy_insn_closure_by_addr_p (gdbarch))
+    {
+      buf_displaced_step_copy_insn_closure *closure
+	= (buf_displaced_step_copy_insn_closure *)
+	  gdbarch_displaced_step_copy_insn_closure_by_addr (gdbarch,
+							    current_inferior (),
+							    pc);
+
+      dsc = (struct kvx_displaced_step *) (void *) closure->buf.data ();
+    }
 
   if (dsc && dsc->execute_inplace)
     {
       if (debug_displaced)
-	printf_filtered ("The PC was not written because the displace "
-			 "will be executed inplace\n");
+	gdb_printf (_ ("The PC was not written because the displace "
+		       "will be executed inplace\n"));
 
       return;
     }
@@ -1016,9 +1072,9 @@ static struct gdbarch *
 kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
+  kvx_gdbarch_tdep *tdep;
   const struct target_desc *tdesc;
-  struct tdesc_arch_data *tdesc_data;
+  tdesc_arch_data_up tdesc_data;
   int i;
   int has_pc = -1, has_sp = -1, has_le = -1, has_ls = -1, has_ps = -1;
   int has_ev = -1, has_lc = -1, has_local = -1, has_ra = -1, has_spc = -1;
@@ -1058,7 +1114,7 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (arches != NULL)
     return arches->gdbarch;
 
-  tdep = (struct gdbarch_tdep *) xzalloc (sizeof (struct gdbarch_tdep));
+  tdep = (kvx_gdbarch_tdep *) xzalloc (sizeof (kvx_gdbarch_tdep));
   gdbarch = gdbarch_alloc (&info, tdep);
 
   pc_name = kvx_pc_name (gdbarch);
@@ -1085,7 +1141,7 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     {
       set_gdbarch_num_regs (gdbarch, 0);
       tdesc_data = tdesc_data_alloc ();
-      tdesc_use_registers (gdbarch, tdesc, tdesc_data);
+      tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data));
 
       for (i = 0; i < gdbarch_num_regs (gdbarch); ++i)
 	{
@@ -1230,35 +1286,30 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Displaced stepping */
   set_gdbarch_displaced_step_copy_insn (gdbarch, kvx_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, kvx_displaced_step_fixup);
-  set_gdbarch_displaced_step_location (gdbarch, kvx_displaced_step_location);
+  set_gdbarch_displaced_step_prepare (gdbarch, kvx_displaced_step_prepare);
+  set_gdbarch_displaced_step_hw_singlestep (gdbarch,
+					    kvx_displaced_step_hw_singlestep);
+  set_gdbarch_displaced_step_finish (gdbarch, kvx_displaced_step_finish);
   set_gdbarch_max_insn_length (gdbarch, 8 * 4);
 
   set_gdbarch_get_longjmp_target (gdbarch, kvx_get_longjmp_target);
 
   if (tdesc_has_registers (tdesc))
     {
-      set_solib_ops (gdbarch, &kvx_bare_solib_ops);
+      set_gdbarch_so_ops (gdbarch, &kvx_bare_solib_ops);
     }
 
   return gdbarch;
 }
 
-static void
-kvx_cleanup_inferior_data (struct inferior *inf, void *data)
-{
-  xfree (data);
-}
-
-extern initialize_file_ftype _initialize_kvx_tdep;
-
+// extern initialize_file_ftype _initialize_kvx_tdep;
 void
-_initialize_kvx_tdep (void)
+_initialize_kvx_tdep ();
+void
+_initialize_kvx_tdep ()
 {
   kvx_look_for_insns ();
-  gdbarch_register (bfd_arch_kvx, kvx_gdbarch_init, NULL);
+  gdbarch_register (bfd_arch_kvx, kvx_gdbarch_init);
 
-  gdb::observers::inferior_created.attach (kvx_inferior_created);
-
-  kvx_inferior_data_token
-    = register_inferior_data_with_cleanup (NULL, kvx_cleanup_inferior_data);
+  gdb::observers::inferior_created.attach (kvx_inferior_created, "kvx-tdep");
 }

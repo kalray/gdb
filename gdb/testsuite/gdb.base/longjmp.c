@@ -47,9 +47,7 @@ main ()
 
   /* Pattern 1 - simple longjmp.  */
   if (setjmp (env) != 0) /* patt1 */
-    {
       resumes++;
-    }
   else
     {
       longjmps++;

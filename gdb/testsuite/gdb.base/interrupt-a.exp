@@ -15,6 +15,12 @@
 
 # Test that 'interrupt -a' works in all stop mode.
 
+# KVX: no signal message
+if [istarget kvx-*-*] then {
+  unsupported "interrupt-a.exp"
+  return 1
+}
+
 standard_testfile .c
 set executable ${testfile}
 

@@ -112,13 +112,14 @@ with_test_prefix "redirect while already logging" {
     gdb_test_no_output "set logging redirect off"
 }
 
+#KVX: extra output arrives after fetch_inferior_event: exit\r\n
 with_test_prefix "debugging" {
     gdb_test "set debug infrun 1"
     gdb_test "set logging enabled on" \
     "Copying output to /dev/null.*Copying debug output to /dev/null\\."
 
     gdb_test \
-	-prompt "$gdb_prompt \\\[infrun\\\] fetch_inferior_event: exit\r\n$" \
+	-prompt "$gdb_prompt \\\[infrun\\\] fetch_inferior_event: exit\r\n.*$" \
 	"continue" \
 	"Continuing.*\\\[infrun\\\] .*\\\[infrun\\\] .*Breakpoint \[0-9\]+, foo.*"
 

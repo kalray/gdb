@@ -21,7 +21,7 @@ struct mppa_dl_debug_s
 {
   uint64_t version; /* Protocol version */
   uint64_t head;    /* Head of the shared object chain */
-  uint64_t brk;     /* Address of the breakpoint function */
+  uint64_t brk;	    /* Address of the breakpoint function */
   uint64_t valid;   /* The  shared object chain is valid */
 } __attribute__ ((packed));
 
@@ -40,20 +40,11 @@ struct mppa_dl_debug_map_s
 struct kvx_lm_info : public lm_info_base
 {
 public:
-  kvx_lm_info (CORE_ADDR addr)
-  {
-    this->lm_addr = addr;
-  }
+  kvx_lm_info (CORE_ADDR addr) { this->lm_addr = addr; }
 
-  kvx_lm_info (void)
-  {
-    this->lm_addr = 0;
-  }
+  kvx_lm_info (void) { this->lm_addr = 0; }
 
-  kvx_lm_info (const kvx_lm_info &o)
-  {
-    this->lm_addr = o.lm_addr;
-  }
+  kvx_lm_info (const kvx_lm_info &o) { this->lm_addr = o.lm_addr; }
 
 public:
   CORE_ADDR lm_addr;
@@ -68,14 +59,15 @@ struct kvx_bare_solib_info
   struct so_list *last_head;
 };
 
-/* Per-program-space data key. */
-static const struct program_space_data *kvx_bare_solib_pspace_data;
-
-static void
-kvx_bare_solib_pspace_data_cleanup (struct program_space *pspace, void *arg)
+struct kvx_bare_solib_pspace_deleter
 {
-  xfree (arg);
-}
+  void operator() (kvx_bare_solib_info *info) { xfree (info); }
+};
+
+/* Per-program-space data key. */
+static const registry<program_space>::key<kvx_bare_solib_info,
+					  kvx_bare_solib_pspace_deleter>
+  kvx_bare_solib_pspace_data_key;
 
 /* Get the current KVX data.  If none is found yet, add it now.  This
    function always returns a valid object */
@@ -84,15 +76,13 @@ kvx_bare_solib_get_info (void)
 {
   struct kvx_bare_solib_info *info;
 
-  info = (struct kvx_bare_solib_info *)
-    program_space_data (current_program_space, kvx_bare_solib_pspace_data);
+  info = kvx_bare_solib_pspace_data_key.get (current_program_space);
   if (info != NULL)
     return info;
 
   info = (struct kvx_bare_solib_info *) xzalloc (
     sizeof (struct kvx_bare_solib_info));
-  set_program_space_data (current_program_space, kvx_bare_solib_pspace_data,
-			  info);
+  kvx_bare_solib_pspace_data_key.set (current_program_space, info);
 
   return info;
 }
@@ -114,7 +104,7 @@ kvx_bare_solib_load_debug_info (void)
   if (msym.minsym == NULL)
     return;
 
-  dl_debug_sect = MSYMBOL_OBJ_SECTION (msym.objfile, msym.minsym);
+  dl_debug_sect = msym.minsym->obj_section (msym.objfile);
   if (!dl_debug_sect || !dl_debug_sect->the_bfd_section)
     return;
   if (bfd_section_lma (dl_debug_sect->the_bfd_section)
@@ -124,7 +114,7 @@ kvx_bare_solib_load_debug_info (void)
 	return;
     }
 
-  mppa_dl_debug_addr = BMSYMBOL_VALUE_ADDRESS (msym);
+  mppa_dl_debug_addr = msym.value_address ();
 
   if (target_read_memory (mppa_dl_debug_addr, (gdb_byte *) &dl_debug,
 			  sizeof (struct mppa_dl_debug_s)))
@@ -150,7 +140,7 @@ kvx_bare_solib_load_debug_info (void)
    Relocate these VMAs according to solib info */
 static void
 kvx_bare_solib_relocate_section_addresses (struct so_list *so,
-					  struct target_section *sec)
+					   struct target_section *sec)
 {
   kvx_lm_info *li = (kvx_lm_info *) so->lm_info;
 
@@ -424,11 +414,8 @@ kvx_bare_solib_open_symbol_file_object (int from_ttyp)
 extern initialize_file_ftype _initialize_kvx_bare_solib;
 
 void
-_initialize_kvx_bare_solib (void)
+_initialize_kvx_bare_solib ()
 {
-  kvx_bare_solib_pspace_data = register_program_space_data_with_cleanup (
-    NULL, kvx_bare_solib_pspace_data_cleanup);
-
   kvx_bare_solib_ops.relocate_section_addresses
     = kvx_bare_solib_relocate_section_addresses;
   kvx_bare_solib_ops.free_so = kvx_bare_solib_free_so;
