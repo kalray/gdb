@@ -1068,6 +1068,44 @@ kvx_write_pc (struct regcache *regcache, CORE_ADDR pc)
 				  gdbarch_pc_regnum (regcache->arch ()), pc);
 }
 
+static int
+kvx_core_addr_lessthan (CORE_ADDR lhs, CORE_ADDR rhs)
+{
+  int i;
+  frame_info_ptr frame;
+  CORE_ADDR pc, fp;
+  struct minimal_symbol *sym;
+  const char *name = NULL;
+  static const char *fcs[]
+    = {"__cos_asm_kernel_debug_handler", "__cos_asm_exception_handler",
+       "__cos_asm_kernel_syscall_handler", "__cos_asm_interrupt_handler"};
+
+  if (lhs >= rhs)
+    return 0;
+
+  for (frame = get_current_frame (); frame; frame = get_prev_frame (frame))
+    {
+      fp = get_frame_base (frame);
+      if (rhs == fp)
+	{
+	  pc = get_frame_pc (frame);
+	  if (!pc)
+	    break;
+	  sym = lookup_minimal_symbol_by_pc (pc).minsym;
+	  if (sym)
+	    name = sym->linkage_name ();
+	  if (!name)
+	    break;
+	  for (i = 0; i < sizeof (fcs) / sizeof (fcs[0]); i++)
+	    if (!strcmp (name, fcs[i]))
+	      return 0;
+	  break;
+	}
+    }
+
+  return 1;
+}
+
 static struct gdbarch *
 kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
@@ -1280,7 +1318,7 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_adjust_breakpoint_address (gdbarch,
 					 kvx_adjust_breakpoint_address);
   /* Settings that should be unnecessary.  */
-  set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
+  set_gdbarch_inner_than (gdbarch, kvx_core_addr_lessthan);
   set_gdbarch_print_insn (gdbarch, kvx_print_insn);
 
   /* Displaced stepping */
