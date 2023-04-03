@@ -18,6 +18,7 @@ enum KVX_ARCH
 {
   KVX_KV3_1,
   KVX_KV3_2,
+  KVX_KV4_1,
   KVX_NUM_ARCHES
 };
 

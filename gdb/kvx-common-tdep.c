@@ -100,6 +100,9 @@ kvx_arch (void)
 	case ELF_KVX_CORE_KV3_2:
 	  kvx_current_arch = KVX_KV3_2;
 	  break;
+	case ELF_KVX_CORE_KV4_1:
+	  kvx_current_arch = KVX_KV4_1;
+	  break;
 	default:
 	  error (_ ("The KVX binary is compiled for an unknown core."));
 	}
@@ -111,6 +114,8 @@ kvx_arch (void)
 	kvx_current_arch = KVX_KV3_1;
       else if (strstr (name, "kv3-2"))
 	kvx_current_arch = KVX_KV3_2;
+      else if (strstr (name, "kv4-1"))
+	kvx_current_arch = KVX_KV4_1;
       else
 	error ("unable to find the current kvx architecture.");
     }
@@ -125,6 +130,34 @@ int
 get_kvx_arch (void)
 {
   return kvx_arch ();
+}
+
+int
+get_kvx_target_core_vers (int *target_ver, int *core_ver)
+{
+  int arch = kvx_arch ();
+
+  switch (arch)
+    {
+    case KVX_KV3_1:
+      *target_ver = 3;
+      *core_ver = 1;
+      break;
+    case KVX_KV3_2:
+      *target_ver = 3;
+      *core_ver = 2;
+      break;
+    case KVX_KV4_1:
+      *target_ver = 4;
+      *core_ver = 1;
+      break;
+    default:
+      *target_ver = 0;
+      *core_ver = 0;
+      return 1;
+    }
+
+  return 0;
 }
 
 const char *
@@ -1032,6 +1065,9 @@ kvx_look_for_insns (void)
 	  break;
 	case KVX_KV3_2:
 	  op = kvx_kv3_v2_optab;
+	  break;
+	case KVX_KV4_1:
+	  op = kvx_kv4_v1_optab;
 	  break;
 	default:
 	  internal_error ("Unknown arch id.");

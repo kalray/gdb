@@ -431,6 +431,9 @@ kvx_target::create_inferior (const char *exec_file, const std::string &args,
 	case ELF_KVX_CORE_KV3_2:
 	  stub_args[argidx++] = (char *) "--march=kv3-2";
 	  break;
+	case ELF_KVX_CORE_KV4_1:
+	  stub_args[argidx++] = (char *) "--march=kv4-1";
+	  break;
 	default:
 	  error (_ ("The KVX binary is compiled for an unknown core."));
 	}
@@ -695,7 +698,7 @@ kvx_change_file (int pid, const char *file_path, const char *cluster_name)
 	{
 	  char path[PATH_MAX], *dn;
 	  int sz = readlink ("/proc/self/exe", path, sizeof (path) - 1);
-	  int len_path, nb_bytes;
+	  int len_path, nb_bytes, target_ver, core_ver;
 	  path[sz] = 0;
 	  dn = dirname (path);
 	  if (dn != path)
@@ -704,11 +707,12 @@ kvx_change_file (int pid, const char *file_path, const char *cluster_name)
 	  if (dn != path)
 	    strcpy (path, dn);
 
+	  get_kvx_target_core_vers (&target_ver, &core_ver);
 	  len_path = strlen (path);
 	  nb_bytes
 	    = snprintf (path + len_path, sizeof (path) - len_path,
-			"/lib/kalray-oce/kvx/kv3_v%d_node_debug_handlers.u",
-			get_kvx_arch () + 1);
+			"/lib/kalray-oce/kvx/kv%d_v%d_node_debug_handlers.u",
+			target_ver, core_ver);
 
 	  if (nb_bytes >= sizeof (path) - len_path)
 	    fprintf (stderr, "Error: the debug handlers path is too long\n");

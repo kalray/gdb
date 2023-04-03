@@ -22,7 +22,7 @@ extern bool opt_cont_os_init_done;
 extern char cjtag_over_iss;
 
 void
-_initialize_kvx_target ();
+_initialize_kvx_target (void);
 void
 send_cluster_break_on_spawn (struct inferior *inf, int v);
 void
@@ -41,6 +41,7 @@ int
 sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value);
 int
 get_kvx_arch (void);
+int get_kvx_target_core_vers (int *target_ver, int *core_ver);
 
 kvx_inferior_data *
 mppa_inferior_data (struct inferior *inf);

@@ -419,9 +419,11 @@ show_trap_info (union reg_es_s es)
 static void
 show_debug_trap_info (union reg_es_s es)
 {
-  int core_ver = get_kvx_arch () + 1;
+  int target_ver, core_ver;
 
-  if (core_ver == 1)
+  get_kvx_target_core_vers (&target_ver, &core_ver);
+
+  if (target_ver == 3 && core_ver == 1)
     {
       printf ("Debug cause: %s (es.dc=%d)\n",
 	      MSG_FROM_ARRAY (es_dc_msg, es.debug.v1.dc),

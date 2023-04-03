@@ -71,7 +71,7 @@ struct tlb_entry_s
 
 typedef void (*tlb_iteration_cb_fc) (struct tlb_entry_s *e, int tlb_type,
 				     int iset, int iway, void *pvoid_opt,
-				     int core_ver);
+				     int target_ver, int core_ver);
 
 struct dump_tlb_opt_s
 {
@@ -164,9 +164,9 @@ static const char *tel_cp2_msg[] = {
 
 static void
 print_tlb_entry (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
-		 int core_ver)
+		 int target_ver, int core_ver)
 {
-  if (core_ver == 1)
+  if (target_ver == 3 && core_ver == 1)
     {
       printf (
 	"%s[s:%02d w:%02d]: PN:%09lx | FN:%09lx | PS:%lu %s | "
@@ -201,28 +201,28 @@ print_tlb_entry (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
 
 static void
 dump_tlb (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
-	  void *pvoid_opt, int core_ver)
+	  void *pvoid_opt, int target_ver, int core_ver)
 {
   struct dump_tlb_opt_s *opt = (struct dump_tlb_opt_s *) pvoid_opt;
-  uint64_t tel_es = (core_ver == 1) ? e->tel.v1.es : e->tel.v2.es;
+  uint64_t tel_es = (target_ver == 3 && core_ver == 1) ? e->tel.v1.es : e->tel.v2.es;
 
   if ((opt->asn == -1 || e->teh._.asn == opt->asn)
       && (!opt->global || e->teh._.g)
       && (!opt->valid_only || tel_es != TLB_ES_INVALID))
     {
-      print_tlb_entry (e, tlb_type, iset, iway, core_ver);
+      print_tlb_entry (e, tlb_type, iset, iway, target_ver, core_ver);
     }
 }
 
 static void
 lookup_addr (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
-	     void *pvoid_opt, int core_ver)
+	     void *pvoid_opt, int target_ver, int core_ver)
 {
   struct lookup_addr_opt_s *opt = (struct lookup_addr_opt_s *) pvoid_opt;
   uint64_t addr, ofs, translated_addr, tlb_begin;
   uint64_t tel_es, tel_ps, tel_fn;
 
-  if (core_ver == 1)
+  if (target_ver == 3 && core_ver == 1)
     {
       tel_es = e->tel.v1.es;
       tel_ps = e->tel.v1.ps;
@@ -249,7 +249,7 @@ lookup_addr (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
       if (addr < tlb_begin || addr >= tlb_begin + tel_ps_vals[tel_ps])
 	return;
 
-      print_tlb_entry (e, tlb_type, iset, iway, core_ver);
+      print_tlb_entry (e, tlb_type, iset, iway, target_ver, core_ver);
       ofs = opt->addr & (tel_ps_vals[tel_ps] - 1);
       translated_addr = (((unsigned long long) tel_fn) << TEL_FN_SHIFT) + ofs;
       printf ("\tvirtual address 0x%llx -> physical address 0x%llx\n\n",
@@ -262,7 +262,7 @@ lookup_addr (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
       tlb_begin = ((unsigned long long) tel_fn) << TEL_FN_SHIFT;
       if (opt->addr < tlb_begin || opt->addr >= tlb_begin + tel_ps_vals[tel_ps])
 	return;
-      print_tlb_entry (e, tlb_type, iset, iway, core_ver);
+      print_tlb_entry (e, tlb_type, iset, iway, target_ver, core_ver);
       ofs = opt->addr & (tel_ps_vals[tel_ps] - 1);
       translated_addr
 	= (((unsigned long long) e->teh._.pn) << TEH_PN_SHIFT) + ofs;
@@ -278,7 +278,7 @@ lookup_addr (struct tlb_entry_s *e, int tlb_type, int iset, int iway,
 
 static void
 iterate_over_tlbs (int tlb_type, tlb_iteration_cb_fc cb, void *cb_options,
-		   int core_ver)
+		   int target_ver, int core_ver)
 {
   int no_sets, no_ways, iset, iway;
   struct tlb_entry_s e;
@@ -309,7 +309,7 @@ iterate_over_tlbs (int tlb_type, tlb_iteration_cb_fc cb, void *cb_options,
 	  }
 	else
 	  {
-	    (*cb) (&e, tlb_type, iset, iway, cb_options, core_ver);
+	    (*cb) (&e, tlb_type, iset, iway, cb_options, target_ver, core_ver);
 	  }
       }
 }
@@ -317,7 +317,7 @@ iterate_over_tlbs (int tlb_type, tlb_iteration_cb_fc cb, void *cb_options,
 void
 mppa_dump_tlb_command (const char *args, int from_tty)
 {
-  int core_ver = get_kvx_arch () + 1;
+  int target_ver, core_ver;
   struct dump_tlb_opt_s opt = {.asn = -1, .global = 0, .valid_only = 0};
   int jtlb = -1, ltlb = -1;
   gdb_argv build_argv (args);
@@ -330,6 +330,8 @@ mppa_dump_tlb_command (const char *args, int from_tty)
       printf (_ ("Cannot dump the TLB without a stopped thread.\n"));
       return;
     }
+
+  get_kvx_target_core_vers (&target_ver, &core_ver);
 
   if (argv)
     {
@@ -380,16 +382,16 @@ mppa_dump_tlb_command (const char *args, int from_tty)
     }
 
   if (jtlb)
-    iterate_over_tlbs (MMC_SB_JTLB, &dump_tlb, &opt, core_ver);
+    iterate_over_tlbs (MMC_SB_JTLB, &dump_tlb, &opt, target_ver, core_ver);
 
   if (ltlb)
-    iterate_over_tlbs (MMC_SB_LTLB, &dump_tlb, &opt, core_ver);
+    iterate_over_tlbs (MMC_SB_LTLB, &dump_tlb, &opt, target_ver, core_ver);
 }
 
 void
 mppa_lookup_addr_command (const char *args, int from_tty)
 {
-  int core_ver = get_kvx_arch () + 1;
+  int target_ver, core_ver;
   struct lookup_addr_opt_s opt = {0, 0, -1};
   int phys = 0;
   gdb_argv build_argv (args);
@@ -404,6 +406,8 @@ mppa_lookup_addr_command (const char *args, int from_tty)
       printf (_ ("Cannot lookup an address without a stopped thread.\n"));
       return;
     }
+
+  get_kvx_target_core_vers (&target_ver, &core_ver);
 
   if (argv)
     {
@@ -460,6 +464,6 @@ mppa_lookup_addr_command (const char *args, int from_tty)
       return;
     }
 
-  iterate_over_tlbs (MMC_SB_JTLB, &lookup_addr, &opt, core_ver);
-  iterate_over_tlbs (MMC_SB_LTLB, &lookup_addr, &opt, core_ver);
+  iterate_over_tlbs (MMC_SB_JTLB, &lookup_addr, &opt, target_ver, core_ver);
+  iterate_over_tlbs (MMC_SB_LTLB, &lookup_addr, &opt, target_ver, core_ver);
 }
