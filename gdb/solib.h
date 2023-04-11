@@ -154,4 +154,6 @@ extern void set_cbfd_soname_build_id (gdb_bfd_ref_ptr abfd,
 extern gdb::unique_xmalloc_ptr<char> get_cbfd_soname_build_id
   (gdb_bfd_ref_ptr abfd, const char *soname);
 
+extern std::string solib_search_path;
+
 #endif /* SOLIB_H */

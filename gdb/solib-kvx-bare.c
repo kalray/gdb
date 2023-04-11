@@ -236,18 +236,14 @@ kvx_bare_check_so (const char *file_name, struct mppa_dl_debug_map_s *mppadl)
   asection *text_sect;
   bfd *hbfd;
   uint64_t cs;
-  int found_file = 0, ret = 1;
+  int ret = 1;
   bfd_byte *text_data = NULL;
-  gdb::unique_xmalloc_ptr<char> found_pathname
-    = solib_find (file_name, &found_file);
+  gdb_bfd_ref_ptr abfd (solib_bfd_open (file_name));
 
-  if (found_pathname == NULL)
+  if (abfd == NULL)
     return 1;
 
-  hbfd = bfd_openr (found_pathname.get (), NULL);
-  if (hbfd == NULL)
-    return 1;
-
+  hbfd = abfd.get ();
   // check if the file is in format
   if (!bfd_check_format (hbfd, bfd_object))
     {
@@ -300,7 +296,6 @@ kvx_bare_check_so (const char *file_name, struct mppa_dl_debug_map_s *mppadl)
 
   ret = 0;
 label_end:
-  bfd_close (hbfd);
   if (text_data)
     free (text_data);
 
@@ -320,6 +315,7 @@ kvx_bare_solib_current_sos (void)
   struct so_list *head = NULL, **ptail = &head;
   const char *cluster_name = NULL;
   process_stratum_target *proc_target;
+  int len_target_prefix = strlen (TARGET_SYSROOT_PREFIX);
 
   info = kvx_bare_solib_get_info ();
   if (!info->brk || !info->head_addr || !info->valid_addr)
@@ -353,6 +349,8 @@ kvx_bare_solib_current_sos (void)
     return NULL;
   for (; crt_debug_map_addr; crt_debug_map_addr = crt_debug_map.next)
     {
+      int len_search = 0;
+
       if (target_read_memory (crt_debug_map_addr, (gdb_byte *) &crt_debug_map,
 			      sizeof (struct mppa_dl_debug_map_s)))
 	break;
@@ -370,11 +368,31 @@ kvx_bare_solib_current_sos (void)
 	  continue;
 	}
 
-      if (crt_debug_map.file_name_len >= SO_NAME_MAX_PATH_SIZE)
+      if (!solib_search_path.empty ()
+	  && startswith (solib_search_path.c_str (), TARGET_SYSROOT_PREFIX "/"))
+	{
+	  /* read the first char of the so path */
+	  if (target_read_memory (crt_debug_map.file_name,
+				  (gdb_byte *) crt_file_name, 1))
+	    continue;
+
+	  /* add solib-search-path only if the remote path is relative */
+	  if (*crt_file_name != '/')
+	    {
+	      len_search = solib_search_path.length () - len_target_prefix;
+	      if (len_search + 1 < SO_NAME_MAX_PATH_SIZE)
+		strcpy (crt_file_name,
+			solib_search_path.c_str () + len_target_prefix);
+	      if (crt_file_name[len_search - 1] != '/')
+		crt_file_name[len_search++] = '/';
+	    }
+	}
+
+      if (crt_debug_map.file_name_len + len_search >= SO_NAME_MAX_PATH_SIZE)
 	continue;
 
       if (target_read_memory (crt_debug_map.file_name,
-			      (gdb_byte *) crt_file_name,
+			      (gdb_byte *) &crt_file_name[len_search],
 			      crt_debug_map.file_name_len))
 	continue;
 

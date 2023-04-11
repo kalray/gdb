@@ -75,7 +75,7 @@ public:
 
   virtual bool can_create_inferior (void) override { return true; }
 
-  virtual bool filesystem_is_local (void) override { return true; }
+  virtual bool filesystem_is_local (void) override;
 
   virtual bool can_run (void) override { return true; }
 
@@ -275,8 +275,6 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
   int print_thread_events_save = print_thread_events;
   char *args_copy, *host, *port, *tar_remote_cmd;
   bool retry_connection = false;
-  bool hide_attach_warning = (current_program_space->exec_filename == nullptr);
-  char *temp_exec_file = NULL;
 
   if (!args)
     args = "";
@@ -294,6 +292,9 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
       port = args_copy;
       host = (char *) "";
     }
+
+  if (!*host || !strcmp (host, "127.0.0.1") || !strcmp (host, "localhost"))
+    execute_command ("set sysroot /", 0);
 
   tar_remote_cmd = (char *) malloc (strlen (host) + strlen (port)
 				    + strlen (tar_remote_str) + 4);
@@ -315,13 +316,6 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
   gdb::observers::new_thread.attach (kvx_target_new_thread, new_thread_token,
 				     "kvx");
   async_disable_stdin ();
-  // apply no executable warning hack
-  if (hide_attach_warning)
-    {
-      temp_exec_file = strdup ("");
-      current_program_space->exec_filename
-	= gdb::unique_xmalloc_ptr<char> (temp_exec_file);
-    }
 
   do
     {
@@ -329,12 +323,6 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
 	{
 	  execute_command (tar_remote_cmd, 0);
 	  retry_connection = false;
-	  // remove no executable warning hack
-	  if (hide_attach_warning
-	      && current_program_space->exec_filename.get () == temp_exec_file)
-	    {
-	      current_program_space->exec_filename.reset (nullptr);
-	    }
 	}
       catch (gdb_exception &ex)
 	{
@@ -353,13 +341,6 @@ kvx_target_attach (struct target_ops *ops, const char *args, int from_tty)
 	      gdb::observers::new_thread.detach (new_thread_token);
 	      free (tar_remote_cmd);
 	      print_thread_events = print_thread_events_save;
-	      // remove no executable warning hack
-	      if (hide_attach_warning
-		  && current_program_space->exec_filename.get ()
-		       == temp_exec_file)
-		{
-		  current_program_space->exec_filename.reset (nullptr);
-		}
 
 	      throw;
 	    }
@@ -606,8 +587,10 @@ kvx_target::mourn_inferior (void)
       set_current_inferior (&inf);
       set_current_program_space (inf.pspace);
       remote_target->mourn_inferior ();
-      inf.unpush_target (remote_target);
-      inf.unpush_target (this);
+      if (this->beneath () == remote_target)
+	inf.unpush_target (remote_target);
+      if (inf.target_is_pushed (this))
+	inf.unpush_target (this);
     }
   set_current_inferior (crt_inf);
   set_current_program_space (crt_inf->pspace);
@@ -701,32 +684,13 @@ kvx_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 }
 
 static void
-kvx_change_file (const char *file_path, const char *cluster_name)
+kvx_change_file (int pid, const char *file_path, const char *cluster_name)
 {
-  struct stat st;
-  if (stat (file_path, &st))
-    {
-      printf ("Cannot stat KVX executable file %s\n", file_path);
-      return;
-    }
-
-  if (st.st_mode & S_IFDIR)
-    {
-      printf ("%s is a directory, not a KVX executable!\n", file_path);
-      return;
-    }
-
   cjtag_over_iss = get_jtag_over_iss ();
 
   try
     {
-      // remove no executable warning hack
-      if (current_program_space->exec_filename.get ())
-	{
-	  current_program_space->exec_filename.reset (nullptr);
-	}
-      exec_file_attach ((char *) file_path, 0);
-      symbol_file_command (file_path, 0);
+      exec_file_locate_attach (pid, 0, 0);
       if (cjtag_over_iss == 'i')
 	{
 	  char path[PATH_MAX], *dn;
@@ -910,7 +874,7 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status,
 	      ptid_t save_ptid = inferior_ptid;
 	      data->sym_file_loaded = 1;
 	      switch_to_thread (proc_target, res);
-	      kvx_change_file (file, data->cluster);
+	      kvx_change_file (pid, file, data->cluster);
 	      if (save_ptid != null_ptid)
 		switch_to_thread (proc_target, save_ptid);
 	    }
@@ -993,6 +957,33 @@ kvx_target::wait (ptid_t ptid, struct target_waitstatus *status,
     }
 
   return res;
+}
+
+bool
+kvx_target::filesystem_is_local (void)
+{
+  struct process_stratum_target *ps;
+  inferior *inf = current_inferior ();
+  const char *scon = NULL, *sport;
+
+  if (!inf)
+    return true;
+  ps = inf->process_target ();
+  if (!inf)
+    return true;
+  scon = ps->connection_string ();
+  if (!scon)
+    return true;
+
+  sport = strchr (scon, ':');
+  if (!sport)
+    return true;
+
+  if (sport == scon || !strncmp (scon, "127.0.0.1", 9)
+      || !strncmp (scon, "localhost", 9))
+    return true;
+
+  return false;
 }
 
 void
@@ -1413,7 +1404,7 @@ attach_mppa_command (const char *args, int from_tty)
 	      if (!data->sym_file_loaded)
 		{
 		  data->sym_file_loaded = 1;
-		  kvx_change_file (file, data->cluster);
+		  kvx_change_file (pid, file, data->cluster);
 		}
 	    }
 	}

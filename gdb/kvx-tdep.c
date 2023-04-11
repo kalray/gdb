@@ -997,7 +997,7 @@ sync_insert_remove_breakpoint (CORE_ADDR addr, int len, uint32_t value)
 
   buf = (char *) malloc (size);
   sprintf (buf, "Qkalray.unified_write:%" PRIx64 ",%d:%" PRIx64, addr, len,
-	   (unsigned long long) value);
+	   (unsigned long) value);
   putpkt (rt, buf);
   getpkt (rt, &buf, &size, 0);
   free (buf);
