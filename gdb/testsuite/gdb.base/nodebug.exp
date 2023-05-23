@@ -26,6 +26,8 @@ if [test_compiler_info "xlc-*"] {
     set exec_opts ""
 }
 
+set CFLAGS_FOR_TARGET "$CFLAGS_FOR_TARGET -Wno-deprecated-non-prototype"
+
 if  { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != "" } {
     untested "failed to compile"
     return -1
