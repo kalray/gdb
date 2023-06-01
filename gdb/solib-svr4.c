@@ -2699,7 +2699,7 @@ svr4_exec_displacement (CORE_ADDR *displacementp)
      executables are ET_DYN.  */
 
   // KVX: temporary disable this test as KVX elfs does not have yet this flag
-  if ((0 && bfd_get_file_flags (current_program_space->exec_bfd ()) & DYNAMIC) == 0)
+  if (0 && (bfd_get_file_flags (current_program_space->exec_bfd ()) & DYNAMIC) == 0)
     return 0;
 
   if (target_auxv_search (AT_ENTRY, &entry_point) <= 0)

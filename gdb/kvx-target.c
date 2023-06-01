@@ -48,6 +48,7 @@
 #include "solib-kvx-bare.h"
 #include "observable.h"
 #include "../gdbsupport/ptid.h"
+#include "bfd-in2.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a < b) ? (b) : (a))
@@ -63,6 +64,26 @@ static struct target_info kvx_target_info = {
 };
 static bool use_all_stop = false;
 
+static int
+kvx_get_inf_arch (inferior *inf)
+{
+  struct gdbarch *gdbarch = NULL;
+  const struct bfd_arch_info *arch_info = NULL;
+
+  if (inf == NULL)
+    inf = current_inferior ();
+
+  if (inf)
+    gdbarch = inf->gdbarch;
+  if (gdbarch)
+    arch_info = gdbarch_bfd_arch_info (gdbarch);
+
+  if (!arch_info)
+    return bfd_arch_unknown;
+
+  return arch_info->arch;
+}
+
 struct kvx_target final : public target_ops
 {
 public:
@@ -73,11 +94,25 @@ public:
     return kvx_target_info;
   }
 
-  virtual bool can_create_inferior (void) override { return true; }
+  virtual bool can_create_inferior (void) override
+  {
+    inferior *inf = current_inferior ();
+    int arch = kvx_get_inf_arch (inf);
+
+    if (inf && arch != bfd_arch_unknown && arch != bfd_arch_kvx)
+      {
+	if (inf->target_is_pushed (this))
+	  inf->unpush_target (this);
+
+	return false;
+      }
+
+    return true;
+  }
 
   virtual bool filesystem_is_local (void) override;
 
-  virtual bool can_run (void) override { return true; }
+  virtual bool can_run (void) override { return false; }
 
   virtual bool can_attach (void) override { return false; }
 
@@ -246,14 +281,23 @@ static void
 kvx_push_arch_stratum (struct target_ops *ops, int from_tty)
 {
   inferior *inf = current_inferior ();
+  int arch = kvx_get_inf_arch (inf);
 
-  if (!inf->target_is_pushed (&the_kvx_target))
+  if (arch != bfd_arch_unknown && arch != bfd_arch_kvx)
+    return;
+
+  if (inf && !inf->target_is_pushed (&the_kvx_target))
     inf->push_target (&the_kvx_target);
 }
 
 static void
 kvx_inf_added (struct inferior *inf)
 {
+  int arch = kvx_get_inf_arch (inf);
+
+  if (arch != bfd_arch_unknown && arch != bfd_arch_kvx)
+    return;
+
   if (!inf->target_is_pushed (&the_kvx_target))
     inf->push_target (&the_kvx_target);
 }
@@ -587,6 +631,9 @@ kvx_target::mourn_inferior (void)
   /* Force disconnect even if we are in extended mode */
   for (inferior &inf : inferior_list)
     {
+      if (inf.target_at (process_stratum) != remote_target)
+	continue;
+
       set_current_inferior (&inf);
       set_current_program_space (inf.pspace);
       remote_target->mourn_inferior ();
@@ -1290,6 +1337,24 @@ show_cluster_debug_ring (struct ui_file *file, int from_tty,
 }
 
 static void
+kvx_force_inf_arch (inferior *inf)
+{
+  int arch;
+
+  if (inf == NULL)
+    inf = current_inferior ();
+
+  arch = kvx_get_inf_arch (inf);
+
+  if (arch != bfd_arch_unknown && arch != bfd_arch_kvx)
+    {
+      execute_command ("target exec", 0);
+      execute_command ("file", 0);
+      kvx_push_arch_stratum (NULL, 0);
+    }
+}
+
+static void
 attach_mppa_command (const char *args, int from_tty)
 {
   char set_non_stop_cmd[] = "set non-stop";
@@ -1311,6 +1376,8 @@ attach_mppa_command (const char *args, int from_tty)
   if (!use_all_stop)
     execute_command (set_non_stop_cmd, 0);
   execute_command (set_pagination_off_cmd, 0);
+
+  kvx_force_inf_arch (NULL);
 
   kvx_target_attach (&the_kvx_target, args, from_tty);
   cjtag_over_iss = get_jtag_over_iss ();
