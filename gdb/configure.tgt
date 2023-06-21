@@ -350,7 +350,8 @@ kvx*-*-linux*)
 	;;
 
 kvx-*-*)
-	gdb_target_obs="kvx-mds-tdep.o kvx-common-tdep.o kvx-tdep.o kvx-exception-info.o kvx-dump-tlb.o kvx-target.o solib-kvx-bare.o"
+	gdb_target_obs="kvx-mds-tdep.o kvx-common-tdep.o kvx-tdep.o kvx-host-attach.o\
+		kvx-exception-info.o kvx-dump-tlb.o kvx-target.o solib-kvx-bare.o"
 	gdb_native=yes
 	;;
 

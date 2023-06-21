@@ -49,6 +49,7 @@
 #include "observable.h"
 #include "../gdbsupport/ptid.h"
 #include "bfd-in2.h"
+#include "kvx-host-attach.h"
 
 #ifndef MAX
 #define MAX(a, b) ((a < b) ? (b) : (a))
@@ -1640,6 +1641,8 @@ _initialize_kvx_target ()
 	      "Syntax:\nmppa-lookup-addr --phys=<addr>|--virt=<addr> "
 	      "[--asn=<asn>]\nIf --asn is not specified, "
 	      "display all matching entries."));
+
+  kvx_ha_init (&kalray_set_cmdlist, &kalray_show_cmdlist);
 
   gdb::observers::inferior_created.attach (kvx_inf_added, "kvx");
   gdb::observers::inferior_added.attach (kvx_inf_added, "kvx");

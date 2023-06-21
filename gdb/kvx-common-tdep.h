@@ -119,5 +119,6 @@ int
 kvx_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc);
 void
 set_parse_compact_asm (bool v);
-
+int
+get_kvx_target_core_vers (int *target_ver, int *core_ver);
 #endif
