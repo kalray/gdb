@@ -29,7 +29,6 @@
 
 #include "elf/kvx.h"
 #include "opcode/kvx.h"
-#include "kvx-dis.h"
 
 // Steering values for the kvx VLIW architecture.
 typedef enum {
@@ -142,10 +141,12 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
   assert(KVXMAXBUNDLEISSUE >= BundleIssue__);
   memset(instr, 0, sizeof(instr));
 
-  if(debug) fprintf(stderr,"kvx_reassemble_bundle: wordcount = %d\n",wordcount);
+  if(debug)
+    fprintf(stderr,"kvx_reassemble_bundle: wordcount = %d\n",wordcount);
 
   if(wordcount == 0) {
-    if(debug) fprintf(stderr,"wordcount == 0\n");
+    if(debug)
+      fprintf(stderr,"wordcount == 0\n");
     return 1;
   }
 
@@ -157,16 +158,20 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
       if (i == 0) {
         if (kvx_is_tca_opcode(syllable)) {
           if (tca_taken) {
-            if(debug) fprintf(stderr,"Too many TCA instructions");
+            if(debug)
+	      fprintf(stderr,"Too many TCA instructions");
             return 1;
           }
-          if(debug) fprintf(stderr,"Syllable 0: Set valid on TCA for instr %d with 0x%x\n",BundleIssue_TCA,syllable);
+          if(debug)
+	    fprintf(stderr,"Syllable 0: Set valid on TCA for instr %d with 0x%x\n",BundleIssue_TCA,syllable);
           instr[BundleIssue_TCA].valid = 1;
           instr[BundleIssue_TCA].opcode = syllable;
           instr[BundleIssue_TCA].nb_syllables = 1;
           tca_taken = 1;
         } else {
-          if(debug) fprintf(stderr,"Syllable 0: Set valid on BCU for instr %d with 0x%x\n",BundleIssue_BCU,syllable);
+          if(debug)
+	    fprintf(stderr,"Syllable 0: Set valid on BCU for instr %d with 0x%x\n",BundleIssue_BCU,syllable);
+
           instr[BundleIssue_BCU].valid = 1;
           instr[BundleIssue_BCU].opcode = syllable;
           instr[BundleIssue_BCU].nb_syllables = 1;
@@ -175,10 +180,12 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
       } else {
         if (i == 1 && bcu_taken && kvx_is_tca_opcode(syllable)) {
           if (tca_taken) {
-            if(debug) fprintf(stderr,"Too many TCA instructions");
+            if(debug)
+	      fprintf(stderr,"Too many TCA instructions");
             return 1;
           }
-          if(debug) fprintf(stderr,"Syllable 0: Set valid on TCA for instr %d with 0x%x\n",BundleIssue_TCA,syllable);
+          if(debug)
+	    fprintf(stderr,"Syllable 0: Set valid on TCA for instr %d with 0x%x\n",BundleIssue_TCA,syllable);
           instr[BundleIssue_TCA].valid = 1;
           instr[BundleIssue_TCA].opcode = syllable;
           instr[BundleIssue_TCA].nb_syllables = 1;
@@ -188,13 +195,15 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
           struct instr_s *instr_p = &(instr[Extension_BundleIssue[kvx_extension(syllable)]]);
           int immx_count = instr_p->immx_count;
           if (immx_count > 1) {
-            if(debug) fprintf(stderr,"Too many IMMX syllables");
+            if(debug)
+	      fprintf(stderr,"Too many IMMX syllables");
             return 1;
           }
           instr_p->immx[immx_count] = syllable;
           instr_p->immx_valid[immx_count] = 1;
           instr_p->nb_syllables++;
-          if(debug) fprintf(stderr,"Set IMMX[%d] on instr %d for extension %d @ %d\n",
+          if(debug)
+	    fprintf(stderr,"Set IMMX[%d] on instr %d for extension %d @ %d\n",
                             immx_count, Extension_BundleIssue[kvx_extension(syllable)],kvx_extension(syllable),i);
           instr_p->immx_count = immx_count + 1;
         }
@@ -203,43 +212,51 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
 
     case Steering_ALU:
       if (alu0_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on ALU0 for instr %d with 0x%x\n",BundleIssue_ALU0,syllable);
+        if(debug)
+	  fprintf(stderr,"Set valid on ALU0 for instr %d with 0x%x\n",BundleIssue_ALU0,syllable);
         instr[BundleIssue_ALU0].valid = 1;
         instr[BundleIssue_ALU0].opcode = syllable;
         instr[BundleIssue_ALU0].nb_syllables = 1;
         alu0_taken = 1;
       } else if (alu1_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on ALU1 for instr %d with 0x%x\n",BundleIssue_ALU1,syllable);
+        if(debug)
+	  fprintf(stderr,"Set valid on ALU1 for instr %d with 0x%x\n",BundleIssue_ALU1,syllable);
         instr[BundleIssue_ALU1].valid = 1;
         instr[BundleIssue_ALU1].opcode = syllable;
         instr[BundleIssue_ALU1].nb_syllables = 1;
         alu1_taken = 1;
       } else if (mau_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on MAU (ALU) for instr %d with 0x%x\n",BundleIssue_MAU,syllable);
+        if(debug)
+	  fprintf(stderr,"Set valid on MAU (ALU) for instr %d with 0x%x\n",BundleIssue_MAU,syllable);
         instr[BundleIssue_MAU].valid = 1;
         instr[BundleIssue_MAU].opcode = syllable;
         instr[BundleIssue_MAU].nb_syllables = 1;
         mau_taken = 1;
       } else if (lsu_taken == 0) {
-        if(debug) fprintf(stderr,"Set valid on LSU (ALU) for instr %d with 0x%x\n",BundleIssue_LSU,syllable);
+        if(debug)
+	  fprintf(stderr,"Set valid on LSU (ALU) for instr %d with 0x%x\n",BundleIssue_LSU,syllable);
         instr[BundleIssue_LSU].valid = 1;
         instr[BundleIssue_LSU].opcode = syllable;
         instr[BundleIssue_LSU].nb_syllables = 1;
         lsu_taken = 1;
       } else if (kvx_is_nop_opcode(syllable)) {
-        if(debug) fprintf(stderr,"Ignoring NOP (ALU) syllable\n");
+        if(debug)
+	  fprintf(stderr,"Ignoring NOP (ALU) syllable\n");
       } else {
-        if(debug) fprintf(stderr,"Too many ALU instructions");
+        if(debug)
+	  fprintf(stderr,"Too many ALU instructions");
         return 1;
       }
       break;
 
     case Steering_MAU:
       if (mau_taken == 1) {
-        if(debug) fprintf(stderr,"Too many MAU instructions");
+        if(debug)
+	  fprintf(stderr,"Too many MAU instructions");
         return 1;
       } else {
-        if(debug) fprintf(stderr,"Set valid on MAU for instr %d with 0x%x\n",BundleIssue_MAU,syllable);
+        if(debug)
+	  fprintf(stderr,"Set valid on MAU for instr %d with 0x%x\n",BundleIssue_MAU,syllable);
         instr[BundleIssue_MAU].valid = 1;
         instr[BundleIssue_MAU].opcode = syllable;
         instr[BundleIssue_MAU].nb_syllables = 1;
@@ -249,10 +266,12 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
 
     case Steering_LSU:
       if (lsu_taken == 1) {
-        if(debug) fprintf(stderr,"Too many LSU instructions");
+        if(debug)
+	  fprintf(stderr,"Too many LSU instructions");
         return 1;
       } else {
-        if(debug) fprintf(stderr,"Set valid on LSU for instr %d with 0x%x\n",BundleIssue_LSU,syllable);
+        if(debug)
+	  fprintf(stderr,"Set valid on LSU for instr %d with 0x%x\n",BundleIssue_LSU,syllable);
         instr[BundleIssue_LSU].valid = 1;
         instr[BundleIssue_LSU].opcode = syllable;
         instr[BundleIssue_LSU].nb_syllables = 1;
@@ -260,14 +279,17 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
       }
     }
     if (!(kvx_has_parallel_bit(syllable))) {
-      if(debug) fprintf(stderr,"Stop! stop bit is set 0x%x\n",syllable);
+      if(debug)
+	fprintf(stderr,"Stop! stop bit is set 0x%x\n",syllable);
       break;
     }
-    if(debug) fprintf(stderr,"Continue %d < %d?\n",i,wordcount);
+    if(debug)
+      fprintf(stderr,"Continue %d < %d?\n",i,wordcount);
 
   }
   if (kvx_has_parallel_bit(bundle_words[i])) {
-      if(debug) fprintf(stderr,"bundle exceeds maximum size");
+      if(debug)
+	fprintf(stderr,"bundle exceeds maximum size");
       return 1;
   }
 
@@ -289,12 +311,14 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
         }
       }
 
-      if(debug) fprintf(stderr,"Instr %d valid, copying in bundle_insn (%d syllables <-> %d)\n",i,bundle_insn[instr_idx].len,instr[i].nb_syllables);
+      if(debug)
+	fprintf(stderr,"Instr %d valid, copying in bundle_insn (%d syllables <-> %d)\n",i,bundle_insn[instr_idx].len,instr[i].nb_syllables);
       instr_idx++;
     }
   }
 
-  if(debug) fprintf(stderr,"End => %d instructions\n",instr_idx);
+  if(debug)
+    fprintf(stderr,"End => %d instructions\n",instr_idx);
 
   *_insncount = instr_idx;
   return 0;
@@ -305,7 +329,7 @@ static int opt_pretty = 0;
 /* Option for not emiting a new line between all bundles */
 static int opt_compact_assembly = 0;
 
-void
+static void
 parse_kvx_dis_option (const char *option)
 {
   /* Try to match options that are simple flags */
@@ -364,12 +388,13 @@ parse_kvx_dis_options (const char *options)
 int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   static int insnindex = 0;
   static int insncount = 0;
-  kvxopc_t *op = NULL;             /* operation table index */
+  struct kvxopc *op = NULL;             /* operation table index */
   insn_t *insn;                   /* the instruction       */
   const char *fmtp;
-  kvxopc_t *opc_table = NULL;
+  struct kvxopc *opc_table = NULL;
   int          *kvx_regfiles = NULL;
-  kvx_Register  *kvx_registers = NULL;
+  struct kvx_Register  *kvx_registers = NULL;
+  const char ***kvx_modifiers = NULL;
   int          *kvx_dec_registers = NULL;
   unsigned int  kvx_max_dec_registers = 0;
   int kvx_arch_size = 32;
@@ -394,7 +419,6 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   }
 
   switch (info->mach) {
-
     case bfd_mach_kv3_1_64:
       kvx_arch_size = 64;
       /* fallthrough */
@@ -403,6 +427,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
       opc_table = kvx_kv3_v1_optab;
       kvx_regfiles = kvx_kv3_v1_regfiles;
       kvx_registers = kvx_kv3_v1_registers;
+      kvx_modifiers = kvx_kv3_v1_modifiers;
       kvx_dec_registers = kvx_kv3_v1_dec_registers;
       break;
     case bfd_mach_kv3_2_64:
@@ -413,6 +438,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
       opc_table = kvx_kv3_v2_optab;
       kvx_regfiles = kvx_kv3_v2_regfiles;
       kvx_registers = kvx_kv3_v2_registers;
+      kvx_modifiers = kvx_kv3_v2_modifiers;
       kvx_dec_registers = kvx_kv3_v2_dec_registers;
       break;
     case bfd_mach_kv4_1_64:
@@ -423,6 +449,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
       opc_table = kvx_kv4_v1_optab;
       kvx_regfiles = kvx_kv4_v1_regfiles;
       kvx_registers = kvx_kv4_v1_registers;
+      kvx_modifiers = kvx_kv4_v1_modifiers;
       kvx_dec_registers = kvx_kv4_v1_dec_registers;
       break;
 
@@ -473,49 +500,47 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
   readsofar = insn->len * 4;
   insnindex++;
 
+  char insn_buf[256] = { 0 };
   /* Check for extension to right iff this is not the end of bundle */
   for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
+    int insn_buf_idx = 0;
       int opcode_match = 1;
       int ch;
 
-      if(invalid_bundle){
-          break;
-      }
+      if(invalid_bundle)
+	break;
 
-      if(op->wordcount != insn->len){
-          continue;
-      }
+      if(op->wordcount != insn->len)
+	continue;
 
-      for(i=0; i < op->wordcount; i++) {
-        if ((op->codewords[i].mask & insn->syllables[i]) != op->codewords[i].opcode) {
+      for(i=0; i < op->wordcount; i++)
+        if ((op->codewords[i].mask & insn->syllables[i]) != op->codewords[i].opcode)
           opcode_match = 0;
-        }
-      }
+
       int encoding_space_flags = kvx_arch_size == 32 ? kvxOPCODE_FLAG_MODE32 : kvxOPCODE_FLAG_MODE64;
 
-      for(i=0; i < op->wordcount; i++) {
+      for(i=0; i < op->wordcount; i++)
         if (! (op->codewords[i].flags & encoding_space_flags))
           opcode_match = 0;
-      }
 
       if (opcode_match) {
           /* print the operands using the instructions format string. */
           fmtp = op->fmtstring;
 
-          if(opt_pretty){
-              (*info->fprintf_func) (info->stream, "[ ");
-              for(i = 0; i < insn->len; i++){
-                  (*info->fprintf_func) (info->stream, "%08x ", insn->syllables[i]);
-              }
-              (*info->fprintf_func) (info->stream, "] ");
-          }
+          if(opt_pretty)
+	    {
+	      insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "[ ");
+	      for(i = 0; i < insn->len; i++)
+		insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%08x ", insn->syllables[i]);
+	      insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "] ");
+	    }
 
 
           /* print the opcode   */
-          (*info->fprintf_styled_func) (info->stream, dis_style_mnemonic, "%s ", op->as_op);
+          insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", op->as_op);
 
           for (i = 0; op->format[i]; i++){
-              kvx_bitfield_t *bf = op->format[i]->bfield;
+              struct kvx_bitfield *bf = op->format[i]->bfield;
               int bf_nb = op->format[i]->bitfields;
               int width = op->format[i]->width;
               int type  = op->format[i]->type;
@@ -529,7 +554,7 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 
               /* Print characters in the format string up to the following % or nul. */
               while((ch=*fmtp) && ch != '%'){
-                  (*info->fprintf_styled_func) (info->stream, dis_style_text, "%c", ch);
+                  insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%c", ch);
                   fmtp++;
               }
 
@@ -554,169 +579,437 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 
 #define KVX_PRINT_REG(regfile,value) \
     if(kvx_regfiles[regfile]+value < kvx_max_dec_registers) { \
-        (*info->fprintf_styled_func) (info->stream, dis_style_register, "%s", kvx_registers[kvx_dec_registers[kvx_regfiles[regfile]+value]].name); \
+        insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", kvx_registers[kvx_dec_registers[kvx_regfiles[regfile]+value]].name); \
     } else { \
-        (*info->fprintf_styled_func) (info->stream, dis_style_register, "$??"); \
+        (*info->fprintf_func) (info->stream, "$??"); \
     }
 
-              switch (type) {
+	      if (opc_table == kvx_kv3_v1_optab)
+	      {
+		switch (type) {
 
-                  case RegClass_kvx_singleReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_GPR,value)
-                      break;
-                  case RegClass_kvx_pairedReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_PGR,value)
-                      break;
-                  case RegClass_kvx_quadReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_QGR,value)
-                      break;
-                  case RegClass_kvx_systemReg:
-                  case RegClass_kv3_v2_systemReg:
-                  case RegClass_kv4_v1_systemReg:
-                  case RegClass_kvx_aloneReg:
-                  case RegClass_kv3_v2_aloneReg:
-                  case RegClass_kv4_v1_aloneReg:
-                  case RegClass_kvx_onlyraReg:
-                  case RegClass_kvx_onlygetReg:
-                  case RegClass_kv3_v2_onlygetReg:
-                  case RegClass_kv4_v1_onlygetReg:
-                  case RegClass_kvx_onlysetReg:
-                  case RegClass_kv3_v2_onlysetReg:
-                  case RegClass_kv4_v1_onlysetReg:
-                  case RegClass_kvx_onlyfxReg:
-                  case RegClass_kv3_v2_onlyfxReg:
-                  case RegClass_kv4_v1_onlyfxReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_SFR,value)
-                      break;
-                  case RegClass_kvx_coproReg:
-                  case RegClass_kvx_coproReg0M4:
-                  case RegClass_kvx_coproReg1M4:
-                  case RegClass_kvx_coproReg2M4:
-                  case RegClass_kvx_coproReg3M4:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_XCR,value)
-                      break;
-                  case RegClass_kvx_blockReg:
-                  case RegClass_kvx_blockRegE:
-                  case RegClass_kvx_blockRegO:
-                  case RegClass_kvx_blockReg0M4:
-                  case RegClass_kvx_blockReg1M4:
-                  case RegClass_kvx_blockReg2M4:
-                  case RegClass_kvx_blockReg3M4:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_XBR,value)
-                      break;
-                  case RegClass_kvx_vectorReg:
-                  case RegClass_kvx_vectorRegE:
-                  case RegClass_kvx_vectorRegO:
-                  case RegClass_kvx_tileReg_0:
-                  case RegClass_kvx_tileReg_1:
-                  case RegClass_kvx_matrixReg_0:
-                  case RegClass_kvx_matrixReg_1:
-                  case RegClass_kvx_matrixReg_2:
-                  case RegClass_kvx_matrixReg_3:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_XVR,value)
-                      break;
-                  case RegClass_kvx_tileReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_XTR,value)
-                      break;
-                  case RegClass_kvx_matrixReg:
-                      KVX_PRINT_REG(KVX_REGFILE_DEC_XMR,value)
-                      break;
-                  case RegClass_kvx_buffer2Reg:
+		  case RegClass_kv3_v1_singleReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_GPR,value)
+		      break;
+		  case RegClass_kv3_v1_pairedReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_PGR,value)
+		      break;
+		  case RegClass_kv3_v1_quadReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_QGR,value)
+		      break;
+		  case RegClass_kv3_v1_systemReg:
+		  case RegClass_kv3_v1_aloneReg:
+		  case RegClass_kv3_v1_onlyraReg:
+		  case RegClass_kv3_v1_onlygetReg:
+		  case RegClass_kv3_v1_onlysetReg:
+		  case RegClass_kv3_v1_onlyfxReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_SFR,value)
+		      break;
+		  case RegClass_kv3_v1_coproReg0M4:
+		  case RegClass_kv3_v1_coproReg1M4:
+		  case RegClass_kv3_v1_coproReg2M4:
+		  case RegClass_kv3_v1_coproReg3M4:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XCR,value)
+		      break;
+		  case RegClass_kv3_v1_blockRegE:
+		  case RegClass_kv3_v1_blockRegO:
+		  case RegClass_kv3_v1_blockReg0M4:
+		  case RegClass_kv3_v1_blockReg1M4:
+		  case RegClass_kv3_v1_blockReg2M4:
+		  case RegClass_kv3_v1_blockReg3M4:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XBR,value)
+		      break;
+		  case RegClass_kv3_v1_vectorReg:
+		  case RegClass_kv3_v1_vectorRegE:
+		  case RegClass_kv3_v1_vectorRegO:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XVR,value)
+		      break;
+		  case RegClass_kv3_v1_tileReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XTR,value)
+		      break;
+		  case RegClass_kv3_v1_matrixReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XMR,value)
+		      break;
+		  case Immediate_kv3_v1_sysnumber:
+		  case Immediate_kv3_v1_signed10:
+		  case Immediate_kv3_v1_signed16:
+		  case Immediate_kv3_v1_signed27:
+		  case Immediate_kv3_v1_wrapped32:
+		  case Immediate_kv3_v1_signed37:
+		  case Immediate_kv3_v1_signed43:
+		  case Immediate_kv3_v1_signed54:
+		  case Immediate_kv3_v1_wrapped64:
+		  case Immediate_kv3_v1_unsigned6:
+		    if(flags & kvxSIGNED){
+		      if(width <= 32) {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%d (0x%x)", (int)value, (int)value);
+		      }
+		      else {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%lld (0x%llx)", value, value);
+		      }
+		    } else {
+		      if(width <= 32) {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
+		      }
+		      else {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
+		      }
+		    }
+		    break;
+
+		  case Immediate_kv3_v1_pcrel17:
+		  case Immediate_kv3_v1_pcrel27:
+		    {
+		      bfd_vma target = value + memaddr;
+
+		      /* Fill in instruction information.  */
+		      info->insn_info_valid = 1;
+		      info->insn_type = dis_branch;
+		      info->target = target;
+
+		      /* Flush time ._. */
+		      insn_buf[insn_buf_idx] = 0;
+		      (*info->fprintf_func) (info->stream, "%s", insn_buf);
+		      insn_buf_idx = 0;
+		      info->print_address_func(value + memaddr, info);
+		    }
+		    break;
+		  case Modifier_kv3_v1_column:
+		  case Modifier_kv3_v1_comparison:
+		  case Modifier_kv3_v1_doscale:
+		  case Modifier_kv3_v1_exunum:
+		  case Modifier_kv3_v1_floatcomp:
+		  case Modifier_kv3_v1_qindex:
+		  case Modifier_kv3_v1_rectify:
+		  case Modifier_kv3_v1_rounding:
+		  case Modifier_kv3_v1_roundint:
+		  case Modifier_kv3_v1_saturate:
+		  case Modifier_kv3_v1_scalarcond:
+		  case Modifier_kv3_v1_silent:
+		  case Modifier_kv3_v1_simplecond:
+		  case Modifier_kv3_v1_speculate:
+		  case Modifier_kv3_v1_splat32:
+		  case Modifier_kv3_v1_variant: {
+		    int sz = 0;
+		    for (sz = 0; kvx_modifiers[type - Modifier_kv3_v1_column][sz] ; ++sz);
+		    const char *mod = value < (unsigned) sz ? kvx_modifiers[type - Modifier_kv3_v1_column][value] : NULL;
+		    if (!mod) {  goto retry; }
+		    insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		  }
+		    break;
+		  default:
+		    fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
+		    exit(-1);
+		};
+	      }
+	      else if (opc_table == kvx_kv3_v2_optab)
+	      {
+		switch (type) {
+
+		  case RegClass_kv3_v2_singleReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_GPR,value)
+		      break;
+		  case RegClass_kv3_v2_pairedReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_PGR,value)
+		      break;
+		  case RegClass_kv3_v2_quadReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_QGR,value)
+		      break;
+		  case RegClass_kv3_v2_systemReg:
+		  case RegClass_kv3_v2_aloneReg:
+		  case RegClass_kv3_v2_onlyraReg:
+		  case RegClass_kv3_v2_onlygetReg:
+		  case RegClass_kv3_v2_onlysetReg:
+		  case RegClass_kv3_v2_onlyfxReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_SFR,value)
+		      break;
+		  case RegClass_kv3_v2_coproReg:
+		  case RegClass_kv3_v2_coproReg0M4:
+		  case RegClass_kv3_v2_coproReg1M4:
+		  case RegClass_kv3_v2_coproReg2M4:
+		  case RegClass_kv3_v2_coproReg3M4:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XCR,value)
+		      break;
+                  case RegClass_kv3_v2_blockReg:
+		  case RegClass_kv3_v2_blockRegE:
+		  case RegClass_kv3_v2_blockRegO:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XBR,value)
+		      break;
+		  case RegClass_kv3_v2_vectorReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XVR,value)
+		      break;
+		  case RegClass_kv3_v2_tileReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XTR,value)
+		      break;
+		  case RegClass_kv3_v2_matrixReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XMR,value)
+		      break;
+                  case RegClass_kv3_v2_buffer2Reg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_X2R,value)
                       break;
-                  case RegClass_kvx_buffer4Reg:
+                  case RegClass_kv3_v2_buffer4Reg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_X4R,value)
                       break;
-                  case RegClass_kvx_buffer8Reg:
+                  case RegClass_kv3_v2_buffer8Reg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_X8R,value)
                       break;
-                  case RegClass_kvx_buffer16Reg:
+                  case RegClass_kv3_v2_buffer16Reg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_X16R,value)
                       break;
-                  case RegClass_kvx_buffer32Reg:
+                  case RegClass_kv3_v2_buffer32Reg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_X32R,value)
                       break;
-                  case RegClass_kvx_buffer64Reg:
+                  case RegClass_kv3_v2_buffer64Reg:
                       KVX_PRINT_REG(KVX_REGFILE_DEC_X64R,value)
                       break;
+		  case Immediate_kv3_v2_brknumber:
+		  case Immediate_kv3_v2_sysnumber:
+		  case Immediate_kv3_v2_signed10:
+		  case Immediate_kv3_v2_signed16:
+		  case Immediate_kv3_v2_signed27:
+		  case Immediate_kv3_v2_wrapped32:
+		  case Immediate_kv3_v2_signed37:
+		  case Immediate_kv3_v2_signed43:
+		  case Immediate_kv3_v2_signed54:
+		  case Immediate_kv3_v2_wrapped64:
+		  case Immediate_kv3_v2_unsigned6:
+		    if(flags & kvxSIGNED){
+		      if(width <= 32) {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%d (0x%x)", (int)value, (int)value);
+		      }
+		      else {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%lld (0x%llx)", value, value);
+		      }
+		    } else {
+		      if(width <= 32) {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
+		      }
+		      else {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
+		      }
+		    }
+		    break;
 
-                  case Immediate_kvx_brknumber:
-                  case Immediate_kvx_sysnumber:
-                  case Immediate_kvx_wrapped8:
-                  case Immediate_kvx_signed10:
-                  case Immediate_kvx_signed16:
-                  case Immediate_kvx_signed27:
-                  case Immediate_kvx_wrapped32:
-                  case Immediate_kvx_signed37:
-                  case Immediate_kvx_signed43:
-                  case Immediate_kvx_signed54:
-                  case Immediate_kvx_wrapped64:
-                  case Immediate_kvx_unsigned6:
-                      if(flags & kvxSIGNED){
-                          if(width <= 32) {
-                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%d (0x%x)", (int)value, (int)value);
-                          }
-                          else {
-                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%lld (0x%llx)", value, value);
-                          }
-                      } else {
-                          if(width <= 32) {
-                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
-                          }
-                          else {
-                              (*info->fprintf_styled_func) (info->stream, dis_style_immediate, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
-                          }
-                      }
+		  case Immediate_kv3_v2_pcrel27:
+		  case Immediate_kv3_v2_pcrel17:
+		    {
+		      bfd_vma target = value + memaddr;
+
+		      /* Fill in instruction information.  */
+		      info->insn_info_valid = 1;
+		      info->insn_type = dis_branch;
+		      info->target = target;
+
+		      /* Flush time ._. */
+		      insn_buf[insn_buf_idx] = 0;
+		      (*info->fprintf_func) (info->stream, "%s", insn_buf);
+		      insn_buf_idx = 0;
+
+		      info->print_address_func(value + memaddr, info);
+		    }
+		    break;
+		  case Modifier_kv3_v2_accesses:
+		  case Modifier_kv3_v2_boolcas:
+		  case Modifier_kv3_v2_cachelev:
+		  case Modifier_kv3_v2_channel:
+		  case Modifier_kv3_v2_coherency:
+		  case Modifier_kv3_v2_comparison:
+		  case Modifier_kv3_v2_conjugate:
+		  case Modifier_kv3_v2_doscale:
+		  case Modifier_kv3_v2_exunum:
+		  case Modifier_kv3_v2_floatcomp:
+		  case Modifier_kv3_v2_hindex:
+		  case Modifier_kv3_v2_lsomask:
+		  case Modifier_kv3_v2_lsumask:
+		  case Modifier_kv3_v2_lsupack:
+		  case Modifier_kv3_v2_qindex:
+		  case Modifier_kv3_v2_rounding:
+		  case Modifier_kv3_v2_scalarcond:
+		  case Modifier_kv3_v2_shuffleV:
+		  case Modifier_kv3_v2_shuffleX:
+		  case Modifier_kv3_v2_silent:
+		  case Modifier_kv3_v2_simplecond:
+		  case Modifier_kv3_v2_speculate:
+		  case Modifier_kv3_v2_splat32:
+		  case Modifier_kv3_v2_transpose:
+		  case Modifier_kv3_v2_variant: {
+		    int sz = 0;
+		    for (sz = 0; kvx_modifiers[type - Modifier_kv3_v2_accesses][sz] ; ++sz);
+		    const char *mod = value < (unsigned) sz ? kvx_modifiers[type - Modifier_kv3_v2_accesses][value] : NULL;
+		    if (!mod) {  goto retry; }
+		    insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		  };
+		    break;
+		  default:
+		    fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
+		    exit(-1);
+		};
+	      } else if (opc_table == kvx_kv4_v1_optab)
+	      {
+		switch (type) {
+
+		  case RegClass_kv4_v1_singleReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_GPR,value)
+		      break;
+		  case RegClass_kv4_v1_pairedReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_PGR,value)
+		      break;
+		  case RegClass_kv4_v1_quadReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_QGR,value)
+		      break;
+		  case RegClass_kv4_v1_systemReg:
+		  case RegClass_kv4_v1_aloneReg:
+		  case RegClass_kv4_v1_onlyraReg:
+		  case RegClass_kv4_v1_onlygetReg:
+		  case RegClass_kv4_v1_onlysetReg:
+		  case RegClass_kv4_v1_onlyfxReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_SFR,value)
+		      break;
+		  case RegClass_kv4_v1_coproReg:
+		  case RegClass_kv4_v1_coproReg0M4:
+		  case RegClass_kv4_v1_coproReg1M4:
+		  case RegClass_kv4_v1_coproReg2M4:
+		  case RegClass_kv4_v1_coproReg3M4:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XCR,value)
+		      break;
+                  case RegClass_kv4_v1_blockReg:
+		  case RegClass_kv4_v1_blockRegE:
+		  case RegClass_kv4_v1_blockRegO:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XBR,value)
+		      break;
+		  case RegClass_kv4_v1_vectorReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XVR,value)
+		      break;
+		  case RegClass_kv4_v1_tileReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XTR,value)
+		      break;
+		  case RegClass_kv4_v1_matrixReg:
+		    KVX_PRINT_REG(KVX_REGFILE_DEC_XMR,value)
+		      break;
+                  case RegClass_kv4_v1_buffer2Reg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_X2R,value)
                       break;
-                  case Immediate_kvx_pcrel17:
-                    {
-                      bfd_vma target = value + memaddr;
+                  case RegClass_kv4_v1_buffer4Reg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_X4R,value)
+                      break;
+                  case RegClass_kv4_v1_buffer8Reg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_X8R,value)
+                      break;
+                  case RegClass_kv4_v1_buffer16Reg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_X16R,value)
+                      break;
+                  case RegClass_kv4_v1_buffer32Reg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_X32R,value)
+                      break;
+                  case RegClass_kv4_v1_buffer64Reg:
+                      KVX_PRINT_REG(KVX_REGFILE_DEC_X64R,value)
+                      break;
+		  case Immediate_kv4_v1_brknumber:
+		  case Immediate_kv4_v1_sysnumber:
+		  case Immediate_kv4_v1_signed10:
+		  case Immediate_kv4_v1_signed16:
+		  case Immediate_kv4_v1_signed27:
+		  case Immediate_kv4_v1_wrapped32:
+		  case Immediate_kv4_v1_signed37:
+		  case Immediate_kv4_v1_signed43:
+		  case Immediate_kv4_v1_signed54:
+		  case Immediate_kv4_v1_wrapped64:
+		  case Immediate_kv4_v1_unsigned6:
+		    if(flags & kvxSIGNED){
+		      if(width <= 32) {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%d (0x%x)", (int)value, (int)value);
+		      }
+		      else {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%lld (0x%llx)", value, value);
+		      }
+		    } else {
+		      if(width <= 32) {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
+		      }
+		      else {
+			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
+		      }
+		    }
+		    break;
 
-                      /* Fill in instruction information.  */
-                      info->insn_info_valid = 1;
-                      info->insn_type = dis_condbranch;
-                      info->target = target;
+		  case Immediate_kv4_v1_pcrel27:
+		  case Immediate_kv4_v1_pcrel17:
+		    {
+		      bfd_vma target = value + memaddr;
 
-                      info->print_address_func(value + memaddr, info);
-                    }
-                    break;
+		      /* Fill in instruction information.  */
+		      info->insn_info_valid = 1;
+		      info->insn_type = dis_branch;
+		      info->target = target;
 
-                  case Immediate_kvx_pcrel27:
-                    {
-                      bfd_vma target = value + memaddr;
+		      /* Flush time ._. */
+		      insn_buf[insn_buf_idx] = 0;
+		      (*info->fprintf_func) (info->stream, "%s", insn_buf);
+		      insn_buf_idx = 0;
 
-                      /* Fill in instruction information.  */
-                      info->insn_info_valid = 1;
-                      info->insn_type = dis_branch;
-                      info->target = target;
+		      info->print_address_func(value + memaddr, info);
+		    }
+		    break;
+		  case Modifier_kv4_v1_accesses:
+		  case Modifier_kv4_v1_boolcas:
+		  case Modifier_kv4_v1_cachelev:
+		  case Modifier_kv4_v1_channel:
+		  case Modifier_kv4_v1_coherency:
+		  case Modifier_kv4_v1_comparison:
+		  case Modifier_kv4_v1_conjugate:
+		  case Modifier_kv4_v1_doscale:
+		  case Modifier_kv4_v1_exunum:
+		  case Modifier_kv4_v1_floatcomp:
+		  case Modifier_kv4_v1_hindex:
+		  case Modifier_kv4_v1_lsomask:
+		  case Modifier_kv4_v1_lsumask:
+		  case Modifier_kv4_v1_lsupack:
+		  case Modifier_kv4_v1_qindex:
+		  case Modifier_kv4_v1_rounding:
+		  case Modifier_kv4_v1_scalarcond:
+		  case Modifier_kv4_v1_shuffleV:
+		  case Modifier_kv4_v1_shuffleX:
+		  case Modifier_kv4_v1_silent:
+		  case Modifier_kv4_v1_simplecond:
+		  case Modifier_kv4_v1_speculate:
+		  case Modifier_kv4_v1_splat32:
+		  case Modifier_kv4_v1_transpose:
+		  case Modifier_kv4_v1_variant: {
+		    int sz = 0;
+		    for (sz = 0; kvx_modifiers[type - Modifier_kv4_v1_accesses][sz] ; ++sz);
+		    const char *mod = value < (unsigned) sz ? kvx_modifiers[type - Modifier_kv4_v1_accesses][value] : NULL;
+		    if (!mod) {  goto retry; }
+		    insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		  }
+		    break;
+		  default:
+		    fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
+		    exit(-1);
+		};
+	      }
 
-                      info->print_address_func(value + memaddr, info);
-                    }
-                    break;
-
-                  default:
-                      fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
-                      exit(-1);
-              };
-
-#undef KVX_PRINT_REG     
+#undef KVX_PRINT_REG
           }
 
           /* Print trailing characters in the format string, if any */
           while((ch=*fmtp)){
-              (*info->fprintf_styled_func) (info->stream, dis_style_text, "%c", ch);
+              insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%c", ch);
               fmtp++;
           }
 
           found = 1;
+	  insn_buf[insn_buf_idx] = 0;
+	  (*info->fprintf_func) (info->stream, "%s", insn_buf);
           break;
+retry:;
+      continue;
       }
   }
 
   if (found && (insnindex == insncount)){
-    (*info->fprintf_styled_func) (info->stream, dis_style_text, ";;");
+    (*info->fprintf_func) (info->stream, ";;");
       if (!opt_compact_assembly)
-        (*info->fprintf_styled_func) (info->stream, dis_style_text, "\n");
+        (*info->fprintf_func) (info->stream, "\n");
       insnindex = 0;
   }
   // couldn't find the opcode, skip this word
@@ -726,374 +1019,6 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
       readsofar = 4;
   }
   return readsofar;
-}
-
-/* This function searches in the current bundle for the instructions required
-   by unwinding. For prologue:
-     (1) addd $r12 = $r12, <res_stack>
-     (2) get <gpr_ra_reg> = $ra
-     (3) sd <ofs>[$r12] = <gpr_ra_reg> or sq/so containing <gpr_ra_reg>
-     (4) sd <ofs>[$r12] = $r14 or sq/so containing r14
-     (5) addd $r14 = $r12, <fp_ofs> or copyd $r14 = $r12
-	 The only difference seen between the code generated by gcc and clang
-	 is the setting/resetting r14. gcc could also generate copyd $r14=$r12
-	 instead of add addd $r14 = $r12, <ofs> when <ofs> is 0.
-	 Vice-versa, <ofs> is not guaranteed to be 0 for clang, so, clang
-	 could also generate addd instead of copyd
-     (6) call, icall, goto, igoto, cb., ret
-  For epilogue:
-     (1) addd $r12 = $r12, <res_stack>
-     (2) addd $r12 = $r14, <offset> or copyd $r12 = $r14
-	 Same comment as prologue (5).
-     (3) ret, goto
-     (4) call, icall, igoto, cb.
-*/
-int
-decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
-				 struct kvx_prologue_epilogue_bundle *peb)
-{
-  kvxopc_t *opc_table = NULL;
-  int *kvx_regfiles = NULL, *kvx_dec_registers = NULL;
-  kvx_Register *kvx_registers = NULL;
-  unsigned int kvx_max_dec_regs = 0;
-  int i, idx_insn, nb_insn, kvx_arch_size, nb_syl;
-
-  peb->nb_insn = 0;
-
-  if (info->arch != bfd_arch_kvx)
-    return -1;
-
-  kvx_arch_size = 32;
-  switch (info->mach)
-    {
-    case bfd_mach_kv3_1_64:
-      kvx_arch_size = 64;
-      /* fallthrough */
-    case bfd_mach_kv3_1_usr:
-    case bfd_mach_kv3_1:
-      opc_table = kvx_kv3_v1_optab;
-      kvx_regfiles = kvx_kv3_v1_regfiles;
-      kvx_registers = kvx_kv3_v1_registers;
-      kvx_dec_registers = kvx_kv3_v1_dec_registers;
-      break;
-    case bfd_mach_kv3_2_64:
-      kvx_arch_size = 64;
-      /* fallthrough */
-    case bfd_mach_kv3_2_usr:
-    case bfd_mach_kv3_2:
-      opc_table = kvx_kv3_v2_optab;
-      kvx_regfiles = kvx_kv3_v2_regfiles;
-      kvx_registers = kvx_kv3_v2_registers;
-      kvx_dec_registers = kvx_kv3_v2_dec_registers;
-      break;
-    case bfd_mach_kv4_1_64:
-      kvx_arch_size = 64;
-      /* fallthrough */
-    case bfd_mach_kv4_1_usr:
-    case bfd_mach_kv4_1:
-      opc_table = kvx_kv4_v1_optab;
-      kvx_regfiles = kvx_kv4_v1_regfiles;
-      kvx_registers = kvx_kv4_v1_registers;
-      kvx_dec_registers = kvx_kv4_v1_dec_registers;
-      break;
-
-    default:
-      return -1; /* Core not supported */
-    }
-
-  kvx_max_dec_regs = kvx_regfiles[KVX_REGFILE_DEC_REGISTERS];
-
-  if (opc_table == NULL)
-    return -1;
-
-  /* read the bundle */
-  nb_syl = 0;
-  do
-    {
-      if (nb_syl >= KVXMAXBUNDLEWORDS)
-	return -1;
-      if ((*info->read_memory_func) (memaddr + 4 * nb_syl,
-				     (bfd_byte *) &bundle_words[nb_syl], 4,
-				     info))
-	return -1;
-      nb_syl++;
-    }
-  while (kvx_has_parallel_bit (bundle_words[nb_syl - 1])
-	 && nb_syl < KVXMAXBUNDLEWORDS);
-  if (kvx_reassemble_bundle (nb_syl, &nb_insn))
-    return -1;
-
-  /* Check for extension to right if this is not the end of bundle */
-  /* find the format of this insn */
-  for (idx_insn = 0; idx_insn < nb_insn; idx_insn++)
-    {
-      kvxopc_t *op;
-      insn_t *insn = &bundle_insn[idx_insn];
-
-      for (op = opc_table; op->as_op && (((char) op->as_op[0]) != 0); op++)
-	{
-	  struct kvx_prologue_epilogue_insn *crt_peb_insn;
-	  int encoding_space_flags = (kvx_arch_size == 32)
-				       ? kvxOPCODE_FLAG_MODE32
-				       : kvxOPCODE_FLAG_MODE64;
-	  const char *op_name = op->as_op;
-	  int is_add = 0, is_get = 0, is_a_peb_insn = 0, is_copyd = 0;
-
-	  if (op->wordcount != insn->len)
-	    continue;
-
-	  for (i = 0; i < op->wordcount; i++)
-	    if (((op->codewords[i].mask & insn->syllables[i])
-		 != op->codewords[i].opcode)
-		|| !(op->codewords[i].flags & encoding_space_flags))
-	      break;
-	  if (i < op->wordcount)
-	    continue;
-
-	  crt_peb_insn = &peb->insn[peb->nb_insn];
-	  crt_peb_insn->nb_gprs = 0;
-
-	  if (!strcmp (op_name, "addd"))
-	    is_add = 1;
-	  else if (!strcmp (op_name, "copyd"))
-	    is_copyd = 1;
-	  else if (!strcmp (op_name, "get"))
-	    is_get = 1;
-	  else if (!strcmp (op_name, "sd"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_SD;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strcmp (op_name, "sq"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_SQ;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strcmp (op_name, "so"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_SO;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strcmp (op_name, "ret"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_RET;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strcmp (op_name, "goto"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_GOTO;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strcmp (op_name, "igoto"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_IGOTO;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strcmp (op_name, "call") || !strcmp (op_name, "icall"))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_CALL;
-	      is_a_peb_insn = 1;
-	    }
-	  else if (!strncmp (op_name, "cb.", 3))
-	    {
-	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_CB;
-	      is_a_peb_insn = 1;
-	    }
-	  else
-	    break;
-
-	  for (i = 0; op->format[i]; i++)
-	    {
-	      kvxbfield *fmt = op->format[i];
-	      kvx_bitfield_t *bf = fmt->bfield;
-	      int bf_nb = fmt->bitfields;
-	      int width = fmt->width;
-	      int type = fmt->type;
-	      int flags = fmt->flags;
-	      int shift = fmt->shift;
-	      int bias = fmt->bias;
-	      unsigned long long encoded_value, value = 0;
-	      int bf_idx;
-
-	      for (bf_idx = 0; bf_idx < bf_nb; bf_idx++)
-		{
-		  int insn_idx = (int) bf[bf_idx].to_offset / 32;
-		  int to_offset = bf[bf_idx].to_offset % 32;
-		  encoded_value = insn->syllables[insn_idx] >> to_offset;
-		  encoded_value &= (1LL << bf[bf_idx].size) - 1;
-		  value |= encoded_value << bf[bf_idx].from_offset;
-		}
-	      if (flags & kvxSIGNED)
-		{
-		  unsigned long long signbit = 1LL << (width - 1);
-		  value = (value ^ signbit) - signbit;
-		}
-	      value = (value << shift) + bias;
-
-	      switch (type)
-		{
-		case RegClass_kvx_singleReg:
-		  if (kvx_regfiles[KVX_REGFILE_DEC_GPR] + value
-		      >= kvx_max_dec_regs)
-		    return -1;
-		  if (is_add && i < 2)
-		    {
-		      if (i == 0)
-			{
-			  if (value == KVX_GPR_REG_SP)
-			    crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_ADD_SP;
-			  else if (value == KVX_GPR_REG_FP)
-			    crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_ADD_FP;
-			  else
-			    is_add = 0;
-			}
-		      else if (i == 1)
-			{
-			  if (value == KVX_GPR_REG_SP)
-			    is_a_peb_insn = 1;
-			  else if (value == KVX_GPR_REG_FP
-				   && crt_peb_insn->insn_type
-					== KVX_PROL_EPIL_INSN_ADD_SP)
-			    {
-			      crt_peb_insn->insn_type
-				= KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP;
-			      is_a_peb_insn = 1;
-			    }
-			  else
-			    is_add = 0;
-			}
-		    }
-		  else if (is_copyd && i < 2)
-		    {
-		      if (i == 0)
-			{
-			  if (value == KVX_GPR_REG_FP)
-			    {
-			      crt_peb_insn->insn_type
-				= KVX_PROL_EPIL_INSN_ADD_FP;
-			      crt_peb_insn->immediate = 0;
-			    }
-			  else if (value == KVX_GPR_REG_SP)
-			    {
-			      crt_peb_insn->insn_type
-				= KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP;
-			      crt_peb_insn->immediate = 0;
-			    }
-			  else
-			    is_copyd = 0;
-			}
-		      else if (i == 1)
-			{
-			  if (value == KVX_GPR_REG_SP
-			      && crt_peb_insn->insn_type
-				   == KVX_PROL_EPIL_INSN_ADD_FP)
-			    is_a_peb_insn = 1;
-			  else if (
-			    value == KVX_GPR_REG_FP
-			    && crt_peb_insn->insn_type
-				 == KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP)
-			    is_a_peb_insn = 1;
-			  else
-			    is_copyd = 0;
-			}
-		    }
-		  else
-		    crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value;
-		  break;
-		case RegClass_kvx_pairedReg:
-		  crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value * 2;
-		  break;
-		case RegClass_kvx_quadReg:
-		  crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value * 4;
-		  break;
-		case RegClass_kvx_systemReg:
-		case RegClass_kv3_v2_systemReg:
-		case RegClass_kv4_v1_systemReg:
-		case RegClass_kvx_aloneReg:
-		case RegClass_kv3_v2_aloneReg:
-		case RegClass_kv4_v1_aloneReg:
-		case RegClass_kvx_onlyraReg:
-		case RegClass_kvx_onlygetReg:
-		case RegClass_kv3_v2_onlygetReg:
-		case RegClass_kv4_v1_onlygetReg:
-		case RegClass_kvx_onlysetReg:
-		case RegClass_kv3_v2_onlysetReg:
-		case RegClass_kv4_v1_onlysetReg:
-		case RegClass_kvx_onlyfxReg:
-		case RegClass_kv3_v2_onlyfxReg:
-		case RegClass_kv4_v1_onlyfxReg:
-		  if (kvx_regfiles[KVX_REGFILE_DEC_GPR] + value
-		      >= kvx_max_dec_regs)
-		    return -1;
-		  if (is_get
-		      && !strcmp (
-			kvx_registers
-			  [kvx_dec_registers[kvx_regfiles[KVX_REGFILE_DEC_SFR]
-					     + value]]
-			    .name,
-			"$ra"))
-		    {
-		      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_GET_RA;
-		      is_a_peb_insn = 1;
-		    }
-		  break;
-		case RegClass_kvx_coproReg:
-		case RegClass_kvx_coproReg0M4:
-		case RegClass_kvx_coproReg1M4:
-		case RegClass_kvx_coproReg2M4:
-		case RegClass_kvx_coproReg3M4:
-		  break;
-		case RegClass_kvx_blockReg:
-		case RegClass_kvx_blockRegE:
-		case RegClass_kvx_blockRegO:
-		case RegClass_kvx_blockReg0M4:
-		case RegClass_kvx_blockReg1M4:
-		case RegClass_kvx_blockReg2M4:
-		case RegClass_kvx_blockReg3M4:
-		  break;
-		case RegClass_kvx_vectorReg:
-		case RegClass_kvx_vectorRegE:
-		case RegClass_kvx_vectorRegO:
-		case RegClass_kvx_tileReg_0:
-		case RegClass_kvx_tileReg_1:
-		case RegClass_kvx_matrixReg_0:
-		case RegClass_kvx_matrixReg_1:
-		case RegClass_kvx_matrixReg_2:
-		case RegClass_kvx_matrixReg_3:
-		  break;
-		case RegClass_kvx_tileReg:
-		  break;
-		case RegClass_kvx_matrixReg:
-		  break;
-		case Immediate_kvx_sysnumber:
-		case Immediate_kvx_wrapped8:
-		case Immediate_kvx_signed10:
-		case Immediate_kvx_signed16:
-		case Immediate_kvx_signed27:
-		case Immediate_kvx_wrapped32:
-		case Immediate_kvx_signed37:
-		case Immediate_kvx_signed43:
-		case Immediate_kvx_signed54:
-		case Immediate_kvx_wrapped64:
-		case Immediate_kvx_unsigned6:
-		  crt_peb_insn->immediate = value;
-		  break;
-		case Immediate_kvx_pcrel17:
-		case Immediate_kvx_pcrel27:
-		  crt_peb_insn->immediate = value + memaddr;
-		  break;
-		default:
-		  return -1;
-		}
-	    }
-
-	  if (is_a_peb_insn)
-	    peb->nb_insn++;
-	  break;
-	}
-    }
-
-  return nb_syl * 4;
 }
 
 void
