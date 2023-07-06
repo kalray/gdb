@@ -26,6 +26,7 @@
 #include "opintl.h"
 #include <assert.h>
 #include "elf-bfd.h"
+#include "kvx-dis.h"
 
 #include "elf/kvx.h"
 #include "opcode/kvx.h"
@@ -67,8 +68,12 @@ typedef uint8_t BundleIssue;
 /*
  * An IMMX syllable is associated with the BundleIssue Extension_BundleIssue[extension].
  */
-static const BundleIssue
-Extension_BundleIssue[] = { BundleIssue_ALU0, BundleIssue_ALU1, BundleIssue_MAU, BundleIssue_LSU };
+static const BundleIssue Extension_BundleIssue[] = {
+  BundleIssue_ALU0,
+  BundleIssue_ALU1,
+  BundleIssue_MAU,
+  BundleIssue_LSU
+};
 
 static inline int
 kvx_steering(uint32_t x)
@@ -119,6 +124,156 @@ struct instr_s {
   int immx_count;
   int nb_syllables;
 };
+
+/* Option for "pretty printing", ie, not the usual little endian objdump output */
+static int opt_pretty = 0;
+/* Option for not emiting a new line between all bundles */
+static int opt_compact_assembly = 0;
+
+void
+parse_kvx_dis_option (const char *option)
+{
+  /* Try to match options that are simple flags */
+  if (startswith (option, "pretty"))
+    {
+      opt_pretty = 1;
+      return;
+    }
+
+  if (startswith (option, "compact-assembly"))
+    {
+      opt_compact_assembly = 1;
+      return;
+    }
+
+  if (startswith (option, "no-compact-assembly"))
+    {
+      opt_compact_assembly = 0;
+      return;
+    }
+
+  /* Invalid option.  */
+  opcodes_error_handler (_("unrecognised disassembler option: %s"), option);
+}
+
+static void
+parse_kvx_dis_options (const char *options)
+{
+  const char *option_end;
+
+  if (options == NULL)
+    return;
+
+  while (*options != '\0')
+    {
+      /* Skip empty options.  */
+      if (*options == ',')
+	{
+	  options++;
+	  continue;
+	}
+
+      /* We know that *options is neither NUL or a comma.  */
+      option_end = options + 1;
+      while (*option_end != ',' && *option_end != '\0')
+	option_end++;
+
+      parse_kvx_dis_option (options);
+
+      /* Go on to the next one.  If option_end points to a comma, it
+	 will be skipped above.  */
+      options = option_end;
+    }
+}
+struct kvx_dis_env
+{
+  int kvx_arch_size;
+  struct kvxopc *opc_table;
+  struct kvx_Register *kvx_registers;
+  const char ***kvx_modifiers;
+  int *kvx_dec_registers;
+  int *kvx_regfiles;
+  unsigned int kvx_max_dec_registers;
+  int initialized_p;
+};
+
+static struct kvx_dis_env env =
+{
+  .kvx_arch_size = 0,
+  .opc_table = NULL,
+  .kvx_registers = NULL,
+  .kvx_modifiers = NULL,
+  .kvx_dec_registers = NULL,
+  .kvx_regfiles = NULL,
+  .initialized_p = 0,
+  .kvx_max_dec_registers = 0
+};
+
+static bool
+kvx_dis_init (struct disassemble_info *info)
+{
+  if (info->arch != bfd_arch_kvx)
+    {
+      (*info->fprintf_func) (info->stream, "error: Unknown architecture\n");
+      return -1;
+    }
+
+  env.kvx_arch_size = 32;
+  switch (info->mach) {
+    case bfd_mach_kv3_1_64:
+      env.kvx_arch_size = 64;
+      /* fallthrough */
+    case bfd_mach_kv3_1_usr:
+    case bfd_mach_kv3_1:
+      env.opc_table = kvx_kv3_v1_optab;
+      env.kvx_regfiles = kvx_kv3_v1_regfiles;
+      env.kvx_registers = kvx_kv3_v1_registers;
+      env.kvx_modifiers = kvx_kv3_v1_modifiers;
+      env.kvx_dec_registers = kvx_kv3_v1_dec_registers;
+      break;
+    case bfd_mach_kv3_2_64:
+      env.kvx_arch_size = 64;
+      /* fallthrough */
+    case bfd_mach_kv3_2_usr:
+    case bfd_mach_kv3_2:
+      env.opc_table = kvx_kv3_v2_optab;
+      env.kvx_regfiles = kvx_kv3_v2_regfiles;
+      env.kvx_registers = kvx_kv3_v2_registers;
+      env.kvx_modifiers = kvx_kv3_v2_modifiers;
+      env.kvx_dec_registers = kvx_kv3_v2_dec_registers;
+      break;
+    case bfd_mach_kv4_1_64:
+      env.kvx_arch_size = 64;
+      /* fallthrough */
+    case bfd_mach_kv4_1_usr:
+    case bfd_mach_kv4_1:
+      env.opc_table = kvx_kv4_v1_optab;
+      env.kvx_regfiles = kvx_kv4_v1_regfiles;
+      env.kvx_registers = kvx_kv4_v1_registers;
+      env.kvx_modifiers = kvx_kv4_v1_modifiers;
+      env.kvx_dec_registers = kvx_kv4_v1_dec_registers;
+      break;
+
+    default:
+      /* Core not supported */
+      (*info->fprintf_func) (info->stream, "disassembling not supported for "
+			     "this KVX core! (core:%d)", (int) info->mach);
+      return -1;
+  }
+
+  env.kvx_max_dec_registers = env.kvx_regfiles[KVX_REGFILE_DEC_REGISTERS];
+
+  if (info->disassembler_options)
+    {
+      parse_kvx_dis_options (info->disassembler_options);
+
+      /* To avoid repeated parsing of these options, we remove them here.  */
+      info->disassembler_options = NULL;
+    }
+  env.initialized_p = 1;
+
+  return env.initialized_p;
+}
 
 static int
 kvx_reassemble_bundle(int wordcount, int *_insncount) {
@@ -324,222 +479,57 @@ kvx_reassemble_bundle(int wordcount, int *_insncount) {
   return 0;
 }
 
-/* Option for "pretty printing", ie, not the usual little endian objdump output */
-static int opt_pretty = 0;
-/* Option for not emiting a new line between all bundles */
-static int opt_compact_assembly = 0;
+struct decoded_insn {
+  /* The entry in the opc_table. */
+  struct kvxopc *opc;
+  /* The number of operands.  */
+  int nb_ops;
+  struct {
+    enum {
+      CAT_REGISTER,
+      CAT_MODIFIER,
+      CAT_IMMEDIATE,
+    } type;
+    unsigned long long val;
+    int sign;
+    int pcrel;
+    int width;
+    int mod_idx;
+  } operands[KVXMAXOPERANDS];
+};
 
-static void
-parse_kvx_dis_option (const char *option)
+static int
+decode_insn (bfd_vma memaddr, insn_t *insn, struct decoded_insn *res)
 {
-  /* Try to match options that are simple flags */
-  if (startswith (option, "pretty"))
-    {
-      opt_pretty = 1;
-      return;
-    }
-
-  if (startswith (option, "compact-assembly"))
-    {
-      opt_compact_assembly = 1;
-      return;
-    }
-
-  if (startswith (option, "no-compact-assembly"))
-    {
-      opt_compact_assembly = 0;
-      return;
-    }
-
-  /* Invalid option.  */
-  opcodes_error_handler (_("unrecognised disassembler option: %s"), option);
-}
-
-static void
-parse_kvx_dis_options (const char *options)
-{
-  const char *option_end;
-
-  if (options == NULL)
-    return;
-
-  while (*options != '\0')
-    {
-      /* Skip empty options.  */
-      if (*options == ',')
-	{
-	  options++;
-	  continue;
-	}
-
-      /* We know that *options is neither NUL or a comma.  */
-      option_end = options + 1;
-      while (*option_end != ',' && *option_end != '\0')
-	option_end++;
-
-      parse_kvx_dis_option (options);
-
-      /* Go on to the next one.  If option_end points to a comma, it
-	 will be skipped above.  */
-      options = option_end;
-    }
-}
-
-int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
-  static int insnindex = 0;
-  static int insncount = 0;
-  struct kvxopc *op = NULL;             /* operation table index */
-  insn_t *insn;                   /* the instruction       */
-  const char *fmtp;
-  struct kvxopc *opc_table = NULL;
-  int          *kvx_regfiles = NULL;
-  struct kvx_Register  *kvx_registers = NULL;
-  const char ***kvx_modifiers = NULL;
-  int          *kvx_dec_registers = NULL;
-  unsigned int  kvx_max_dec_registers = 0;
-  int kvx_arch_size = 32;
-  int readsofar = 0;
   int found = 0;
-  int invalid_bundle = 0;
-  int i;
-
-  /* Clear instruction information field.  */
-  info->insn_info_valid = 0;
-  info->branch_delay_insns = 0;
-  info->data_size = 0;
-  info->insn_type = dis_noninsn;
-  info->target = 0;
-  info->target2 = 0;
-
-  /* check that tables are initialized */
-
-  if (info->arch != bfd_arch_kvx) {
-      fprintf(stderr, "error: Unknown architecture\n");
-      exit(-1);
-  }
-
-  switch (info->mach) {
-    case bfd_mach_kv3_1_64:
-      kvx_arch_size = 64;
-      /* fallthrough */
-    case bfd_mach_kv3_1_usr:
-    case bfd_mach_kv3_1:
-      opc_table = kvx_kv3_v1_optab;
-      kvx_regfiles = kvx_kv3_v1_regfiles;
-      kvx_registers = kvx_kv3_v1_registers;
-      kvx_modifiers = kvx_kv3_v1_modifiers;
-      kvx_dec_registers = kvx_kv3_v1_dec_registers;
-      break;
-    case bfd_mach_kv3_2_64:
-      kvx_arch_size = 64;
-      /* fallthrough */
-    case bfd_mach_kv3_2_usr:
-    case bfd_mach_kv3_2:
-      opc_table = kvx_kv3_v2_optab;
-      kvx_regfiles = kvx_kv3_v2_regfiles;
-      kvx_registers = kvx_kv3_v2_registers;
-      kvx_modifiers = kvx_kv3_v2_modifiers;
-      kvx_dec_registers = kvx_kv3_v2_dec_registers;
-      break;
-    case bfd_mach_kv4_1_64:
-      kvx_arch_size = 64;
-      /* fallthrough */
-    case bfd_mach_kv4_1_usr:
-    case bfd_mach_kv4_1:
-      opc_table = kvx_kv4_v1_optab;
-      kvx_regfiles = kvx_kv4_v1_regfiles;
-      kvx_registers = kvx_kv4_v1_registers;
-      kvx_modifiers = kvx_kv4_v1_modifiers;
-      kvx_dec_registers = kvx_kv4_v1_dec_registers;
-      break;
-
-    default:
-      /* Core not supported */
-      (*info->fprintf_func)(info->stream, "disassembling not supported for this KVX core! (core:%d)",
-                            (int) info->mach);
-      return -1;
-  }
-
-  kvx_max_dec_registers = kvx_regfiles[KVX_REGFILE_DEC_REGISTERS];
-
-  if (opc_table == NULL) {
-      fprintf(stderr, "error: uninitialized opcode table\n");
-      exit(-1);
-  }
-
-  // Set line length
-  info->bytes_per_line = 16;
-
-  if (info->disassembler_options)
+  int idx = 0;
+  for (struct kvxopc *op = env.opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++)
     {
-      parse_kvx_dis_options (info->disassembler_options);
-
-      /* To avoid repeated parsing of these options, we remove them here.  */
-      info->disassembler_options = NULL;
-    }
-
-  /* read the instruction */
-
-  /* If this is the beginning of the bundle, read BUNDLESIZE words and apply decentrifugate function */
-  if(insnindex == 0){
-      int wordcount = 0;
-      do{
-          int status;
-          assert(wordcount < KVXMAXBUNDLEWORDS);
-          status = (*info->read_memory_func) (memaddr + 4*wordcount, (bfd_byte*)(bundle_words + wordcount), 4, info);
-          if (status != 0){
-              (*info->memory_error_func) (status, memaddr + 4*wordcount, info);
-              return -1;
-          }
-          wordcount++;
-      } while (kvx_has_parallel_bit(bundle_words[wordcount-1]) && wordcount < KVXMAXBUNDLEWORDS);
-      invalid_bundle = kvx_reassemble_bundle(wordcount, &insncount);
-  }
-  assert(insnindex < KVXMAXBUNDLEISSUE);
-  insn = &(bundle_insn[insnindex]);
-  readsofar = insn->len * 4;
-  insnindex++;
-
-  char insn_buf[256] = { 0 };
-  /* Check for extension to right iff this is not the end of bundle */
-  for (op = opc_table; op->as_op && (((char)op->as_op[0]) != 0); op++){  /* find the format of this insn */
-    int insn_buf_idx = 0;
+      /* find the format of this insn */
       int opcode_match = 1;
-      int ch;
 
-      if(invalid_bundle)
-	break;
-
-      if(op->wordcount != insn->len)
+      if (op->wordcount != insn->len)
 	continue;
 
-      for(i=0; i < op->wordcount; i++)
+      for (int i = 0; i < op->wordcount; i++)
         if ((op->codewords[i].mask & insn->syllables[i]) != op->codewords[i].opcode)
           opcode_match = 0;
 
-      int encoding_space_flags = kvx_arch_size == 32 ? kvxOPCODE_FLAG_MODE32 : kvxOPCODE_FLAG_MODE64;
+      int encoding_space_flags = env.kvx_arch_size == 32
+	? kvxOPCODE_FLAG_MODE32
+	: kvxOPCODE_FLAG_MODE64;
 
-      for(i=0; i < op->wordcount; i++)
-        if (! (op->codewords[i].flags & encoding_space_flags))
+      for (int i = 0; i < op->wordcount; i++)
+        if (!(op->codewords[i].flags & encoding_space_flags))
           opcode_match = 0;
 
       if (opcode_match) {
-          /* print the operands using the instructions format string. */
-          fmtp = op->fmtstring;
+          /* print the operands using the instructions format string.  */
 
-          if(opt_pretty)
-	    {
-	      insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "[ ");
-	      for(i = 0; i < insn->len; i++)
-		insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%08x ", insn->syllables[i]);
-	      insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "] ");
-	    }
+	  /* print the opcode.  */
+	  res->opc = op;
 
-
-          /* print the opcode   */
-          insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", op->as_op);
-
-          for (i = 0; op->format[i]; i++){
+          for (int i = 0; op->format[i]; i++){
               struct kvx_bitfield *bf = op->format[i]->bfield;
               int bf_nb = op->format[i]->bitfields;
               int width = op->format[i]->width;
@@ -550,19 +540,6 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
               int bias = op->format[i]->bias;
               unsigned long long value = 0;
               int bf_idx;
-
-
-              /* Print characters in the format string up to the following % or nul. */
-              while((ch=*fmtp) && ch != '%'){
-                  insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%c", ch);
-                  fmtp++;
-              }
-
-              /* Skip past %s */
-              if(ch == '%'){
-                  ch=*fmtp++;
-                  fmtp++;
-              }
 
               for(bf_idx=0;bf_idx < bf_nb; bf_idx++) {
                   int insn_idx = (int)bf[bf_idx].to_offset / 32;
@@ -578,13 +555,17 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
               value = (value << shift) + bias;
 
 #define KVX_PRINT_REG(regfile,value) \
-    if(kvx_regfiles[regfile]+value < kvx_max_dec_registers) { \
-        insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", kvx_registers[kvx_dec_registers[kvx_regfiles[regfile]+value]].name); \
+    if(env.kvx_regfiles[regfile]+value < env.kvx_max_dec_registers) { \
+        res->operands[idx].val = env.kvx_dec_registers[env.kvx_regfiles[regfile]+value]; \
+        res->operands[idx].type = CAT_REGISTER; \
+	idx++; \
     } else { \
-        (*info->fprintf_func) (info->stream, "$??"); \
+        res->operands[idx].val = ~0; \
+        res->operands[idx].type = CAT_REGISTER; \
+	idx++; \
     }
 
-	      if (opc_table == kvx_kv3_v1_optab)
+	      if (env.opc_table == kvx_kv3_v1_optab)
 	      {
 		switch (type) {
 
@@ -640,39 +621,21 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		  case Immediate_kv3_v1_signed54:
 		  case Immediate_kv3_v1_wrapped64:
 		  case Immediate_kv3_v1_unsigned6:
-		    if(flags & kvxSIGNED){
-		      if(width <= 32) {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%d (0x%x)", (int)value, (int)value);
-		      }
-		      else {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%lld (0x%llx)", value, value);
-		      }
-		    } else {
-		      if(width <= 32) {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
-		      }
-		      else {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
-		      }
-		    }
+		    res->operands[idx].val = value;
+		    res->operands[idx].sign = flags & kvxSIGNED;
+		    res->operands[idx].width = width;
+		    res->operands[idx].type = CAT_IMMEDIATE;
+		    res->operands[idx].pcrel = 0;
+		    idx++;
 		    break;
-
 		  case Immediate_kv3_v1_pcrel17:
 		  case Immediate_kv3_v1_pcrel27:
-		    {
-		      bfd_vma target = value + memaddr;
-
-		      /* Fill in instruction information.  */
-		      info->insn_info_valid = 1;
-		      info->insn_type = dis_branch;
-		      info->target = target;
-
-		      /* Flush time ._. */
-		      insn_buf[insn_buf_idx] = 0;
-		      (*info->fprintf_func) (info->stream, "%s", insn_buf);
-		      insn_buf_idx = 0;
-		      info->print_address_func(value + memaddr, info);
-		    }
+		    res->operands[idx].val = value + memaddr;
+		    res->operands[idx].sign = flags & kvxSIGNED;
+		    res->operands[idx].width = width;
+		    res->operands[idx].type = CAT_IMMEDIATE;
+		    res->operands[idx].pcrel = 1;
+		    idx++;
 		    break;
 		  case Modifier_kv3_v1_column:
 		  case Modifier_kv3_v1_comparison:
@@ -691,10 +654,15 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		  case Modifier_kv3_v1_splat32:
 		  case Modifier_kv3_v1_variant: {
 		    int sz = 0;
-		    for (sz = 0; kvx_modifiers[type - Modifier_kv3_v1_column][sz] ; ++sz);
-		    const char *mod = value < (unsigned) sz ? kvx_modifiers[type - Modifier_kv3_v1_column][value] : NULL;
+		    for (sz = 0; env.kvx_modifiers[type - Modifier_kv3_v1_column][sz] ; ++sz);
+		    const char *mod = value < (unsigned) sz
+		      ? env.kvx_modifiers[type - Modifier_kv3_v1_column][value]
+		      : NULL;
 		    if (!mod) {  goto retry; }
-		    insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		    res->operands[idx].val = value;
+		    res->operands[idx].type = CAT_MODIFIER;
+		    res->operands[idx].mod_idx = type - Modifier_kv3_v1_column;
+		    idx++;
 		  }
 		    break;
 		  default:
@@ -702,10 +670,9 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		    exit(-1);
 		};
 	      }
-	      else if (opc_table == kvx_kv3_v2_optab)
+	      else if (env.opc_table == kvx_kv3_v2_optab)
 	      {
 		switch (type) {
-
 		  case RegClass_kv3_v2_singleReg:
 		    KVX_PRINT_REG(KVX_REGFILE_DEC_GPR,value)
 		      break;
@@ -773,40 +740,21 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		  case Immediate_kv3_v2_signed54:
 		  case Immediate_kv3_v2_wrapped64:
 		  case Immediate_kv3_v2_unsigned6:
-		    if(flags & kvxSIGNED){
-		      if(width <= 32) {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%d (0x%x)", (int)value, (int)value);
-		      }
-		      else {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%lld (0x%llx)", value, value);
-		      }
-		    } else {
-		      if(width <= 32) {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
-		      }
-		      else {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
-		      }
-		    }
+		    res->operands[idx].val = value;
+		    res->operands[idx].sign = flags & kvxSIGNED;
+		    res->operands[idx].width = width;
+		    res->operands[idx].type = CAT_IMMEDIATE;
+		    res->operands[idx].pcrel = 0;
+		    idx++;
 		    break;
-
 		  case Immediate_kv3_v2_pcrel27:
 		  case Immediate_kv3_v2_pcrel17:
-		    {
-		      bfd_vma target = value + memaddr;
-
-		      /* Fill in instruction information.  */
-		      info->insn_info_valid = 1;
-		      info->insn_type = dis_branch;
-		      info->target = target;
-
-		      /* Flush time ._. */
-		      insn_buf[insn_buf_idx] = 0;
-		      (*info->fprintf_func) (info->stream, "%s", insn_buf);
-		      insn_buf_idx = 0;
-
-		      info->print_address_func(value + memaddr, info);
-		    }
+		    res->operands[idx].val = value + memaddr;
+		    res->operands[idx].sign = flags & kvxSIGNED;
+		    res->operands[idx].width = width;
+		    res->operands[idx].type = CAT_IMMEDIATE;
+		    res->operands[idx].pcrel = 1;
+		    idx++;
 		    break;
 		  case Modifier_kv3_v2_accesses:
 		  case Modifier_kv3_v2_boolcas:
@@ -834,17 +782,22 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		  case Modifier_kv3_v2_transpose:
 		  case Modifier_kv3_v2_variant: {
 		    int sz = 0;
-		    for (sz = 0; kvx_modifiers[type - Modifier_kv3_v2_accesses][sz] ; ++sz);
-		    const char *mod = value < (unsigned) sz ? kvx_modifiers[type - Modifier_kv3_v2_accesses][value] : NULL;
+		    for (sz = 0; env.kvx_modifiers[type - Modifier_kv3_v2_accesses][sz] ; ++sz);
+		    const char *mod = value < (unsigned) sz
+		      ? env.kvx_modifiers[type - Modifier_kv3_v2_accesses][value]
+		      : NULL;
 		    if (!mod) {  goto retry; }
-		    insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		    res->operands[idx].val = value;
+		    res->operands[idx].type = CAT_MODIFIER;
+		    res->operands[idx].mod_idx = type - Modifier_kv3_v2_accesses;
+		    idx++;
 		  };
 		    break;
 		  default:
 		    fprintf(stderr, "error: unexpected operand type (%s)\n", type_name);
 		    exit(-1);
 		};
-	      } else if (opc_table == kvx_kv4_v1_optab)
+	      } else if (env.opc_table == kvx_kv4_v1_optab)
 	      {
 		switch (type) {
 
@@ -915,40 +868,21 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		  case Immediate_kv4_v1_signed54:
 		  case Immediate_kv4_v1_wrapped64:
 		  case Immediate_kv4_v1_unsigned6:
-		    if(flags & kvxSIGNED){
-		      if(width <= 32) {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%d (0x%x)", (int)value, (int)value);
-		      }
-		      else {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%lld (0x%llx)", value, value);
-		      }
-		    } else {
-		      if(width <= 32) {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%u (0x%x)", (unsigned int) value, (unsigned int) value);
-		      }
-		      else {
-			insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%llu (0x%llx)", (unsigned long long) value, (unsigned long long) value);
-		      }
-		    }
+		    res->operands[idx].val = value;
+		    res->operands[idx].sign = flags & kvxSIGNED;
+		    res->operands[idx].width = width;
+		    res->operands[idx].type = CAT_IMMEDIATE;
+		    res->operands[idx].pcrel = 0;
+		    idx++;
 		    break;
-
 		  case Immediate_kv4_v1_pcrel27:
 		  case Immediate_kv4_v1_pcrel17:
-		    {
-		      bfd_vma target = value + memaddr;
-
-		      /* Fill in instruction information.  */
-		      info->insn_info_valid = 1;
-		      info->insn_type = dis_branch;
-		      info->target = target;
-
-		      /* Flush time ._. */
-		      insn_buf[insn_buf_idx] = 0;
-		      (*info->fprintf_func) (info->stream, "%s", insn_buf);
-		      insn_buf_idx = 0;
-
-		      info->print_address_func(value + memaddr, info);
-		    }
+		    res->operands[idx].val = value + memaddr;
+		    res->operands[idx].sign = flags & kvxSIGNED;
+		    res->operands[idx].width = width;
+		    res->operands[idx].type = CAT_IMMEDIATE;
+		    res->operands[idx].pcrel = 1;
+		    idx++;
 		    break;
 		  case Modifier_kv4_v1_accesses:
 		  case Modifier_kv4_v1_boolcas:
@@ -976,10 +910,15 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 		  case Modifier_kv4_v1_transpose:
 		  case Modifier_kv4_v1_variant: {
 		    int sz = 0;
-		    for (sz = 0; kvx_modifiers[type - Modifier_kv4_v1_accesses][sz] ; ++sz);
-		    const char *mod = value < (unsigned) sz ? kvx_modifiers[type - Modifier_kv4_v1_accesses][value] : NULL;
+		    for (sz = 0; env.kvx_modifiers[type - Modifier_kv4_v1_accesses][sz] ; ++sz);
+		    const char *mod = value < (unsigned) sz
+		      ? env.kvx_modifiers[type - Modifier_kv4_v1_accesses][value]
+		      : NULL;
 		    if (!mod) {  goto retry; }
-		    insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		    res->operands[idx].val = value;
+		    res->operands[idx].type = CAT_MODIFIER;
+		    res->operands[idx].mod_idx = type - Modifier_kv4_v1_accesses;
+		    idx++;
 		  }
 		    break;
 		  default:
@@ -991,20 +930,164 @@ int print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info){
 #undef KVX_PRINT_REG
           }
 
-          /* Print trailing characters in the format string, if any */
-          while((ch=*fmtp)){
-              insn_buf_idx += sprintf (insn_buf + insn_buf_idx, "%c", ch);
-              fmtp++;
-          }
-
           found = 1;
-	  insn_buf[insn_buf_idx] = 0;
-	  (*info->fprintf_func) (info->stream, "%s", insn_buf);
           break;
 retry:;
+      idx = 0;
       continue;
       }
   }
+  res->nb_ops = idx;
+  return found;
+}
+
+int
+print_insn_kvx (bfd_vma memaddr, struct disassemble_info *info)
+{
+  static int insnindex = 0;
+  static int insncount = 0;
+  insn_t *insn;                   /* the instruction       */
+  int readsofar = 0;
+  int found = 0;
+  int invalid_bundle = 0;
+
+  if (!env.initialized_p)
+    kvx_dis_init (info);
+
+  /* Clear instruction information field.  */
+  info->insn_info_valid = 0;
+  info->branch_delay_insns = 0;
+  info->data_size = 0;
+  info->insn_type = dis_noninsn;
+  info->target = 0;
+  info->target2 = 0;
+
+  /* Set line length */
+  info->bytes_per_line = 16;
+
+
+  /* If this is the beginning of the bundle, read BUNDLESIZE words and apply
+     decentrifugate function.  */
+  if (insnindex == 0)
+    {
+      int wordcount = 0;
+      do {
+	int status;
+	assert(wordcount < KVXMAXBUNDLEWORDS);
+	status = (*info->read_memory_func) (memaddr + 4*wordcount, (bfd_byte*)(bundle_words + wordcount), 4, info);
+	if (status != 0)
+	  {
+	    (*info->memory_error_func) (status, memaddr + 4*wordcount, info);
+	    return -1;
+	  }
+	wordcount++;
+      } while (kvx_has_parallel_bit (bundle_words[wordcount-1])
+	       && wordcount < KVXMAXBUNDLEWORDS);
+      invalid_bundle = kvx_reassemble_bundle(wordcount, &insncount);
+    }
+
+  assert(insnindex < KVXMAXBUNDLEISSUE);
+  insn = &(bundle_insn[insnindex]);
+  readsofar = insn->len * 4;
+  insnindex++;
+
+  if(opt_pretty)
+    {
+      (*info->fprintf_func) (info->stream, "[ ");
+      for(int i = 0; i < insn->len; i++)
+	(*info->fprintf_func) (info->stream, "%08x ", insn->syllables[i]);
+      (*info->fprintf_func) (info->stream, "] ");
+    }
+
+  /* Check for extension to right iff this is not the end of bundle */
+
+  struct decoded_insn dec = { 0 };
+  if (!invalid_bundle && (found = decode_insn (memaddr, insn, &dec)))
+    {
+      int ch;
+      (*info->fprintf_func) (info->stream, "%s", dec.opc->as_op);
+      const char *fmtp = dec.opc->fmtstring;
+      for (int i = 0 ; i < dec.nb_ops ; ++i)
+	{
+              /* Print characters in the format string up to the following % or nul. */
+              while((ch=*fmtp) && ch != '%')
+		{
+		  (*info->fprintf_func) (info->stream, "%c", ch);
+		  fmtp++;
+		}
+
+              /* Skip past %s */
+              if(ch == '%')
+		{
+                  ch=*fmtp++;
+                  fmtp++;
+		}
+
+	  switch (dec.operands[i].type)
+	    {
+	      case CAT_REGISTER:
+		(*info->fprintf_func) (info->stream, "%s", env.kvx_registers[dec.operands[i].val].name);
+		break;
+	      case CAT_MODIFIER:
+		{
+		    const char *mod = env.kvx_modifiers[dec.operands[i].mod_idx][dec.operands[i].val];
+		    (*info->fprintf_func) (info->stream, "%s", !mod || !strcmp (mod, ".") ? "" : mod);
+		}
+		break;
+	      case CAT_IMMEDIATE:
+		{
+		  if (dec.operands[i].pcrel)
+		    {
+		      /* Fill in instruction information.  */
+		      info->insn_info_valid = 1;
+		      info->insn_type = dec.operands[i].width == 17 ? dis_condbranch : dis_branch;
+		      info->target = dec.operands[i].val;
+
+		      info->print_address_func(dec.operands[i].val, info);
+		    }
+		  else if (dec.operands[i].sign)
+		    {
+		    if(dec.operands[i].width <= 32) {
+		      (*info->fprintf_func) (info->stream, "%d (0x%x)",
+					     (int) dec.operands[i].val,
+					     (int) dec.operands[i].val);
+		    }
+		    else {
+		      (*info->fprintf_func) (info->stream, "%lld (0x%llx)",
+					     dec.operands[i].val,
+					     dec.operands[i].val);
+		    }
+		  } else {
+		    if(dec.operands[i].width <= 32) {
+		      (*info->fprintf_func) (info->stream, "%u (0x%x)",
+					     (unsigned int) dec.operands[i].val,
+					     (unsigned int) dec.operands[i].val);
+		    }
+		    else {
+		      (*info->fprintf_func) (info->stream, "%llu (0x%llx)",
+					     (unsigned long long) dec.operands[i].val,
+					     (unsigned long long) dec.operands[i].val);
+		    }
+		    }
+		}
+		    break;
+	      default:
+		    break;
+
+	    }
+	}
+      /* Print trailing characters in the format string, if any */
+      while((ch=*fmtp)){
+	(*info->fprintf_styled_func) (info->stream, dis_style_text, "%c", ch);
+	fmtp++;
+      }
+    }
+  else
+    {
+      (*info->fprintf_func) (info->stream, "*** invalid opcode ***\n");
+      insnindex = 0;
+      readsofar = 4;
+    }
 
   if (found && (insnindex == insncount)){
     (*info->fprintf_func) (info->stream, ";;");
@@ -1012,13 +1095,407 @@ retry:;
         (*info->fprintf_func) (info->stream, "\n");
       insnindex = 0;
   }
-  // couldn't find the opcode, skip this word
-  if(!found){
-      (*info->fprintf_func) (info->stream, "*** invalid opcode ***\n");
-      insnindex = 0;
-      readsofar = 4;
-  }
+
   return readsofar;
+}
+
+/* This function searches in the current bundle for the instructions required
+   by unwinding. For prologue:
+     (1) addd $r12 = $r12, <res_stack>
+     (2) get <gpr_ra_reg> = $ra
+     (3) sd <ofs>[$r12] = <gpr_ra_reg> or sq/so containing <gpr_ra_reg>
+     (4) sd <ofs>[$r12] = $r14 or sq/so containing r14
+     (5) addd $r14 = $r12, <fp_ofs> or copyd $r14 = $r12
+	 The only difference seen between the code generated by gcc and clang
+	 is the setting/resetting r14. gcc could also generate copyd $r14=$r12
+	 instead of add addd $r14 = $r12, <ofs> when <ofs> is 0.
+	 Vice-versa, <ofs> is not guaranteed to be 0 for clang, so, clang
+	 could also generate addd instead of copyd
+     (6) call, icall, goto, igoto, cb., ret
+  For epilogue:
+     (1) addd $r12 = $r12, <res_stack>
+     (2) addd $r12 = $r14, <offset> or copyd $r12 = $r14
+	 Same comment as prologue (5).
+     (3) ret, goto
+     (4) call, icall, igoto, cb.
+*/
+int
+decode_prologue_epilogue_bundle (bfd_vma memaddr, struct disassemble_info *info,
+				 struct kvx_prologue_epilogue_bundle *peb)
+{
+  int i, idx_insn, nb_insn, nb_syl;
+
+  peb->nb_insn = 0;
+
+  if (info->arch != bfd_arch_kvx)
+    return -1;
+
+  if (!env.initialized_p)
+    kvx_dis_init (info);
+
+  /* read the bundle */
+  nb_syl = 0;
+  do
+    {
+      if (nb_syl >= KVXMAXBUNDLEWORDS)
+	return -1;
+      if ((*info->read_memory_func) (memaddr + 4 * nb_syl,
+				     (bfd_byte *) &bundle_words[nb_syl], 4,
+				     info))
+	return -1;
+      nb_syl++;
+    }
+  while (kvx_has_parallel_bit (bundle_words[nb_syl - 1])
+	 && nb_syl < KVXMAXBUNDLEWORDS);
+  if (kvx_reassemble_bundle (nb_syl, &nb_insn))
+    return -1;
+
+  /* Check for extension to right if this is not the end of bundle */
+  /* find the format of this insn */
+  for (idx_insn = 0; idx_insn < nb_insn; idx_insn++)
+  {
+    insn_t *insn = &bundle_insn[idx_insn];
+    int is_add = 0, is_get = 0, is_a_peb_insn = 0, is_copyd = 0;
+
+    struct decoded_insn dec = { 0 };
+    if (!decode_insn (memaddr, insn, &dec))
+      continue;
+
+    const char *op_name = dec.opc->as_op;
+    struct kvx_prologue_epilogue_insn *crt_peb_insn;
+
+    crt_peb_insn = &peb->insn[peb->nb_insn];
+    crt_peb_insn->nb_gprs = 0;
+
+    if (!strcmp (op_name, "addd"))
+      is_add = 1;
+    else if (!strcmp (op_name, "copyd"))
+      is_copyd = 1;
+    else if (!strcmp (op_name, "get"))
+      is_get = 1;
+    else if (!strcmp (op_name, "sd"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_SD;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "sq"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_SQ;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "so"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_SO;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "ret"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_RET;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "goto"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_GOTO;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "igoto"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_IGOTO;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "call") || !strcmp (op_name, "icall"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_CALL;
+      is_a_peb_insn = 1;
+    }
+    else if (!strcmp (op_name, "cb"))
+    {
+      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_CB;
+      is_a_peb_insn = 1;
+    }
+    else
+      continue;
+
+    for (i = 0; dec.opc->format[i]; i++)
+    {
+      struct kvx_operand *fmt = dec.opc->format[i];
+      struct kvx_bitfield *bf = fmt->bfield;
+      int bf_nb = fmt->bitfields;
+      int width = fmt->width;
+      int type = fmt->type;
+      int flags = fmt->flags;
+      int shift = fmt->shift;
+      int bias = fmt->bias;
+      unsigned long long encoded_value, value = 0;
+      int bf_idx;
+
+      for (bf_idx = 0; bf_idx < bf_nb; bf_idx++)
+      {
+	int insn_idx = (int) bf[bf_idx].to_offset / 32;
+	int to_offset = bf[bf_idx].to_offset % 32;
+	encoded_value = insn->syllables[insn_idx] >> to_offset;
+	encoded_value &= (1LL << bf[bf_idx].size) - 1;
+	value |= encoded_value << bf[bf_idx].from_offset;
+      }
+      if (flags & kvxSIGNED)
+      {
+	unsigned long long signbit = 1LL << (width - 1);
+	value = (value ^ signbit) - signbit;
+      }
+      value = (value << shift) + bias;
+
+#define chk_type(core_, val_) \
+      (env.opc_table == kvx_## core_ ##_optab && type == (val_))
+
+      if (chk_type (kv3_v1, RegClass_kv3_v1_singleReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_singleReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_singleReg))
+      {
+	if (env.kvx_regfiles[KVX_REGFILE_DEC_GPR] + value
+	    >= env.kvx_max_dec_registers)
+	  return -1;
+	if (is_add && i < 2)
+	{
+	  if (i == 0)
+	  {
+	    if (value == KVX_GPR_REG_SP)
+	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_ADD_SP;
+	    else if (value == KVX_GPR_REG_FP)
+	      crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_ADD_FP;
+	    else
+	      is_add = 0;
+	  }
+	  else if (i == 1)
+	  {
+	    if (value == KVX_GPR_REG_SP)
+	      is_a_peb_insn = 1;
+	    else if (value == KVX_GPR_REG_FP
+		&& crt_peb_insn->insn_type
+		== KVX_PROL_EPIL_INSN_ADD_SP)
+	    {
+	      crt_peb_insn->insn_type
+		= KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP;
+	      is_a_peb_insn = 1;
+	    }
+	    else
+	      is_add = 0;
+	  }
+	}
+	else if (is_copyd && i < 2)
+	{
+	  if (i == 0)
+	  {
+	    if (value == KVX_GPR_REG_FP)
+	    {
+	      crt_peb_insn->insn_type
+		= KVX_PROL_EPIL_INSN_ADD_FP;
+	      crt_peb_insn->immediate = 0;
+	    }
+	    else if (value == KVX_GPR_REG_SP)
+	    {
+	      crt_peb_insn->insn_type
+		= KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP;
+	      crt_peb_insn->immediate = 0;
+	    }
+	    else
+	      is_copyd = 0;
+	  }
+	  else if (i == 1)
+	  {
+	    if (value == KVX_GPR_REG_SP
+		&& crt_peb_insn->insn_type
+		== KVX_PROL_EPIL_INSN_ADD_FP)
+	      is_a_peb_insn = 1;
+	    else if (
+		value == KVX_GPR_REG_FP
+		&& crt_peb_insn->insn_type
+		== KVX_PROL_EPIL_INSN_RESTORE_SP_FROM_FP)
+	      is_a_peb_insn = 1;
+	    else
+	      is_copyd = 0;
+	  }
+	}
+	else
+	  crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value;
+      }
+      else if (chk_type (kv3_v1, RegClass_kv3_v1_pairedReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_pairedReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_pairedReg))
+	crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value * 2;
+      else if (chk_type (kv3_v1, RegClass_kv3_v1_quadReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_quadReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_quadReg))
+	crt_peb_insn->gpr_reg[crt_peb_insn->nb_gprs++] = value * 4;
+      else if (chk_type (kv3_v1, RegClass_kv3_v1_systemReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_systemReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_systemReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_aloneReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_aloneReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_aloneReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_onlyraReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_onlyraReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_onlygetReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_onlygetReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_onlygetReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_onlygetReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_onlysetReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_onlysetReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_onlysetReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_onlyfxReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_onlyfxReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_onlyfxReg))
+      {
+	if (env.kvx_regfiles[KVX_REGFILE_DEC_GPR] + value
+	    >= env.kvx_max_dec_registers)
+	  return -1;
+	if (is_get
+	    && !strcmp (
+	      env.kvx_registers
+	      [env.kvx_dec_registers[env.kvx_regfiles[KVX_REGFILE_DEC_SFR]
+	      + value]]
+	      .name,
+	      "$ra"))
+	{
+	  crt_peb_insn->insn_type = KVX_PROL_EPIL_INSN_GET_RA;
+	  is_a_peb_insn = 1;
+	}
+      }
+      else if (chk_type (kv3_v1, RegClass_kv3_v1_coproReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_coproReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_coproReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_blockReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_blockReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_blockReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_vectorReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_vectorReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_vectorReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_tileReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_tileReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_tileReg)
+	  || chk_type (kv3_v1, RegClass_kv3_v1_matrixReg)
+	  || chk_type (kv3_v2, RegClass_kv3_v2_matrixReg)
+	  || chk_type (kv4_v1, RegClass_kv4_v1_matrixReg)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_scalarcond)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_column)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_comparison)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_doscale)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_exunum)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_floatcomp)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_qindex)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_rectify)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_rounding)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_roundint)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_saturate)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_scalarcond)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_silent)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_simplecond)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_speculate)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_splat32)
+	  || chk_type (kv3_v1, Modifier_kv3_v1_variant)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_accesses)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_boolcas)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_cachelev)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_channel)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_coherency)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_comparison)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_conjugate)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_doscale)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_exunum)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_floatcomp)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_hindex)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_lsomask)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_lsumask)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_lsupack)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_qindex)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_rounding)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_scalarcond)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_shuffleV)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_shuffleX)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_silent)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_simplecond)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_speculate)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_splat32)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_transpose)
+	  || chk_type (kv3_v2, Modifier_kv3_v2_variant)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_accesses)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_boolcas)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_cachelev)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_channel)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_coherency)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_comparison)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_conjugate)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_doscale)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_exunum)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_floatcomp)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_hindex)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_lsomask)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_lsumask)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_lsupack)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_qindex)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_rounding)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_scalarcond)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_shuffleV)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_shuffleX)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_silent)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_simplecond)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_speculate)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_splat32)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_transpose)
+	  || chk_type (kv4_v1, Modifier_kv4_v1_variant))
+	  {
+	    /* Nothing */
+	  }
+      else if (chk_type (kv3_v1, Immediate_kv3_v1_sysnumber)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_sysnumber)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_sysnumber)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_wrapped8)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_wrapped8)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_signed10)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_signed10)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_signed10)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_signed16)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_signed16)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_signed16)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_signed27)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_signed27)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_signed27)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_wrapped32)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_wrapped32)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_wrapped32)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_signed37)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_signed37)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_signed37)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_signed43)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_signed43)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_signed43)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_signed54)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_signed54)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_signed54)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_wrapped64)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_wrapped64)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_wrapped64)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_unsigned6)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_unsigned6)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_unsigned6))
+	  crt_peb_insn->immediate = value;
+      else if (chk_type (kv3_v1, Immediate_kv3_v1_pcrel17)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_pcrel17)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_pcrel17)
+	  || chk_type (kv3_v1, Immediate_kv3_v1_pcrel27)
+	  || chk_type (kv3_v2, Immediate_kv3_v2_pcrel27)
+	  || chk_type (kv4_v1, Immediate_kv4_v1_pcrel27))
+	crt_peb_insn->immediate = value + memaddr;
+      else
+	return -1;
+    }
+
+    if (is_a_peb_insn)
+      peb->nb_insn++;
+    continue;
+  }
+
+  return nb_syl * 4;
+#undef chk_type
 }
 
 void

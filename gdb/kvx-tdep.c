@@ -226,9 +226,9 @@ kvx_displaced_step_finish (gdbarch *arch, thread_info *thread, gdb_signal sig)
 }
 
 static uint64_t
-extract_mds_bitfield (kvxopc_t *op, uint32_t syllab, int bitfield, int sign)
+extract_mds_bitfield (struct kvxopc *op, uint32_t syllab, int bitfield, int sign)
 {
-  kvx_bitfield_t *bfield;
+  struct kvx_bitfield *bfield;
   uint64_t res;
 
   bfield = &op->format[bitfield]->bfield[0];
@@ -241,9 +241,9 @@ extract_mds_bitfield (kvxopc_t *op, uint32_t syllab, int bitfield, int sign)
 }
 
 static void
-patch_mds_bitfield (kvxopc_t *op, uint32_t *syllab, int bitfield, int value)
+patch_mds_bitfield (struct kvxopc *op, uint32_t *syllab, int bitfield, int value)
 {
-  kvx_bitfield_t *bfield;
+  struct kvx_bitfield *bfield;
   uint32_t mask;
 
   bfield = &op->format[bitfield]->bfield[0];
@@ -389,7 +389,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
 
   while (insn)
     {
-      kvxopc_t *op = insn->op;
+      struct kvxopc *op = insn->op;
 
       if ((dsc->insn_words[0] & op->codewords[0].mask)
 	  != op->codewords[0].opcode)
@@ -416,7 +416,7 @@ patch_bcu_instruction (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
 	    = from + extract_mds_bitfield (op, dsc->insn_words[0], 0, 1) * 4;
 	  patch_mds_bitfield (op, &dsc->insn_words[0], 0, 0);
 	}
-      else if (strncmp ("cb.", op->as_op, 3) == 0)
+      else if (strcmp ("cb", op->as_op) == 0)
 	{
 	  dsc->dest
 	    = from + extract_mds_bitfield (op, dsc->insn_words[0], 1, 1) * 4;
@@ -604,7 +604,7 @@ kvx_displaced_step_copy_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 
 	  while (insn)
 	    {
-	      kvxopc_t *op = insn->op;
+	      struct kvxopc *op = insn->op;
 
 	      if ((crt_word & op->codewords[0].mask) != op->codewords[0].opcode)
 		{

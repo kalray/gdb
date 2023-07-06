@@ -1033,7 +1033,7 @@ kvx_get_longjmp_target (frame_info_ptr frame, CORE_ADDR *pc)
 }
 
 static void
-add_op (struct op_list **list, kvxopc_t *op)
+add_op (struct op_list **list, struct kvxopc *op)
 {
   struct op_list *op_l = (struct op_list *) malloc (sizeof (struct op_list));
 
@@ -1056,7 +1056,7 @@ kvx_look_for_insns (void)
 
   for (i = 0; i < KVX_NUM_ARCHES; ++i)
     {
-      kvxopc_t *op;
+      struct kvxopc *op;
 
       switch (i)
 	{
@@ -1106,7 +1106,7 @@ kvx_look_for_insns (void)
 		}
 	      add_op (&branch_insns[i], op);
 	    }
-	  else if (strncmp ("cb.", op->as_op, 3) == 0)
+	  else if (strcmp ("cb", op->as_op) == 0)
 	    add_op (&branch_insns[i], op);
 	  else if (strcmp ("loopdo", op->as_op) == 0)
 	    add_op (&branch_insns[i], op);

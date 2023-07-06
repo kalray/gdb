@@ -47,7 +47,7 @@ struct kvx_gdbarch_tdep : gdbarch_tdep_base
 
 struct op_list
 {
-  kvxopc_t *op;
+  struct kvxopc *op;
   struct op_list *next;
 };
 
