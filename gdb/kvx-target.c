@@ -1021,7 +1021,7 @@ kvx_target::filesystem_is_local (void)
   if (!inf)
     return true;
   ps = inf->process_target ();
-  if (!inf)
+  if (!ps)
     return true;
   scon = ps->connection_string ();
   if (!scon)
