@@ -1,64 +1,32 @@
+/* kvx-parse.h -- Recursive decent parser tables for the KVX ISA
+
+   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Contributed by Kalray SA.
+
+   This file is part of GAS.
+
+   GAS is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the license, or
+   (at your option) any later version.
+
+   GAS is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING3. If not,
+   see <http://www.gnu.org/licenses/>.  */
+
 #ifndef __H_KVX_PARSER__
 #define __H_KVX_PARSER__
 
-/* COMMON BEGIN {{{ */
-
-// struct token_s {
-//   char *insn;
-//   int begin, end;
-//   int category;
-//   int class_id, val;
-// };
-// 
-// struct token_class {
-//   const char ** class_values;
-//   int class_id;
-//   int sz;
-// };
-// 
-// enum token_category {
-//   CAT_INSTRUCTION,
-//   CAT_MODIFIER,
-//   CAT_IMMEDIATE,
-//   CAT_SEPARATOR,
-//   CAT_REGISTER,
-//   CAT_INVALID
-// };
-// 
-// struct token_classes {
-//   struct token_class *reg_classes;
-//   struct token_class *mod_classes;
-//   struct token_class *imm_classes;
-//   struct token_class *insn_classes;
-//   struct token_class *sep_classes;
-// };
-// 
-// struct steering_rule {
-//   int steering;
-//   int jump_target;
-//   int stack_it;
-// };
-// 
-// struct rule {
-//   struct steering_rule *rules;
-// };
-// 
-// static struct {
-//   const char ** tokens_names;
-//   int fst_reg, sys_reg, fst_mod;
-//   int (*promote_immediate) (int);
-//   int allow_all_sfr;
-//   struct rule *rules;
-//   struct token_classes *token_classes;
-//   struct node_s *insns;
-// } env;
-
 struct token_list* parse (struct token_s tok);
 void free_token_list (struct token_list* tok_list);
-void setup (int version/*, int allow_all_sfr*/);
+void setup (int version);
 void cleanup (void);
 
-/* }}} COMMON END */
 
 
 /* KV3_V1 BEGIN {{{ */
