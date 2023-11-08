@@ -63,7 +63,7 @@ add_pl2:
   ;;
   slld $r0 = $r0, 32 // move the sps wfxl set part to its location
   ;;
-  ord $r0 = $r0, $r1 // add the sps wfxl clear part
+  iord $r0 = $r0, $r1 // add the sps wfxl clear part
   ;;
   wfxl $sps, $r0
   ;;
