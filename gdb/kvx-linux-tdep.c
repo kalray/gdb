@@ -224,7 +224,8 @@ kvx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       unsigned long bfd_mach = info.bfd_arch_info->mach;
 
       /* Hook in the ABI-specific overrides, if they have been registered. */
-      if (bfd_mach == bfd_mach_kv3_1_64 || bfd_mach == bfd_mach_kv3_1_usr)
+      if (bfd_mach == bfd_mach_kv3_1_64 || bfd_mach == bfd_mach_kv3_1_usr
+	  || bfd_mach == bfd_mach_kv3_2_64 || bfd_mach == bfd_mach_kv3_2_usr)
 	gdbarch_init_osabi (info, gdbarch);
     }
 
@@ -457,6 +458,10 @@ _initialize_kvx_linux_tdep ()
   gdbarch_register_osabi (bfd_arch_kvx, bfd_mach_kv3_1_64, GDB_OSABI_LINUX,
 			  kvx_linux_init_abi);
   gdbarch_register_osabi (bfd_arch_kvx, bfd_mach_kv3_1_usr, GDB_OSABI_LINUX,
+			  kvx_linux_init_abi);
+  gdbarch_register_osabi (bfd_arch_kvx, bfd_mach_kv3_2_64, GDB_OSABI_LINUX,
+			  kvx_linux_init_abi);
+  gdbarch_register_osabi (bfd_arch_kvx, bfd_mach_kv3_2_usr, GDB_OSABI_LINUX,
 			  kvx_linux_init_abi);
   add_kvx_commands ();
 }
